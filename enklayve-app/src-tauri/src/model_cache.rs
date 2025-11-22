@@ -29,10 +29,10 @@ impl CachedModel {
         crate::logger::log_info("🚀 Metal GPU support enabled for Apple Silicon");
 
         #[cfg(target_os = "windows")]
-        crate::logger::log_info("🚀 CUDA GPU support enabled for NVIDIA GPUs");
+        crate::logger::log_info("🚀 GPU support enabled (CUDA if NVIDIA GPU detected)");
 
         #[cfg(target_os = "linux")]
-        crate::logger::log_info("⚙️  CPU inference mode (enable CUDA for GPU acceleration)");
+        crate::logger::log_info("⚙️  GPU support enabled (CUDA if NVIDIA GPU detected)");
 
         // Detect hardware and calculate optimal GPU layers
         let hardware = crate::hardware::HardwareProfile::detect()
