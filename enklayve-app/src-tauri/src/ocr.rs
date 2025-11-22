@@ -1,0 +1,344 @@
+use anyhow::{Result, Context};
+use std::path::{Path, PathBuf};
+use std::fs;
+use ocrs::{OcrEngine, OcrEngineParams, ImageSource};
+use image::DynamicImage;
+use rten::Model;
+use tauri::Emitter;
+
+const DETECTION_MODEL_URL: &str = "https://ocrs-models.s3-accelerate.amazonaws.com/text-detection.rten";
+const RECOGNITION_MODEL_URL: &str = "https://ocrs-models.s3-accelerate.amazonaws.com/text-recognition.rten";
+
+/// Get the directory where OCR models are cached
+fn get_models_dir() -> Result<PathBuf> {
+    let cache_dir = dirs::cache_dir()
+        .context("Failed to get cache directory")?
+        .join("enklayve")
+        .join("ocr-models");
+
+    fs::create_dir_all(&cache_dir)
+        .context("Failed to create OCR models cache directory")?;
+
+    Ok(cache_dir)
+}
+
+/// Download a model file if it doesn't exist in cache
+async fn ensure_model_downloaded(url: &str, filename: &str) -> Result<PathBuf> {
+    let models_dir = get_models_dir()?;
+    let model_path = models_dir.join(filename);
+
+    // If model already exists, return path
+    if model_path.exists() {
+        crate::logger::log_info(&format!("Using cached OCR model: {}", filename));
+        return Ok(model_path);
+    }
+
+    // Download model
+    crate::logger::log_info(&format!("Downloading OCR model: {} (first-time setup, ~10MB)", filename));
+
+    let response = reqwest::get(url)
+        .await
+        .context("Failed to download OCR model")?;
+
+    let bytes = response.bytes()
+        .await
+        .context("Failed to download OCR model bytes")?;
+
+    fs::write(&model_path, &bytes)
+        .context("Failed to save OCR model to cache")?;
+
+    crate::logger::log_info(&format!("OCR model downloaded: {}", filename));
+
+    Ok(model_path)
+}
+
+/// Check if OCR is available (always true with ocrs - pure Rust implementation)
+pub fn is_tesseract_available() -> bool {
+    true
+}
+
+/// Extract text from an image file (JPG, PNG) using OCR
+pub async fn extract_text_from_image(image_path: &Path, app_handle: Option<&tauri::AppHandle>) -> Result<String> {
+    crate::logger::log_info(&format!("Starting OCR processing for image: {:?}", image_path));
+
+    // Emit progress event
+    if let Some(app) = app_handle {
+        let _ = app.emit("ocr-progress", serde_json::json!({
+            "stage": "starting",
+            "message": "Starting OCR processing...",
+            "progress": 0
+        }));
+    }
+
+    // Emit progress: downloading models
+    if let Some(app) = app_handle {
+        let _ = app.emit("ocr-progress", serde_json::json!({
+            "stage": "downloading",
+            "message": "Downloading OCR models...",
+            "progress": 10
+        }));
+    }
+
+    // Ensure models are downloaded
+    let detection_model_path = ensure_model_downloaded(DETECTION_MODEL_URL, "text-detection.rten")
+        .await
+        .context("Failed to download text detection model")?;
+
+    let recognition_model_path = ensure_model_downloaded(RECOGNITION_MODEL_URL, "text-recognition.rten")
+        .await
+        .context("Failed to download text recognition model")?;
+
+    // Emit progress: loading models
+    if let Some(app) = app_handle {
+        let _ = app.emit("ocr-progress", serde_json::json!({
+            "stage": "loading",
+            "message": "Loading OCR models...",
+            "progress": 30
+        }));
+    }
+
+    // Load models
+    crate::logger::log_info("Loading OCR models...");
+    let detection_model = Model::load_file(&detection_model_path)
+        .context("Failed to load detection model")?;
+
+    let recognition_model = Model::load_file(&recognition_model_path)
+        .context("Failed to load recognition model")?;
+
+    // Create OCR engine
+    crate::logger::log_info("Initializing OCR engine...");
+    let engine = OcrEngine::new(OcrEngineParams {
+        detection_model: Some(detection_model),
+        recognition_model: Some(recognition_model),
+        ..Default::default()
+    })
+    .context("Failed to initialize OCR engine")?;
+
+    // Emit progress: processing image
+    if let Some(app) = app_handle {
+        let _ = app.emit("ocr-progress", serde_json::json!({
+            "stage": "processing",
+            "message": "Processing image...",
+            "progress": 50
+        }));
+    }
+
+    // Load image
+    crate::logger::log_info("Loading image file...");
+    let img = image::open(image_path)
+        .context("Failed to load image file")?;
+
+    // Convert to RGB8
+    let rgb_image = img.to_rgb8();
+
+    // Prepare image for OCR
+    crate::logger::log_info("Preparing image for OCR...");
+    let ocr_input = engine.prepare_input(ImageSource::from_bytes(
+        rgb_image.as_raw(),
+        rgb_image.dimensions(),
+    )?)?;
+
+    // Emit progress: detecting text
+    if let Some(app) = app_handle {
+        let _ = app.emit("ocr-progress", serde_json::json!({
+            "stage": "detecting",
+            "message": "Detecting text...",
+            "progress": 70
+        }));
+    }
+
+    // Run OCR
+    crate::logger::log_info("Running text detection...");
+    let word_rects = engine.detect_words(&ocr_input)?;
+
+    crate::logger::log_info("Grouping words into lines...");
+    let line_rects = engine.find_text_lines(&ocr_input, &word_rects);
+
+    // Emit progress: recognizing text
+    if let Some(app) = app_handle {
+        let _ = app.emit("ocr-progress", serde_json::json!({
+            "stage": "recognizing",
+            "message": "Recognizing text...",
+            "progress": 90
+        }));
+    }
+
+    crate::logger::log_info("Recognizing text...");
+    let line_texts = engine.recognize_text(&ocr_input, &line_rects)?;
+
+    // Extract text from results
+    let mut all_text = String::new();
+    for line_opt in line_texts.iter() {
+        if let Some(line) = line_opt {
+            all_text.push_str(&line.to_string());
+            all_text.push('\n');
+        }
+    }
+
+    if all_text.trim().is_empty() {
+        anyhow::bail!("OCR did not extract any text from the image. The image quality may be too low, or the image may not contain readable text.");
+    }
+
+    // Emit completion event
+    if let Some(app) = app_handle {
+        let _ = app.emit("ocr-progress", serde_json::json!({
+            "stage": "complete",
+            "message": "OCR complete!",
+            "progress": 100
+        }));
+    }
+
+    crate::logger::log_info(&format!("✅ OCR completed! Extracted {} characters from image", all_text.len()));
+
+    Ok(all_text)
+}
+
+/// Extract text from a scanned PDF using OCR
+/// This function converts PDF pages to images and runs OCR on them
+pub async fn extract_text_from_scanned_pdf(pdf_path: &Path) -> Result<String> {
+    crate::logger::log_info(&format!("Starting OCR processing for: {:?}", pdf_path));
+
+    // Ensure models are downloaded
+    let detection_model_path = ensure_model_downloaded(DETECTION_MODEL_URL, "text-detection.rten")
+        .await
+        .context("Failed to download text detection model")?;
+
+    let recognition_model_path = ensure_model_downloaded(RECOGNITION_MODEL_URL, "text-recognition.rten")
+        .await
+        .context("Failed to download text recognition model")?;
+
+    // Load models
+    crate::logger::log_info("Loading OCR models...");
+    let detection_model = Model::load_file(&detection_model_path)
+        .context("Failed to load detection model")?;
+
+    let recognition_model = Model::load_file(&recognition_model_path)
+        .context("Failed to load recognition model")?;
+
+    // Create OCR engine
+    crate::logger::log_info("Initializing OCR engine...");
+    let engine = OcrEngine::new(OcrEngineParams {
+        detection_model: Some(detection_model),
+        recognition_model: Some(recognition_model),
+        ..Default::default()
+    })
+    .context("Failed to initialize OCR engine")?;
+
+    // Convert PDF pages to images
+    let images = pdf_to_images(pdf_path)
+        .context("Failed to convert PDF to images")?;
+
+    crate::logger::log_info(&format!("Processing {} page(s) with OCR...", images.len()));
+
+    // Process each page with OCR
+    let mut all_text = String::new();
+
+    for (page_num, img) in images.iter().enumerate() {
+        crate::logger::log_info(&format!("OCR processing page {} of {}...", page_num + 1, images.len()));
+
+        // Convert to RGB8
+        let rgb_image = img.to_rgb8();
+
+        // Prepare image for OCR
+        let ocr_input = engine.prepare_input(ImageSource::from_bytes(
+            rgb_image.as_raw(),
+            rgb_image.dimensions(),
+        )?)?;
+
+        // Run OCR
+        let word_rects = engine.detect_words(&ocr_input)?;
+        let line_rects = engine.find_text_lines(&ocr_input, &word_rects);
+        let line_texts = engine.recognize_text(&ocr_input, &line_rects)?;
+
+        // Extract text from results
+        for line_opt in line_texts.iter() {
+            if let Some(line) = line_opt {
+                // TextLine implements Display, so we can use to_string()
+                all_text.push_str(&line.to_string());
+                all_text.push('\n');
+            }
+        }
+
+        if page_num < images.len() - 1 {
+            all_text.push_str("\n--- Page Break ---\n\n");
+        }
+    }
+
+    if all_text.trim().is_empty() {
+        anyhow::bail!("OCR did not extract any text from the PDF. The image quality may be too low, or the document may not contain readable text.");
+    }
+
+    crate::logger::log_info(&format!("OCR completed! Extracted {} characters", all_text.len()));
+
+    Ok(all_text)
+}
+
+/// Convert PDF pages to images for OCR processing
+fn pdf_to_images(pdf_path: &Path) -> Result<Vec<DynamicImage>> {
+    use std::sync::Arc;
+
+    crate::logger::log_info("Rendering PDF pages to images using hayro...");
+
+    // Read PDF file bytes
+    let pdf_bytes = std::fs::read(pdf_path)
+        .context("Failed to read PDF file")?;
+
+    // Parse PDF (hayro requires Arc<dyn AsRef<[u8]> + Send + Sync>)
+    let pdf_data: Arc<dyn AsRef<[u8]> + Send + Sync> = Arc::new(pdf_bytes);
+    let pdf = hayro::Pdf::new(pdf_data)
+        .map_err(|e| anyhow::anyhow!("Failed to parse PDF: {:?}", e))?;
+
+    let pages = pdf.pages();
+    let page_count = pages.len();
+    crate::logger::log_info(&format!("PDF has {} pages", page_count));
+
+    if page_count == 0 {
+        anyhow::bail!("PDF has no pages to process");
+    }
+
+    let mut images = Vec::new();
+
+    // Set up rendering settings (scale 2.0 for ~150 DPI quality)
+    let render_settings = hayro::RenderSettings {
+        x_scale: 2.0,
+        y_scale: 2.0,
+        width: None,
+        height: None,
+    };
+
+    let interpreter_settings = hayro::InterpreterSettings::default();
+
+    // Render each page to an image
+    for (page_index, page) in pages.iter().enumerate() {
+        crate::logger::log_info(&format!("Rendering page {} of {}...", page_index + 1, page_count));
+
+        // Render page to pixmap
+        let pixmap = hayro::render(page, &interpreter_settings, &render_settings);
+
+        // Convert pixmap to DynamicImage
+        let width = pixmap.width() as u32;
+        let height = pixmap.height() as u32;
+        let pixels = pixmap.data_as_u8_slice();
+
+        // Pixmap is RGBA, create RGBA image
+        let img_buffer = image::ImageBuffer::from_fn(width, height, |x, y| {
+            let offset = ((y * width + x) * 4) as usize;
+            if offset + 3 < pixels.len() {
+                image::Rgba([
+                    pixels[offset],
+                    pixels[offset + 1],
+                    pixels[offset + 2],
+                    pixels[offset + 3],
+                ])
+            } else {
+                image::Rgba([255, 255, 255, 255])  // White fallback
+            }
+        });
+
+        images.push(DynamicImage::ImageRgba8(img_buffer));
+    }
+
+    crate::logger::log_info(&format!("Successfully rendered {} pages to images", images.len()));
+
+    Ok(images)
+}

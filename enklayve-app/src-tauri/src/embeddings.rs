@@ -1,0 +1,171 @@
+use anyhow::{Result, Context};
+use std::path::Path;
+use fastembed::{TextEmbedding, InitOptions, EmbeddingModel};
+
+/// Represents a text embedding (vector)
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct Embedding {
+    pub vector: Vec<f32>,
+    pub dimension: usize,
+}
+
+impl Embedding {
+    pub fn new(vector: Vec<f32>) -> Self {
+        let dimension = vector.len();
+        Self { vector, dimension }
+    }
+
+    /// Compute cosine similarity between two embeddings
+    pub fn cosine_similarity(&self, other: &Embedding) -> f32 {
+        if self.dimension != other.dimension {
+            return 0.0;
+        }
+
+        let dot_product: f32 = self.vector.iter()
+            .zip(other.vector.iter())
+            .map(|(a, b)| a * b)
+            .sum();
+
+        let magnitude_a: f32 = self.vector.iter().map(|x| x * x).sum::<f32>().sqrt();
+        let magnitude_b: f32 = other.vector.iter().map(|x| x * x).sum::<f32>().sqrt();
+
+        if magnitude_a == 0.0 || magnitude_b == 0.0 {
+            return 0.0;
+        }
+
+        dot_product / (magnitude_a * magnitude_b)
+    }
+
+    /// Convert to bytes for database storage
+    pub fn to_bytes(&self) -> Vec<u8> {
+        bincode::serialize(&self.vector).unwrap_or_default()
+    }
+
+    /// Load from bytes from database
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
+        let vector: Vec<f32> = bincode::deserialize(bytes)
+            .context("Failed to deserialize embedding")?;
+        Ok(Self::new(vector))
+    }
+}
+
+/// Embedding generator using FastEmbed (sentence-transformers)
+pub struct EmbeddingGenerator {
+    model: TextEmbedding,
+}
+
+impl EmbeddingGenerator {
+    /// Create a new embedding generator with the default model
+    /// Uses BGE-small-en-v1.5 (33MB, 384 dimensions) - excellent quality and fast
+    pub fn new() -> Result<Self> {
+        // Set cache directory to user's home
+        let home = std::env::var("HOME")
+            .or_else(|_| std::env::var("USERPROFILE"))
+            .unwrap_or_else(|_| "/tmp".to_string());
+        let cache_dir = std::path::PathBuf::from(format!("{}/.cache/fastembed", home));
+        std::fs::create_dir_all(&cache_dir)?;
+
+        let model = TextEmbedding::try_new(
+            InitOptions::new(EmbeddingModel::BGESmallENV15)
+                .with_cache_dir(cache_dir)
+                .with_show_download_progress(true)
+        ).context("Failed to initialize FastEmbed model. This will download a 33MB model file on first use.")?;
+
+        Ok(Self { model })
+    }
+
+    /// Load a specific embedding model
+    pub fn load_model(&mut self, _model_path: &Path) -> Result<()> {
+        // For now, we use FastEmbed's built-in models
+        // This method is kept for API compatibility
+        // Future: Could support custom ONNX models
+        Ok(())
+    }
+
+    /// Generate embedding for a single text
+    /// Returns a 384-dimensional vector for BGE-small-en-v1.5
+    pub fn generate_embedding(&self, text: &str) -> Result<Embedding> {
+        // FastEmbed returns Vec<Vec<f32>> for batch processing
+        // We pass a single text and take the first result
+        let embeddings = self.model.embed(vec![text.to_string()], None)?;
+
+        let vector = embeddings
+            .first()
+            .ok_or_else(|| anyhow::anyhow!("No embedding generated"))?
+            .clone();
+
+        Ok(Embedding::new(vector))
+    }
+
+    /// Generate embeddings for multiple texts in batch
+    /// More efficient than calling generate_embedding repeatedly
+    pub fn generate_embeddings_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
+        let embeddings = self.model.embed(texts.to_vec(), None)?;
+
+        Ok(embeddings
+            .into_iter()
+            .map(Embedding::new)
+            .collect())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cosine_similarity() {
+        let emb1 = Embedding::new(vec![1.0, 0.0, 0.0]);
+        let emb2 = Embedding::new(vec![1.0, 0.0, 0.0]);
+        let emb3 = Embedding::new(vec![0.0, 1.0, 0.0]);
+
+        // Identical vectors should have similarity 1.0
+        assert!((emb1.cosine_similarity(&emb2) - 1.0).abs() < 0.0001);
+
+        // Orthogonal vectors should have similarity 0.0
+        assert!((emb1.cosine_similarity(&emb3) - 0.0).abs() < 0.0001);
+    }
+
+    #[test]
+    fn test_embedding_serialization() {
+        let emb = Embedding::new(vec![0.1, 0.2, 0.3, 0.4, 0.5]);
+        let bytes = emb.to_bytes();
+        let restored = Embedding::from_bytes(&bytes).unwrap();
+
+        assert_eq!(emb.dimension, restored.dimension);
+        for (a, b) in emb.vector.iter().zip(restored.vector.iter()) {
+            assert!((a - b).abs() < 0.0001);
+        }
+    }
+
+    #[test]
+    fn test_generate_embedding() {
+        let generator = EmbeddingGenerator::new().unwrap();
+        let text = "This is a test document about machine learning.";
+        let emb = generator.generate_embedding(text).unwrap();
+
+        assert_eq!(emb.dimension, 384);
+
+        // Vector should be normalized
+        let magnitude: f32 = emb.vector.iter().map(|x| x * x).sum::<f32>().sqrt();
+        assert!((magnitude - 1.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_similar_texts_have_high_similarity() {
+        let generator = EmbeddingGenerator::new().unwrap();
+
+        let emb1 = generator.generate_embedding("machine learning artificial intelligence").unwrap();
+        let emb2 = generator.generate_embedding("machine learning artificial intelligence").unwrap();
+        let emb3 = generator.generate_embedding("cooking recipes food preparation").unwrap();
+
+        let sim_same = emb1.cosine_similarity(&emb2);
+        let sim_different = emb1.cosine_similarity(&emb3);
+
+        // Identical texts should have similarity 1.0
+        assert!((sim_same - 1.0).abs() < 0.0001);
+
+        // Different topics should have lower similarity
+        assert!(sim_different < sim_same);
+    }
+}

@@ -1,0 +1,120 @@
+[package]
+name = "enklayve-app"
+version = "0.1.0"
+description = "A secure, private, and personal desktop app for using top LLM models"
+authors = ["Enklayve Contributors"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "enklayve_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+thiserror = "1"
+chrono = "0.4"
+
+# Database
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+# Document processing
+pdf-extract = "0.7"
+docx-rs = "0.4"
+lopdf = "0.32"
+
+# OCR - Pure Rust implementation (no external dependencies!)
+ocrs = "0.11"
+rten = "0.22"
+image = "0.25"
+hayro = "0.4"  # Pure Rust PDF renderer for OCR
+
+# HTTP client for downloads (web search removed - Enklayve is 100% local!)
+reqwest = { version = "0.12", features = ["stream", "rustls-tls"], default-features = false }
+sha2 = "0.10"
+hex = "0.4"
+# urlencoding = "2.1"  # Removed - was only used for web search
+# scraper = "0.18"     # Removed - was only used for web search HTML parsing
+
+# Chunking and text processing
+unicode-segmentation = "1.12"
+
+# Async runtime
+futures = "0.3"
+
+# Serialization for embeddings
+bincode = "1.3"
+
+# Hardware detection
+sysinfo = "0.31"
+
+# Embeddings
+fastembed = "4.1"
+
+# Encryption
+aes-gcm = "0.10"
+argon2 = "0.5"
+rand = "0.8"
+zeroize = "1.7"
+
+# Platform directories
+dirs = "5.0"
+
+# Platform-specific dependencies
+[target.'cfg(target_os = "macos")'.dependencies]
+# Biometric authentication
+security-framework = "2.9"
+# LLM inference with Metal GPU support for Apple Silicon
+llama-cpp-2 = { version = "0.1", features = ["metal"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+# Windows APIs
+windows = { version = "0.52", features = [
+    "Win32_Security_Credentials",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+    "Win32_Foundation",
+] }
+# LLM inference with CUDA support for NVIDIA GPUs
+llama-cpp-2 = { version = "0.1", features = ["cuda"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# LLM inference with optional CUDA support
+llama-cpp-2 = { version = "0.1", default-features = true }
+
+# GPU acceleration features
+[features]
+default = ["auto-gpu"]
+# Auto-enable GPU based on platform
+auto-gpu = []
+# CUDA support for NVIDIA GPUs (Windows/Linux)
+cuda = ["llama-cpp-2/cuda"]
+# Metal support for Apple Silicon (macOS)
+metal = ["llama-cpp-2/metal"]
+# All GPU features
+gpu = ["cuda", "metal"]
+
+# Release profile optimizations
+# Note: Currently disabled due to llama-cpp-2 rebuild issues
+# The llama-cpp-sys dependency fails to compile with custom release profiles
+# due to macOS 10.15 u8path compatibility issues in the C++ code.
+# TODO: Re-enable once llama-cpp-2 is updated or when we can patch the build
+# [profile.release]
+# opt-level = 3
+# strip = true
+# panic = "abort"
+
