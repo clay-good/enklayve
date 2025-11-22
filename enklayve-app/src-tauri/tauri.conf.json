@@ -42,7 +42,7 @@
     "copyright": "Copyright © 2025 Enklayve Contributors",
     "macOS": {
       "minimumSystemVersion": "10.15",
-      "signingIdentity": null,
+      "signingIdentity": "-",
       "entitlements": null,
       "exceptionDomain": null
     },

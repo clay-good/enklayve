@@ -88,6 +88,8 @@ windows = { version = "0.52", features = [
     "Win32_Graphics_Dxgi",
     "Win32_Graphics_Dxgi_Common",
     "Win32_Foundation",
+    "Security_Credentials_UI",
+    "Foundation",
 ] }
 # LLM inference (GPU support auto-detected at runtime)
 llama-cpp-2 = { version = "0.1" }

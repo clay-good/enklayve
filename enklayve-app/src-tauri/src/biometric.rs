@@ -298,52 +298,6 @@ fn get_secure_storage_path() -> Result<std::path::PathBuf> {
     Ok(path)
 }
 
-// Add fallback implementations for non-biometric platforms
-#[cfg(not(any(target_os = "macos", target_os = "windows")))]
-fn store_encrypted_file(key: &str, data: &[u8]) -> Result<()> {
-    use crate::encryption::{EncryptionKey, encrypt};
-    use std::fs;
-
-    let salt = EncryptionKey::generate_salt();
-    let encryption_key = EncryptionKey::from_password("enklayve-secure-storage", &salt)?;
-
-    let encrypted = encrypt(data, &encryption_key)?;
-
-    let storage_path = get_secure_storage_path()?;
-    let file_path = storage_path.join(format!("{}.enc", key));
-
-    let mut output = salt.to_vec();
-    output.extend_from_slice(&encrypted);
-
-    fs::write(file_path, output)
-        .context("Failed to write encrypted file")?;
-
-    Ok(())
-}
-
-#[cfg(not(any(target_os = "macos", target_os = "windows")))]
-fn retrieve_encrypted_file(key: &str) -> Result<Vec<u8>> {
-    use crate::encryption::{EncryptionKey, decrypt};
-    use std::fs;
-
-    let storage_path = get_secure_storage_path()?;
-    let file_path = storage_path.join(format!("{}.enc", key));
-
-    let data = fs::read(file_path)
-        .context("Failed to read encrypted file")?;
-
-    if data.len() < 16 {
-        anyhow::bail!("Invalid encrypted data");
-    }
-
-    let salt: [u8; 16] = data[..16].try_into()?;
-    let encryption_key = EncryptionKey::from_password("enklayve-secure-storage", &salt)?;
-
-    let decrypted = decrypt(&data[16..], &encryption_key)?;
-
-    Ok(decrypted)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

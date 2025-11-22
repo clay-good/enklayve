@@ -49,6 +49,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MACOSX_DEPLOYMENT_TARGET: '10.15'
+          # Use ad-hoc signing for macOS (no Apple Developer account required)
+          APPLE_SIGNING_IDENTITY: '-'
         with:
           projectPath: enklayve-app
           tagName: ${{ github.ref_name }}
