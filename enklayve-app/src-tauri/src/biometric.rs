@@ -237,7 +237,7 @@ fn retrieve_credential_windows(key: &str) -> Result<Vec<u8>> {
     retrieve_encrypted_file(key)
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+#[cfg(not(target_os = "macos"))]
 fn store_encrypted_file(key: &str, data: &[u8]) -> Result<()> {
     use crate::encryption::{EncryptionKey, encrypt};
     use std::fs;
@@ -262,7 +262,7 @@ fn store_encrypted_file(key: &str, data: &[u8]) -> Result<()> {
     Ok(())
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+#[cfg(not(target_os = "macos"))]
 fn retrieve_encrypted_file(key: &str) -> Result<Vec<u8>> {
     use crate::encryption::{EncryptionKey, decrypt};
     use std::fs;

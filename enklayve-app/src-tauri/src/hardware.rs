@@ -174,6 +174,8 @@ impl HardwareProfile {
         {
             if let Some((vendor, name)) = Self::detect_windows_gpu() {
                 return (true, Some(vendor), Some(name));
+            } else {
+                return (false, None, None);
             }
         }
 
