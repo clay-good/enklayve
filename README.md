@@ -4,6 +4,8 @@
 
 Enklayve is a privacy-first desktop application for analyzing documents using local Large Language Models (LLMs). All processing happens on your device with end-to-end encryption, biometric authentication, and zero-knowledge architecture.
 
+> **Enklayve is currently unsigned on macOS so please allow it to run unsigned with this command: "update xattr -r -d com.apple.quarantine /path/to/your/enklayve.app"** 
+
 ## Features
 
 - **Local LLM Inference**: Run models entirely on your device - no cloud, no data leaks
