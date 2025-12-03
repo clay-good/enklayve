@@ -103,19 +103,37 @@ pub fn add_message(
         .duration_since(UNIX_EPOCH)?
         .as_secs() as i64;
 
-    conn.execute(
-        "INSERT INTO messages (conversation_id, role, content, timestamp, tokens)
-         VALUES (?1, ?2, ?3, ?4, ?5)",
-        rusqlite::params![conversation_id, role, content, now, tokens],
-    )?;
+    // Use transaction to ensure atomicity of message insert + conversation update
+    conn.execute("BEGIN IMMEDIATE", [])?;
 
-    // Update conversation's updated_at timestamp
-    conn.execute(
-        "UPDATE conversations SET updated_at = ?1 WHERE id = ?2",
-        rusqlite::params![now, conversation_id],
-    )?;
+    let result: Result<i64> = (|| {
+        conn.execute(
+            "INSERT INTO messages (conversation_id, role, content, timestamp, tokens)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            rusqlite::params![conversation_id, role, content, now, tokens],
+        )?;
 
-    Ok(conn.last_insert_rowid())
+        let message_id = conn.last_insert_rowid();
+
+        // Update conversation's updated_at timestamp
+        conn.execute(
+            "UPDATE conversations SET updated_at = ?1 WHERE id = ?2",
+            rusqlite::params![now, conversation_id],
+        )?;
+
+        Ok(message_id)
+    })();
+
+    match result {
+        Ok(id) => {
+            conn.execute("COMMIT", [])?;
+            Ok(id)
+        }
+        Err(e) => {
+            conn.execute("ROLLBACK", []).ok();
+            Err(e)
+        }
+    }
 }
 
 /// Get all messages in a conversation

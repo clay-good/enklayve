@@ -25,7 +25,15 @@ pub fn init_logger(app_handle: &AppHandle) -> Result<()> {
         .append(true)
         .open(&log_file_path)?;
 
-    *LOG_FILE.lock().unwrap() = Some(file);
+    // Handle mutex poisoning gracefully
+    match LOG_FILE.lock() {
+        Ok(mut file_lock) => *file_lock = Some(file),
+        Err(poisoned) => {
+            // Recover from poisoned mutex by clearing the poison
+            let mut file_lock = poisoned.into_inner();
+            *file_lock = Some(file);
+        }
+    }
 
     log_info(&format!("Logger initialized at: {}", log_file_path.display()));
 

@@ -19,11 +19,11 @@ pub struct ModelInfo {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CompatibilityLevel {
-    Excellent,      // Perfect match, will run great
-    Good,           // Will run well
-    Acceptable,     // Will run but may be slow
-    Poor,           // Will run but very slow
-    Incompatible,   // Not enough RAM
+    Excellent,
+    Good,
+    Acceptable,
+    Poor,
+    Incompatible,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -36,217 +36,81 @@ pub struct ModelRecommendation {
     pub benefits: Vec<String>,
 }
 
-/// Get the comprehensive list of available models suitable for RAG
 pub fn get_available_models() -> Vec<ModelInfo> {
     vec![
-        // Ultra High-end models (64GB+ RAM)
         ModelInfo {
-            name: "Llama 3.1 70B Instruct (Q4)".to_string(),
-            description: "Flagship model with exceptional reasoning and knowledge - best for complex RAG".to_string(),
-            size_gb: 40.0,
-            min_ram_gb: 48,
-            recommended_ram_gb: 64,
-            repo_url: "https://huggingface.co/bartowski/Meta-Llama-3.1-70B-Instruct-GGUF".to_string(),
-            file_name: "Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf".to_string(),
+            name: "Qwen 2.5 1.5B Instruct (Q4)".to_string(),
+            description: "Ultra-efficient model for minimal hardware - perfect for basic Q&A".to_string(),
+            size_gb: 1.0,
+            min_ram_gb: 4,
+            recommended_ram_gb: 6,
+            repo_url: "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF".to_string(),
+            file_name: "qwen2.5-1.5b-instruct-q4_k_m.gguf".to_string(),
             checksum: "".to_string(),
-            recommended_use: "Complex reasoning, research, professional writing, detailed analysis".to_string(),
-            performance_tier: "Excellent".to_string(),
-            estimated_speed_tokens_per_sec: 10,
-            context_length: 128000,
-        },
-        ModelInfo {
-            name: "Qwen2.5 72B Instruct (Q4)".to_string(),
-            description: "State-of-the-art model for technical content and reasoning".to_string(),
-            size_gb: 42.0,
-            min_ram_gb: 50,
-            recommended_ram_gb: 64,
-            repo_url: "https://huggingface.co/Qwen/Qwen2.5-72B-Instruct-GGUF".to_string(),
-            file_name: "qwen2.5-72b-instruct-q4_k_m.gguf".to_string(),
-            checksum: "".to_string(),
-            recommended_use: "Advanced technical docs, complex coding, mathematics, multilingual RAG".to_string(),
-            performance_tier: "Excellent".to_string(),
-            estimated_speed_tokens_per_sec: 10,
-            context_length: 131072,
-        },
-
-        // High-end models (32GB+ RAM)
-        ModelInfo {
-            name: "Qwen2.5 32B Instruct (Q4)".to_string(),
-            description: "Powerful model for technical and coding tasks with excellent RAG performance".to_string(),
-            size_gb: 19.0,
-            min_ram_gb: 24,
-            recommended_ram_gb: 32,
-            repo_url: "https://huggingface.co/Qwen/Qwen2.5-32B-Instruct-GGUF".to_string(),
-            file_name: "qwen2.5-32b-instruct-q4_k_m.gguf".to_string(),
-            checksum: "".to_string(),
-            recommended_use: "Advanced coding, technical writing, mathematics, document analysis".to_string(),
-            performance_tier: "Excellent".to_string(),
-            estimated_speed_tokens_per_sec: 15,
+            recommended_use: "Fast responses, simple document Q&A, basic summarization".to_string(),
+            performance_tier: "Fast".to_string(),
+            estimated_speed_tokens_per_sec: 80,
             context_length: 32768,
         },
         ModelInfo {
-            name: "Mixtral 8x7B Instruct (Q4)".to_string(),
-            description: "Mixture of Experts model with excellent general performance".to_string(),
-            size_gb: 26.0,
-            min_ram_gb: 32,
-            recommended_ram_gb: 48,
-            repo_url: "https://huggingface.co/TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF".to_string(),
-            file_name: "mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf".to_string(),
+            name: "Qwen 2.5 3B Instruct (Q4)".to_string(),
+            description: "Fast and efficient model with strong reasoning for most tasks".to_string(),
+            size_gb: 1.9,
+            min_ram_gb: 6,
+            recommended_ram_gb: 8,
+            repo_url: "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF".to_string(),
+            file_name: "qwen2.5-3b-instruct-q4_k_m.gguf".to_string(),
             checksum: "".to_string(),
-            recommended_use: "General RAG, multilingual support, balanced performance".to_string(),
-            performance_tier: "Excellent".to_string(),
-            estimated_speed_tokens_per_sec: 20,
+            recommended_use: "Document analysis, coding help, technical content, multilingual support".to_string(),
+            performance_tier: "Fast".to_string(),
+            estimated_speed_tokens_per_sec: 60,
             context_length: 32768,
         },
         ModelInfo {
-            name: "Llama 3.1 45B Instruct (Q4)".to_string(),
-            description: "Large instruction-following model with strong RAG capabilities".to_string(),
-            size_gb: 26.0,
-            min_ram_gb: 32,
-            recommended_ram_gb: 40,
-            repo_url: "https://huggingface.co/bartowski/Meta-Llama-3.1-45B-Instruct-GGUF".to_string(),
-            file_name: "Meta-Llama-3.1-45B-Instruct-Q4_K_M.gguf".to_string(),
-            checksum: "".to_string(),
-            recommended_use: "Professional writing, detailed analysis, complex reasoning".to_string(),
-            performance_tier: "Excellent".to_string(),
-            estimated_speed_tokens_per_sec: 12,
-            context_length: 128000,
-        },
-
-        // Mid-high range models (16-24GB RAM)
-        ModelInfo {
-            name: "Llama 3.1 8B Instruct (Q4)".to_string(),
-            description: "Meta's latest Llama model, great for general documents".to_string(),
-            size_gb: 4.9,
+            name: "Qwen 2.5 7B Instruct (Q3)".to_string(),
+            description: "Balanced intelligence and speed - recommended for most users".to_string(),
+            size_gb: 3.5,
             min_ram_gb: 8,
-            recommended_ram_gb: 12,
-            repo_url: "https://huggingface.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF".to_string(),
-            file_name: "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf".to_string(),
-            checksum: "".to_string(),
-            recommended_use: "General document Q&A, summarization, analysis".to_string(),
-            performance_tier: "Good".to_string(),
-            estimated_speed_tokens_per_sec: 40,
-            context_length: 131072,
-        },
-        ModelInfo {
-            name: "Mistral Nemo 12B Instruct (Q4)".to_string(),
-            description: "Fast and capable model with strong instruction following".to_string(),
-            size_gb: 7.2,
-            min_ram_gb: 10,
             recommended_ram_gb: 16,
-            repo_url: "https://huggingface.co/bartowski/Mistral-Nemo-Instruct-2407-GGUF".to_string(),
-            file_name: "Mistral-Nemo-Instruct-2407-Q4_K_M.gguf".to_string(),
-            checksum: "".to_string(),
-            recommended_use: "General RAG, document Q&A, chat with context".to_string(),
-            performance_tier: "Good".to_string(),
-            estimated_speed_tokens_per_sec: 30,
-            context_length: 128000,
-        },
-
-        // Mid-range models (8-16GB RAM) - Sweet spot for RAG
-        ModelInfo {
-            name: "Llama 3.1 8B Instruct (Q4)".to_string(),
-            description: "Excellent general-purpose model with strong RAG performance".to_string(),
-            size_gb: 4.7,
-            min_ram_gb: 6,
-            recommended_ram_gb: 8,
-            repo_url: "https://huggingface.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF".to_string(),
-            file_name: "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf".to_string(),
-            checksum: "".to_string(),
-            recommended_use: "General RAG, document Q&A, reasoning, code generation".to_string(),
-            performance_tier: "Good".to_string(),
-            estimated_speed_tokens_per_sec: 40,
-            context_length: 128000,
-        },
-        ModelInfo {
-            name: "Qwen2.5 7B Instruct (Q4)".to_string(),
-            description: "Excellent for technical content and multilingual RAG".to_string(),
-            size_gb: 4.4,
-            min_ram_gb: 6,
-            recommended_ram_gb: 8,
             repo_url: "https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF".to_string(),
-            file_name: "qwen2.5-7b-instruct-q4_k_m.gguf".to_string(),
+            file_name: "qwen2.5-7b-instruct-q3_k_m.gguf".to_string(),
             checksum: "".to_string(),
-            recommended_use: "Technical docs, code analysis, math, multilingual documents".to_string(),
-            performance_tier: "Good".to_string(),
+            recommended_use: "Complex reasoning, technical docs, code analysis, mathematics, research".to_string(),
+            performance_tier: "Balanced".to_string(),
             estimated_speed_tokens_per_sec: 45,
             context_length: 32768,
         },
         ModelInfo {
-            name: "Mistral 7B Instruct v0.3 (Q4)".to_string(),
-            description: "Fast and efficient model for general RAG use".to_string(),
-            size_gb: 4.1,
-            min_ram_gb: 6,
-            recommended_ram_gb: 8,
-            repo_url: "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.3-GGUF".to_string(),
-            file_name: "mistral-7b-instruct-v0.3.Q4_K_M.gguf".to_string(),
+            name: "Qwen 2.5 14B Instruct (Q4)".to_string(),
+            description: "Very smart model for advanced analysis and complex reasoning".to_string(),
+            size_gb: 8.7,
+            min_ram_gb: 16,
+            recommended_ram_gb: 32,
+            repo_url: "https://huggingface.co/Qwen/Qwen2.5-14B-Instruct-GGUF".to_string(),
+            file_name: "qwen2.5-14b-instruct-q4_k_m.gguf".to_string(),
             checksum: "".to_string(),
-            recommended_use: "Document chat, creative writing with context, general assistance".to_string(),
-            performance_tier: "Good".to_string(),
-            estimated_speed_tokens_per_sec: 50,
+            recommended_use: "Advanced reasoning, professional writing, research, complex technical analysis".to_string(),
+            performance_tier: "Smart".to_string(),
+            estimated_speed_tokens_per_sec: 30,
             context_length: 32768,
         },
         ModelInfo {
-            name: "Llama 3.2 11B Vision Instruct (Q4)".to_string(),
-            description: "Multimodal model for text and image RAG tasks".to_string(),
-            size_gb: 6.8,
-            min_ram_gb: 10,
-            recommended_ram_gb: 12,
-            repo_url: "https://huggingface.co/bartowski/Llama-3.2-11B-Vision-Instruct-GGUF".to_string(),
-            file_name: "Llama-3.2-11B-Vision-Instruct-Q4_K_M.gguf".to_string(),
-            checksum: "".to_string(),
-            recommended_use: "Document analysis with images, multimodal RAG, visual Q&A".to_string(),
-            performance_tier: "Good".to_string(),
-            estimated_speed_tokens_per_sec: 35,
-            context_length: 128000,
-        },
-
-        ModelInfo {
-            name: "Gemma 2 9B Instruct (Q4)".to_string(),
-            description: "Google's efficient model with good RAG capabilities".to_string(),
-            size_gb: 5.4,
-            min_ram_gb: 8,
-            recommended_ram_gb: 10,
-            repo_url: "https://huggingface.co/bartowski/gemma-2-9b-it-GGUF".to_string(),
-            file_name: "gemma-2-9b-it-Q4_K_M.gguf".to_string(),
-            checksum: "".to_string(),
-            recommended_use: "General document analysis, balanced performance".to_string(),
-            performance_tier: "Good".to_string(),
-            estimated_speed_tokens_per_sec: 40,
-            context_length: 8192,
-        },
-        ModelInfo {
-            name: "DeepSeek Coder 33B Instruct (Q4)".to_string(),
-            description: "Specialized for technical documentation and code-related RAG".to_string(),
-            size_gb: 19.5,
-            min_ram_gb: 24,
-            recommended_ram_gb: 32,
-            repo_url: "https://huggingface.co/TheBloke/deepseek-coder-33b-instruct-GGUF".to_string(),
-            file_name: "deepseek-coder-33b-instruct.Q4_K_M.gguf".to_string(),
-            checksum: "".to_string(),
-            recommended_use: "Code analysis, technical documentation, API docs, software manuals".to_string(),
-            performance_tier: "Excellent".to_string(),
-            estimated_speed_tokens_per_sec: 15,
-            context_length: 16384,
-        },
-        ModelInfo {
-            name: "CodeLlama 34B Instruct (Q4)".to_string(),
-            description: "Meta's code-specialized model excellent for technical RAG".to_string(),
+            name: "Qwen 2.5 32B Instruct (Q4)".to_string(),
+            description: "Maximum intelligence for the most demanding tasks and research".to_string(),
             size_gb: 19.0,
-            min_ram_gb: 24,
-            recommended_ram_gb: 32,
-            repo_url: "https://huggingface.co/TheBloke/CodeLlama-34B-Instruct-GGUF".to_string(),
-            file_name: "codellama-34b-instruct.Q4_K_M.gguf".to_string(),
+            min_ram_gb: 32,
+            recommended_ram_gb: 64,
+            repo_url: "https://huggingface.co/Qwen/Qwen2.5-32B-Instruct-GGUF".to_string(),
+            file_name: "qwen2.5-32b-instruct-q4_k_m.gguf".to_string(),
             checksum: "".to_string(),
-            recommended_use: "Programming books, technical specs, architecture docs, code repositories".to_string(),
-            performance_tier: "Excellent".to_string(),
+            recommended_use: "Expert-level analysis, complex research, advanced coding, scientific work".to_string(),
+            performance_tier: "Maximum".to_string(),
             estimated_speed_tokens_per_sec: 15,
-            context_length: 16384,
+            context_length: 32768,
         },
     ]
 }
 
-/// Get models recommended for specific hardware
 pub fn get_recommended_models(hardware: &HardwareProfile) -> Vec<ModelRecommendation> {
     let all_models = get_available_models();
     let mut recommendations: Vec<ModelRecommendation> = all_models
@@ -254,7 +118,6 @@ pub fn get_recommended_models(hardware: &HardwareProfile) -> Vec<ModelRecommenda
         .map(|model| evaluate_model_compatibility(&model, hardware))
         .collect();
 
-    // Sort by compatibility level and then by size (larger is generally better if compatible)
     recommendations.sort_by(|a, b| {
         let compat_order = |c: &CompatibilityLevel| -> i32 {
             match c {
@@ -272,15 +135,15 @@ pub fn get_recommended_models(hardware: &HardwareProfile) -> Vec<ModelRecommenda
         if a_order != b_order {
             a_order.cmp(&b_order)
         } else {
-            // Within same compatibility, prefer larger models
-            b.model.size_gb.partial_cmp(&a.model.size_gb).unwrap()
+            // Handle NaN safely - treat NaN as smallest value
+            b.model.size_gb.partial_cmp(&a.model.size_gb)
+                .unwrap_or(std::cmp::Ordering::Equal)
         }
     });
 
     recommendations
 }
 
-/// Evaluate how well a model matches the hardware
 fn evaluate_model_compatibility(
     model: &ModelInfo,
     hardware: &HardwareProfile,
@@ -289,7 +152,6 @@ fn evaluate_model_compatibility(
     let mut warnings = Vec::new();
     let mut benefits = Vec::new();
 
-    // Determine compatibility level
     let compatibility = if available_ram < model.min_ram_gb as f64 {
         warnings.push(format!(
             "Requires {} GB RAM but only {:.1} GB available",
@@ -314,7 +176,6 @@ fn evaluate_model_compatibility(
         CompatibilityLevel::Poor
     };
 
-    // Check storage space
     if hardware.storage_available_gb < (model.size_gb as f64 + 5.0) {
         warnings.push(format!(
             "Needs {:.1} GB storage, only {:.1} GB available",
@@ -323,40 +184,38 @@ fn evaluate_model_compatibility(
         ));
     }
 
-    // Performance tier matching
     let is_recommended = match (&hardware.performance_tier, model.performance_tier.as_str()) {
-        (PerformanceTier::Excellent, "Excellent") => {
+        (PerformanceTier::Excellent, "Maximum" | "Smart") => {
             benefits.push("Perfect match for your high-end hardware".to_string());
             true
         }
-        (PerformanceTier::Good, "Good") => {
+        (PerformanceTier::Good, "Balanced" | "Smart") => {
             benefits.push("Ideal for your system".to_string());
             true
         }
-        (PerformanceTier::Fair, "Fair") => {
+        (PerformanceTier::Fair, "Balanced" | "Fast") => {
             benefits.push("Well-matched to your hardware".to_string());
             true
         }
-        (PerformanceTier::Poor, "Poor") => {
+        (PerformanceTier::Poor | PerformanceTier::Minimal, "Fast") => {
             benefits.push("Best option for your system".to_string());
             true
         }
-        (PerformanceTier::Excellent, "Good" | "Fair") => {
+        (PerformanceTier::Excellent, "Balanced" | "Fast") => {
             benefits.push("Will run very fast on your hardware".to_string());
             false
         }
-        (PerformanceTier::Good, "Fair" | "Poor") => {
+        (PerformanceTier::Good, "Fast") => {
             benefits.push("Fast performance expected".to_string());
             false
         }
-        (PerformanceTier::Fair | PerformanceTier::Good, "Excellent") => {
+        (PerformanceTier::Fair | PerformanceTier::Good, "Maximum") => {
             warnings.push("May be slower than optimal".to_string());
             false
         }
         _ => false,
     };
 
-    // Estimate speed category
     let estimated_speed = if hardware.is_apple_silicon {
         match &hardware.performance_tier {
             PerformanceTier::Excellent => "Very Fast (50-100+ tokens/sec)".to_string(),
@@ -375,13 +234,11 @@ fn evaluate_model_compatibility(
         }
     };
 
-    // Add Apple Silicon specific benefits
     if hardware.is_apple_silicon && hardware.cpu_cores >= 8 {
         benefits.push("High-performance cores will accelerate inference".to_string());
     }
 
-    // Add context length benefit if large
-    if model.context_length >= 100000 {
+    if model.context_length >= 32768 {
         benefits.push(format!(
             "Large context window ({} tokens) for extensive documents",
             model.context_length
@@ -424,12 +281,11 @@ mod tests {
     #[test]
     fn test_model_count() {
         let models = get_available_models();
-        assert!(models.len() >= 15, "Should have at least 15 RAG-capable models");
-        println!("Total RAG-capable models available: {}", models.len());
+        assert_eq!(models.len(), 5, "Should have exactly 5 Qwen 2.5 models");
 
-        // Verify we have no tiny models (< 3B)
-        let tiny_models: Vec<_> = models.iter().filter(|m| m.size_gb < 1.5).collect();
-        assert_eq!(tiny_models.len(), 0, "Should have no models smaller than 3B");
+        for model in &models {
+            assert!(model.name.starts_with("Qwen 2.5"), "All models should be Qwen 2.5 series");
+        }
     }
 
     #[test]
@@ -437,22 +293,9 @@ mod tests {
         let hardware = create_test_hardware(64.0, PerformanceTier::Excellent);
         let recommendations = get_recommended_models(&hardware);
 
-        println!("\nRecommendations for Excellent tier (64GB RAM):");
-        for (i, rec) in recommendations.iter().take(3).enumerate() {
-            println!(
-                "{}. {} - {:?} ({})",
-                i + 1,
-                rec.model.name,
-                rec.compatibility,
-                rec.estimated_speed
-            );
-        }
-
-        // Should have at least one recommended model
         let has_recommended = recommendations.iter().any(|r| r.is_recommended);
         assert!(has_recommended, "Should have at least one recommended model");
 
-        // Top recommendation should be compatible
         assert!(
             !matches!(recommendations[0].compatibility, CompatibilityLevel::Incompatible),
             "Top recommendation should be compatible"
@@ -464,37 +307,6 @@ mod tests {
         let hardware = create_test_hardware(16.0, PerformanceTier::Good);
         let recommendations = get_recommended_models(&hardware);
 
-        println!("\nRecommendations for Good tier (16GB RAM):");
-        for (i, rec) in recommendations.iter().take(3).enumerate() {
-            println!(
-                "{}. {} - {:?}",
-                i + 1, rec.model.name, rec.compatibility
-            );
-        }
-
-        // Should have multiple compatible models
-        let compatible_count = recommendations
-            .iter()
-            .filter(|r| !matches!(r.compatibility, CompatibilityLevel::Incompatible))
-            .count();
-
-        assert!(compatible_count >= 5, "Should have at least 5 compatible models");
-    }
-
-    #[test]
-    fn test_recommendation_for_fair_hardware() {
-        let hardware = create_test_hardware(8.0, PerformanceTier::Fair);
-        let recommendations = get_recommended_models(&hardware);
-
-        println!("\nRecommendations for Fair tier (8GB RAM):");
-        for (i, rec) in recommendations.iter().take(3).enumerate() {
-            println!(
-                "{}. {} - {:?}",
-                i + 1, rec.model.name, rec.compatibility
-            );
-        }
-
-        // Should have some compatible models
         let compatible_count = recommendations
             .iter()
             .filter(|r| !matches!(r.compatibility, CompatibilityLevel::Incompatible))
@@ -504,25 +316,26 @@ mod tests {
     }
 
     #[test]
+    fn test_recommendation_for_fair_hardware() {
+        let hardware = create_test_hardware(8.0, PerformanceTier::Fair);
+        let recommendations = get_recommended_models(&hardware);
+
+        let compatible_count = recommendations
+            .iter()
+            .filter(|r| !matches!(r.compatibility, CompatibilityLevel::Incompatible))
+            .count();
+
+        assert!(compatible_count >= 2, "Should have at least 2 compatible models");
+    }
+
+    #[test]
     fn test_incompatible_model_detection() {
         let hardware = create_test_hardware(4.0, PerformanceTier::Poor);
         let recommendations = get_recommended_models(&hardware);
 
-        println!("\nRecommendations for Poor tier (4GB RAM):");
-        for (i, rec) in recommendations.iter().take(5).enumerate() {
-            println!(
-                "{}. {} - {:?} - Warnings: {:?}",
-                i + 1,
-                rec.model.name,
-                rec.compatibility,
-                rec.warnings
-            );
-        }
-
-        // Large models (70B+) should be incompatible with 4GB RAM
         let large_models: Vec<_> = recommendations
             .iter()
-            .filter(|r| r.model.size_gb > 30.0)
+            .filter(|r| r.model.size_gb > 10.0)
             .collect();
 
         for model in large_models {
@@ -534,12 +347,11 @@ mod tests {
             assert!(!model.warnings.is_empty(), "Should have warnings for large models");
         }
 
-        // Should have at least some compatible models even with 4GB
         let compatible_count = recommendations
             .iter()
             .filter(|r| !matches!(r.compatibility, CompatibilityLevel::Incompatible))
             .count();
 
-        assert!(compatible_count >= 2, "Should have at least 2 compatible models for 4GB RAM");
+        assert!(compatible_count >= 1, "Should have at least 1 compatible model for 4GB RAM");
     }
 }

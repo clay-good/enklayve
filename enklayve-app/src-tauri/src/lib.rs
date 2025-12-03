@@ -15,6 +15,12 @@ mod conversations;
 mod settings;
 mod model_cache;
 mod ocr;
+mod onboarding;
+mod model_selection;
+mod reranker;
+mod citations;
+mod backup;
+mod export;
 
 // Tauri commands
 mod commands;
@@ -71,8 +77,28 @@ pub fn run() {
             commands::reset_settings,
             commands::export_settings,
             commands::import_settings,
+            commands::get_display_mode,
+            commands::set_display_mode,
+            commands::apply_auto_tuning,
+            commands::export_all_conversations,
+            commands::export_conversation_with_sources,
+            commands::create_backup,
+            commands::restore_backup,
+            commands::list_backups,
             commands::log_from_frontend,
             commands::get_log_path,
+            commands::check_first_run,
+            commands::complete_onboarding,
+            commands::mark_model_downloaded,
+            commands::reset_onboarding,
+            commands::get_best_model,
+            commands::get_hardware_summary,
+            commands::preload_model,
+            commands::get_preload_status,
+            commands::cancel_preload,
+            commands::invalidate_prompt_cache,
+            commands::get_prompt_cache_stats,
+            commands::stop_generation,
         ])
         .setup(|app| {
             // Initialize logger first

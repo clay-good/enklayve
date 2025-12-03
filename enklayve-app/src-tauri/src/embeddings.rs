@@ -1,6 +1,7 @@
 use anyhow::{Result, Context};
 use std::path::Path;
 use fastembed::{TextEmbedding, InitOptions, EmbeddingModel};
+use rayon::prelude::*;
 
 /// Represents a text embedding (vector)
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -106,6 +107,103 @@ impl EmbeddingGenerator {
             .into_iter()
             .map(Embedding::new)
             .collect())
+    }
+
+    /// Generate embeddings for multiple texts with parallel batch processing
+    /// Optimized for large document sets with 100+ chunks
+    /// Uses all available CPU cores and shows progress for large batches
+    pub fn generate_embeddings_parallel<F>(
+        &self,
+        texts: &[String],
+        progress_callback: F,
+    ) -> Result<Vec<Embedding>>
+    where
+        F: Fn(usize, usize) + Send + Sync,
+    {
+        let total_chunks = texts.len();
+        let start_time = std::time::Instant::now();
+
+        crate::logger::log_info(&format!(
+            "Starting parallel embedding generation for {} chunks",
+            total_chunks
+        ));
+
+        // Determine optimal batch size based on total chunks
+        // FastEmbed is optimized for batch processing, so larger batches are better
+        let batch_size = if total_chunks > 1000 {
+            128
+        } else if total_chunks > 100 {
+            64
+        } else {
+            32
+        };
+
+        crate::logger::log_info(&format!(
+            "Using batch size {} for {} chunks",
+            batch_size, total_chunks
+        ));
+
+        // Split texts into batches for parallel processing
+        let batches: Vec<&[String]> = texts.chunks(batch_size).collect();
+        let num_batches = batches.len();
+
+        crate::logger::log_info(&format!(
+            "Processing {} batches in parallel using {} CPU cores",
+            num_batches,
+            num_cpus::get()
+        ));
+
+        // Process batches in parallel using rayon
+        // Each batch is processed by FastEmbed which is already optimized
+        let processed = std::sync::atomic::AtomicUsize::new(0);
+
+        let results: Result<Vec<Vec<Embedding>>> = batches
+            .par_iter()
+            .map(|batch| {
+                // Generate embeddings for this batch
+                let batch_embeddings = self.model.embed(batch.to_vec(), None)
+                    .context("Failed to generate batch embeddings")?;
+
+                let embeddings: Vec<Embedding> = batch_embeddings
+                    .into_iter()
+                    .map(Embedding::new)
+                    .collect();
+
+                // Update progress
+                let chunks_processed = processed.fetch_add(batch.len(), std::sync::atomic::Ordering::Relaxed) + batch.len();
+
+                // Call progress callback (thread-safe)
+                progress_callback(chunks_processed, total_chunks);
+
+                Ok(embeddings)
+            })
+            .collect();
+
+        let all_embeddings: Vec<Embedding> = results?
+            .into_iter()
+            .flatten()
+            .collect();
+
+        let elapsed = start_time.elapsed();
+        let chunks_per_second = if elapsed.as_secs_f64() > 0.0 {
+            total_chunks as f64 / elapsed.as_secs_f64()
+        } else {
+            0.0
+        };
+
+        crate::logger::log_info(&format!(
+            "Parallel embedding generation complete: {} chunks in {:.2}s ({:.1} chunks/sec)",
+            total_chunks,
+            elapsed.as_secs_f64(),
+            chunks_per_second
+        ));
+
+        Ok(all_embeddings)
+    }
+
+    /// Generate embeddings for multiple texts with simple parallel processing (no progress callback)
+    pub fn generate_embeddings_parallel_simple(&self, texts: &[String]) -> Result<Vec<Embedding>> {
+        self.generate_embeddings_parallel(texts, |_, _| {})
     }
 }
 

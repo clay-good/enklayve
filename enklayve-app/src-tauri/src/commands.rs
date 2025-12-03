@@ -10,6 +10,66 @@ use crate::conversations;
 use crate::settings;
 use tauri::Emitter;
 
+/// Clean response to ensure natural paragraph formatting without lists
+fn clean_response(response: &str) -> String {
+    let mut cleaned = response.to_string();
+
+    // Remove markdown bold (**text**)
+    cleaned = cleaned.replace("**", "");
+
+    // Remove markdown italic (*text* and _text_)
+    cleaned = regex::Regex::new(r"(^|\s)[\*_]([^\*_]+)[\*_](\s|$)")
+        .unwrap()
+        .replace_all(&cleaned, "$1$2$3")
+        .to_string();
+
+    // Remove bullet points and list markers (•, *, -, numbered lists)
+    // Convert lines starting with list markers into regular paragraphs
+    let lines: Vec<&str> = cleaned.lines().collect();
+    let mut processed_lines = Vec::new();
+
+    for line in lines {
+        let trimmed = line.trim();
+
+        // Skip empty lines - preserve them for paragraph breaks
+        if trimmed.is_empty() {
+            processed_lines.push(String::new());
+            continue;
+        }
+
+        // Remove common list prefixes
+        let cleaned_line = if let Some(rest) = trimmed.strip_prefix("• ") {
+            rest.to_string()
+        } else if let Some(rest) = trimmed.strip_prefix("* ") {
+            rest.to_string()
+        } else if let Some(rest) = trimmed.strip_prefix("- ") {
+            rest.to_string()
+        } else if let Some(rest) = trimmed.strip_prefix("+ ") {
+            rest.to_string()
+        } else {
+            // Check for numbered lists (1. 2. etc.)
+            let numbered_pattern = regex::Regex::new(r"^\d+\.\s+(.+)$").unwrap();
+            if let Some(caps) = numbered_pattern.captures(trimmed) {
+                caps.get(1).unwrap().as_str().to_string()
+            } else {
+                trimmed.to_string()
+            }
+        };
+
+        processed_lines.push(cleaned_line);
+    }
+
+    cleaned = processed_lines.join("\n");
+
+    // Clean up excessive whitespace while preserving paragraph breaks (max 2 newlines)
+    cleaned = regex::Regex::new(r"\n{3,}")
+        .unwrap()
+        .replace_all(&cleaned, "\n\n")
+        .to_string();
+
+    cleaned.trim().to_string()
+}
+
 /// Simple greeting command for testing
 #[tauri::command]
 pub fn greet(name: &str) -> String {
@@ -21,10 +81,16 @@ pub fn greet(name: &str) -> String {
 pub async fn upload_document(
     file_path: String,
     app_handle: tauri::AppHandle,
+    model_cache: tauri::State<'_, crate::model_cache::ModelCache>,
 ) -> Result<DocumentMetadata, String> {
-    crate::documents::upload_document(file_path, &app_handle)
+    let result = crate::documents::upload_document(file_path, &app_handle)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+
+    model_cache.invalidate_prompt_cache();
+    crate::logger::log_info("Prompt cache invalidated due to document upload");
+
+    Ok(result)
 }
 
 /// List all uploaded documents
@@ -40,10 +106,16 @@ pub async fn list_documents(app_handle: tauri::AppHandle) -> Result<Vec<Document
 pub async fn delete_document(
     document_id: i64,
     app_handle: tauri::AppHandle,
+    model_cache: tauri::State<'_, crate::model_cache::ModelCache>,
 ) -> Result<(), String> {
     crate::documents::delete_document(&app_handle, document_id)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+
+    model_cache.invalidate_prompt_cache();
+    crate::logger::log_info("Prompt cache invalidated due to document deletion");
+
+    Ok(())
 }
 
 /// Get available models
@@ -101,6 +173,12 @@ pub async fn delete_model(app_handle: tauri::AppHandle, model_name: String) -> R
         .map_err(|e| e.to_string())
 }
 
+/// Always retrieve documents if they exist - let the model decide relevance
+/// No hardcoded patterns or guessing about user intent
+fn should_retrieve_documents(_query: &str, has_documents: bool) -> bool {
+    has_documents
+}
+
 /// Query documents using RAG (Retrieval-Augmented Generation)
 #[tauri::command]
 pub async fn query_documents(
@@ -114,30 +192,60 @@ pub async fn query_documents(
     crate::logger::log_info(&format!("Model path: {:?}", model_path));
     crate::logger::log_info(&format!("Conversation ID: {:?}", conversation_id));
 
-    // Search for relevant chunks using vector similarity (3-4 chunks for better context)
-    let search_results = crate::vector_search::search_similar_chunks(&question, &app_handle, 4)
+    // Check if documents exist
+    let documents = crate::documents::list_documents(&app_handle)
         .await
-        .map_err(|e| {
-            crate::logger::log_error(&format!("Failed to search chunks: {}", e));
-            e.to_string()
-        })?;
+        .map_err(|e| e.to_string())?;
+    let has_documents = !documents.is_empty();
 
-    crate::logger::log_info(&format!("Found {} relevant chunks", search_results.len()));
+    // Determine if retrieval is needed
+    let should_retrieve = should_retrieve_documents(&question, has_documents);
 
-    // Extract chunk texts for context (may be empty if no documents)
-    // With 4K context window and optimized batching, we can handle full chunks
-    let context_chunks: Vec<String> = search_results
+    // Search for relevant chunks using hybrid search only if needed
+    let search_results = if should_retrieve {
+        crate::vector_search::hybrid_search(&question, &app_handle, 10)
+            .await
+            .map_err(|e| {
+                crate::logger::log_error(&format!("Failed to search chunks: {}", e));
+                e.to_string()
+            })?
+    } else {
+        Vec::new()
+    };
+
+    crate::logger::log_info(&format!("Found {} relevant chunks from hybrid search", search_results.len()));
+
+    // Use hybrid search results directly - no reranking, no filtering
+    // Let the model see all relevant context and decide what's useful
+    let max_chunks = 8;  // Generous limit for thorough answers
+    let filtered_chunks: Vec<_> = search_results.iter().take(max_chunks).collect();
+
+    crate::logger::log_info(&format!(
+        "Using {} chunks for context",
+        filtered_chunks.len()
+    ));
+
+    let context_chunks: Vec<String> = filtered_chunks
         .iter()
-        .map(|r| r.chunk_text.clone())
+        .map(|r| {
+            // Increased to ~1000 words for thorough document coverage
+            // Qwen 7B has 8K context window - we have plenty of room
+            let words: Vec<&str> = r.chunk_text.split_whitespace().collect();
+            if words.len() > 1000 {
+                words[..1000].join(" ") + "..."
+            } else {
+                r.chunk_text.clone()
+            }
+        })
         .collect();
 
-    // Get conversation context if conversation_id provided (last 4 messages for better context)
+    // Get conversation context if conversation_id provided (last 3 messages for continuity)
     let conversation_context = if let Some(conv_id) = conversation_id {
         let conn = crate::database::get_connection(&app_handle)
             .map_err(|e| e.to_string())?;
 
-        // Get last 4 messages for context (2 Q&A pairs)
-        crate::conversations::get_conversation_context(&conn, conv_id, 4)
+        // Get last 3 messages for context - balances continuity with context window limits
+        crate::conversations::get_conversation_context(&conn, conv_id, 3)
             .unwrap_or_else(|e| {
                 crate::logger::log_warn(&format!("Failed to get conversation context: {}", e));
                 String::new()
@@ -151,40 +259,49 @@ pub async fn query_documents(
     let current_date = now.format("%B %d, %Y").to_string(); // e.g., "November 21, 2025"
     let current_datetime = now.format("%B %d, %Y at %I:%M %p").to_string();
 
-    // Create system context with date
-    let system_context = format!(
-        "Current date: {}\nCurrent time: {}\n\nYou are a helpful AI assistant.",
-        current_date, current_datetime
+    // System prompt - honest about capabilities and knowledge cutoff
+    let system_base = format!(
+        "You are a helpful, knowledgeable AI assistant. Today is {}. Your knowledge was last updated in early 2024, so for questions about recent events, let the user know you may not have the latest information.",
+        current_date
     );
 
-    // Create RAG prompt with conversation context
+    // Create prompt using ChatML format - clean and natural
     let prompt = if context_chunks.is_empty() {
-        // No documents - use conversation context if available
+        // No documents - general knowledge query
         if conversation_context.is_empty() {
-            format!("{}\n\nAnswer the following question:\n\n{}", system_context, question)
+            format!(
+                "<|im_start|>system\n{}<|im_end|>\n<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n",
+                system_base, question
+            )
         } else {
             format!(
-                "{}\n\nHere is the conversation history:\n\n{}\n\nNow answer the following question:\n\n{}",
-                system_context, conversation_context, question
+                "<|im_start|>system\n{}<|im_end|>\n<|im_start|>user\nConversation so far:\n{}\n\n{}<|im_end|>\n<|im_start|>assistant\n",
+                system_base, conversation_context, question
             )
         }
     } else {
-        // Documents available - create RAG prompt with optional conversation context
-        let mut prompt = format!("{}\n\n", system_context);
-
-        if !conversation_context.is_empty() {
-            prompt.push_str("Conversation history:\n");
-            prompt.push_str(&conversation_context);
-            prompt.push_str("\n\n");
+        // Documents available - RAG mode
+        let mut docs_text = String::new();
+        for (_i, (result, chunk_text)) in filtered_chunks.iter().zip(context_chunks.iter()).enumerate() {
+            docs_text.push_str(&format!("[{}]\n{}\n\n", result.file_name, chunk_text));
         }
 
-        prompt.push_str("Context from documents:\n");
-        for (i, chunk) in context_chunks.iter().enumerate() {
-            prompt.push_str(&format!("[{}] {}\n\n", i + 1, chunk));
-        }
+        let system_with_docs = format!(
+            "{} You have access to the user's documents below. Use them to provide accurate, thorough answers.",
+            system_base
+        );
 
-        prompt.push_str(&format!("Question: {}\n\nInstructions:\n1. Analyze the relevant information from the documents above\n2. Provide a comprehensive, well-structured answer\n3. Include specific details and examples when available\n4. If multiple documents are relevant, synthesize the information coherently\n\nAnswer:", question));
-        prompt
+        if conversation_context.is_empty() {
+            format!(
+                "<|im_start|>system\n{}<|im_end|>\n<|im_start|>user\nMy documents:\n\n{}\n{}<|im_end|>\n<|im_start|>assistant\n",
+                system_with_docs, docs_text, question
+            )
+        } else {
+            format!(
+                "<|im_start|>system\n{}<|im_end|>\n<|im_start|>user\nMy documents:\n\n{}\nConversation so far:\n{}\n\n{}<|im_end|>\n<|im_start|>assistant\n",
+                system_with_docs, docs_text, conversation_context, question
+            )
+        }
     };
 
     // If model path provided, use actual LLM inference with caching
@@ -200,14 +317,27 @@ pub async fn query_documents(
             .map_err(|e| format!("Failed to load model: {}", e))?;
 
         // Generate response using cached model
-        let response = model_cache.generate(&prompt, 512)
+        // Increased to 2048 tokens to prevent response cutoff (we have ~4600 tokens available in 8K context)
+        let response = model_cache.generate(&prompt, 2048)
             .map_err(|e| format!("Failed to generate response: {}", e))?;
 
-        return Ok(response);
+        // Clean response - remove any ChatML markers that leaked through
+        let cleaned_response = response
+            .replace("<|im_end|>", "")
+            .replace("<|im_start|>", "")
+            .replace("<|endoftext|>", "")
+            .trim()
+            .to_string();
+
+        // Parse citations from response
+        let parsed = crate::citations::parse_citations(&cleaned_response);
+        crate::logger::log_info(&format!("Parsed {} citations from response", parsed.citations.len()));
+
+        return Ok(cleaned_response);
     }
 
     // Fallback: return search results if no model provided
-    if search_results.is_empty() {
+    if filtered_chunks.is_empty() {
         return Ok("No AI model is currently loaded. Please wait for the model to download, or check the application logs for errors.".to_string());
     }
 
@@ -215,13 +345,13 @@ pub async fn query_documents(
         "Based on your documents, here are the most relevant passages:\n\n"
     );
 
-    for (i, result) in search_results.iter().enumerate() {
+    for (i, (result, chunk_text)) in filtered_chunks.iter().zip(context_chunks.iter()).enumerate() {
         response.push_str(&format!(
             "{}. From \"{}\" (similarity: {:.2}):\n{}\n\n",
             i + 1,
             result.file_name,
             result.similarity,
-            result.chunk_text
+            chunk_text
         ));
     }
 
@@ -255,69 +385,152 @@ pub fn get_model_recommendations() -> Result<Vec<ModelRecommendation>, String> {
 pub async fn query_documents_streaming(
     question: String,
     model_path: Option<String>,
+    conversation_id: Option<i64>,
     app_handle: tauri::AppHandle,
     window: tauri::Window,
+    model_cache: tauri::State<'_, crate::model_cache::ModelCache>,
 ) -> Result<String, String> {
-    // Search for relevant chunks using vector similarity
-    let search_results = crate::vector_search::search_similar_chunks(&question, &app_handle, 5)
+    crate::logger::log_info(&format!("Streaming query received: {}", question));
+
+    let documents = crate::documents::list_documents(&app_handle)
         .await
         .map_err(|e| e.to_string())?;
+    let has_documents = !documents.is_empty();
 
-    // Extract chunk texts for context (may be empty if no documents)
-    let context_chunks: Vec<String> = search_results
+    let should_retrieve = should_retrieve_documents(&question, has_documents);
+
+    let search_results = if should_retrieve {
+        crate::vector_search::hybrid_search(&question, &app_handle, 10)
+            .await
+            .map_err(|e| {
+                crate::logger::log_error(&format!("Failed to search chunks: {}", e));
+                e.to_string()
+            })?
+    } else {
+        Vec::new()
+    };
+
+    crate::logger::log_info(&format!("Found {} relevant chunks from hybrid search", search_results.len()));
+
+    // Use hybrid search results directly - no reranking, no filtering
+    // Let the model see all relevant context and decide what's useful
+    let max_chunks = 8;  // Generous limit for thorough answers
+    let filtered_chunks: Vec<_> = search_results.iter().take(max_chunks).collect();
+
+    crate::logger::log_info(&format!(
+        "Using {} chunks for context",
+        filtered_chunks.len()
+    ));
+
+    let context_chunks: Vec<String> = filtered_chunks
         .iter()
-        .map(|r| r.chunk_text.clone())
+        .map(|r| {
+            // Increased to ~1000 words for thorough document coverage
+            // Qwen 7B has 8K context window - we have plenty of room
+            let words: Vec<&str> = r.chunk_text.split_whitespace().collect();
+            if words.len() > 1000 {
+                words[..1000].join(" ") + "..."
+            } else {
+                r.chunk_text.clone()
+            }
+        })
         .collect();
 
-    // Get current date and time for context
+    // Get conversation context if conversation_id provided (last 3 messages for continuity)
+    let conversation_context = if let Some(conv_id) = conversation_id {
+        let conn = crate::database::get_connection(&app_handle)
+            .map_err(|e| e.to_string())?;
+
+        // Get last 3 messages for context - balances continuity with context window limits
+        crate::conversations::get_conversation_context(&conn, conv_id, 3)
+            .unwrap_or_else(|e| {
+                crate::logger::log_warn(&format!("Failed to get conversation context: {}", e));
+                String::new()
+            })
+    } else {
+        String::new()
+    };
+
+    // Get current date for context
     let now = chrono::Local::now();
     let current_date = now.format("%B %d, %Y").to_string();
-    let current_datetime = now.format("%B %d, %Y at %I:%M %p").to_string();
 
-    // Create RAG prompt (or simple prompt if no documents)
+    // System prompt - honest about capabilities and knowledge cutoff
+    let system_base = format!(
+        "You are a helpful, knowledgeable AI assistant. Today is {}. Your knowledge was last updated in early 2024, so for questions about recent events, let the user know you may not have the latest information.",
+        current_date
+    );
+
+    // Create prompt using ChatML format - clean and natural
     let prompt = if context_chunks.is_empty() {
-        // No documents - just use the question directly with a helpful system prompt
-        format!("Current date: {}\nCurrent time: {}\n\nYou are a helpful AI assistant. Answer the following question:\n\n{}",
-            current_date, current_datetime, question)
-    } else {
-        // Documents available - use RAG prompt with date context
-        let mut prompt = format!("Current date: {}\nCurrent time: {}\n\nYou are a helpful AI assistant that answers questions based on provided documents.\n\n", current_date, current_datetime);
-        prompt.push_str("Context from documents:\n");
-        for (i, chunk) in context_chunks.iter().enumerate() {
-            prompt.push_str(&format!("[{}] {}\n\n", i + 1, chunk));
+        // No documents - general knowledge query
+        if conversation_context.is_empty() {
+            format!(
+                "<|im_start|>system\n{}<|im_end|>\n<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n",
+                system_base, question
+            )
+        } else {
+            format!(
+                "<|im_start|>system\n{}<|im_end|>\n<|im_start|>user\nConversation so far:\n{}\n\n{}<|im_end|>\n<|im_start|>assistant\n",
+                system_base, conversation_context, question
+            )
         }
-        prompt.push_str(&format!("Question: {}\n\nAnswer based on the provided context:", question));
-        prompt
+    } else {
+        // Documents available - RAG mode
+        let mut docs_text = String::new();
+        for (_i, (result, chunk_text)) in filtered_chunks.iter().zip(context_chunks.iter()).enumerate() {
+            docs_text.push_str(&format!("[{}]\n{}\n\n", result.file_name, chunk_text));
+        }
+
+        let system_with_docs = format!(
+            "{} You have access to the user's documents below. Use them to provide accurate, thorough answers.",
+            system_base
+        );
+
+        if conversation_context.is_empty() {
+            format!(
+                "<|im_start|>system\n{}<|im_end|>\n<|im_start|>user\nMy documents:\n\n{}\n{}<|im_end|>\n<|im_start|>assistant\n",
+                system_with_docs, docs_text, question
+            )
+        } else {
+            format!(
+                "<|im_start|>system\n{}<|im_end|>\n<|im_start|>user\nMy documents:\n\n{}\nConversation so far:\n{}\n\n{}<|im_end|>\n<|im_start|>assistant\n",
+                system_with_docs, docs_text, conversation_context, question
+            )
+        }
     };
 
     // If model path provided, use actual LLM inference with streaming
     if let Some(model_path_str) = model_path {
-        let model_path = std::path::Path::new(&model_path_str);
+        // Load model into cache if not already loaded
+        model_cache.get_or_load(&model_path_str)
+            .map_err(|e| format!("Failed to load model: {}", e))?;
 
-        if !model_path.exists() {
-            return Err(format!("Model file not found: {}", model_path_str));
-        }
-
-        // Create inference engine
-        let engine = crate::inference::InferenceEngine::new()
-            .map_err(|e| format!("Failed to initialize inference engine: {}", e))?;
-
-        // Generate response with streaming
-        let response = engine.generate_streaming(model_path, &prompt, 512, |token| {
-            // Emit token to frontend
-            window.emit("llm-token", token).ok();
+        // Generate response with buffered streaming
+        // 2000 tokens for complete, thorough answers - Qwen can handle it
+        let response = model_cache.generate_streaming(&prompt, 2000, |token_batch| {
+            // Emit tokens directly during streaming without cleaning
+            window.emit("llm-token", token_batch).ok();
             Ok(())
         })
         .map_err(|e| format!("Failed to generate response: {}", e))?;
 
-        // Emit completion event
-        window.emit("llm-complete", &response).ok();
+        // Clean the final response - remove any ChatML markers that leaked through
+        let cleaned_response = clean_response(&response)
+            .replace("<|im_end|>", "")
+            .replace("<|im_start|>", "")
+            .replace("<|endoftext|>", "")
+            .trim()
+            .to_string();
 
-        return Ok(response);
+        // Emit completion event with single response (whitespace already preserved)
+        window.emit("llm-complete", &cleaned_response).ok();
+
+        return Ok(cleaned_response);
     }
 
     // Fallback: return search results if no model provided
-    if search_results.is_empty() {
+    if filtered_chunks.is_empty() {
         return Ok("No AI model is currently loaded. Please wait for the model to download, or check the application logs for errors.".to_string());
     }
 
@@ -325,13 +538,13 @@ pub async fn query_documents_streaming(
         "Based on your documents, here are the most relevant passages:\n\n"
     );
 
-    for (i, result) in search_results.iter().enumerate() {
+    for (i, (result, chunk_text)) in filtered_chunks.iter().zip(context_chunks.iter()).enumerate() {
         response.push_str(&format!(
             "{}. From \"{}\" (similarity: {:.2}):\n{}\n\n",
             i + 1,
             result.file_name,
             result.similarity,
-            result.chunk_text
+            chunk_text
         ));
     }
 
@@ -817,6 +1030,126 @@ pub async fn import_settings(
         .map_err(|e| e.to_string())
 }
 
+/// Get the current display mode
+#[tauri::command]
+pub async fn get_display_mode(
+    app_handle: tauri::AppHandle,
+) -> Result<settings::DisplayMode, String> {
+    let conn = database::get_connection(&app_handle)
+        .map_err(|e| e.to_string())?;
+
+    settings::get_display_mode(&conn)
+        .map_err(|e| e.to_string())
+}
+
+/// Set the display mode
+#[tauri::command]
+pub async fn set_display_mode(
+    app_handle: tauri::AppHandle,
+    mode: settings::DisplayMode,
+) -> Result<(), String> {
+    let conn = database::get_connection(&app_handle)
+        .map_err(|e| e.to_string())?;
+
+    settings::set_display_mode(&conn, mode)
+        .map_err(|e| e.to_string())
+}
+
+/// Apply hardware-based auto-tuning to settings
+#[tauri::command]
+pub async fn apply_auto_tuning(
+    app_handle: tauri::AppHandle,
+) -> Result<settings::AppSettings, String> {
+    let conn = database::get_connection(&app_handle)
+        .map_err(|e| e.to_string())?;
+
+    let hardware = HardwareProfile::detect()
+        .map_err(|e| e.to_string())?;
+
+    settings::load_settings_with_auto_tuning(&conn, &hardware)
+        .map_err(|e| e.to_string())
+}
+
+// ============================================================================
+// EXPORT COMMANDS
+// ============================================================================
+
+/// Export all conversations to a single ZIP file
+#[tauri::command]
+pub async fn export_all_conversations(
+    app_handle: tauri::AppHandle,
+    destination_path: String,
+) -> Result<String, String> {
+    let export_manager = crate::export::ExportManager::new(app_handle);
+    let destination = std::path::Path::new(&destination_path);
+
+    let export_path = export_manager.export_all_conversations(destination)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(export_path.to_string_lossy().to_string())
+}
+
+/// Export a conversation with embedded source documents
+#[tauri::command]
+pub async fn export_conversation_with_sources(
+    app_handle: tauri::AppHandle,
+    conversation_id: i64,
+    destination_path: String,
+) -> Result<String, String> {
+    let export_manager = crate::export::ExportManager::new(app_handle);
+    let destination = std::path::Path::new(&destination_path);
+
+    let export_path = export_manager.export_conversation_with_sources(conversation_id, destination)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(export_path.to_string_lossy().to_string())
+}
+
+// ============================================================================
+// BACKUP COMMANDS
+// ============================================================================
+
+/// Create a full backup of all user data
+#[tauri::command]
+pub async fn create_backup(
+    app_handle: tauri::AppHandle,
+    destination_path: String,
+) -> Result<String, String> {
+    let backup_manager = crate::backup::BackupManager::new(app_handle);
+    let destination = std::path::Path::new(&destination_path);
+
+    let backup_path = backup_manager.create_backup(destination)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(backup_path.to_string_lossy().to_string())
+}
+
+/// Restore from a backup file
+#[tauri::command]
+pub async fn restore_backup(
+    app_handle: tauri::AppHandle,
+    backup_path: String,
+) -> Result<(), String> {
+    let backup_manager = crate::backup::BackupManager::new(app_handle);
+    let path = std::path::Path::new(&backup_path);
+
+    backup_manager.restore_backup(path)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// List available backups in a directory
+#[tauri::command]
+pub fn list_backups(directory_path: String) -> Result<Vec<crate::backup::BackupInfo>, String> {
+    let directory = std::path::Path::new(&directory_path);
+
+    crate::backup::BackupManager::list_backups(directory)
+        .map_err(|e| e.to_string())
+}
+
 // ============================================================================
 // LOGGING COMMANDS
 // ============================================================================
@@ -833,4 +1166,115 @@ pub fn get_log_path(app_handle: tauri::AppHandle) -> Result<String, String> {
     crate::logger::get_log_path(&app_handle)
         .map(|p| p.to_string_lossy().to_string())
         .map_err(|e| e.to_string())
+}
+
+// ============================================================================
+// ONBOARDING COMMANDS
+// ============================================================================
+
+/// Check if this is the first run of the application
+#[tauri::command]
+pub fn check_first_run(app_handle: tauri::AppHandle) -> Result<crate::onboarding::OnboardingState, String> {
+    crate::onboarding::get_onboarding_state(&app_handle)
+        .map_err(|e| e.to_string())
+}
+
+/// Mark onboarding as completed
+#[tauri::command]
+pub fn complete_onboarding(app_handle: tauri::AppHandle) -> Result<(), String> {
+    crate::onboarding::mark_onboarding_completed(&app_handle)
+        .map_err(|e| e.to_string())
+}
+
+/// Mark recommended model as downloaded
+#[tauri::command]
+pub fn mark_model_downloaded(app_handle: tauri::AppHandle) -> Result<(), String> {
+    crate::onboarding::mark_model_downloaded(&app_handle)
+        .map_err(|e| e.to_string())
+}
+
+/// Reset onboarding state (for testing)
+#[tauri::command]
+pub fn reset_onboarding(app_handle: tauri::AppHandle) -> Result<(), String> {
+    crate::onboarding::reset_onboarding(&app_handle)
+        .map_err(|e| e.to_string())
+}
+
+/// Get the best model for the current hardware
+#[tauri::command]
+pub fn get_best_model(app_handle: tauri::AppHandle) -> Result<crate::model_selection::BestModelSelection, String> {
+    let hardware = HardwareProfile::detect()
+        .map_err(|e| e.to_string())?;
+
+    let best_model = crate::model_selection::get_best_model_for_hardware(&hardware);
+
+    Ok(best_model)
+}
+
+/// Get hardware summary in user-friendly format
+#[tauri::command]
+pub fn get_hardware_summary() -> Result<String, String> {
+    let hardware = HardwareProfile::detect()
+        .map_err(|e| e.to_string())?;
+
+    Ok(hardware.get_hardware_summary())
+}
+
+/// Preload model in background
+#[tauri::command]
+pub fn preload_model(
+    model_path: String,
+    model_cache: tauri::State<'_, crate::model_cache::ModelCache>,
+) -> Result<(), String> {
+    model_cache.preload_model(model_path);
+    Ok(())
+}
+
+/// Get preload status
+#[tauri::command]
+pub fn get_preload_status(
+    model_cache: tauri::State<'_, crate::model_cache::ModelCache>,
+) -> Result<String, String> {
+    let status = model_cache.get_preload_status();
+    Ok(format!("{:?}", status))
+}
+
+/// Cancel preload
+#[tauri::command]
+pub fn cancel_preload(
+    model_cache: tauri::State<'_, crate::model_cache::ModelCache>,
+) -> Result<(), String> {
+    model_cache.cancel_preload();
+    Ok(())
+}
+
+/// Invalidate prompt cache (call when documents change)
+#[tauri::command]
+pub fn invalidate_prompt_cache(
+    model_cache: tauri::State<'_, crate::model_cache::ModelCache>,
+) -> Result<(), String> {
+    model_cache.invalidate_prompt_cache();
+    Ok(())
+}
+
+/// Get prompt cache statistics
+#[tauri::command]
+pub fn get_prompt_cache_stats(
+    model_cache: tauri::State<'_, crate::model_cache::ModelCache>,
+) -> Result<serde_json::Value, String> {
+    let (has_cache, hits, hit_rate) = model_cache.get_prompt_cache_stats();
+    Ok(serde_json::json!({
+        "enabled": has_cache,
+        "hits": hits,
+        "hit_rate": hit_rate
+    }))
+}
+
+/// Stop ongoing generation
+#[tauri::command]
+pub fn stop_generation(
+    model_cache: tauri::State<'_, crate::model_cache::ModelCache>,
+) -> Result<(), String> {
+    model_cache.stop_generation();
+    Ok(())
 }

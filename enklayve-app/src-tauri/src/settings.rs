@@ -2,12 +2,41 @@ use anyhow::Result;
 use rusqlite::{Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+pub enum DisplayMode {
+    Simple,
+    Advanced,
+}
+
+impl Default for DisplayMode {
+    fn default() -> Self {
+        Self::Simple
+    }
+}
+
+impl DisplayMode {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            DisplayMode::Simple => "simple",
+            DisplayMode::Advanced => "advanced",
+        }
+    }
+
+    pub fn from_str(s: &str) -> Self {
+        match s {
+            "advanced" => DisplayMode::Advanced,
+            _ => DisplayMode::Simple,
+        }
+    }
+}
+
 /// Application settings
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppSettings {
     // General settings
     pub theme: String,
     pub language: String,
+    pub display_mode: DisplayMode,
 
     // Model settings
     pub default_model: Option<String>,
@@ -15,6 +44,9 @@ pub struct AppSettings {
     pub max_tokens: i32,
     pub top_p: f32,
     pub top_k: i32,
+    pub context_window: i32,
+    pub thread_count: i32,
+    pub batch_size: i32,
 
     // Security settings
     pub encryption_enabled: bool,
@@ -42,13 +74,17 @@ impl Default for AppSettings {
             // General
             theme: "dark".to_string(),
             language: "en".to_string(),
+            display_mode: DisplayMode::Simple,
 
-            // Model - Default to Llama 3.1 8B for best balance of speed and quality
-            default_model: Some("Llama 3.1 8B Instruct (Q4)".to_string()),
+            // Model - Auto-selected based on hardware
+            default_model: None,
             temperature: 0.7,
             max_tokens: 512,
             top_p: 0.9,
             top_k: 40,
+            context_window: 2048,
+            thread_count: 4,
+            batch_size: 512,
 
             // Security
             encryption_enabled: false,
@@ -124,6 +160,9 @@ pub fn load_settings(conn: &Connection) -> Result<AppSettings> {
     if let Some(language) = get_setting(conn, "language")? {
         settings.language = language;
     }
+    if let Some(display_mode) = get_setting(conn, "display_mode")? {
+        settings.display_mode = DisplayMode::from_str(&display_mode);
+    }
 
     // Model
     settings.default_model = get_setting(conn, "default_model")?;
@@ -138,6 +177,15 @@ pub fn load_settings(conn: &Connection) -> Result<AppSettings> {
     }
     if let Some(top_k) = get_setting(conn, "top_k")? {
         settings.top_k = top_k.parse().unwrap_or(40);
+    }
+    if let Some(context) = get_setting(conn, "context_window")? {
+        settings.context_window = context.parse().unwrap_or(2048);
+    }
+    if let Some(threads) = get_setting(conn, "thread_count")? {
+        settings.thread_count = threads.parse().unwrap_or(4);
+    }
+    if let Some(batch) = get_setting(conn, "batch_size")? {
+        settings.batch_size = batch.parse().unwrap_or(512);
     }
 
     // Security
@@ -189,6 +237,7 @@ pub fn save_settings(conn: &Connection, settings: &AppSettings) -> Result<()> {
     // General
     set_setting(conn, "theme", &settings.theme)?;
     set_setting(conn, "language", &settings.language)?;
+    set_setting(conn, "display_mode", settings.display_mode.as_str())?;
 
     // Model
     if let Some(model) = &settings.default_model {
@@ -198,6 +247,9 @@ pub fn save_settings(conn: &Connection, settings: &AppSettings) -> Result<()> {
     set_setting(conn, "max_tokens", &settings.max_tokens.to_string())?;
     set_setting(conn, "top_p", &settings.top_p.to_string())?;
     set_setting(conn, "top_k", &settings.top_k.to_string())?;
+    set_setting(conn, "context_window", &settings.context_window.to_string())?;
+    set_setting(conn, "thread_count", &settings.thread_count.to_string())?;
+    set_setting(conn, "batch_size", &settings.batch_size.to_string())?;
 
     // Security
     set_setting(conn, "encryption_enabled", if settings.encryption_enabled { "true" } else { "false" })?;
@@ -241,6 +293,68 @@ pub fn export_settings_json(settings: &AppSettings) -> Result<String> {
 /// Import settings from JSON
 pub fn import_settings_json(json: &str) -> Result<AppSettings> {
     Ok(serde_json::from_str(json)?)
+}
+
+/// Get the current display mode
+pub fn get_display_mode(conn: &Connection) -> Result<DisplayMode> {
+    if let Some(mode_str) = get_setting(conn, "display_mode")? {
+        Ok(DisplayMode::from_str(&mode_str))
+    } else {
+        Ok(DisplayMode::default())
+    }
+}
+
+/// Set the display mode
+pub fn set_display_mode(conn: &Connection, mode: DisplayMode) -> Result<()> {
+    set_setting(conn, "display_mode", mode.as_str())
+}
+
+/// Apply intelligent auto-tuning based on hardware profile
+pub fn apply_hardware_auto_tuning(settings: &mut AppSettings, hardware: &crate::hardware::HardwareProfile) {
+    let ram_gb = hardware.ram_total_gb;
+    let cpu_cores = hardware.cpu_cores;
+
+    // Auto-set context window based on RAM
+    settings.context_window = if ram_gb >= 32.0 {
+        8192
+    } else if ram_gb >= 16.0 {
+        4096
+    } else if ram_gb >= 8.0 {
+        2048
+    } else {
+        1024
+    };
+
+    // Auto-set thread count to 80% of available cores
+    settings.thread_count = ((cpu_cores as f64 * 0.8).ceil() as usize).max(1) as i32;
+
+    // Auto-set batch size based on RAM
+    settings.batch_size = if ram_gb >= 32.0 {
+        1024
+    } else if ram_gb >= 16.0 {
+        768
+    } else if ram_gb >= 8.0 {
+        512
+    } else {
+        256
+    };
+
+    crate::logger::log_info(&format!(
+        "Auto-tuning applied: context_window={}, thread_count={}, batch_size={} (RAM: {:.1}GB, CPU cores: {})",
+        settings.context_window,
+        settings.thread_count,
+        settings.batch_size,
+        ram_gb,
+        cpu_cores
+    ));
+}
+
+/// Load settings with hardware-based auto-tuning applied
+pub fn load_settings_with_auto_tuning(conn: &Connection, hardware: &crate::hardware::HardwareProfile) -> Result<AppSettings> {
+    let mut settings = load_settings(conn)?;
+    apply_hardware_auto_tuning(&mut settings, hardware);
+    save_settings(conn, &settings)?;
+    Ok(settings)
 }
 
 #[cfg(test)]

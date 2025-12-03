@@ -452,6 +452,27 @@ impl HardwareProfile {
             self.performance_tier
         )
     }
+
+    pub fn get_hardware_summary(&self) -> String {
+        let ram_display = format!("{:.0}GB RAM", self.ram_total_gb);
+
+        let cpu_display = if self.is_apple_silicon {
+            if self.cpu_brand.contains("M1") || self.cpu_brand.contains("M2") ||
+               self.cpu_brand.contains("M3") || self.cpu_brand.contains("M4") {
+                self.cpu_brand.split_whitespace().take(2).collect::<Vec<_>>().join(" ")
+            } else {
+                "Apple Silicon".to_string()
+            }
+        } else {
+            match self.cpu_vendor {
+                CpuVendor::Intel => format!("Intel {} cores", self.cpu_cores),
+                CpuVendor::AMD => format!("AMD {} cores", self.cpu_cores),
+                _ => format!("{} cores", self.cpu_cores),
+            }
+        };
+
+        format!("{}, {}", ram_display, cpu_display)
+    }
 }
 
 // For dirs crate (to get home directory)

@@ -13,6 +13,8 @@ pub struct DownloadProgress {
     pub downloaded_bytes: u64,
     pub percentage: f32,
     pub speed_mbps: f32,
+    pub estimated_seconds_remaining: u64,
+    pub speed_mb_per_sec: f32,
 }
 
 pub struct ModelDownloader {
@@ -99,44 +101,69 @@ impl ModelDownloader {
             .await
             .context("Failed to create file")?;
 
-        // Download with progress tracking
-        let mut stream = response.bytes_stream();
-        let mut downloaded: u64 = 0;
-        let start_time = std::time::Instant::now();
-        let mut last_update = start_time;
+        // Download with progress tracking (cleanup on error)
+        let download_result: Result<u64> = async {
+            let mut stream = response.bytes_stream();
+            let mut downloaded: u64 = 0;
+            let start_time = std::time::Instant::now();
+            let mut last_update = start_time;
 
-        while let Some(chunk) = stream.next().await {
-            let chunk = chunk.context("Failed to read chunk")?;
-            file.write_all(&chunk)
-                .await
-                .context("Failed to write chunk")?;
+            while let Some(chunk) = stream.next().await {
+                let chunk = chunk.context("Failed to read chunk")?;
+                file.write_all(&chunk)
+                    .await
+                    .context("Failed to write chunk")?;
 
-            downloaded += chunk.len() as u64;
+                downloaded += chunk.len() as u64;
 
-            // Update progress every 500ms
-            let now = std::time::Instant::now();
-            if now.duration_since(last_update).as_millis() > 500 {
-                let elapsed = now.duration_since(start_time).as_secs_f32();
-                let speed_mbps = if elapsed > 0.0 {
-                    (downloaded as f32 / 1_048_576.0) / elapsed
-                } else {
-                    0.0
-                };
+                // Update progress every 500ms
+                let now = std::time::Instant::now();
+                if now.duration_since(last_update).as_millis() > 500 {
+                    let elapsed = now.duration_since(start_time).as_secs_f32();
+                    let speed_mb_per_sec = if elapsed > 0.0 {
+                        (downloaded as f32 / 1_048_576.0) / elapsed
+                    } else {
+                        0.0
+                    };
 
-                let percentage = (downloaded as f32 / total_size as f32) * 100.0;
+                    let speed_mbps = speed_mb_per_sec * 8.0;
 
-                progress_callback(DownloadProgress {
-                    total_bytes: total_size,
-                    downloaded_bytes: downloaded,
-                    percentage,
-                    speed_mbps,
-                });
+                    let percentage = (downloaded as f32 / total_size as f32) * 100.0;
 
-                last_update = now;
+                    let bytes_remaining = total_size.saturating_sub(downloaded);
+                    let estimated_seconds_remaining = if speed_mb_per_sec > 0.0 {
+                        let mb_remaining = bytes_remaining as f32 / 1_048_576.0;
+                        (mb_remaining / speed_mb_per_sec) as u64
+                    } else {
+                        0
+                    };
+
+                    progress_callback(DownloadProgress {
+                        total_bytes: total_size,
+                        downloaded_bytes: downloaded,
+                        percentage,
+                        speed_mbps,
+                        estimated_seconds_remaining,
+                        speed_mb_per_sec,
+                    });
+
+                    last_update = now;
+                }
             }
-        }
 
-        file.flush().await?;
+            file.flush().await?;
+            Ok(downloaded)
+        }.await;
+
+        // If download failed, clean up partial file
+        let downloaded = match download_result {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                crate::logger::log_error(&format!("Download failed: {}, cleaning up partial file", e));
+                let _ = tokio::fs::remove_file(&file_path).await;
+                return Err(e);
+            }
+        };
 
         // Verify file was downloaded correctly
         if !is_valid_model_file(&file_path) {
@@ -145,6 +172,8 @@ impl ModelDownloader {
                 model_name,
                 std::fs::metadata(&file_path)?.len()
             ));
+            // Clean up invalid file
+            let _ = std::fs::remove_file(&file_path);
             anyhow::bail!("Downloaded file is corrupted or incomplete");
         }
 
@@ -160,6 +189,8 @@ impl ModelDownloader {
             downloaded_bytes: downloaded,
             percentage: 100.0,
             speed_mbps: 0.0,
+            estimated_seconds_remaining: 0,
+            speed_mb_per_sec: 0.0,
         });
 
         Ok(file_path)
@@ -225,19 +256,23 @@ pub fn get_models_directory(app_handle: &AppHandle) -> Result<PathBuf> {
 
 pub async fn list_downloaded_models(app_handle: &AppHandle) -> Result<Vec<DownloadedModelInfo>> {
     let models_dir = get_models_directory(app_handle)?;
+    crate::logger::log_info(&format!("Checking for models in: {}", models_dir.display()));
 
     if !models_dir.exists() {
+        crate::logger::log_warn("Models directory does not exist");
         return Ok(Vec::new());
     }
 
     let mut models = Vec::new();
-    let mut entries = tokio::fs::read_dir(models_dir).await?;
+    let mut entries = tokio::fs::read_dir(&models_dir).await?;
 
     while let Some(entry) = entries.next_entry().await? {
         let path = entry.path();
+        crate::logger::log_info(&format!("Found file: {}", path.display()));
 
         if path.is_file() {
             if let Some(extension) = path.extension() {
+                crate::logger::log_info(&format!("File extension: {:?}", extension));
                 if extension == "gguf" {
                     // Validate model file is not corrupted (size > 100 MB)
                     if !is_valid_model_file(&path) {
@@ -255,6 +290,8 @@ pub async fn list_downloaded_models(app_handle: &AppHandle) -> Result<Vec<Downlo
                         .unwrap_or("unknown")
                         .to_string();
 
+                    crate::logger::log_info(&format!("Adding model to list: {} (size: {} bytes)", file_name, metadata.len()));
+
                     models.push(DownloadedModelInfo {
                         name: file_name.clone(),
                         path: path.to_string_lossy().to_string(),
@@ -266,6 +303,7 @@ pub async fn list_downloaded_models(app_handle: &AppHandle) -> Result<Vec<Downlo
         }
     }
 
+    crate::logger::log_info(&format!("Total models found: {}", models.len()));
     Ok(models)
 }
 

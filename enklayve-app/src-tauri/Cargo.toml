@@ -36,6 +36,8 @@ rusqlite = { version = "0.32", features = ["bundled"] }
 pdf-extract = "0.7"
 docx-rs = "0.4"
 lopdf = "0.32"
+html2text = "0.12"
+calamine = "0.26"
 
 # OCR - Pure Rust implementation (no external dependencies!)
 ocrs = "0.11"
@@ -52,6 +54,7 @@ hex = "0.4"
 
 # Chunking and text processing
 unicode-segmentation = "1.12"
+regex = "1.10"
 
 # Async runtime
 futures = "0.3"
@@ -64,6 +67,13 @@ sysinfo = "0.31"
 
 # Embeddings
 fastembed = "4.1"
+
+# Parallel processing
+rayon = "1.10"
+num_cpus = "1.16"
+
+# Backup and restore
+zip = { version = "2.2", default-features = false, features = ["deflate"] }
 
 # Encryption
 aes-gcm = "0.10"
@@ -110,13 +120,10 @@ metal = ["llama-cpp-2/metal"]
 # All GPU features
 gpu = ["cuda", "metal"]
 
-# Release profile optimizations
-# Note: Currently disabled due to llama-cpp-2 rebuild issues
-# The llama-cpp-sys dependency fails to compile with custom release profiles
-# due to macOS 10.15 u8path compatibility issues in the C++ code.
-# TODO: Re-enable once llama-cpp-2 is updated or when we can patch the build
-# [profile.release]
-# opt-level = 3
-# strip = true
-# panic = "abort"
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
 

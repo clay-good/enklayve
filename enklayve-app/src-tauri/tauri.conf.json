@@ -64,7 +64,7 @@
     "updater": {
       "active": true,
       "endpoints": [
-        "https://releases.enklayve.app/{{target}}/{{arch}}/{{current_version}}"
+        "https://github.com/user/enklayve-dev/releases/latest/download/latest.json"
       ],
       "dialog": true,
       "pubkey": "TO_BE_GENERATED_BY_TAURI_CLI",
