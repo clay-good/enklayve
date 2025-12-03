@@ -69,7 +69,7 @@ Enklayve is a secure, privacy-first desktop application that lets you chat with 
 3. Drag Enklayve to Applications folder
 4. Run the following command to allow unsigned app:
    ```bash
-   xattr -r -d com.apple.quarantine /Applications/enklayve.app
+   xattr -cr /Applications/enklayve.app
    ```
 5. Launch Enklayve from Applications
 
