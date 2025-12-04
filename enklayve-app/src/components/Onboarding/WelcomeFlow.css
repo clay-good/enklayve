@@ -246,6 +246,124 @@
   background: #c53030;
 }
 
+/* Security Setup Styles */
+.security-setup {
+  margin: 24px 0;
+}
+
+.security-info {
+  background: #f0f5ff;
+  border: 1px solid #c3dafe;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.security-info p {
+  margin: 0;
+  font-size: 14px;
+  color: #4a5568;
+  line-height: 1.6;
+}
+
+.password-form {
+  margin: 24px 0;
+}
+
+.input-group {
+  margin-bottom: 16px;
+}
+
+.input-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 6px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.checkbox-group {
+  margin: 20px 0;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #4a5568;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #667eea;
+  cursor: pointer;
+}
+
+.error-message {
+  color: #e53e3e;
+  font-size: 14px;
+  margin: 8px 0 0 0;
+  text-align: center;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  margin-top: 32px;
+}
+
+.secondary-button {
+  background: transparent;
+  color: #718096;
+  border: none;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.secondary-button:hover {
+  color: #4a5568;
+}
+
+.secondary-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primary-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.skip-note {
+  text-align: center;
+  font-size: 13px;
+  color: #a0aec0;
+  margin-top: 16px;
+}
+
 @media (prefers-color-scheme: dark) {
   .welcome-content {
     background: #1a202c;
@@ -305,5 +423,49 @@
 
   .loading-indicator p {
     color: #a0aec0;
+  }
+
+  /* Security Setup Dark Mode */
+  .security-info {
+    background: #2d3748;
+    border-color: #4a5568;
+  }
+
+  .security-info p {
+    color: #cbd5e0;
+  }
+
+  .input-group label {
+    color: #e2e8f0;
+  }
+
+  .input-group input {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #f7fafc;
+  }
+
+  .input-group input:focus {
+    border-color: #667eea;
+  }
+
+  .input-group input::placeholder {
+    color: #718096;
+  }
+
+  .checkbox-group label {
+    color: #cbd5e0;
+  }
+
+  .secondary-button {
+    color: #a0aec0;
+  }
+
+  .secondary-button:hover {
+    color: #e2e8f0;
+  }
+
+  .skip-note {
+    color: #718096;
   }
 }

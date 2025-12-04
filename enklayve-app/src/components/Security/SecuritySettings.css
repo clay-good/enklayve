@@ -1,0 +1,399 @@
+.security-settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.security-settings-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.close-button {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #718096;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: #f7fafc;
+  color: #2d3748;
+}
+
+.modal-content {
+  padding: 24px;
+}
+
+.loading-state {
+  padding: 48px 24px;
+  text-align: center;
+  color: #718096;
+}
+
+.alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.alert-error {
+  background: #fed7d7;
+  color: #c53030;
+  border: 1px solid #feb2b2;
+}
+
+.alert-success {
+  background: #c6f6d5;
+  color: #276749;
+  border: 1px solid #9ae6b4;
+}
+
+.security-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  background: #f7fafc;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.status-icon {
+  flex-shrink: 0;
+}
+
+.status-text h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.status-text h3 .enabled {
+  color: #38a169;
+}
+
+.status-text h3 .disabled {
+  color: #718096;
+}
+
+.status-text p {
+  margin: 0;
+  font-size: 14px;
+  color: #718096;
+}
+
+.form-section {
+  background: #f7fafc;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 16px;
+}
+
+.form-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4a5568;
+  margin-bottom: 6px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.checkbox-group {
+  margin: 16px 0;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #4a5568;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #667eea;
+  cursor: pointer;
+}
+
+.warning-text {
+  color: #c53030;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+  padding: 12px;
+  background: #fed7d7;
+  border-radius: 6px;
+}
+
+.info-text {
+  color: #4a5568;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.button-group.vertical {
+  flex-direction: column;
+}
+
+.action-button {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.action-button.primary {
+  background: #667eea;
+  color: white;
+}
+
+.action-button.primary:hover:not(:disabled) {
+  background: #5568d3;
+}
+
+.action-button.secondary {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.action-button.secondary:hover:not(:disabled) {
+  background: #cbd5e0;
+}
+
+.action-button.danger {
+  background: #e53e3e;
+  color: white;
+}
+
+.action-button.danger:hover:not(:disabled) {
+  background: #c53030;
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.enabled-options {
+  margin-top: 16px;
+}
+
+.option-info {
+  background: #f7fafc;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-label {
+  font-size: 14px;
+  color: #4a5568;
+}
+
+.info-value {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.info-value.enabled {
+  color: #38a169;
+}
+
+.info-value.disabled {
+  color: #718096;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .security-settings-modal {
+    background: #1a202c;
+  }
+
+  .modal-header {
+    border-bottom-color: #2d3748;
+  }
+
+  .modal-header h2 {
+    color: #f7fafc;
+  }
+
+  .close-button {
+    color: #a0aec0;
+  }
+
+  .close-button:hover {
+    background: #2d3748;
+    color: #f7fafc;
+  }
+
+  .loading-state {
+    color: #a0aec0;
+  }
+
+  .alert-error {
+    background: rgba(254, 178, 178, 0.1);
+    border-color: #c53030;
+  }
+
+  .alert-success {
+    background: rgba(154, 230, 180, 0.1);
+    border-color: #38a169;
+  }
+
+  .security-status {
+    background: #2d3748;
+  }
+
+  .status-text h3 {
+    color: #f7fafc;
+  }
+
+  .status-text p {
+    color: #a0aec0;
+  }
+
+  .form-section {
+    background: #2d3748;
+  }
+
+  .form-section h4 {
+    color: #f7fafc;
+  }
+
+  .form-group label {
+    color: #e2e8f0;
+  }
+
+  .form-group input {
+    background: #1a202c;
+    border-color: #4a5568;
+    color: #f7fafc;
+  }
+
+  .form-group input:focus {
+    border-color: #667eea;
+  }
+
+  .form-group input::placeholder {
+    color: #718096;
+  }
+
+  .checkbox-group label {
+    color: #e2e8f0;
+  }
+
+  .warning-text {
+    background: rgba(254, 178, 178, 0.1);
+  }
+
+  .option-info {
+    background: #2d3748;
+  }
+
+  .info-label {
+    color: #a0aec0;
+  }
+
+  .action-button.secondary {
+    background: #4a5568;
+    color: #e2e8f0;
+  }
+
+  .action-button.secondary:hover:not(:disabled) {
+    background: #718096;
+  }
+}

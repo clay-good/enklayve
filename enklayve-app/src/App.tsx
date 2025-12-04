@@ -6,6 +6,8 @@ import { WelcomeFlow } from "./components/Onboarding/WelcomeFlow";
 import { ChatWindow } from "./components/Chat/ChatWindow";
 import { ConversationList } from "./components/Sidebar/ConversationList";
 import { DocumentPanel } from "./components/Documents/DocumentPanel";
+import { UnlockScreen } from "./components/Security/UnlockScreen";
+import { SecuritySettings } from "./components/Security/SecuritySettings";
 import "./styles/design-tokens.css";
 import "./App.css";
 
@@ -25,6 +27,14 @@ interface OnboardingState {
   recommended_model_downloaded: boolean;
   first_launch_timestamp: number;
   completion_timestamp: number | null;
+  security_enabled: boolean;
+  biometric_enabled: boolean;
+}
+
+interface SecurityConfig {
+  security_enabled: boolean;
+  biometric_enabled: boolean;
+  biometric_available: boolean;
 }
 
 interface ConversationSummary {
@@ -70,6 +80,11 @@ function App() {
   const [ocrProgress, setOcrProgress] = useState<OcrProgress | null>(null);
   const [modelPath, setModelPath] = useState<string | null>(null);
 
+  // Security state
+  const [isLocked, setIsLocked] = useState(false);
+  const [securityEnabled, setSecurityEnabled] = useState(false);
+  const [showSecuritySettings, setShowSecuritySettings] = useState(false);
+
   useEffect(() => {
     checkOnboarding();
     loadDocuments();
@@ -100,6 +115,13 @@ function App() {
       const state = await invoke<OnboardingState>("check_first_run");
       if (state.is_first_run && !state.onboarding_completed) {
         setShowOnboarding(true);
+      } else {
+        // Check if security is enabled and we need to show unlock screen
+        const secConfig = await invoke<SecurityConfig>("get_security_config");
+        setSecurityEnabled(secConfig.security_enabled);
+        if (secConfig.security_enabled) {
+          setIsLocked(true);
+        }
       }
       setCheckingOnboarding(false);
     } catch (error) {
@@ -108,8 +130,35 @@ function App() {
     }
   }
 
+  const handleUnlock = () => {
+    setIsLocked(false);
+    // Load data after unlock
+    loadDocuments();
+    loadConversations();
+    loadModelPath();
+  };
+
+  const handleSecuritySettingsClose = async () => {
+    setShowSecuritySettings(false);
+    // Refresh security status
+    try {
+      const secConfig = await invoke<SecurityConfig>("get_security_config");
+      setSecurityEnabled(secConfig.security_enabled);
+    } catch (error) {
+      console.error("Failed to refresh security config:", error);
+    }
+  };
+
   const handleOnboardingComplete = async () => {
     setShowOnboarding(false);
+    // Check if security was enabled during onboarding
+    try {
+      const secConfig = await invoke<SecurityConfig>("get_security_config");
+      setSecurityEnabled(secConfig.security_enabled);
+      // Don't lock after onboarding - user just set up their password
+    } catch (error) {
+      console.error("Failed to check security config after onboarding:", error);
+    }
     loadDocuments();
     loadConversations();
     await loadModelPath();
@@ -448,6 +497,10 @@ function App() {
     return <WelcomeFlow onComplete={handleOnboardingComplete} />;
   }
 
+  if (isLocked) {
+    return <UnlockScreen onUnlock={handleUnlock} />;
+  }
+
   const handleBackupComplete = (success: boolean, message: string) => {
     if (success && message.includes('restored')) {
       loadDocuments();
@@ -457,6 +510,10 @@ function App() {
 
   return (
     <div className="app">
+      {showSecuritySettings && (
+        <SecuritySettings onClose={handleSecuritySettingsClose} />
+      )}
+
       <aside className="sidebar">
         <div className="sidebar-top">
           <ConversationList
@@ -474,6 +531,8 @@ function App() {
             isDarkMode={isDarkMode}
             onThemeToggle={toggleTheme}
             onBackupComplete={handleBackupComplete}
+            onSecuritySettings={() => setShowSecuritySettings(true)}
+            securityEnabled={securityEnabled}
           />
         </div>
 

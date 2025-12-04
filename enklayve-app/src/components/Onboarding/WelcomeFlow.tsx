@@ -23,16 +23,30 @@ interface DownloadProgress {
   speed_mb_per_sec: number;
 }
 
+interface SecurityConfig {
+  security_enabled: boolean;
+  biometric_enabled: boolean;
+  biometric_available: boolean;
+}
+
 interface WelcomeFlowProps {
   onComplete: () => void;
 }
 
 export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
-  const [step, setStep] = useState<'welcome' | 'hardware' | 'downloading' | 'complete'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'hardware' | 'security' | 'downloading' | 'complete'>('welcome');
   const [hardwareSummary, setHardwareSummary] = useState<string>('');
   const [bestModel, setBestModel] = useState<BestModelSelection | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
   const [error, setError] = useState<string>('');
+
+  // Security setup state
+  const [securityConfig, setSecurityConfig] = useState<SecurityConfig | null>(null);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [enableBiometric, setEnableBiometric] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [settingUpSecurity, setSettingUpSecurity] = useState(false);
 
   useEffect(() => {
     const initOnboarding = async () => {
@@ -42,6 +56,14 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
 
         const model = await invoke<BestModelSelection>('get_best_model');
         setBestModel(model);
+
+        // Load security config to check biometric availability
+        const config = await invoke<SecurityConfig>('get_security_config');
+        setSecurityConfig(config);
+        // Pre-enable biometric if available
+        if (config.biometric_available) {
+          setEnableBiometric(true);
+        }
 
         setStep('hardware');
       } catch (err) {
@@ -71,6 +93,51 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
       }
     };
   }, [step]);
+
+  const handleContinueToSecurity = () => {
+    setStep('security');
+  };
+
+  const handleSetupSecurity = async () => {
+    // Validate password
+    if (password.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+
+    setPasswordError('');
+    setSettingUpSecurity(true);
+
+    try {
+      await invoke('setup_security', {
+        password,
+        enableBiometric,
+      });
+
+      // Clear sensitive data from state
+      setPassword('');
+      setConfirmPassword('');
+
+      // Continue to download
+      handleStartDownload();
+    } catch (err) {
+      setPasswordError(String(err));
+      setSettingUpSecurity(false);
+    }
+  };
+
+  const handleSkipSecurity = async () => {
+    try {
+      await invoke('skip_security_setup');
+      handleStartDownload();
+    } catch (err) {
+      setError(String(err));
+    }
+  };
 
   const handleStartDownload = async () => {
     if (!bestModel) return;
@@ -160,9 +227,93 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
           </div>
 
           <div className="action-buttons">
-            <button className="primary-button" onClick={handleStartDownload}>
-              Download Model
+            <button className="primary-button" onClick={handleContinueToSecurity}>
+              Continue
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'security') {
+    return (
+      <div className="welcome-flow">
+        <div className="welcome-content">
+          <h1>Secure Your Data</h1>
+          <p className="tagline">Optional: Add encryption at rest</p>
+
+          <div className="security-setup">
+            <div className="security-info">
+              <p>
+                Protect your documents and conversations with AES-256-GCM encryption.
+                All data will be encrypted on disk and require your password to access.
+              </p>
+            </div>
+
+            <div className="password-form">
+              <div className="input-group">
+                <label htmlFor="password">Password</label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password (min 8 characters)"
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <div className="input-group">
+                <label htmlFor="confirm-password">Confirm Password</label>
+                <input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm password"
+                  autoComplete="new-password"
+                />
+              </div>
+
+              {securityConfig?.biometric_available && (
+                <div className="checkbox-group">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={enableBiometric}
+                      onChange={(e) => setEnableBiometric(e.target.checked)}
+                    />
+                    <span>Enable Touch ID / Windows Hello for quick unlock</span>
+                  </label>
+                </div>
+              )}
+
+              {passwordError && (
+                <p className="error-message">{passwordError}</p>
+              )}
+            </div>
+
+            <div className="action-buttons">
+              <button
+                className="primary-button"
+                onClick={handleSetupSecurity}
+                disabled={settingUpSecurity || !password || !confirmPassword}
+              >
+                {settingUpSecurity ? 'Setting up...' : 'Enable Encryption'}
+              </button>
+              <button
+                className="secondary-button"
+                onClick={handleSkipSecurity}
+                disabled={settingUpSecurity}
+              >
+                Skip for now
+              </button>
+            </div>
+
+            <p className="skip-note">
+              You can enable encryption later in Settings
+            </p>
           </div>
         </div>
       </div>

@@ -208,6 +208,22 @@ pub fn initialize_encryption_support(conn: &Connection) -> Result<()> {
         println!("Added encrypted_content column to messages table");
     }
 
+    // Check if is_encrypted column exists in chunks table
+    let chunks_is_encrypted_exists: bool = conn
+        .prepare("SELECT COUNT(*) FROM pragma_table_info('chunks') WHERE name='is_encrypted'")?
+        .query_row([], |row| row.get(0))
+        .map(|count: i32| count > 0)?;
+
+    if !chunks_is_encrypted_exists {
+        // Add is_encrypted column to chunks table with default value false
+        conn.execute(
+            "ALTER TABLE chunks ADD COLUMN is_encrypted BOOLEAN NOT NULL DEFAULT 0",
+            [],
+        )?;
+
+        println!("Added is_encrypted column to chunks table");
+    }
+
     Ok(())
 }
 

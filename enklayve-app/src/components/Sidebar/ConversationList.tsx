@@ -23,6 +23,8 @@ interface ConversationListProps {
   isDarkMode: boolean;
   onThemeToggle: () => void;
   onBackupComplete: (success: boolean, message: string) => void;
+  onSecuritySettings?: () => void;
+  securityEnabled?: boolean;
 }
 
 export function ConversationList({
@@ -37,6 +39,8 @@ export function ConversationList({
   isDarkMode,
   onThemeToggle,
   onBackupComplete,
+  onSecuritySettings,
+  securityEnabled,
 }: ConversationListProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
@@ -157,6 +161,15 @@ export function ConversationList({
         >
           {isRestoring ? 'Importing...' : 'Import'}
         </button>
+        {onSecuritySettings && (
+          <button
+            className={`text-button ${securityEnabled ? 'security-enabled' : ''}`}
+            onClick={onSecuritySettings}
+            title={securityEnabled ? "Security: Enabled" : "Security Settings"}
+          >
+            {securityEnabled ? '🔒' : '🔓'}
+          </button>
+        )}
         <button
           className="text-button"
           onClick={onThemeToggle}

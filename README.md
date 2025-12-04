@@ -20,12 +20,12 @@ Enklayve is a secure, privacy-first desktop application that lets you chat with 
 
 ### Privacy & Security
 - End-to-end encryption with AES-256-GCM
-- Biometric authentication (Touch ID / Windows Hello)
+- Biometric authentication (Touch ID / Windows Hello / Linux Fingerprint)
 - Zero-knowledge architecture
 - All data stays on your device
 
 ### Document Intelligence
-- Upload PDFs, DOCX, TXT, Markdown files
+- Upload PDFs, DOCX, TXT, Markdown, Excel files
 - Ask questions about your documents
 - Get answers with source citations
 - Vector search for relevant context
@@ -106,7 +106,8 @@ Enklayve is a secure, privacy-first desktop application that lets you chat with 
 - Microsoft Word (.docx)
 - Plain Text (.txt)
 - Markdown (.md)
-- Excel (.xlsx) - Coming soon
+- Excel (.xlsx, .xls)
+- CSV (.csv)
 
 ## Available Models
 
@@ -170,8 +171,8 @@ enklayve-dev/
 │   │   │   ├── documents.rs       # Document processing
 │   │   │   ├── embeddings.rs      # Vector embeddings
 │   │   │   ├── hardware.rs        # GPU detection
-│   │   │   ├── encryption.rs      # Encryption
-│   │   │   ├── biometric.rs       # Biometric auth
+│   │   │   ├── encryption.rs      # AES-256-GCM encryption
+│   │   │   ├── biometric.rs       # Touch ID / Windows Hello / fprintd
 │   │   │   ├── conversations.rs   # Chat history
 │   │   │   ├── backup.rs          # Backup/restore
 │   │   │   ├── export.rs          # Export functionality
@@ -186,13 +187,13 @@ enklayve-dev/
 ## Architecture
 
 ### Technology Stack
-- **Frontend**: React 18 + TypeScript + Vite + TailwindCSS
+- **Frontend**: React 19 + TypeScript + Vite
 - **Backend**: Rust + Tauri 2.0
 - **LLM Engine**: llama.cpp (via llama-cpp-2)
 - **Embeddings**: BGE-Small-EN-v1.5 (fastembed)
 - **Database**: SQLite with encryption
 - **Vector Search**: Custom cosine similarity
-- **Document Processing**: pdf-extract, docx-rs, ocrs (OCR)
+- **Document Processing**: pdf-extract, docx-rs, calamine (Excel), ocrs (OCR)
 
 ### GPU Acceleration
 
@@ -227,6 +228,16 @@ Check system requirements. Ensure you have at least 8GB RAM and 10GB free disk s
 - **NVIDIA**: Install latest drivers and CUDA toolkit
 - **Apple**: Metal is automatic on M1/M2/M3/M4 chips
 
+### Linux: Fingerprint authentication not working
+Ensure fprintd is installed and fingerprints are enrolled:
+```bash
+# Install fprintd
+sudo apt install fprintd
+
+# Enroll fingerprint
+fprintd-enroll
+```
+
 ## Privacy & Security
 
 Enklayve is built with privacy as the foundation:
@@ -235,7 +246,8 @@ Enklayve is built with privacy as the foundation:
 - **No analytics**: No tracking, no crash reports (unless you opt-in)
 - **No network calls**: Models run 100% offline
 - **Encrypted storage**: All data encrypted with AES-256-GCM
-- **Secure credentials**: Platform keychain integration
+- **Secure credentials**: Platform keychain integration (macOS Keychain, Windows Credential Manager, Linux Secret Service)
+- **Biometric unlock**: Touch ID, Windows Hello, and Linux fingerprint (fprintd) support
 - **Open source**: Full transparency, audit the code yourself
 
 ## Performance Tips
@@ -262,11 +274,9 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Roadmap
 
-- [ ] Excel spreadsheet support
 - [ ] Image analysis
 - [ ] Voice input/output
 - [ ] Multiple document comparison
-- [ ] Export to various formats
 - [ ] Plugin system
 - [ ] Mobile apps (iOS, Android)
 

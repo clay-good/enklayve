@@ -794,6 +794,153 @@ pub async fn disable_database_encryption(
 }
 
 // ============================================================================
+// SECURITY & AUTHENTICATION COMMANDS
+// ============================================================================
+
+/// Get security configuration (safe to expose - no password hash)
+#[tauri::command]
+pub async fn get_security_config(
+    app_handle: tauri::AppHandle,
+) -> Result<crate::onboarding::SecurityConfig, String> {
+    crate::onboarding::get_security_config(&app_handle)
+        .map_err(|e| e.to_string())
+}
+
+/// Setup security with password during onboarding or settings
+#[tauri::command(rename_all = "camelCase")]
+pub async fn setup_security(
+    app_handle: tauri::AppHandle,
+    password: String,
+    enable_biometric: bool,
+) -> Result<(), String> {
+    crate::logger::log_info("Setting up security...");
+
+    crate::onboarding::setup_security(&app_handle, &password, enable_biometric)
+        .map_err(|e| {
+            crate::logger::log_error(&format!("Security setup failed: {}", e));
+            e.to_string()
+        })?;
+
+    crate::logger::log_info("Security setup completed successfully");
+    Ok(())
+}
+
+/// Verify password for unlock screen
+#[tauri::command]
+pub async fn verify_unlock_password(
+    app_handle: tauri::AppHandle,
+    password: String,
+) -> Result<bool, String> {
+    crate::onboarding::verify_unlock_password(&app_handle, &password)
+        .map_err(|e| e.to_string())
+}
+
+/// Unlock with biometric (Touch ID / Windows Hello)
+#[tauri::command]
+pub async fn unlock_with_biometric(
+    app_handle: tauri::AppHandle,
+) -> Result<bool, String> {
+    crate::logger::log_info("Attempting biometric unlock...");
+
+    // First check if biometric is available and enabled
+    let config = crate::onboarding::get_security_config(&app_handle)
+        .map_err(|e| e.to_string())?;
+
+    if !config.biometric_enabled {
+        return Err("Biometric authentication is not enabled".to_string());
+    }
+
+    if !config.biometric_available {
+        return Err("Biometric authentication is not available on this device".to_string());
+    }
+
+    // Authenticate with biometric
+    let auth_result = biometric::authenticate_biometric("Unlock Enklayve")
+        .map_err(|e| {
+            crate::logger::log_error(&format!("Biometric auth failed: {}", e));
+            e.to_string()
+        })?;
+
+    if !auth_result {
+        return Ok(false);
+    }
+
+    // Biometric passed - the password is stored in keychain for biometric unlock
+    // We don't need to return it, just verify it's accessible
+    match biometric::retrieve_secure("enklayve_master_password") {
+        Ok(_) => {
+            crate::logger::log_info("Biometric unlock successful");
+            Ok(true)
+        }
+        Err(e) => {
+            crate::logger::log_error(&format!("Failed to retrieve password after biometric: {}", e));
+            Err("Biometric authentication succeeded but could not retrieve credentials".to_string())
+        }
+    }
+}
+
+/// Disable security (requires current password)
+#[tauri::command(rename_all = "camelCase")]
+pub async fn disable_security(
+    app_handle: tauri::AppHandle,
+    current_password: String,
+) -> Result<(), String> {
+    crate::logger::log_info("Disabling security...");
+
+    crate::onboarding::disable_security(&app_handle, &current_password)
+        .map_err(|e| {
+            crate::logger::log_error(&format!("Failed to disable security: {}", e));
+            e.to_string()
+        })?;
+
+    crate::logger::log_info("Security disabled successfully");
+    Ok(())
+}
+
+/// Change password (requires current password)
+#[tauri::command(rename_all = "camelCase")]
+pub async fn change_password(
+    app_handle: tauri::AppHandle,
+    current_password: String,
+    new_password: String,
+) -> Result<(), String> {
+    crate::logger::log_info("Changing password...");
+
+    crate::onboarding::change_password(&app_handle, &current_password, &new_password)
+        .map_err(|e| {
+            crate::logger::log_error(&format!("Password change failed: {}", e));
+            e.to_string()
+        })?;
+
+    crate::logger::log_info("Password changed successfully");
+    Ok(())
+}
+
+/// Skip security setup during onboarding
+#[tauri::command]
+pub async fn skip_security_setup(
+    app_handle: tauri::AppHandle,
+) -> Result<(), String> {
+    crate::logger::log_info("User skipped security setup during onboarding");
+    // Nothing to do - security_enabled remains false by default
+    Ok(())
+}
+
+/// Toggle biometric authentication
+#[tauri::command(rename_all = "camelCase")]
+pub async fn toggle_biometric(
+    app_handle: tauri::AppHandle,
+    current_password: String,
+    enable: bool,
+) -> Result<(), String> {
+    crate::onboarding::toggle_biometric(&app_handle, &current_password, enable)
+        .map_err(|e| {
+            crate::logger::log_error(&format!("Failed to toggle biometric: {}", e));
+            e.to_string()
+        })
+}
+
+// ============================================================================
 // CONVERSATION HISTORY COMMANDS
 // ============================================================================
 
