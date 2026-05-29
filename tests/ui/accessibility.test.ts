@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import axe from "axe-core";
-import { renderHome, renderAllTools, renderReadout, mountApp } from "../../src/ui/shell";
+import {
+  renderHome,
+  renderAllTools,
+  renderReadout,
+  renderReport,
+  mountApp,
+} from "../../src/ui/shell";
 import { SituationPanel } from "../../src/ui/situationPanel";
 import { mountTakeHome } from "../../src/tiles/takeHome";
 import { mountFederalIncomeTax } from "../../src/tiles/federalIncomeTax";
@@ -61,6 +67,16 @@ describe("accessibility (axe-core)", () => {
   it("the Readout view has no violations", async () => {
     const main = document.createElement("main");
     renderReadout({ container: main, navigate: () => {}, profile: new SituationStore() });
+    document.body.append(main);
+    await expectNoViolations(main);
+  }, 30000);
+
+  it("the Readout Report view has no violations", async () => {
+    const main = document.createElement("main");
+    const profile = new SituationStore();
+    profile.set("annualIncome", 95000);
+    profile.set("stateCode", "ca");
+    renderReport({ container: main, navigate: () => {}, profile, data });
     document.body.append(main);
     await expectNoViolations(main);
   }, 30000);

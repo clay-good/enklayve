@@ -1141,3 +1141,44 @@ body {
   color: var(--enk-text-muted);
   font-size: 0.9rem;
 }
+
+/* --- Readout Report view (BUILD-SPEC-2 §5) ------------------------------- */
+.report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+.report-section {
+  margin-bottom: 1.25rem;
+}
+.report-section-title {
+  color: var(--enk-primary-strong);
+  font-size: 1.1rem;
+  margin: 0 0 0.4rem;
+}
+.report-table {
+  margin-top: 0.25rem;
+}
+.report-note {
+  color: var(--enk-text-muted);
+  font-style: italic;
+  margin: 0.4rem 0;
+}
+.report-appendix {
+  border-top: 2px solid var(--enk-primary-soft);
+  padding-top: 1rem;
+}
+.report-subhead {
+  color: var(--enk-primary-strong);
+  font-size: 0.95rem;
+  margin: 1rem 0 0.3rem;
+}
+.report-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--enk-text-muted);
+}
+.report-list a {
+  color: var(--enk-primary);
+}

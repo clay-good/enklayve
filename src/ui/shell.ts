@@ -9,6 +9,7 @@ import { Router, permalinkFor, type Route } from "./router";
 import { CommandPalette } from "./commandPalette";
 import { SituationPanel } from "./situationPanel";
 import { renderReadout } from "./readoutView";
+import { renderReport } from "./reportView";
 import { applyStoredPreferences, setTheme, THEMES, getTheme, type Theme } from "./theme";
 import { el, option, clear } from "./dom";
 import { loadBundledData, type BundledData } from "../data/browser";
@@ -374,6 +375,10 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
       renderReadout({ container: content, navigate, profile });
       return;
     }
+    if (route.tileId === "report") {
+      renderReport({ container: content, navigate, profile, data });
+      return;
+    }
     const tile = getTile(route.tileId);
     if (!tile) {
       navigate(null);
@@ -395,4 +400,4 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
 }
 
 // Exposed for unit tests.
-export { renderHome, renderTileView, renderAllTools, renderReadout };
+export { renderHome, renderTileView, renderAllTools, renderReadout, renderReport };

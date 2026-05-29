@@ -296,6 +296,12 @@ export function renderReadout(opts: RenderReadoutOptions): void {
           el("button", {
             type: "button",
             class: "btn btn--ghost",
+            text: "Your Readout Report →",
+            on: { click: () => navigate("report") },
+          }),
+          el("button", {
+            type: "button",
+            class: "btn btn--ghost",
             text: "Read another document",
             on: {
               click: () => {
