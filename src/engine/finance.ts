@@ -118,3 +118,44 @@ export function debtPayoff(
   if (bal.greaterThan(0)) return null;
   return { months, totalInterest: interestPaid, totalPaid: paid };
 }
+
+/**
+ * Level monthly payment that amortizes a loan (BUILD-SPEC.md §3.3). Standard
+ * mortgage formula M = P·r / (1 − (1+r)^−n); a zero rate degenerates to P/n.
+ *
+ * @param principal    amount borrowed
+ * @param annualRatePct annual interest rate as a percentage
+ * @param termYears     term in years
+ */
+export function monthlyMortgagePayment(
+  principal: number,
+  annualRatePct: number,
+  termYears: number,
+): Money {
+  const n = Math.round(termYears * 12);
+  if (n <= 0) return Money.zero();
+  const r = new Decimal(annualRatePct).div(100).div(12);
+  const p = new Decimal(principal);
+  if (r.isZero()) return Money.from(p.div(n));
+  const factor = r.plus(1).pow(-n); // (1+r)^-n
+  return Money.from(p.times(r).div(new Decimal(1).minus(factor)));
+}
+
+/**
+ * The loan principal a given monthly payment can support — the inverse of
+ * {@link monthlyMortgagePayment}. Used by home-affordability: how big a mortgage
+ * does my housing budget cover? P = M·(1 − (1+r)^−n) / r; zero rate → M·n.
+ */
+export function loanPrincipalFromPayment(
+  monthlyPayment: number,
+  annualRatePct: number,
+  termYears: number,
+): Money {
+  const n = Math.round(termYears * 12);
+  if (n <= 0) return Money.zero();
+  const r = new Decimal(annualRatePct).div(100).div(12);
+  const m = new Decimal(Math.max(0, monthlyPayment));
+  if (r.isZero()) return Money.from(m.times(n));
+  const factor = r.plus(1).pow(-n); // (1+r)^-n
+  return Money.from(m.times(new Decimal(1).minus(factor)).div(r));
+}

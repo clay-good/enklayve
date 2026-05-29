@@ -116,3 +116,35 @@ describe("debt payoff", () => {
     expect(debtPayoff(6000, 22, 300)).toEqual(debtPayoff(6000, 22, 300));
   });
 });
+
+import { monthlyMortgagePayment, loanPrincipalFromPayment } from "../../src/engine/finance";
+
+/**
+ * Golden cases for the loan/mortgage math (BUILD-SPEC.md §3.3, §6.3). The
+ * payment and the principal-from-payment functions are exact inverses, and a
+ * zero rate degenerates to simple division/multiplication.
+ */
+describe("mortgage math", () => {
+  it("computes the standard monthly payment", () => {
+    // $300,000 at 6% for 30 years ≈ $1,798.65/mo (published amortization value).
+    const m = monthlyMortgagePayment(300000, 6, 30);
+    expect(m.roundToCents().toNumber()).toBeCloseTo(1798.65, 1);
+  });
+
+  it("zero rate is principal divided over the term", () => {
+    expect(monthlyMortgagePayment(360000, 0, 30).roundToCents().toNumber()).toBe(1000);
+    expect(loanPrincipalFromPayment(1000, 0, 30).roundToCents().toNumber()).toBe(360000);
+  });
+
+  it("principal-from-payment inverts payment", () => {
+    const payment = monthlyMortgagePayment(300000, 6, 30);
+    const principal = loanPrincipalFromPayment(payment.toNumber(), 6, 30);
+    expect(principal.roundToCents().toNumber()).toBeCloseTo(300000, 0);
+  });
+
+  it("a bigger budget supports a bigger loan", () => {
+    const small = loanPrincipalFromPayment(1500, 6.5, 30).toNumber();
+    const big = loanPrincipalFromPayment(2500, 6.5, 30).toNumber();
+    expect(big).toBeGreaterThan(small);
+  });
+});

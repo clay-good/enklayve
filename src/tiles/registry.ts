@@ -10,6 +10,8 @@ import { takeHomeTile } from "./takeHome";
 import { federalIncomeTaxTile } from "./federalIncomeTax";
 import { marginalExplorerTile } from "./marginalExplorer";
 import { compoundGrowthTile } from "./compoundGrowth";
+import { spendingPlanTile } from "./spendingPlan";
+import { homeAffordabilityTile } from "./homeAffordability";
 import { peaceOfMindTile } from "./peaceOfMind";
 import { freedomDateTile } from "./freedomDate";
 import { yourPlanTile } from "./yourPlan";
@@ -96,6 +98,9 @@ export const TILES: TileDefinition[] = [
     "What a past dollar is worth today, from BLS data.",
     ["inflation", "cpi", "purchasing power"],
   ),
+  // Expansion tools (BUILD-SPEC-2 §6), cash-flow + home, grouped under Take Home.
+  spendingPlanTile,
+  homeAffordabilityTile,
 
   // --- Pillar 2: What You're Owed (§4) ---
   soon(

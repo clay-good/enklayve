@@ -266,6 +266,15 @@ Prompt to Claude Code:
 
 Goal: the highest value tools from section 6 that deepen the guide.
 
+**Status: 🟡 first wave started.** Shipped two distinct §6 tools (chosen to avoid overlap with what already exists):
+
+- **50/30/20 Spending Plan** (§6.1, `src/tiles/spendingPlan.ts`): splits monthly take-home into needs / wants / savings, with one-tap presets (50/30/20, 60/20/20, 70/20/10) and an editable split (savings is the remainder, never negative). The framework is a labeled guideline, not a cited rule (like Compound Growth).
+- **Home Buying Readiness** (§6.3, `src/tiles/homeAffordability.ts`): the all-in home price you can afford on the conventional 28/36 debt-to-income guideline — the binding monthly budget, minus the taxes/insurance you enter, backs out a maximum loan via the new `loanPrincipalFromPayment` engine helper (with `monthlyMortgagePayment`, its exact inverse — both golden-tested, §3.3). Reads income from Your Situation and writes it back.
+
+Both are deterministic, deep-linkable, carry a worked example, and pass axe. 213 tests pass (added the golden mortgage-math corpus and the two tiles' behavior + axe coverage); `format:check`, `lint`, `typecheck`, `build`, and `wrangler deploy --dry-run` are all green.
+
+- Deferred to later sub-waves (same pattern): the zero-based budget and cash-flow timeline (§6.1), rent-versus-buy and the sinking-fund planner (§6.3), and the health-plan chooser and paycheck optimizer (§6.4). The standalone Debt Freedom Planner (§6.2) is intentionally folded into the existing **Freedom Date** tile rather than duplicated.
+
 Prompt to Claude Code:
 
 > Implement the first wave of expansion tools from section 6 of BUILD-SPEC-2.md: the zero based monthly budget and the fifty thirty twenty spending plan from cash flow and budgeting, the debt freedom planner from debt freedom, the home buying readiness and rent versus buy tools from home and big purchases, and the health plan chooser and paycheck optimizer from benefits and open enrollment. Each must read and write Your Situation, feed Your Plan where relevant, carry citations on any rule based figure, include a worked example, and encode state in the URL. Add golden cases for each. Acceptance criteria: each tool integrates with the profile and the plan, passes its worked example, and is covered by golden cases. Build the remaining section 6 tools in later waves on the same pattern.
