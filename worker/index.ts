@@ -23,20 +23,27 @@ export interface Env {
  * `connect-src 'none'` means no fetch/XHR/WebSocket can leave the page — all
  * datasets are bundled at build time, so nothing is ever fetched at runtime.
  */
-const CSP = [
-  "default-src 'self'",
-  "script-src 'self'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data:",
-  "font-src 'self'",
-  "connect-src 'none'",
-  "object-src 'none'",
-  "base-uri 'none'",
-  "form-action 'none'",
-  "frame-ancestors 'none'",
-  "manifest-src 'self'",
-  "worker-src 'self'",
-].join("; ");
+function cspFor(pathname: string): string {
+  // The offline service worker (BUILD-SPEC.md §8) must fetch SAME-ORIGIN static
+  // assets to populate its cache, so its own script is served with
+  // `connect-src 'self'`. It has no server endpoint and never touches user data,
+  // so nothing can leave the device. Every page keeps `connect-src 'none'`.
+  const connectSrc = pathname === "/sw.js" ? "connect-src 'self'" : "connect-src 'none'";
+  return [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data:",
+    "font-src 'self'",
+    connectSrc,
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'none'",
+    "frame-ancestors 'none'",
+    "manifest-src 'self'",
+    "worker-src 'self'",
+  ].join("; ");
+}
 
 const PERMISSIONS_POLICY = [
   "accelerometer=()",
@@ -50,9 +57,9 @@ const PERMISSIONS_POLICY = [
 ].join(", ");
 
 /** Headers applied to every response. */
-function securityHeaders(): Record<string, string> {
+function securityHeaders(pathname: string): Record<string, string> {
   return {
-    "Content-Security-Policy": CSP,
+    "Content-Security-Policy": cspFor(pathname),
     "Referrer-Policy": "no-referrer",
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
@@ -72,7 +79,13 @@ function cacheControlFor(pathname: string): string {
   if (pathname.startsWith("/assets/")) {
     return "public, max-age=31536000, immutable";
   }
-  if (pathname === "/" || pathname.endsWith(".html") || pathname.endsWith("/manifest.json")) {
+  if (
+    pathname === "/" ||
+    pathname === "/sw.js" ||
+    pathname.endsWith(".html") ||
+    pathname.endsWith(".webmanifest") ||
+    pathname.endsWith("/manifest.json")
+  ) {
     return "no-cache";
   }
   return "public, max-age=3600, must-revalidate";
@@ -84,7 +97,7 @@ export default {
     const assetResponse = await env.ASSETS.fetch(request);
 
     const headers = new Headers(assetResponse.headers);
-    for (const [key, value] of Object.entries(securityHeaders())) {
+    for (const [key, value] of Object.entries(securityHeaders(url.pathname))) {
       headers.set(key, value);
     }
     headers.set("Cache-Control", cacheControlFor(url.pathname));
