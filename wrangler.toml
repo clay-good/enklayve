@@ -5,6 +5,10 @@
 name = "enklayve"
 main = "worker/index.ts"
 compatibility_date = "2024-11-01"
+# No telemetry anywhere in this project (BUILD-SPEC.md §2): opt out of Wrangler's
+# anonymous usage metrics so the build/deploy tooling phones home no more than
+# the site does.
+send_metrics = false
 
 [assets]
 directory = "./dist"
