@@ -8,7 +8,12 @@
  * manifest hash was computed over, so the hash check is meaningful in the browser.
  */
 import { loadManifest, type LoadedManifest, type DatasetStatus } from "./loader";
-import { ManifestSchema, type FicaData, type Jurisdiction } from "./schemas";
+import {
+  ManifestSchema,
+  type FicaData,
+  type Jurisdiction,
+  type RetirementLimitsData,
+} from "./schemas";
 
 // Inlined at build time. The keys are repo-relative paths; the values are the
 // exact file contents. eager so the data is available synchronously after import.
@@ -28,6 +33,8 @@ export interface BundledData {
   readonly manifest: LoadedManifest;
   federal(): Jurisdiction | null;
   fica(): FicaData | null;
+  /** IRS retirement / HSA / FSA contribution limits (BUILD-SPEC.md §3.4). */
+  retirementLimits(): RetirementLimitsData | null;
   /** A state jurisdiction by two-letter code (e.g. "ca"); null if unavailable. */
   state(code: string): Jurisdiction | null;
   /** Status for a dataset id, for the fail-safe verify banner. */
@@ -70,6 +77,8 @@ async function build(): Promise<BundledData> {
     manifest: loaded,
     federal: () => dataOf("federal-income-tax-2024") as Jurisdiction | null,
     fica: () => dataOf("fica-2024") as FicaData | null,
+    retirementLimits: () =>
+      dataOf("retirement-limits-2024") as RetirementLimitsData | null,
     state: (code) => dataOf(`state-${code.toLowerCase()}-income-tax-2024`) as Jurisdiction | null,
     statusOf: (id) => loaded.byId.get(id)?.status ?? "missing",
     stateCodes: () =>

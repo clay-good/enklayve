@@ -808,3 +808,164 @@ body {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* --- Your Plan (BUILD-SPEC-2 §4) ----------------------------------------- */
+.plan-intro {
+  color: var(--enk-text-muted);
+  margin: 0 0 1.25rem;
+  max-width: 60ch;
+}
+
+/* The hero: the single next right step. */
+.plan-next {
+  border: 1px solid var(--enk-primary);
+  background: var(--enk-primary-soft);
+  border-radius: var(--enk-radius);
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--enk-shadow);
+}
+.plan-next--done {
+  border-color: var(--enk-good);
+  background: var(--enk-surface-2);
+}
+.plan-next-eyebrow {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--enk-primary-strong);
+}
+.plan-next-title {
+  margin: 0.2rem 0 0.5rem;
+  font-size: 1.4rem;
+  color: var(--enk-text);
+}
+.plan-next-action {
+  margin: 0;
+  color: var(--enk-text);
+  max-width: 62ch;
+}
+.plan-next-amount {
+  margin: 0.6rem 0 0;
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--enk-primary-strong);
+}
+.plan-next-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.plan-list-head {
+  margin: 1.75rem 0 0.5rem;
+  color: var(--enk-primary-strong);
+}
+.plan-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+.plan-step {
+  border: 1px solid var(--enk-border);
+  border-radius: var(--enk-radius);
+  background: var(--enk-surface);
+  padding: 0.85rem 1rem;
+}
+.plan-step--active {
+  border-color: var(--enk-primary);
+  box-shadow: var(--enk-shadow);
+}
+.plan-step--complete .plan-step-mark {
+  color: var(--enk-good);
+}
+.plan-step--active .plan-step-mark {
+  color: var(--enk-primary);
+}
+.plan-step-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.plan-step-mark {
+  font-size: 1.1rem;
+  font-weight: 800;
+  width: 1.2rem;
+  text-align: center;
+}
+.plan-step-titles {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.plan-step-title {
+  font-weight: 700;
+  color: var(--enk-text);
+}
+.plan-step-tag {
+  font-size: 0.8rem;
+  color: var(--enk-text-muted);
+}
+.plan-step-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.plan-move {
+  padding: 0.25rem 0.45rem;
+  line-height: 1;
+}
+.plan-step-status {
+  margin: 0.5rem 0 0;
+  color: var(--enk-text-muted);
+}
+.plan-step-status--action {
+  color: var(--enk-text);
+  font-weight: 600;
+}
+.plan-step-cite {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--enk-text-muted);
+}
+.plan-open {
+  margin-top: 0.5rem;
+}
+
+/* Settings drawer. */
+.plan-config {
+  margin-top: 1.75rem;
+  border: 1px solid var(--enk-border);
+  border-radius: var(--enk-radius);
+  background: var(--enk-surface);
+  padding: 0.5rem 1rem 1rem;
+}
+.plan-config > summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--enk-primary-strong);
+  padding: 0.5rem 0;
+}
+.plan-config-note {
+  color: var(--enk-text-muted);
+  font-size: 0.9rem;
+}
+.plan-subhead {
+  margin: 1rem 0 0.4rem;
+  color: var(--enk-primary-strong);
+}
+.plan-debt-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.plan-debt-row .field {
+  margin: 0;
+}

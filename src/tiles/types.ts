@@ -41,6 +41,9 @@ export interface TileContext {
   setParams(params: URLSearchParams): void;
   /** Shareable URL for the given params (defaults to the tile's current params). */
   permalink(params?: URLSearchParams): string;
+  /** Navigate to another tile (or home, with null) — used by Your Plan to link
+   * each step to the tile that performs it. */
+  navigate(tileId: string | null): void;
   /** Active display locale. */
   locale: string;
   /** Bundled, integrity-gated datasets; null when data failed to load. */

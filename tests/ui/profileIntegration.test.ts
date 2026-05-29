@@ -23,6 +23,7 @@ function mount(
     params,
     setParams: () => {},
     permalink: () => "https://enklayve.com/#/x",
+    navigate: () => {},
     locale: "en-US",
     data,
     profile,

@@ -6,6 +6,7 @@ import { mountTakeHome } from "../../src/tiles/takeHome";
 import { mountFederalIncomeTax } from "../../src/tiles/federalIncomeTax";
 import { mountMarginalExplorer } from "../../src/tiles/marginalExplorer";
 import { mountCompoundGrowth } from "../../src/tiles/compoundGrowth";
+import { mountYourPlan } from "../../src/tiles/yourPlan";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
@@ -84,6 +85,11 @@ describe("accessibility (axe-core)", () => {
         mount: mountCompoundGrowth,
         params: new URLSearchParams({ p: "10000", c: "500", r: "6", y: "30" }),
       },
+      {
+        name: "your-plan",
+        mount: mountYourPlan,
+        params: new URLSearchParams(),
+      },
     ];
 
   for (const tc of tileCases) {
@@ -94,6 +100,7 @@ describe("accessibility (axe-core)", () => {
         params: tc.params,
         setParams: () => {},
         permalink: () => "https://enklayve.com/#/x",
+        navigate: () => {},
         locale: "en-US",
         data,
         profile: new SituationStore(),

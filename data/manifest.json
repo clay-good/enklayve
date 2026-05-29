@@ -29,6 +29,19 @@
       "contentHash": "7cfa58e9c05959b6e3792b69622a7aaa2a5d1533afce82ad88427a35b9c65ea6"
     },
     {
+      "id": "retirement-limits-2024",
+      "kind": "retirement-limits",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "retirement-limits-2024.json",
+      "sourceUrl": "https://www.irs.gov/pub/irs-drop/n-23-75.pdf",
+      "sourceDocument": "IRS Notice 2023-75 (2024 retirement plan limits)",
+      "dateRetrieved": "2024-02-01",
+      "contentHash": "754fc89cf8d6e712db17d6dbe99f209b3f88992bd3077a94d22a13c735530110"
+    },
+    {
       "id": "state-ca-income-tax-2024",
       "kind": "state-income-tax",
       "version": "2024.0",

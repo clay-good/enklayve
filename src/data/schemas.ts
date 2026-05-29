@@ -100,6 +100,7 @@ export const RetirementLimitsSchema = z.object({
   limits: z.record(z.string(), z.number().gte(0)),
   citation: CitationSchema,
 });
+export type RetirementLimitsData = z.infer<typeof RetirementLimitsSchema>;
 
 /** FICA wage base, COLA, and Social Security bend points (SSA fact sheets). */
 export const FicaSchema = z.object({

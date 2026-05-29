@@ -8,4 +8,15 @@ export { cite, isCited, assertCited, citationProblems } from "./citation";
 export type { Citation, Cited } from "./citation";
 export { compoundGrowth } from "./finance";
 export type { CompoundGrowthInput, CompoundGrowthResult } from "./finance";
+export { evaluatePlan, PLAN_STEPS, DEFAULT_CONFIG, DEFAULT_ORDER } from "./plan";
+export type {
+  PlanStepId,
+  DebtStrategy,
+  SinkingGoal,
+  PlanInput,
+  PlanConfig,
+  StepLine,
+  StepResult,
+  PlanResult,
+} from "./plan";
 export * from "./tax";

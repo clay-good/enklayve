@@ -26,6 +26,7 @@ function mount(
       captured = p;
     },
     permalink: (p) => `https://enklayve.com/#/take-home?${(p ?? params).toString()}`,
+    navigate: () => {},
     locale: "en-US",
     data,
     profile,

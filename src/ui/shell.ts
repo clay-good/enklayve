@@ -338,6 +338,7 @@ function renderTileView(
     params: route.params,
     setParams: (p) => router.replaceState(tile.id, p),
     permalink: (p) => permalinkFor(tile.id, p ?? route.params),
+    navigate,
     locale,
     data,
     profile,

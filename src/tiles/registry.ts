@@ -10,6 +10,7 @@ import { takeHomeTile } from "./takeHome";
 import { federalIncomeTaxTile } from "./federalIncomeTax";
 import { marginalExplorerTile } from "./marginalExplorer";
 import { compoundGrowthTile } from "./compoundGrowth";
+import { yourPlanTile } from "./yourPlan";
 
 function soon(
   id: string,
@@ -212,13 +213,7 @@ export const TILES: TileDefinition[] = [
   ),
 
   // --- Your Plan (BUILD-SPEC-2 §4) ---
-  soon(
-    "your-plan",
-    "Your Plan",
-    "plan",
-    "The deterministic next right step, with the math shown.",
-    ["plan", "next step", "guidance"],
-  ),
+  yourPlanTile,
 ];
 
 const BY_ID = new Map(TILES.map((t) => [t.id, t]));

@@ -39,6 +39,12 @@ const SHARDS: ShardSource[] = [
     ...ANNUAL,
   },
   { id: "fica-2024", kind: "fica", shard: "fica-2024.json", ...ANNUAL },
+  {
+    id: "retirement-limits-2024",
+    kind: "retirement-limits",
+    shard: "retirement-limits-2024.json",
+    ...ANNUAL,
+  },
   ...STATE_CODES.map((code) => ({
     id: `state-${code}-income-tax-2024`,
     kind: "state-income-tax",

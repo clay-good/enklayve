@@ -31,6 +31,10 @@ const FIELD_LABELS: Partial<Record<SituationKey, string>> = {
   essentialMonthlyExpenses: "Essential monthly expenses",
   totalMonthlyExpenses: "Total monthly expenses",
   liquidSavings: "Liquid savings",
+  retirementContributionsAnnual: "Retirement contributions / yr",
+  employerMatchAnnual: "Employer match available / yr",
+  employerMatchCaptured: "Match you're capturing / yr",
+  debts: "Debts",
 };
 
 const SOURCE_LABELS: Record<FieldSource, string> = {
@@ -277,7 +281,18 @@ export class SituationPanel {
 }
 
 function formatValue(value: unknown): string {
-  if (Array.isArray(value)) return value.join(", ");
+  if (Array.isArray(value)) {
+    // Debts are objects ({ name, balance, ratePct }); summarize them.
+    if (value.every((v) => v && typeof v === "object")) {
+      const debts = value as { name: string; balance: number; ratePct: number }[];
+      return debts.length === 0
+        ? "none"
+        : debts
+            .map((d) => `${d.name} ($${d.balance.toLocaleString("en-US")} @ ${d.ratePct}%)`)
+            .join(", ");
+    }
+    return value.join(", ");
+  }
   if (typeof value === "number") return value.toLocaleString("en-US");
   return String(value);
 }

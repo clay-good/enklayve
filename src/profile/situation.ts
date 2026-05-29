@@ -16,6 +16,16 @@ import type { FilingStatus } from "../data/schemas";
 /** Where a field's value came from (§3.1). */
 export type FieldSource = "typed" | "extracted" | "assumed";
 
+/** A single debt: a balance, its annual interest rate, and a name (§3.1). */
+export interface Debt {
+  /** Display name, e.g. "Visa" or "Car loan". */
+  name: string;
+  /** Outstanding balance. */
+  balance: number;
+  /** Annual interest rate as a percentage, e.g. 22.99 for 22.99% APR. */
+  ratePct: number;
+}
+
 /** The known fields of the session profile. All optional — a profile fills in
  * over time as the user (or the Readout) supplies values. */
 export interface SituationValues {
@@ -30,6 +40,14 @@ export interface SituationValues {
   annualIncome: number;
   /** Annual pre-tax contributions (401k/HSA/etc.). */
   preTaxContributions: number;
+  /** Annual contributions to tax-advantaged retirement accounts (401k/IRA). */
+  retirementContributionsAnnual: number;
+  /** Full annual employer match available if you contribute enough to capture it. */
+  employerMatchAnnual: number;
+  /** Annual employer match you are currently capturing. */
+  employerMatchCaptured: number;
+  /** Debts with their balances and rates (§3.1). Feeds the high-cost-debt step. */
+  debts: Debt[];
   /** Essential monthly expenses (the "sleep at night" number). */
   essentialMonthlyExpenses: number;
   /** Total monthly expenses. */
@@ -108,7 +126,11 @@ export class SituationStore {
   /** A deep-enough copy for export. */
   snapshot(): SituationSnapshot {
     return {
-      values: { ...this.values, ...(this.values.ages ? { ages: [...this.values.ages] } : {}) },
+      values: {
+        ...this.values,
+        ...(this.values.ages ? { ages: [...this.values.ages] } : {}),
+        ...(this.values.debts ? { debts: this.values.debts.map((d) => ({ ...d })) } : {}),
+      },
       sources: { ...this.sources },
     };
   }
