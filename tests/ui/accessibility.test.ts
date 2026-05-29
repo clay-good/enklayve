@@ -24,6 +24,8 @@ import { mountRmd } from "../../src/tiles/rmd";
 import { mountYourPlan } from "../../src/tiles/yourPlan";
 import { mountPeaceOfMind } from "../../src/tiles/peaceOfMind";
 import { mountFreedomDate } from "../../src/tiles/freedomDate";
+import { mountDownshift } from "../../src/tiles/downshift";
+import { mountSabbatical } from "../../src/tiles/sabbatical";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
@@ -180,6 +182,16 @@ describe("accessibility (axe-core)", () => {
         name: "freedom-date",
         mount: mountFreedomDate,
         params: new URLSearchParams({ b: "6000", r: "22", pay: "300" }),
+      },
+      {
+        name: "downshift",
+        mount: mountDownshift,
+        params: new URLSearchParams({ age: "40", ret: "65", bal: "150000", r: "5", t: "1000000" }),
+      },
+      {
+        name: "sabbatical",
+        mount: mountSabbatical,
+        params: new URLSearchParams({ s: "30000", burn: "4000", m: "6" }),
       },
     ];
 

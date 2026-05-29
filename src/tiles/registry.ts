@@ -30,6 +30,8 @@ import { snapTile } from "./snap";
 import { medicaidTile } from "./medicaid";
 import { peaceOfMindTile } from "./peaceOfMind";
 import { freedomDateTile } from "./freedomDate";
+import { downshiftTile } from "./downshift";
+import { sabbaticalTile } from "./sabbatical";
 import { yourPlanTile } from "./yourPlan";
 
 function soon(
@@ -104,18 +106,8 @@ export const TILES: TileDefinition[] = [
   // near-identical calculators (the math was the same: savings ÷ monthly spend).
   peaceOfMindTile,
   freedomDateTile,
-  soon("downshift", "Downshift Point", "safe-harbor", "When continued saving becomes optional.", [
-    "coast fire",
-    "downshift",
-    "retirement",
-  ]),
-  soon(
-    "sabbatical",
-    "Sabbatical Planner",
-    "safe-harbor",
-    "Can I afford a break, and what does it cost?",
-    ["sabbatical", "break", "big purchase"],
-  ),
+  downshiftTile,
+  sabbaticalTile,
 
   // --- My Plan (BUILD-SPEC-2 §4) ---
   yourPlanTile,

@@ -303,3 +303,113 @@ describe("refinance break-even", () => {
     expect(refinanceBreakEven(i)).toEqual(refinanceBreakEven(i));
   });
 });
+
+import { coastFireProjection, sabbaticalPlan } from "../../src/engine/finance";
+
+/**
+ * Golden cases for the Downshift Point (coast-FIRE) projection (BUILD-SPEC.md
+ * §5.1, §9). The growth factor (1+r)^years is computed by hand; the return is
+ * the user's assumption, never a prediction.
+ */
+describe("coast-FIRE projection", () => {
+  it("reports the coast number and gap when not yet reached", () => {
+    // 200,000 at 5% real for 20 years → 200,000 × 1.05^20 = 530,659.54.
+    // Coast number = 1,000,000 / 1.05^20 = 376,889.48; gap = 176,889.48.
+    const r = coastFireProjection({
+      currentBalance: 200000,
+      annualRealReturnPct: 5,
+      years: 20,
+      targetNumber: 1000000,
+    });
+    expect(r.projected.roundToCents().toNumber()).toBeCloseTo(530659.54, 1);
+    expect(r.coastNumber.roundToCents().toNumber()).toBeCloseTo(376889.48, 1);
+    expect(r.reached).toBe(false);
+    expect(r.gap.roundToCents().toNumber()).toBeCloseTo(176889.48, 1);
+  });
+
+  it("marks the Downshift Point reached once today's balance coasts to target", () => {
+    // 400,000 × 1.05^20 = 1,061,319.08 ≥ 1,000,000 → reached, no gap.
+    const r = coastFireProjection({
+      currentBalance: 400000,
+      annualRealReturnPct: 5,
+      years: 20,
+      targetNumber: 1000000,
+    });
+    expect(r.reached).toBe(true);
+    expect(r.gap.isZero()).toBe(true);
+  });
+
+  it("with a zero return, the projection is just today's balance", () => {
+    const r = coastFireProjection({
+      currentBalance: 50000,
+      annualRealReturnPct: 0,
+      years: 30,
+      targetNumber: 100000,
+    });
+    expect(r.projected.toNumber()).toBe(50000);
+    expect(r.coastNumber.toNumber()).toBe(100000);
+    expect(r.reached).toBe(false);
+  });
+});
+
+/**
+ * Golden cases for the sabbatical / big-purchase planner (BUILD-SPEC.md §5.2,
+ * §9). Pure arithmetic on the user's own numbers.
+ */
+describe("sabbatical planner", () => {
+  it("computes the cost, leftover, and runway of an affordable break", () => {
+    // 6 months at 4,000/mo burn, no income → 24,000 cost; 30,000 − 24,000 = 6,000
+    // left; 6,000 / 4,000 = 1.5 months of runway after.
+    const r = sabbaticalPlan({
+      savings: 30000,
+      monthlyEssentialBurn: 4000,
+      breakMonths: 6,
+      monthlyIncomeDuringBreak: 0,
+      oneTimeCost: 0,
+    });
+    expect(r.totalCost.toNumber()).toBe(24000);
+    expect(r.remaining.toNumber()).toBe(6000);
+    expect(r.affordable).toBe(true);
+    expect(r.runwayAfterMonths).toBeCloseTo(1.5, 5);
+  });
+
+  it("credits income earned during the break", () => {
+    // net draw 4,000 − 1,500 = 2,500/mo × 6 = 15,000.
+    const r = sabbaticalPlan({
+      savings: 30000,
+      monthlyEssentialBurn: 4000,
+      breakMonths: 6,
+      monthlyIncomeDuringBreak: 1500,
+      oneTimeCost: 0,
+    });
+    expect(r.netMonthlyDraw.toNumber()).toBe(2500);
+    expect(r.totalCost.toNumber()).toBe(15000);
+    expect(r.remaining.toNumber()).toBe(15000);
+  });
+
+  it("flags a shortfall calmly (remaining goes negative, not affordable)", () => {
+    const r = sabbaticalPlan({
+      savings: 10000,
+      monthlyEssentialBurn: 4000,
+      breakMonths: 6,
+      monthlyIncomeDuringBreak: 0,
+      oneTimeCost: 0,
+    });
+    expect(r.affordable).toBe(false);
+    expect(r.remaining.toNumber()).toBe(-14000);
+    expect(r.runwayAfterMonths).toBe(0);
+  });
+
+  it("handles a pure big purchase (no break months)", () => {
+    const r = sabbaticalPlan({
+      savings: 30000,
+      monthlyEssentialBurn: 4000,
+      breakMonths: 0,
+      monthlyIncomeDuringBreak: 0,
+      oneTimeCost: 20000,
+    });
+    expect(r.totalCost.toNumber()).toBe(20000);
+    expect(r.remaining.toNumber()).toBe(10000);
+    expect(r.affordable).toBe(true);
+  });
+});

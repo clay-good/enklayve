@@ -263,6 +263,100 @@ export function amortizationSummary(input: AmortizationInput): AmortizationResul
   };
 }
 
+export interface CoastFireInput {
+  /** Invested balance today. */
+  currentBalance: number;
+  /** Assumed real (after-inflation) annual return, as a percentage (e.g. 5). */
+  annualRealReturnPct: number;
+  /** Years from now until the target date (e.g. retirement age − current age). */
+  years: number;
+  /** The target balance to coast to (e.g. My Enough Number). */
+  targetNumber: number;
+}
+
+export interface CoastFireResult {
+  /** Today's balance grown for `years` at the assumed rate, with no new saving. */
+  projected: Money;
+  /** The balance you'd need today to coast exactly to the target by then. */
+  coastNumber: Money;
+  /** True once today's balance alone would reach the target — the Downshift Point. */
+  reached: boolean;
+  /** How much more you'd need today to reach the Downshift Point (0 once reached). */
+  gap: Money;
+}
+
+/**
+ * Downshift Point / coast-FIRE projection (BUILD-SPEC.md §5.1). Given a balance
+ * today and an assumed real return, project what it grows to by the target date
+ * with NO further contributions, and the "coast number" — the balance today that
+ * would coast exactly to the target. Once today's balance reaches the coast
+ * number, continued saving is optional. The return is the user's assumption,
+ * clearly labeled; we never predict markets (§2.1).
+ */
+export function coastFireProjection(input: CoastFireInput): CoastFireResult {
+  const r = new Decimal(input.annualRealReturnPct).div(100);
+  const years = Math.max(0, input.years);
+  const factor = r.plus(1).pow(years); // (1 + r)^years
+  const projected = Money.from(new Decimal(input.currentBalance).times(factor));
+  const coastNumber = factor.isZero()
+    ? Money.from(input.targetNumber)
+    : Money.from(new Decimal(input.targetNumber).div(factor));
+  const reached = projected.greaterThanOrEqual(input.targetNumber);
+  const gap = coastNumber.subtract(input.currentBalance);
+  return { projected, coastNumber, reached, gap: gap.isNegative() ? Money.zero() : gap };
+}
+
+export interface SabbaticalInput {
+  /** Savings set aside for the break. */
+  savings: number;
+  /** Essential monthly spending during the break. */
+  monthlyEssentialBurn: number;
+  /** Length of the break in months (0 for a pure big-purchase question). */
+  breakMonths: number;
+  /** Any income still coming in during the break (part-time, rental, etc.). */
+  monthlyIncomeDuringBreak: number;
+  /** A one-time cost on top of living expenses (the "big purchase"). */
+  oneTimeCost: number;
+}
+
+export interface SabbaticalResult {
+  /** Net monthly draw on savings (burn − income, never negative). */
+  netMonthlyDraw: Money;
+  /** Total cost of the break: net draw × months + the one-time cost. */
+  totalCost: Money;
+  /** Savings left afterward (negative when it's not covered). */
+  remaining: Money;
+  /** True when savings cover the whole plan. */
+  affordable: boolean;
+  /** Months of runway the remaining savings buy at the essential burn. */
+  runwayAfterMonths: number;
+}
+
+/**
+ * Sabbatical and big-purchase planner (BUILD-SPEC.md §5.2). Deterministic
+ * arithmetic on the user's own numbers: what a break (or a one-time purchase)
+ * costs, whether current savings cover it, and the runway left afterward. Framed
+ * calmly — it answers "can I afford this, and what does it leave me?" without
+ * shame (§5.3).
+ */
+export function sabbaticalPlan(input: SabbaticalInput): SabbaticalResult {
+  const burn = Money.from(Math.max(0, input.monthlyEssentialBurn));
+  const income = Money.from(Math.max(0, input.monthlyIncomeDuringBreak));
+  let netDraw = burn.subtract(income);
+  if (netDraw.isNegative()) netDraw = Money.zero();
+
+  const months = Math.max(0, Math.round(input.breakMonths));
+  const totalCost = netDraw.multiply(months).add(Math.max(0, input.oneTimeCost));
+  const remaining = Money.from(Math.max(0, input.savings)).subtract(totalCost);
+  const affordable = !remaining.isNegative();
+
+  const burnNum = burn.toNumber();
+  const runwayAfterMonths =
+    affordable && burnNum > 0 ? Math.min(1200, remaining.toNumber() / burnNum) : 0;
+
+  return { netMonthlyDraw: netDraw, totalCost, remaining, affordable, runwayAfterMonths };
+}
+
 export interface RefinanceInput {
   /** Current loan balance being refinanced. */
   balance: number;

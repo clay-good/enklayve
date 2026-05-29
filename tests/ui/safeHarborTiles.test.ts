@@ -2,6 +2,8 @@ import { describe, it, expect, afterEach } from "vitest";
 import axe from "axe-core";
 import { mountPeaceOfMind } from "../../src/tiles/peaceOfMind";
 import { mountFreedomDate } from "../../src/tiles/freedomDate";
+import { mountDownshift } from "../../src/tiles/downshift";
+import { mountSabbatical } from "../../src/tiles/sabbatical";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
 
@@ -150,4 +152,83 @@ describe("Freedom Date tile", () => {
     expect(root.querySelector<HTMLInputElement>('input[name="b"]')?.value).toBe("6000");
     expect(lastParams()?.get("pay")).toBe("300");
   });
+});
+
+describe("Downshift Point tile", () => {
+  it("shows the coast number and gap when not yet reached, no rule to cite", () => {
+    const { root } = mount(
+      mountDownshift,
+      new URLSearchParams({ age: "40", ret: "65", bal: "150000", r: "5", t: "1000000" }),
+    );
+    expect(root.querySelector(".result-label")?.textContent).toBe("Your Downshift Point");
+    const labels = texts(root, ".bd-label");
+    expect(labels.some((l) => l.startsWith("Coast number"))).toBe(true);
+    expect(labels).toContain("Where you stand");
+    // The return is the user's assumption, not a cited rule.
+    expect(root.querySelector("a.cite-link")).toBeNull();
+    expect(texts(root, ".bd-value").some((v) => v.includes("your assumption"))).toBe(true);
+  });
+
+  it("celebrates calmly once the Downshift Point is reached", () => {
+    const { root } = mount(
+      mountDownshift,
+      new URLSearchParams({ age: "40", ret: "65", bal: "400000", r: "5", t: "1000000" }),
+    );
+    expect(texts(root, ".bd-value").some((v) => v.includes("Reached"))).toBe(true);
+  });
+
+  it("prompts for a target before guessing when none is known", () => {
+    const { root } = mount(mountDownshift, new URLSearchParams({ t: "0" }));
+    expect(root.querySelector(".ph-empty")).not.toBeNull();
+  });
+
+  it("has no axe violations", async () => {
+    const { root } = mount(
+      mountDownshift,
+      new URLSearchParams({ age: "40", ret: "65", bal: "150000", r: "5", t: "1000000" }),
+    );
+    document.body.append(root);
+    const results = await axe.run(root, { rules: { "color-contrast": { enabled: false } } });
+    expect(results.violations.map((v) => v.id).join(", ")).toBe("");
+  }, 30000);
+});
+
+describe("Sabbatical Planner tile", () => {
+  it("computes an affordable break with the runway left over", () => {
+    const { root } = mount(
+      mountSabbatical,
+      new URLSearchParams({ s: "30000", burn: "4000", m: "6" }),
+    );
+    expect(root.querySelector(".result-label")?.textContent).toBe("Cost of your break");
+    const rows = texts(root, ".bd-row");
+    const total = rows.find((t) => t.includes("Total cost of the plan"));
+    expect(total).toContain("$24,000");
+    expect(texts(root, ".bd-value").some((v) => v.includes("Yes"))).toBe(true);
+    expect(root.querySelector(".verify-banner")).toBeNull();
+  });
+
+  it("warns calmly (red allowed) when the break isn't covered", () => {
+    const { root } = mount(
+      mountSabbatical,
+      new URLSearchParams({ s: "10000", burn: "4000", m: "6" }),
+    );
+    expect(root.querySelector(".verify-banner")?.textContent).toContain("short");
+  });
+
+  it("prefills a worked example and deep-links it", () => {
+    const { root, lastParams } = mount(mountSabbatical, new URLSearchParams());
+    clickExample(root);
+    expect(root.querySelector<HTMLInputElement>('input[name="s"]')?.value).toBe("30000");
+    expect(lastParams()?.get("m")).toBe("6");
+  });
+
+  it("has no axe violations", async () => {
+    const { root } = mount(
+      mountSabbatical,
+      new URLSearchParams({ s: "30000", burn: "4000", m: "6" }),
+    );
+    document.body.append(root);
+    const results = await axe.run(root, { rules: { "color-contrast": { enabled: false } } });
+    expect(results.violations.map((v) => v.id).join(", ")).toBe("");
+  }, 30000);
 });
