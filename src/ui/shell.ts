@@ -102,6 +102,36 @@ function tileLink(tile: TileDefinition, navigate: (id: string) => void): HTMLEle
   );
 }
 
+/**
+ * The Readout dropzone — the hero of the home experience (BUILD-SPEC-2 §1.1,
+ * §2). It is the single most personal moment in the product: drop a document
+ * and get an instant private readout, parsed on the device. The parsing engine
+ * lands in Phase 14; for now the dropzone is the inviting entry point that
+ * navigates into the Readout view.
+ */
+function readoutDropzone(navigate: (id: string | null) => void): HTMLElement {
+  return el(
+    "button",
+    {
+      type: "button",
+      class: "readout-dropzone",
+      attrs: {
+        "aria-label": "Open the Readout to drop a pay stub, W-2, 1040, or 1095-A",
+      },
+      on: { click: () => navigate("readout") },
+    },
+    el("span", { class: "readout-dropzone-icon", attrs: { "aria-hidden": "true" }, text: "⤓" }),
+    el("span", {
+      class: "readout-dropzone-title",
+      text: "Drop a pay stub, W-2, 1040, or 1095-A",
+    }),
+    el("span", {
+      class: "readout-dropzone-sub",
+      text: "Get an instant private readout — parsed on your device, never uploaded.",
+    }),
+  );
+}
+
 function renderHome(
   container: HTMLElement,
   navigate: (id: string | null) => void,
@@ -118,6 +148,7 @@ function renderHome(
       class: "hero-sub",
       text: "Your real take-home, what you owe, and what you're owed — computed entirely on your device. Nothing ever leaves.",
     }),
+    readoutDropzone(navigate),
   );
 
   const search = el(
@@ -132,21 +163,130 @@ function renderHome(
     el("kbd", { class: "kbd", text: "⌘K" }),
   );
 
+  // Compact grouped browsing: one expandable card per pillar (plus Your Plan),
+  // collapsed by default so the home stays short to scroll (BUILD-SPEC-2 §1.1,
+  // §1.2). Native <details>/<summary> keeps it fully keyboard- and
+  // screen-reader-operable without a mega dropdown.
   const grid = el("div", { class: "pillar-grid" });
   for (const pillar of PILLARS) {
     const tiles = tilesForPillar(pillar.id);
-    grid.append(
+    const card = el(
+      "details",
+      { class: "pillar-card" },
+      el(
+        "summary",
+        { class: "pillar-summary" },
+        el(
+          "span",
+          { class: "pillar-summary-text" },
+          el("span", { class: "pillar-title", text: pillar.title }),
+          el("span", { class: "pillar-blurb", text: pillar.blurb }),
+        ),
+        el("span", {
+          class: "pillar-count",
+          text: `${tiles.length} ${tiles.length === 1 ? "tool" : "tools"}`,
+        }),
+      ),
+      el("ul", { class: "tile-list" }, ...tiles.map((t) => tileLink(t, (id) => navigate(id)))),
+    );
+    grid.append(card);
+  }
+
+  // The All Tools index card: a stable, linkable, crawlable home for every tool.
+  const indexCard = el(
+    "button",
+    {
+      type: "button",
+      class: "index-card",
+      on: { click: () => navigate("all-tools") },
+    },
+    el("span", { class: "pillar-title", text: "All tools" }),
+    el("span", { class: "pillar-blurb", text: "Browse the full index of every tool." }),
+  );
+  grid.append(indexCard);
+
+  container.append(hero, search, grid);
+}
+
+/**
+ * The All Tools index (BUILD-SPEC-2 §1.2): a stable, linkable home for every
+ * tool, grouped by pillar. The client route mirrors the static `tools.html`
+ * emitted at build time for search-engine crawlability.
+ */
+function renderAllTools(container: HTMLElement, navigate: (id: string | null) => void): void {
+  clear(container);
+  document.title = "All tools — enklayve";
+
+  const back = el(
+    "button",
+    { type: "button", class: "btn btn--ghost back-link", on: { click: () => navigate(null) } },
+    "← Home",
+  );
+
+  const head = el(
+    "div",
+    { class: "tile-head" },
+    back,
+    el("h1", { class: "tile-title", text: "All tools" }),
+    el("p", {
+      class: "tile-desc",
+      text: "Every enklayve tool, grouped by pillar. Each runs entirely on your device.",
+    }),
+  );
+
+  const sections = el("div", { class: "all-tools" });
+  for (const pillar of PILLARS) {
+    const tiles = tilesForPillar(pillar.id);
+    if (tiles.length === 0) continue;
+    sections.append(
       el(
         "section",
-        { class: "pillar-card" },
+        { class: "all-tools-group" },
         el("h2", { class: "pillar-title", text: pillar.title }),
-        el("p", { class: "pillar-blurb", text: pillar.blurb }),
         el("ul", { class: "tile-list" }, ...tiles.map((t) => tileLink(t, (id) => navigate(id)))),
       ),
     );
   }
 
-  container.append(hero, search, grid);
+  container.append(el("article", { class: "tile" }, head, sections));
+}
+
+/**
+ * The Readout view (BUILD-SPEC-2 §2). Deterministic on-device document parsing
+ * lands in Phase 14; this is the destination of the hero dropzone until then,
+ * explaining the privacy promise so the entry point is honest about its state.
+ */
+function renderReadout(container: HTMLElement, navigate: (id: string | null) => void): void {
+  clear(container);
+  document.title = "The Readout — enklayve";
+
+  const back = el(
+    "button",
+    { type: "button", class: "btn btn--ghost back-link", on: { click: () => navigate(null) } },
+    "← Home",
+  );
+
+  const head = el(
+    "div",
+    { class: "tile-head" },
+    back,
+    el("h1", { class: "tile-title", text: "The Readout" }),
+    el("p", {
+      class: "tile-desc",
+      text: "Drop a pay stub, W-2, 1040, 1099, 1095-A, or mortgage statement and get an instant private readout.",
+    }),
+  );
+
+  const body = el(
+    "div",
+    { class: "tile-body" },
+    el("p", {
+      class: "coming-soon-note",
+      text: "On-device document parsing is being built phase by phase. When it lands, files are read locally with pdf.js and never uploaded — the Content-Security-Policy connect-src stays 'none', so the browser physically cannot send your documents anywhere.",
+    }),
+  );
+
+  container.append(el("article", { class: "tile" }, head, body));
 }
 
 function renderTileView(
@@ -262,6 +402,14 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
       renderHome(content, navigate, openPalette);
       return;
     }
+    if (route.tileId === "all-tools") {
+      renderAllTools(content, navigate);
+      return;
+    }
+    if (route.tileId === "readout") {
+      renderReadout(content, navigate);
+      return;
+    }
     const tile = getTile(route.tileId);
     if (!tile) {
       navigate(null);
@@ -283,4 +431,4 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
 }
 
 // Exposed for unit tests.
-export { renderHome, renderTileView };
+export { renderHome, renderTileView, renderAllTools, renderReadout };

@@ -236,6 +236,47 @@ body {
   margin: 0 auto;
 }
 
+/* --- The Readout dropzone (hero) --- */
+.readout-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  max-width: 40rem;
+  margin: 1.5rem auto 0;
+  padding: 2rem 1.5rem;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  color: var(--enk-text);
+  background: var(--enk-primary-soft);
+  border: 2px dashed var(--enk-primary);
+  border-radius: var(--enk-radius);
+  transition: background 0.15s ease;
+}
+
+.readout-dropzone:hover {
+  background: var(--enk-surface);
+}
+
+.readout-dropzone-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  color: var(--enk-primary);
+}
+
+.readout-dropzone-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.readout-dropzone-sub {
+  color: var(--enk-text-muted);
+  font-size: 0.9rem;
+  max-width: 30rem;
+}
+
 .home-search {
   display: flex;
   align-items: center;
@@ -263,24 +304,97 @@ body {
   gap: 1rem;
 }
 
-.pillar-card {
+.pillar-card,
+.index-card {
   background: var(--enk-surface);
   border: 1px solid var(--enk-border);
   border-radius: var(--enk-radius);
-  padding: 1.1rem 1.2rem;
   box-shadow: var(--enk-shadow);
 }
 
+.pillar-card {
+  padding: 0;
+}
+
+/* Expandable category card (BUILD-SPEC-2 §1.1): collapsed by default. */
+.pillar-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.1rem 1.2rem;
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--enk-radius);
+}
+
+.pillar-summary::-webkit-details-marker {
+  display: none;
+}
+
+.pillar-summary::after {
+  content: "▸";
+  color: var(--enk-primary);
+  transition: transform 0.15s ease;
+}
+
+.pillar-card[open] .pillar-summary::after {
+  transform: rotate(90deg);
+}
+
+.pillar-summary:hover {
+  background: var(--enk-primary-soft);
+}
+
+.pillar-summary-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.pillar-count {
+  flex: none;
+  font-size: 0.75rem;
+  color: var(--enk-text-muted);
+}
+
+.index-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 1.1rem 1.2rem;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  color: var(--enk-text);
+}
+
+.index-card:hover {
+  border-color: var(--enk-primary);
+}
+
 .pillar-title {
-  margin: 0 0 0.2rem;
+  margin: 0;
   font-size: 1.1rem;
   color: var(--enk-primary);
 }
 
 .pillar-blurb {
-  margin: 0 0 0.75rem;
+  margin: 0;
   color: var(--enk-text-muted);
   font-size: 0.9rem;
+}
+
+/* --- All Tools index page --- */
+.all-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.all-tools-group .pillar-title {
+  margin-bottom: 0.5rem;
 }
 
 .tile-list {
@@ -290,6 +404,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+}
+
+/* Inside an expandable card the list sits below the summary, so it needs its
+   own inset since the card itself has no padding. */
+.pillar-card .tile-list {
+  padding: 0 0.7rem 0.8rem;
 }
 
 .tile-link {
