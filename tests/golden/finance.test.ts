@@ -71,3 +71,48 @@ describe("compound growth", () => {
     );
   });
 });
+
+import { debtPayoff } from "../../src/engine/finance";
+
+/**
+ * Golden cases for the Freedom Date payoff math (BUILD-SPEC.md §5.1, §9).
+ * Deterministic month-by-month payoff; a payment that can't cover the interest
+ * is surfaced as "never" rather than an infinite loop.
+ */
+describe("debt payoff", () => {
+  it("zero rate is simple division (rounded up to whole months)", () => {
+    const r = debtPayoff(6000, 0, 500);
+    expect(r).not.toBeNull();
+    expect(r!.months).toBe(12);
+    expect(r!.totalInterest.toNumber()).toBe(0);
+    expect(r!.totalPaid.roundToCents().toNumber()).toBe(6000);
+  });
+
+  it("charges interest and pays off a card in finite time", () => {
+    const r = debtPayoff(6000, 22, 300);
+    expect(r).not.toBeNull();
+    // ~24 months, with real interest paid.
+    expect(r!.months).toBeGreaterThan(20);
+    expect(r!.months).toBeLessThan(30);
+    expect(r!.totalInterest.toNumber()).toBeGreaterThan(0);
+    // Total paid = principal + interest.
+    expect(r!.totalPaid.roundToCents().toNumber()).toBe(
+      r!.totalInterest.add(6000).roundToCents().toNumber(),
+    );
+  });
+
+  it("returns null when the payment can't cover the monthly interest", () => {
+    // $10,000 at 18% accrues $150/mo; a $150 payment never reduces the balance.
+    expect(debtPayoff(10000, 18, 150)).toBeNull();
+  });
+
+  it("treats a zero balance as already free", () => {
+    const r = debtPayoff(0, 22, 300);
+    expect(r).not.toBeNull();
+    expect(r!.months).toBe(0);
+  });
+
+  it("is deterministic", () => {
+    expect(debtPayoff(6000, 22, 300)).toEqual(debtPayoff(6000, 22, 300));
+  });
+});

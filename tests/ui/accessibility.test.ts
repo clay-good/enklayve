@@ -7,6 +7,8 @@ import { mountFederalIncomeTax } from "../../src/tiles/federalIncomeTax";
 import { mountMarginalExplorer } from "../../src/tiles/marginalExplorer";
 import { mountCompoundGrowth } from "../../src/tiles/compoundGrowth";
 import { mountYourPlan } from "../../src/tiles/yourPlan";
+import { mountPeaceOfMind } from "../../src/tiles/peaceOfMind";
+import { mountFreedomDate } from "../../src/tiles/freedomDate";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
@@ -89,6 +91,16 @@ describe("accessibility (axe-core)", () => {
         name: "your-plan",
         mount: mountYourPlan,
         params: new URLSearchParams(),
+      },
+      {
+        name: "peace-of-mind",
+        mount: mountPeaceOfMind,
+        params: new URLSearchParams(),
+      },
+      {
+        name: "freedom-date",
+        mount: mountFreedomDate,
+        params: new URLSearchParams({ b: "6000", r: "22", pay: "300" }),
       },
     ];
 

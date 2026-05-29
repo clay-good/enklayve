@@ -10,6 +10,8 @@ import { takeHomeTile } from "./takeHome";
 import { federalIncomeTaxTile } from "./federalIncomeTax";
 import { marginalExplorerTile } from "./marginalExplorer";
 import { compoundGrowthTile } from "./compoundGrowth";
+import { peaceOfMindTile } from "./peaceOfMind";
+import { freedomDateTile } from "./freedomDate";
 import { yourPlanTile } from "./yourPlan";
 
 function soon(
@@ -161,49 +163,17 @@ export const TILES: TileDefinition[] = [
   ),
 
   // --- Pillar 3: Safe Harbor (§5) ---
-  soon(
-    "rainy-day",
-    "Rainy Day Fund",
-    "safe-harbor",
-    "How many months of essentials your savings cover.",
-    ["emergency fund", "rainy day", "cushion"],
-  ),
-  soon("runway", "Runway", "safe-harbor", "How long your savings last at your burn rate.", [
-    "runway",
-    "burn rate",
-    "savings",
-  ]),
-  soon(
-    "war-chest",
-    "War Chest",
-    "safe-harbor",
-    "Your liquid safety net and net worth, tracked privately.",
-    ["net worth", "war chest", "assets"],
-  ),
-  soon(
-    "enough-number",
-    "Your Enough Number",
-    "safe-harbor",
-    "The amount that buys you choices, inflation aware.",
-    ["enough", "fire", "financial independence"],
-  ),
+  // The Peace of Mind dashboard consolidates the rainy-day cushion, runway,
+  // net worth (war chest), and Your Enough Number into one calm overview, so the
+  // user enters shared inputs once instead of re-typing them into four
+  // near-identical calculators (the math was the same: savings ÷ monthly spend).
+  peaceOfMindTile,
+  freedomDateTile,
   soon("downshift", "Downshift Point", "safe-harbor", "When continued saving becomes optional.", [
     "coast fire",
     "downshift",
     "retirement",
   ]),
-  soon("freedom-date", "Freedom Date", "safe-harbor", "The date your debts are gone.", [
-    "debt payoff",
-    "freedom",
-    "debt free",
-  ]),
-  soon(
-    "peace-of-mind",
-    "Peace of Mind Dashboard",
-    "safe-harbor",
-    "Cushion, runway, and progress toward enough, at a glance.",
-    ["dashboard", "overview", "calm"],
-  ),
   soon(
     "sabbatical",
     "Sabbatical Planner",

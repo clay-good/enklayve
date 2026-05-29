@@ -1060,3 +1060,84 @@ body {
   font-size: 0.85rem;
   color: var(--enk-text-muted);
 }
+
+/* --- Peace of Mind dashboard (BUILD-SPEC.md §5.2) ------------------------ */
+.ph-intro {
+  color: var(--enk-text-muted);
+  margin: 0 0 1.25rem;
+  max-width: 60ch;
+}
+.ph-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.85rem;
+}
+.ph-reading {
+  border: 1px solid var(--enk-border);
+  border-radius: var(--enk-radius);
+  background: var(--enk-surface);
+  padding: 1rem 1.15rem;
+  box-shadow: var(--enk-shadow);
+}
+.ph-reading-label {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--enk-primary-strong);
+}
+.ph-reading-value {
+  margin: 0.25rem 0;
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--enk-text);
+}
+.ph-reading-sub {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--enk-text-muted);
+}
+.ph-progress {
+  width: 100%;
+  height: 0.5rem;
+  margin-top: 0.6rem;
+  appearance: none;
+  border: none;
+  border-radius: 999px;
+  background: var(--enk-surface-2);
+  overflow: hidden;
+}
+.ph-progress::-webkit-progress-bar {
+  background: var(--enk-surface-2);
+  border-radius: 999px;
+}
+.ph-progress::-webkit-progress-value {
+  background: var(--enk-accent);
+  border-radius: 999px;
+}
+.ph-progress::-moz-progress-bar {
+  background: var(--enk-accent);
+  border-radius: 999px;
+}
+.ph-empty {
+  color: var(--enk-text-muted);
+  padding: 1rem 0;
+}
+.ph-config {
+  margin-top: 1.75rem;
+  border: 1px solid var(--enk-border);
+  border-radius: var(--enk-radius);
+  background: var(--enk-surface);
+  padding: 0.5rem 1rem 1rem;
+}
+.ph-config > summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--enk-primary-strong);
+  padding: 0.5rem 0;
+}
+.ph-config-note {
+  color: var(--enk-text-muted);
+  font-size: 0.9rem;
+}

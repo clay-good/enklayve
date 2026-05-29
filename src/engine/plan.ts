@@ -169,7 +169,7 @@ export const PLAN_STEPS: StepDef[] = [
   {
     id: "starter-cushion",
     title: "Starter cushion",
-    tileId: "rainy-day",
+    tileId: "peace-of-mind",
     evaluate(input, config) {
       const target = config.starterCushion;
       const have = input.liquidSavings;
@@ -249,7 +249,7 @@ export const PLAN_STEPS: StepDef[] = [
   {
     id: "rainy-day-fund",
     title: "Full rainy-day fund",
-    tileId: "rainy-day",
+    tileId: "peace-of-mind",
     evaluate(input, config) {
       const essential = input.essentialMonthlyExpenses;
       if (essential <= 0) {
@@ -336,7 +336,7 @@ export const PLAN_STEPS: StepDef[] = [
   {
     id: "war-chest",
     title: "Build the war chest",
-    tileId: "enough-number",
+    tileId: "peace-of-mind",
     evaluate(input, config) {
       const essential = input.essentialMonthlyExpenses;
       if (essential <= 0) {

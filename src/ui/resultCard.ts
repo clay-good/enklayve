@@ -27,6 +27,14 @@ export interface ResultCardOptions {
   breakdown: BreakdownLine[];
   /** Returns the current shareable URL — read lazily so it reflects edits. */
   permalink: () => string;
+  /**
+   * Override the headline formatting (default: USD currency). Safe Harbor tiles
+   * use this for answers that are a duration ("3.2 months") rather than dollars.
+   * Receives the counted-up number each frame.
+   */
+  format?: (n: number) => string;
+  /** Text the copy button copies (default: the currency-formatted value). */
+  copyText?: string;
 }
 
 function citationLink(citation: CitationData): HTMLElement {
@@ -65,10 +73,15 @@ export function resultCard(options: ResultCardOptions): HTMLElement {
     text: "",
   });
 
-  // Count up to the rounded-to-cents number, formatting every frame as currency.
-  countUp(valueNode, options.value.roundToCents().toNumber(), (n) =>
-    new Intl.NumberFormat(options.locale, { style: "currency", currency: "USD" }).format(n),
-  );
+  // Count up to the headline number, formatting every frame. Currency by
+  // default; a tile can override `format` for a duration or other unit.
+  const currency = (n: number): string =>
+    new Intl.NumberFormat(options.locale, { style: "currency", currency: "USD" }).format(n);
+  const formatHeadline = options.format ?? currency;
+  const target = options.format
+    ? options.value.toNumber()
+    : options.value.roundToCents().toNumber();
+  countUp(valueNode, target, formatHeadline);
 
   const copyBtn = el("button", {
     type: "button",
@@ -76,7 +89,7 @@ export function resultCard(options: ResultCardOptions): HTMLElement {
     text: "Copy number",
     on: {
       click: () => {
-        void copyToClipboard(options.value.format(options.locale));
+        void copyToClipboard(options.copyText ?? options.value.format(options.locale));
       },
     },
   });

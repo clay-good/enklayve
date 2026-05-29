@@ -66,3 +66,55 @@ export function compoundGrowth(input: CompoundGrowthInput): CompoundGrowthResult
     periods,
   };
 }
+
+export interface PayoffResult {
+  /** Whole months until the balance reaches zero. */
+  months: number;
+  /** Total interest paid over the payoff. */
+  totalInterest: Money;
+  /** Total paid (principal + interest). */
+  totalPaid: Money;
+}
+
+/**
+ * Months to pay off a debt at a fixed monthly payment (BUILD-SPEC.md §5.1,
+ * "Freedom Date"). Iterates month by month in exact decimal so the interest
+ * total is precise. Returns null when the payment can't cover the monthly
+ * interest (the balance never falls — we surface that rather than show ∞).
+ *
+ * @param balance        current balance owed
+ * @param annualRatePct  annual interest rate as a percentage (e.g. 22.99)
+ * @param monthlyPayment fixed amount paid each month
+ */
+export function debtPayoff(
+  balance: number,
+  annualRatePct: number,
+  monthlyPayment: number,
+): PayoffResult | null {
+  let bal = Money.from(Math.max(0, balance));
+  if (bal.isZero()) {
+    return { months: 0, totalInterest: Money.zero(), totalPaid: Money.zero() };
+  }
+  const payment = Money.from(Math.max(0, monthlyPayment));
+  const monthlyRate = new Decimal(annualRatePct).div(100).div(12);
+
+  let interestPaid = Money.zero();
+  let paid = Money.zero();
+  let months = 0;
+  const MAX_MONTHS = 1200; // 100 years — beyond this we treat it as "never".
+
+  while (bal.greaterThan(0) && months < MAX_MONTHS) {
+    const interest = bal.multiply(monthlyRate);
+    // A payment that can't even cover the interest never retires the debt.
+    if (payment.lessThanOrEqual(interest)) return null;
+    const owed = bal.add(interest);
+    const pay = payment.greaterThan(owed) ? owed : payment; // final payment trims to the balance
+    bal = owed.subtract(pay);
+    interestPaid = interestPaid.add(interest);
+    paid = paid.add(pay);
+    months += 1;
+  }
+
+  if (bal.greaterThan(0)) return null;
+  return { months, totalInterest: interestPaid, totalPaid: paid };
+}
