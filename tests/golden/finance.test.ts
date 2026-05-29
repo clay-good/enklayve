@@ -777,3 +777,48 @@ describe("college cost plan", () => {
     expect(r.monthlyContribution.isZero()).toBe(true);
   });
 });
+
+import { balanceTransferBreakEven } from "../../src/engine/finance";
+
+describe("balance transfer break-even", () => {
+  it("compares an interest-bearing card against a 0% transfer with a fee", () => {
+    const r = balanceTransferBreakEven({
+      balance: 6000,
+      currentAprPct: 24,
+      monthlyPayment: 1000,
+      transferFeePct: 3,
+      introAprPct: 0,
+      introMonths: 12,
+      postIntroAprPct: 18,
+    });
+    // Current card: paid off in 7 months with $457.83 of interest.
+    expect(r.currentMonths).toBe(7);
+    expect(r.currentInterest!.roundToCents().toNumber()).toBe(457.83);
+    // Transfer: $180 fee, then $6,180 at 0% clears in 7 months with no interest.
+    expect(r.transferFee.toNumber()).toBe(180);
+    expect(r.transferMonths).toBe(7);
+    expect(r.transferInterest!.isZero()).toBe(true);
+    expect(r.transferTotalCost!.toNumber()).toBe(180);
+    expect(r.paysOffWithinIntro).toBe(true);
+    // Saving = $457.83 interest avoided − $180 fee = $277.83.
+    expect(r.interestSaved!.roundToCents().toNumber()).toBe(277.83);
+  });
+
+  it("flags a payment that can't cover the current card's interest", () => {
+    const r = balanceTransferBreakEven({
+      balance: 10000,
+      currentAprPct: 25,
+      monthlyPayment: 200, // less than the $208/mo interest at 25%
+      transferFeePct: 3,
+      introAprPct: 0,
+      introMonths: 12,
+      postIntroAprPct: 18,
+    });
+    expect(r.currentMonths).toBeNull();
+    expect(r.currentInterest).toBeNull();
+    // The 0% intro path knocks the balance down enough that the post-intro
+    // payment (vs ~18%) covers the interest, so the transfer still pays off.
+    expect(r.transferMonths).not.toBeNull();
+    expect(r.interestSaved).toBeNull(); // can't compare savings when one path never ends
+  });
+});

@@ -1003,3 +1003,109 @@ export function collegeCostPlan(input: CollegeCostInput): CollegeCostResult {
     alreadyOnTrack: funding.alreadyOnTrack,
   };
 }
+
+/** Pay a balance off month by month through an intro rate then a post-intro rate. */
+function simulatePhasedPayoff(
+  startBalance: number,
+  introRatePct: number,
+  introMonths: number,
+  postRatePct: number,
+  monthlyPayment: number,
+): { months: number; interest: Money } | null {
+  let bal = Money.from(Math.max(0, startBalance));
+  if (!bal.greaterThan(0)) return { months: 0, interest: Money.zero() };
+  const pay = Money.from(Math.max(0, monthlyPayment));
+  let interestTotal = Money.zero();
+  let months = 0;
+  const MAX_MONTHS = 1200;
+
+  while (bal.greaterThan(0) && months < MAX_MONTHS) {
+    const ratePct = months < Math.max(0, introMonths) ? introRatePct : postRatePct;
+    const monthlyRate = new Decimal(ratePct).div(100).div(12);
+    const interest = bal.multiply(monthlyRate);
+    // A payment that can't cover the interest never retires the balance.
+    if (interest.greaterThan(0) && pay.lessThanOrEqual(interest)) return null;
+    const owed = bal.add(interest);
+    const thisPay = pay.greaterThan(owed) ? owed : pay;
+    if (!thisPay.greaterThan(0)) return null; // no payment → never pays off
+    bal = owed.subtract(thisPay);
+    interestTotal = interestTotal.add(interest);
+    months += 1;
+  }
+  if (bal.greaterThan(0)) return null;
+  return { months, interest: interestTotal };
+}
+
+export interface BalanceTransferInput {
+  /** Current balance owed. */
+  balance: number;
+  /** Current card's APR, as a percentage. */
+  currentAprPct: number;
+  /** Fixed amount paid each month on either path. */
+  monthlyPayment: number;
+  /** Balance-transfer fee, as a percentage of the transferred balance. */
+  transferFeePct: number;
+  /** Promotional APR during the intro period (often 0), as a percentage. */
+  introAprPct: number;
+  /** Length of the intro period in months. */
+  introMonths: number;
+  /** APR after the intro period ends, as a percentage. */
+  postIntroAprPct: number;
+}
+
+export interface BalanceTransferResult {
+  /** Months to clear the current card (null if the payment can't cover interest). */
+  currentMonths: number | null;
+  /** Interest paid keeping the current card (null if it never pays off). */
+  currentInterest: Money | null;
+  /** The upfront transfer fee. */
+  transferFee: Money;
+  /** Months to clear the transferred balance (null if it never pays off). */
+  transferMonths: number | null;
+  /** Interest paid on the transfer path, excluding the fee (null if never). */
+  transferInterest: Money | null;
+  /** Transfer interest plus the fee (null if it never pays off). */
+  transferTotalCost: Money | null;
+  /** Current interest minus the transfer's total cost (positive = transferring saves). */
+  interestSaved: Money | null;
+  /** True when the transferred balance is cleared before the intro rate ends. */
+  paysOffWithinIntro: boolean;
+}
+
+/**
+ * Balance-transfer / consolidation break-even (BUILD-SPEC-2 §6.2). Compares
+ * keeping the current card against transferring the balance (paying a fee, then
+ * an intro APR for a promo window, then a post-intro APR), both at the same
+ * monthly payment. Deterministic from the fees and rates the user enters.
+ */
+export function balanceTransferBreakEven(input: BalanceTransferInput): BalanceTransferResult {
+  const current = debtPayoff(input.balance, input.currentAprPct, input.monthlyPayment);
+  const transferFee = Money.from(Math.max(0, input.balance)).multiply(
+    Math.max(0, input.transferFeePct) / 100,
+  );
+  const startBalance = Money.from(Math.max(0, input.balance)).add(transferFee);
+  const transfer = simulatePhasedPayoff(
+    startBalance.toNumber(),
+    input.introAprPct,
+    input.introMonths,
+    input.postIntroAprPct,
+    input.monthlyPayment,
+  );
+
+  const transferInterest = transfer ? transfer.interest : null;
+  const transferTotalCost = transferInterest ? transferInterest.add(transferFee) : null;
+  const currentInterest = current ? current.totalInterest : null;
+  const interestSaved =
+    currentInterest && transferTotalCost ? currentInterest.subtract(transferTotalCost) : null;
+
+  return {
+    currentMonths: current ? current.months : null,
+    currentInterest,
+    transferFee,
+    transferMonths: transfer ? transfer.months : null,
+    transferInterest,
+    transferTotalCost,
+    interestSaved,
+    paysOffWithinIntro: transfer ? transfer.months <= Math.max(0, input.introMonths) : false,
+  };
+}

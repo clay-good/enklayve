@@ -20,8 +20,11 @@ import { capitalGainsTile } from "./capitalGains";
 import { inflationTile } from "./inflation";
 import { rmdTile } from "./rmd";
 import { taxLossHarvestingTile } from "./taxLossHarvesting";
+import { lotPickerTile } from "./lotPicker";
 import { rothLadderTile } from "./rothLadder";
 import { backdoorRothTile } from "./backdoorRoth";
+import { balanceTransferTile } from "./balanceTransfer";
+import { paycheckOptimizerTile } from "./paycheckOptimizer";
 import { socialSecurityTile } from "./socialSecurity";
 import { drawdownTile } from "./drawdown";
 import { collegeCostTile } from "./collegeCost";
@@ -73,6 +76,7 @@ export const TILES: TileDefinition[] = [
   federalIncomeTaxTile,
   selfEmploymentTaxTile,
   capitalGainsTile,
+  lotPickerTile,
   taxLossHarvestingTile,
   rothLadderTile,
   backdoorRothTile,
@@ -80,8 +84,10 @@ export const TILES: TileDefinition[] = [
   loanAmortizationTile,
   refinanceTile,
   autoLoanTile,
+  balanceTransferTile,
   compoundGrowthTile,
   retirementOptimizerTile,
+  paycheckOptimizerTile,
   rmdTile,
   inflationTile,
   // Expansion tools (BUILD-SPEC-2 §6), cash-flow + home + open enrollment,
