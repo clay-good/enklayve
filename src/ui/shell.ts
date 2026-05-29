@@ -145,10 +145,10 @@ function renderHome(
   const hero = el(
     "section",
     { class: "hero" },
-    el("h1", { class: "hero-title", text: "Know where you stand. Privately." }),
+    el("h1", { class: "hero-title", text: "Know where you stand — and what to do next." }),
     el("p", {
       class: "hero-sub",
-      text: "A calm, kind personal-finance guide for the United States. See your real take-home, what you owe, and what you're owed — with the math shown and every source linked. It's all computed on your device, and nothing ever leaves.",
+      text: "The honest money guidance the experts charge hundreds for — your real paycheck, what you owe, what you're owed, and your next right step. Here it's free, and it always will be. No login, no ads, no cookie banner, no upsell. It runs entirely on your device, shows its math, and links every source, so you can just trust what you see.",
     }),
     readoutDropzone(navigate),
   );
@@ -244,23 +244,28 @@ function homeExplainer(): HTMLElement {
       "div",
       { class: "explainer-points" },
       point(
-        "It's truly private",
-        "Every number is computed on your device. The page literally cannot send your data anywhere — there's no server to send it to.",
+        "Free, and always free",
+        "No accounts, no ads, no cookie banner, no upsell, no “premium” tier. The personal-finance celebrities sell this; we think knowing where you stand should be a public good — free for everyone, for good.",
+      ),
+      point(
+        "Truly private",
+        "Every number is computed on your device. There's no server to send your data to, so it physically can't leak, get sold, or train anything.",
       ),
       point(
         "It shows its work",
-        "Every tool explains the logic and the math, and cites the public U.S. rule behind each figure, so you never have to just trust it.",
+        "Every figure shows the math and links the public rule it came from. You don't have to trust us — you can check it yourself. That's deterministic verification, not a hot take.",
       ),
       point(
-        "It's for the United States",
-        "enklayve is built around U.S. federal and state taxes and benefits. We're keeping the scope U.S.-only for now so every figure stays accurate.",
-      ),
-      point(
-        "It's free and on your side",
-        "No accounts, no ads, no upsell. It's a calm guide that gives you the next right step — never shame.",
+        "Peace, not pressure",
+        "No dark patterns, no shame, no fear-of-missing-out. Just clear answers and the next sensible step, whenever you want them.",
       ),
     ),
-    el("h3", { class: "explainer-subhead", text: "Trusted U.S. resources" }),
+    el("h3", { class: "explainer-subhead", text: "Where it works" }),
+    el("p", {
+      class: "explainer-point-body",
+      text: "enklayve covers U.S. federal and state taxes and benefits today. Support for more places — Europe, India, China, Russia, and beyond — is on the roadmap as we learn each one's rules properly. We'd rather be right than everywhere.",
+    }),
+    el("h3", { class: "explainer-subhead", text: "Trusted resources" }),
     el(
       "ul",
       { class: "explainer-resources" },
@@ -278,7 +283,7 @@ function homeExplainer(): HTMLElement {
     ),
     el("p", {
       class: "explainer-promise",
-      text: "This is information to help you understand your money, not financial, tax, or legal advice.",
+      text: "enklayve is educational information, not financial, tax, investment, or legal advice. Figures are estimates from public data and the numbers you enter; check anything important against the official source or a qualified professional before you act on it.",
     }),
   );
 }
@@ -430,7 +435,7 @@ function tileExplainer(tile: TileDefinition): HTMLElement | null {
   section.append(
     el("p", {
       class: "explainer-promise",
-      text: "Computed entirely on your device for U.S. taxes and benefits — nothing is ever sent anywhere. Every figure shows its source; this is information, not financial or tax advice.",
+      text: "Computed entirely on your device for U.S. taxes and benefits — nothing is ever sent anywhere, and it's free forever. This is educational information, not financial, tax, investment, or legal advice; it's an estimate from public data and your inputs, so verify anything important with the official source or a qualified professional.",
     }),
   );
 

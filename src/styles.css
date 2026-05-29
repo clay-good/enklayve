@@ -639,6 +639,14 @@ body {
 }
 
 /* --- Command palette --- */
+/* The `hidden` attribute must always win, even over an explicit `display` rule
+ * below (e.g. the flex backdrop). Without this, setting `element.hidden = true`
+ * would not hide a `display: flex` element — which would leave the My Situation
+ * dialog and the command palette stuck open (they could not be closed). */
+[hidden] {
+  display: none !important;
+}
+
 .palette-backdrop {
   position: fixed;
   inset: 0;

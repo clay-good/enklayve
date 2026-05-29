@@ -24,7 +24,25 @@ These supersede earlier wording across both specs:
 2. **Warm, kind, and explanatory by default.** Every tool page carries a plain-English **"How this works"** that explains the logic and the math, a **"Learn more"** list of trusted external resources, and a one-line promise that it's computed on-device, US-only, and is information rather than advice. The voice is warm and never shaming.
 3. **Resources on every page.** Beyond per-figure citations, every tool and the home link out to authoritative U.S. sources (IRS, HHS, SSA, Benefits.gov, HealthCare.gov, CFPB, Federal Student Aid) so the user can always go deeper.
 4. **United States only, for now.** enklayve is intentionally scoped to U.S. federal and state taxes and benefits. International support is explicitly deferred so every figure stays accurate; the home says so plainly. (The i18n scaffolding in Phase 11 is for U.S. English presentation, not other countries.)
-5. **No modal is ever a trap.** Dialogs (e.g. My Situation) are always dismissable by a visible Close button, a Done button, the Escape key, and clicking outside.
+5. **No modal is ever a trap.** Dialogs (e.g. My Situation) are always dismissable by a visible Close button, a Done button, the Escape key, and clicking outside. (Implementation note: a global `[hidden] { display: none !important }` reset ensures the `hidden` attribute always wins over an overlay's `display: flex`, so closing actually hides it.)
+
+### 0.1 Voice and positioning (adopted 2026-05-29)
+
+Don't *describe* the product as "calm and kind" — *be* it, and let the framing be relatable:
+
+- **A friendlier, more capable version of the money gurus — and free.** The Dave-Ramsey-style personalities built fortunes charging for guidance that boils down to what this site does deterministically: know your real take-home, what you owe, what you're owed, and your next right step. enklayve gives more than they sell, for free, and it stays free.
+- **Free forever, a public utility.** No accounts, ads, cookie banners, sponsors, subscriptions, upsells, or "premium" tier — ever. Knowing where you stand should be a public good. This is non-negotiable; "free and stays free" is a core principle, not a launch promotion.
+- **Peace in digital form.** A deliberate contrast to the transactional web. No dark patterns, no shame, no FOMO — peace, knowledge, and deterministic verification, so people genuinely understand their situation and how to keep going.
+- **Trust through verification, not authority.** Every figure shows its math and links the public rule behind it; the user can check it themselves rather than trust a personality.
+- **Cover the project legally.** Clear, friendly disclaimers appear on the home and on every tool: educational information, **not** financial, tax, investment, or legal advice; figures are estimates from public data and the user's inputs; verify anything important with the official source or a qualified professional.
+
+### 0.2 Country scope and roadmap
+
+United States only **today** (federal and state taxes and benefits). The intended expansion order, as each jurisdiction's rules are learned properly, is **Europe, then India, China, and Russia**, and possibly stopping there rather than guessing at countries we don't understand. The principle: be right before being everywhere. The home states the current scope and the roadmap plainly.
+
+### 0.3 Deployment
+
+The repository is connected to **Cloudflare's native Git integration (Workers Builds)**, which builds and deploys on every push to `main`. The site is live and stays current automatically; there is no GitHub deploy workflow and no `CLOUDFLARE_*` GitHub secret. GitHub Actions is the quality gate (lint, types, tests, build, the release audit); Cloudflare is the deploy.
 
 ---
 

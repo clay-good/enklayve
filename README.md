@@ -2,9 +2,11 @@
 
 > Your private financial enclave. Every number is computed on your device. Nothing is ever sent anywhere.
 
-enklayve is a deterministic personal finance utility: a calm, fast place to answer real money questions — your actual take-home pay, what you owe in taxes, how much is enough, and what public benefits you're owed. Zero accounts, zero telemetry, zero AI, zero runtime network calls. Every figure is reproducible from public data bundled into the site, and every rule cites its source.
+enklayve is the honest money guidance the personal-finance experts charge for — your real take-home pay, what you owe in taxes, what public benefits you're owed, and your next right step — except it's **free, and it always will be.** No accounts, no ads, no cookie banner, no upsell. It's a free public utility for understanding your money: deterministic, private, and showing its work.
 
-The Content-Security-Policy sets `connect-src 'none'`: the browser physically cannot send your data out, even if a bug tried to.
+It's meant to feel like peace in a transactional web. Every figure is reproducible from public data bundled into the site, every rule links its source so you can verify it yourself, and there's zero telemetry, zero AI, and zero runtime network calls. The Content-Security-Policy sets `connect-src 'none'`: the browser physically cannot send your data out, even if a bug tried to.
+
+Scope is the **United States** today (federal and state taxes and benefits); Europe, India, China, and Russia are on the roadmap as each jurisdiction's rules are learned. enklayve is educational information, not financial, tax, investment, or legal advice.
 
 See [docs/specs/SPEC.md](docs/specs/SPEC.md) and [docs/specs/SPEC-2.md](docs/specs/SPEC-2.md) for the full vision and the phased build plan.
 
