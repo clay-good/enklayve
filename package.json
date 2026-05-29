@@ -21,6 +21,7 @@
     "format:check": "prettier --check .",
     "deploy": "wrangler deploy",
     "deploy:dry": "wrangler deploy --dry-run",
+    "audit": "node scripts/audit-release.ts",
     "data:manifest": "node scripts/build-manifest.ts",
     "golden:regen": "REGEN_GOLDEN=1 vitest run tests/golden/snapshot.test.ts"
   },

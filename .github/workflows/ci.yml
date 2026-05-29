@@ -13,7 +13,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 24 runs the TypeScript build scripts (audit, manifest) directly
+          # via native type stripping, and matches .nvmrc.
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm run format:check
@@ -21,3 +23,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run test
       - run: npm run build
+      # Family invariants gate (BUILD-SPEC.md §10): CSP connect-src 'none', no
+      # cross-origin resource loads, every rule cited, no sensitive persistence.
+      # Runs after the build so it can inspect dist/. Fails on any violation.
+      - run: npm run audit
