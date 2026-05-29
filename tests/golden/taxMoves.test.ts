@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { taxLossHarvest, rothConversionLadder } from "../../src/engine/taxMoves";
+import {
+  taxLossHarvest,
+  rothConversionLadder,
+  backdoorRoth,
+  megaBackdoorRoth,
+} from "../../src/engine/taxMoves";
 
 /**
  * Tax moves (BUILD-SPEC-2 §6.5, §9). Tax-loss harvesting nets gains and losses
@@ -125,5 +130,47 @@ describe("Roth conversion ladder", () => {
     expect(r.rungs).toHaveLength(0);
     expect(r.totalConverted.isZero()).toBe(true);
     expect(r.totalEstimatedTax.isZero()).toBe(true);
+  });
+});
+
+describe("backdoor Roth (pro-rata rule)", () => {
+  it("is fully tax-free with no pre-tax IRA balance", () => {
+    const r = backdoorRoth({ contribution: 7000, pretaxIraBalance: 0, ordinaryRatePct: 24 });
+    expect(r.isClean).toBe(true);
+    expect(r.taxableFraction).toBe(0);
+    expect(r.taxablePortion.isZero()).toBe(true);
+    expect(r.nontaxablePortion.toNumber()).toBe(7000);
+    expect(r.taxOwed.isZero()).toBe(true);
+  });
+
+  it("taxes the conversion pro-rata when pre-tax balances exist", () => {
+    const r = backdoorRoth({ contribution: 7000, pretaxIraBalance: 30000, ordinaryRatePct: 24 });
+    // taxable fraction = 30,000 / 37,000; taxable portion = 7,000 × that = $5,675.6757…
+    expect(r.isClean).toBe(false);
+    expect(r.taxableFraction).toBeCloseTo(30000 / 37000, 10);
+    expect(r.taxablePortion.roundToCents().toNumber()).toBe(5675.68);
+    expect(r.nontaxablePortion.roundToCents().toNumber()).toBe(1324.32);
+    // tax owed = 5,675.6757… × 24% = $1,362.16
+    expect(r.taxOwed.roundToCents().toNumber()).toBe(1362.16);
+  });
+});
+
+describe("mega-backdoor Roth (after-tax 401k room)", () => {
+  it("is the §415(c) limit less deferrals and employer contributions", () => {
+    const r = megaBackdoorRoth({
+      definedContributionLimit: 69000,
+      electiveDeferral: 23000,
+      employerContributions: 10000,
+    });
+    expect(r.afterTaxRoom.toNumber()).toBe(36000); // 69,000 − 23,000 − 10,000
+  });
+
+  it("never goes negative when the limit is already used up", () => {
+    const r = megaBackdoorRoth({
+      definedContributionLimit: 69000,
+      electiveDeferral: 50000,
+      employerContributions: 30000,
+    });
+    expect(r.afterTaxRoom.isZero()).toBe(true);
   });
 });

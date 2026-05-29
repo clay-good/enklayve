@@ -750,3 +750,89 @@ export function refinanceBreakEven(input: RefinanceInput): RefinanceResult {
     newTotalInterest,
   };
 }
+
+export interface DisabilityNeedInput {
+  /** Gross annual income to protect. */
+  annualIncome: number;
+  /** Share of income to replace if you can't work, as a percentage (e.g. 60). */
+  replacementRatePct: number;
+  /** Disability benefit you already have, monthly (e.g. group long-term disability). */
+  existingMonthlyBenefit: number;
+  /** Other monthly income that would continue (e.g. a spouse's earmarked income). */
+  otherMonthlyIncome: number;
+}
+
+export interface DisabilityNeedResult {
+  /** Monthly income you're aiming to replace (income × rate ÷ 12). */
+  targetMonthly: Money;
+  /** Monthly income already covered (existing benefit + other income). */
+  coveredMonthly: Money;
+  /** The monthly coverage gap to close (≥ 0). */
+  monthlyGap: Money;
+  /** The annual coverage gap (monthly × 12). */
+  annualGap: Money;
+}
+
+/**
+ * Disability-insurance need (BUILD-SPEC-2 §6.6): the monthly income gap if you
+ * couldn't work. Replace a chosen share of income (a labeled assumption, often
+ * ~60% for group long-term disability), then subtract coverage and other income
+ * you'd still have. Deterministic from the inputs — not advice, no rule to cite.
+ */
+export function disabilityCoverageNeed(input: DisabilityNeedInput): DisabilityNeedResult {
+  const rate = new Decimal(Math.max(0, input.replacementRatePct)).div(100);
+  const targetMonthly = Money.from(Math.max(0, input.annualIncome)).multiply(rate).divide(12);
+  const coveredMonthly = Money.from(Math.max(0, input.existingMonthlyBenefit)).add(
+    Math.max(0, input.otherMonthlyIncome),
+  );
+  const gap = targetMonthly.subtract(coveredMonthly);
+  const monthlyGap = gap.isNegative() ? Money.zero() : gap;
+  return {
+    targetMonthly,
+    coveredMonthly,
+    monthlyGap,
+    annualGap: monthlyGap.multiply(12),
+  };
+}
+
+export interface UmbrellaNeedInput {
+  /** Net worth a lawsuit could reach (assets to protect). */
+  netWorth: number;
+  /** Extra future-income exposure to cover beyond net worth (optional, ≥ 0). */
+  futureIncomeExposure: number;
+  /** Liability coverage you already carry (auto + home limits combined). */
+  existingLiabilityCoverage: number;
+  /** Increment umbrella policies are sold in (typically $1,000,000). */
+  policyIncrement: number;
+}
+
+export interface UmbrellaNeedResult {
+  /** Total exposure to protect (net worth + future-income exposure). */
+  exposure: Money;
+  /** Exposure not already covered by existing liability limits (≥ 0). */
+  uncoveredExposure: Money;
+  /** Recommended umbrella, the uncovered exposure rounded up to a whole policy increment. */
+  recommendedUmbrella: Money;
+}
+
+/**
+ * Umbrella-liability sizing (BUILD-SPEC-2 §6.6): the common guideline is to
+ * carry umbrella coverage at least equal to your net worth (what a judgment
+ * could reach), above your auto and home liability limits. We round the
+ * uncovered exposure up to the increment umbrella is sold in. A labeled
+ * guideline, not a cited rule.
+ */
+export function umbrellaCoverageNeed(input: UmbrellaNeedInput): UmbrellaNeedResult {
+  const exposure = Money.from(Math.max(0, input.netWorth)).add(
+    Math.max(0, input.futureIncomeExposure),
+  );
+  const uncovered = exposure.subtract(Math.max(0, input.existingLiabilityCoverage));
+  const uncoveredExposure = uncovered.isNegative() ? Money.zero() : uncovered;
+  const increment = Math.max(1, input.policyIncrement);
+  const layers = Math.ceil(uncoveredExposure.toNumber() / increment);
+  return {
+    exposure,
+    uncoveredExposure,
+    recommendedUmbrella: Money.from(layers * increment),
+  };
+}

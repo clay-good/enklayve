@@ -21,7 +21,10 @@ import { inflationTile } from "./inflation";
 import { rmdTile } from "./rmd";
 import { taxLossHarvestingTile } from "./taxLossHarvesting";
 import { rothLadderTile } from "./rothLadder";
+import { backdoorRothTile } from "./backdoorRoth";
 import { socialSecurityTile } from "./socialSecurity";
+import { disabilityTile } from "./disability";
+import { umbrellaTile } from "./umbrella";
 import { spendingPlanTile } from "./spendingPlan";
 import { homeAffordabilityTile } from "./homeAffordability";
 import { sinkingFundTile } from "./sinkingFund";
@@ -69,6 +72,7 @@ export const TILES: TileDefinition[] = [
   capitalGainsTile,
   taxLossHarvestingTile,
   rothLadderTile,
+  backdoorRothTile,
   marginalExplorerTile,
   loanAmortizationTile,
   refinanceTile,
@@ -129,6 +133,8 @@ export const TILES: TileDefinition[] = [
   socialSecurityTile,
   // Protection (BUILD-SPEC-2 §6.6): securing your family's safe harbor.
   lifeInsuranceTile,
+  disabilityTile,
+  umbrellaTile,
 
   // --- My Plan (BUILD-SPEC-2 §4) ---
   yourPlanTile,

@@ -625,3 +625,69 @@ describe("life insurance need", () => {
     expect(r.recommendedCoverage.isZero()).toBe(true);
   });
 });
+
+import { disabilityCoverageNeed, umbrellaCoverageNeed } from "../../src/engine/finance";
+
+describe("disability coverage need", () => {
+  it("targets a share of income and subtracts existing coverage and other income", () => {
+    const r = disabilityCoverageNeed({
+      annualIncome: 90000,
+      replacementRatePct: 60,
+      existingMonthlyBenefit: 2000,
+      otherMonthlyIncome: 500,
+    });
+    // 90,000 × 60% ÷ 12 = $4,500 target; covered 2,500; gap $2,000/mo, $24,000/yr.
+    expect(r.targetMonthly.toNumber()).toBe(4500);
+    expect(r.coveredMonthly.toNumber()).toBe(2500);
+    expect(r.monthlyGap.toNumber()).toBe(2000);
+    expect(r.annualGap.toNumber()).toBe(24000);
+  });
+
+  it("never reports a negative gap when coverage already exceeds the target", () => {
+    const r = disabilityCoverageNeed({
+      annualIncome: 60000,
+      replacementRatePct: 60,
+      existingMonthlyBenefit: 5000,
+      otherMonthlyIncome: 0,
+    });
+    expect(r.monthlyGap.isZero()).toBe(true);
+  });
+});
+
+describe("umbrella coverage need", () => {
+  it("covers uncovered net worth, rounded up to the next $1M layer", () => {
+    const r = umbrellaCoverageNeed({
+      netWorth: 1300000,
+      futureIncomeExposure: 0,
+      existingLiabilityCoverage: 500000,
+      policyIncrement: 1000000,
+    });
+    // Exposure 1.3M, uncovered 800k → rounds up to a $1M umbrella.
+    expect(r.exposure.toNumber()).toBe(1300000);
+    expect(r.uncoveredExposure.toNumber()).toBe(800000);
+    expect(r.recommendedUmbrella.toNumber()).toBe(1000000);
+  });
+
+  it("adds future-income exposure and needs two layers when uncovered exposure exceeds one", () => {
+    const r = umbrellaCoverageNeed({
+      netWorth: 1500000,
+      futureIncomeExposure: 600000,
+      existingLiabilityCoverage: 0,
+      policyIncrement: 1000000,
+    });
+    // Exposure 2.1M, none covered → rounds up to a $3M umbrella.
+    expect(r.uncoveredExposure.toNumber()).toBe(2100000);
+    expect(r.recommendedUmbrella.toNumber()).toBe(3000000);
+  });
+
+  it("recommends nothing when existing coverage already exceeds exposure", () => {
+    const r = umbrellaCoverageNeed({
+      netWorth: 300000,
+      futureIncomeExposure: 0,
+      existingLiabilityCoverage: 500000,
+      policyIncrement: 1000000,
+    });
+    expect(r.uncoveredExposure.isZero()).toBe(true);
+    expect(r.recommendedUmbrella.isZero()).toBe(true);
+  });
+});

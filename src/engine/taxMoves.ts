@@ -179,3 +179,80 @@ export function rothConversionLadder(input: RothLadderInput): RothLadderResult {
     annualAccessibleAmount: annual,
   };
 }
+
+export interface BackdoorRothInput {
+  /** Nondeductible contribution to a traditional IRA (you then convert it). */
+  contribution: number;
+  /** Existing pre-tax IRA balance (traditional/SEP/SIMPLE) subject to pro-rata. */
+  pretaxIraBalance: number;
+  /** Marginal ordinary rate (%), taxing the pro-rata taxable portion. */
+  ordinaryRatePct: number;
+}
+
+export interface BackdoorRothResult {
+  /** The amount moved into the Roth (the contribution converted). */
+  contribution: Money;
+  /** Pro-rata taxable share: pretax ÷ (pretax + contribution). */
+  taxableFraction: number;
+  /** Taxable portion of the conversion (contribution × fraction). */
+  taxablePortion: Money;
+  /** Tax-free portion of the conversion (your nondeductible basis). */
+  nontaxablePortion: Money;
+  /** Tax owed on the conversion this year. */
+  taxOwed: Money;
+  /** True when no pre-tax IRA balance exists — a fully tax-free "clean" backdoor. */
+  isClean: boolean;
+}
+
+/**
+ * Backdoor Roth (BUILD-SPEC-2 §6.5): a nondeductible traditional-IRA
+ * contribution converted to a Roth. The pro-rata rule (IRC §408(d)(2)) taxes the
+ * conversion in proportion to your pre-tax IRA balances — so with no pre-tax IRA
+ * money the conversion is tax-free, and with pre-tax balances part of it is
+ * taxable. Deterministic from the inputs.
+ */
+export function backdoorRoth(input: BackdoorRothInput): BackdoorRothResult {
+  const contributionNum = nn(input.contribution);
+  const pretax = nn(input.pretaxIraBalance);
+  const contribution = Money.from(contributionNum);
+  const total = contributionNum + pretax;
+  // Exact taxable portion = contribution × pretax / total (avoids float fraction).
+  const taxablePortion = total === 0 ? Money.zero() : contribution.multiply(pretax).divide(total);
+  const nontaxablePortion = contribution.subtract(taxablePortion);
+  const taxOwed = taxablePortion.multiply(input.ordinaryRatePct / 100);
+  return {
+    contribution,
+    taxableFraction: total === 0 ? 0 : pretax / total,
+    taxablePortion,
+    nontaxablePortion,
+    taxOwed,
+    isClean: pretax === 0,
+  };
+}
+
+export interface MegaBackdoorInput {
+  /** The §415(c) total defined-contribution limit for the year. */
+  definedContributionLimit: number;
+  /** Your elective 401(k) deferrals so far (traditional + Roth). */
+  electiveDeferral: number;
+  /** Employer contributions (match + profit sharing). */
+  employerContributions: number;
+}
+
+export interface MegaBackdoorResult {
+  /** After-tax 401(k) room available to convert to Roth (≥ 0). */
+  afterTaxRoom: Money;
+}
+
+/**
+ * Mega-backdoor Roth (BUILD-SPEC-2 §6.5): after-tax 401(k) contributions, up to
+ * the §415(c) overall limit less your elective deferrals and employer
+ * contributions, then converted to Roth (in-plan or rolled out). The age-50
+ * catch-up sits on top of §415(c), so it is excluded here. Deterministic.
+ */
+export function megaBackdoorRoth(input: MegaBackdoorInput): MegaBackdoorResult {
+  const room = Money.from(nn(input.definedContributionLimit))
+    .subtract(nn(input.electiveDeferral))
+    .subtract(nn(input.employerContributions));
+  return { afterTaxRoom: room.isNegative() ? Money.zero() : room };
+}
