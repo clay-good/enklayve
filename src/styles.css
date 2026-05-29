@@ -1320,3 +1320,112 @@ body {
   margin: 0;
   color: var(--enk-text-muted);
 }
+
+/* --- Hero disclaimer (the greeting carries the promise) ------------------ */
+.hero-disclaimer {
+  color: var(--enk-text-muted);
+  font-size: 0.85rem;
+  max-width: 40rem;
+  margin: 0.75rem auto 0;
+}
+
+/* --- "Why enklayve": centered, symmetrical cards ------------------------- */
+.home-explainer {
+  text-align: center;
+}
+.home-explainer-title {
+  text-align: center;
+}
+.home-explainer-lede {
+  color: var(--enk-text-muted);
+  max-width: 44rem;
+  margin: 0 auto 1.25rem;
+}
+.explainer-points {
+  align-items: stretch;
+}
+.explainer-point {
+  background: var(--enk-surface);
+  border: 1px solid var(--enk-border);
+  border-radius: var(--enk-radius);
+  padding: 1.1rem 1.15rem;
+  text-align: center;
+}
+.explainer-subhead {
+  text-align: center;
+}
+.home-explainer .explainer-resources {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem 1.25rem;
+}
+
+/* --- Footer: two centered links with breathing room --------------------- */
+.app-footer {
+  margin-top: 3rem;
+  padding: 2rem 1rem;
+  border-top: 1px solid var(--enk-border);
+}
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+}
+.footer-link {
+  color: var(--enk-text-muted);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--enk-border);
+  border-radius: 999px;
+  background: var(--enk-surface);
+}
+.footer-link:hover {
+  color: var(--enk-primary);
+  border-color: var(--enk-primary);
+}
+.footer-link--accent:hover {
+  color: var(--enk-warn);
+  border-color: var(--enk-warn);
+}
+
+/* --- Delightful, modern polish (reduced-motion safe) -------------------- */
+.hero-title {
+  background: linear-gradient(
+    100deg,
+    var(--enk-primary),
+    var(--enk-primary-strong) 55%,
+    var(--enk-accent)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .pillar-card,
+  .index-card,
+  .explainer-point,
+  .tile-link,
+  .footer-link,
+  .readout-dropzone {
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease;
+  }
+  .index-card:hover,
+  .explainer-point:hover,
+  .readout-dropzone:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--enk-shadow);
+  }
+  .tile-link:hover {
+    transform: translateX(2px);
+  }
+}

@@ -113,7 +113,7 @@ export function mountOwedScreener(ctx: TileContext): void {
 
   const intro = el("p", {
     class: "screener-intro",
-    text: "Enter your situation once. We'll list the programs you likely qualify for, with an estimate and a citation for each — computed on your device, asking for nothing identifying.",
+    text: "Enter your situation once. We'll list the programs you likely qualify for, with an estimate and a citation for each, computed on your device, asking for nothing identifying.",
   });
 
   const results = el("div", { class: "screener-results", attrs: { "aria-live": "polite" } });
@@ -127,7 +127,7 @@ export function mountOwedScreener(ctx: TileContext): void {
         el("div", {
           class: "verify-banner",
           attrs: { role: "alert" },
-          text: "Benefit data is unavailable — verify before relying on any figure.",
+          text: "Benefit data is unavailable, verify before relying on any figure.",
         }),
       );
       return;
@@ -190,7 +190,7 @@ export function mountOwedScreener(ctx: TileContext): void {
       results.append(
         el("p", {
           class: "screener-note",
-          text: "No programs flagged at this income and household — try the individual tools to explore thresholds.",
+          text: "No programs flagged at this income and household, try the individual tools to explore thresholds.",
         }),
       );
     } else {
@@ -275,12 +275,12 @@ export const owedScreenerTile: TileDefinition = {
   description: "Enter your situation once; see every program you likely qualify for.",
   keywords: ["screener", "benefits", "eligibility", "what am i owed"],
   status: "ready",
-  how: "You enter your household once — size, income, region, children, and filing status — and we compute your percentage of the poverty line, estimate the refundable credits you likely qualify for (the Earned Income Tax Credit and the Child Tax Credit), and flag where your income suggests Medicaid or ACA-subsidy eligibility. Each line shows its public source.\n\nWe ask for nothing identifying and send nothing anywhere. These are estimates to point you toward programs worth applying for — the agencies make the final determination.",
+  how: "You enter your household once, size, income, region, children, and filing status, and we compute your percentage of the poverty line, estimate the refundable credits you likely qualify for (the Earned Income Tax Credit and the Child Tax Credit), and flag where your income suggests Medicaid or ACA-subsidy eligibility. Each line shows its public source.\n\nWe ask for nothing identifying and send nothing anywhere. These are estimates to point you toward programs worth applying for, the agencies make the final determination.",
   resources: [
-    { label: "Benefits.gov — find benefits", url: "https://www.benefits.gov/" },
-    { label: "HealthCare.gov — lower costs", url: "https://www.healthcare.gov/lower-costs/" },
+    { label: "Benefits.gov, find benefits", url: "https://www.benefits.gov/" },
+    { label: "HealthCare.gov, lower costs", url: "https://www.healthcare.gov/lower-costs/" },
     {
-      label: "IRS — credits & deductions",
+      label: "IRS, credits & deductions",
       url: "https://www.irs.gov/credits-deductions-for-individuals",
     },
   ],

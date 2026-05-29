@@ -226,7 +226,7 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
             value: gross,
             confidence: "needs-review",
             needsReview: true,
-            note: "Pay frequency not detected — annualize manually before relying on it.",
+            note: "Pay frequency not detected, annualize manually before relying on it.",
           });
         }
       }
@@ -276,7 +276,7 @@ export function extractDocument(t: ExtractedText): ExtractionResult {
     kind === "paystub" || (revision !== null && SUPPORTED_REVISIONS.includes(revision));
   if (!revisionOk) {
     warnings.push(
-      `This looks like a ${labelFor(kind)} but its form revision (${revision ?? "unknown"}) isn't one we've validated — enter the values manually rather than trust a guess.`,
+      `This looks like a ${labelFor(kind)} but its form revision (${revision ?? "unknown"}) isn't one we've validated, enter the values manually rather than trust a guess.`,
     );
     return {
       kind,
@@ -292,14 +292,14 @@ export function extractDocument(t: ExtractedText): ExtractionResult {
   let fields = extractor.extract(t);
   if (fields.length === 0) {
     warnings.push(
-      "We recognized the document but couldn't read its fields — please enter them by hand.",
+      "We recognized the document but couldn't read its fields, please enter them by hand.",
     );
   }
 
   // OCR is a clearly-labeled, lower-confidence source: flag every field (§2.2).
   if (t.source === "ocr") {
     warnings.push(
-      "Read by optical character recognition — every value is lower confidence; please review each one.",
+      "Read by optical character recognition, every value is lower confidence; please review each one.",
     );
     fields = fields.map((f) => ({
       ...f,

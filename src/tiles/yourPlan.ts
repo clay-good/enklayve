@@ -159,7 +159,7 @@ export function mountYourPlan(ctx: TileContext): void {
 
   const intro = el("p", {
     class: "plan-intro",
-    text: "A calm, ordered plan that reads My Situation and shows the single next right step — opinionated by default, fully yours to adjust. Every figure is computed on your device.",
+    text: "A calm, ordered plan that reads My Situation and shows the single next right step, opinionated by default, fully yours to adjust. Every figure is computed on your device.",
   });
 
   // --- The plan output (the next step + the full ordered list) ---
@@ -223,7 +223,7 @@ export function mountYourPlan(ctx: TileContext): void {
     });
 
     const statusLine = step.satisfied
-      ? el("p", { class: "plan-step-status", text: "On track — nothing to do here right now." })
+      ? el("p", { class: "plan-step-status", text: "On track, nothing to do here right now." })
       : el("p", { class: "plan-step-status plan-step-status--action", text: step.action });
 
     return el(
@@ -582,10 +582,10 @@ export const yourPlanTile: TileDefinition = {
   how: "We read My Situation and walk a calm, ordered plan: a starter cushion, capturing the full employer match, clearing high-cost debt, a full rainy-day fund, tax-advantaged retirement, sinking funds for named goals, and finally building the war chest. The first step you haven't met yet is your next right step, shown with the exact dollar figure and the math.\n\nIt's opinionated by default but fully yours: reorder steps, change the rainy-day target, choose smallest-balance or highest-rate debt payoff, or turn steps off. The only statutory threshold (the retirement contribution limit) cites the IRS; the rest are clearly-labeled guidelines.",
   resources: [
     {
-      label: "CFPB — financial tools & guides",
+      label: "CFPB, financial tools & guides",
       url: "https://www.consumerfinance.gov/consumer-tools/",
     },
-    { label: "Investor.gov — saving & investing basics", url: "https://www.investor.gov/" },
+    { label: "Investor.gov, saving & investing basics", url: "https://www.investor.gov/" },
   ],
   mount: mountYourPlan,
 };

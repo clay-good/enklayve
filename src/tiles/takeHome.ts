@@ -149,7 +149,7 @@ export function mountTakeHome(ctx: TileContext): void {
       el("div", {
         class: "verify-banner",
         attrs: { role: "alert" },
-        text: "Federal tax data is unavailable — verify before relying on any figure.",
+        text: "Federal tax data is unavailable, verify before relying on any figure.",
       }),
     );
     return;
@@ -327,14 +327,13 @@ export const takeHomeTile: TileDefinition = {
   id: "take-home",
   title: "Take-Home Pay",
   pillar: "take-home",
-  description:
-    "Your real paycheck after federal, FICA, state, and local taxes — across all states.",
+  description: "Your real paycheck after federal, FICA, state, and local taxes, across all states.",
   keywords: ["paycheck", "net pay", "salary", "withholding", "fica", "state tax"],
   status: "ready",
-  how: "Your take-home is your gross pay minus four things: federal income tax (the larger of your standard or itemized deduction, then the IRS bracket schedule), FICA (Social Security at 6.2% up to the annual wage base, plus Medicare at 1.45% — and a 0.9% Additional Medicare surtax on high earners), your state income tax, and any local tax that applies.\n\nThe effective rate is your total tax divided by gross income; the marginal rate is the bracket your next dollar lands in. Every line links the IRS or state source it came from.",
+  how: "Your take-home is your gross pay minus four things: federal income tax (the larger of your standard or itemized deduction, then the IRS bracket schedule), FICA (Social Security at 6.2% up to the annual wage base, plus Medicare at 1.45%, and a 0.9% Additional Medicare surtax on high earners), your state income tax, and any local tax that applies.\n\nThe effective rate is your total tax divided by gross income; the marginal rate is the bracket your next dollar lands in. Every line links the IRS or state source it came from.",
   resources: [
     {
-      label: "IRS — federal income tax rates",
+      label: "IRS, federal income tax rates",
       url: "https://www.irs.gov/filing/federal-income-tax-rates-and-brackets",
     },
     {
@@ -342,7 +341,7 @@ export const takeHomeTile: TileDefinition = {
       url: "https://www.irs.gov/pub/irs-pdf/p15t.pdf",
     },
     {
-      label: "SSA — Social Security & Medicare tax rates",
+      label: "SSA, Social Security & Medicare tax rates",
       url: "https://www.ssa.gov/oact/progdata/taxRates.html",
     },
   ],

@@ -124,7 +124,7 @@ export async function decrypt(envelopeText: string, passphrase: string): Promise
     );
     return dec.decode(plain);
   } catch {
-    throw new Error("could not decrypt — wrong passphrase or corrupted file");
+    throw new Error("could not decrypt, wrong passphrase or corrupted file");
   }
 }
 
@@ -155,7 +155,7 @@ export async function importProfile(
   passphrase?: string,
 ): Promise<void> {
   if (isEncrypted(fileContent)) {
-    if (!passphrase) throw new Error("this profile is encrypted — a passphrase is required");
+    if (!passphrase) throw new Error("this profile is encrypted, a passphrase is required");
     loadPlain(store, await decrypt(fileContent, passphrase));
     return;
   }

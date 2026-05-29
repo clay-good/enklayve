@@ -48,7 +48,7 @@ export function mountEitc(ctx: TileContext): void {
       el("div", {
         class: "verify-banner",
         attrs: { role: "alert" },
-        text: "EITC data is unavailable — verify before relying on any figure.",
+        text: "EITC data is unavailable, verify before relying on any figure.",
       }),
     );
     return;
@@ -96,7 +96,7 @@ export function mountEitc(ctx: TileContext): void {
       {
         label: "Note",
         value: r.phasedOut
-          ? "Income is past the phase-out — no credit at this level."
+          ? "Income is past the phase-out, no credit at this level."
           : "A refundable credit. Eligibility also depends on investment income and (for no children) age 25–64.",
       },
     ];
@@ -154,10 +154,10 @@ export const eitcTile: TileDefinition = {
   description: "EITC from the published phase-in and phase-out.",
   keywords: ["eitc", "earned income", "credit", "refundable"],
   status: "ready",
-  how: "The Earned Income Tax Credit phases in as a percentage of your earned income, rises to a maximum, holds on a plateau, then phases out above an income threshold. The rates, maximum, and thresholds all depend on your number of qualifying children and whether you file jointly. We use the published 2024 figures.\n\nIt's refundable — it can pay out even if you owe no tax. Real eligibility also depends on investment income and, for filers with no children, being age 25–64.",
+  how: "The Earned Income Tax Credit phases in as a percentage of your earned income, rises to a maximum, holds on a plateau, then phases out above an income threshold. The rates, maximum, and thresholds all depend on your number of qualifying children and whether you file jointly. We use the published 2024 figures.\n\nIt's refundable, it can pay out even if you owe no tax. Real eligibility also depends on investment income and, for filers with no children, being age 25–64.",
   resources: [
     {
-      label: "IRS — Earned Income Tax Credit",
+      label: "IRS, Earned Income Tax Credit",
       url: "https://www.irs.gov/credits-deductions/individuals/earned-income-tax-credit-eitc",
     },
     {

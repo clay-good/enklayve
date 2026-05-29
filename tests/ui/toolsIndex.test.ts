@@ -24,7 +24,7 @@ describe("static All Tools index", () => {
 
   it("is a complete, crawlable HTML document with a link home", () => {
     expect(html).toContain("<!doctype html>");
-    expect(html).toContain("<title>All tools — enklayve</title>");
+    expect(html).toContain("<title>All tools · enklayve</title>");
     expect(html).toContain('<a href="/">');
   });
 

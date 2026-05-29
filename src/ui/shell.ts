@@ -85,6 +85,34 @@ function buildHeader(
   );
 }
 
+/**
+ * The site footer: two centered links, the author credit and the source. Shown
+ * on every view. It's the only outbound chrome, in keeping with the calm,
+ * non-transactional feel.
+ */
+function buildFooter(): HTMLElement {
+  const link = (text: string, href: string, extra = ""): HTMLElement =>
+    el(
+      "a",
+      {
+        class: `footer-link ${extra}`.trim(),
+        href,
+        attrs: { rel: "noopener noreferrer", target: "_blank" },
+      },
+      text,
+    );
+  return el(
+    "footer",
+    { class: "app-footer" },
+    el(
+      "div",
+      { class: "footer-links" },
+      link("Made with ♥ by Clay Good", "https://claygood.com", "footer-link--accent"),
+      link("GitHub", "https://github.com/clay-good/enklayve"),
+    ),
+  );
+}
+
 function tileLink(tile: TileDefinition, navigate: (id: string) => void): HTMLElement {
   return el(
     "li",
@@ -129,7 +157,7 @@ function readoutDropzone(navigate: (id: string | null) => void): HTMLElement {
     }),
     el("span", {
       class: "readout-dropzone-sub",
-      text: "Get an instant private readout — parsed on your device, never uploaded.",
+      text: "Get an instant private readout, parsed on your device, never uploaded.",
     }),
   );
 }
@@ -145,10 +173,14 @@ function renderHome(
   const hero = el(
     "section",
     { class: "hero" },
-    el("h1", { class: "hero-title", text: "Know where you stand — and what to do next." }),
+    el("h1", { class: "hero-title", text: "Know where you stand, and what to do next." }),
     el("p", {
       class: "hero-sub",
-      text: "The honest money guidance the experts charge hundreds for — your real paycheck, what you owe, what you're owed, and your next right step. Here it's free, and it always will be. No login, no ads, no cookie banner, no upsell. It runs entirely on your device, shows its math, and links every source, so you can just trust what you see.",
+      text: "The honest money guidance the experts charge hundreds for: your real paycheck, what you owe, what you're owed, and your next right step. Here it's free, and it always will be. No login, no ads, no cookie banner, no upsell. It runs entirely on your device, shows its math, and links every source, so you can simply trust what you see.",
+    }),
+    el("p", {
+      class: "hero-disclaimer",
+      text: "Free forever. Private by design. Educational information, not financial, tax, or legal advice.",
     }),
     readoutDropzone(navigate),
   );
@@ -212,9 +244,9 @@ function renderHome(
 
 /** Trusted U.S. resources to learn the public rules behind the numbers. */
 const US_RESOURCES: { label: string; url: string }[] = [
-  { label: "IRS — federal taxes", url: "https://www.irs.gov/" },
-  { label: "Benefits.gov — federal benefits", url: "https://www.benefits.gov/" },
-  { label: "HealthCare.gov — ACA marketplace", url: "https://www.healthcare.gov/" },
+  { label: "IRS, federal taxes", url: "https://www.irs.gov/" },
+  { label: "Benefits.gov, federal benefits", url: "https://www.benefits.gov/" },
+  { label: "HealthCare.gov, ACA marketplace", url: "https://www.healthcare.gov/" },
   {
     label: "Consumer Financial Protection Bureau",
     url: "https://www.consumerfinance.gov/consumer-tools/",
@@ -238,32 +270,44 @@ function homeExplainer(): HTMLElement {
 
   return el(
     "section",
-    { class: "home-explainer", attrs: { "aria-label": "How enklayve works" } },
-    el("h2", { class: "home-explainer-title", text: "How this works" }),
+    { class: "home-explainer", attrs: { "aria-label": "Why enklayve" } },
+    el("h2", { class: "home-explainer-title", text: "Why enklayve" }),
+    el("p", {
+      class: "home-explainer-lede",
+      text: "There are a thousand budgeting apps, tax calculators, and money coaches. Almost all of them want your email, your data, your attention, or your money. enklayve wants none of it. Here is what makes it different.",
+    }),
     el(
       "div",
       { class: "explainer-points" },
       point(
-        "Free, and always free",
-        "No accounts, no ads, no cookie banner, no upsell, no “premium” tier. The personal-finance celebrities sell this; we think knowing where you stand should be a public good — free for everyone, for good.",
+        "Free, forever",
+        "No accounts, no ads, no cookie banner, no upsell, no premium tier, ever. The finance celebrities sell this; we think knowing where you stand should be a public good, free for everyone.",
       ),
       point(
         "Truly private",
-        "Every number is computed on your device. There's no server to send your data to, so it physically can't leak, get sold, or train anything.",
+        "Every number is computed on your device. There is no server to send your data to, so it cannot leak, be sold, or train anything. Your money stays yours.",
       ),
       point(
-        "It shows its work",
-        "Every figure shows the math and links the public rule it came from. You don't have to trust us — you can check it yourself. That's deterministic verification, not a hot take.",
+        "Shows its work",
+        "Every figure shows the exact math and links the public rule behind it. You never have to trust a personality. You can verify it yourself, down to the citation.",
       ),
       point(
-        "Peace, not pressure",
-        "No dark patterns, no shame, no fear-of-missing-out. Just clear answers and the next sensible step, whenever you want them.",
+        "Genuinely useful",
+        "Your real take-home pay, federal and state taxes, the benefits and credits you may be owed, debt payoff, and your next right step, all in one calm place.",
+      ),
+      point(
+        "No dark patterns",
+        "No streaks, no guilt, no fear-of-missing-out, no notifications begging you back. It respects your time and never tries to manipulate you. Just answers.",
+      ),
+      point(
+        "Built to last",
+        "Open source, deterministic, and reproducible from public data. It works offline, installs like an app, and will still give the same honest answer years from now.",
       ),
     ),
     el("h3", { class: "explainer-subhead", text: "Where it works" }),
     el("p", {
-      class: "explainer-point-body",
-      text: "enklayve covers U.S. federal and state taxes and benefits today. Support for more places — Europe, India, China, Russia, and beyond — is on the roadmap as we learn each one's rules properly. We'd rather be right than everywhere.",
+      class: "home-explainer-lede",
+      text: "enklayve covers U.S. federal and state taxes and benefits today. Support for more places, starting with Europe, India, China, and Russia, is on the roadmap as we learn each one's rules properly. We would rather be right than everywhere.",
     }),
     el("h3", { class: "explainer-subhead", text: "Trusted resources" }),
     el(
@@ -281,10 +325,6 @@ function homeExplainer(): HTMLElement {
         ),
       ),
     ),
-    el("p", {
-      class: "explainer-promise",
-      text: "enklayve is educational information, not financial, tax, investment, or legal advice. Figures are estimates from public data and the numbers you enter; check anything important against the official source or a qualified professional before you act on it.",
-    }),
   );
 }
 
@@ -295,7 +335,7 @@ function homeExplainer(): HTMLElement {
  */
 function renderAllTools(container: HTMLElement, navigate: (id: string | null) => void): void {
   clear(container);
-  document.title = "All tools — enklayve";
+  document.title = "All tools · enklayve";
 
   const back = el(
     "button",
@@ -342,7 +382,7 @@ function renderTileView(
   profile: SituationStore,
 ): void {
   clear(container);
-  document.title = `${tile.title} — enklayve`;
+  document.title = `${tile.title} · enklayve`;
 
   const back = el(
     "button",
@@ -435,7 +475,7 @@ function tileExplainer(tile: TileDefinition): HTMLElement | null {
   section.append(
     el("p", {
       class: "explainer-promise",
-      text: "Computed entirely on your device for U.S. taxes and benefits — nothing is ever sent anywhere, and it's free forever. This is educational information, not financial, tax, investment, or legal advice; it's an estimate from public data and your inputs, so verify anything important with the official source or a qualified professional.",
+      text: "Computed entirely on your device for U.S. taxes and benefits, nothing is ever sent anywhere, and it's free forever. This is educational information, not financial, tax, investment, or legal advice; it's an estimate from public data and your inputs, so verify anything important with the official source or a qualified professional.",
     }),
   );
 
@@ -477,7 +517,7 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
   const content = el("main", { id: "content", class: "content", attrs: { tabindex: "-1" } });
   const header = buildHeader(navigate, openPalette, openSituation);
 
-  root.replaceChildren(header, content);
+  root.replaceChildren(header, content, buildFooter());
   document.body.append(palette.element, situationPanel.element);
 
   // Cmd/Ctrl-K toggles the palette from anywhere.

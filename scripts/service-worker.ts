@@ -23,7 +23,7 @@
 /** Render the service worker source for a given precache list and version. */
 export function renderServiceWorker(precache: string[], version: string): string {
   const sorted = [...new Set(precache)].sort();
-  return `// Generated at build time — do not edit by hand.
+  return `// Generated at build time, do not edit by hand.
 const CACHE = "enklayve-${version}";
 const PRECACHE = ${JSON.stringify(sorted, null, 2)};
 

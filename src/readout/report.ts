@@ -199,7 +199,7 @@ export function buildReport(
   sections.push({
     title: "What you may be owed",
     lines: owedLines,
-    note: "For estimated EITC, Child Tax Credit, and Medicaid/ACA eligibility, use the What Am I Owed screener — it composes these from your household.",
+    note: "For estimated EITC, Child Tax Credit, and Medicaid/ACA eligibility, use the What Am I Owed screener, it composes these from your household.",
   });
 
   // --- My Plan: the current next right step ---
@@ -208,7 +208,7 @@ export function buildReport(
     const c = plan.current;
     if (c.citation) citations.push(c.citation);
     sections.push({
-      title: "My Plan — the next right step",
+      title: "My Plan, the next right step",
       lines: [
         { label: "Current step", value: c.title },
         { label: "Next action", value: c.action },
@@ -286,7 +286,7 @@ export function renderReportHtml(model: ReportModel): string {
   const citations = model.appendix.citations
     .map(
       (c) =>
-        `        <li>${esc(c.sourceDocument)} (${c.effectiveYear}) — <a href="${esc(c.sourceUrl)}">${esc(c.sourceUrl)}</a></li>`,
+        `        <li>${esc(c.sourceDocument)} (${c.effectiveYear}), <a href="${esc(c.sourceUrl)}">${esc(c.sourceUrl)}</a></li>`,
     )
     .join("\n");
 
@@ -295,7 +295,7 @@ export function renderReportHtml(model: ReportModel): string {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>My Readout Report — enklayve</title>
+    <title>My Readout Report · enklayve</title>
     <style>
       :root { color-scheme: light; }
       body {
@@ -341,7 +341,7 @@ ${datasets}
 ${citations}
       </ul>
     </section>
-    <footer>enklayve — a calm, private money guide. Every figure is reproducible from the dataset versions above.</footer>
+    <footer>enklayve, a calm, private money guide. Every figure is reproducible from the dataset versions above.</footer>
   </body>
 </html>
 `;

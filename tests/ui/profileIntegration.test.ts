@@ -56,7 +56,7 @@ describe("Your Situation continuity", () => {
 });
 
 describe("My Situation panel", () => {
-  it("can always be closed — by the Close button, the Done button, or Escape", () => {
+  it("can always be closed, by the Close button, the Done button, or Escape", () => {
     const profile = new SituationStore();
     const panel = new SituationPanel(profile, data);
     document.body.append(panel.element);

@@ -101,7 +101,7 @@ export function mountFpl(ctx: TileContext): void {
         el("div", {
           class: "verify-banner",
           attrs: { role: "alert" },
-          text: "Poverty guideline data is unavailable — verify before relying on any figure.",
+          text: "Poverty guideline data is unavailable, verify before relying on any figure.",
         }),
       );
       return;
@@ -176,17 +176,17 @@ export const fplTile: TileDefinition = {
   id: "fpl",
   title: "Federal Poverty Level",
   pillar: "owed",
-  description: "Your income as a percentage of the poverty line — the key to most programs.",
+  description: "Your income as a percentage of the poverty line, the key to most programs.",
   keywords: ["fpl", "poverty", "guidelines", "medicaid", "subsidy threshold"],
   status: "ready",
   how: "Your household's poverty line is the HHS base amount for one person plus a fixed amount for each additional person, for your region (the 48 contiguous states, Alaska, or Hawaii). We divide your income by that line to get your percentage of the federal poverty level.\n\nThat percentage is the key to most programs: many cap Medicaid eligibility around 138% of FPL, and ACA marketplace subsidies generally apply from 100% to 400%.",
   resources: [
     {
-      label: "HHS — federal poverty guidelines",
+      label: "HHS, federal poverty guidelines",
       url: "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
     },
     {
-      label: "HealthCare.gov — using your income estimate",
+      label: "HealthCare.gov, using your income estimate",
       url: "https://www.healthcare.gov/lower-costs/",
     },
   ],

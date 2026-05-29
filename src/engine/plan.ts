@@ -197,7 +197,7 @@ export const PLAN_STEPS: StepDef[] = [
       const gap = positiveGap(available, captured);
       return {
         satisfied: captured >= available,
-        action: `Contribute enough to capture the remaining ${usd(gap)} of employer match — it's money your employer is offering.`,
+        action: `Contribute enough to capture the remaining ${usd(gap)} of employer match, it's money your employer is offering.`,
         amount: Money.from(gap),
         math: [
           { label: "Employer match available", value: usd(available) },
@@ -233,7 +233,7 @@ export const PLAN_STEPS: StepDef[] = [
         config.debtStrategy === "highest-rate" ? "highest rate first" : "smallest balance first";
       return {
         satisfied: false,
-        action: `Attack your ${target.name} next — ${usd(target.balance)} at ${ratePct(target.ratePct)} (${strategyLabel}).`,
+        action: `Attack your ${target.name} next, ${usd(target.balance)} at ${ratePct(target.ratePct)} (${strategyLabel}).`,
         amount: Money.from(target.balance),
         math: [
           ...highCost.map((d) => ({
@@ -355,7 +355,7 @@ export const PLAN_STEPS: StepDef[] = [
       const gap = positiveGap(target, have);
       return {
         satisfied: have >= target,
-        action: `Grow ${usd(gap)} more toward My Enough Number of ${usd(target)} — the point where work becomes optional.`,
+        action: `Grow ${usd(gap)} more toward My Enough Number of ${usd(target)}, the point where work becomes optional.`,
         amount: Money.from(gap),
         math: [
           { label: "Annual essentials", value: usd(essential * 12) },

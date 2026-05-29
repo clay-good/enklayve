@@ -66,7 +66,7 @@ export function mountMarginalExplorer(ctx: TileContext): void {
       el("div", {
         class: "verify-banner",
         attrs: { role: "alert" },
-        text: "Federal tax data is unavailable — verify before relying on any figure.",
+        text: "Federal tax data is unavailable, verify before relying on any figure.",
       }),
     );
     return;
@@ -212,14 +212,14 @@ export const marginalExplorerTile: TileDefinition = {
   description: "What does my next $1,000 of income actually cost?",
   keywords: ["marginal", "next dollar", "bracket", "raise", "rate"],
   status: "ready",
-  how: "We run the tax engine twice — at your current income, and again at your income plus the step you choose — then attribute the extra tax to each layer: federal income tax, FICA, and your state. That difference is what your next dollars actually cost you, which is often higher than your bracket alone because several taxes stack.",
+  how: "We run the tax engine twice, at your current income, and again at your income plus the step you choose, then attribute the extra tax to each layer: federal income tax, FICA, and your state. That difference is what your next dollars actually cost you, which is often higher than your bracket alone because several taxes stack.",
   resources: [
     {
-      label: "IRS — tax brackets & rates",
+      label: "IRS, tax brackets & rates",
       url: "https://www.irs.gov/filing/federal-income-tax-rates-and-brackets",
     },
     {
-      label: "SSA — Social Security & Medicare tax rates",
+      label: "SSA, Social Security & Medicare tax rates",
       url: "https://www.ssa.gov/oact/progdata/taxRates.html",
     },
   ],

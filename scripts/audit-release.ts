@@ -57,7 +57,7 @@ export function checkLocalStorage(files: { path: string; content: string }[]): s
   for (const { path, content } of files) {
     if (/\blocalStorage\b/.test(content) && !allowed.test(path)) {
       violations.push(
-        `${path} uses localStorage (only ui/theme.ts may — nothing financial persists)`,
+        `${path} uses localStorage (only ui/theme.ts may, nothing financial persists)`,
       );
     }
   }
@@ -88,7 +88,7 @@ function runCli(): void {
   try {
     violations.push(...checkIndexHtml(readFileSync(indexPath, "utf8")));
   } catch {
-    violations.push("dist/index.html not found — run `npm run build` before the audit");
+    violations.push("dist/index.html not found, run `npm run build` before the audit");
   }
 
   // 3. Provenance for every dataset shard.

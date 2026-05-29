@@ -63,9 +63,9 @@
       "staleAfterYears": 2,
       "shard": "state-ny-income-tax-2024.json",
       "sourceUrl": "https://www.tax.ny.gov/pit/file/tax-tables/nys-tax-rate-schedule.htm",
-      "sourceDocument": "NYS Department of Taxation and Finance — 2024 tax rate schedule (and NYC resident rates)",
+      "sourceDocument": "NYS Department of Taxation and Finance, 2024 tax rate schedule (and NYC resident rates)",
       "dateRetrieved": "2024-02-01",
-      "contentHash": "9109ac4a02f1e3c2871f24bbe3ddd109b0627c763508bc9edfdf5a750965b9e7"
+      "contentHash": "cfa7ace133c7d9b4e864a3834194aa110e4c01c025b63d18088ba041ee173fe4"
     },
     {
       "id": "state-tx-income-tax-2024",
@@ -76,9 +76,9 @@
       "staleAfterYears": 2,
       "shard": "state-tx-income-tax-2024.json",
       "sourceUrl": "https://comptroller.texas.gov/taxes/",
-      "sourceDocument": "Texas Comptroller — no state personal income tax",
+      "sourceDocument": "Texas Comptroller, no state personal income tax",
       "dateRetrieved": "2024-02-01",
-      "contentHash": "da86706a26ac30e6c498ae718cb61abc4247b386f35d316f484089f33562f16e"
+      "contentHash": "9d1946b742ce8c962caebbb3bcdb7ed87a2f236dab9d4e8b7361c642436d54fb"
     },
     {
       "id": "state-fl-income-tax-2024",
@@ -89,9 +89,9 @@
       "staleAfterYears": 2,
       "shard": "state-fl-income-tax-2024.json",
       "sourceUrl": "https://floridarevenue.com/taxes/",
-      "sourceDocument": "Florida Department of Revenue — no state personal income tax",
+      "sourceDocument": "Florida Department of Revenue, no state personal income tax",
       "dateRetrieved": "2024-02-01",
-      "contentHash": "71815add1c6655aee15a748147fc5954baa60478a1054bc5cc6d3f83fe75b4a3"
+      "contentHash": "4d0bb90e8850c604a770dc80bbc08f6a29367eafeb7db823ef70432604b5ddf4"
     },
     {
       "id": "state-pa-income-tax-2024",
@@ -102,9 +102,9 @@
       "staleAfterYears": 2,
       "shard": "state-pa-income-tax-2024.json",
       "sourceUrl": "https://www.pa.gov/agencies/revenue/forms-and-publications/pa-personal-income-tax-guide.html",
-      "sourceDocument": "Pennsylvania DOR — 3.07% flat personal income tax (2024)",
+      "sourceDocument": "Pennsylvania DOR, 3.07% flat personal income tax (2024)",
       "dateRetrieved": "2024-02-01",
-      "contentHash": "f219404d6ae17e2589ab200c5406d76efeba770b2a2b52c6c32102b3b918e928"
+      "contentHash": "80ab3a297bff3468587a2d85ad0bd8a44fe344b4077be69a4465d5b538b92f16"
     },
     {
       "id": "state-il-income-tax-2024",
@@ -115,9 +115,9 @@
       "staleAfterYears": 2,
       "shard": "state-il-income-tax-2024.json",
       "sourceUrl": "https://tax.illinois.gov/individuals/rates.html",
-      "sourceDocument": "Illinois DOR — 4.95% flat tax; 2024 personal exemption $2,775",
+      "sourceDocument": "Illinois DOR, 4.95% flat tax; 2024 personal exemption $2,775",
       "dateRetrieved": "2024-02-01",
-      "contentHash": "9e85ac17c520570526f80807f20185d390037d649367cabba53c6ade3b6ecb33"
+      "contentHash": "d749d2af38b3b6338f586b87fccc61de92dc398c91b5a0c25164b12b3c61ff55"
     },
     {
       "id": "state-oh-income-tax-2024",
@@ -128,9 +128,9 @@
       "staleAfterYears": 2,
       "shard": "state-oh-income-tax-2024.json",
       "sourceUrl": "https://tax.ohio.gov/individual/resources/annual-tax-rates",
-      "sourceDocument": "Ohio Department of Taxation — 2024 income tax rate schedule",
+      "sourceDocument": "Ohio Department of Taxation, 2024 income tax rate schedule",
       "dateRetrieved": "2024-02-01",
-      "contentHash": "7da3995b72c7c3482d1986febe45804ace1ca4b0b2c054717e12137eb3fd2371"
+      "contentHash": "eb91d1ace388363abbf1e2bfb762391185ea955ad98c313d752a99c61582b4b3"
     },
     {
       "id": "state-ga-income-tax-2024",
@@ -141,9 +141,9 @@
       "staleAfterYears": 2,
       "shard": "state-ga-income-tax-2024.json",
       "sourceUrl": "https://dor.georgia.gov/taxes/individual-taxes",
-      "sourceDocument": "Georgia DOR — 5.39% flat tax (2024); standard deduction $12,000/$24,000",
+      "sourceDocument": "Georgia DOR, 5.39% flat tax (2024); standard deduction $12,000/$24,000",
       "dateRetrieved": "2024-02-01",
-      "contentHash": "714da5109e51b6012c4f75020d63d51ff832fcfc182d781c4cefa1ffcfe15cf9"
+      "contentHash": "84f3c46f9df6c7b1cb65c61d0d57cd868d35f7831a3ebf95f7f645df609728e1"
     },
     {
       "id": "state-nc-income-tax-2024",
@@ -154,9 +154,9 @@
       "staleAfterYears": 2,
       "shard": "state-nc-income-tax-2024.json",
       "sourceUrl": "https://www.ncdor.gov/taxes-forms/individual-income-tax/north-carolina-individual-income-tax-rates",
-      "sourceDocument": "NCDOR — 4.5% flat tax; 2024 standard deduction",
+      "sourceDocument": "NCDOR, 4.5% flat tax; 2024 standard deduction",
       "dateRetrieved": "2024-02-01",
-      "contentHash": "349e9198098f9392da6c24d949e59e8188f966f5d75b3dae932098e9acfa1ce4"
+      "contentHash": "c71d6665304181e791d72e3e82d6f79e2d65c6c29645aad2a810c1bca59d1d31"
     },
     {
       "id": "state-mi-income-tax-2024",
@@ -167,9 +167,9 @@
       "staleAfterYears": 2,
       "shard": "state-mi-income-tax-2024.json",
       "sourceUrl": "https://www.michigan.gov/taxes/iit/tax-time/whats-new-for-tax-year-2024",
-      "sourceDocument": "Michigan Treasury — 4.25% flat tax; 2024 personal exemption $5,600",
+      "sourceDocument": "Michigan Treasury, 4.25% flat tax; 2024 personal exemption $5,600",
       "dateRetrieved": "2024-02-01",
-      "contentHash": "84d8fd3da94072676296abb34aa9fdbcd881d29da34012be981a8543a80c5be9"
+      "contentHash": "42be875e2dc8f92a7b15a1bc417c8c35723feafe8163eade6b846b9080a8e0f3"
     },
     {
       "id": "state-dc-income-tax-2024",
@@ -180,9 +180,9 @@
       "staleAfterYears": 2,
       "shard": "state-dc-income-tax-2024.json",
       "sourceUrl": "https://otr.cfo.dc.gov/page/dc-individual-and-fiduciary-income-tax-rates",
-      "sourceDocument": "DC Office of Tax and Revenue — 2024 individual income tax rates",
+      "sourceDocument": "DC Office of Tax and Revenue, 2024 individual income tax rates",
       "dateRetrieved": "2024-02-01",
-      "contentHash": "4ac618d90ae80050d98cf851e4c60287175ff642b537131ac2de6c9e40ae61b4"
+      "contentHash": "8a1005813c9455f9437b6d0f3a2bc20b00c8a82e1dec5d41faf97cd95f578e7a"
     },
     {
       "id": "federal-poverty-level-2024-contiguous",

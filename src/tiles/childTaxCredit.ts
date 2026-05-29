@@ -45,7 +45,7 @@ export function mountChildTaxCredit(ctx: TileContext): void {
       el("div", {
         class: "verify-banner",
         attrs: { role: "alert" },
-        text: "Child Tax Credit data is unavailable — verify before relying on any figure.",
+        text: "Child Tax Credit data is unavailable, verify before relying on any figure.",
       }),
     );
     return;
@@ -148,10 +148,10 @@ export const childTaxCreditTile: TileDefinition = {
   description: "Child Tax Credit and the refundable Additional CTC.",
   keywords: ["ctc", "child tax credit", "actc", "dependents"],
   status: "ready",
-  how: "The Child Tax Credit is $2,000 per qualifying child under 17. It's reduced by $50 for every $1,000 (or part of $1,000) of income above $200,000 (single or head of household) or $400,000 (married filing jointly).\n\nUp to $1,700 per child is refundable — the Additional Child Tax Credit — so part of it can come back even if you owe little or no tax.",
+  how: "The Child Tax Credit is $2,000 per qualifying child under 17. It's reduced by $50 for every $1,000 (or part of $1,000) of income above $200,000 (single or head of household) or $400,000 (married filing jointly).\n\nUp to $1,700 per child is refundable, the Additional Child Tax Credit, so part of it can come back even if you owe little or no tax.",
   resources: [
     {
-      label: "IRS — Child Tax Credit",
+      label: "IRS, Child Tax Credit",
       url: "https://www.irs.gov/credits-deductions/individuals/child-tax-credit",
     },
     {

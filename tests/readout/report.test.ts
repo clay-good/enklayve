@@ -25,7 +25,7 @@ function fundedProfile(): SituationStore {
   return p;
 }
 
-describe("Readout Report — model", () => {
+describe("Readout Report, model", () => {
   it("composes a snapshot, tax picture, plan, and appendix from Your Situation", () => {
     const model = buildReport(fundedProfile(), data);
     expect(model.hasIncomeData).toBe(true);
@@ -72,11 +72,11 @@ describe("Readout Report — model", () => {
   });
 });
 
-describe("Readout Report — HTML", () => {
+describe("Readout Report, HTML", () => {
   it("is a complete, self-contained, script-free document", () => {
     const html = renderReportHtml(buildReport(fundedProfile(), data));
     expect(html).toContain("<!doctype html>");
-    expect(html).toContain("<title>My Readout Report — enklayve</title>");
+    expect(html).toContain("<title>My Readout Report · enklayve</title>");
     expect(html).toContain("Assumptions &amp; sources");
     // Self-contained and safe: no scripts, no external resource loads.
     expect(html).not.toContain("<script");

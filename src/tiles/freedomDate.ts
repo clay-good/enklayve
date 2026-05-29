@@ -94,7 +94,7 @@ export function mountFreedomDate(ctx: TileContext): void {
       resultContainer.append(
         el("p", {
           class: "ph-empty",
-          text: "No debt entered — you're already free here. 🎉",
+          text: "No debt entered, you're already free here. 🎉",
         }),
       );
       return;
@@ -180,14 +180,14 @@ export const freedomDateTile: TileDefinition = {
   description: "When your debts are gone, at a payment you choose.",
   keywords: ["debt payoff", "freedom", "debt free", "payoff date", "amortization"],
   status: "ready",
-  how: "We amortize your balance month by month: each month adds interest (your annual rate ÷ 12 on the remaining balance) and subtracts your payment, until the balance reaches zero. That count of months is your freedom date, and we total the interest you'll pay along the way.\n\nIf the payment can't cover even the monthly interest, the balance never falls — we tell you plainly instead of showing an impossible date.",
+  how: "We amortize your balance month by month: each month adds interest (your annual rate ÷ 12 on the remaining balance) and subtracts your payment, until the balance reaches zero. That count of months is your freedom date, and we total the interest you'll pay along the way.\n\nIf the payment can't cover even the monthly interest, the balance never falls, we tell you plainly instead of showing an impossible date.",
   resources: [
     {
-      label: "CFPB — dealing with debt",
+      label: "CFPB, dealing with debt",
       url: "https://www.consumerfinance.gov/consumer-tools/debt-collection/",
     },
     {
-      label: "CFPB — debt payoff strategies",
+      label: "CFPB, debt payoff strategies",
       url: "https://www.consumerfinance.gov/about-us/blog/",
     },
   ],

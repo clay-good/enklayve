@@ -96,7 +96,7 @@ export class SituationPanel {
       ),
       el("p", {
         class: "situation-blurb",
-        text: "Tell me your numbers once and every tool uses them. They live only in memory and clear the moment you leave — export a private copy if you'd like to keep them. Nothing is ever sent anywhere.",
+        text: "Tell me your numbers once and every tool uses them. They live only in memory and clear the moment you leave, export a private copy if you'd like to keep them. Nothing is ever sent anywhere.",
       }),
       this.buildEditor(),
       el("h3", { class: "situation-subhead", text: "What you've shared so far" }),

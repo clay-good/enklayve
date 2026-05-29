@@ -41,7 +41,7 @@ function value(
   return result.fields.find((f) => f.id === id)?.value;
 }
 
-describe("Readout — W-2 extraction", () => {
+describe("Readout, W-2 extraction", () => {
   const result = extractDocument(W2_2024);
 
   it("recognizes a typed W-2 and its revision", () => {
@@ -70,7 +70,7 @@ describe("Readout — W-2 extraction", () => {
   });
 });
 
-describe("Readout — Form 1040 extraction", () => {
+describe("Readout, Form 1040 extraction", () => {
   const result = extractDocument(FORM_1040_2024);
 
   it("recognizes a typed 1040 and reads AGI + filing status", () => {
@@ -86,7 +86,7 @@ describe("Readout — Form 1040 extraction", () => {
   });
 });
 
-describe("Readout — pay stub extraction", () => {
+describe("Readout, pay stub extraction", () => {
   const result = extractDocument(PAYSTUB);
 
   it("annualizes bi-weekly gross pay and flags it for review", () => {
@@ -98,12 +98,12 @@ describe("Readout — pay stub extraction", () => {
     expect(gross?.target).toBe("annualIncome");
   });
 
-  it("carries no citation — a pay stub is the employer's own document", () => {
+  it("carries no citation, a pay stub is the employer's own document", () => {
     expect(result.citation).toBeNull();
   });
 });
 
-describe("Readout — flagging, not guessing (§2.2)", () => {
+describe("Readout, flagging, not guessing (§2.2)", () => {
   it("flags an unrecognized form revision instead of extracting", () => {
     const oldW2 = typed(
       "Form W-2 Wage and Tax Statement 2009 1 Wages, tips, other compensation 40000.00",

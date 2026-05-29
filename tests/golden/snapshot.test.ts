@@ -71,7 +71,7 @@ describe("golden snapshot matrix (147 cases)", () => {
       return;
     }
 
-    expect(existsSync(SNAPSHOT_PATH), "snapshot.json missing — run `npm run golden:regen`").toBe(
+    expect(existsSync(SNAPSHOT_PATH), "snapshot.json missing, run `npm run golden:regen`").toBe(
       true,
     );
     const committed = JSON.parse(readFileSync(SNAPSHOT_PATH, "utf8")) as Record<string, CaseResult>;

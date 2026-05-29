@@ -26,7 +26,7 @@ export function renderToolsIndex(): string {
       .map(
         (t) =>
           `        <li><a href="/#/${encodeURIComponent(t.id)}">${escapeHtml(t.title)}</a>` +
-          `<span class="d"> — ${escapeHtml(t.description)}</span></li>`,
+          `<span class="d">, ${escapeHtml(t.description)}</span></li>`,
       )
       .join("\n");
     return (
@@ -42,7 +42,7 @@ export function renderToolsIndex(): string {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>All tools — enklayve</title>
+    <title>All tools · enklayve</title>
     <meta
       name="description"
       content="The full index of enklayve tools. Every figure is computed on your device; nothing is ever sent anywhere."
@@ -74,7 +74,7 @@ export function renderToolsIndex(): string {
     <nav><a href="/">← enklayve home</a></nav>
     <h1>All tools</h1>
     <p class="lede">
-      Every enklayve tool, grouped by pillar. Each one runs entirely on your device —
+      Every enklayve tool, grouped by pillar. Each one runs entirely on your device, 
       nothing is ever sent anywhere.
     </p>
     <main>

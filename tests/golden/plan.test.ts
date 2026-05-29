@@ -45,7 +45,7 @@ function currentId(input: PlanInput, config: PlanConfig = DEFAULT_CONFIG): PlanS
   return evaluatePlan(input, config).current?.id ?? null;
 }
 
-describe("Your Plan — current-step selection", () => {
+describe("Your Plan, current-step selection", () => {
   it("picks the starter cushion when there's no savings", () => {
     expect(currentId(base({ liquidSavings: 0 }))).toBe("starter-cushion");
   });
@@ -104,7 +104,7 @@ describe("Your Plan — current-step selection", () => {
   });
 });
 
-describe("Your Plan — adjustability (§4.2)", () => {
+describe("Your Plan, adjustability (§4.2)", () => {
   const debts = [
     { name: "Loan A", balance: 1000, ratePct: 10 },
     { name: "Loan B", balance: 9000, ratePct: 25 },
@@ -154,7 +154,7 @@ describe("Your Plan — adjustability (§4.2)", () => {
   });
 });
 
-describe("Your Plan — invariants and provenance", () => {
+describe("Your Plan, invariants and provenance", () => {
   it("is deterministic: the same input yields the same result", () => {
     const input = base({
       liquidSavings: 2000,

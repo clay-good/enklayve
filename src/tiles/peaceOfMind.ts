@@ -140,7 +140,7 @@ export function mountPeaceOfMind(ctx: TileContext): void {
 
   const intro = el("p", {
     class: "ph-intro",
-    text: "Where you stand, calmly. Enter your situation once and see every safe-harbor reading together — all computed on your device.",
+    text: "Where you stand, calmly. Enter your situation once and see every safe-harbor reading together, all computed on your device.",
   });
 
   const dashboard = el("div", { class: "ph-dashboard", attrs: { "aria-live": "polite" } });
@@ -187,7 +187,7 @@ export function mountPeaceOfMind(ctx: TileContext): void {
         label: "My Enough Number",
         headlineTarget: r.enough,
         format: (n) => usd(n, ctx.locale),
-        sub: `Annual essentials ${usd(r.annualEssentials, ctx.locale)} ÷ ${pct(config.withdrawalRatePct / 100)} withdrawal rate (your assumption). You're ${r.enoughProgressPct.toFixed(0)}% of the way — every step counts.`,
+        sub: `Annual essentials ${usd(r.annualEssentials, ctx.locale)} ÷ ${pct(config.withdrawalRatePct / 100)} withdrawal rate (your assumption). You're ${r.enoughProgressPct.toFixed(0)}% of the way, every step counts.`,
         progress: {
           value: r.enoughProgressPct,
           max: 100,
@@ -334,7 +334,7 @@ export const peaceOfMindTile: TileDefinition = {
   id: "peace-of-mind",
   title: "Peace of Mind",
   pillar: "safe-harbor",
-  description: "Your cushion, runway, net worth, and Enough Number — one calm overview.",
+  description: "Your cushion, runway, net worth, and Enough Number, one calm overview.",
   keywords: [
     "dashboard",
     "overview",
@@ -354,10 +354,10 @@ export const peaceOfMindTile: TileDefinition = {
   how: "From your essentials, total spending, savings, and debts we compute four calm readings: your cushion (savings ÷ essential monthly spending = months covered), your runway (savings ÷ total monthly spending, plus a downshift scenario at essentials only), your net worth (savings + other assets − debts), and My Enough Number (annual essentials ÷ your safe-withdrawal rate, e.g. 4% ≈ 25×).\n\nThe target months and the withdrawal rate are your assumptions, shown and adjustable. The tone is progress, never shame.",
   resources: [
     {
-      label: "CFPB — building an emergency fund",
+      label: "CFPB, building an emergency fund",
       url: "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/",
     },
-    { label: "Investor.gov — saving & investing", url: "https://www.investor.gov/" },
+    { label: "Investor.gov, saving & investing", url: "https://www.investor.gov/" },
   ],
   mount: mountPeaceOfMind,
 };

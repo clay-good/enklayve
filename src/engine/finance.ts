@@ -101,7 +101,7 @@ export function debtPayoff(
   let interestPaid = Money.zero();
   let paid = Money.zero();
   let months = 0;
-  const MAX_MONTHS = 1200; // 100 years — beyond this we treat it as "never".
+  const MAX_MONTHS = 1200; // 100 years, beyond this we treat it as "never".
 
   while (bal.greaterThan(0) && months < MAX_MONTHS) {
     const interest = bal.multiply(monthlyRate);

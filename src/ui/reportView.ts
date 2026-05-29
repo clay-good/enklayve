@@ -40,7 +40,7 @@ function sectionEl(section: ReportModel["sections"][number]): HTMLElement {
 export function renderReport(opts: RenderReportOptions): void {
   const { container, navigate, profile, data } = opts;
   clear(container);
-  document.title = "My Readout Report — enklayve";
+  document.title = "My Readout Report · enklayve";
 
   const model = buildReport(profile, data);
 
@@ -56,7 +56,7 @@ export function renderReport(opts: RenderReportOptions): void {
     el("h1", { class: "tile-title", text: "My Readout Report" }),
     el("p", {
       class: "tile-desc",
-      text: `Where you stand, computed on your device from ${model.effectiveYear} data. Download a private copy or print it — nothing is uploaded.`,
+      text: `Where you stand, computed on your device from ${model.effectiveYear} data. Download a private copy or print it, nothing is uploaded.`,
     }),
   );
 
@@ -112,7 +112,7 @@ export function renderReport(opts: RenderReportOptions): void {
       "ul",
       { class: "report-list" },
       ...model.appendix.datasets.map((d) =>
-        el("li", { text: `${d.id} — effective ${d.effectiveYear} (${d.status})` }),
+        el("li", { text: `${d.id}, effective ${d.effectiveYear} (${d.status})` }),
       ),
     ),
     el("h3", { class: "report-subhead", text: "Citations" }),
