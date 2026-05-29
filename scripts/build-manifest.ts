@@ -51,6 +51,14 @@ const SHARDS: ShardSource[] = [
     shard: `state-${code}-income-tax-2024.json`,
     ...ANNUAL,
   })),
+  // Pillar 2 — What You're Owed (§4).
+  ...(["contiguous", "alaska", "hawaii"] as const).map((region) => ({
+    id: `federal-poverty-level-2024-${region}`,
+    kind: "federal-poverty-level",
+    shard: `federal-poverty-level-2024-${region}.json`,
+    ...ANNUAL,
+  })),
+  { id: "eitc-ctc-2024", kind: "eitc-ctc", shard: "eitc-ctc-2024.json", ...ANNUAL },
 ];
 
 function sha256Hex(buf: Buffer): string {

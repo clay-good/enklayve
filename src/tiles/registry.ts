@@ -12,6 +12,10 @@ import { marginalExplorerTile } from "./marginalExplorer";
 import { compoundGrowthTile } from "./compoundGrowth";
 import { spendingPlanTile } from "./spendingPlan";
 import { homeAffordabilityTile } from "./homeAffordability";
+import { fplTile } from "./fpl";
+import { eitcTile } from "./eitc";
+import { childTaxCreditTile } from "./childTaxCredit";
+import { owedScreenerTile } from "./owedScreener";
 import { peaceOfMindTile } from "./peaceOfMind";
 import { freedomDateTile } from "./freedomDate";
 import { yourPlanTile } from "./yourPlan";
@@ -103,13 +107,10 @@ export const TILES: TileDefinition[] = [
   homeAffordabilityTile,
 
   // --- Pillar 2: What You're Owed (§4) ---
-  soon(
-    "fpl",
-    "Federal Poverty Level",
-    "owed",
-    "Poverty guidelines with the contiguous, Alaska, and Hawaii variants.",
-    ["fpl", "poverty", "guidelines"],
-  ),
+  fplTile,
+  eitcTile,
+  childTaxCreditTile,
+  owedScreenerTile,
   soon(
     "aca-ptc",
     "ACA Premium Tax Credit",
@@ -117,18 +118,6 @@ export const TILES: TileDefinition[] = [
     "Marketplace subsidy from the applicable-percentage table.",
     ["aca", "obamacare", "premium tax credit", "subsidy"],
   ),
-  soon(
-    "eitc",
-    "Earned Income Tax Credit",
-    "owed",
-    "EITC from the published phase-in and phase-out.",
-    ["eitc", "earned income", "credit"],
-  ),
-  soon("ctc", "Child Tax Credit", "owed", "Child Tax Credit and the refundable Additional CTC.", [
-    "ctc",
-    "child tax credit",
-    "actc",
-  ]),
   soon("savers-credit", "Saver's Credit", "owed", "Eligibility and amount for retirement savers.", [
     "savers credit",
     "retirement",
@@ -159,13 +148,6 @@ export const TILES: TileDefinition[] = [
     "college",
     "aid",
   ]),
-  soon(
-    "screener",
-    "What Am I Owed Screener",
-    "owed",
-    "Enter your situation once; see every program you likely qualify for.",
-    ["screener", "benefits", "eligibility"],
-  ),
 
   // --- Pillar 3: Safe Harbor (§5) ---
   // The Peace of Mind dashboard consolidates the rainy-day cushion, runway,

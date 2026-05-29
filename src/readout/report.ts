@@ -13,10 +13,17 @@
 import { Money } from "../engine/money";
 import { evaluateTaxes, type TaxInput, type TaxResult } from "../engine/tax";
 import { evaluatePlan, DEFAULT_CONFIG, type PlanConfig, type PlanInput } from "../engine/plan";
+import { fplPercent } from "../engine/benefits";
 import { pct } from "../ui/form";
 import type { CitationData } from "../data/schemas";
-import type { BundledData } from "../data/browser";
+import type { BundledData, FplRegion } from "../data/browser";
 import type { SituationStore } from "../profile/situation";
+
+function regionFromState(code: string | undefined): FplRegion {
+  if (code === "ak") return "alaska";
+  if (code === "hi") return "hawaii";
+  return "contiguous";
+}
 
 /** Same public IRS figure the plan cites when the bundled limits are unavailable. */
 const FALLBACK_LIMIT = 23000;
@@ -177,11 +184,22 @@ export function buildReport(
     });
   }
 
-  // --- What you may be owed (pending the What You're Owed pillar) ---
+  // --- What you may be owed (Pillar 2) ---
+  const owedLines: ReportLine[] = [];
+  const householdSize = profile.get("householdSize");
+  const fplData = data?.fpl(regionFromState(stateCode)) ?? null;
+  if (income > 0 && householdSize && fplData) {
+    const p = fplPercent(income, householdSize, fplData);
+    owedLines.push({
+      label: "Household income vs. poverty line",
+      value: `${p.toFixed(0)}% of FPL`,
+    });
+    citations.push(fplData.citation);
+  }
   sections.push({
     title: "What you may be owed",
-    lines: [],
-    note: "Benefits and aid eligibility (Federal Poverty Level, EITC, Child Tax Credit, ACA, SNAP, Medicaid, FAFSA) arrive with the What You're Owed pillar and will be summarized here.",
+    lines: owedLines,
+    note: "For estimated EITC, Child Tax Credit, and Medicaid/ACA eligibility, use the What Am I Owed screener — it composes these from your household.",
   });
 
   // --- Your Plan: the current next right step ---

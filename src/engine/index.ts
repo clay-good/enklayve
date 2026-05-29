@@ -13,6 +13,8 @@ export {
   loanPrincipalFromPayment,
 } from "./finance";
 export type { CompoundGrowthInput, CompoundGrowthResult, PayoffResult } from "./finance";
+export { povertyLine, fplPercent, estimateEitc, estimateCtc } from "./benefits";
+export type { EitcResult, CtcResult } from "./benefits";
 export { evaluatePlan, PLAN_STEPS, DEFAULT_CONFIG, DEFAULT_ORDER } from "./plan";
 export type {
   PlanStepId,

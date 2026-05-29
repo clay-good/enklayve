@@ -159,10 +159,19 @@ export const EitcCtcSchema = z.object({
   ),
   childTaxCredit: z.object({
     perChild: z.number().gte(0),
+    /** Refundable portion cap per child (the Additional Child Tax Credit). */
     refundableCap: z.number().gte(0),
+    /** MAGI above which the credit phases out (single / head of household). */
+    phaseOutThresholdSingle: z.number().gte(0),
+    /** MAGI above which the credit phases out (married filing jointly). */
+    phaseOutThresholdMarried: z.number().gte(0),
+    /** Credit lost per $1,000 (or fraction) of MAGI over the threshold (e.g. $50). */
+    phaseOutPerThousand: z.number().gte(0),
   }),
   citation: CitationSchema,
 });
+export type EitcCtcData = z.infer<typeof EitcCtcSchema>;
+export type FederalPovertyLevelData = z.infer<typeof FederalPovertyLevelSchema>;
 
 /** ACA applicable percentage table and county benchmark silver plan (IRS/CMS). */
 export const AcaSchema = z.object({

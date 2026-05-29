@@ -13,7 +13,12 @@ import {
   type FicaData,
   type Jurisdiction,
   type RetirementLimitsData,
+  type EitcCtcData,
+  type FederalPovertyLevelData,
 } from "./schemas";
+
+/** Federal Poverty Level region (BUILD-SPEC.md §4.1). */
+export type FplRegion = "contiguous" | "alaska" | "hawaii";
 
 // Inlined at build time. The keys are repo-relative paths; the values are the
 // exact file contents. eager so the data is available synchronously after import.
@@ -35,6 +40,10 @@ export interface BundledData {
   fica(): FicaData | null;
   /** IRS retirement / HSA / FSA contribution limits (BUILD-SPEC.md §3.4). */
   retirementLimits(): RetirementLimitsData | null;
+  /** Federal Poverty Level guidelines for a region (BUILD-SPEC.md §4.1). */
+  fpl(region: FplRegion): FederalPovertyLevelData | null;
+  /** EITC and Child Tax Credit parameters (BUILD-SPEC.md §4.2). */
+  eitcCtc(): EitcCtcData | null;
   /** A state jurisdiction by two-letter code (e.g. "ca"); null if unavailable. */
   state(code: string): Jurisdiction | null;
   /** Status for a dataset id, for the fail-safe verify banner. */
@@ -77,8 +86,10 @@ async function build(): Promise<BundledData> {
     manifest: loaded,
     federal: () => dataOf("federal-income-tax-2024") as Jurisdiction | null,
     fica: () => dataOf("fica-2024") as FicaData | null,
-    retirementLimits: () =>
-      dataOf("retirement-limits-2024") as RetirementLimitsData | null,
+    retirementLimits: () => dataOf("retirement-limits-2024") as RetirementLimitsData | null,
+    fpl: (region) =>
+      dataOf(`federal-poverty-level-2024-${region}`) as FederalPovertyLevelData | null,
+    eitcCtc: () => dataOf("eitc-ctc-2024") as EitcCtcData | null,
     state: (code) => dataOf(`state-${code.toLowerCase()}-income-tax-2024`) as Jurisdiction | null,
     statusOf: (id) => loaded.byId.get(id)?.status ?? "missing",
     stateCodes: () =>

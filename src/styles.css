@@ -1182,3 +1182,49 @@ body {
 .report-list a {
   color: var(--enk-primary);
 }
+
+/* --- What Am I Owed screener (BUILD-SPEC.md §4.5) ------------------------ */
+.screener-intro {
+  color: var(--enk-text-muted);
+  margin: 0 0 1rem;
+  max-width: 60ch;
+}
+.screener-summary {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--enk-text);
+  margin: 1rem 0 0.5rem;
+}
+.screener-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+.screener-item {
+  border: 1px solid var(--enk-border);
+  border-radius: var(--enk-radius);
+  background: var(--enk-surface);
+  padding: 0.85rem 1rem;
+}
+.screener-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+.screener-program {
+  font-weight: 700;
+  color: var(--enk-text);
+}
+.screener-estimate {
+  font-weight: 800;
+  color: var(--enk-primary-strong);
+}
+.screener-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--enk-text-muted);
+}

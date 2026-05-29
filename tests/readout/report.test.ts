@@ -18,6 +18,7 @@ function fundedProfile(): SituationStore {
   p.set("annualIncome", 95000);
   p.set("filingStatus", "single");
   p.set("stateCode", "ca");
+  p.set("householdSize", 4);
   p.set("essentialMonthlyExpenses", 3200);
   p.set("liquidSavings", 12000);
   p.set("debts", [{ name: "Card", balance: 6000, ratePct: 23 }]);
@@ -47,12 +48,13 @@ describe("Readout Report — model", () => {
     expect(model.appendix.datasets.some((d) => d.id === "federal-income-tax-2024")).toBe(true);
   });
 
-  it("notes the What You're Owed pillar as pending rather than inventing it", () => {
+  it("summarizes FPL position and points to the screener for credit estimates", () => {
     const owed = buildReport(fundedProfile(), data).sections.find(
       (s) => s.title === "What you may be owed",
     )!;
-    expect(owed.lines).toHaveLength(0);
-    expect(owed.note).toMatch(/What You're Owed pillar/);
+    // $95,000 for a household of 4 ≈ 304% of the 2024 contiguous poverty line.
+    expect(owed.lines.find((l) => l.label.includes("poverty line"))?.value).toMatch(/% of FPL/);
+    expect(owed.note).toMatch(/What Am I Owed screener/);
   });
 
   it("degrades gracefully when no income is entered", () => {

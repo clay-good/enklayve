@@ -1,0 +1,50 @@
+{
+  "taxYear": 2024,
+  "eitc": [
+    {
+      "qualifyingChildren": 0,
+      "phaseInRate": 0.0765,
+      "maxCredit": 632,
+      "phaseOutRate": 0.0765,
+      "phaseOutThresholdSingle": 10330,
+      "phaseOutThresholdMarried": 17250
+    },
+    {
+      "qualifyingChildren": 1,
+      "phaseInRate": 0.34,
+      "maxCredit": 4213,
+      "phaseOutRate": 0.1598,
+      "phaseOutThresholdSingle": 22720,
+      "phaseOutThresholdMarried": 29640
+    },
+    {
+      "qualifyingChildren": 2,
+      "phaseInRate": 0.4,
+      "maxCredit": 6960,
+      "phaseOutRate": 0.2106,
+      "phaseOutThresholdSingle": 22720,
+      "phaseOutThresholdMarried": 29640
+    },
+    {
+      "qualifyingChildren": 3,
+      "phaseInRate": 0.45,
+      "maxCredit": 7830,
+      "phaseOutRate": 0.2106,
+      "phaseOutThresholdSingle": 22720,
+      "phaseOutThresholdMarried": 29640
+    }
+  ],
+  "childTaxCredit": {
+    "perChild": 2000,
+    "refundableCap": 1700,
+    "phaseOutThresholdSingle": 200000,
+    "phaseOutThresholdMarried": 400000,
+    "phaseOutPerThousand": 50
+  },
+  "citation": {
+    "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-23-34.pdf",
+    "sourceDocument": "IRS Revenue Procedure 2023-34 (2024 EITC) and IRC §24 (Child Tax Credit)",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2024-02-01"
+  }
+}
