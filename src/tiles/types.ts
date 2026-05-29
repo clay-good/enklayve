@@ -6,6 +6,7 @@
  * adding a tile is registering data + a mount function — never editing the shell.
  */
 import type { BundledData } from "../data/browser";
+import type { SituationStore } from "../profile/situation";
 
 /** The three pillars plus the guide surfaces (BUILD-SPEC.md §3–5, BUILD-SPEC-2 §4). */
 export type Pillar = "take-home" | "owed" | "safe-harbor" | "plan";
@@ -44,6 +45,9 @@ export interface TileContext {
   locale: string;
   /** Bundled, integrity-gated datasets; null when data failed to load. */
   data: BundledData | null;
+  /** The shared session profile (Your Situation). Tiles read defaults from it
+   * and write user entries back so a value entered once flows everywhere. */
+  profile: SituationStore;
 }
 
 export interface TileDefinition {

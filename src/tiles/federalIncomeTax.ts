@@ -11,6 +11,8 @@ import type { FilingStatus, Jurisdiction, FicaData } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { rememberShared } from "./profileSync";
+import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
 
 const FILING_STATUSES: { value: FilingStatus; label: string }[] = [
@@ -56,12 +58,13 @@ function isDeductionMode(v: string): v is DeductionMode {
   return DEDUCTION_MODES.some((d) => d.value === v);
 }
 
-function readFields(p: URLSearchParams): Fields {
+function readFields(p: URLSearchParams, profile: SituationStore): Fields {
   const fs = p.get("fs");
   const dm = p.get("dm");
   return {
-    fs: fs && isFilingStatus(fs) ? fs : "single",
-    income: parseNonNegative(p.get("inc"), 0),
+    // Precedence: URL fragment > session profile > built-in default.
+    fs: fs && isFilingStatus(fs) ? fs : (profile.get("filingStatus") ?? "single"),
+    income: p.has("inc") ? parseNonNegative(p.get("inc"), 0) : (profile.get("annualIncome") ?? 0),
     adjustments: parseNonNegative(p.get("adj"), 0),
     dm: dm && isDeductionMode(dm) ? dm : "auto",
     salt: parseNonNegative(p.get("salt"), 0),
@@ -121,7 +124,7 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
     return;
   }
 
-  let fields = readFields(ctx.params);
+  let fields = readFields(ctx.params, ctx.profile);
 
   const fsSelect = el(
     "select",
@@ -247,6 +250,7 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
     collect();
     syncItemizedVisibility();
     ctx.setParams(writeFields(fields));
+    rememberShared(ctx.profile, { filingStatus: fields.fs, annualIncome: fields.income });
     compute();
   }
 

@@ -10,6 +10,8 @@ import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { rememberShared } from "./profileSync";
+import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
 
 const FILING_STATUSES: { value: FilingStatus; label: string }[] = [
@@ -33,13 +35,14 @@ function isFilingStatus(v: string): v is FilingStatus {
   return FILING_STATUSES.some((f) => f.value === v);
 }
 
-function readFields(p: URLSearchParams, defaultState: string): Fields {
+function readFields(p: URLSearchParams, defaultState: string, profile: SituationStore): Fields {
   const fs = p.get("fs");
   const st = p.get("st");
   return {
-    fs: fs && isFilingStatus(fs) ? fs : "single",
-    st: st === null ? defaultState : st,
-    income: parseNonNegative(p.get("inc"), 0),
+    // Precedence: URL fragment > session profile > built-in default.
+    fs: fs && isFilingStatus(fs) ? fs : (profile.get("filingStatus") ?? "single"),
+    st: st !== null ? st : (profile.get("stateCode") ?? defaultState),
+    income: p.has("inc") ? parseNonNegative(p.get("inc"), 0) : (profile.get("annualIncome") ?? 0),
     step: Math.max(1, parseNonNegative(p.get("step"), 1000)),
   };
 }
@@ -71,7 +74,7 @@ export function mountMarginalExplorer(ctx: TileContext): void {
 
   const codes = data!.stateCodes();
   const defaultState = codes.includes("ca") ? "ca" : (codes[0] ?? "");
-  let fields = readFields(ctx.params, defaultState);
+  let fields = readFields(ctx.params, defaultState, ctx.profile);
 
   const fsSelect = el(
     "select",
@@ -168,6 +171,11 @@ export function mountMarginalExplorer(ctx: TileContext): void {
   function recompute(): void {
     collect();
     ctx.setParams(writeFields(fields));
+    rememberShared(ctx.profile, {
+      filingStatus: fields.fs,
+      stateCode: fields.st,
+      annualIncome: fields.income,
+    });
     compute();
   }
 

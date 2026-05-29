@@ -7,11 +7,13 @@
  */
 import { Router, permalinkFor, type Route } from "./router";
 import { CommandPalette } from "./commandPalette";
+import { SituationPanel } from "./situationPanel";
 import { applyStoredPreferences, setTheme, THEMES, getTheme, type Theme } from "./theme";
 import { el, option, clear } from "./dom";
 import { loadBundledData, type BundledData } from "../data/browser";
 import { PILLARS, type TileContext, type TileDefinition } from "../tiles/types";
 import { getTile, tilesForPillar } from "../tiles/registry";
+import { SituationStore } from "../profile/situation";
 
 const THEME_LABELS: Record<Theme, string> = {
   light: "Light",
@@ -39,7 +41,11 @@ function themeControl(): HTMLElement {
   );
 }
 
-function buildHeader(navigate: (id: string | null) => void, openPalette: () => void): HTMLElement {
+function buildHeader(
+  navigate: (id: string | null) => void,
+  openPalette: () => void,
+  openSituation: () => void,
+): HTMLElement {
   const wordmark = el(
     "button",
     {
@@ -62,11 +68,18 @@ function buildHeader(navigate: (id: string | null) => void, openPalette: () => v
     el("kbd", { class: "kbd", text: "⌘K" }),
   );
 
+  const situation = el("button", {
+    type: "button",
+    class: "btn btn--ghost situation-trigger",
+    text: "Your Situation",
+    on: { click: openSituation },
+  });
+
   return el(
     "header",
     { class: "app-header" },
     wordmark,
-    el("div", { class: "header-actions" }, search, themeControl()),
+    el("div", { class: "header-actions" }, search, situation, themeControl()),
   );
 }
 
@@ -95,7 +108,7 @@ function renderHome(
   openPalette: () => void,
 ): void {
   clear(container);
-  document.title = "enklayve — know where you stand, privately";
+  document.title = "enklayve";
 
   const hero = el(
     "section",
@@ -144,6 +157,7 @@ function renderTileView(
   data: BundledData | null,
   locale: string,
   navigate: (id: string | null) => void,
+  profile: SituationStore,
 ): void {
   clear(container);
   document.title = `${tile.title} — enklayve`;
@@ -186,6 +200,7 @@ function renderTileView(
     permalink: (p) => permalinkFor(tile.id, p ?? route.params),
     locale,
     data,
+    profile,
   };
   tile.mount(ctx);
 }
@@ -206,14 +221,27 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
   const router = new Router();
   const navigate = (id: string | null): void => router.navigate(id);
 
+  // The single in-memory session profile every tile shares (SPEC-2 §3).
+  const profile = new SituationStore();
+
   const palette = new CommandPalette((tile) => navigate(tile.id));
   const openPalette = (): void => palette.show();
 
+  let data: BundledData | null = null;
+  try {
+    data = await loadBundledData();
+  } catch {
+    data = null;
+  }
+
+  const situationPanel = new SituationPanel(profile, data);
+  const openSituation = (): void => situationPanel.show();
+
   const content = el("main", { id: "content", class: "content", attrs: { tabindex: "-1" } });
-  const header = buildHeader(navigate, openPalette);
+  const header = buildHeader(navigate, openPalette, openSituation);
 
   root.replaceChildren(header, content);
-  document.body.append(palette.element);
+  document.body.append(palette.element, situationPanel.element);
 
   // Cmd/Ctrl-K toggles the palette from anywhere.
   const onKeyDown = (e: KeyboardEvent): void => {
@@ -224,12 +252,10 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
   };
   window.addEventListener("keydown", onKeyDown);
 
-  let data: BundledData | null = null;
-  try {
-    data = await loadBundledData();
-  } catch {
-    data = null;
-  }
+  // Privacy: the profile lives only in memory and is cleared on unload
+  // (SPEC §2 principle 8, SPEC-2 §3.2). Nothing is ever persisted automatically.
+  const onPageHide = (): void => profile.clear();
+  window.addEventListener("pagehide", onPageHide);
 
   router.start((route) => {
     if (!route.tileId) {
@@ -241,7 +267,7 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
       navigate(null);
       return;
     }
-    renderTileView(content, tile, route, router, data, locale, navigate);
+    renderTileView(content, tile, route, router, data, locale, navigate, profile);
   });
 
   return {
@@ -249,7 +275,9 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
     destroy: () => {
       router.stop();
       window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("pagehide", onPageHide);
       palette.element.remove();
+      situationPanel.element.remove();
     },
   };
 }

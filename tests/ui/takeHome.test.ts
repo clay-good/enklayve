@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { mountTakeHome } from "../../src/tiles/takeHome";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
+import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
 
 let data: BundledData;
@@ -9,7 +10,10 @@ beforeAll(async () => {
   data = await loadBundledData();
 });
 
-function mount(params: URLSearchParams): {
+function mount(
+  params: URLSearchParams,
+  profile = new SituationStore(),
+): {
   root: HTMLElement;
   lastParams: () => URLSearchParams | null;
 } {
@@ -24,6 +28,7 @@ function mount(params: URLSearchParams): {
     permalink: (p) => `https://enklayve.com/#/take-home?${(p ?? params).toString()}`,
     locale: "en-US",
     data,
+    profile,
   };
   mountTakeHome(ctx);
   return { root, lastParams: () => captured };

@@ -590,6 +590,97 @@ body {
   color: var(--enk-text-muted);
 }
 
+/* --- Your Situation panel --- */
+.situation-dialog {
+  width: min(44rem, 94vw);
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 1.4rem 1.5rem;
+}
+
+.situation-title {
+  margin: 0 0 0.2rem;
+  color: var(--enk-primary);
+}
+
+.situation-blurb {
+  margin: 0 0 1rem;
+  color: var(--enk-text-muted);
+  font-size: 0.9rem;
+}
+
+.situation-subhead {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1rem;
+}
+
+.situation-editor {
+  box-shadow: none;
+  padding: 1rem;
+}
+
+.situation-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0;
+}
+
+.situation-list dt {
+  font-weight: 600;
+  color: var(--enk-text-muted);
+}
+
+.situation-list dd {
+  margin: 0;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.situation-empty {
+  color: var(--enk-text-muted);
+}
+
+.situation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+}
+
+.situation-pass {
+  font: inherit;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid var(--enk-border);
+  background: var(--enk-bg);
+  color: var(--enk-text);
+  flex: 1 1 12rem;
+}
+
+.situation-import-label {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.situation-import {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.situation-status {
+  margin: 0.75rem 0 0;
+  color: var(--enk-text-muted);
+  font-size: 0.9rem;
+  min-height: 1.2em;
+}
+
 /* --- Reduced motion: no non-essential animation (§10, §11). --- */
 @media (prefers-reduced-motion: reduce) {
   * {

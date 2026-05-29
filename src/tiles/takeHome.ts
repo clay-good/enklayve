@@ -12,6 +12,8 @@ import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { rememberShared } from "./profileSync";
+import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
 
 const FILING_STATUSES: { value: FilingStatus; label: string }[] = [
@@ -55,14 +57,21 @@ function isDeductionMode(v: string): v is DeductionMode {
   return DEDUCTION_MODES.some((d) => d.value === v);
 }
 
-function readFields(params: URLSearchParams, defaultState: string): Fields {
+function readFields(
+  params: URLSearchParams,
+  defaultState: string,
+  profile: SituationStore,
+): Fields {
   const fsRaw = params.get("fs");
   const dmRaw = params.get("dm");
   const stRaw = params.get("st");
   return {
-    fs: fsRaw && isFilingStatus(fsRaw) ? fsRaw : "single",
-    st: stRaw === null ? defaultState : stRaw,
-    wages: parseNonNegative(params.get("w"), 0),
+    // Precedence: URL fragment > session profile > built-in default.
+    fs: fsRaw && isFilingStatus(fsRaw) ? fsRaw : (profile.get("filingStatus") ?? "single"),
+    st: stRaw !== null ? stRaw : (profile.get("stateCode") ?? defaultState),
+    wages: params.has("w")
+      ? parseNonNegative(params.get("w"), 0)
+      : (profile.get("annualIncome") ?? 0),
     other: parseNonNegative(params.get("oi"), 0),
     adjustments: parseNonNegative(params.get("adj"), 0),
     dm: dmRaw && isDeductionMode(dmRaw) ? dmRaw : "auto",
@@ -153,7 +162,7 @@ export function mountTakeHome(ctx: TileContext): void {
   const ficaData = fica;
   const codes = bundled.stateCodes();
   const defaultState = codes.includes("ca") ? "ca" : (codes[0] ?? "");
-  let fields = readFields(ctx.params, defaultState);
+  let fields = readFields(ctx.params, defaultState, ctx.profile);
 
   // --- Controls ---
   const fsSelect = el(
@@ -267,6 +276,11 @@ export function mountTakeHome(ctx: TileContext): void {
     collect();
     renderLocalAddOns();
     ctx.setParams(writeFields(fields));
+    rememberShared(ctx.profile, {
+      filingStatus: fields.fs,
+      stateCode: fields.st,
+      annualIncome: fields.wages,
+    });
     compute();
   }
 

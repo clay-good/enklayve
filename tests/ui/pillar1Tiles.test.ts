@@ -3,6 +3,7 @@ import { mountFederalIncomeTax } from "../../src/tiles/federalIncomeTax";
 import { mountMarginalExplorer } from "../../src/tiles/marginalExplorer";
 import { mountCompoundGrowth } from "../../src/tiles/compoundGrowth";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
+import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
 
 let data: BundledData;
@@ -13,6 +14,7 @@ beforeAll(async () => {
 function mount(
   mountFn: (ctx: TileContext) => void,
   params: URLSearchParams,
+  profile = new SituationStore(),
 ): { root: HTMLElement; lastParams: () => URLSearchParams | null } {
   const root = document.createElement("div");
   let captured: URLSearchParams | null = null;
@@ -25,6 +27,7 @@ function mount(
     permalink: (p) => `https://enklayve.com/#/x?${(p ?? params).toString()}`,
     locale: "en-US",
     data,
+    profile,
   });
   return { root, lastParams: () => captured };
 }

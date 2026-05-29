@@ -18,6 +18,7 @@ Foundation phases are complete:
 - **Phase 3 — The tax engine.** [`src/engine/tax`](src/engine/tax) — one generic evaluator that composes federal income tax, FICA, state, and local into a single fully-cited result. Seeded the ten most populous states plus DC (no-income-tax states are first-class records) and the 2024 FICA dataset, with a hand-verified + generated golden corpus and bounds/fuzz invariants.
 - **Phase 4 — UI shell & design system.** [`src/ui`](src/ui) — a tiny vanilla render layer, three instant-switch themes (light / dark / high-contrast) in royal purple and gold, a reduced-motion-aware count-up, the result card (collapsible cited breakdown, copy + permalink), a fuzzy command palette (Cmd/Ctrl-K), and fragment-based routing that makes every result deep-linkable. axe-core runs in CI with zero violations.
 - **Phase 5 (first wave) — Pillar 1 tiles.** [`src/tiles`](src/tiles) — **Take-Home Pay**, **Federal Income Tax** (standard vs itemized), **Marginal Rate Explorer**, and **Compound Growth**, each built on the engine with a worked example, per-line citations, and deep-linkable state. The remaining Pillar 1 tools are rolling out in later waves.
+- **Phase 12 — Your Situation (session profile).** [`src/profile`](src/profile) — a single in-memory profile every tile reads from and writes to, so income is entered once. It is never persisted automatically and is cleared on unload; continuity is opt-in via a user-held export that can be passphrase-encrypted on the device (PBKDF2 → AES-GCM). A **Your Situation** panel views/edits it.
 
 ## Develop
 
@@ -42,6 +43,7 @@ npm run deploy:dry     # wrangler dry-run deploy
 | `src/data`    | Dataset schemas, integrity check, manifest loader, fail-safe gate  |
 | `src/tiles`   | One module per calculator (Take-Home Pay built; rest rolling out)  |
 | `src/ui`      | Render layer, themes, result card, command palette, router         |
+| `src/profile` | Your Situation — the in-memory session profile and portable export |
 | `data`        | Sharded JSON datasets, sibling `.sha256` files, and the manifest   |
 | `scripts`     | Data refresh adapters and the manifest builder                     |
 | `worker`      | Cloudflare Worker asset router and security headers                |

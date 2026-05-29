@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import axe from "axe-core";
 import { renderHome, mountApp } from "../../src/ui/shell";
+import { SituationPanel } from "../../src/ui/situationPanel";
 import { mountTakeHome } from "../../src/tiles/takeHome";
 import { mountFederalIncomeTax } from "../../src/tiles/federalIncomeTax";
 import { mountMarginalExplorer } from "../../src/tiles/marginalExplorer";
 import { mountCompoundGrowth } from "../../src/tiles/compoundGrowth";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
+import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
 
 /**
@@ -80,6 +82,7 @@ describe("accessibility (axe-core)", () => {
         permalink: () => "https://enklayve.com/#/x",
         locale: "en-US",
         data,
+        profile: new SituationStore(),
       };
       tc.mount(ctx);
       document.body.append(main);
@@ -93,5 +96,15 @@ describe("accessibility (axe-core)", () => {
     const handle = await mountApp(root);
     await expectNoViolations(document.body);
     handle.destroy();
+  }, 30000);
+
+  it("the open Your Situation panel has no violations", async () => {
+    const profile = new SituationStore();
+    profile.set("annualIncome", 85000);
+    const panel = new SituationPanel(profile, data);
+    document.body.append(panel.element);
+    panel.show();
+    await expectNoViolations(document.body);
+    panel.close();
   }, 30000);
 });
