@@ -9,10 +9,10 @@
  *   - Runway: how long savings last at your full burn, plus a downshift scenario
  *     (cutting back to essentials).
  *   - Net worth (the war chest): assets minus debts.
- *   - Your Enough Number: annual essentials ÷ a safe withdrawal rate, with
+ *   - My Enough Number: annual essentials ÷ a safe withdrawal rate, with
  *     progress toward it.
  *
- * Every figure is computed on the device from Your Situation. Assumptions (the
+ * Every figure is computed on the device from My Situation. Assumptions (the
  * target months and the withdrawal rate) are shown and adjustable — never hidden
  * (§5.3). The tone frames progress, never "you are behind".
  */
@@ -184,20 +184,20 @@ export function mountPeaceOfMind(ctx: TileContext): void {
         sub: `Savings ${usd(r.savings, ctx.locale)} + other assets ${usd(config.otherAssets, ctx.locale)} − debts ${usd(r.debts, ctx.locale)}.`,
       }),
       reading({
-        label: "Your Enough Number",
+        label: "My Enough Number",
         headlineTarget: r.enough,
         format: (n) => usd(n, ctx.locale),
         sub: `Annual essentials ${usd(r.annualEssentials, ctx.locale)} ÷ ${pct(config.withdrawalRatePct / 100)} withdrawal rate (your assumption). You're ${r.enoughProgressPct.toFixed(0)}% of the way — every step counts.`,
         progress: {
           value: r.enoughProgressPct,
           max: 100,
-          label: "Progress toward Your Enough Number",
+          label: "Progress toward My Enough Number",
         },
       }),
     );
   }
 
-  // --- Shared inputs (Your Situation, entered once) ---
+  // --- Shared inputs (My Situation, entered once) ---
   function numberField(
     name: string,
     label: string,
@@ -308,10 +308,10 @@ export function mountPeaceOfMind(ctx: TileContext): void {
   const inputs = el(
     "details",
     { class: "ph-config" },
-    el("summary", { text: "Your Situation & assumptions" }),
+    el("summary", { text: "My Situation & assumptions" }),
     el("p", {
       class: "ph-config-note",
-      text: "These live only in this session and are cleared when you leave. Open Your Situation in the header to export a private copy.",
+      text: "These live only in this session and are cleared when you leave. Open My Situation in the header to export a private copy.",
     }),
     el(
       "div",
@@ -351,5 +351,13 @@ export const peaceOfMindTile: TileDefinition = {
     "financial independence",
   ],
   status: "ready",
+  how: "From your essentials, total spending, savings, and debts we compute four calm readings: your cushion (savings ÷ essential monthly spending = months covered), your runway (savings ÷ total monthly spending, plus a downshift scenario at essentials only), your net worth (savings + other assets − debts), and My Enough Number (annual essentials ÷ your safe-withdrawal rate, e.g. 4% ≈ 25×).\n\nThe target months and the withdrawal rate are your assumptions, shown and adjustable. The tone is progress, never shame.",
+  resources: [
+    {
+      label: "CFPB — building an emergency fund",
+      url: "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/",
+    },
+    { label: "Investor.gov — saving & investing", url: "https://www.investor.gov/" },
+  ],
   mount: mountPeaceOfMind,
 };

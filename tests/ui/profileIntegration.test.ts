@@ -55,7 +55,58 @@ describe("Your Situation continuity", () => {
   });
 });
 
-describe("Your Situation panel", () => {
+describe("My Situation panel", () => {
+  it("can always be closed — by the Close button, the Done button, or Escape", () => {
+    const profile = new SituationStore();
+    const panel = new SituationPanel(profile, data);
+    document.body.append(panel.element);
+
+    // Close button.
+    panel.show();
+    expect(panel.isOpen()).toBe(true);
+    const closeBtn = Array.from(panel.element.querySelectorAll("button")).find((b) =>
+      b.textContent?.includes("Close"),
+    )!;
+    expect(closeBtn).toBeTruthy();
+    closeBtn.click();
+    expect(panel.isOpen()).toBe(false);
+    expect(panel.element.hidden).toBe(true);
+
+    // Done button.
+    panel.show();
+    Array.from(panel.element.querySelectorAll("button"))
+      .find((b) => b.textContent === "Done")!
+      .click();
+    expect(panel.isOpen()).toBe(false);
+
+    // Escape key, from anywhere on the window (not only a focused field).
+    panel.show();
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    expect(panel.isOpen()).toBe(false);
+
+    panel.element.remove();
+  });
+
+  it("lets you choose a filing status and enter income", () => {
+    const profile = new SituationStore();
+    const panel = new SituationPanel(profile, data);
+    document.body.append(panel.element);
+    panel.show();
+
+    const fs = panel.element.querySelector<HTMLSelectElement>('select[name="fs"]')!;
+    fs.value = "single";
+    fs.dispatchEvent(new Event("change"));
+    expect(profile.get("filingStatus")).toBe("single");
+
+    const inc = panel.element.querySelector<HTMLInputElement>('input[name="inc"]')!;
+    inc.value = "60000";
+    inc.dispatchEvent(new Event("input"));
+    expect(profile.get("annualIncome")).toBe(60000);
+
+    panel.close();
+    panel.element.remove();
+  });
+
   it("edits write to the profile and the summary reflects them", () => {
     const profile = new SituationStore();
     const panel = new SituationPanel(profile, data);

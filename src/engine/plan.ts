@@ -1,7 +1,7 @@
 /**
- * Your Plan — the deterministic guidance engine (BUILD-SPEC-2 §4).
+ * My Plan — the deterministic guidance engine (BUILD-SPEC-2 §4).
  *
- * A rules-based, ordered plan that reads a normalized snapshot of Your Situation
+ * A rules-based, ordered plan that reads a normalized snapshot of My Situation
  * and surfaces the single next right step, with the math shown and the rule
  * behind any statutory threshold cited. It uses no AI and makes no prediction:
  * every output is a pure function of the inputs and the (cited) bundled limits.
@@ -35,7 +35,7 @@ export interface SinkingGoal {
 }
 
 /**
- * The normalized inputs the plan reads, derived from Your Situation plus the
+ * The normalized inputs the plan reads, derived from My Situation plus the
  * cited retirement limit. All money fields are plain dollars.
  */
 export interface PlanInput {
@@ -50,7 +50,7 @@ export interface PlanInput {
   retirementLimitAnnual: number;
   retirementLimitCitation: CitationData;
   sinkingGoals: SinkingGoal[];
-  /** Total net worth counted toward Your Enough Number; defaults to liquidSavings. */
+  /** Total net worth counted toward My Enough Number; defaults to liquidSavings. */
   netWorth?: number;
 }
 
@@ -64,7 +64,7 @@ export interface PlanConfig {
   highCostThresholdPct: number;
   /** Smallest balance first or highest rate first (§4.2). */
   debtStrategy: DebtStrategy;
-  /** Your Enough Number as a multiple of annual essential expenses (SPEC §5.1). */
+  /** My Enough Number as a multiple of annual essential expenses (SPEC §5.1). */
   enoughMultiple: number;
   /** Step order — the user can reorder (§4.2). */
   order: PlanStepId[];
@@ -256,7 +256,7 @@ export const PLAN_STEPS: StepDef[] = [
         return {
           satisfied: false,
           action:
-            "Add your essential monthly expenses in Your Situation so we can size your rainy-day fund.",
+            "Add your essential monthly expenses in My Situation so we can size your rainy-day fund.",
           amount: null,
           math: [{ label: "Essential monthly expenses", value: "not set" }],
           citation: null,
@@ -343,7 +343,7 @@ export const PLAN_STEPS: StepDef[] = [
         return {
           satisfied: false,
           action:
-            "Add your essential monthly expenses in Your Situation so we can compute Your Enough Number.",
+            "Add your essential monthly expenses in My Situation so we can compute My Enough Number.",
           amount: null,
           math: [{ label: "Essential monthly expenses", value: "not set" }],
           citation: null,
@@ -355,11 +355,11 @@ export const PLAN_STEPS: StepDef[] = [
       const gap = positiveGap(target, have);
       return {
         satisfied: have >= target,
-        action: `Grow ${usd(gap)} more toward Your Enough Number of ${usd(target)} — the point where work becomes optional.`,
+        action: `Grow ${usd(gap)} more toward My Enough Number of ${usd(target)} — the point where work becomes optional.`,
         amount: Money.from(gap),
         math: [
           { label: "Annual essentials", value: usd(essential * 12) },
-          { label: `Your Enough Number (${config.enoughMultiple}×)`, value: usd(target) },
+          { label: `My Enough Number (${config.enoughMultiple}×)`, value: usd(target) },
           { label: "Counted toward it", value: usd(have) },
           { label: "Still to grow", value: usd(gap) },
         ],

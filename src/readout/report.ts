@@ -1,12 +1,12 @@
 /**
  * The Readout Report (BUILD-SPEC-2 §5): a downloadable, cited, reproducible
  * summary of where the user stands, generated entirely on the device. The
- * builder is pure — the same Your Situation profile and the same dataset
+ * builder is pure — the same My Situation profile and the same dataset
  * versions always produce an identical model and an identical HTML document, so
  * the report is auditable and reproducible (no embedded timestamp, no randomness).
  *
  * It composes everything already built: the tax engine (snapshot + tax picture),
- * Your Plan (the next right step), the Safe Harbor readings (net worth, rainy-day
+ * My Plan (the next right step), the Safe Harbor readings (net worth, rainy-day
  * months), and the dataset manifest (the assumptions-and-sources appendix). The
  * "What you may be owed" section lands with the What You're Owed pillar (Phase 6).
  */
@@ -97,7 +97,7 @@ function dedupeCitations(citations: CitationData[]): ReportModel["appendix"]["ci
 }
 
 /**
- * Build the report model deterministically from Your Situation and the bundled
+ * Build the report model deterministically from My Situation and the bundled
  * datasets. Pure: identical inputs yield an identical model.
  */
 export function buildReport(
@@ -156,7 +156,7 @@ export function buildReport(
     });
 
     sections.push({
-      title: "Your tax picture",
+      title: "My tax picture",
       lines: [
         { label: "Federal income tax", value: usd(result.federal.incomeTax) },
         { label: "Social Security + Medicare (FICA)", value: usd(result.fica.total) },
@@ -179,7 +179,7 @@ export function buildReport(
     sections.push({
       title: "Snapshot",
       lines: [
-        { label: "Status", value: "Add your income in Your Situation to compute your snapshot." },
+        { label: "Status", value: "Add your income in My Situation to compute your snapshot." },
       ],
     });
   }
@@ -202,13 +202,13 @@ export function buildReport(
     note: "For estimated EITC, Child Tax Credit, and Medicaid/ACA eligibility, use the What Am I Owed screener — it composes these from your household.",
   });
 
-  // --- Your Plan: the current next right step ---
+  // --- My Plan: the current next right step ---
   const plan = evaluatePlan(planInputFrom(profile, data), config);
   if (plan.current) {
     const c = plan.current;
     if (c.citation) citations.push(c.citation);
     sections.push({
-      title: "Your Plan — the next right step",
+      title: "My Plan — the next right step",
       lines: [
         { label: "Current step", value: c.title },
         { label: "Next action", value: c.action },
@@ -217,7 +217,7 @@ export function buildReport(
     });
   } else {
     sections.push({
-      title: "Your Plan",
+      title: "My Plan",
       lines: [{ label: "Status", value: "You're on track across every step for now." }],
     });
   }
@@ -231,7 +231,7 @@ export function buildReport(
       value:
         config.debtStrategy === "highest-rate" ? "Highest rate first" : "Smallest balance first",
     },
-    { label: "Your Enough Number multiple", value: `${config.enoughMultiple}× annual essentials` },
+    { label: "My Enough Number multiple", value: `${config.enoughMultiple}× annual essentials` },
   ];
 
   const datasets = (data?.manifest.datasets ?? []).map((d) => ({
@@ -295,7 +295,7 @@ export function renderReportHtml(model: ReportModel): string {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Your Readout Report — enklayve</title>
+    <title>My Readout Report — enklayve</title>
     <style>
       :root { color-scheme: light; }
       body {
@@ -322,7 +322,7 @@ export function renderReportHtml(model: ReportModel): string {
     </style>
   </head>
   <body>
-    <h1>Your Readout Report</h1>
+    <h1>My Readout Report</h1>
     <p class="lede">Where you stand, computed entirely on your device from ${model.effectiveYear} data. Nothing was sent anywhere.</p>
 ${body}
     <section class="appendix">

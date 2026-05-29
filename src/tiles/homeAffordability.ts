@@ -233,5 +233,10 @@ export const homeAffordabilityTile: TileDefinition = {
   description: "How much house you can afford, all-in, on the 28/36 rule.",
   keywords: ["home", "house", "mortgage affordability", "28/36", "down payment", "buying"],
   status: "ready",
+  how: "Lenders commonly cap housing at 28% of your gross monthly income and total debt (housing plus other payments) at 36% — the '28/36 rule'. We take the smaller of those two budgets, subtract the monthly taxes, insurance, and HOA you enter, and the remainder is the principal-and-interest payment you can support.\n\nFrom that payment, your rate, and the term, we back out the largest mortgage (the present value of those payments) and add your down payment to get a maximum home price. Lenders vary, so treat it as a starting point.",
+  resources: [
+    { label: "CFPB — buying a house", url: "https://www.consumerfinance.gov/owning-a-home/" },
+    { label: "HUD — buying a home", url: "https://www.hud.gov/buying" },
+  ],
   mount: mountHomeAffordability,
 };

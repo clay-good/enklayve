@@ -186,5 +186,13 @@ export const compoundGrowthTile: TileDefinition = {
   description: "Contribution growth at a rate you choose.",
   keywords: ["compound", "interest", "growth", "savings", "investment", "future value"],
   status: "ready",
+  how: "Future value = your starting balance grown at the rate you choose, plus each contribution grown for the periods it has left to compound. We compound every period exactly (no rounding drift).\n\nThe rate of return is your assumption, clearly labeled — never a prediction. We don't guess markets; change the rate to see optimistic and conservative cases.",
+  resources: [
+    {
+      label: "Investor.gov — compound interest calculator",
+      url: "https://www.investor.gov/financial-tools-calculators/calculators/compound-interest-calculator",
+    },
+    { label: "CFPB — saving & investing", url: "https://www.consumerfinance.gov/consumer-tools/" },
+  ],
   mount: mountCompoundGrowth,
 };

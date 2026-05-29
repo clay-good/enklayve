@@ -1,5 +1,5 @@
 /**
- * Flow confirmed Readout fields into Your Situation (BUILD-SPEC-2 §2.3).
+ * Flow confirmed Readout fields into My Situation (BUILD-SPEC-2 §2.3).
  *
  * Only fields the user has confirmed and that carry a `target` are written, and
  * they are recorded with provenance "extracted" so the profile (and the Readout

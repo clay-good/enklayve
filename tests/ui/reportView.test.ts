@@ -36,7 +36,7 @@ afterEach(() => document.body.replaceChildren());
 describe("Readout Report view", () => {
   it("previews the report with its sections, download, and print", () => {
     const { container } = mount(fundedProfile());
-    expect(container.querySelector(".tile-title")?.textContent).toBe("Your Readout Report");
+    expect(container.querySelector(".tile-title")?.textContent).toBe("My Readout Report");
     const titles = Array.from(container.querySelectorAll(".report-section-title")).map(
       (n) => n.textContent ?? "",
     );
@@ -57,7 +57,7 @@ describe("Readout Report view", () => {
   it("links onward to Your Plan", () => {
     const { container, dest } = mount(fundedProfile());
     Array.from(container.querySelectorAll("button"))
-      .find((b) => b.textContent === "See Your Plan →")!
+      .find((b) => b.textContent === "See My Plan →")!
       .click();
     expect(dest()).toBe("your-plan");
   });

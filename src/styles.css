@@ -710,7 +710,7 @@ body {
   color: var(--enk-text-muted);
 }
 
-/* --- Your Situation panel --- */
+/* --- My Situation panel --- */
 .situation-dialog {
   width: min(44rem, 94vw);
   max-height: 80vh;
@@ -809,7 +809,7 @@ body {
   }
 }
 
-/* --- Your Plan (BUILD-SPEC-2 §4) ----------------------------------------- */
+/* --- My Plan (BUILD-SPEC-2 §4) ----------------------------------------- */
 .plan-intro {
   color: var(--enk-text-muted);
   margin: 0 0 1.25rem;
@@ -1226,5 +1226,89 @@ body {
 .screener-note {
   margin: 0.35rem 0 0;
   font-size: 0.85rem;
+  color: var(--enk-text-muted);
+}
+
+/* --- My Situation dialog: header + close (always dismissable) ------------ */
+.situation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.25rem;
+}
+.situation-header .situation-title {
+  margin: 0;
+}
+.situation-close {
+  flex: none;
+}
+.situation-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--enk-border);
+}
+
+/* --- Explainers: "How this works" + resources (warm, helpful, US-only) --- */
+.tile-explainer {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--enk-border);
+}
+.explainer-how > summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--enk-primary-strong);
+  padding: 0.25rem 0;
+}
+.explainer-para {
+  color: var(--enk-text);
+  max-width: 68ch;
+  margin: 0.5rem 0;
+}
+.explainer-subhead {
+  margin: 1rem 0 0.4rem;
+  color: var(--enk-primary-strong);
+  font-size: 0.95rem;
+}
+.explainer-resources {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--enk-text-muted);
+}
+.explainer-resources a {
+  color: var(--enk-primary);
+}
+.explainer-promise {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--enk-text-muted);
+  max-width: 68ch;
+}
+
+/* Home "how this works" block. */
+.home-explainer {
+  margin-top: 2.5rem;
+  border-top: 1px solid var(--enk-border);
+  padding-top: 1.5rem;
+}
+.home-explainer-title {
+  color: var(--enk-primary-strong);
+  margin: 0 0 0.75rem;
+}
+.explainer-points {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+}
+.explainer-point-title {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  color: var(--enk-text);
+}
+.explainer-point-body {
+  margin: 0;
   color: var(--enk-text-muted);
 }

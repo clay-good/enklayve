@@ -1,6 +1,6 @@
 /**
  * Small shared helpers for the Pillar 2 (What You're Owed) tiles: a consistent
- * "married filing jointly" control and its default from Your Situation.
+ * "married filing jointly" control and its default from My Situation.
  */
 import { el } from "../ui/dom";
 import type { SituationStore } from "../profile/situation";

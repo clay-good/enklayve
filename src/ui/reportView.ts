@@ -1,7 +1,7 @@
 /**
  * The Readout Report view (BUILD-SPEC-2 §5): an in-app preview of the
  * downloadable summary, with a one-tap download of a self-contained HTML file
- * and a print button. Everything is generated on the device from Your Situation
+ * and a print button. Everything is generated on the device from My Situation
  * — nothing is uploaded. The report itself is reproducible: the same profile and
  * dataset versions always produce the same document.
  */
@@ -40,7 +40,7 @@ function sectionEl(section: ReportModel["sections"][number]): HTMLElement {
 export function renderReport(opts: RenderReportOptions): void {
   const { container, navigate, profile, data } = opts;
   clear(container);
-  document.title = "Your Readout Report — enklayve";
+  document.title = "My Readout Report — enklayve";
 
   const model = buildReport(profile, data);
 
@@ -53,7 +53,7 @@ export function renderReport(opts: RenderReportOptions): void {
     "div",
     { class: "tile-head" },
     back,
-    el("h1", { class: "tile-title", text: "Your Readout Report" }),
+    el("h1", { class: "tile-title", text: "My Readout Report" }),
     el("p", {
       class: "tile-desc",
       text: `Where you stand, computed on your device from ${model.effectiveYear} data. Download a private copy or print it — nothing is uploaded.`,
@@ -79,7 +79,7 @@ export function renderReport(opts: RenderReportOptions): void {
   const planLink = el("button", {
     type: "button",
     class: "btn btn--ghost",
-    text: "See Your Plan →",
+    text: "See My Plan →",
     on: { click: () => navigate("your-plan") },
   });
   const actions = el("div", { class: "report-actions" }, download, print, planLink);

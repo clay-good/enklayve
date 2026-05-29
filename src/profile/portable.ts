@@ -1,7 +1,7 @@
 /**
  * Portable, user-held profile export/import (BUILD-SPEC-2 §3.2, §5.2).
  *
- * The user may export Your Situation to a local file they keep and re-import it
+ * The user may export My Situation to a local file they keep and re-import it
  * later. The export can be passphrase-encrypted on the device, reusing the
  * encryptalotta technique: PBKDF2 → AES-GCM, all via Web Crypto, which is a
  * local computation and therefore allowed under the strict `connect-src 'none'`

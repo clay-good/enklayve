@@ -1,5 +1,5 @@
 /**
- * The bridge between tiles and Your Situation (BUILD-SPEC-2 §3). Tiles resolve
+ * The bridge between tiles and My Situation (BUILD-SPEC-2 §3). Tiles resolve
  * their starting values with the precedence URL fragment > session profile >
  * built-in default, and write the fields they share — filing status, state, and
  * income — back to the profile so a value entered in one tile pre-fills the next.

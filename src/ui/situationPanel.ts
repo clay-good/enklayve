@@ -1,9 +1,11 @@
 /**
- * The Your Situation panel (BUILD-SPEC-2 §3): a calm dialog to view and edit the
- * session profile and to export/import it as a portable, optionally encrypted,
- * user-held file. It is the visible face of the in-memory profile that the tiles
- * read from and write to. Nothing here is persisted automatically or sent
- * anywhere — export is a download the user keeps.
+ * The My Situation panel (BUILD-SPEC-2 §3): a calm, warm dialog to view and edit
+ * the session profile and to export/import it as a portable, optionally
+ * encrypted, user-held file. It is the visible face of the in-memory profile
+ * that the tiles read from and write to. Nothing here is persisted automatically
+ * or sent anywhere — export is a download you keep. It can always be closed (a
+ * visible Close button, the Escape key, or clicking outside), so it is never a
+ * trap.
  */
 import { el, option, clear, copyToClipboard } from "./dom";
 import { field } from "./form";
@@ -52,6 +54,7 @@ export class SituationPanel {
   private readonly passInput: HTMLInputElement;
   private open = false;
   private unsubscribe: (() => void) | null = null;
+  private onKeydown: ((e: KeyboardEvent) => void) | null = null;
 
   constructor(store: SituationStore, data: BundledData | null) {
     this.store = store;
@@ -71,22 +74,36 @@ export class SituationPanel {
       attrs: { "aria-label": "Export/import passphrase", autocomplete: "off" },
     });
 
+    const closeBtn = el("button", {
+      type: "button",
+      class: "btn btn--ghost situation-close",
+      text: "✕ Close",
+      attrs: { "aria-label": "Close My Situation" },
+      on: { click: () => this.close() },
+    });
+
     const panel = el(
       "div",
       {
         class: "palette-panel situation-dialog",
-        attrs: { role: "dialog", "aria-modal": "true", "aria-label": "Your Situation" },
+        attrs: { role: "dialog", "aria-modal": "true", "aria-label": "My Situation" },
       },
-      el("h2", { class: "situation-title", text: "Your Situation" }),
+      el(
+        "div",
+        { class: "situation-header" },
+        el("h2", { class: "situation-title", text: "My Situation" }),
+        closeBtn,
+      ),
       el("p", {
         class: "situation-blurb",
-        text: "Enter a number once and every tool uses it. It lives only in memory and is cleared when you leave — export it to keep a private copy.",
+        text: "Tell me your numbers once and every tool uses them. They live only in memory and clear the moment you leave — export a private copy if you'd like to keep them. Nothing is ever sent anywhere.",
       }),
       this.buildEditor(),
-      el("h3", { class: "situation-subhead", text: "What enklayve knows" }),
+      el("h3", { class: "situation-subhead", text: "What you've shared so far" }),
       this.summary,
       this.buildPortableControls(),
       this.status,
+      el("div", { class: "situation-footer" }, this.buildDoneButton()),
     );
 
     this.element = el(
@@ -98,13 +115,19 @@ export class SituationPanel {
           click: (e) => {
             if (e.target === this.element) this.close();
           },
-          keydown: (e) => {
-            if ((e as KeyboardEvent).key === "Escape") this.close();
-          },
         },
       },
       panel,
     );
+  }
+
+  private buildDoneButton(): HTMLElement {
+    return el("button", {
+      type: "button",
+      class: "btn btn--accent",
+      text: "Done",
+      on: { click: () => this.close() },
+    });
   }
 
   private buildEditor(): HTMLElement {
@@ -198,7 +221,7 @@ export class SituationPanel {
   private async doExport(): Promise<void> {
     const passphrase = this.passInput.value.trim();
     const content = await exportProfile(this.store, passphrase || undefined);
-    const name = passphrase ? "your-situation.encrypted.json" : "your-situation.json";
+    const name = passphrase ? "my-situation.encrypted.json" : "my-situation.json";
     triggerDownload(name, content);
     // Also offer the content via clipboard as a fallback when downloads are blocked.
     void copyToClipboard(content);
@@ -261,6 +284,11 @@ export class SituationPanel {
     this.element.hidden = false;
     this.renderSummary();
     this.unsubscribe = this.store.subscribe(() => this.renderSummary());
+    // Escape closes from anywhere while open (not only when a field is focused).
+    this.onKeydown = (e) => {
+      if (e.key === "Escape") this.close();
+    };
+    window.addEventListener("keydown", this.onKeydown);
   }
 
   close(): void {
@@ -268,6 +296,10 @@ export class SituationPanel {
     this.element.hidden = true;
     this.unsubscribe?.();
     this.unsubscribe = null;
+    if (this.onKeydown) {
+      window.removeEventListener("keydown", this.onKeydown);
+      this.onKeydown = null;
+    }
   }
 
   isOpen(): boolean {

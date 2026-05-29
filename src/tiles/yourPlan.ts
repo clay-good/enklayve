@@ -1,6 +1,6 @@
 /**
- * Your Plan tile (BUILD-SPEC-2 §4): the calm, deterministic guidance engine made
- * visible. It reads Your Situation, surfaces the single next right step with its
+ * My Plan tile (BUILD-SPEC-2 §4): the calm, deterministic guidance engine made
+ * visible. It reads My Situation, surfaces the single next right step with its
  * dollar figure and a link to the tile that performs it, shows the math for every
  * step, and cites the rule behind the one statutory threshold (the retirement
  * limit). It is opinionated by default and fully adjustable (§4.2): the user can
@@ -159,7 +159,7 @@ export function mountYourPlan(ctx: TileContext): void {
 
   const intro = el("p", {
     class: "plan-intro",
-    text: "A calm, ordered plan that reads Your Situation and shows the single next right step — opinionated by default, fully yours to adjust. Every figure is computed on your device.",
+    text: "A calm, ordered plan that reads My Situation and shows the single next right step — opinionated by default, fully yours to adjust. Every figure is computed on your device.",
   });
 
   // --- The plan output (the next step + the full ordered list) ---
@@ -320,7 +320,7 @@ export function mountYourPlan(ctx: TileContext): void {
     );
   }
 
-  // --- Your Situation inputs the plan reads (entered once, used everywhere) ---
+  // --- My Situation inputs the plan reads (entered once, used everywhere) ---
   function numberInput(
     name: string,
     label: string,
@@ -390,7 +390,7 @@ export function mountYourPlan(ctx: TileContext): void {
     field("Retirement contributions / yr", retireInput),
   );
 
-  // --- Debts (shared with Your Situation; drives the high-cost-debt step) ---
+  // --- Debts (shared with My Situation; drives the high-cost-debt step) ---
   const debtsContainer = el("div", { class: "plan-debts" });
 
   function currentDebts(): Debt[] {
@@ -554,10 +554,10 @@ export function mountYourPlan(ctx: TileContext): void {
   const situationDetails = el(
     "details",
     { class: "plan-config" },
-    el("summary", { text: "Your Situation & plan settings" }),
+    el("summary", { text: "My Situation & plan settings" }),
     el("p", {
       class: "plan-config-note",
-      text: "These live only in this session and are cleared when you leave. Open Your Situation in the header to export a private copy.",
+      text: "These live only in this session and are cleared when you leave. Open My Situation in the header to export a private copy.",
     }),
     situationEditor,
     el("h4", { class: "plan-subhead", text: "Debts" }),
@@ -574,10 +574,18 @@ export function mountYourPlan(ctx: TileContext): void {
 
 export const yourPlanTile: TileDefinition = {
   id: "your-plan",
-  title: "Your Plan",
+  title: "My Plan",
   pillar: "plan",
   description: "The deterministic next right step, with the math shown.",
   keywords: ["plan", "next step", "guidance", "guide", "baby steps", "order of operations"],
   status: "ready",
+  how: "We read My Situation and walk a calm, ordered plan: a starter cushion, capturing the full employer match, clearing high-cost debt, a full rainy-day fund, tax-advantaged retirement, sinking funds for named goals, and finally building the war chest. The first step you haven't met yet is your next right step, shown with the exact dollar figure and the math.\n\nIt's opinionated by default but fully yours: reorder steps, change the rainy-day target, choose smallest-balance or highest-rate debt payoff, or turn steps off. The only statutory threshold (the retirement contribution limit) cites the IRS; the rest are clearly-labeled guidelines.",
+  resources: [
+    {
+      label: "CFPB — financial tools & guides",
+      url: "https://www.consumerfinance.gov/consumer-tools/",
+    },
+    { label: "Investor.gov — saving & investing basics", url: "https://www.investor.gov/" },
+  ],
   mount: mountYourPlan,
 };

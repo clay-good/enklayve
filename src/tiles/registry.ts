@@ -151,7 +151,7 @@ export const TILES: TileDefinition[] = [
 
   // --- Pillar 3: Safe Harbor (§5) ---
   // The Peace of Mind dashboard consolidates the rainy-day cushion, runway,
-  // net worth (war chest), and Your Enough Number into one calm overview, so the
+  // net worth (war chest), and My Enough Number into one calm overview, so the
   // user enters shared inputs once instead of re-typing them into four
   // near-identical calculators (the math was the same: savings ÷ monthly spend).
   peaceOfMindTile,
@@ -169,7 +169,7 @@ export const TILES: TileDefinition[] = [
     ["sabbatical", "break", "big purchase"],
   ),
 
-  // --- Your Plan (BUILD-SPEC-2 §4) ---
+  // --- My Plan (BUILD-SPEC-2 §4) ---
   yourPlanTile,
 ];
 

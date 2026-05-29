@@ -1,5 +1,5 @@
 /**
- * Your Situation — the in-memory session profile (BUILD-SPEC-2 §3).
+ * My Situation — the in-memory session profile (BUILD-SPEC-2 §3).
  *
  * A single store every tile reads defaults from and writes user entries back
  * to, so income is entered once, not retyped in eight tools. Each field records

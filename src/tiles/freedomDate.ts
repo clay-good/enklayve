@@ -2,7 +2,7 @@
  * Freedom Date tile (BUILD-SPEC.md §5.1) — debt payoff, reframed calmly: the
  * date your debts are gone. Deterministic month-by-month payoff at a fixed
  * payment (the engine's {@link debtPayoff}). Defaults pull the balance and a
- * balance-weighted rate from the debts in Your Situation, so a number entered
+ * balance-weighted rate from the debts in My Situation, so a number entered
  * once flows here. The full snowball-vs-avalanche comparison is the Debt Freedom
  * Planner (a later wave); this answers the single question "when am I free?".
  */
@@ -180,5 +180,16 @@ export const freedomDateTile: TileDefinition = {
   description: "When your debts are gone, at a payment you choose.",
   keywords: ["debt payoff", "freedom", "debt free", "payoff date", "amortization"],
   status: "ready",
+  how: "We amortize your balance month by month: each month adds interest (your annual rate ÷ 12 on the remaining balance) and subtracts your payment, until the balance reaches zero. That count of months is your freedom date, and we total the interest you'll pay along the way.\n\nIf the payment can't cover even the monthly interest, the balance never falls — we tell you plainly instead of showing an impossible date.",
+  resources: [
+    {
+      label: "CFPB — dealing with debt",
+      url: "https://www.consumerfinance.gov/consumer-tools/debt-collection/",
+    },
+    {
+      label: "CFPB — debt payoff strategies",
+      url: "https://www.consumerfinance.gov/about-us/blog/",
+    },
+  ],
   mount: mountFreedomDate,
 };

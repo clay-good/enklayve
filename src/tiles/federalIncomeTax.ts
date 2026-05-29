@@ -295,5 +295,13 @@ export const federalIncomeTaxTile: TileDefinition = {
   description: "Marginal and effective breakdown, standard vs itemized.",
   keywords: ["federal", "tax", "marginal", "effective", "deduction", "itemized"],
   status: "ready",
+  how: "We start from your income and subtract the larger of the standard deduction or your itemized 'big four' — state and local taxes (capped at $10,000), mortgage interest, charitable gifts, and medical expenses above 7.5% of your income. Then we apply the IRS marginal brackets for your filing status.\n\nYour effective rate is total tax ÷ income. Your marginal rate is the bracket your next dollar of income lands in — handy for weighing a raise or a pre-tax contribution.",
+  resources: [
+    {
+      label: "IRS — tax brackets & rates",
+      url: "https://www.irs.gov/filing/federal-income-tax-rates-and-brackets",
+    },
+    { label: "IRS — standard vs. itemized deductions", url: "https://www.irs.gov/taxtopics/tc501" },
+  ],
   mount: mountFederalIncomeTax,
 };

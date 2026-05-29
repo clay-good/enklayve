@@ -275,5 +275,14 @@ export const owedScreenerTile: TileDefinition = {
   description: "Enter your situation once; see every program you likely qualify for.",
   keywords: ["screener", "benefits", "eligibility", "what am i owed"],
   status: "ready",
+  how: "You enter your household once — size, income, region, children, and filing status — and we compute your percentage of the poverty line, estimate the refundable credits you likely qualify for (the Earned Income Tax Credit and the Child Tax Credit), and flag where your income suggests Medicaid or ACA-subsidy eligibility. Each line shows its public source.\n\nWe ask for nothing identifying and send nothing anywhere. These are estimates to point you toward programs worth applying for — the agencies make the final determination.",
+  resources: [
+    { label: "Benefits.gov — find benefits", url: "https://www.benefits.gov/" },
+    { label: "HealthCare.gov — lower costs", url: "https://www.healthcare.gov/lower-costs/" },
+    {
+      label: "IRS — credits & deductions",
+      url: "https://www.irs.gov/credits-deductions-for-individuals",
+    },
+  ],
   mount: mountOwedScreener,
 };

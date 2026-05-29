@@ -73,7 +73,7 @@ function buildHeader(
   const situation = el("button", {
     type: "button",
     class: "btn btn--ghost situation-trigger",
-    text: "Your Situation",
+    text: "My Situation",
     on: { click: openSituation },
   });
 
@@ -148,7 +148,7 @@ function renderHome(
     el("h1", { class: "hero-title", text: "Know where you stand. Privately." }),
     el("p", {
       class: "hero-sub",
-      text: "Your real take-home, what you owe, and what you're owed — computed entirely on your device. Nothing ever leaves.",
+      text: "A calm, kind personal-finance guide for the United States. See your real take-home, what you owe, and what you're owed — with the math shown and every source linked. It's all computed on your device, and nothing ever leaves.",
     }),
     readoutDropzone(navigate),
   );
@@ -165,7 +165,7 @@ function renderHome(
     el("kbd", { class: "kbd", text: "⌘K" }),
   );
 
-  // Compact grouped browsing: one expandable card per pillar (plus Your Plan),
+  // Compact grouped browsing: one expandable card per pillar (plus My Plan),
   // collapsed by default so the home stays short to scroll (BUILD-SPEC-2 §1.1,
   // §1.2). Native <details>/<summary> keeps it fully keyboard- and
   // screen-reader-operable without a mega dropdown.
@@ -207,7 +207,80 @@ function renderHome(
   );
   grid.append(indexCard);
 
-  container.append(hero, search, grid);
+  container.append(hero, search, grid, homeExplainer());
+}
+
+/** Trusted U.S. resources to learn the public rules behind the numbers. */
+const US_RESOURCES: { label: string; url: string }[] = [
+  { label: "IRS — federal taxes", url: "https://www.irs.gov/" },
+  { label: "Benefits.gov — federal benefits", url: "https://www.benefits.gov/" },
+  { label: "HealthCare.gov — ACA marketplace", url: "https://www.healthcare.gov/" },
+  {
+    label: "Consumer Financial Protection Bureau",
+    url: "https://www.consumerfinance.gov/consumer-tools/",
+  },
+  { label: "Social Security Administration", url: "https://www.ssa.gov/" },
+  { label: "Federal Student Aid (FAFSA)", url: "https://studentaid.gov/" },
+];
+
+/**
+ * The home "how this works / why you can trust it" section: warm, plain-English,
+ * US-only, and pointing to the public sources behind every number.
+ */
+function homeExplainer(): HTMLElement {
+  const point = (title: string, body: string): HTMLElement =>
+    el(
+      "div",
+      { class: "explainer-point" },
+      el("h3", { class: "explainer-point-title", text: title }),
+      el("p", { class: "explainer-point-body", text: body }),
+    );
+
+  return el(
+    "section",
+    { class: "home-explainer", attrs: { "aria-label": "How enklayve works" } },
+    el("h2", { class: "home-explainer-title", text: "How this works" }),
+    el(
+      "div",
+      { class: "explainer-points" },
+      point(
+        "It's truly private",
+        "Every number is computed on your device. The page literally cannot send your data anywhere — there's no server to send it to.",
+      ),
+      point(
+        "It shows its work",
+        "Every tool explains the logic and the math, and cites the public U.S. rule behind each figure, so you never have to just trust it.",
+      ),
+      point(
+        "It's for the United States",
+        "enklayve is built around U.S. federal and state taxes and benefits. We're keeping the scope U.S.-only for now so every figure stays accurate.",
+      ),
+      point(
+        "It's free and on your side",
+        "No accounts, no ads, no upsell. It's a calm guide that gives you the next right step — never shame.",
+      ),
+    ),
+    el("h3", { class: "explainer-subhead", text: "Trusted U.S. resources" }),
+    el(
+      "ul",
+      { class: "explainer-resources" },
+      ...US_RESOURCES.map((r) =>
+        el(
+          "li",
+          {},
+          el(
+            "a",
+            { href: r.url, attrs: { rel: "noopener noreferrer", target: "_blank" } },
+            r.label,
+          ),
+        ),
+      ),
+    ),
+    el("p", {
+      class: "explainer-promise",
+      text: "This is information to help you understand your money, not financial, tax, or legal advice.",
+    }),
+  );
 }
 
 /**
@@ -308,6 +381,60 @@ function renderTileView(
     profile,
   };
   tile.mount(ctx);
+
+  // "How this works" + "Learn more" — explain the logic and the math, and point
+  // to trusted U.S. sources, on every tool page (a warm, helpful default).
+  const explainer = tileExplainer(tile);
+  if (explainer) container.querySelector(".tile")?.append(explainer);
+}
+
+/**
+ * The explainer shown under every tool: a plain-English "how this works" (the
+ * logic and the math), trusted U.S. resource links, and the privacy + US-only
+ * promise. Returns null only if a tile somehow has nothing to add.
+ */
+function tileExplainer(tile: TileDefinition): HTMLElement | null {
+  const section = el("section", { class: "tile-explainer" });
+
+  if (tile.how) {
+    const how = el("details", { class: "explainer-how", attrs: { open: "" } });
+    how.append(el("summary", { text: "How this works" }));
+    for (const para of tile.how.split(/\n\n+/)) {
+      how.append(el("p", { class: "explainer-para", text: para.trim() }));
+    }
+    section.append(how);
+  }
+
+  if (tile.resources && tile.resources.length > 0) {
+    const list = el(
+      "ul",
+      { class: "explainer-resources" },
+      ...tile.resources.map((r) =>
+        el(
+          "li",
+          {},
+          el(
+            "a",
+            {
+              href: r.url,
+              attrs: { rel: "noopener noreferrer", target: "_blank" },
+            },
+            r.label,
+          ),
+        ),
+      ),
+    );
+    section.append(el("h3", { class: "explainer-subhead", text: "Learn more" }), list);
+  }
+
+  section.append(
+    el("p", {
+      class: "explainer-promise",
+      text: "Computed entirely on your device for U.S. taxes and benefits — nothing is ever sent anywhere. Every figure shows its source; this is information, not financial or tax advice.",
+    }),
+  );
+
+  return section;
 }
 
 export interface ShellHandle {

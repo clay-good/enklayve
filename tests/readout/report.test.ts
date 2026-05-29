@@ -31,9 +31,9 @@ describe("Readout Report — model", () => {
     expect(model.hasIncomeData).toBe(true);
     const titles = model.sections.map((s) => s.title);
     expect(titles).toContain("Snapshot");
-    expect(titles).toContain("Your tax picture");
+    expect(titles).toContain("My tax picture");
     expect(titles).toContain("What you may be owed");
-    expect(titles.some((t) => t.startsWith("Your Plan"))).toBe(true);
+    expect(titles.some((t) => t.startsWith("My Plan"))).toBe(true);
 
     const snapshot = model.sections.find((s) => s.title === "Snapshot")!;
     expect(snapshot.lines.find((l) => l.label === "Annual income")?.value).toContain("$95,000");
@@ -76,7 +76,7 @@ describe("Readout Report — HTML", () => {
   it("is a complete, self-contained, script-free document", () => {
     const html = renderReportHtml(buildReport(fundedProfile(), data));
     expect(html).toContain("<!doctype html>");
-    expect(html).toContain("<title>Your Readout Report — enklayve</title>");
+    expect(html).toContain("<title>My Readout Report — enklayve</title>");
     expect(html).toContain("Assumptions &amp; sources");
     // Self-contained and safe: no scripts, no external resource loads.
     expect(html).not.toContain("<script");

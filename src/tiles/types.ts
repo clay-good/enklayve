@@ -29,7 +29,7 @@ export const PILLARS: PillarMeta[] = [
     title: "Safe Harbor",
     blurb: "Calm wealth: cushion, runway, and your enough number.",
   },
-  { id: "plan", title: "Your Plan", blurb: "The next right step, with the math shown." },
+  { id: "plan", title: "My Plan", blurb: "The next right step, with the math shown." },
 ];
 
 export interface TileContext {
@@ -41,14 +41,14 @@ export interface TileContext {
   setParams(params: URLSearchParams): void;
   /** Shareable URL for the given params (defaults to the tile's current params). */
   permalink(params?: URLSearchParams): string;
-  /** Navigate to another tile (or home, with null) — used by Your Plan to link
+  /** Navigate to another tile (or home, with null) — used by My Plan to link
    * each step to the tile that performs it. */
   navigate(tileId: string | null): void;
   /** Active display locale. */
   locale: string;
   /** Bundled, integrity-gated datasets; null when data failed to load. */
   data: BundledData | null;
-  /** The shared session profile (Your Situation). Tiles read defaults from it
+  /** The shared session profile (My Situation). Tiles read defaults from it
    * and write user entries back so a value entered once flows everywhere. */
   profile: SituationStore;
 }
@@ -65,6 +65,20 @@ export interface TileDefinition {
   status: "ready" | "coming-soon";
   /** Mount the interactive tile (required when status is "ready"). */
   mount?: (ctx: TileContext) => void;
+  /**
+   * Plain-English explanation of how the tool works and the math behind it —
+   * shown in a "How this works" section under the tool (warm, helpful, US-only).
+   * Paragraphs are separated by blank lines.
+   */
+  how?: string;
+  /** Trusted external resources to learn more (shown as "Learn more" links). */
+  resources?: { label: string; url: string }[];
+}
+
+/** A learn-more resource link. */
+export interface ResourceLink {
+  label: string;
+  url: string;
 }
 
 /** The text the fuzzy palette searches for a tile. */

@@ -180,5 +180,12 @@ export const spendingPlanTile: TileDefinition = {
   description: "Split your take-home into needs, wants, and savings.",
   keywords: ["budget", "50/30/20", "spending plan", "needs wants savings", "cash flow"],
   status: "ready",
+  how: "We split your monthly take-home into three buckets by the percentages you choose — 50% needs, 30% wants, 20% savings by default. Savings is simply whatever's left after needs and wants, so it never goes negative. Use the take-home tools first if you're not sure of your monthly net.\n\nThe 50/30/20 split is a popular starting guideline, not a rule — adjust it to fit your life.",
+  resources: [
+    {
+      label: "CFPB — making a budget",
+      url: "https://www.consumerfinance.gov/about-us/blog/budgeting-how-to-create-a-budget-and-stick-with-it/",
+    },
+  ],
   mount: mountSpendingPlan,
 };

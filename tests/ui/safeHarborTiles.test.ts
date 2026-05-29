@@ -61,7 +61,7 @@ describe("Peace of Mind dashboard", () => {
       "Rainy-day cushion",
       "Runway",
       "Net worth (war chest)",
-      "Your Enough Number",
+      "My Enough Number",
     ]);
     // Net worth = 12,000 savings + 0 other − 4,000 debts; the sub-line shows the parts.
     const netWorthSub = texts(root, ".ph-reading-sub").find((t) => t.includes("debts"));

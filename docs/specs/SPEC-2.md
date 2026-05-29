@@ -16,6 +16,18 @@ The guiding ambition: enklayve should feel like a personal money guide that is a
 
 ---
 
+## 0. Design decisions (adopted 2026-05-29)
+
+These supersede earlier wording across both specs:
+
+1. **First-person, personal naming.** The product's owned surfaces are named in the first person — **"My Situation"**, **"My Plan"**, **"My Readout Report"**, **"My Enough Number"** — so it reads as *my* personal finance tool. (Earlier drafts called these "Your Situation" / "Your Plan"; the codebase and copy now use the first person. Internal route ids like `#/your-plan` are unchanged to preserve links.) The guidance prose still warmly addresses the reader as "you" ("here's your next right step").
+2. **Warm, kind, and explanatory by default.** Every tool page carries a plain-English **"How this works"** that explains the logic and the math, a **"Learn more"** list of trusted external resources, and a one-line promise that it's computed on-device, US-only, and is information rather than advice. The voice is warm and never shaming.
+3. **Resources on every page.** Beyond per-figure citations, every tool and the home link out to authoritative U.S. sources (IRS, HHS, SSA, Benefits.gov, HealthCare.gov, CFPB, Federal Student Aid) so the user can always go deeper.
+4. **United States only, for now.** enklayve is intentionally scoped to U.S. federal and state taxes and benefits. International support is explicitly deferred so every figure stays accurate; the home says so plainly. (The i18n scaffolding in Phase 11 is for U.S. English presentation, not other countries.)
+5. **No modal is ever a trap.** Dialogs (e.g. My Situation) are always dismissable by a visible Close button, a Done button, the Escape key, and clicking outside.
+
+---
+
 ## 1. The design decision: home experience and information architecture
 
 The question was whether to put a vaulytica style upload front and center, then a search bar, then the tools, in a compact sophiewell style rather than the longer roughlogic scroll. The answer is yes to all three, with one refinement.

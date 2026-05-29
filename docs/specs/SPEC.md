@@ -211,6 +211,7 @@ The jan.ai feeling (clean, airy, friendly, fast) expressed with a purple identit
 - **Big, legible numbers.** Generous whitespace, rounded cards, soft shadows, and one delightful micro interaction on result reveal (a gentle count up that respects reduced motion preferences).
 - **Tone:** plain English, encouraging, never scolding. Here is where you stand, not you are behind.
 - **Result cards** show the answer large, the breakdown collapsible, and a one tap copy plus permalink. Every input has a worked example default.
+- **First-person, warm, explanatory, US-only (adopted 2026-05-29; see BUILD-SPEC-2 §0).** Owned surfaces are named in the first person ("My Situation", "My Plan", "My Readout Report", "My Enough Number"). Every tool page carries a "How this works" explainer (the logic and the math), a "Learn more" list of trusted U.S. resources, and an on-device / US-only / not-advice promise. The product is scoped to the United States for now. Modals are never traps (visible Close + Done + Escape + click-outside).
 
 ---
 

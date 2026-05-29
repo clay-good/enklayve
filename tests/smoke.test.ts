@@ -47,7 +47,7 @@ describe("All Tools index view", () => {
     // Every registry tile appears exactly once (the static tools.html mirrors this).
     expect(titles).toContain("Take-Home Pay");
     expect(titles).toContain("What Am I Owed Screener");
-    expect(titles).toContain("Your Plan");
+    expect(titles).toContain("My Plan");
     expect(new Set(titles).size).toBe(titles.length);
   });
 });

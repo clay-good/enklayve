@@ -3,7 +3,7 @@
  * stub, W-2, or 1040 and get an instant private readout, parsed entirely on the
  * device. Extraction is deterministic and anchored (never inferred); every value
  * is shown with its confidence and a needs-review flag, and the user confirms
- * before anything flows into Your Situation. Nothing is uploaded — the strict
+ * before anything flows into My Situation. Nothing is uploaded — the strict
  * CSP keeps `connect-src 'none'`, so the browser physically cannot send the
  * document anywhere.
  */
@@ -167,7 +167,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
           el("button", {
             type: "button",
             class: "btn btn--accent",
-            text: "Enter values in Your Situation →",
+            text: "Enter values in My Situation →",
             on: { click: () => navigate("your-plan") },
           }),
         ),
@@ -242,7 +242,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     const confirm = el("button", {
       type: "button",
       class: "btn btn--accent",
-      text: "Confirm and add to Your Situation",
+      text: "Confirm and add to My Situation",
       on: {
         click: () => {
           const applied = applyToSituation(profile, working);
@@ -281,7 +281,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
           class: "readout-note",
           text:
             applied > 0
-              ? `Added ${applied} value${applied === 1 ? "" : "s"} to Your Situation (provenance: from a document). Open Your Situation in the header to review or export them.`
+              ? `Added ${applied} value${applied === 1 ? "" : "s"} to My Situation (provenance: from a document). Open My Situation in the header to review or export them.`
               : "Nothing was added — adjust the values and confirm again.",
         }),
         el(
@@ -290,13 +290,13 @@ export function renderReadout(opts: RenderReadoutOptions): void {
           el("button", {
             type: "button",
             class: "btn btn--accent",
-            text: "See Your Plan →",
+            text: "See My Plan →",
             on: { click: () => navigate("your-plan") },
           }),
           el("button", {
             type: "button",
             class: "btn btn--ghost",
-            text: "Your Readout Report →",
+            text: "My Readout Report →",
             on: { click: () => navigate("report") },
           }),
           el("button", {

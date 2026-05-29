@@ -5,7 +5,7 @@
  * which document we recognized, which form revision, and the fields we pulled
  * by anchoring to known labels and box numbers — never by inference. Each field
  * carries a confidence state and a needs-review flag, and the user always
- * confirms before any value flows into Your Situation (§2.2).
+ * confirms before any value flows into My Situation (§2.2).
  */
 import type { CitationData } from "../data/schemas";
 import type { TextSource } from "./extractText";
@@ -13,7 +13,7 @@ import type { TextSource } from "./extractText";
 /** The personal-finance documents the Readout knows how to read (§2.1). */
 export type DocKind = "w2" | "form1040" | "paystub";
 
-/** The Your Situation fields the Readout can populate on confirmation. Kept
+/** The My Situation fields the Readout can populate on confirmation. Kept
  * narrow (not all of {@link SituationKey}) so the mapping stays type-safe. */
 export type ReadoutTarget = "annualIncome" | "retirementContributionsAnnual" | "filingStatus";
 
@@ -21,7 +21,7 @@ export type ReadoutTarget = "annualIncome" | "retirementContributionsAnnual" | "
 export type FieldConfidence = "high" | "needs-review" | "low";
 
 /**
- * One extracted field. `target` names the Your Situation field it populates on
+ * One extracted field. `target` names the My Situation field it populates on
  * confirmation (omitted for informational-only fields like withholding). The
  * value is always shown to the user for confirmation before it is used.
  */
@@ -36,7 +36,7 @@ export interface ExtractedField {
   confidence: FieldConfidence;
   /** True when the user should double-check before relying on it. */
   needsReview: boolean;
-  /** The Your Situation field this populates, when applicable. */
+  /** The My Situation field this populates, when applicable. */
   target?: ReadoutTarget;
   /** Optional note (e.g. how an annualized figure was derived). */
   note?: string;
