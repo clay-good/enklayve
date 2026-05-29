@@ -2,6 +2,9 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import axe from "axe-core";
 import { renderHome, mountApp } from "../../src/ui/shell";
 import { mountTakeHome } from "../../src/tiles/takeHome";
+import { mountFederalIncomeTax } from "../../src/tiles/federalIncomeTax";
+import { mountMarginalExplorer } from "../../src/tiles/marginalExplorer";
+import { mountCompoundGrowth } from "../../src/tiles/compoundGrowth";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import type { TileContext } from "../../src/tiles/types";
 
@@ -43,20 +46,46 @@ describe("accessibility (axe-core)", () => {
     await expectNoViolations(main);
   }, 30000);
 
-  it("the take-home tile form has no violations", async () => {
-    const main = document.createElement("main");
-    const ctx: TileContext = {
-      root: main,
-      params: new URLSearchParams({ fs: "single", st: "ny", w: "85000" }),
-      setParams: () => {},
-      permalink: () => "https://enklayve.com/#/take-home",
-      locale: "en-US",
-      data,
-    };
-    mountTakeHome(ctx);
-    document.body.append(main);
-    await expectNoViolations(main);
-  }, 30000);
+  const tileCases: { name: string; mount: (ctx: TileContext) => void; params: URLSearchParams }[] =
+    [
+      {
+        name: "take-home",
+        mount: mountTakeHome,
+        params: new URLSearchParams({ fs: "single", st: "ny", w: "85000" }),
+      },
+      {
+        name: "federal-income-tax",
+        mount: mountFederalIncomeTax,
+        params: new URLSearchParams({ fs: "single", inc: "95000", dm: "itemized" }),
+      },
+      {
+        name: "marginal-explorer",
+        mount: mountMarginalExplorer,
+        params: new URLSearchParams({ fs: "single", st: "ca", inc: "120000", step: "1000" }),
+      },
+      {
+        name: "compound-growth",
+        mount: mountCompoundGrowth,
+        params: new URLSearchParams({ p: "10000", c: "500", r: "6", y: "30" }),
+      },
+    ];
+
+  for (const tc of tileCases) {
+    it(`the ${tc.name} tile form has no violations`, async () => {
+      const main = document.createElement("main");
+      const ctx: TileContext = {
+        root: main,
+        params: tc.params,
+        setParams: () => {},
+        permalink: () => "https://enklayve.com/#/x",
+        locale: "en-US",
+        data,
+      };
+      tc.mount(ctx);
+      document.body.append(main);
+      await expectNoViolations(main);
+    }, 30000);
+  }
 
   it("the fully mounted shell has no violations", async () => {
     const root = document.createElement("div");

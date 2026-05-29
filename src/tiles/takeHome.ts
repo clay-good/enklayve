@@ -10,6 +10,7 @@ import { evaluateTaxes, type TaxInput, type TaxResult } from "../engine/tax";
 import type { DeductionMode } from "../engine/tax/types";
 import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
+import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import type { TileContext, TileDefinition } from "./types";
 
@@ -53,11 +54,6 @@ function isFilingStatus(v: string): v is FilingStatus {
 function isDeductionMode(v: string): v is DeductionMode {
   return DEDUCTION_MODES.some((d) => d.value === v);
 }
-function num(v: string | null, fallback: number): number {
-  if (v === null) return fallback;
-  const n = Number(v);
-  return Number.isFinite(n) && n >= 0 ? n : fallback;
-}
 
 function readFields(params: URLSearchParams, defaultState: string): Fields {
   const fsRaw = params.get("fs");
@@ -66,9 +62,9 @@ function readFields(params: URLSearchParams, defaultState: string): Fields {
   return {
     fs: fsRaw && isFilingStatus(fsRaw) ? fsRaw : "single",
     st: stRaw === null ? defaultState : stRaw,
-    wages: num(params.get("w"), 0),
-    other: num(params.get("oi"), 0),
-    adjustments: num(params.get("adj"), 0),
+    wages: parseNonNegative(params.get("w"), 0),
+    other: parseNonNegative(params.get("oi"), 0),
+    adjustments: parseNonNegative(params.get("adj"), 0),
     dm: dmRaw && isDeductionMode(dmRaw) ? dmRaw : "auto",
     local: (params.get("loc") ?? "").split(",").filter((s) => s.length > 0),
   };
@@ -84,10 +80,6 @@ function writeFields(f: Fields): URLSearchParams {
   if (f.dm !== "auto") p.set("dm", f.dm);
   if (f.local.length > 0) p.set("loc", f.local.join(","));
   return p;
-}
-
-function pct(rate: number): string {
-  return `${(rate * 100).toFixed(2)}%`;
 }
 
 function buildBreakdown(result: TaxResult, locale: string): BreakdownLine[] {
@@ -213,17 +205,6 @@ export function mountTakeHome(ctx: TileContext): void {
   const localContainer = el("div", { class: "local-addons" });
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
-  function field(labelText: string, control: HTMLElement): HTMLElement {
-    const id = `f-${control.getAttribute("name") ?? labelText}`;
-    control.id = id;
-    return el(
-      "div",
-      { class: "field" },
-      el("label", { attrs: { for: id }, text: labelText }),
-      control,
-    );
-  }
-
   function renderLocalAddOns(): void {
     localContainer.replaceChildren();
     const state = fields.st ? bundled.state(fields.st) : null;
@@ -249,9 +230,9 @@ export function mountTakeHome(ctx: TileContext): void {
     fields = {
       fs: isFilingStatus(fsSelect.value) ? fsSelect.value : "single",
       st: stSelect.value,
-      wages: num(wagesInput.value, 0),
-      other: num(otherInput.value, 0),
-      adjustments: num(adjInput.value, 0),
+      wages: parseNonNegative(wagesInput.value, 0),
+      other: parseNonNegative(otherInput.value, 0),
+      adjustments: parseNonNegative(adjInput.value, 0),
       dm: isDeductionMode(dmSelect.value) ? dmSelect.value : "auto",
       local: Array.from(localContainer.querySelectorAll<HTMLInputElement>("input:checked")).map(
         (cb) => cb.name.replace(/^loc-/, ""),
@@ -296,22 +277,15 @@ export function mountTakeHome(ctx: TileContext): void {
     input.addEventListener("input", recompute);
   }
 
-  const tryExample = el("button", {
-    type: "button",
-    class: "btn btn--accent",
-    text: "Try an example",
-    on: {
-      click: () => {
-        fields = { ...EXAMPLE };
-        fsSelect.value = fields.fs;
-        stSelect.value = fields.st;
-        wagesInput.value = String(fields.wages);
-        otherInput.value = String(fields.other);
-        adjInput.value = String(fields.adjustments);
-        dmSelect.value = fields.dm;
-        recompute();
-      },
-    },
+  const tryExample = tryExampleButton(() => {
+    fields = { ...EXAMPLE };
+    fsSelect.value = fields.fs;
+    stSelect.value = fields.st;
+    wagesInput.value = String(fields.wages);
+    otherInput.value = String(fields.other);
+    adjInput.value = String(fields.adjustments);
+    dmSelect.value = fields.dm;
+    recompute();
   });
 
   const form = el(

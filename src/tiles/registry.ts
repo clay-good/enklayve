@@ -7,6 +7,9 @@
  */
 import type { Pillar, TileDefinition } from "./types";
 import { takeHomeTile } from "./takeHome";
+import { federalIncomeTaxTile } from "./federalIncomeTax";
+import { marginalExplorerTile } from "./marginalExplorer";
+import { compoundGrowthTile } from "./compoundGrowth";
 
 function soon(
   id: string,
@@ -35,13 +38,7 @@ export const TILES: TileDefinition[] = [
     "Convert pay rates with overtime and multiple jobs.",
     ["hourly", "salary", "overtime", "wage"],
   ),
-  soon(
-    "federal-income-tax",
-    "Federal Income Tax",
-    "take-home",
-    "Marginal and effective breakdown, standard vs itemized.",
-    ["federal", "tax", "marginal", "effective"],
-  ),
+  federalIncomeTaxTile,
   soon(
     "self-employment-tax",
     "Self-Employment Tax",
@@ -56,13 +53,7 @@ export const TILES: TileDefinition[] = [
     "Short- and long-term gains with a cost-basis helper.",
     ["capital gains", "niit", "cost basis", "investments"],
   ),
-  soon(
-    "marginal-explorer",
-    "Marginal Rate Explorer",
-    "take-home",
-    "What does my next $1,000 of income actually cost?",
-    ["marginal", "next dollar", "bracket"],
-  ),
+  marginalExplorerTile,
   soon(
     "loan-amortization",
     "Loan & Mortgage Amortization",
@@ -82,13 +73,7 @@ export const TILES: TileDefinition[] = [
     "APR to nominal rate and the real cost of borrowing.",
     ["auto loan", "car", "apr", "credit"],
   ),
-  soon(
-    "compound-growth",
-    "Compound Growth",
-    "take-home",
-    "Contribution growth at a rate you choose.",
-    ["compound", "interest", "growth", "savings"],
-  ),
+  compoundGrowthTile,
   soon(
     "retirement-optimizer",
     "Retirement Contribution Optimizer",
