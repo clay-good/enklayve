@@ -74,10 +74,26 @@
     Roboto,
     sans-serif;
   color-scheme: light dark;
+  /* Keep our own type scale on rotate/zoom rather than letting mobile Safari
+     inflate text unpredictably. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Long, unbreakable strings (URLs, big labels) must never force the page wider
+   than the viewport on a narrow phone. */
+body {
+  overflow-wrap: break-word;
+}
+
+img,
+svg {
+  max-width: 100%;
+  height: auto;
 }
 
 body {
@@ -1427,5 +1443,137 @@ body {
   }
   .tile-link:hover {
     transform: translateX(2px);
+  }
+}
+
+/* ======================================================================== *
+ * Responsive — comfortable on phones, tablets, and large screens.
+ *
+ * The layout is fluid by default (auto-fit grids + clamp() type), so most of
+ * the work here is (1) generous touch targets on any pointer-coarse device,
+ * (2) reclaiming horizontal space on small screens by tightening padding and
+ * letting the header wrap, and (3) capping the reading width on very large
+ * screens so lines never become uncomfortably long.
+ * ======================================================================== */
+
+/* Touch / stylus: every interactive control gets a ~44px tap target (WCAG 2.2
+   AA target size), regardless of viewport width. */
+@media (pointer: coarse) {
+  .btn,
+  .theme-select,
+  .tile-link,
+  .footer-link,
+  .palette-opt,
+  .situation-pass,
+  .readout-dropzone {
+    min-height: 44px;
+  }
+  .plan-move {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  /* The "source" links live in a dense table; give them room to be tapped
+     without enlarging the row text. */
+  .cite-link,
+  .tile-link {
+    padding-block: 0.5rem;
+  }
+}
+
+/* Tablets and below: trim the widest gutters so content gets the full width. */
+@media (max-width: 768px) {
+  .content {
+    padding: 1.25rem 1rem;
+  }
+}
+
+/* Phones: the header wraps instead of overflowing, paddings tighten, and the
+   keyboard-only ⌘K hint is hidden (there's no physical keyboard to press). */
+@media (max-width: 600px) {
+  .app-header {
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    padding: 0.6rem 1rem;
+  }
+  .header-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.4rem;
+  }
+  .header-actions .btn {
+    padding: 0.5rem 0.65rem;
+  }
+  .kbd {
+    display: none;
+  }
+
+  .hero {
+    padding: 1.25rem 0 0.5rem;
+  }
+  .readout-dropzone {
+    padding: 1.5rem 1rem;
+  }
+  .home-search {
+    margin: 1rem auto 1.5rem;
+    padding: 0.75rem 0.9rem;
+  }
+
+  .tile-title {
+    font-size: 1.35rem;
+  }
+  .tile-form,
+  .result-card {
+    padding: 1rem;
+  }
+  .plan-next,
+  .readout-summary {
+    padding: 1rem 1.1rem;
+  }
+
+  /* Tighten the breakdown table so three columns fit without sideways scroll. */
+  .breakdown-table th[scope="col"],
+  .bd-label,
+  .bd-value,
+  .bd-cite {
+    padding: 0.3rem 0.3rem;
+  }
+
+  /* Dialogs use nearly the full screen and can scroll their own body. */
+  .palette-backdrop {
+    padding-top: 8vh;
+  }
+  .palette-panel {
+    width: min(40rem, 96vw);
+  }
+  .situation-dialog {
+    width: min(44rem, 96vw);
+    max-height: 88vh;
+    padding: 1.1rem 1.1rem;
+  }
+  .palette-list {
+    max-height: 60vh;
+  }
+}
+
+/* Small phones: drop the headline figure a notch so seven-figure values never
+   overflow their card. */
+@media (max-width: 400px) {
+  .result-value {
+    font-size: 1.9rem;
+  }
+  .plan-next-amount,
+  .ph-reading-value {
+    font-size: 1.6rem;
+  }
+  .wordmark {
+    font-size: 1.25rem;
+  }
+}
+
+/* Large screens: keep prose and result columns from stretching too wide; the
+   reading experience stays calm and centered. */
+@media (min-width: 1280px) {
+  .content {
+    max-width: 72rem;
   }
 }
