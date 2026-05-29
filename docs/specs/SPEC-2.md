@@ -296,14 +296,17 @@ Prompt to Claude Code:
 
 Goal: the highest value tools from section 6 that deepen the guide.
 
-**Status: 🟡 first wave started.** Shipped two distinct §6 tools (chosen to avoid overlap with what already exists):
+**Status: 🟡 second wave done.** Five distinct §6 tools are now live (chosen to avoid overlap with what already exists), each deterministic, deep-linkable, worked-example-first, and passing axe:
 
 - **50/30/20 Spending Plan** (§6.1, `src/tiles/spendingPlan.ts`): splits monthly take-home into needs / wants / savings, with one-tap presets (50/30/20, 60/20/20, 70/20/10) and an editable split (savings is the remainder, never negative). The framework is a labeled guideline, not a cited rule (like Compound Growth).
-- **Home Buying Readiness** (§6.3, `src/tiles/homeAffordability.ts`): the all-in home price you can afford on the conventional 28/36 debt-to-income guideline — the binding monthly budget, minus the taxes/insurance you enter, backs out a maximum loan via the new `loanPrincipalFromPayment` engine helper (with `monthlyMortgagePayment`, its exact inverse — both golden-tested, §3.3). Reads income from Your Situation and writes it back.
+- **Home Buying Readiness** (§6.3, `src/tiles/homeAffordability.ts`): the all-in home price you can afford on the conventional 28/36 debt-to-income guideline — the binding monthly budget, minus the taxes/insurance you enter, backs out a maximum loan via the `loanPrincipalFromPayment` engine helper (with `monthlyMortgagePayment`, its exact inverse — both golden-tested, §3.3). Reads income from Your Situation and writes it back.
+- **Sinking Fund Planner** (§6.3, `src/tiles/sinkingFund.ts` + the golden-tested `requiredMonthlyContribution` helper): solves the future-value-of-an-annuity equation for the level monthly amount that reaches a goal by a date, counting what's already saved and an assumed return (labeled, never a forecast); recognizes when today's savings already get there. This makes My Plan's "sinking funds" step concrete for one goal at a time.
+- **Rent vs Buy** (§6.3, `src/tiles/rentVsBuy.ts` + the golden-tested `rentVsBuy` helper): a net-cost comparison over a chosen horizon — buying's cash out (down payment, closing, P&I, ownership costs) minus sale proceeds (appreciated value less selling costs and the remaining loan balance) vs renting's growing rent minus the investment gain on the cash a renter doesn't tie up. Appreciation, rent growth, and the investment return are user assumptions; two simplifications (flat carrying costs, no separately-invested monthly cash-flow difference) are stated plainly.
+- **Health Plan Chooser** (§6.4, `src/tiles/healthPlan.ts` + the golden-tested `healthPlanAnnualCost` helper): compares two plans for a year of expected spend — premiums plus out-of-pocket on care (deductible, then coinsurance, capped at the out-of-pocket max) — names the cheaper, and flags the HDHP/HSA tradeoff.
 
-Both are deterministic, deep-linkable, carry a worked example, and pass axe. 213 tests pass (added the golden mortgage-math corpus and the two tiles' behavior + axe coverage); `format:check`, `lint`, `typecheck`, `build`, and `wrangler deploy --dry-run` are all green.
+364 tests pass (added the golden corpora for the three new helpers and the tiles' behavior + axe coverage); `format:check`, `lint`, `typecheck`, `build`, `wrangler deploy --dry-run`, and the release audit are all green.
 
-- Deferred to later sub-waves (same pattern): the zero-based budget and cash-flow timeline (§6.1), rent-versus-buy and the sinking-fund planner (§6.3), and the health-plan chooser and paycheck optimizer (§6.4). The standalone Debt Freedom Planner (§6.2) is intentionally folded into the existing **Freedom Date** tile rather than duplicated.
+- Deferred to a later sub-wave (same pattern): the **zero-based budget** and **cash-flow timeline** (§6.1) and the **paycheck optimizer** (§6.4 — it tunes the W-4/HSA/retirement to a take-home or tax target and pairs naturally with the still-deferred W-4 estimator). The standalone Debt Freedom Planner (§6.2) is intentionally folded into the existing **Freedom Date** tile rather than duplicated.
 
 Prompt to Claude Code:
 

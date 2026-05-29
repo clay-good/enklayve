@@ -263,6 +263,213 @@ export function amortizationSummary(input: AmortizationInput): AmortizationResul
   };
 }
 
+export interface SinkingFundInput {
+  /** Amount already saved toward the goal. */
+  currentSaved: number;
+  /** The target amount to reach. */
+  target: number;
+  /** Months until the goal date. */
+  months: number;
+  /** Assumed annual return on the savings, as a percentage (the user's assumption). */
+  annualReturnPct: number;
+}
+
+export interface SinkingFundResult {
+  /** Level monthly contribution needed to hit the target by the date. */
+  monthlyContribution: Money;
+  /** What today's balance alone grows to by the date, with no contributions. */
+  projectedFromCurrent: Money;
+  /** True when today's balance already reaches the target on its own. */
+  alreadyOnTrack: boolean;
+  /** monthlyContribution × months — the total you'd put in. */
+  totalContributed: Money;
+}
+
+/**
+ * Sinking-fund planner (BUILD-SPEC-2 §6.3): the level monthly contribution that
+ * reaches a target by a date, given what's already saved and an assumed return.
+ * Solves the future-value-of-an-annuity equation for the payment. A zero rate
+ * degenerates to (remaining ÷ months). The return is the user's assumption,
+ * clearly labeled; we never predict markets (§2.1).
+ */
+export function requiredMonthlyContribution(input: SinkingFundInput): SinkingFundResult {
+  const months = Math.max(0, Math.round(input.months));
+  const i = new Decimal(input.annualReturnPct).div(100).div(12);
+  const pv = new Decimal(Math.max(0, input.currentSaved));
+  const fv = new Decimal(Math.max(0, input.target));
+  const growth = i.plus(1).pow(months);
+  const projected = pv.times(growth);
+  const projectedMoney = Money.from(projected);
+
+  const remaining = fv.minus(projected);
+  if (months === 0 || remaining.lessThanOrEqualTo(0)) {
+    return {
+      monthlyContribution: Money.zero(),
+      projectedFromCurrent: projectedMoney,
+      alreadyOnTrack: remaining.lessThanOrEqualTo(0),
+      totalContributed: Money.zero(),
+    };
+  }
+
+  const pmt = i.isZero() ? remaining.div(months) : remaining.times(i).div(growth.minus(1));
+  const pmtMoney = Money.from(pmt);
+  return {
+    monthlyContribution: pmtMoney,
+    projectedFromCurrent: projectedMoney,
+    alreadyOnTrack: false,
+    totalContributed: pmtMoney.multiply(months),
+  };
+}
+
+export interface HealthPlanInput {
+  /** Monthly premium. */
+  monthlyPremium: number;
+  /** Annual deductible. */
+  deductible: number;
+  /** Member's share of costs after the deductible (0–1, e.g. 0.2 for 20%). */
+  coinsuranceRate: number;
+  /** Annual out-of-pocket maximum (caps total member cost on claims). */
+  outOfPocketMax: number;
+  /** Expected total medical spend for the year (the user's estimate). */
+  expectedAnnualSpend: number;
+}
+
+export interface HealthPlanResult {
+  /** Premiums for the year (monthly × 12). */
+  annualPremium: Money;
+  /** Out-of-pocket on claims (deductible + coinsurance), capped at the OOP max. */
+  memberCost: Money;
+  /** annualPremium + memberCost — the all-in cost for the year. */
+  totalAnnualCost: Money;
+}
+
+/**
+ * Health-plan annual cost (BUILD-SPEC-2 §6.4). Deterministic from the plan terms
+ * and the user's expected spend: you pay the full cost up to the deductible, then
+ * the coinsurance share above it, with total out-of-pocket on claims capped at
+ * the out-of-pocket maximum. Add the premiums to get the all-in cost. Comparing
+ * two plans is just two of these.
+ */
+export function healthPlanAnnualCost(input: HealthPlanInput): HealthPlanResult {
+  const annualPremium = Money.from(Math.max(0, input.monthlyPremium)).multiply(12);
+  const spend = Math.max(0, input.expectedAnnualSpend);
+  const deductible = Math.max(0, input.deductible);
+  const coins = Math.min(1, Math.max(0, input.coinsuranceRate));
+  const oopMax = Math.max(0, input.outOfPocketMax);
+
+  let member = spend <= deductible ? spend : deductible + (spend - deductible) * coins;
+  member = Math.min(member, oopMax);
+  const memberCost = Money.from(member);
+  return { annualPremium, memberCost, totalAnnualCost: annualPremium.add(memberCost) };
+}
+
+/**
+ * Remaining loan balance after `monthsPaid` scheduled payments. Closed form:
+ * balance = P·(1+i)^k − PMT·((1+i)^k − 1)/i, with a zero-rate branch. Internal
+ * helper for {@link rentVsBuy}.
+ */
+function remainingLoanBalance(
+  loan: number,
+  annualRatePct: number,
+  termYears: number,
+  monthsPaid: number,
+): Decimal {
+  const n = Math.round(termYears * 12);
+  const k = Math.min(Math.max(0, Math.round(monthsPaid)), n);
+  const P = new Decimal(Math.max(0, loan));
+  if (k >= n || n <= 0) return new Decimal(0);
+  const r = new Decimal(annualRatePct).div(100).div(12);
+  if (r.isZero()) return P.minus(P.div(n).times(k));
+  const pmt = P.times(r).div(new Decimal(1).minus(r.plus(1).pow(-n)));
+  const g = r.plus(1).pow(k);
+  return P.times(g).minus(pmt.times(g.minus(1).div(r)));
+}
+
+export interface RentVsBuyInput {
+  homePrice: number;
+  downPayment: number;
+  mortgageRatePct: number;
+  termYears: number;
+  /** Monthly ownership costs beyond principal & interest (tax, insurance, maintenance, HOA). */
+  monthlyOwnershipCosts: number;
+  /** Up-front closing costs to buy. */
+  closingCostBuy: number;
+  /** Selling costs as a percentage of the sale price (agent fees, etc.). */
+  sellingCostPct: number;
+  /** Assumed annual home appreciation (percentage). */
+  homeAppreciationPct: number;
+  monthlyRent: number;
+  /** Assumed annual rent growth (percentage). */
+  rentGrowthPct: number;
+  /** Assumed annual return on money not tied up in the home (percentage). */
+  investmentReturnPct: number;
+  /** Horizon in years. */
+  years: number;
+}
+
+export interface RentVsBuyResult {
+  /** Net cost of buying over the horizon (cash out − sale proceeds). */
+  netCostBuy: Money;
+  /** Net cost of renting over the horizon (rent − investment gain on the freed cash). */
+  netCostRent: Money;
+  /** The monthly principal & interest payment used for the buy path. */
+  monthlyPayment: Money;
+  /** Which path costs less over the horizon. */
+  cheaper: "buy" | "rent" | "tie";
+  /** Absolute difference between the two net costs. */
+  difference: Money;
+}
+
+/**
+ * Rent vs buy over a chosen horizon (BUILD-SPEC-2 §6.3). A deterministic
+ * net-cost comparison: buying's net cost is all cash out (down payment, closing,
+ * principal & interest, ownership costs) minus the sale proceeds (appreciated
+ * value less selling costs and the remaining loan balance); renting's net cost
+ * is the rent paid (growing annually) minus the investment gain on the cash a
+ * renter doesn't tie up. Lower wins. Appreciation, rent growth, and the
+ * investment return are all the user's assumptions, clearly labeled — never
+ * forecasts (§2.1). Carrying costs are held flat (a stated simplification), and
+ * the monthly cash-flow difference is not separately invested.
+ */
+export function rentVsBuy(input: RentVsBuyInput): RentVsBuyResult {
+  const years = Math.max(0, Math.round(input.years));
+  const months = years * 12;
+  const loan = Math.max(0, input.homePrice - input.downPayment);
+  const monthlyPayment = monthlyMortgagePayment(loan, input.mortgageRatePct, input.termYears);
+  const termMonths = Math.round(input.termYears * 12);
+  const piPaid = monthlyPayment.multiply(Math.min(months, termMonths));
+  const ownershipPaid = Money.from(Math.max(0, input.monthlyOwnershipCosts)).multiply(months);
+
+  const upfrontBuy = new Decimal(Math.max(0, input.downPayment)).plus(
+    Math.max(0, input.closingCostBuy),
+  );
+  const apprFactor = new Decimal(input.homeAppreciationPct).div(100).plus(1).pow(years);
+  const terminalValue = new Decimal(input.homePrice).times(apprFactor);
+  const balance = remainingLoanBalance(loan, input.mortgageRatePct, input.termYears, months);
+  const saleProceeds = terminalValue
+    .times(new Decimal(1).minus(new Decimal(input.sellingCostPct).div(100)))
+    .minus(balance);
+  const netCostBuy = Money.from(upfrontBuy)
+    .add(piPaid)
+    .add(ownershipPaid)
+    .subtract(Money.from(saleProceeds));
+
+  const invFactor = new Decimal(input.investmentReturnPct).div(100).plus(1).pow(years);
+  const investmentGain = upfrontBuy.times(invFactor).minus(upfrontBuy);
+  const rentGrowth = new Decimal(input.rentGrowthPct).div(100);
+  let totalRent = new Decimal(0);
+  for (let y = 0; y < years; y++) {
+    totalRent = totalRent.plus(
+      new Decimal(Math.max(0, input.monthlyRent)).times(12).times(rentGrowth.plus(1).pow(y)),
+    );
+  }
+  const netCostRent = Money.from(totalRent).subtract(Money.from(investmentGain));
+
+  const diff = netCostBuy.subtract(netCostRent);
+  const cheaper = diff.isZero() ? "tie" : diff.isNegative() ? "buy" : "rent";
+  return { netCostBuy, netCostRent, monthlyPayment, cheaper, difference: diff.abs() };
+}
+
 export interface CoastFireInput {
   /** Invested balance today. */
   currentBalance: number;

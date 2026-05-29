@@ -413,3 +413,139 @@ describe("sabbatical planner", () => {
     expect(r.affordable).toBe(true);
   });
 });
+
+import {
+  requiredMonthlyContribution,
+  healthPlanAnnualCost,
+  rentVsBuy,
+} from "../../src/engine/finance";
+
+/**
+ * Golden cases for the sinking-fund planner (BUILD-SPEC-2 §6.3, §9). Solves the
+ * future-value-of-an-annuity equation; the return is the user's assumption.
+ */
+describe("sinking fund planner", () => {
+  it("with a zero return is simple division of the remaining amount", () => {
+    const r = requiredMonthlyContribution({
+      currentSaved: 0,
+      target: 12000,
+      months: 12,
+      annualReturnPct: 0,
+    });
+    expect(r.monthlyContribution.roundToCents().toNumber()).toBe(1000);
+    expect(r.alreadyOnTrack).toBe(false);
+  });
+
+  it("credits an assumed return so a smaller contribution suffices", () => {
+    // FV 10,000 in 24 months at 6% → 10,000 × 0.005 / (1.005^24 − 1) = 393.21.
+    const r = requiredMonthlyContribution({
+      currentSaved: 0,
+      target: 10000,
+      months: 24,
+      annualReturnPct: 6,
+    });
+    expect(r.monthlyContribution.roundToCents().toNumber()).toBeCloseTo(393.21, 1);
+  });
+
+  it("counts what's already saved, growing it before solving", () => {
+    // 5,000 grows to 5,635.80 at 6% over 24mo; remaining 4,364.20 → 171.60/mo.
+    const r = requiredMonthlyContribution({
+      currentSaved: 5000,
+      target: 10000,
+      months: 24,
+      annualReturnPct: 6,
+    });
+    expect(r.projectedFromCurrent.roundToCents().toNumber()).toBeCloseTo(5635.8, 1);
+    expect(r.monthlyContribution.roundToCents().toNumber()).toBeCloseTo(171.6, 1);
+  });
+
+  it("needs nothing more when today's balance already reaches the target", () => {
+    const r = requiredMonthlyContribution({
+      currentSaved: 10000,
+      target: 8000,
+      months: 12,
+      annualReturnPct: 5,
+    });
+    expect(r.alreadyOnTrack).toBe(true);
+    expect(r.monthlyContribution.isZero()).toBe(true);
+  });
+});
+
+/**
+ * Golden cases for the health-plan annual cost (BUILD-SPEC-2 §6.4, §9).
+ */
+describe("health plan annual cost", () => {
+  const plan = {
+    monthlyPremium: 300,
+    deductible: 2000,
+    coinsuranceRate: 0.2,
+    outOfPocketMax: 6000,
+  };
+
+  it("charges full cost up to the deductible", () => {
+    const r = healthPlanAnnualCost({ ...plan, expectedAnnualSpend: 1000 });
+    expect(r.memberCost.toNumber()).toBe(1000);
+    expect(r.totalAnnualCost.toNumber()).toBe(4600); // 3,600 premiums + 1,000
+  });
+
+  it("applies coinsurance above the deductible", () => {
+    // 2,000 + (10,000 − 2,000) × 20% = 3,600 member; + 3,600 premiums = 7,200.
+    const r = healthPlanAnnualCost({ ...plan, expectedAnnualSpend: 10000 });
+    expect(r.memberCost.toNumber()).toBe(3600);
+    expect(r.totalAnnualCost.toNumber()).toBe(7200);
+  });
+
+  it("caps member cost at the out-of-pocket maximum", () => {
+    const r = healthPlanAnnualCost({ ...plan, expectedAnnualSpend: 50000 });
+    expect(r.memberCost.toNumber()).toBe(6000);
+    expect(r.totalAnnualCost.toNumber()).toBe(9600); // 3,600 + 6,000
+  });
+});
+
+/**
+ * Golden cases for rent vs buy (BUILD-SPEC-2 §6.3, §9). With every growth rate
+ * at zero the model reduces to clean arithmetic that's checkable by hand.
+ */
+describe("rent vs buy", () => {
+  it("compares net cost over the horizon (all rates zero → exact)", () => {
+    // Buy: upfront 60,000 + P&I 40,000 (240,000/360 × 60) + ownership 30,000
+    //      − sale proceeds 100,000 (300,000 − 200,000 balance) = 30,000.
+    // Rent: 2,000 × 12 × 5 = 120,000, no investment gain. Buy wins by 90,000.
+    const r = rentVsBuy({
+      homePrice: 300000,
+      downPayment: 60000,
+      mortgageRatePct: 0,
+      termYears: 30,
+      monthlyOwnershipCosts: 500,
+      closingCostBuy: 0,
+      sellingCostPct: 0,
+      homeAppreciationPct: 0,
+      monthlyRent: 2000,
+      rentGrowthPct: 0,
+      investmentReturnPct: 0,
+      years: 5,
+    });
+    expect(r.netCostBuy.roundToCents().toNumber()).toBe(30000);
+    expect(r.netCostRent.roundToCents().toNumber()).toBe(120000);
+    expect(r.cheaper).toBe("buy");
+    expect(r.difference.roundToCents().toNumber()).toBe(90000);
+  });
+
+  it("is deterministic with realistic assumptions", () => {
+    const input = {
+      homePrice: 400000,
+      downPayment: 80000,
+      mortgageRatePct: 6.5,
+      termYears: 30,
+      monthlyOwnershipCosts: 700,
+      closingCostBuy: 8000,
+      sellingCostPct: 6,
+      homeAppreciationPct: 3,
+      monthlyRent: 2200,
+      rentGrowthPct: 3,
+      investmentReturnPct: 6,
+      years: 7,
+    };
+    expect(rentVsBuy(input)).toEqual(rentVsBuy(input));
+  });
+});

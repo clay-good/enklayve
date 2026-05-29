@@ -21,6 +21,9 @@ import { inflationTile } from "./inflation";
 import { rmdTile } from "./rmd";
 import { spendingPlanTile } from "./spendingPlan";
 import { homeAffordabilityTile } from "./homeAffordability";
+import { sinkingFundTile } from "./sinkingFund";
+import { rentVsBuyTile } from "./rentVsBuy";
+import { healthPlanTile } from "./healthPlan";
 import { fplTile } from "./fpl";
 import { eitcTile } from "./eitc";
 import { childTaxCreditTile } from "./childTaxCredit";
@@ -66,9 +69,13 @@ export const TILES: TileDefinition[] = [
   retirementOptimizerTile,
   rmdTile,
   inflationTile,
-  // Expansion tools (BUILD-SPEC-2 §6), cash-flow + home, grouped under Take Home.
+  // Expansion tools (BUILD-SPEC-2 §6), cash-flow + home + open enrollment,
+  // grouped under Take Home.
   spendingPlanTile,
   homeAffordabilityTile,
+  sinkingFundTile,
+  rentVsBuyTile,
+  healthPlanTile,
 
   // --- Pillar 2: What You're Owed (§4) ---
   fplTile,
