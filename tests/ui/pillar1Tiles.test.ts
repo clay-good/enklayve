@@ -5,6 +5,9 @@ import { mountCompoundGrowth } from "../../src/tiles/compoundGrowth";
 import { mountSelfEmploymentTax } from "../../src/tiles/selfEmploymentTax";
 import { mountHourlySalary } from "../../src/tiles/hourlySalary";
 import { mountLoanAmortization } from "../../src/tiles/loanAmortization";
+import { mountRefinance } from "../../src/tiles/refinance";
+import { mountAutoLoan } from "../../src/tiles/autoLoan";
+import { mountRetirementOptimizer } from "../../src/tiles/retirementOptimizer";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
@@ -214,5 +217,78 @@ describe("Loan & Mortgage Amortization tile", () => {
       new URLSearchParams({ p: "320000", r: "6.5", y: "30" }),
     );
     expect(labels(root)).not.toContain("Interest saved by the extra payment");
+  });
+});
+
+describe("Refinance Break-Even tile", () => {
+  it("shows a break-even when the new rate is lower, with no rule to cite", () => {
+    const { root } = mount(
+      mountRefinance,
+      new URLSearchParams({ b: "300000", cr: "7", cy: "27", nr: "5.5", ny: "30", cc: "6000" }),
+    );
+    expect(root.querySelector(".result-label")?.textContent).toBe("Break-even point");
+    expect(labels(root)).toContain("Monthly savings");
+    expect(root.querySelector("a.cite-link")).toBeNull();
+  });
+
+  it("reports no break-even when the new rate isn't lower", () => {
+    const { root } = mount(
+      mountRefinance,
+      new URLSearchParams({ b: "300000", cr: "5", cy: "27", nr: "6.5", ny: "30", cc: "6000" }),
+    );
+    expect(root.querySelector(".result-label")?.textContent).toBe("No break-even at this rate");
+    expect(labels(root)).toContain("Monthly change");
+  });
+});
+
+describe("Auto Loan tile", () => {
+  it("amortizes the financed amount and shows the true cost of credit", () => {
+    const { root } = mount(
+      mountAutoLoan,
+      new URLSearchParams({ a: "32000", apr: "7.5", y: "6", f: "1500" }),
+    );
+    expect(root.querySelector(".result-label")?.textContent).toBe("Monthly payment");
+    const ls = labels(root);
+    expect(ls).toContain("True cost of credit (interest)");
+    expect(ls).toContain("Effective annual rate");
+    // Financed amount includes the rolled-in fees: 32,000 + 1,500.
+    const financed = Array.from(root.querySelectorAll(".bd-row"))
+      .find((r) => r.querySelector(".bd-label")?.textContent === "Amount financed")
+      ?.querySelector(".bd-value")?.textContent;
+    expect(financed).toContain("33,500");
+    expect(root.querySelector("a.cite-link")).toBeNull();
+  });
+});
+
+describe("Retirement Contribution Optimizer tile", () => {
+  it("applies catch-up at 50+ and cites the IRS limits", () => {
+    const { root } = mount(
+      mountRetirementOptimizer,
+      new URLSearchParams({ age: "52", k: "12000", ira: "3000", hsa: "family", h: "4000" }),
+    );
+    expect(root.querySelector(".result-label")?.textContent).toBe(
+      "Tax-advantaged room left this year",
+    );
+    const ls = labels(root);
+    // 50+ → catch-up annotation on the 401(k) and IRA limits.
+    expect(ls.some((l) => l.startsWith("401(k) limit (with catch-up)"))).toBe(true);
+    expect(ls).toContain("401(k) room remaining");
+    // HSA section shows because coverage is selected.
+    expect(ls.some((l) => l.startsWith("HSA limit"))).toBe(true);
+    // Every limit cites the IRS notice.
+    expect(root.querySelectorAll("a.cite-link").length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("reads the 401(k) from the profile and writes edits back", () => {
+    const profile = new SituationStore();
+    profile.set("retirementContributionsAnnual", 8000);
+    const { root } = mount(mountRetirementOptimizer, new URLSearchParams({ age: "40" }), profile);
+    expect(root.querySelector<HTMLInputElement>('input[name="k"]')?.value).toBe("8000");
+    const k = root.querySelector<HTMLInputElement>('input[name="k"]')!;
+    k.value = "15000";
+    k.dispatchEvent(new Event("input"));
+    expect(profile.get("retirementContributionsAnnual")).toBe(15000);
+    // Under 50 → no catch-up annotation.
+    expect(labels(root).some((l) => l.includes("catch-up"))).toBe(false);
   });
 });

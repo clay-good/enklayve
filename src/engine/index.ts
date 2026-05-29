@@ -14,6 +14,7 @@ export {
   annualFromHourly,
   hourlyFromAnnual,
   amortizationSummary,
+  refinanceBreakEven,
 } from "./finance";
 export type {
   CompoundGrowthInput,
@@ -22,6 +23,8 @@ export type {
   HourlyPayInput,
   AmortizationInput,
   AmortizationResult,
+  RefinanceInput,
+  RefinanceResult,
 } from "./finance";
 export { povertyLine, fplPercent, estimateEitc, estimateCtc } from "./benefits";
 export type { EitcResult, CtcResult } from "./benefits";

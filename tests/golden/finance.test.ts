@@ -239,3 +239,67 @@ describe("amortization summary", () => {
     expect(amortizationSummary(i)).toEqual(amortizationSummary(i));
   });
 });
+
+import { refinanceBreakEven } from "../../src/engine/finance";
+
+/**
+ * Golden cases for refinance break-even (BUILD-SPEC.md §3.3). A lower rate
+ * lowers the payment; the closing costs are recouped over a whole number of
+ * months of that saving. A rate that isn't lower has no break-even.
+ */
+describe("refinance break-even", () => {
+  it("recoups closing costs from the monthly saving", () => {
+    const r = refinanceBreakEven({
+      balance: 300000,
+      currentRatePct: 7,
+      currentRemainingYears: 30,
+      newRatePct: 5.5,
+      newTermYears: 30,
+      closingCosts: 6000,
+    });
+    expect(r.monthlySavings.greaterThan(0)).toBe(true);
+    // ~$292/mo saved → ceil(6000/292) ≈ 21 months.
+    expect(r.breakEvenMonths).not.toBeNull();
+    expect(r.breakEvenMonths!).toBeGreaterThan(15);
+    expect(r.breakEvenMonths!).toBeLessThan(30);
+    // The lower rate also means less interest over the same 30-year term.
+    expect(r.newTotalInterest.lessThan(r.currentRemainingInterest)).toBe(true);
+  });
+
+  it("has no break-even when the new rate isn't lower", () => {
+    const r = refinanceBreakEven({
+      balance: 300000,
+      currentRatePct: 5,
+      currentRemainingYears: 30,
+      newRatePct: 6,
+      newTermYears: 30,
+      closingCosts: 6000,
+    });
+    expect(r.monthlySavings.isNegative()).toBe(true);
+    expect(r.breakEvenMonths).toBeNull();
+  });
+
+  it("breaks even immediately with no closing costs", () => {
+    const r = refinanceBreakEven({
+      balance: 200000,
+      currentRatePct: 7,
+      currentRemainingYears: 25,
+      newRatePct: 5,
+      newTermYears: 25,
+      closingCosts: 0,
+    });
+    expect(r.breakEvenMonths).toBe(0);
+  });
+
+  it("is deterministic", () => {
+    const i = {
+      balance: 250000,
+      currentRatePct: 6.5,
+      currentRemainingYears: 28,
+      newRatePct: 5.25,
+      newTermYears: 30,
+      closingCosts: 4500,
+    };
+    expect(refinanceBreakEven(i)).toEqual(refinanceBreakEven(i));
+  });
+});

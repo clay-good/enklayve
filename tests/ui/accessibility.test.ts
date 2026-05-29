@@ -15,6 +15,9 @@ import { mountCompoundGrowth } from "../../src/tiles/compoundGrowth";
 import { mountSelfEmploymentTax } from "../../src/tiles/selfEmploymentTax";
 import { mountHourlySalary } from "../../src/tiles/hourlySalary";
 import { mountLoanAmortization } from "../../src/tiles/loanAmortization";
+import { mountRefinance } from "../../src/tiles/refinance";
+import { mountAutoLoan } from "../../src/tiles/autoLoan";
+import { mountRetirementOptimizer } from "../../src/tiles/retirementOptimizer";
 import { mountYourPlan } from "../../src/tiles/yourPlan";
 import { mountPeaceOfMind } from "../../src/tiles/peaceOfMind";
 import { mountFreedomDate } from "../../src/tiles/freedomDate";
@@ -120,6 +123,34 @@ describe("accessibility (axe-core)", () => {
         name: "loan-amortization",
         mount: mountLoanAmortization,
         params: new URLSearchParams({ p: "320000", r: "6.5", y: "30", x: "200" }),
+      },
+      {
+        name: "refinance",
+        mount: mountRefinance,
+        params: new URLSearchParams({
+          b: "300000",
+          cr: "7",
+          cy: "27",
+          nr: "5.5",
+          ny: "30",
+          cc: "6000",
+        }),
+      },
+      {
+        name: "auto-loan",
+        mount: mountAutoLoan,
+        params: new URLSearchParams({ a: "32000", apr: "7.5", y: "6", f: "1500" }),
+      },
+      {
+        name: "retirement-optimizer",
+        mount: mountRetirementOptimizer,
+        params: new URLSearchParams({
+          age: "52",
+          k: "12000",
+          ira: "3000",
+          hsa: "family",
+          h: "4000",
+        }),
       },
       {
         name: "your-plan",

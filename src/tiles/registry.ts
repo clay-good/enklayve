@@ -12,7 +12,10 @@ import { federalIncomeTaxTile } from "./federalIncomeTax";
 import { selfEmploymentTaxTile } from "./selfEmploymentTax";
 import { marginalExplorerTile } from "./marginalExplorer";
 import { loanAmortizationTile } from "./loanAmortization";
+import { refinanceTile } from "./refinance";
+import { autoLoanTile } from "./autoLoan";
 import { compoundGrowthTile } from "./compoundGrowth";
+import { retirementOptimizerTile } from "./retirementOptimizer";
 import { spendingPlanTile } from "./spendingPlan";
 import { homeAffordabilityTile } from "./homeAffordability";
 import { fplTile } from "./fpl";
@@ -55,26 +58,10 @@ export const TILES: TileDefinition[] = [
   ),
   marginalExplorerTile,
   loanAmortizationTile,
-  soon("refinance", "Refinance Break-Even", "take-home", "When refinancing pays for itself.", [
-    "refinance",
-    "break even",
-    "mortgage",
-  ]),
-  soon(
-    "auto-loan",
-    "Auto Loan & True Cost of Credit",
-    "take-home",
-    "APR to nominal rate and the real cost of borrowing.",
-    ["auto loan", "car", "apr", "credit"],
-  ),
+  refinanceTile,
+  autoLoanTile,
   compoundGrowthTile,
-  soon(
-    "retirement-optimizer",
-    "Retirement Contribution Optimizer",
-    "take-home",
-    "401(k), IRA, and Roth against the current IRS limits.",
-    ["401k", "ira", "roth", "retirement", "catch up"],
-  ),
+  retirementOptimizerTile,
   soon("rmd", "Required Minimum Distribution", "take-home", "Your RMD schedule.", [
     "rmd",
     "required minimum distribution",

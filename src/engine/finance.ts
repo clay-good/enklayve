@@ -262,3 +262,72 @@ export function amortizationSummary(input: AmortizationInput): AmortizationResul
     monthsSaved: Math.max(0, baseline.months - withExtra.months),
   };
 }
+
+export interface RefinanceInput {
+  /** Current loan balance being refinanced. */
+  balance: number;
+  /** Current loan's annual rate as a percentage. */
+  currentRatePct: number;
+  /** Years remaining on the current loan. */
+  currentRemainingYears: number;
+  /** Proposed new loan's annual rate as a percentage. */
+  newRatePct: number;
+  /** Proposed new loan's term in years. */
+  newTermYears: number;
+  /** Up-front closing costs to refinance. */
+  closingCosts: number;
+}
+
+export interface RefinanceResult {
+  /** Monthly payment on the current loan over its remaining term. */
+  currentPayment: Money;
+  /** Monthly payment on the proposed new loan. */
+  newPayment: Money;
+  /** currentPayment − newPayment; negative when the new loan costs more. */
+  monthlySavings: Money;
+  /** Whole months to recoup the closing costs from the monthly savings, or
+   *  null when the new payment isn't lower (there is nothing to recoup). */
+  breakEvenMonths: number | null;
+  /** Interest left to pay on the current loan over its remaining term. */
+  currentRemainingInterest: Money;
+  /** Total interest over the full new loan term. */
+  newTotalInterest: Money;
+}
+
+/**
+ * Refinance break-even (BUILD-SPEC.md §3.3): compare the current loan's payment
+ * to a proposed new loan's payment and report how many months of monthly
+ * savings it takes to recoup the closing costs. The rate is the loan's own
+ * terms, so there is no external rule to cite. A new payment that isn't lower
+ * yields a null break-even (we surface "no break-even" rather than a negative).
+ */
+export function refinanceBreakEven(input: RefinanceInput): RefinanceResult {
+  const currentPayment = monthlyMortgagePayment(
+    input.balance,
+    input.currentRatePct,
+    input.currentRemainingYears,
+  );
+  const newPayment = monthlyMortgagePayment(input.balance, input.newRatePct, input.newTermYears);
+  const monthlySavings = currentPayment.subtract(newPayment);
+
+  const closing = Money.from(Math.max(0, input.closingCosts));
+  let breakEvenMonths: number | null = null;
+  if (monthlySavings.greaterThan(0)) {
+    breakEvenMonths = Math.ceil(closing.divide(monthlySavings.toNumber()).toNumber());
+  }
+
+  const currentMonths = Math.round(input.currentRemainingYears * 12);
+  const newMonths = Math.round(input.newTermYears * 12);
+  const balance = Money.from(input.balance);
+  const currentRemainingInterest = currentPayment.multiply(currentMonths).subtract(balance);
+  const newTotalInterest = newPayment.multiply(newMonths).subtract(balance);
+
+  return {
+    currentPayment,
+    newPayment,
+    monthlySavings,
+    breakEvenMonths,
+    currentRemainingInterest,
+    newTotalInterest,
+  };
+}
