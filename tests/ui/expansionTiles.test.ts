@@ -5,6 +5,9 @@ import { mountHomeAffordability } from "../../src/tiles/homeAffordability";
 import { mountSinkingFund } from "../../src/tiles/sinkingFund";
 import { mountRentVsBuy } from "../../src/tiles/rentVsBuy";
 import { mountHealthPlan } from "../../src/tiles/healthPlan";
+import { mountZeroBudget } from "../../src/tiles/zeroBudget";
+import { mountCashFlow } from "../../src/tiles/cashFlow";
+import { mountLifeInsurance } from "../../src/tiles/lifeInsurance";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
 
@@ -212,12 +215,130 @@ describe("Health Plan Chooser", () => {
   });
 });
 
+describe("Zero-Based Budget", () => {
+  it("balances when every dollar is assigned", () => {
+    const { root } = mount(
+      mountZeroBudget,
+      new URLSearchParams({
+        inc: "2500",
+        k: "2",
+        c0: "Rent",
+        a0: "1600",
+        c1: "Savings",
+        a1: "900",
+      }),
+    );
+    expect(rowValue(root, "Total assigned")).toContain("$2,500");
+    expect(rowValue(root, "Left to assign")).toContain("$0");
+    expect(rowValue(root, "Status")).toContain("Balanced");
+    expect(root.querySelector("a.cite-link")).toBeNull();
+  });
+
+  it("flags over-assignment (red is a genuine warning here)", () => {
+    const { root } = mount(
+      mountZeroBudget,
+      new URLSearchParams({ inc: "2000", k: "1", c0: "Rent", a0: "2500" }),
+    );
+    expect(rowValue(root, "Status")).toContain("Over-assigned by $500");
+  });
+
+  it("prefills a balanced worked example", () => {
+    const { root } = mount(mountZeroBudget, new URLSearchParams());
+    clickExample(root);
+    expect(root.querySelector<HTMLInputElement>('input[name="inc"]')?.value).toBe("5000");
+    expect(rowValue(root, "Status")).toContain("Balanced");
+  });
+});
+
+describe("Cash-Flow Timeline", () => {
+  it("finds a day the balance dips negative", () => {
+    const { root } = mount(
+      mountCashFlow,
+      new URLSearchParams({
+        s: "800",
+        k: "2",
+        d0: "1",
+        l0: "Rent",
+        t0: "bill",
+        m0: "1500",
+        d1: "3",
+        l1: "Paycheck",
+        t1: "income",
+        m1: "2400",
+      }),
+    );
+    expect(rowValue(root, "Lowest balance")).toContain("700");
+    expect(rowValue(root, "Ending balance")).toContain("$1,700");
+    expect(rowValue(root, "Heads up")).toContain("day 1");
+  });
+
+  it("reports a steady month when the balance stays positive", () => {
+    const { root } = mount(
+      mountCashFlow,
+      new URLSearchParams({ s: "5000", k: "1", d0: "10", l0: "Utilities", t0: "bill", m0: "200" }),
+    );
+    expect(rowValue(root, "Looks steady")).toBeTruthy();
+  });
+});
+
+describe("Life Insurance Needs", () => {
+  it("sums the DIME need and subtracts offsets, reading income from My Situation", () => {
+    const profile = new SituationStore();
+    profile.set("annualIncome", 80000);
+    const { root } = mount(
+      mountLifeInsurance,
+      new URLSearchParams({
+        yrs: "10",
+        debt: "20000",
+        mort: "250000",
+        final: "15000",
+        edu: "100000",
+        cov: "100000",
+        assets: "50000",
+      }),
+      profile,
+    );
+    expect(rowValue(root, "Total need")).toContain("$1,185,000");
+    expect(rowValue(root, "Recommended new coverage")).toContain("$1,035,000");
+    expect(root.querySelector("a.cite-link")).toBeNull();
+  });
+});
+
 describe("expansion tiles accessibility", () => {
   for (const tc of [
     {
       name: "spending-plan",
       mount: mountSpendingPlan,
       params: new URLSearchParams({ th: "5000" }),
+    },
+    {
+      name: "zero-budget",
+      mount: mountZeroBudget,
+      params: new URLSearchParams({
+        inc: "5000",
+        k: "2",
+        c0: "Rent",
+        a0: "1600",
+        c1: "Food",
+        a1: "600",
+      }),
+    },
+    {
+      name: "cash-flow",
+      mount: mountCashFlow,
+      params: new URLSearchParams({
+        s: "800",
+        k: "1",
+        d0: "1",
+        l0: "Rent",
+        t0: "bill",
+        m0: "1500",
+      }),
+    },
+    {
+      name: "life-insurance",
+      mount: mountLifeInsurance,
+      params: new URLSearchParams({ inc: "80000", yrs: "10" }),
     },
     {
       name: "home-affordability",

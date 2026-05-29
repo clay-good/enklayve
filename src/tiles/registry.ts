@@ -24,6 +24,9 @@ import { homeAffordabilityTile } from "./homeAffordability";
 import { sinkingFundTile } from "./sinkingFund";
 import { rentVsBuyTile } from "./rentVsBuy";
 import { healthPlanTile } from "./healthPlan";
+import { zeroBudgetTile } from "./zeroBudget";
+import { cashFlowTile } from "./cashFlow";
+import { lifeInsuranceTile } from "./lifeInsurance";
 import { fplTile } from "./fpl";
 import { eitcTile } from "./eitc";
 import { childTaxCreditTile } from "./childTaxCredit";
@@ -72,6 +75,8 @@ export const TILES: TileDefinition[] = [
   // Expansion tools (BUILD-SPEC-2 §6), cash-flow + home + open enrollment,
   // grouped under Take Home.
   spendingPlanTile,
+  zeroBudgetTile,
+  cashFlowTile,
   homeAffordabilityTile,
   sinkingFundTile,
   rentVsBuyTile,
@@ -115,6 +120,8 @@ export const TILES: TileDefinition[] = [
   freedomDateTile,
   downshiftTile,
   sabbaticalTile,
+  // Protection (BUILD-SPEC-2 §6.6): securing your family's safe harbor.
+  lifeInsuranceTile,
 
   // --- My Plan (BUILD-SPEC-2 §4) ---
   yourPlanTile,

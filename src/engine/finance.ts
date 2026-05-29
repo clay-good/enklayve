@@ -263,6 +263,124 @@ export function amortizationSummary(input: AmortizationInput): AmortizationResul
   };
 }
 
+export interface CashFlowEvent {
+  /** Day of the month (1–31). */
+  day: number;
+  /** Signed amount: positive for income, negative for a bill. */
+  amount: number;
+  label?: string;
+}
+
+export interface CashFlowDay {
+  day: number;
+  /** Net change on that day (sum of its events). */
+  net: number;
+  /** Running balance at the end of that day. */
+  balance: number;
+}
+
+export interface CashFlowResult {
+  /** Only the days that have at least one event, in order, with running balance. */
+  days: CashFlowDay[];
+  /** Balance after the last event of the month. */
+  endingBalance: Money;
+  /** The lowest end-of-day balance reached (including the starting balance). */
+  minBalance: Money;
+  /** The day the low is hit (0 when the starting balance is never beaten down). */
+  minDay: number;
+  /** True when the balance dips below zero at any point. */
+  goesNegative: boolean;
+}
+
+/**
+ * Cash-flow timeline (BUILD-SPEC-2 §6.1): walk a month day by day, applying each
+ * dated income and bill to a running balance, to spot the tightest day (and any
+ * day the balance would go negative). Deterministic arithmetic on the user's own
+ * dated amounts — nothing to cite.
+ */
+export function cashFlowTimeline(startingBalance: number, events: CashFlowEvent[]): CashFlowResult {
+  const byDay = new Map<number, number>();
+  for (const e of events) {
+    const d = Math.max(1, Math.min(31, Math.round(e.day)));
+    byDay.set(d, (byDay.get(d) ?? 0) + e.amount);
+  }
+  let balance = Money.from(startingBalance);
+  let minBalance = balance;
+  let minDay = 0;
+  const days: CashFlowDay[] = [];
+  for (let d = 1; d <= 31; d++) {
+    const net = byDay.get(d);
+    if (net === undefined) continue;
+    balance = balance.add(net);
+    days.push({ day: d, net, balance: balance.toNumber() });
+    if (balance.lessThan(minBalance)) {
+      minBalance = balance;
+      minDay = d;
+    }
+  }
+  return {
+    days,
+    endingBalance: balance,
+    minBalance,
+    minDay,
+    goesNegative: minBalance.isNegative(),
+  };
+}
+
+export interface LifeInsuranceInput {
+  /** Annual income to replace for survivors. */
+  annualIncome: number;
+  /** Years of income to replace. */
+  yearsToReplace: number;
+  /** Non-mortgage debts to clear. */
+  debts: number;
+  /** Mortgage balance to pay off. */
+  mortgageBalance: number;
+  /** Final expenses (funeral, medical, estate). */
+  finalExpenses: number;
+  /** Future obligations such as children's education. */
+  futureObligations: number;
+  /** Life insurance already in force. */
+  existingCoverage: number;
+  /** Liquid assets (savings, investments) that offset the need. */
+  liquidAssets: number;
+}
+
+export interface LifeInsuranceResult {
+  /** Income to replace: annual income × years. */
+  incomeReplacement: Money;
+  /** Gross need before offsets (income replacement + debts + mortgage + final + future). */
+  totalNeed: Money;
+  /** Recommended new coverage: gross need less existing coverage and liquid assets (≥ 0). */
+  recommendedCoverage: Money;
+}
+
+/**
+ * Life-insurance needs, the transparent "DIME"-style method (BUILD-SPEC-2 §6.6):
+ * replace several years of income, clear Debts and the Mortgage, cover final
+ * expenses and future obligations (Education), then subtract coverage already in
+ * force and liquid assets. Deterministic from the inputs — not advice, and no
+ * external rule to cite.
+ */
+export function lifeInsuranceNeed(input: LifeInsuranceInput): LifeInsuranceResult {
+  const nn = (n: number): number => Math.max(0, n);
+  const years = Math.max(0, Math.round(input.yearsToReplace));
+  const incomeReplacement = Money.from(nn(input.annualIncome)).multiply(years);
+  const totalNeed = incomeReplacement
+    .add(nn(input.debts))
+    .add(nn(input.mortgageBalance))
+    .add(nn(input.finalExpenses))
+    .add(nn(input.futureObligations));
+  const recommended = totalNeed
+    .subtract(nn(input.existingCoverage))
+    .subtract(nn(input.liquidAssets));
+  return {
+    incomeReplacement,
+    totalNeed,
+    recommendedCoverage: recommended.isNegative() ? Money.zero() : recommended,
+  };
+}
+
 export interface SinkingFundInput {
   /** Amount already saved toward the goal. */
   currentSaved: number;

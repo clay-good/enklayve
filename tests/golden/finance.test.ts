@@ -549,3 +549,79 @@ describe("rent vs buy", () => {
     expect(rentVsBuy(input)).toEqual(rentVsBuy(input));
   });
 });
+
+import { cashFlowTimeline, lifeInsuranceNeed } from "../../src/engine/finance";
+
+/**
+ * Golden cases for the cash-flow timeline (BUILD-SPEC-2 §6.1, §9). A running
+ * daily balance over dated income and bills; flags the tightest day.
+ */
+describe("cash-flow timeline", () => {
+  it("runs a balance through the month and finds the tightest day", () => {
+    const r = cashFlowTimeline(500, [
+      { day: 1, amount: 3000 },
+      { day: 2, amount: -2000 },
+      { day: 10, amount: -1200 },
+      { day: 15, amount: 3000 },
+      { day: 28, amount: -2500 },
+    ]);
+    // 500 → 3,500 → 1,500 → 300 (low, day 10) → 3,300 → 800 (end).
+    expect(r.days.map((d) => d.balance)).toEqual([3500, 1500, 300, 3300, 800]);
+    expect(r.endingBalance.toNumber()).toBe(800);
+    expect(r.minBalance.toNumber()).toBe(300);
+    expect(r.minDay).toBe(10);
+    expect(r.goesNegative).toBe(false);
+  });
+
+  it("flags a day the balance goes negative", () => {
+    const r = cashFlowTimeline(200, [{ day: 5, amount: -500 }]);
+    expect(r.minBalance.toNumber()).toBe(-300);
+    expect(r.minDay).toBe(5);
+    expect(r.goesNegative).toBe(true);
+  });
+
+  it("sums multiple events landing on the same day", () => {
+    const r = cashFlowTimeline(0, [
+      { day: 1, amount: 1000 },
+      { day: 1, amount: -250 },
+    ]);
+    expect(r.days).toHaveLength(1);
+    expect(r.days[0]!.net).toBe(750);
+    expect(r.endingBalance.toNumber()).toBe(750);
+  });
+});
+
+/**
+ * Golden cases for the life-insurance needs method (BUILD-SPEC-2 §6.6, §9).
+ */
+describe("life insurance need", () => {
+  it("sums income replacement, debts, mortgage, and obligations, less offsets", () => {
+    const r = lifeInsuranceNeed({
+      annualIncome: 80000,
+      yearsToReplace: 10,
+      debts: 20000,
+      mortgageBalance: 250000,
+      finalExpenses: 15000,
+      futureObligations: 100000,
+      existingCoverage: 100000,
+      liquidAssets: 50000,
+    });
+    expect(r.incomeReplacement.toNumber()).toBe(800000);
+    expect(r.totalNeed.toNumber()).toBe(1185000); // 800k + 20k + 250k + 15k + 100k
+    expect(r.recommendedCoverage.toNumber()).toBe(1035000); // less 150k offsets
+  });
+
+  it("never recommends negative coverage when assets already exceed the need", () => {
+    const r = lifeInsuranceNeed({
+      annualIncome: 50000,
+      yearsToReplace: 5,
+      debts: 0,
+      mortgageBalance: 0,
+      finalExpenses: 10000,
+      futureObligations: 0,
+      existingCoverage: 500000,
+      liquidAssets: 0,
+    });
+    expect(r.recommendedCoverage.isZero()).toBe(true);
+  });
+});
