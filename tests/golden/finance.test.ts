@@ -148,3 +148,94 @@ describe("mortgage math", () => {
     expect(big).toBeGreaterThan(small);
   });
 });
+
+import { annualFromHourly, hourlyFromAnnual } from "../../src/engine/finance";
+
+/**
+ * Golden cases for the hourly↔salary conversion (BUILD-SPEC.md §3.1). Regular
+ * hours pay the base rate; overtime pays 1.5×. The annual→hourly path inverts
+ * the no-overtime annual.
+ */
+describe("pay conversion", () => {
+  it("annualizes a regular wage exactly", () => {
+    // $28/hr × 40 hrs × 52 wks = $58,240.
+    const a = annualFromHourly({
+      hourlyRate: 28,
+      hoursPerWeek: 40,
+      overtimeHoursPerWeek: 0,
+      weeksPerYear: 52,
+    });
+    expect(a.roundToCents().toNumber()).toBe(58240);
+  });
+
+  it("pays overtime at 1.5×", () => {
+    // + $28 × 1.5 × 5 hrs × 52 wks = $10,920 → $69,160.
+    const a = annualFromHourly({
+      hourlyRate: 28,
+      hoursPerWeek: 40,
+      overtimeHoursPerWeek: 5,
+      weeksPerYear: 52,
+    });
+    expect(a.roundToCents().toNumber()).toBe(69160);
+  });
+
+  it("inverts annual→hourly for the regular case", () => {
+    expect(hourlyFromAnnual(58240, 40, 52).roundToCents().toNumber()).toBe(28);
+    // No hours to divide across → zero, never a divide-by-zero.
+    expect(hourlyFromAnnual(58240, 0, 52).isZero()).toBe(true);
+  });
+});
+
+import { amortizationSummary } from "../../src/engine/finance";
+
+/**
+ * Golden cases for the amortization what-if (BUILD-SPEC.md §3.3). The scheduled
+ * payment comes from the mortgage formula; baseline and with-extra payoffs run
+ * through the same month-by-month engine, so they agree at extra = 0.
+ */
+describe("amortization summary", () => {
+  it("zero rate: extra payment halves the term, no interest", () => {
+    const r = amortizationSummary({
+      principal: 360000,
+      annualRatePct: 0,
+      termYears: 30,
+      extraMonthly: 1000,
+    });
+    expect(r.scheduledPayment.roundToCents().toNumber()).toBe(1000);
+    expect(r.baselineMonths).toBe(360);
+    expect(r.payoffMonths).toBe(180); // paying $2,000/mo on $360k
+    expect(r.monthsSaved).toBe(180);
+    expect(r.totalInterest.isZero()).toBe(true);
+    expect(r.interestSaved.isZero()).toBe(true);
+  });
+
+  it("no extra payment saves nothing", () => {
+    const r = amortizationSummary({
+      principal: 300000,
+      annualRatePct: 6,
+      termYears: 30,
+      extraMonthly: 0,
+    });
+    expect(r.scheduledPayment.roundToCents().toNumber()).toBeCloseTo(1798.65, 1);
+    expect(r.monthsSaved).toBe(0);
+    expect(r.interestSaved.isZero()).toBe(true);
+    expect(r.payoffMonths).toBe(r.baselineMonths);
+  });
+
+  it("an extra payment saves interest and time", () => {
+    const r = amortizationSummary({
+      principal: 300000,
+      annualRatePct: 6,
+      termYears: 30,
+      extraMonthly: 200,
+    });
+    expect(r.monthsSaved).toBeGreaterThan(0);
+    expect(r.interestSaved.greaterThan(0)).toBe(true);
+    expect(r.totalInterest.lessThan(r.baselineInterest)).toBe(true);
+  });
+
+  it("is deterministic", () => {
+    const i = { principal: 250000, annualRatePct: 5.5, termYears: 30, extraMonthly: 150 };
+    expect(amortizationSummary(i)).toEqual(amortizationSummary(i));
+  });
+});

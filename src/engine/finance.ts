@@ -159,3 +159,106 @@ export function loanPrincipalFromPayment(
   const factor = r.plus(1).pow(-n); // (1+r)^-n
   return Money.from(m.times(new Decimal(1).minus(factor)).div(r));
 }
+
+export interface HourlyPayInput {
+  /** Pay rate for regular hours. */
+  hourlyRate: number;
+  /** Regular hours worked each week. */
+  hoursPerWeek: number;
+  /** Overtime hours each week, paid at 1.5× the regular rate. */
+  overtimeHoursPerWeek: number;
+  /** Weeks worked per year (52 for a full year). */
+  weeksPerYear: number;
+}
+
+/**
+ * Annualize an hourly wage (BUILD-SPEC.md §3.1). Regular hours pay the base
+ * rate; overtime hours pay 1.5× the base rate (the FLSA convention). Pure
+ * arithmetic on the user's own pay — no rule to cite, only their numbers.
+ */
+export function annualFromHourly(input: HourlyPayInput): Money {
+  const rate = new Decimal(Math.max(0, input.hourlyRate));
+  const weeks = new Decimal(Math.max(0, input.weeksPerYear));
+  const regularWeekly = rate.times(Math.max(0, input.hoursPerWeek));
+  const overtimeWeekly = rate.times(1.5).times(Math.max(0, input.overtimeHoursPerWeek));
+  return Money.from(regularWeekly.plus(overtimeWeekly).times(weeks));
+}
+
+/**
+ * The equivalent hourly rate for an annual salary, given the regular hours and
+ * weeks worked. The inverse of {@link annualFromHourly} for the no-overtime
+ * case. Returns zero when there are no hours to divide across.
+ */
+export function hourlyFromAnnual(
+  annual: number,
+  hoursPerWeek: number,
+  weeksPerYear: number,
+): Money {
+  const totalHours = new Decimal(Math.max(0, hoursPerWeek)).times(Math.max(0, weeksPerYear));
+  if (totalHours.isZero()) return Money.zero();
+  return Money.from(new Decimal(Math.max(0, annual)).div(totalHours));
+}
+
+export interface AmortizationInput {
+  /** Amount borrowed. */
+  principal: number;
+  /** Annual interest rate as a percentage (e.g. 6.5). */
+  annualRatePct: number;
+  /** Loan term in years. */
+  termYears: number;
+  /** Extra amount paid toward principal each month (the "what-if"). */
+  extraMonthly: number;
+}
+
+export interface AmortizationResult {
+  /** Scheduled monthly payment (principal + interest), rounded to cents. */
+  scheduledPayment: Money;
+  /** Months to payoff with the extra payment applied. */
+  payoffMonths: number;
+  /** Total interest paid with the extra payment applied. */
+  totalInterest: Money;
+  /** Total paid (principal + interest) with the extra payment applied. */
+  totalPaid: Money;
+  /** Months to payoff on the scheduled payment alone (no extra). */
+  baselineMonths: number;
+  /** Total interest on the scheduled payment alone. */
+  baselineInterest: Money;
+  /** Interest saved by the extra payment. */
+  interestSaved: Money;
+  /** Months shaved off by the extra payment. */
+  monthsSaved: number;
+}
+
+/**
+ * Loan amortization with an extra-payment what-if (BUILD-SPEC.md §3.3). The
+ * scheduled payment comes from {@link monthlyMortgagePayment}; both the baseline
+ * and the with-extra payoff are run through {@link debtPayoff} so the interest
+ * totals are computed by the same exact month-by-month engine and agree at
+ * extra = 0. The rate is the loan's own terms, so there is no external rule to
+ * cite — the user's numbers are the inputs.
+ */
+export function amortizationSummary(input: AmortizationInput): AmortizationResult {
+  const scheduledPayment = monthlyMortgagePayment(
+    input.principal,
+    input.annualRatePct,
+    input.termYears,
+  ).roundToCents();
+  const base = scheduledPayment.toNumber();
+  const extra = Math.max(0, input.extraMonthly);
+
+  const zero: PayoffResult = { months: 0, totalInterest: Money.zero(), totalPaid: Money.zero() };
+  const baseline = debtPayoff(input.principal, input.annualRatePct, base) ?? zero;
+  const withExtra = debtPayoff(input.principal, input.annualRatePct, base + extra) ?? baseline;
+
+  const interestSaved = baseline.totalInterest.subtract(withExtra.totalInterest);
+  return {
+    scheduledPayment,
+    payoffMonths: withExtra.months,
+    totalInterest: withExtra.totalInterest,
+    totalPaid: withExtra.totalPaid,
+    baselineMonths: baseline.months,
+    baselineInterest: baseline.totalInterest,
+    interestSaved: interestSaved.isNegative() ? Money.zero() : interestSaved,
+    monthsSaved: Math.max(0, baseline.months - withExtra.months),
+  };
+}

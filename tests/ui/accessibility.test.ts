@@ -12,6 +12,9 @@ import { mountTakeHome } from "../../src/tiles/takeHome";
 import { mountFederalIncomeTax } from "../../src/tiles/federalIncomeTax";
 import { mountMarginalExplorer } from "../../src/tiles/marginalExplorer";
 import { mountCompoundGrowth } from "../../src/tiles/compoundGrowth";
+import { mountSelfEmploymentTax } from "../../src/tiles/selfEmploymentTax";
+import { mountHourlySalary } from "../../src/tiles/hourlySalary";
+import { mountLoanAmortization } from "../../src/tiles/loanAmortization";
 import { mountYourPlan } from "../../src/tiles/yourPlan";
 import { mountPeaceOfMind } from "../../src/tiles/peaceOfMind";
 import { mountFreedomDate } from "../../src/tiles/freedomDate";
@@ -102,6 +105,21 @@ describe("accessibility (axe-core)", () => {
         name: "compound-growth",
         mount: mountCompoundGrowth,
         params: new URLSearchParams({ p: "10000", c: "500", r: "6", y: "30" }),
+      },
+      {
+        name: "self-employment-tax",
+        mount: mountSelfEmploymentTax,
+        params: new URLSearchParams({ fs: "single", np: "80000" }),
+      },
+      {
+        name: "hourly-salary",
+        mount: mountHourlySalary,
+        params: new URLSearchParams({ m: "hourly", hr: "28", h: "40", ot: "5" }),
+      },
+      {
+        name: "loan-amortization",
+        mount: mountLoanAmortization,
+        params: new URLSearchParams({ p: "320000", r: "6.5", y: "30", x: "200" }),
       },
       {
         name: "your-plan",

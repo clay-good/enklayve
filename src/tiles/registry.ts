@@ -7,8 +7,11 @@
  */
 import type { Pillar, TileDefinition } from "./types";
 import { takeHomeTile } from "./takeHome";
+import { hourlySalaryTile } from "./hourlySalary";
 import { federalIncomeTaxTile } from "./federalIncomeTax";
+import { selfEmploymentTaxTile } from "./selfEmploymentTax";
 import { marginalExplorerTile } from "./marginalExplorer";
+import { loanAmortizationTile } from "./loanAmortization";
 import { compoundGrowthTile } from "./compoundGrowth";
 import { spendingPlanTile } from "./spendingPlan";
 import { homeAffordabilityTile } from "./homeAffordability";
@@ -40,21 +43,9 @@ export const TILES: TileDefinition[] = [
     "Tune your W-4 from the published withholding method.",
     ["w4", "withholding", "allowances"],
   ),
-  soon(
-    "hourly-salary",
-    "Hourly ↔ Salary",
-    "take-home",
-    "Convert pay rates with overtime and multiple jobs.",
-    ["hourly", "salary", "overtime", "wage"],
-  ),
+  hourlySalaryTile,
   federalIncomeTaxTile,
-  soon(
-    "self-employment-tax",
-    "Self-Employment Tax",
-    "take-home",
-    "SE tax plus the quarterly estimated payment schedule.",
-    ["1099", "se tax", "quarterly", "estimated"],
-  ),
+  selfEmploymentTaxTile,
   soon(
     "capital-gains",
     "Capital Gains",
@@ -63,13 +54,7 @@ export const TILES: TileDefinition[] = [
     ["capital gains", "niit", "cost basis", "investments"],
   ),
   marginalExplorerTile,
-  soon(
-    "loan-amortization",
-    "Loan & Mortgage Amortization",
-    "take-home",
-    "Full schedule with extra-payment what-ifs.",
-    ["loan", "mortgage", "amortization", "schedule"],
-  ),
+  loanAmortizationTile,
   soon("refinance", "Refinance Break-Even", "take-home", "When refinancing pays for itself.", [
     "refinance",
     "break even",

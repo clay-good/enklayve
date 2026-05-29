@@ -11,8 +11,18 @@ export {
   debtPayoff,
   monthlyMortgagePayment,
   loanPrincipalFromPayment,
+  annualFromHourly,
+  hourlyFromAnnual,
+  amortizationSummary,
 } from "./finance";
-export type { CompoundGrowthInput, CompoundGrowthResult, PayoffResult } from "./finance";
+export type {
+  CompoundGrowthInput,
+  CompoundGrowthResult,
+  PayoffResult,
+  HourlyPayInput,
+  AmortizationInput,
+  AmortizationResult,
+} from "./finance";
 export { povertyLine, fplPercent, estimateEitc, estimateCtc } from "./benefits";
 export type { EitcResult, CtcResult } from "./benefits";
 export { evaluatePlan, PLAN_STEPS, DEFAULT_CONFIG, DEFAULT_ORDER } from "./plan";

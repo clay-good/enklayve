@@ -2,6 +2,9 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { mountFederalIncomeTax } from "../../src/tiles/federalIncomeTax";
 import { mountMarginalExplorer } from "../../src/tiles/marginalExplorer";
 import { mountCompoundGrowth } from "../../src/tiles/compoundGrowth";
+import { mountSelfEmploymentTax } from "../../src/tiles/selfEmploymentTax";
+import { mountHourlySalary } from "../../src/tiles/hourlySalary";
+import { mountLoanAmortization } from "../../src/tiles/loanAmortization";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
@@ -137,5 +140,79 @@ describe("Compound Growth tile", () => {
     clickExample(root);
     expect(lastParams()?.get("p")).toBe("10000");
     expect(lastParams()?.get("y")).toBe("30");
+  });
+});
+
+describe("Self-Employment Tax tile", () => {
+  it("breaks out SE tax with the quarterly schedule, every line cited", () => {
+    const { root } = mount(
+      mountSelfEmploymentTax,
+      new URLSearchParams({ fs: "single", np: "80000" }),
+    );
+    expect(root.querySelector(".result-label")?.textContent).toBe("Self-employment tax");
+    const ls = labels(root);
+    expect(ls).toContain("Total self-employment tax");
+    expect(ls).toContain("Deductible half (adjustment to income)");
+    // Four quarterly installments, each cited to Form 1040-ES.
+    expect(ls.filter((l) => l.startsWith("Quarterly estimate")).length).toBe(4);
+    expect(root.querySelectorAll("a.cite-link").length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("prefills the worked example and writes filing status to the profile", () => {
+    const profile = new SituationStore();
+    const { root } = mount(mountSelfEmploymentTax, new URLSearchParams(), profile);
+    clickExample(root);
+    expect(root.querySelector<HTMLInputElement>('input[name="np"]')?.value).toBe("80000");
+    expect(profile.get("filingStatus")).toBe("single");
+  });
+});
+
+describe("Hourly ↔ Salary tile", () => {
+  it("annualizes an hourly rate with overtime, with no rule to cite", () => {
+    const { root } = mount(
+      mountHourlySalary,
+      new URLSearchParams({ m: "hourly", hr: "28", h: "40", ot: "5" }),
+    );
+    expect(root.querySelector(".result-label")?.textContent).toBe("Annual income");
+    expect(labels(root)).toContain("Combined annual");
+    // Pure arithmetic on the user's pay — no citation.
+    expect(root.querySelector("a.cite-link")).toBeNull();
+  });
+
+  it("stacks a second job and writes combined income to the profile", () => {
+    const profile = new SituationStore();
+    const { root } = mount(
+      mountHourlySalary,
+      new URLSearchParams({ m: "hourly", hr: "28", h: "40", wk: "52", j2: "12000" }),
+      profile,
+    );
+    expect(labels(root)).toContain("Second job, annual");
+    // An edit recomputes and writes back: 28×40×52 = 58,240 + 12,000 = 70,240.
+    const hr = root.querySelector<HTMLInputElement>('input[name="hr"]')!;
+    hr.dispatchEvent(new Event("input"));
+    expect(profile.get("annualIncome")).toBe(70240);
+  });
+});
+
+describe("Loan & Mortgage Amortization tile", () => {
+  it("shows the extra-payment what-if and cites no external rule", () => {
+    const { root } = mount(
+      mountLoanAmortization,
+      new URLSearchParams({ p: "320000", r: "6.5", y: "30", x: "200" }),
+    );
+    expect(root.querySelector(".result-label")?.textContent).toBe("Monthly payment");
+    const ls = labels(root);
+    expect(ls).toContain("Scheduled monthly payment");
+    expect(ls).toContain("Interest saved by the extra payment");
+    expect(ls).toContain("Time saved");
+    expect(root.querySelector("a.cite-link")).toBeNull();
+  });
+
+  it("hides the what-if lines with no extra payment", () => {
+    const { root } = mount(
+      mountLoanAmortization,
+      new URLSearchParams({ p: "320000", r: "6.5", y: "30" }),
+    );
+    expect(labels(root)).not.toContain("Interest saved by the extra payment");
   });
 });

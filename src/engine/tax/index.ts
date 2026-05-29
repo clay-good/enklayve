@@ -12,7 +12,7 @@ export {
   personalExemptionFor,
   type Bracket,
 } from "./brackets";
-export { computeFica } from "./fica";
+export { computeFica, selfEmploymentTax, type SelfEmploymentTaxResult } from "./fica";
 export {
   chooseFederalDeduction,
   itemizedTotal,
