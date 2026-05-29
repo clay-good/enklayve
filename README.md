@@ -6,7 +6,7 @@ enklayve is a deterministic personal finance utility: a calm, fast place to answ
 
 The Content-Security-Policy sets `connect-src 'none'`: the browser physically cannot send your data out, even if a bug tried to.
 
-See [BUILD-SPEC.md](BUILD-SPEC.md) and [BUILD-SPEC-2.md](BUILD-SPEC-2.md) for the full vision and the phased build plan.
+See [docs/specs/SPEC.md](docs/specs/SPEC.md) and [docs/specs/SPEC-2.md](docs/specs/SPEC-2.md) for the full vision and the phased build plan.
 
 ## Status
 
@@ -16,6 +16,7 @@ Foundation phases are complete:
 - **Phase 1 — Money & citation primitives.** [`src/engine`](src/engine) — exact decimal money math (decimal.js) and the citation/provenance types that guarantee no orphan numbers ship.
 - **Phase 2 — Data layer.** [`src/data`](src/data) — zod schemas for every bundled dataset kind, content-hash integrity verification, and the per-dataset fail-safe gate. Seeded with the 2024 federal and California tax jurisdictions.
 - **Phase 3 — The tax engine.** [`src/engine/tax`](src/engine/tax) — one generic evaluator that composes federal income tax, FICA, state, and local into a single fully-cited result. Seeded the ten most populous states plus DC (no-income-tax states are first-class records) and the 2024 FICA dataset, with a hand-verified + generated golden corpus and bounds/fuzz invariants.
+- **Phase 4 — UI shell & design system.** [`src/ui`](src/ui) — a tiny vanilla render layer, three instant-switch themes (light / dark / high-contrast) in royal purple and gold, a reduced-motion-aware count-up, the result card (collapsible cited breakdown, copy + permalink), a fuzzy command palette (Cmd/Ctrl-K), and fragment-based routing that makes every result deep-linkable. The **Take-Home Pay** tile is built end-to-end on the engine; axe-core runs in CI with zero violations.
 
 ## Develop
 
@@ -38,8 +39,8 @@ npm run deploy:dry     # wrangler dry-run deploy
 | ------------- | ------------------------------------------------------------------ |
 | `src/engine`  | Money math, citation/provenance types (the foundation)             |
 | `src/data`    | Dataset schemas, integrity check, manifest loader, fail-safe gate  |
-| `src/tiles`   | One module per calculator (later phases)                           |
-| `src/ui`      | Render layer, theme, result card, command palette (later phases)   |
+| `src/tiles`   | One module per calculator (Take-Home Pay built; rest rolling out)  |
+| `src/ui`      | Render layer, themes, result card, command palette, router         |
 | `data`        | Sharded JSON datasets, sibling `.sha256` files, and the manifest   |
 | `scripts`     | Data refresh adapters and the manifest builder                     |
 | `worker`      | Cloudflare Worker asset router and security headers                |
