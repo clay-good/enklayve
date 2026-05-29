@@ -8,6 +8,7 @@
 import { Router, permalinkFor, type Route } from "./router";
 import { CommandPalette } from "./commandPalette";
 import { SituationPanel } from "./situationPanel";
+import { renderReadout } from "./readoutView";
 import { applyStoredPreferences, setTheme, THEMES, getTheme, type Theme } from "./theme";
 import { el, option, clear } from "./dom";
 import { loadBundledData, type BundledData } from "../data/browser";
@@ -116,14 +117,14 @@ function readoutDropzone(navigate: (id: string | null) => void): HTMLElement {
       type: "button",
       class: "readout-dropzone",
       attrs: {
-        "aria-label": "Open the Readout to drop a pay stub, W-2, 1040, or 1095-A",
+        "aria-label": "Open the Readout to drop a pay stub, W-2, or 1040",
       },
       on: { click: () => navigate("readout") },
     },
     el("span", { class: "readout-dropzone-icon", attrs: { "aria-hidden": "true" }, text: "⤓" }),
     el("span", {
       class: "readout-dropzone-title",
-      text: "Drop a pay stub, W-2, 1040, or 1095-A",
+      text: "Drop a pay stub, W-2, or 1040",
     }),
     el("span", {
       class: "readout-dropzone-sub",
@@ -251,44 +252,6 @@ function renderAllTools(container: HTMLElement, navigate: (id: string | null) =>
   container.append(el("article", { class: "tile" }, head, sections));
 }
 
-/**
- * The Readout view (BUILD-SPEC-2 §2). Deterministic on-device document parsing
- * lands in Phase 14; this is the destination of the hero dropzone until then,
- * explaining the privacy promise so the entry point is honest about its state.
- */
-function renderReadout(container: HTMLElement, navigate: (id: string | null) => void): void {
-  clear(container);
-  document.title = "The Readout — enklayve";
-
-  const back = el(
-    "button",
-    { type: "button", class: "btn btn--ghost back-link", on: { click: () => navigate(null) } },
-    "← Home",
-  );
-
-  const head = el(
-    "div",
-    { class: "tile-head" },
-    back,
-    el("h1", { class: "tile-title", text: "The Readout" }),
-    el("p", {
-      class: "tile-desc",
-      text: "Drop a pay stub, W-2, 1040, 1099, 1095-A, or mortgage statement and get an instant private readout.",
-    }),
-  );
-
-  const body = el(
-    "div",
-    { class: "tile-body" },
-    el("p", {
-      class: "coming-soon-note",
-      text: "On-device document parsing is being built phase by phase. When it lands, files are read locally with pdf.js and never uploaded — the Content-Security-Policy connect-src stays 'none', so the browser physically cannot send your documents anywhere.",
-    }),
-  );
-
-  container.append(el("article", { class: "tile" }, head, body));
-}
-
 function renderTileView(
   container: HTMLElement,
   tile: TileDefinition,
@@ -408,7 +371,7 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
       return;
     }
     if (route.tileId === "readout") {
-      renderReadout(content, navigate);
+      renderReadout({ container: content, navigate, profile });
       return;
     }
     const tile = getTile(route.tileId);

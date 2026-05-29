@@ -969,3 +969,94 @@ body {
 .plan-debt-row .field {
   margin: 0;
 }
+
+/* --- The Readout, live view (BUILD-SPEC-2 §2) ---------------------------- */
+.badge--good {
+  background: color-mix(in srgb, var(--enk-good) 16%, transparent);
+  color: var(--enk-good);
+  border: 1px solid var(--enk-good);
+}
+.badge--warn {
+  background: color-mix(in srgb, var(--enk-warn) 14%, transparent);
+  color: var(--enk-warn);
+  border: 1px solid var(--enk-warn);
+}
+
+.readout-dropzone--live {
+  width: 100%;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+.readout-dropzone--live.is-dragover {
+  border-color: var(--enk-accent);
+  background: var(--enk-primary-soft);
+}
+.readout-file {
+  margin-top: 0.75rem;
+  color: var(--enk-text-muted);
+  font: inherit;
+}
+.readout-status {
+  color: var(--enk-text-muted);
+  min-height: 1.25rem;
+}
+.readout-detected {
+  font-weight: 600;
+  color: var(--enk-text);
+  margin: 0.25rem 0;
+}
+.readout-cite {
+  font-size: 0.85rem;
+  color: var(--enk-text-muted);
+  margin: 0 0 0.75rem;
+}
+.readout-note {
+  color: var(--enk-text-muted);
+  margin: 0.25rem 0;
+}
+.readout-note--warn {
+  color: var(--enk-warn);
+  font-weight: 600;
+}
+.readout-fields {
+  margin-top: 0.5rem;
+}
+.field-label-wrap {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+.readout-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+.readout-field-note {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--enk-text-muted);
+  margin-top: 0.2rem;
+}
+.readout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.readout-summary {
+  border: 1px solid var(--enk-primary);
+  background: var(--enk-primary-soft);
+  border-radius: var(--enk-radius);
+  padding: 1rem 1.25rem;
+}
+.readout-summary-line {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--enk-text);
+  margin: 0 0 0.5rem;
+}
+.readout-privacy {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--enk-text-muted);
+}

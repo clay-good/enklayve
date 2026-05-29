@@ -58,7 +58,7 @@ describe("accessibility (axe-core)", () => {
 
   it("the Readout view has no violations", async () => {
     const main = document.createElement("main");
-    renderReadout(main, () => {});
+    renderReadout({ container: main, navigate: () => {}, profile: new SituationStore() });
     document.body.append(main);
     await expectNoViolations(main);
   }, 30000);

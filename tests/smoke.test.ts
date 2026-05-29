@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderHome, renderAllTools, renderReadout } from "../src/ui/shell";
+import { SituationStore } from "../src/profile/situation";
 
 describe("shell home view", () => {
   it("renders the hero, the Readout dropzone, the pillar cards, and the All Tools card", () => {
@@ -52,10 +53,13 @@ describe("All Tools index view", () => {
 });
 
 describe("Readout view", () => {
-  it("renders the privacy promise placeholder", () => {
+  it("renders the live dropzone and the on-device privacy promise", () => {
     const root = document.createElement("main");
-    renderReadout(root, () => {});
+    renderReadout({ container: root, navigate: () => {}, profile: new SituationStore() });
     expect(root.querySelector(".tile-title")?.textContent).toContain("Readout");
+    expect(root.querySelector(".readout-dropzone--live")).not.toBeNull();
+    expect(root.querySelector('input[type="file"]')).not.toBeNull();
     expect(root.textContent).toContain("never uploaded");
+    expect(root.textContent).toContain("connect-src 'none'");
   });
 });
