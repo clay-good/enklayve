@@ -1,0 +1,66 @@
+{
+  "id": "US-NY",
+  "name": "New York",
+  "taxYear": 2024,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.04 },
+      { "lowerBound": 8500, "rate": 0.045 },
+      { "lowerBound": 11700, "rate": 0.0525 },
+      { "lowerBound": 13900, "rate": 0.055 },
+      { "lowerBound": 80650, "rate": 0.06 },
+      { "lowerBound": 215400, "rate": 0.0685 },
+      { "lowerBound": 1077550, "rate": 0.0965 },
+      { "lowerBound": 5000000, "rate": 0.103 },
+      { "lowerBound": 25000000, "rate": 0.109 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.04 },
+      { "lowerBound": 17150, "rate": 0.045 },
+      { "lowerBound": 23600, "rate": 0.0525 },
+      { "lowerBound": 27900, "rate": 0.055 },
+      { "lowerBound": 161550, "rate": 0.06 },
+      { "lowerBound": 323200, "rate": 0.0685 },
+      { "lowerBound": 2155350, "rate": 0.0965 },
+      { "lowerBound": 5000000, "rate": 0.103 },
+      { "lowerBound": 25000000, "rate": 0.109 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.04 },
+      { "lowerBound": 12800, "rate": 0.045 },
+      { "lowerBound": 17650, "rate": 0.0525 },
+      { "lowerBound": 20900, "rate": 0.055 },
+      { "lowerBound": 107650, "rate": 0.06 },
+      { "lowerBound": 269300, "rate": 0.0685 },
+      { "lowerBound": 1616450, "rate": 0.0965 },
+      { "lowerBound": 5000000, "rate": 0.103 },
+      { "lowerBound": 25000000, "rate": 0.109 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 8000,
+    "married_jointly": 16050,
+    "head_of_household": 11200
+  },
+  "localAddOns": [
+    {
+      "id": "nyc",
+      "name": "New York City resident income tax",
+      "brackets": [
+        { "lowerBound": 0, "rate": 0.03078 },
+        { "lowerBound": 12000, "rate": 0.03762 },
+        { "lowerBound": 25000, "rate": 0.03819 },
+        { "lowerBound": 50000, "rate": 0.03876 }
+      ]
+    }
+  ],
+  "citation": {
+    "sourceUrl": "https://www.tax.ny.gov/pit/file/tax-tables/nys-tax-rate-schedule.htm",
+    "sourceDocument": "NYS Department of Taxation and Finance — 2024 tax rate schedule (and NYC resident rates)",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2024-02-01"
+  },
+  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+}

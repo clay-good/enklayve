@@ -1,0 +1,43 @@
+{
+  "id": "US-OH",
+  "name": "Ohio",
+  "taxYear": 2024,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0 },
+      { "lowerBound": 26050, "rate": 0.0275 },
+      { "lowerBound": 100000, "rate": 0.035 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0 },
+      { "lowerBound": 26050, "rate": 0.0275 },
+      { "lowerBound": 100000, "rate": 0.035 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0 },
+      { "lowerBound": 26050, "rate": 0.0275 },
+      { "lowerBound": 100000, "rate": 0.035 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 0,
+    "married_jointly": 0,
+    "head_of_household": 0
+  },
+  "localAddOns": [
+    {
+      "id": "oh-columbus",
+      "name": "Columbus municipal income tax",
+      "flatRate": 0.025
+    }
+  ],
+  "citation": {
+    "sourceUrl": "https://tax.ohio.gov/individual/resources/annual-tax-rates",
+    "sourceDocument": "Ohio Department of Taxation — 2024 income tax rate schedule",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2024-02-01"
+  },
+  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+}

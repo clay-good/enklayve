@@ -1,0 +1,24 @@
+{
+  "id": "US-PA",
+  "name": "Pennsylvania",
+  "taxYear": 2024,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [{ "lowerBound": 0, "rate": 0.0307 }],
+    "married_jointly": [{ "lowerBound": 0, "rate": 0.0307 }],
+    "head_of_household": [{ "lowerBound": 0, "rate": 0.0307 }]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 0,
+    "married_jointly": 0,
+    "head_of_household": 0
+  },
+  "citation": {
+    "sourceUrl": "https://www.pa.gov/agencies/revenue/forms-and-publications/pa-personal-income-tax-guide.html",
+    "sourceDocument": "Pennsylvania DOR — 3.07% flat personal income tax (2024)",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2024-02-01"
+  },
+  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+}

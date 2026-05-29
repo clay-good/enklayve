@@ -1,0 +1,29 @@
+{
+  "id": "US-MI",
+  "name": "Michigan",
+  "taxYear": 2024,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [{ "lowerBound": 0, "rate": 0.0425 }],
+    "married_jointly": [{ "lowerBound": 0, "rate": 0.0425 }],
+    "head_of_household": [{ "lowerBound": 0, "rate": 0.0425 }]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 0,
+    "married_jointly": 0,
+    "head_of_household": 0
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 5600,
+    "married_jointly": 11200,
+    "head_of_household": 5600
+  },
+  "citation": {
+    "sourceUrl": "https://www.michigan.gov/taxes/iit/tax-time/whats-new-for-tax-year-2024",
+    "sourceDocument": "Michigan Treasury — 4.25% flat tax; 2024 personal exemption $5,600",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2024-02-01"
+  },
+  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+}

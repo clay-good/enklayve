@@ -7,7 +7,8 @@
     "single",
     "married_jointly",
     "married_separately",
-    "head_of_household"
+    "head_of_household",
+    "qualifying_surviving_spouse"
   ],
   "bracketsByFilingStatus": {
     "single": [
@@ -45,13 +46,23 @@
       { "lowerBound": 191950, "rate": 0.32 },
       { "lowerBound": 243700, "rate": 0.35 },
       { "lowerBound": 609350, "rate": 0.37 }
+    ],
+    "qualifying_surviving_spouse": [
+      { "lowerBound": 0, "rate": 0.1 },
+      { "lowerBound": 23200, "rate": 0.12 },
+      { "lowerBound": 94300, "rate": 0.22 },
+      { "lowerBound": 201050, "rate": 0.24 },
+      { "lowerBound": 383900, "rate": 0.32 },
+      { "lowerBound": 487450, "rate": 0.35 },
+      { "lowerBound": 731200, "rate": 0.37 }
     ]
   },
   "standardDeductionByFilingStatus": {
     "single": 14600,
     "married_jointly": 29200,
     "married_separately": 14600,
-    "head_of_household": 21900
+    "head_of_household": 21900,
+    "qualifying_surviving_spouse": 29200
   },
   "citation": {
     "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-23-34.pdf",

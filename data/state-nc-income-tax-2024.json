@@ -1,0 +1,24 @@
+{
+  "id": "US-NC",
+  "name": "North Carolina",
+  "taxYear": 2024,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [{ "lowerBound": 0, "rate": 0.045 }],
+    "married_jointly": [{ "lowerBound": 0, "rate": 0.045 }],
+    "head_of_household": [{ "lowerBound": 0, "rate": 0.045 }]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 12750,
+    "married_jointly": 25500,
+    "head_of_household": 19125
+  },
+  "citation": {
+    "sourceUrl": "https://www.ncdor.gov/taxes-forms/individual-income-tax/north-carolina-individual-income-tax-rates",
+    "sourceDocument": "NCDOR — 4.5% flat tax; 2024 standard deduction",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2024-02-01"
+  },
+  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+}

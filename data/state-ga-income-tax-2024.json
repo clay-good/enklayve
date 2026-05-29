@@ -1,0 +1,24 @@
+{
+  "id": "US-GA",
+  "name": "Georgia",
+  "taxYear": 2024,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [{ "lowerBound": 0, "rate": 0.0539 }],
+    "married_jointly": [{ "lowerBound": 0, "rate": 0.0539 }],
+    "head_of_household": [{ "lowerBound": 0, "rate": 0.0539 }]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 12000,
+    "married_jointly": 24000,
+    "head_of_household": 12000
+  },
+  "citation": {
+    "sourceUrl": "https://dor.georgia.gov/taxes/individual-taxes",
+    "sourceDocument": "Georgia DOR — 5.39% flat tax (2024); standard deduction $12,000/$24,000",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2024-02-01"
+  },
+  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+}

@@ -1,0 +1,48 @@
+{
+  "id": "US-DC",
+  "name": "District of Columbia",
+  "taxYear": 2024,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.04 },
+      { "lowerBound": 10000, "rate": 0.06 },
+      { "lowerBound": 40000, "rate": 0.065 },
+      { "lowerBound": 60000, "rate": 0.085 },
+      { "lowerBound": 250000, "rate": 0.0925 },
+      { "lowerBound": 500000, "rate": 0.0975 },
+      { "lowerBound": 1000000, "rate": 0.1075 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.04 },
+      { "lowerBound": 10000, "rate": 0.06 },
+      { "lowerBound": 40000, "rate": 0.065 },
+      { "lowerBound": 60000, "rate": 0.085 },
+      { "lowerBound": 250000, "rate": 0.0925 },
+      { "lowerBound": 500000, "rate": 0.0975 },
+      { "lowerBound": 1000000, "rate": 0.1075 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.04 },
+      { "lowerBound": 10000, "rate": 0.06 },
+      { "lowerBound": 40000, "rate": 0.065 },
+      { "lowerBound": 60000, "rate": 0.085 },
+      { "lowerBound": 250000, "rate": 0.0925 },
+      { "lowerBound": 500000, "rate": 0.0975 },
+      { "lowerBound": 1000000, "rate": 0.1075 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 14600,
+    "married_jointly": 29200,
+    "head_of_household": 21900
+  },
+  "citation": {
+    "sourceUrl": "https://otr.cfo.dc.gov/page/dc-individual-and-fiduciary-income-tax-rates",
+    "sourceDocument": "DC Office of Tax and Revenue — 2024 individual income tax rates",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2024-02-01"
+  },
+  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+}

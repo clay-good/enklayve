@@ -6,3 +6,4 @@ export { Money } from "./money";
 export type { MoneyInput } from "./money";
 export { cite, isCited, assertCited, citationProblems } from "./citation";
 export type { Citation, Cited } from "./citation";
+export * from "./tax";

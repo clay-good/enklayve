@@ -21,7 +21,8 @@
     "format:check": "prettier --check .",
     "deploy": "wrangler deploy",
     "deploy:dry": "wrangler deploy --dry-run",
-    "data:manifest": "node scripts/build-manifest.ts"
+    "data:manifest": "node scripts/build-manifest.ts",
+    "golden:regen": "REGEN_GOLDEN=1 vitest run tests/golden/snapshot.test.ts"
   },
   "dependencies": {
     "decimal.js": "^10.4.3",

@@ -1,0 +1,20 @@
+{
+  "taxYear": 2024,
+  "socialSecurityWageBase": 168600,
+  "socialSecurityRate": 0.062,
+  "medicareRate": 0.0145,
+  "additionalMedicareRate": 0.009,
+  "additionalMedicareThresholdByFilingStatus": {
+    "single": 200000,
+    "married_jointly": 250000,
+    "married_separately": 125000,
+    "head_of_household": 200000,
+    "qualifying_surviving_spouse": 200000
+  },
+  "citation": {
+    "sourceUrl": "https://www.ssa.gov/oact/cola/cbb.html",
+    "sourceDocument": "SSA Contribution and Benefit Base 2024; IRS Topic No. 751",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2024-02-01"
+  }
+}

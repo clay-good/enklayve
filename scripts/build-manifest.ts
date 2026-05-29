@@ -14,45 +14,37 @@ import { fileURLToPath } from "node:url";
 
 const DATA_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..", "data");
 
-interface ShardDef {
+interface ShardSource {
   id: string;
   kind: string;
-  version: string;
+  shard: string;
   effectiveYear: number;
   expectedRefreshMonths: number;
   staleAfterYears: number;
-  shard: string;
-  sourceUrl: string;
-  sourceDocument: string;
-  dateRetrieved: string;
 }
 
-// The bundled shards. Add an entry here when seeding a new dataset.
-const SHARDS: ShardDef[] = [
+// The ten most populous states plus DC (BUILD-SPEC.md §14). Adding a state is a
+// data file plus one code here — no engine change.
+const STATE_CODES = ["ca", "ny", "tx", "fl", "pa", "il", "oh", "ga", "nc", "mi", "dc"];
+
+const ANNUAL = { effectiveYear: 2024, expectedRefreshMonths: 12, staleAfterYears: 2 } as const;
+
+// The bundled shards. Source citation metadata is read from each shard's own
+// `citation` block below, so it is never duplicated here.
+const SHARDS: ShardSource[] = [
   {
     id: "federal-income-tax-2024",
     kind: "federal-income-tax",
-    version: "2024.0",
-    effectiveYear: 2024,
-    expectedRefreshMonths: 12,
-    staleAfterYears: 2,
     shard: "federal-income-tax-2024.json",
-    sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-23-34.pdf",
-    sourceDocument: "IRS Revenue Procedure 2023-34 (2024 inflation adjustments)",
-    dateRetrieved: "2024-02-01",
+    ...ANNUAL,
   },
-  {
-    id: "state-ca-income-tax-2024",
+  { id: "fica-2024", kind: "fica", shard: "fica-2024.json", ...ANNUAL },
+  ...STATE_CODES.map((code) => ({
+    id: `state-${code}-income-tax-2024`,
     kind: "state-income-tax",
-    version: "2024.0",
-    effectiveYear: 2024,
-    expectedRefreshMonths: 12,
-    staleAfterYears: 2,
-    shard: "state-ca-income-tax-2024.json",
-    sourceUrl: "https://www.ftb.ca.gov/forms/2024/2024-540-tax-rate-schedules.html",
-    sourceDocument: "California FTB 2024 Tax Rate Schedules",
-    dateRetrieved: "2024-02-01",
-  },
+    shard: `state-${code}-income-tax-2024.json`,
+    ...ANNUAL,
+  })),
 ];
 
 function sha256Hex(buf: Buffer): string {
@@ -65,7 +57,22 @@ const datasets = SHARDS.map((def) => {
   const contentHash = sha256Hex(bytes);
   // Sibling hash file, per BUILD-SPEC.md §7.1.
   writeFileSync(`${shardPath}.sha256`, `${contentHash}\n`, "utf8");
-  return { ...def, contentHash };
+  const parsed = JSON.parse(bytes.toString("utf8")) as {
+    citation: { sourceUrl: string; sourceDocument: string; dateRetrieved: string };
+  };
+  return {
+    id: def.id,
+    kind: def.kind,
+    version: `${def.effectiveYear}.0`,
+    effectiveYear: def.effectiveYear,
+    expectedRefreshMonths: def.expectedRefreshMonths,
+    staleAfterYears: def.staleAfterYears,
+    shard: def.shard,
+    sourceUrl: parsed.citation.sourceUrl,
+    sourceDocument: parsed.citation.sourceDocument,
+    dateRetrieved: parsed.citation.dateRetrieved,
+    contentHash,
+  };
 });
 
 const manifest = {

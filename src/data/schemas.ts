@@ -111,6 +111,7 @@ export const FicaSchema = z.object({
   additionalMedicareThresholdByFilingStatus: amountByStatus,
   citation: CitationSchema,
 });
+export type FicaData = z.infer<typeof FicaSchema>;
 
 /** CPI-U series for inflation adjustment (BLS public database). */
 export const CpiSchema = z.object({

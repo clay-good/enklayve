@@ -1,0 +1,29 @@
+{
+  "id": "US-IL",
+  "name": "Illinois",
+  "taxYear": 2024,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [{ "lowerBound": 0, "rate": 0.0495 }],
+    "married_jointly": [{ "lowerBound": 0, "rate": 0.0495 }],
+    "head_of_household": [{ "lowerBound": 0, "rate": 0.0495 }]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 0,
+    "married_jointly": 0,
+    "head_of_household": 0
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 2775,
+    "married_jointly": 5550,
+    "head_of_household": 2775
+  },
+  "citation": {
+    "sourceUrl": "https://tax.illinois.gov/individuals/rates.html",
+    "sourceDocument": "Illinois DOR — 4.95% flat tax; 2024 personal exemption $2,775",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2024-02-01"
+  },
+  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+}

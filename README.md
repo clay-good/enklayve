@@ -15,6 +15,7 @@ Foundation phases are complete:
 - **Phase 0 — Scaffold & tooling.** TypeScript (strict), Vite, Vitest, ESLint, Prettier, a Cloudflare Worker asset router with the strict CSP, and CI.
 - **Phase 1 — Money & citation primitives.** [`src/engine`](src/engine) — exact decimal money math (decimal.js) and the citation/provenance types that guarantee no orphan numbers ship.
 - **Phase 2 — Data layer.** [`src/data`](src/data) — zod schemas for every bundled dataset kind, content-hash integrity verification, and the per-dataset fail-safe gate. Seeded with the 2024 federal and California tax jurisdictions.
+- **Phase 3 — The tax engine.** [`src/engine/tax`](src/engine/tax) — one generic evaluator that composes federal income tax, FICA, state, and local into a single fully-cited result. Seeded the ten most populous states plus DC (no-income-tax states are first-class records) and the 2024 FICA dataset, with a hand-verified + generated golden corpus and bounds/fuzz invariants.
 
 ## Develop
 
@@ -27,6 +28,7 @@ npm run lint           # eslint
 npm run format         # prettier --write
 npm run build          # production build to dist/
 npm run data:manifest  # regenerate data/manifest.json + .sha256 after editing a shard
+npm run golden:regen   # regenerate the tax-engine golden snapshot after an intended change
 npm run deploy:dry     # wrangler dry-run deploy
 ```
 
