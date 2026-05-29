@@ -19,6 +19,9 @@ import { retirementOptimizerTile } from "./retirementOptimizer";
 import { capitalGainsTile } from "./capitalGains";
 import { inflationTile } from "./inflation";
 import { rmdTile } from "./rmd";
+import { taxLossHarvestingTile } from "./taxLossHarvesting";
+import { rothLadderTile } from "./rothLadder";
+import { socialSecurityTile } from "./socialSecurity";
 import { spendingPlanTile } from "./spendingPlan";
 import { homeAffordabilityTile } from "./homeAffordability";
 import { sinkingFundTile } from "./sinkingFund";
@@ -64,6 +67,8 @@ export const TILES: TileDefinition[] = [
   federalIncomeTaxTile,
   selfEmploymentTaxTile,
   capitalGainsTile,
+  taxLossHarvestingTile,
+  rothLadderTile,
   marginalExplorerTile,
   loanAmortizationTile,
   refinanceTile,
@@ -120,6 +125,8 @@ export const TILES: TileDefinition[] = [
   freedomDateTile,
   downshiftTile,
   sabbaticalTile,
+  // Long horizon (BUILD-SPEC-2 §6.7): retirement-income optionality.
+  socialSecurityTile,
   // Protection (BUILD-SPEC-2 §6.6): securing your family's safe harbor.
   lifeInsuranceTile,
 

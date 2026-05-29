@@ -8,6 +8,7 @@ import {
   type CapitalGainsData,
   type CpiData,
   type RmdData,
+  type SocialSecurityData,
 } from "../../src/data/schemas";
 
 /**
@@ -30,6 +31,7 @@ export interface Datasets {
   capitalGains: CapitalGainsData;
   cpi: CpiData;
   rmd: RmdData;
+  socialSecurity: SocialSecurityData;
 }
 
 let cached: Datasets | null = null;
@@ -51,6 +53,7 @@ export async function loadDatasets(): Promise<Datasets> {
     capitalGains: get("capital-gains-2024") as CapitalGainsData,
     cpi: get("cpi-u-annual") as CpiData,
     rmd: get("rmd-uniform-lifetime-2024") as RmdData,
+    socialSecurity: get("social-security-2024") as SocialSecurityData,
   };
   return cached;
 }

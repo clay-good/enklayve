@@ -292,6 +292,51 @@ export const FafsaSchema = z.object({
   citation: CitationSchema,
 });
 
+/**
+ * Social Security retirement benefit-adjustment rules (BUILD-SPEC-2 §6.7, SSA).
+ * The monthly benefit equals the Primary Insurance Amount (the benefit at Full
+ * Retirement Age) adjusted for the claiming age: reduced for claiming early,
+ * increased by delayed-retirement credits for claiming after FRA up to age 70.
+ * The reduction is "5/9 of one percent" per month for the first 36 months early
+ * and "5/12 of one percent" thereafter; the delayed credit is "2/3 of one
+ * percent" per month (8%/year) for births 1943 and later — repeating fractions,
+ * so they are stored exactly as numerator/denominator of one percent rather than
+ * as truncated decimals.
+ */
+export const SocialSecuritySchema = z.object({
+  effectiveYear: z.number().int(),
+  /** Earliest age you can claim retirement benefits (62). */
+  earliestClaimAge: z.number().int().positive(),
+  /** Age at which delayed-retirement credits stop accruing (70). */
+  delayedCreditMaxAge: z.number().int().positive(),
+  /**
+   * Full Retirement Age in months by birth year, ascending. Each entry applies
+   * to births through `bornThrough` (inclusive); the final entry is open-ended
+   * (`bornThrough: null`).
+   */
+  fullRetirementAge: z
+    .array(
+      z.object({
+        bornThrough: z.number().int().nullable(),
+        months: z.number().int().positive(),
+      }),
+    )
+    .min(1),
+  /** Early-claiming reduction, in fractions of one percent per month. */
+  earlyReduction: z.object({
+    firstMonths: z.number().int().positive(),
+    perMonthFirstNumer: z.number().positive(),
+    perMonthFirstDenom: z.number().positive(),
+    perMonthBeyondNumer: z.number().positive(),
+    perMonthBeyondDenom: z.number().positive(),
+  }),
+  /** Delayed-retirement credit per month, in fractions of one percent. */
+  delayedCreditPerMonthNumer: z.number().positive(),
+  delayedCreditPerMonthDenom: z.number().positive(),
+  citation: CitationSchema,
+});
+export type SocialSecurityData = z.infer<typeof SocialSecuritySchema>;
+
 /** Every dataset kind referenced by the manifest (BUILD-SPEC.md §7.2). */
 export const DATASET_SCHEMAS = {
   "federal-income-tax": JurisdictionSchema,
@@ -309,6 +354,7 @@ export const DATASET_SCHEMAS = {
   snap: SnapSchema,
   medicaid: MedicaidSchema,
   fafsa: FafsaSchema,
+  "social-security": SocialSecuritySchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

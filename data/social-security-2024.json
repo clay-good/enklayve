@@ -1,0 +1,29 @@
+{
+  "effectiveYear": 2024,
+  "earliestClaimAge": 62,
+  "delayedCreditMaxAge": 70,
+  "fullRetirementAge": [
+    { "bornThrough": 1954, "months": 792 },
+    { "bornThrough": 1955, "months": 794 },
+    { "bornThrough": 1956, "months": 796 },
+    { "bornThrough": 1957, "months": 798 },
+    { "bornThrough": 1958, "months": 800 },
+    { "bornThrough": 1959, "months": 802 },
+    { "bornThrough": null, "months": 804 }
+  ],
+  "earlyReduction": {
+    "firstMonths": 36,
+    "perMonthFirstNumer": 5,
+    "perMonthFirstDenom": 9,
+    "perMonthBeyondNumer": 5,
+    "perMonthBeyondDenom": 12
+  },
+  "delayedCreditPerMonthNumer": 2,
+  "delayedCreditPerMonthDenom": 3,
+  "citation": {
+    "sourceUrl": "https://www.ssa.gov/benefits/retirement/planner/agereduction.html",
+    "sourceDocument": "Social Security Administration, Benefit Reduction for Early Retirement & Delayed Retirement Credits",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2026-05-29"
+  }
+}

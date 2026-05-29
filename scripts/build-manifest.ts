@@ -89,6 +89,13 @@ const SHARDS: ShardSource[] = [
   },
   { id: "snap-fy2024-contiguous", kind: "snap", shard: "snap-fy2024-contiguous.json", ...ANNUAL },
   { id: "medicaid-2024", kind: "medicaid", shard: "medicaid-2024.json", ...ANNUAL },
+  // Pillar 3 / long-horizon (§6.7) — Social Security claiming.
+  {
+    id: "social-security-2024",
+    kind: "social-security",
+    shard: "social-security-2024.json",
+    ...ANNUAL,
+  },
 ];
 
 function sha256Hex(buf: Buffer): string {
