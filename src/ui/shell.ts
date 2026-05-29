@@ -162,11 +162,7 @@ function readoutDropzone(navigate: (id: string | null) => void): HTMLElement {
   );
 }
 
-function renderHome(
-  container: HTMLElement,
-  navigate: (id: string | null) => void,
-  openPalette: () => void,
-): void {
+function renderHome(container: HTMLElement, navigate: (id: string | null) => void): void {
   clear(container);
   document.title = "enklayve";
 
@@ -183,18 +179,6 @@ function renderHome(
       text: "Free forever. Private by design. Educational information, not financial, tax, or legal advice.",
     }),
     readoutDropzone(navigate),
-  );
-
-  const search = el(
-    "button",
-    {
-      type: "button",
-      class: "home-search",
-      attrs: { "aria-label": "Search any tool or question" },
-      on: { click: openPalette },
-    },
-    el("span", { class: "home-search-text", text: "Search any tool or question…" }),
-    el("kbd", { class: "kbd", text: "⌘K" }),
   );
 
   // Compact grouped browsing: one expandable card per pillar (plus My Plan),
@@ -239,7 +223,7 @@ function renderHome(
   );
   grid.append(indexCard);
 
-  container.append(hero, search, grid, homeExplainer());
+  container.append(hero, grid, homeExplainer());
 }
 
 /** Trusted U.S. resources to learn the public rules behind the numbers. */
@@ -536,7 +520,7 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
 
   router.start((route) => {
     if (!route.tileId) {
-      renderHome(content, navigate, openPalette);
+      renderHome(content, navigate);
       return;
     }
     if (route.tileId === "all-tools") {

@@ -5,11 +5,7 @@ import { SituationStore } from "../src/profile/situation";
 describe("shell home view", () => {
   it("renders the hero, the Readout dropzone, the pillar cards, and the All Tools card", () => {
     const root = document.createElement("main");
-    renderHome(
-      root,
-      () => {},
-      () => {},
-    );
+    renderHome(root, () => {});
     expect(root.querySelector(".hero-title")?.textContent).toContain("Know where you stand");
     // The Readout dropzone is the hero (BUILD-SPEC-2 §1.1).
     expect(root.querySelector(".readout-dropzone")).not.toBeNull();
@@ -25,7 +21,7 @@ describe("shell home view", () => {
   it("the dropzone navigates to the Readout", () => {
     const root = document.createElement("main");
     const navigate = vi.fn();
-    renderHome(root, navigate, () => {});
+    renderHome(root, navigate);
     root.querySelector<HTMLButtonElement>(".readout-dropzone")?.click();
     expect(navigate).toHaveBeenCalledWith("readout");
   });
@@ -33,7 +29,7 @@ describe("shell home view", () => {
   it("the All Tools card navigates to the index", () => {
     const root = document.createElement("main");
     const navigate = vi.fn();
-    renderHome(root, navigate, () => {});
+    renderHome(root, navigate);
     root.querySelector<HTMLButtonElement>(".index-card")?.click();
     expect(navigate).toHaveBeenCalledWith("all-tools");
   });

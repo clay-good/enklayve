@@ -45,6 +45,28 @@ const SHARDS: ShardSource[] = [
     shard: "retirement-limits-2024.json",
     ...ANNUAL,
   },
+  {
+    id: "capital-gains-2024",
+    kind: "capital-gains",
+    shard: "capital-gains-2024.json",
+    ...ANNUAL,
+  },
+  {
+    id: "rmd-uniform-lifetime-2024",
+    kind: "rmd",
+    shard: "rmd-uniform-lifetime-2024.json",
+    ...ANNUAL,
+  },
+  // CPI-U refreshes monthly (BUILD-SPEC.md §7.2); the latest annual average is
+  // effective for the current year and stays usable for prior-year adjustments.
+  {
+    id: "cpi-u-annual",
+    kind: "cpi",
+    shard: "cpi-u-annual.json",
+    effectiveYear: 2024,
+    expectedRefreshMonths: 1,
+    staleAfterYears: 2,
+  },
   ...STATE_CODES.map((code) => ({
     id: `state-${code}-income-tax-2024`,
     kind: "state-income-tax",

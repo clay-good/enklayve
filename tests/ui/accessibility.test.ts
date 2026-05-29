@@ -18,6 +18,9 @@ import { mountLoanAmortization } from "../../src/tiles/loanAmortization";
 import { mountRefinance } from "../../src/tiles/refinance";
 import { mountAutoLoan } from "../../src/tiles/autoLoan";
 import { mountRetirementOptimizer } from "../../src/tiles/retirementOptimizer";
+import { mountCapitalGains } from "../../src/tiles/capitalGains";
+import { mountInflation } from "../../src/tiles/inflation";
+import { mountRmd } from "../../src/tiles/rmd";
 import { mountYourPlan } from "../../src/tiles/yourPlan";
 import { mountPeaceOfMind } from "../../src/tiles/peaceOfMind";
 import { mountFreedomDate } from "../../src/tiles/freedomDate";
@@ -54,11 +57,7 @@ afterEach(() => {
 describe("accessibility (axe-core)", () => {
   it("home view has no violations", async () => {
     const main = document.createElement("main");
-    renderHome(
-      main,
-      () => {},
-      () => {},
-    );
+    renderHome(main, () => {});
     document.body.append(main);
     await expectNoViolations(main);
   }, 30000);
@@ -151,6 +150,21 @@ describe("accessibility (axe-core)", () => {
           hsa: "family",
           h: "4000",
         }),
+      },
+      {
+        name: "capital-gains",
+        mount: mountCapitalGains,
+        params: new URLSearchParams({ fs: "single", ord: "90000", st: "5000", lt: "20000" }),
+      },
+      {
+        name: "inflation",
+        mount: mountInflation,
+        params: new URLSearchParams({ amt: "100", from: "2000", to: "2024" }),
+      },
+      {
+        name: "rmd",
+        mount: mountRmd,
+        params: new URLSearchParams({ age: "75", bal: "500000" }),
       },
       {
         name: "your-plan",

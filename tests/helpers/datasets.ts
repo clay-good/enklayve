@@ -1,7 +1,14 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadManifest } from "../../src/data/loader";
-import { ManifestSchema, type FicaData, type Jurisdiction } from "../../src/data/schemas";
+import {
+  ManifestSchema,
+  type FicaData,
+  type Jurisdiction,
+  type CapitalGainsData,
+  type CpiData,
+  type RmdData,
+} from "../../src/data/schemas";
 
 /**
  * Load every bundled dataset through the real loader (hash + schema + staleness
@@ -20,6 +27,9 @@ export interface Datasets {
   federal: Jurisdiction;
   fica: FicaData;
   state(code: string): Jurisdiction;
+  capitalGains: CapitalGainsData;
+  cpi: CpiData;
+  rmd: RmdData;
 }
 
 let cached: Datasets | null = null;
@@ -38,6 +48,9 @@ export async function loadDatasets(): Promise<Datasets> {
     federal: get("federal-income-tax-2024") as Jurisdiction,
     fica: get("fica-2024") as FicaData,
     state: (code: string) => get(`state-${code}-income-tax-2024`) as Jurisdiction,
+    capitalGains: get("capital-gains-2024") as CapitalGainsData,
+    cpi: get("cpi-u-annual") as CpiData,
+    rmd: get("rmd-uniform-lifetime-2024") as RmdData,
   };
   return cached;
 }

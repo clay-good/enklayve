@@ -16,6 +16,9 @@ import { refinanceTile } from "./refinance";
 import { autoLoanTile } from "./autoLoan";
 import { compoundGrowthTile } from "./compoundGrowth";
 import { retirementOptimizerTile } from "./retirementOptimizer";
+import { capitalGainsTile } from "./capitalGains";
+import { inflationTile } from "./inflation";
+import { rmdTile } from "./rmd";
 import { spendingPlanTile } from "./spendingPlan";
 import { homeAffordabilityTile } from "./homeAffordability";
 import { fplTile } from "./fpl";
@@ -49,31 +52,15 @@ export const TILES: TileDefinition[] = [
   hourlySalaryTile,
   federalIncomeTaxTile,
   selfEmploymentTaxTile,
-  soon(
-    "capital-gains",
-    "Capital Gains",
-    "take-home",
-    "Short- and long-term gains with a cost-basis helper.",
-    ["capital gains", "niit", "cost basis", "investments"],
-  ),
+  capitalGainsTile,
   marginalExplorerTile,
   loanAmortizationTile,
   refinanceTile,
   autoLoanTile,
   compoundGrowthTile,
   retirementOptimizerTile,
-  soon("rmd", "Required Minimum Distribution", "take-home", "Your RMD schedule.", [
-    "rmd",
-    "required minimum distribution",
-    "retirement",
-  ]),
-  soon(
-    "inflation",
-    "CPI Inflation Adjuster",
-    "take-home",
-    "What a past dollar is worth today, from BLS data.",
-    ["inflation", "cpi", "purchasing power"],
-  ),
+  rmdTile,
+  inflationTile,
   // Expansion tools (BUILD-SPEC-2 §6), cash-flow + home, grouped under Take Home.
   spendingPlanTile,
   homeAffordabilityTile,

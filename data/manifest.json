@@ -42,6 +42,45 @@
       "contentHash": "754fc89cf8d6e712db17d6dbe99f209b3f88992bd3077a94d22a13c735530110"
     },
     {
+      "id": "capital-gains-2024",
+      "kind": "capital-gains",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "capital-gains-2024.json",
+      "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-23-34.pdf",
+      "sourceDocument": "IRS Revenue Procedure 2023-34 (2024 long-term capital gains brackets); IRC §1411 (Net Investment Income Tax)",
+      "dateRetrieved": "2024-02-01",
+      "contentHash": "40d1e0bd762d621e1af815b166af8042c049a00ccb4abc5c8a8f5e4d7fe474fc"
+    },
+    {
+      "id": "rmd-uniform-lifetime-2024",
+      "kind": "rmd",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "rmd-uniform-lifetime-2024.json",
+      "sourceUrl": "https://www.irs.gov/publications/p590b",
+      "sourceDocument": "IRS Publication 590-B, Appendix B, Uniform Lifetime Table (effective 2022)",
+      "dateRetrieved": "2024-02-01",
+      "contentHash": "7858eb4bcfe1636cffebbf4544f72b844a4c2c9bb733052fdc0577c0acef3732"
+    },
+    {
+      "id": "cpi-u-annual",
+      "kind": "cpi",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 1,
+      "staleAfterYears": 2,
+      "shard": "cpi-u-annual.json",
+      "sourceUrl": "https://www.bls.gov/cpi/",
+      "sourceDocument": "U.S. Bureau of Labor Statistics, CPI for All Urban Consumers (CPI-U), U.S. city average, all items, annual averages (1982-84=100)",
+      "dateRetrieved": "2025-01-15",
+      "contentHash": "1c3d8c46b3ef27a28ba91ed6ee41c8f03287a701ba51cc1af086e7bf66f13e25"
+    },
+    {
       "id": "state-ca-income-tax-2024",
       "kind": "state-income-tax",
       "version": "2024.0",

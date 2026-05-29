@@ -293,27 +293,6 @@ body {
   max-width: 30rem;
 }
 
-.home-search {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 36rem;
-  margin: 1.25rem auto 2rem;
-  padding: 0.85rem 1.1rem;
-  border-radius: var(--enk-radius);
-  border: 1px solid var(--enk-border);
-  background: var(--enk-surface);
-  color: var(--enk-text-muted);
-  font: inherit;
-  cursor: text;
-  box-shadow: var(--enk-shadow);
-}
-
-.home-search:hover {
-  border-color: var(--enk-primary);
-}
-
 .pillar-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
@@ -1512,10 +1491,6 @@ body {
   }
   .readout-dropzone {
     padding: 1.5rem 1rem;
-  }
-  .home-search {
-    margin: 1rem auto 1.5rem;
-    padding: 0.75rem 0.9rem;
   }
 
   .tile-title {

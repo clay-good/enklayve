@@ -8,6 +8,9 @@ import { mountLoanAmortization } from "../../src/tiles/loanAmortization";
 import { mountRefinance } from "../../src/tiles/refinance";
 import { mountAutoLoan } from "../../src/tiles/autoLoan";
 import { mountRetirementOptimizer } from "../../src/tiles/retirementOptimizer";
+import { mountCapitalGains } from "../../src/tiles/capitalGains";
+import { mountInflation } from "../../src/tiles/inflation";
+import { mountRmd } from "../../src/tiles/rmd";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
@@ -290,5 +293,76 @@ describe("Retirement Contribution Optimizer tile", () => {
     expect(profile.get("retirementContributionsAnnual")).toBe(15000);
     // Under 50 → no catch-up annotation.
     expect(labels(root).some((l) => l.includes("catch-up"))).toBe(false);
+  });
+});
+
+describe("Capital Gains tile", () => {
+  it("splits long-term gains into bands and cites each layer", () => {
+    const { root } = mount(
+      mountCapitalGains,
+      new URLSearchParams({ fs: "single", ord: "90000", st: "5000", lt: "20000" }),
+    );
+    expect(root.querySelector(".result-label")?.textContent).toBe("Tax on your capital gains");
+    const ls = labels(root);
+    expect(ls).toContain("Short-term gain (taxed as ordinary income)");
+    expect(ls.some((l) => l.startsWith("Long-term gain at 15%"))).toBe(true);
+    expect(ls).toContain("Total tax on gains");
+    expect(ls).toContain("Effective rate on gains");
+    // Short-term cites the federal brackets; long-term cites the capital-gains data.
+    expect(root.querySelectorAll("a.cite-link").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("shows the NIIT line when modified AGI is high enough", () => {
+    const { root } = mount(
+      mountCapitalGains,
+      new URLSearchParams({ fs: "single", ord: "190000", lt: "50000", magi: "240000" }),
+    );
+    expect(labels(root).some((l) => l.startsWith("Net Investment Income Tax"))).toBe(true);
+  });
+
+  it("prefills the worked example and writes filing status to the profile", () => {
+    const profile = new SituationStore();
+    const { root } = mount(mountCapitalGains, new URLSearchParams(), profile);
+    clickExample(root);
+    expect(root.querySelector<HTMLInputElement>('input[name="lt"]')?.value).toBe("20000");
+    expect(profile.get("filingStatus")).toBe("single");
+  });
+});
+
+describe("CPI Inflation Adjuster tile", () => {
+  it("adjusts an amount across years, cited to BLS", () => {
+    const { root } = mount(
+      mountInflation,
+      new URLSearchParams({ amt: "100", from: "2000", to: "2024" }),
+    );
+    expect(root.querySelector(".result-card")).not.toBeNull();
+    expect(labels(root)).toContain("Equivalent in 2024 dollars");
+    expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/bls\.gov/);
+  });
+
+  it("only offers years present in the dataset", () => {
+    const { root } = mount(mountInflation, new URLSearchParams());
+    const fromOpts = Array.from(
+      root.querySelectorAll<HTMLSelectElement>('select[name="from"] option'),
+    ).map((o) => o.value);
+    expect(fromOpts).toContain("2024");
+    expect(fromOpts).not.toContain("1800");
+  });
+});
+
+describe("Required Minimum Distribution tile", () => {
+  it("computes the RMD from the Uniform Lifetime Table, cited to the IRS", () => {
+    const { root } = mount(mountRmd, new URLSearchParams({ age: "75", bal: "500000" }));
+    expect(root.querySelector(".result-label")?.textContent).toBe(
+      "Your required minimum distribution this year",
+    );
+    expect(labels(root)).toContain("Required minimum distribution");
+    expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/irs\.gov/);
+  });
+
+  it("says no RMD is due below the begin age, with no number invented", () => {
+    const { root } = mount(mountRmd, new URLSearchParams({ age: "68", bal: "500000" }));
+    expect(root.querySelector(".result-card")).toBeNull();
+    expect(root.textContent).toContain("No RMD is required yet");
   });
 });

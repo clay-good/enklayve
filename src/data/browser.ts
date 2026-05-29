@@ -15,6 +15,9 @@ import {
   type RetirementLimitsData,
   type EitcCtcData,
   type FederalPovertyLevelData,
+  type CapitalGainsData,
+  type CpiData,
+  type RmdData,
 } from "./schemas";
 
 /** Federal Poverty Level region (BUILD-SPEC.md §4.1). */
@@ -40,6 +43,12 @@ export interface BundledData {
   fica(): FicaData | null;
   /** IRS retirement / HSA / FSA contribution limits (BUILD-SPEC.md §3.4). */
   retirementLimits(): RetirementLimitsData | null;
+  /** Long-term capital-gains brackets and NIIT thresholds (BUILD-SPEC.md §3.2). */
+  capitalGains(): CapitalGainsData | null;
+  /** CPI-U annual averages for inflation adjustment (BUILD-SPEC.md §3.4). */
+  cpi(): CpiData | null;
+  /** IRS Uniform Lifetime Table for RMDs (BUILD-SPEC.md §3.4). */
+  rmd(): RmdData | null;
   /** Federal Poverty Level guidelines for a region (BUILD-SPEC.md §4.1). */
   fpl(region: FplRegion): FederalPovertyLevelData | null;
   /** EITC and Child Tax Credit parameters (BUILD-SPEC.md §4.2). */
@@ -87,6 +96,9 @@ async function build(): Promise<BundledData> {
     federal: () => dataOf("federal-income-tax-2024") as Jurisdiction | null,
     fica: () => dataOf("fica-2024") as FicaData | null,
     retirementLimits: () => dataOf("retirement-limits-2024") as RetirementLimitsData | null,
+    capitalGains: () => dataOf("capital-gains-2024") as CapitalGainsData | null,
+    cpi: () => dataOf("cpi-u-annual") as CpiData | null,
+    rmd: () => dataOf("rmd-uniform-lifetime-2024") as RmdData | null,
     fpl: (region) =>
       dataOf(`federal-poverty-level-2024-${region}`) as FederalPovertyLevelData | null,
     eitcCtc: () => dataOf("eitc-ctc-2024") as EitcCtcData | null,

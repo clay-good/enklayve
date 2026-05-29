@@ -120,6 +120,40 @@ export const CpiSchema = z.object({
   byYear: z.record(z.string().regex(/^\d{4}$/), z.number().gt(0)),
   citation: CitationSchema,
 });
+export type CpiData = z.infer<typeof CpiSchema>;
+
+/**
+ * Long-term capital-gains brackets and the Net Investment Income Tax (NIIT).
+ * Long-term gains stack on top of ordinary taxable income through the 0/15/20%
+ * brackets; NIIT adds a flat surtax on net investment income above a MAGI
+ * threshold (IRS annual revenue procedure for the brackets; IRC §1411 for NIIT).
+ */
+export const CapitalGainsSchema = z.object({
+  taxYear: z.number().int(),
+  /** Preferential long-term brackets per filing status (ascending lowerBounds). */
+  longTermBracketsByFilingStatus: bracketsByStatus,
+  /** Net Investment Income Tax rate (3.8%). */
+  netInvestmentIncomeTaxRate: z.number().gte(0).lte(1),
+  /** MAGI above which NIIT applies, by filing status (statutory, not indexed). */
+  niitThresholdByFilingStatus: amountByStatus,
+  citation: CitationSchema,
+});
+export type CapitalGainsData = z.infer<typeof CapitalGainsSchema>;
+
+/**
+ * IRS Uniform Lifetime Table for required minimum distributions (Pub 590-B).
+ * The RMD for a year is the prior-year-end account balance divided by the
+ * distribution period (life-expectancy factor) for the owner's age.
+ */
+export const RmdSchema = z.object({
+  taxYear: z.number().int(),
+  /** Age at which RMDs begin (73 under SECURE 2.0 for 2024). */
+  beginAge: z.number().int().positive(),
+  /** Distribution period (life-expectancy factor) by age. */
+  distributionPeriodByAge: z.record(z.string().regex(/^\d{2,3}\+?$/), z.number().gt(0)),
+  citation: CitationSchema,
+});
+export type RmdData = z.infer<typeof RmdSchema>;
 
 /** Treasury I-bond / savings-bond fixed and inflation rates (TreasuryDirect). */
 export const TreasuryBondsSchema = z.object({
@@ -215,6 +249,8 @@ export const DATASET_SCHEMAS = {
   "retirement-limits": RetirementLimitsSchema,
   fica: FicaSchema,
   cpi: CpiSchema,
+  "capital-gains": CapitalGainsSchema,
+  rmd: RmdSchema,
   "treasury-bonds": TreasuryBondsSchema,
   "federal-poverty-level": FederalPovertyLevelSchema,
   "eitc-ctc": EitcCtcSchema,
