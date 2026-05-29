@@ -1,0 +1,13 @@
+# Cloudflare Workers Static Assets configuration for enklayve.com.
+# The Worker (worker/index.ts) routes requests to the bundled dist/ assets
+# and applies the strict security headers. There is no KV, D1, or R2 — by
+# design there is no server-side state. See BUILD-SPEC.md §6.
+name = "enklayve"
+main = "worker/index.ts"
+compatibility_date = "2024-11-01"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+# Serve index.html for unknown paths so client-side fragment routing works.
+not_found_handling = "single-page-application"

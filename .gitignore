@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.wrangler/
+
+# Test + coverage
+coverage/
+test-results/
+playwright-report/
+
+# Editor / OS
+.DS_Store
+*.log
+.idea/
+.vscode/
+
+# Env / secrets
+.env
+.env.*
+!.env.example

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-05-29",
+  "datasets": [
+    {
+      "id": "federal-income-tax-2024",
+      "kind": "federal-income-tax",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "federal-income-tax-2024.json",
+      "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-23-34.pdf",
+      "sourceDocument": "IRS Revenue Procedure 2023-34 (2024 inflation adjustments)",
+      "dateRetrieved": "2024-02-01",
+      "contentHash": "c33ecd0d8e7453c5bd4164e8cfc54a523143c83686b3f9dc5141b840377ba89f"
+    },
+    {
+      "id": "state-ca-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-ca-income-tax-2024.json",
+      "sourceUrl": "https://www.ftb.ca.gov/forms/2024/2024-540-tax-rate-schedules.html",
+      "sourceDocument": "California FTB 2024 Tax Rate Schedules",
+      "dateRetrieved": "2024-02-01",
+      "contentHash": "a6e0569cd691e7bc74156ea43b16c9ac72476dde60615fb4f8e2527746eee43d"
+    }
+  ]
+}

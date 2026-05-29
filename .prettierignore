@@ -1,0 +1,7 @@
+dist/
+node_modules/
+coverage/
+package-lock.json
+*.md
+# Data shards are hashed byte-for-byte; reformatting would break integrity checks.
+data/

@@ -1,0 +1,63 @@
+{
+  "id": "US",
+  "name": "United States (Federal)",
+  "taxYear": 2024,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": [
+    "single",
+    "married_jointly",
+    "married_separately",
+    "head_of_household"
+  ],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.1 },
+      { "lowerBound": 11600, "rate": 0.12 },
+      { "lowerBound": 47150, "rate": 0.22 },
+      { "lowerBound": 100525, "rate": 0.24 },
+      { "lowerBound": 191950, "rate": 0.32 },
+      { "lowerBound": 243725, "rate": 0.35 },
+      { "lowerBound": 609350, "rate": 0.37 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.1 },
+      { "lowerBound": 23200, "rate": 0.12 },
+      { "lowerBound": 94300, "rate": 0.22 },
+      { "lowerBound": 201050, "rate": 0.24 },
+      { "lowerBound": 383900, "rate": 0.32 },
+      { "lowerBound": 487450, "rate": 0.35 },
+      { "lowerBound": 731200, "rate": 0.37 }
+    ],
+    "married_separately": [
+      { "lowerBound": 0, "rate": 0.1 },
+      { "lowerBound": 11600, "rate": 0.12 },
+      { "lowerBound": 47150, "rate": 0.22 },
+      { "lowerBound": 100525, "rate": 0.24 },
+      { "lowerBound": 191950, "rate": 0.32 },
+      { "lowerBound": 243725, "rate": 0.35 },
+      { "lowerBound": 365600, "rate": 0.37 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.1 },
+      { "lowerBound": 16550, "rate": 0.12 },
+      { "lowerBound": 63100, "rate": 0.22 },
+      { "lowerBound": 100500, "rate": 0.24 },
+      { "lowerBound": 191950, "rate": 0.32 },
+      { "lowerBound": 243700, "rate": 0.35 },
+      { "lowerBound": 609350, "rate": 0.37 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 14600,
+    "married_jointly": 29200,
+    "married_separately": 14600,
+    "head_of_household": 21900
+  },
+  "citation": {
+    "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-23-34.pdf",
+    "sourceDocument": "IRS Revenue Procedure 2023-34 (2024 inflation adjustments)",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2024-02-01"
+  },
+  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+}
