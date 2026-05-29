@@ -23,8 +23,11 @@ import { taxLossHarvestingTile } from "./taxLossHarvesting";
 import { rothLadderTile } from "./rothLadder";
 import { backdoorRothTile } from "./backdoorRoth";
 import { socialSecurityTile } from "./socialSecurity";
+import { drawdownTile } from "./drawdown";
+import { collegeCostTile } from "./collegeCost";
 import { disabilityTile } from "./disability";
 import { umbrellaTile } from "./umbrella";
+import { estateChecklistTile } from "./estateChecklist";
 import { spendingPlanTile } from "./spendingPlan";
 import { homeAffordabilityTile } from "./homeAffordability";
 import { sinkingFundTile } from "./sinkingFund";
@@ -90,6 +93,7 @@ export const TILES: TileDefinition[] = [
   sinkingFundTile,
   rentVsBuyTile,
   healthPlanTile,
+  collegeCostTile,
 
   // --- Pillar 2: What You're Owed (§4) ---
   fplTile,
@@ -131,10 +135,12 @@ export const TILES: TileDefinition[] = [
   sabbaticalTile,
   // Long horizon (BUILD-SPEC-2 §6.7): retirement-income optionality.
   socialSecurityTile,
+  drawdownTile,
   // Protection (BUILD-SPEC-2 §6.6): securing your family's safe harbor.
   lifeInsuranceTile,
   disabilityTile,
   umbrellaTile,
+  estateChecklistTile,
 
   // --- My Plan (BUILD-SPEC-2 §4) ---
   yourPlanTile,

@@ -1,5 +1,7 @@
 import Decimal from "decimal.js";
 import { Money } from "./money";
+import { requiredMinimumDistribution } from "./rmd";
+import type { RmdData } from "../data/schemas";
 
 /**
  * Deterministic time-value-of-money math (BUILD-SPEC.md §3.4). We never predict
@@ -834,5 +836,170 @@ export function umbrellaCoverageNeed(input: UmbrellaNeedInput): UmbrellaNeedResu
     exposure,
     uncoveredExposure,
     recommendedUmbrella: Money.from(layers * increment),
+  };
+}
+
+export interface RetirementDrawdownInput {
+  /** Balance at the start of retirement. */
+  currentBalance: number;
+  /** Age at the start of the projection. */
+  currentAge: number;
+  /** Annual amount to withdraw, in today's dollars. */
+  annualWithdrawal: number;
+  /**
+   * Real (after-inflation) return as a percentage. Using a real return keeps the
+   * whole projection in today's dollars — honest, and no market forecast (§2.1).
+   */
+  realReturnPct: number;
+  /** Age to project to (default 100). */
+  maxAge?: number;
+}
+
+export interface DrawdownYear {
+  age: number;
+  /** Balance at the start of the year (the prior year-end balance). */
+  startBalance: Money;
+  /** Required minimum distribution for the year (0 before the begin age). */
+  rmd: Money;
+  /** Amount actually withdrawn: the greater of the chosen draw and the RMD. */
+  withdrawal: Money;
+  /** Balance at year end, after the withdrawal grows at the real return. */
+  endBalance: Money;
+}
+
+export interface RetirementDrawdownResult {
+  timeline: DrawdownYear[];
+  /** Age the balance is exhausted, or null if it lasts to maxAge. */
+  depletedAtAge: number | null;
+  /** Whole years the savings support withdrawals from currentAge. */
+  yearsLasting: number;
+  /** First age a required minimum distribution applies (null if none). */
+  firstRmdAge: number | null;
+  /** Total withdrawn across the projection. */
+  totalWithdrawn: Money;
+  /** True when the balance still has money at maxAge. */
+  lastsToMaxAge: boolean;
+}
+
+/**
+ * Retirement drawdown and RMD timeline (BUILD-SPEC-2 §6.7). Projects the balance
+ * year by year in today's dollars (a real return, never a nominal forecast):
+ * each year withdraws the greater of the chosen amount and the required minimum
+ * distribution (from the bundled IRS table, when provided), then grows the
+ * remainder. Reports how long the money lasts and when RMDs begin.
+ */
+export function retirementDrawdown(
+  input: RetirementDrawdownInput,
+  rmdData?: RmdData | null,
+): RetirementDrawdownResult {
+  const maxAge = Math.round(input.maxAge ?? 100);
+  const startAge = Math.round(input.currentAge);
+  const realRate = new Decimal(input.realReturnPct).div(100);
+  const withdrawalAmt = Math.max(0, input.annualWithdrawal);
+
+  let balance = Money.from(Math.max(0, input.currentBalance));
+  const timeline: DrawdownYear[] = [];
+  let depletedAtAge: number | null = null;
+  let firstRmdAge: number | null = null;
+  let totalWithdrawn = Money.zero();
+
+  for (let age = startAge; age <= maxAge; age++) {
+    if (!balance.greaterThan(0)) break;
+    const startBalance = balance;
+
+    let rmd = Money.zero();
+    if (rmdData) {
+      const r = requiredMinimumDistribution(age, startBalance.toNumber(), rmdData);
+      if (r.required) {
+        rmd = r.amount;
+        if (firstRmdAge === null) firstRmdAge = age;
+      }
+    }
+
+    let withdrawal = Money.from(withdrawalAmt);
+    if (rmd.greaterThan(withdrawal)) withdrawal = rmd;
+    if (withdrawal.greaterThan(startBalance)) withdrawal = startBalance;
+    totalWithdrawn = totalWithdrawn.add(withdrawal);
+
+    const afterWithdrawal = startBalance.subtract(withdrawal);
+    const endBalance = afterWithdrawal.add(afterWithdrawal.multiply(realRate));
+    timeline.push({ age, startBalance, rmd, withdrawal, endBalance });
+    balance = endBalance.isNegative() ? Money.zero() : endBalance;
+
+    if (!balance.greaterThan(0)) {
+      depletedAtAge = age;
+      break;
+    }
+  }
+
+  const lastsToMaxAge = depletedAtAge === null;
+  return {
+    timeline,
+    depletedAtAge,
+    yearsLasting: depletedAtAge === null ? maxAge - startAge : depletedAtAge - startAge + 1,
+    firstRmdAge,
+    totalWithdrawn,
+    lastsToMaxAge,
+  };
+}
+
+export interface CollegeCostInput {
+  /** One year's all-in college cost in today's dollars. */
+  annualCostToday: number;
+  /** Years until the first year of college. */
+  yearsUntilStart: number;
+  /** Number of years of college to fund (e.g. 4). */
+  yearsOfCollege: number;
+  /** Assumed annual college-cost inflation, as a percentage. */
+  costInflationPct: number;
+  /** Amount already saved toward college. */
+  currentSavings: number;
+  /** Assumed annual return on savings, as a percentage (the user's assumption). */
+  expectedReturnPct: number;
+}
+
+export interface CollegeCostResult {
+  /** Total projected cost: each enrollment year's cost inflated to that year. */
+  projectedTotalCost: Money;
+  /** Level monthly contribution to fully fund the cost by the start date. */
+  monthlyContribution: Money;
+  /** What today's savings alone grow to by the start date. */
+  projectedFromCurrent: Money;
+  /** True when today's savings already cover the projected cost. */
+  alreadyOnTrack: boolean;
+}
+
+/**
+ * College cost planner (BUILD-SPEC-2 §6.7). Projects each enrollment year's cost
+ * forward at an assumed college-inflation rate, sums them, and solves for the
+ * level monthly contribution to have it fully saved by the start date (counting
+ * what's already saved, growing at an assumed return). Targeting the full amount
+ * by freshman year is a deliberately conservative simplification — you actually
+ * draw it down over the college years. All rates are the user's assumptions.
+ */
+export function collegeCostPlan(input: CollegeCostInput): CollegeCostResult {
+  const yearsUntilStart = Math.max(0, Math.round(input.yearsUntilStart));
+  const yearsOfCollege = Math.max(0, Math.round(input.yearsOfCollege));
+  const inflationFactor = new Decimal(input.costInflationPct).div(100).plus(1);
+  const costToday = new Decimal(Math.max(0, input.annualCostToday));
+
+  let total = new Decimal(0);
+  for (let j = 0; j < yearsOfCollege; j++) {
+    total = total.plus(costToday.times(inflationFactor.pow(yearsUntilStart + j)));
+  }
+  const projectedTotalCost = Money.from(total);
+
+  const funding = requiredMonthlyContribution({
+    currentSaved: Math.max(0, input.currentSavings),
+    target: projectedTotalCost.toNumber(),
+    months: yearsUntilStart * 12,
+    annualReturnPct: input.expectedReturnPct,
+  });
+
+  return {
+    projectedTotalCost,
+    monthlyContribution: funding.monthlyContribution,
+    projectedFromCurrent: funding.projectedFromCurrent,
+    alreadyOnTrack: funding.alreadyOnTrack,
   };
 }

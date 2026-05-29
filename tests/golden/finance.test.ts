@@ -691,3 +691,89 @@ describe("umbrella coverage need", () => {
     expect(r.recommendedUmbrella.isZero()).toBe(true);
   });
 });
+
+import { retirementDrawdown, collegeCostPlan } from "../../src/engine/finance";
+import { loadDatasets, type Datasets } from "../helpers/datasets";
+
+describe("retirement drawdown", () => {
+  it("exhausts a flat-return balance in exactly balance ÷ withdrawal years", () => {
+    const r = retirementDrawdown({
+      currentBalance: 100000,
+      currentAge: 60,
+      annualWithdrawal: 10000,
+      realReturnPct: 0,
+    });
+    // $100k ÷ $10k = 10 years; depleted after the age-69 withdrawal.
+    expect(r.depletedAtAge).toBe(69);
+    expect(r.yearsLasting).toBe(10);
+    expect(r.totalWithdrawn.toNumber()).toBe(100000);
+    expect(r.lastsToMaxAge).toBe(false);
+  });
+
+  it("never depletes when the real return covers the withdrawals", () => {
+    const r = retirementDrawdown({
+      currentBalance: 100000,
+      currentAge: 60,
+      annualWithdrawal: 0,
+      realReturnPct: 5,
+      maxAge: 100,
+    });
+    expect(r.depletedAtAge).toBeNull();
+    expect(r.lastsToMaxAge).toBe(true);
+    expect(r.yearsLasting).toBe(40);
+    expect(r.totalWithdrawn.isZero()).toBe(true);
+  });
+
+  it("forces the required minimum distribution once the begin age arrives", async () => {
+    const ds: Datasets = await loadDatasets();
+    const r = retirementDrawdown(
+      { currentBalance: 500000, currentAge: 73, annualWithdrawal: 0, realReturnPct: 0 },
+      ds.rmd,
+    );
+    expect(r.firstRmdAge).toBe(73);
+    // 500,000 ÷ 26.5 (age-73 factor) = $18,867.92, withdrawn even though the chosen draw is 0.
+    expect(r.timeline[0]!.rmd.roundToCents().toNumber()).toBe(18867.92);
+    expect(r.timeline[0]!.withdrawal.roundToCents().toNumber()).toBe(18867.92);
+  });
+});
+
+describe("college cost plan", () => {
+  it("sums the enrollment years and solves the monthly contribution (no inflation)", () => {
+    const r = collegeCostPlan({
+      annualCostToday: 25000,
+      yearsUntilStart: 10,
+      yearsOfCollege: 4,
+      costInflationPct: 0,
+      currentSavings: 0,
+      expectedReturnPct: 0,
+    });
+    expect(r.projectedTotalCost.toNumber()).toBe(100000); // 25k × 4
+    expect(r.monthlyContribution.roundToCents().toNumber()).toBe(833.33); // 100k / 120 months
+  });
+
+  it("inflates each year's cost forward at the assumed rate", () => {
+    const r = collegeCostPlan({
+      annualCostToday: 25000,
+      yearsUntilStart: 10,
+      yearsOfCollege: 1,
+      costInflationPct: 5,
+      currentSavings: 0,
+      expectedReturnPct: 0,
+    });
+    // 25,000 × 1.05^10 = $40,722.37
+    expect(r.projectedTotalCost.roundToCents().toNumber()).toBe(40722.37);
+  });
+
+  it("recognizes when current savings already cover the projected cost", () => {
+    const r = collegeCostPlan({
+      annualCostToday: 25000,
+      yearsUntilStart: 10,
+      yearsOfCollege: 4,
+      costInflationPct: 0,
+      currentSavings: 200000,
+      expectedReturnPct: 0,
+    });
+    expect(r.alreadyOnTrack).toBe(true);
+    expect(r.monthlyContribution.isZero()).toBe(true);
+  });
+});
