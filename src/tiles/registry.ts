@@ -25,6 +25,9 @@ import { fplTile } from "./fpl";
 import { eitcTile } from "./eitc";
 import { childTaxCreditTile } from "./childTaxCredit";
 import { owedScreenerTile } from "./owedScreener";
+import { saversCreditTile } from "./saversCredit";
+import { snapTile } from "./snap";
+import { medicaidTile } from "./medicaid";
 import { peaceOfMindTile } from "./peaceOfMind";
 import { freedomDateTile } from "./freedomDate";
 import { yourPlanTile } from "./yourPlan";
@@ -77,23 +80,9 @@ export const TILES: TileDefinition[] = [
     "Marketplace subsidy from the applicable-percentage table.",
     ["aca", "obamacare", "premium tax credit", "subsidy"],
   ),
-  soon("savers-credit", "Saver's Credit", "owed", "Eligibility and amount for retirement savers.", [
-    "savers credit",
-    "retirement",
-    "credit",
-  ]),
-  soon("snap", "SNAP Eligibility", "owed", "Gross and net income tests against the poverty line.", [
-    "snap",
-    "food stamps",
-    "benefits",
-  ]),
-  soon(
-    "medicaid",
-    "Medicaid Threshold",
-    "owed",
-    "MAGI thresholds by state, expansion vs non-expansion.",
-    ["medicaid", "magi", "health"],
-  ),
+  saversCreditTile,
+  snapTile,
+  medicaidTile,
   soon(
     "fafsa-sai",
     "FAFSA Student Aid Index",

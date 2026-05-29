@@ -4,6 +4,9 @@ import { mountFpl } from "../../src/tiles/fpl";
 import { mountEitc } from "../../src/tiles/eitc";
 import { mountChildTaxCredit } from "../../src/tiles/childTaxCredit";
 import { mountOwedScreener } from "../../src/tiles/owedScreener";
+import { mountSaversCredit } from "../../src/tiles/saversCredit";
+import { mountSnap } from "../../src/tiles/snap";
+import { mountMedicaid } from "../../src/tiles/medicaid";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
@@ -105,6 +108,56 @@ describe("What Am I Owed screener", () => {
     expect(profile.get("householdSize")).toBe(3);
     expect(profile.get("annualIncome")).toBe(40000);
   });
+
+  it("includes a SNAP estimate for a low-income contiguous household", () => {
+    const root = mount(
+      mountOwedScreener,
+      new URLSearchParams({ hh: "4", inc: "38000", kids: "2", mfj: "1" }),
+    );
+    const programs = Array.from(root.querySelectorAll(".screener-program")).map(
+      (n) => n.textContent ?? "",
+    );
+    expect(programs).toContain("SNAP (food assistance)");
+  });
+});
+
+describe("Saver's Credit tile", () => {
+  it("gives the 50% credit below the AGI ceiling, cited", () => {
+    const root = mount(
+      mountSaversCredit,
+      new URLSearchParams({ fs: "single", agi: "21000", c: "2000" }),
+    );
+    expect(rowValue(root, "Estimated Saver's Credit")).toContain("$1,000");
+    expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/irs\.gov/);
+  });
+});
+
+describe("SNAP tile", () => {
+  it("estimates a monthly benefit for an eligible household, cited", () => {
+    const root = mount(mountSnap, new URLSearchParams({ hh: "3", inc: "2200" }));
+    expect(rowValue(root, "Estimated monthly benefit")).toContain("$297");
+    expect(root.querySelectorAll("a.cite-link").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("reports ineligibility above the gross income limit", () => {
+    const root = mount(mountSnap, new URLSearchParams({ hh: "1", inc: "3000" }));
+    expect(rowValue(root, "Estimated monthly benefit")).toContain("Not eligible");
+  });
+});
+
+describe("Medicaid tile", () => {
+  it("flags income eligibility in an expansion state, cited", () => {
+    const root = mount(mountMedicaid, new URLSearchParams({ st: "CA", hh: "1", inc: "18000" }));
+    expect(rowValue(root, "Medicaid expansion")).toContain("expanded Medicaid");
+    expect(rowValue(root, "Likely eligible")).toContain("Yes");
+    expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/medicaid\.gov/);
+  });
+
+  it("explains the limited coverage in a non-expansion state", () => {
+    const root = mount(mountMedicaid, new URLSearchParams({ st: "TX", hh: "1", inc: "10000" }));
+    expect(rowValue(root, "Medicaid expansion")).toContain("has not expanded");
+    expect(rowValue(root, "Likely eligible")).toContain("Limited");
+  });
 });
 
 describe("Pillar 2 accessibility", () => {
@@ -120,6 +173,17 @@ describe("Pillar 2 accessibility", () => {
       name: "screener",
       mount: mountOwedScreener,
       params: new URLSearchParams({ hh: "4", inc: "38000", kids: "2" }),
+    },
+    {
+      name: "savers-credit",
+      mount: mountSaversCredit,
+      params: new URLSearchParams({ fs: "single", agi: "21000", c: "2000" }),
+    },
+    { name: "snap", mount: mountSnap, params: new URLSearchParams({ hh: "3", inc: "2200" }) },
+    {
+      name: "medicaid",
+      mount: mountMedicaid,
+      params: new URLSearchParams({ st: "CA", hh: "1", inc: "18000" }),
     },
   ]) {
     it(`${tc.name} has no axe violations`, async () => {

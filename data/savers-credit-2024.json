@@ -1,0 +1,15 @@
+{
+  "taxYear": 2024,
+  "maxContributionPerPerson": 2000,
+  "tiers": [
+    { "rate": 0.5, "agiCapSingle": 23000, "agiCapHeadOfHousehold": 34500, "agiCapMarried": 46000 },
+    { "rate": 0.2, "agiCapSingle": 25000, "agiCapHeadOfHousehold": 37500, "agiCapMarried": 50000 },
+    { "rate": 0.1, "agiCapSingle": 38250, "agiCapHeadOfHousehold": 57375, "agiCapMarried": 76500 }
+  ],
+  "citation": {
+    "sourceUrl": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-savings-contributions-savers-credit",
+    "sourceDocument": "IRS Retirement Savings Contributions Credit (Form 8880), 2024 AGI limits per Rev. Proc. 2023-34",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2024-02-01"
+  }
+}

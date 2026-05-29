@@ -1,7 +1,21 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { povertyLine, fplPercent, estimateEitc, estimateCtc } from "../../src/engine/benefits";
+import {
+  povertyLine,
+  fplPercent,
+  estimateEitc,
+  estimateCtc,
+  estimateSaversCredit,
+  estimateSnap,
+  medicaidEligibility,
+} from "../../src/engine/benefits";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
-import type { EitcCtcData, FederalPovertyLevelData } from "../../src/data/schemas";
+import type {
+  EitcCtcData,
+  FederalPovertyLevelData,
+  MedicaidData,
+  SaversCreditData,
+  SnapData,
+} from "../../src/data/schemas";
 
 /**
  * Golden cases for Pillar 2 (BUILD-SPEC.md §4, §9), cross-checked against the
@@ -11,10 +25,16 @@ import type { EitcCtcData, FederalPovertyLevelData } from "../../src/data/schema
 let data: BundledData;
 let fpl: FederalPovertyLevelData;
 let eitcCtc: EitcCtcData;
+let savers: SaversCreditData;
+let snap: SnapData;
+let medicaid: MedicaidData;
 beforeAll(async () => {
   data = await loadBundledData();
   fpl = data.fpl("contiguous")!;
   eitcCtc = data.eitcCtc()!;
+  savers = data.saversCredit()!;
+  snap = data.snap()!;
+  medicaid = data.medicaid()!;
 });
 
 describe("Federal Poverty Level", () => {
@@ -95,5 +115,123 @@ describe("Child Tax Credit (2024)", () => {
   it("is deterministic", () => {
     const input = { qualifyingChildren: 2, magi: 410000, married: true };
     expect(estimateCtc(input, eitcCtc)).toEqual(estimateCtc(input, eitcCtc));
+  });
+});
+
+describe("Saver's Credit (2024)", () => {
+  it("gives the 50% rate below the first AGI ceiling (single, $21k, $2k)", () => {
+    const r = estimateSaversCredit(
+      { agi: 21000, filingStatus: "single", contributions: 2000 },
+      savers,
+    );
+    expect(r.rate).toBe(0.5);
+    expect(r.credit.toNumber()).toBe(1000);
+  });
+
+  it("steps down to 20% in the next AGI band (single, $24k)", () => {
+    const r = estimateSaversCredit(
+      { agi: 24000, filingStatus: "single", contributions: 2000 },
+      savers,
+    );
+    expect(r.rate).toBe(0.2);
+    expect(r.credit.toNumber()).toBe(400);
+  });
+
+  it("is zero above the top AGI ceiling (single, $40k)", () => {
+    const r = estimateSaversCredit(
+      { agi: 40000, filingStatus: "single", contributions: 2000 },
+      savers,
+    );
+    expect(r.rate).toBe(0);
+    expect(r.credit.toNumber()).toBe(0);
+  });
+
+  it("counts both spouses' contributions up to $4,000 for MFJ", () => {
+    const r = estimateSaversCredit(
+      { agi: 45000, filingStatus: "married_jointly", contributions: 5000 },
+      savers,
+    );
+    expect(r.rate).toBe(0.5);
+    expect(r.eligibleContributions.toNumber()).toBe(4000);
+    expect(r.credit.toNumber()).toBe(2000);
+  });
+
+  it("uses the head-of-household column", () => {
+    const r = estimateSaversCredit(
+      { agi: 35000, filingStatus: "head_of_household", contributions: 1000 },
+      savers,
+    );
+    expect(r.rate).toBe(0.2);
+    expect(r.credit.toNumber()).toBe(200);
+  });
+});
+
+describe("SNAP eligibility (FY2024, contiguous)", () => {
+  it("estimates a benefit for an eligible 3-person household", () => {
+    // Poverty line(3) = 25,820/yr → 2,151.67/mo. Gross 2,200 ≤ 130% (2,797.17).
+    // Net = 2,200 − 198 standard − 440 earned (20%) = 1,562 ≤ 100% (2,151.67).
+    // Benefit = 766 max − 30% × 1,562 = 766 − 468.60 = 297.40.
+    const r = estimateSnap({ householdSize: 3, monthlyGrossIncome: 2200 }, snap, fpl);
+    expect(r.eligible).toBe(true);
+    expect(r.monthlyBenefit.roundToCents().toNumber()).toBeCloseTo(297.4, 2);
+  });
+
+  it("fails the gross income test at high income", () => {
+    const r = estimateSnap({ householdSize: 1, monthlyGrossIncome: 3000 }, snap, fpl);
+    expect(r.passedGrossTest).toBe(false);
+    expect(r.eligible).toBe(false);
+    expect(r.monthlyBenefit.isZero()).toBe(true);
+  });
+
+  it("floors an eligible small household at the minimum benefit", () => {
+    // hh1, $1,500/mo: passes both tests, computed benefit is negative → $23 minimum.
+    const r = estimateSnap({ householdSize: 1, monthlyGrossIncome: 1500 }, snap, fpl);
+    expect(r.eligible).toBe(true);
+    expect(r.monthlyBenefit.toNumber()).toBe(23);
+  });
+});
+
+describe("Medicaid eligibility (2024)", () => {
+  it("is income-eligible in an expansion state below 138% FPL", () => {
+    // CA expanded; $18,000 for a household of 1 is ~119% FPL.
+    const r = medicaidEligibility(
+      { stateCode: "CA", income: 18000, householdSize: 1 },
+      medicaid,
+      fpl,
+    );
+    expect(r.expansionState).toBe(true);
+    expect(r.eligible).toBe(true);
+    expect(r.thresholdPctFpl).toBe(138);
+  });
+
+  it("is not income-eligible above the threshold in an expansion state", () => {
+    const r = medicaidEligibility(
+      { stateCode: "CA", income: 25000, householdSize: 1 },
+      medicaid,
+      fpl,
+    );
+    expect(r.eligible).toBe(false);
+  });
+
+  it("returns a null verdict for a non-expansion state (no number invented)", () => {
+    const r = medicaidEligibility(
+      { stateCode: "TX", income: 10000, householdSize: 1 },
+      medicaid,
+      fpl,
+    );
+    expect(r.expansionState).toBe(false);
+    expect(r.eligible).toBeNull();
+    expect(r.thresholdPctFpl).toBeNull();
+  });
+
+  it("applies DC's higher 215% threshold", () => {
+    // $30,000 for a household of 1 is ~199% FPL — eligible only because DC goes to 215%.
+    const r = medicaidEligibility(
+      { stateCode: "DC", income: 30000, householdSize: 1 },
+      medicaid,
+      fpl,
+    );
+    expect(r.thresholdPctFpl).toBe(215);
+    expect(r.eligible).toBe(true);
   });
 });

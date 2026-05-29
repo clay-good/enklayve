@@ -81,6 +81,14 @@ const SHARDS: ShardSource[] = [
     ...ANNUAL,
   })),
   { id: "eitc-ctc-2024", kind: "eitc-ctc", shard: "eitc-ctc-2024.json", ...ANNUAL },
+  {
+    id: "savers-credit-2024",
+    kind: "savers-credit",
+    shard: "savers-credit-2024.json",
+    ...ANNUAL,
+  },
+  { id: "snap-fy2024-contiguous", kind: "snap", shard: "snap-fy2024-contiguous.json", ...ANNUAL },
+  { id: "medicaid-2024", kind: "medicaid", shard: "medicaid-2024.json", ...ANNUAL },
 ];
 
 function sha256Hex(buf: Buffer): string {

@@ -216,23 +216,73 @@ export const AcaSchema = z.object({
   citation: CitationSchema,
 });
 
-/** SNAP COLA, deductions, and maximum allotments (USDA FNS). */
+/**
+ * Saver's Credit — the Retirement Savings Contributions Credit (BUILD-SPEC.md
+ * §4.2, IRS Form 8880). A non-refundable credit equal to a rate (50%, 20%, or
+ * 10%) of up to a capped contribution amount, where the rate steps down as AGI
+ * rises through filing-status-specific ceilings.
+ */
+export const SaversCreditSchema = z.object({
+  taxYear: z.number().int(),
+  /** Maximum contribution counted per individual ($2,000); MFJ counts each spouse. */
+  maxContributionPerPerson: z.number().gte(0),
+  /** Credit-rate tiers, highest rate first; each gives the AGI ceiling per status. */
+  tiers: z
+    .array(
+      z.object({
+        rate: z.number().gte(0).lte(1),
+        agiCapSingle: z.number().gte(0),
+        agiCapHeadOfHousehold: z.number().gte(0),
+        agiCapMarried: z.number().gte(0),
+      }),
+    )
+    .min(1),
+  citation: CitationSchema,
+});
+export type SaversCreditData = z.infer<typeof SaversCreditSchema>;
+
+/** SNAP COLA, deductions, allotments, and the income tests (USDA FNS). */
 export const SnapSchema = z.object({
   fiscalYear: z.number().int(),
+  /** Region these figures apply to (allotments differ for AK/HI). */
+  region: z.enum(["contiguous", "alaska", "hawaii"]),
   maxAllotmentByHouseholdSize: z.record(z.string(), z.number().gte(0)),
+  /** Added to the size-8 allotment for each person beyond eight. */
+  additionalPersonAllotment: z.number().gte(0),
   standardDeductionByHouseholdSize: z.record(z.string(), z.number().gte(0)),
   earnedIncomeDeductionRate: z.number().gte(0).lte(1),
+  /** Gross monthly income limit as a percentage of the poverty line (130). */
+  grossIncomeLimitPctFpl: z.number().gte(0),
+  /** Net monthly income limit as a percentage of the poverty line (100). */
+  netIncomeLimitPctFpl: z.number().gte(0),
+  /** Share of net income a household is expected to contribute (0.30). */
+  expectedContributionRate: z.number().gte(0).lte(1),
+  /** Minimum monthly benefit for eligible one- and two-person households. */
+  minBenefit: z.number().gte(0),
   citation: CitationSchema,
 });
+export type SnapData = z.infer<typeof SnapSchema>;
 
-/** Medicaid MAGI thresholds by state (CMS / state publications). */
+/**
+ * Medicaid adult eligibility (BUILD-SPEC.md §4.3). In expansion states adult
+ * MAGI eligibility is deterministic (at or below a percentage of the poverty
+ * line); in non-expansion states adult coverage is limited and
+ * category-specific, so we carry the expansion status per state and the
+ * expansion threshold rather than inventing a precise non-expansion number.
+ */
 export const MedicaidSchema = z.object({
   year: z.number().int(),
-  stateId: z.string().regex(/^US-[A-Z]{2}$/),
-  expansionState: z.boolean(),
-  adultMagiThresholdPctFpl: z.number().gte(0),
+  /** Adult MAGI eligibility ceiling in expansion states, as a % of FPL (138). */
+  expansionThresholdPctFpl: z.number().gte(0),
+  /** Per-state ceiling overrides (e.g. DC covers adults to 215% FPL). */
+  thresholdOverridesPctFpl: z
+    .record(z.string().regex(/^[A-Z]{2}$/), z.number().gte(0))
+    .optional(),
+  /** Whether each state (and DC) expanded Medicaid, keyed by two-letter code. */
+  expansionByState: z.record(z.string().regex(/^[A-Z]{2}$/), z.boolean()),
   citation: CitationSchema,
 });
+export type MedicaidData = z.infer<typeof MedicaidSchema>;
 
 /** FAFSA Student Aid Index tables and Pell schedule (Dept. of Education). */
 export const FafsaSchema = z.object({
@@ -254,6 +304,7 @@ export const DATASET_SCHEMAS = {
   "treasury-bonds": TreasuryBondsSchema,
   "federal-poverty-level": FederalPovertyLevelSchema,
   "eitc-ctc": EitcCtcSchema,
+  "savers-credit": SaversCreditSchema,
   aca: AcaSchema,
   snap: SnapSchema,
   medicaid: MedicaidSchema,

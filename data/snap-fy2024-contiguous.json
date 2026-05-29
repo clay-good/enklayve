@@ -1,0 +1,34 @@
+{
+  "fiscalYear": 2024,
+  "region": "contiguous",
+  "maxAllotmentByHouseholdSize": {
+    "1": 291,
+    "2": 535,
+    "3": 766,
+    "4": 973,
+    "5": 1155,
+    "6": 1386,
+    "7": 1532,
+    "8": 1751
+  },
+  "additionalPersonAllotment": 219,
+  "standardDeductionByHouseholdSize": {
+    "1": 198,
+    "2": 198,
+    "3": 198,
+    "4": 208,
+    "5": 244,
+    "6": 279
+  },
+  "earnedIncomeDeductionRate": 0.2,
+  "grossIncomeLimitPctFpl": 130,
+  "netIncomeLimitPctFpl": 100,
+  "expectedContributionRate": 0.3,
+  "minBenefit": 23,
+  "citation": {
+    "sourceUrl": "https://www.fns.usda.gov/snap/allotment/COLA",
+    "sourceDocument": "USDA FNS SNAP Fiscal Year 2024 Cost-of-Living Adjustments (48 contiguous states and DC)",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2024-02-01"
+  }
+}

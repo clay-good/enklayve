@@ -18,6 +18,9 @@ import {
   type CapitalGainsData,
   type CpiData,
   type RmdData,
+  type SaversCreditData,
+  type SnapData,
+  type MedicaidData,
 } from "./schemas";
 
 /** Federal Poverty Level region (BUILD-SPEC.md §4.1). */
@@ -53,6 +56,12 @@ export interface BundledData {
   fpl(region: FplRegion): FederalPovertyLevelData | null;
   /** EITC and Child Tax Credit parameters (BUILD-SPEC.md §4.2). */
   eitcCtc(): EitcCtcData | null;
+  /** Saver's Credit tiers and contribution cap (BUILD-SPEC.md §4.2). */
+  saversCredit(): SaversCreditData | null;
+  /** SNAP allotments, deductions, and income tests (BUILD-SPEC.md §4.3). */
+  snap(): SnapData | null;
+  /** Medicaid expansion status and thresholds by state (BUILD-SPEC.md §4.3). */
+  medicaid(): MedicaidData | null;
   /** A state jurisdiction by two-letter code (e.g. "ca"); null if unavailable. */
   state(code: string): Jurisdiction | null;
   /** Status for a dataset id, for the fail-safe verify banner. */
@@ -102,6 +111,9 @@ async function build(): Promise<BundledData> {
     fpl: (region) =>
       dataOf(`federal-poverty-level-2024-${region}`) as FederalPovertyLevelData | null,
     eitcCtc: () => dataOf("eitc-ctc-2024") as EitcCtcData | null,
+    saversCredit: () => dataOf("savers-credit-2024") as SaversCreditData | null,
+    snap: () => dataOf("snap-fy2024-contiguous") as SnapData | null,
+    medicaid: () => dataOf("medicaid-2024") as MedicaidData | null,
     state: (code) => dataOf(`state-${code.toLowerCase()}-income-tax-2024`) as Jurisdiction | null,
     statusOf: (id) => loaded.byId.get(id)?.status ?? "missing",
     stateCodes: () =>

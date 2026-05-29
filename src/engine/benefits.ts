@@ -5,7 +5,14 @@
  * pure function of the inputs and the bundled, cited dataset — no inference.
  */
 import { Money } from "./money";
-import type { EitcCtcData, FederalPovertyLevelData } from "../data/schemas";
+import type {
+  EitcCtcData,
+  FederalPovertyLevelData,
+  FilingStatus,
+  MedicaidData,
+  SaversCreditData,
+  SnapData,
+} from "../data/schemas";
 
 /** The poverty line for a household of `size` in the dataset's region (§4.1). */
 export function povertyLine(size: number, fpl: FederalPovertyLevelData): Money {
@@ -83,4 +90,187 @@ export function estimateCtc(
   const credit = Math.max(0, base - reduction);
   const refundable = Math.min(credit, ctc.refundableCap * kids);
   return { credit: Money.from(credit), refundable: Money.from(refundable) };
+}
+
+export interface SaversCreditResult {
+  /** Estimated non-refundable credit. */
+  credit: Money;
+  /** The credit rate that applied (0, 0.1, 0.2, or 0.5). */
+  rate: number;
+  /** Contributions actually counted, after the per-person cap. */
+  eligibleContributions: Money;
+}
+
+/**
+ * Estimate the Saver's Credit (§4.2). The credit rate steps down (50% → 20% →
+ * 10% → 0) as AGI rises through the filing-status ceilings, applied to up to a
+ * capped contribution amount. Non-refundable (it can only offset tax owed),
+ * which the tile notes. Married-filing-jointly counts each spouse's cap; head of
+ * household uses its own column; everyone else uses the single column (the
+ * Form 8880 grouping).
+ */
+export function estimateSaversCredit(
+  input: { agi: number; filingStatus: FilingStatus; contributions: number },
+  data: SaversCreditData,
+): SaversCreditResult {
+  const agi = Math.max(0, input.agi);
+  const married = input.filingStatus === "married_jointly";
+  const capFor = (t: SaversCreditData["tiers"][number]): number =>
+    married
+      ? t.agiCapMarried
+      : input.filingStatus === "head_of_household"
+        ? t.agiCapHeadOfHousehold
+        : t.agiCapSingle;
+
+  // Tiers run highest-rate-first; take the best rate whose ceiling still covers
+  // this AGI. Above the lowest tier's ceiling the rate is zero.
+  let rate = 0;
+  for (const tier of data.tiers) {
+    if (agi <= capFor(tier)) {
+      rate = tier.rate;
+      break;
+    }
+  }
+
+  const maxConsidered = data.maxContributionPerPerson * (married ? 2 : 1);
+  const eligible = Math.min(Math.max(0, input.contributions), maxConsidered);
+  return {
+    credit: Money.from(eligible).multiply(rate),
+    rate,
+    eligibleContributions: Money.from(eligible),
+  };
+}
+
+export interface SnapResult {
+  /** True when the household passes both the gross and net income tests. */
+  eligible: boolean;
+  passedGrossTest: boolean;
+  passedNetTest: boolean;
+  /** Estimated monthly benefit (0 when ineligible). */
+  monthlyBenefit: Money;
+  grossMonthlyIncome: Money;
+  netMonthlyIncome: Money;
+  grossLimit: Money;
+  netLimit: Money;
+  maxAllotment: Money;
+}
+
+/** SNAP allotment / standard-deduction lookup, using the largest defined size
+ *  for households beyond the table and adding the per-person amount past eight. */
+function snapAllotment(size: number, data: SnapData): Money {
+  const sizes = Object.keys(data.maxAllotmentByHouseholdSize)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const top = sizes[sizes.length - 1] ?? 1;
+  if (size <= top) {
+    return Money.from(data.maxAllotmentByHouseholdSize[String(size)] ?? 0);
+  }
+  const base = data.maxAllotmentByHouseholdSize[String(top)] ?? 0;
+  return Money.from(base).add(Money.from(data.additionalPersonAllotment).multiply(size - top));
+}
+
+function snapStandardDeduction(size: number, data: SnapData): Money {
+  const sizes = Object.keys(data.standardDeductionByHouseholdSize)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const top = sizes[sizes.length - 1] ?? 1;
+  const key = String(Math.min(size, top));
+  return Money.from(data.standardDeductionByHouseholdSize[key] ?? 0);
+}
+
+/**
+ * Estimate SNAP eligibility and the monthly benefit (§4.3). Applies the gross
+ * income test (income ≤ a percentage of the poverty line), then the net income
+ * test after the standard deduction and the earned-income deduction. The benefit
+ * is the maximum allotment less the household's expected contribution (a share
+ * of net income), floored at zero or the minimum benefit for small households.
+ *
+ * This is a deterministic estimate: it models the standard and earned-income
+ * deductions but not the shelter, dependent-care, or medical deductions (which
+ * would only raise the benefit), and households with an elderly or disabled
+ * member are exempt from the gross test. States vary; the agency decides.
+ */
+export function estimateSnap(
+  input: { householdSize: number; monthlyGrossIncome: number; monthlyEarnedIncome?: number },
+  data: SnapData,
+  fpl: FederalPovertyLevelData,
+): SnapResult {
+  const size = Math.max(1, Math.floor(input.householdSize));
+  const gross = Money.from(Math.max(0, input.monthlyGrossIncome));
+  const earned = Money.from(Math.max(0, input.monthlyEarnedIncome ?? input.monthlyGrossIncome));
+
+  const monthlyLine = povertyLine(size, fpl).divide(12);
+  const grossLimit = monthlyLine.multiply(data.grossIncomeLimitPctFpl / 100);
+  const netLimit = monthlyLine.multiply(data.netIncomeLimitPctFpl / 100);
+
+  const standardDeduction = snapStandardDeduction(size, data);
+  const earnedDeduction = earned.multiply(data.earnedIncomeDeductionRate);
+  let net = gross.subtract(standardDeduction).subtract(earnedDeduction);
+  if (net.isNegative()) net = Money.zero();
+
+  const passedGrossTest = gross.lessThanOrEqual(grossLimit);
+  const passedNetTest = net.lessThanOrEqual(netLimit);
+  const eligible = passedGrossTest && passedNetTest;
+
+  const maxAllotment = snapAllotment(size, data);
+  let monthlyBenefit = Money.zero();
+  if (eligible) {
+    const contribution = net.multiply(data.expectedContributionRate);
+    monthlyBenefit = maxAllotment.subtract(contribution);
+    if (monthlyBenefit.isNegative()) monthlyBenefit = Money.zero();
+    // Minimum benefit floors eligible one- and two-person households.
+    if (size <= 2 && monthlyBenefit.lessThan(data.minBenefit)) {
+      monthlyBenefit = Money.from(data.minBenefit);
+    }
+  }
+
+  return {
+    eligible,
+    passedGrossTest,
+    passedNetTest,
+    monthlyBenefit,
+    grossMonthlyIncome: gross,
+    netMonthlyIncome: net,
+    grossLimit,
+    netLimit,
+    maxAllotment,
+  };
+}
+
+export interface MedicaidResult {
+  /** Whether the state expanded Medicaid under the ACA. */
+  expansionState: boolean;
+  /** The MAGI eligibility ceiling as a % of FPL, or null in non-expansion states. */
+  thresholdPctFpl: number | null;
+  /** Likely eligible / not, or null when non-expansion (can't be determined simply). */
+  eligible: boolean | null;
+  /** Household income as a percentage of the poverty line. */
+  fplPercent: number;
+}
+
+/**
+ * Adult Medicaid eligibility by state (§4.3). In an expansion state, an adult at
+ * or below the threshold (138% FPL, or a state override) is likely eligible. In a
+ * non-expansion state, adult coverage is limited and category-specific (parents,
+ * pregnancy, disability), so we return null eligibility and let the tile say so
+ * rather than invent a precise number.
+ */
+export function medicaidEligibility(
+  input: { stateCode: string; income: number; householdSize: number },
+  data: MedicaidData,
+  fpl: FederalPovertyLevelData,
+): MedicaidResult {
+  const code = input.stateCode.toUpperCase();
+  const expanded = data.expansionByState[code] ?? false;
+  const pct = fplPercent(input.income, input.householdSize, fpl);
+  if (!expanded) {
+    return { expansionState: false, thresholdPctFpl: null, eligible: null, fplPercent: pct };
+  }
+  const threshold = data.thresholdOverridesPctFpl?.[code] ?? data.expansionThresholdPctFpl;
+  return {
+    expansionState: true,
+    thresholdPctFpl: threshold,
+    eligible: pct <= threshold,
+    fplPercent: pct,
+  };
 }

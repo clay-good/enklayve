@@ -274,6 +274,45 @@
       "sourceDocument": "IRS Revenue Procedure 2023-34 (2024 EITC) and IRC §24 (Child Tax Credit)",
       "dateRetrieved": "2024-02-01",
       "contentHash": "02fa49d5e130fa4fe9764676107df55b25b48384583df5cac8418d4342ceae42"
+    },
+    {
+      "id": "savers-credit-2024",
+      "kind": "savers-credit",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "savers-credit-2024.json",
+      "sourceUrl": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-savings-contributions-savers-credit",
+      "sourceDocument": "IRS Retirement Savings Contributions Credit (Form 8880), 2024 AGI limits per Rev. Proc. 2023-34",
+      "dateRetrieved": "2024-02-01",
+      "contentHash": "3a70671dac65405f8989e409fd62e35350c89e1a2d7a78d1818448fdf3c82939"
+    },
+    {
+      "id": "snap-fy2024-contiguous",
+      "kind": "snap",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "snap-fy2024-contiguous.json",
+      "sourceUrl": "https://www.fns.usda.gov/snap/allotment/COLA",
+      "sourceDocument": "USDA FNS SNAP Fiscal Year 2024 Cost-of-Living Adjustments (48 contiguous states and DC)",
+      "dateRetrieved": "2024-02-01",
+      "contentHash": "0311b0140ceb3c22e57cca6393ffc5f499d53506b3334172c2d821880b71b10a"
+    },
+    {
+      "id": "medicaid-2024",
+      "kind": "medicaid",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "medicaid-2024.json",
+      "sourceUrl": "https://www.medicaid.gov/medicaid/program-information/medicaid-and-chip-enrollment-data/report-highlights/index.html",
+      "sourceDocument": "Medicaid.gov / KFF Status of State Medicaid Expansion Decisions (2024); ACA adult eligibility at 138% FPL",
+      "dateRetrieved": "2024-06-01",
+      "contentHash": "28d5400b5ebf24eec8012433f629f87a6096347e2cc72718b0e760d3bafe4215"
     }
   ]
 }

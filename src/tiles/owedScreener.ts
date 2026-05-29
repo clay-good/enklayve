@@ -7,7 +7,13 @@
  * computed on the device. It composes the same engine the individual tiles use.
  */
 import { Money } from "../engine/money";
-import { fplPercent, estimateEitc, estimateCtc } from "../engine/benefits";
+import {
+  fplPercent,
+  estimateEitc,
+  estimateCtc,
+  estimateSnap,
+  estimateSaversCredit,
+} from "../engine/benefits";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { marriedCheckbox, marriedDefault } from "./owedShared";
@@ -161,6 +167,48 @@ export function mountOwedScreener(ctx: TileContext): void {
         note: `Up to ${fmt(ctc.refundable)} of it is refundable (the Additional Child Tax Credit).`,
         citation: eitcCtc.citation,
       });
+    }
+
+    // SNAP — only the contiguous figures are seeded, so estimate it for that
+    // region (Alaska and Hawaii use different allotments).
+    const snap = bundled.snap();
+    if (snap && fields.region === "contiguous") {
+      const snapResult = estimateSnap(
+        { householdSize: fields.householdSize, monthlyGrossIncome: fields.income / 12 },
+        snap,
+        fpl,
+      );
+      if (snapResult.eligible) {
+        findings.push({
+          program: "SNAP (food assistance)",
+          estimate: `${fmt(snapResult.monthlyBenefit)}/mo`,
+          note: "Estimated monthly benefit after the gross and net income tests. States vary; the agency decides.",
+          citation: snap.citation,
+        });
+      }
+    }
+
+    // Saver's Credit — needs a contribution amount, which the screener doesn't
+    // collect, so surface it only when My Situation already knows one.
+    const savers = bundled.saversCredit();
+    const contributions = profile.get("retirementContributionsAnnual");
+    if (savers && contributions && contributions > 0) {
+      const sc = estimateSaversCredit(
+        {
+          agi: fields.income,
+          filingStatus: fields.married ? "married_jointly" : "single",
+          contributions,
+        },
+        savers,
+      );
+      if (sc.credit.greaterThan(0)) {
+        findings.push({
+          program: "Saver's Credit",
+          estimate: fmt(sc.credit),
+          note: "A credit on your retirement contributions, from the amount in My Situation.",
+          citation: savers.citation,
+        });
+      }
     }
 
     if (pctOfLine <= 138) {
