@@ -664,7 +664,7 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
       return;
     }
     if (route.tileId === "readout") {
-      renderReadout({ container: content, navigate, profile });
+      renderReadout({ container: content, navigate, profile, data });
       return;
     }
     if (route.tileId === "report") {

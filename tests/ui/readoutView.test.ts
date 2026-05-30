@@ -1,8 +1,14 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, beforeAll } from "vitest";
 import axe from "axe-core";
 import { renderReadout } from "../../src/ui/readoutView";
+import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TextExtractor } from "../../src/readout/extractText";
+
+let bundled: BundledData;
+beforeAll(async () => {
+  bundled = await loadBundledData();
+});
 
 /**
  * The Readout view (BUILD-SPEC-2 §2): drop a document, see the anchored fields
@@ -22,7 +28,10 @@ const typedExtractor: TextExtractor = async () => ({
   source: "typed" as const,
 });
 
-function setup(extractor: TextExtractor = typedExtractor): {
+function setup(
+  extractor: TextExtractor = typedExtractor,
+  data: BundledData | null = null,
+): {
   container: HTMLElement;
   profile: SituationStore;
   dest: () => string | null;
@@ -30,7 +39,7 @@ function setup(extractor: TextExtractor = typedExtractor): {
   const container = document.createElement("div");
   const profile = new SituationStore();
   let dest: string | null = null;
-  renderReadout({ container, navigate: (id) => (dest = id), profile, extractor });
+  renderReadout({ container, navigate: (id) => (dest = id), profile, data, extractor });
   document.body.append(container);
   return { container, profile, dest: () => dest };
 }
@@ -73,6 +82,22 @@ describe("Readout view", () => {
     expect(profile.get("retirementContributionsAnnual")).toBe(8000);
     // A plain-English summary appears.
     expect(container.querySelector(".readout-summary-line")?.textContent).toContain("$75,000");
+  });
+
+  it("shows the tax rate and the next right step in the summary when data is present", async () => {
+    const { container } = setup(typedExtractor, bundled);
+    await dropFile(container);
+    const confirm = Array.from(container.querySelectorAll("button")).find((b) =>
+      b.textContent?.startsWith("Confirm and add"),
+    );
+    confirm?.click();
+    // The §2.3 standing block: effective rate + take-home, plus the next step.
+    const standing = container.querySelector(".readout-standing")?.textContent ?? "";
+    expect(standing).toContain("Effective tax rate");
+    expect(standing).toContain("Annual take-home");
+    expect(container.querySelector(".readout-next-step")?.textContent).toContain(
+      "Your next right step:",
+    );
   });
 
   it("shows the error message when a file type isn't supported", async () => {

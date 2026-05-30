@@ -12,8 +12,10 @@ import { field } from "./form";
 import { extractDocument, labelFor } from "../readout/extract";
 import { applyToSituation } from "../readout/toSituation";
 import { extractTextFromFile, type TextExtractor } from "../readout/extractText";
+import { buildReport } from "../readout/report";
 import type { ExtractedField, ExtractionResult } from "../readout/types";
 import type { SituationStore } from "../profile/situation";
+import type { BundledData } from "../data/browser";
 import type { FilingStatus } from "../data/schemas";
 
 const FILING_LABELS: Record<FilingStatus, string> = {
@@ -34,6 +36,8 @@ export interface RenderReadoutOptions {
   container: HTMLElement;
   navigate: (id: string | null) => void;
   profile: SituationStore;
+  /** Bundled datasets, so the summary can show the tax rate and the next step. */
+  data?: BundledData | null;
   /** Injectable for tests; defaults to the real on-device extractor. */
   extractor?: TextExtractor;
 }
@@ -68,6 +72,7 @@ function summaryLine(fields: ExtractedField[]): string {
 
 export function renderReadout(opts: RenderReadoutOptions): void {
   const { container, navigate, profile } = opts;
+  const data = opts.data ?? null;
   const extractor = opts.extractor ?? extractTextFromFile;
   clear(container);
   document.title = "The Readout · enklayve";
@@ -270,6 +275,43 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     return wrapped;
   }
 
+  /**
+   * The §2.3 payoff, composed from the same engine the Readout Report uses (so
+   * the figures match and nothing is duplicated): the effective tax rate and
+   * annual take-home, plus the single next right step from My Plan. Returns null
+   * when there's no data or no income yet, so the summary degrades gracefully.
+   */
+  function standingBlock(): HTMLElement | null {
+    if (!data) return null;
+    const model = buildReport(profile, data);
+    const grid = el("dl", { class: "readout-standing" });
+    if (model.hasIncomeData) {
+      const snap = model.sections.find((s) => s.title === "Snapshot");
+      for (const label of ["Effective tax rate", "Annual take-home"]) {
+        const line = snap?.lines.find((l) => l.label === label);
+        if (line) grid.append(el("dt", { text: label }), el("dd", { text: line.value }));
+      }
+    }
+    const planSection = model.sections.find((s) => s.title.startsWith("My Plan"));
+    const stepTitle = planSection?.lines.find((l) => l.label === "Current step")?.value;
+    const action = planSection?.lines.find((l) => l.label === "Next action")?.value;
+
+    if (grid.childElementCount === 0 && !stepTitle) return null;
+    return el(
+      "div",
+      { class: "readout-standing-wrap" },
+      grid.childElementCount > 0 ? grid : null,
+      stepTitle
+        ? el(
+            "p",
+            { class: "readout-next-step" },
+            el("strong", { text: "Your next right step: " }),
+            el("span", { text: action ? `${stepTitle}. ${action}` : stepTitle }),
+          )
+        : null,
+    );
+  }
+
   function renderSummary(fields: ExtractedField[], applied: number): void {
     clear(resultRegion);
     resultRegion.append(
@@ -277,6 +319,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
         "section",
         { class: "readout-summary", attrs: { "aria-label": "Your readout" } },
         el("p", { class: "readout-summary-line", text: summaryLine(fields) }),
+        standingBlock(),
         el("p", {
           class: "readout-note",
           text:
