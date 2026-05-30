@@ -68,7 +68,7 @@ describe("Your Plan tile", () => {
       b.textContent?.startsWith("Open the tool that does this"),
     );
     open?.click();
-    expect(navigatedTo()).toBe("freedom-date");
+    expect(navigatedTo()).toBe("debt-freedom");
   });
 
   it("cites the IRS retirement limit somewhere in the plan", () => {

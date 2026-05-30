@@ -57,6 +57,23 @@ describe("Readout Report, model", () => {
     expect(owed.note).toMatch(/What Am I Owed screener/);
   });
 
+  it("estimates EITC/CTC and flags Medicaid for a lower-income household with children", () => {
+    const p = new SituationStore();
+    p.set("annualIncome", 38000);
+    p.set("filingStatus", "married_jointly");
+    p.set("stateCode", "ca");
+    p.set("householdSize", 4);
+    p.set("ages", [40, 38, 10, 8]); // two qualifying children (under 17)
+    const owed = buildReport(p, data).sections.find((s) => s.title === "What you may be owed")!;
+    const labels = owed.lines.map((l) => l.label);
+    // ~122% of the 2024 contiguous poverty line for a family of four → Medicaid-likely.
+    expect(labels).toContain("Medicaid");
+    const eitc = owed.lines.find((l) => l.label.startsWith("Earned Income Tax Credit"));
+    const ctc = owed.lines.find((l) => l.label.startsWith("Child Tax Credit"));
+    expect(eitc?.value).toMatch(/\$/);
+    expect(ctc?.value).toMatch(/\$/);
+  });
+
   it("degrades gracefully when no income is entered", () => {
     const model = buildReport(new SituationStore(), data);
     expect(model.hasIncomeData).toBe(false);

@@ -6,14 +6,15 @@
  * the report is auditable and reproducible (no embedded timestamp, no randomness).
  *
  * It composes everything already built: the tax engine (snapshot + tax picture),
- * My Plan (the next right step), the Safe Harbor readings (net worth, rainy-day
- * months), and the dataset manifest (the assumptions-and-sources appendix). The
- * "What you may be owed" section lands with the What You're Owed pillar (Phase 6).
+ * the What You're Owed benefits engine (the FPL position, Medicaid/ACA
+ * likelihood, and the EITC/Child Tax Credit estimates), My Plan (the next right
+ * step), the Safe Harbor readings (net worth, rainy-day months), and the dataset
+ * manifest (the assumptions-and-sources appendix).
  */
 import { Money } from "../engine/money";
 import { evaluateTaxes, type TaxInput, type TaxResult } from "../engine/tax";
 import { evaluatePlan, DEFAULT_CONFIG, type PlanConfig, type PlanInput } from "../engine/plan";
-import { fplPercent } from "../engine/benefits";
+import { fplPercent, estimateEitc, estimateCtc } from "../engine/benefits";
 import { pct } from "../ui/form";
 import type { CitationData } from "../data/schemas";
 import type { BundledData, FplRegion } from "../data/browser";
@@ -185,9 +186,17 @@ export function buildReport(
   }
 
   // --- What you may be owed (Pillar 2) ---
+  // Composed from the same benefits engine the screener uses, on the household
+  // already in My Situation: the FPL position, the Medicaid/ACA likelihood it
+  // implies, and the refundable-credit dollar estimates. Qualifying children are
+  // the household members under 17 (the CTC test); married follows filing status.
   const owedLines: ReportLine[] = [];
   const householdSize = profile.get("householdSize");
+  const qualifyingChildren = (profile.get("ages") ?? []).filter((a) => a < 17).length;
+  const married = filingStatus === "married_jointly";
   const fplData = data?.fpl(regionFromState(stateCode)) ?? null;
+  const eitcCtc = data?.eitcCtc() ?? null;
+
   if (income > 0 && householdSize && fplData) {
     const p = fplPercent(income, householdSize, fplData);
     owedLines.push({
@@ -195,11 +204,34 @@ export function buildReport(
       value: `${p.toFixed(0)}% of FPL`,
     });
     citations.push(fplData.citation);
+    if (p <= 138) {
+      owedLines.push({
+        label: "Medicaid",
+        value: "Likely eligible where the state expanded it",
+      });
+    } else if (p >= 100) {
+      owedLines.push({
+        label: "ACA premium tax credit",
+        value: "Likely eligible; size it in the ACA tool",
+      });
+    }
+  }
+  if (income > 0 && eitcCtc) {
+    const eitc = estimateEitc({ earnedIncome: income, qualifyingChildren, married }, eitcCtc);
+    if (eitc.credit.greaterThan(0)) {
+      owedLines.push({ label: "Earned Income Tax Credit (estimated)", value: usd(eitc.credit) });
+      citations.push(eitcCtc.citation);
+    }
+    const ctc = estimateCtc({ qualifyingChildren, magi: income, married }, eitcCtc);
+    if (ctc.credit.greaterThan(0)) {
+      owedLines.push({ label: "Child Tax Credit (estimated)", value: usd(ctc.credit) });
+      citations.push(eitcCtc.citation);
+    }
   }
   sections.push({
     title: "What you may be owed",
     lines: owedLines,
-    note: "For estimated EITC, Child Tax Credit, and Medicaid/ACA eligibility, use the What Am I Owed screener, it composes these from your household.",
+    note: "Estimated from your household. For SNAP, the Saver's Credit, and the full picture, use the What Am I Owed screener, which composes them together.",
   });
 
   // --- My Plan: the current next right step ---

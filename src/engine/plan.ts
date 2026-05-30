@@ -211,7 +211,10 @@ export const PLAN_STEPS: StepDef[] = [
   {
     id: "high-cost-debt",
     title: "Clear high-cost debt",
-    tileId: "freedom-date",
+    // The multi-debt planner is the tool that performs this step: it lists every
+    // debt and compares the same two orders this step's debtStrategy selects
+    // (avalanche = highest rate first, snowball = smallest balance first).
+    tileId: "debt-freedom",
     evaluate(input, config) {
       const threshold = config.highCostThresholdPct;
       const highCost = input.debts.filter((d) => d.ratePct >= threshold && d.balance > 0);
