@@ -135,7 +135,7 @@ export function mountUmbrella(ctx: TileContext): void {
 export const umbrellaTile: TileDefinition = {
   id: "umbrella-liability",
   title: "Umbrella Liability Coverage",
-  pillar: "safe-harbor",
+  pillar: "protect",
   description: "Size personal umbrella coverage to your net worth.",
   keywords: ["umbrella", "liability", "lawsuit", "asset protection", "coverage", "protection"],
   status: "ready",

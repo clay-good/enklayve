@@ -173,7 +173,7 @@ export function mountLoanAmortization(ctx: TileContext): void {
 export const loanAmortizationTile: TileDefinition = {
   id: "loan-amortization",
   title: "Loan & Mortgage Amortization",
-  pillar: "take-home",
+  pillar: "debt",
   description: "Full schedule with extra-payment what-ifs.",
   keywords: ["loan", "mortgage", "amortization", "schedule", "payment", "extra"],
   status: "ready",

@@ -173,7 +173,7 @@ export function mountDrawdown(ctx: TileContext): void {
 export const drawdownTile: TileDefinition = {
   id: "retirement-drawdown",
   title: "Retirement Drawdown & RMD Timeline",
-  pillar: "safe-harbor",
+  pillar: "retirement",
   description: "How long your savings last, with required distributions.",
   keywords: ["drawdown", "retirement", "rmd", "withdrawal", "4% rule", "decumulation"],
   status: "ready",

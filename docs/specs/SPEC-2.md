@@ -56,7 +56,7 @@ Lead with the upload, follow with search, then offer compact grouped browsing. C
 
 1. **The Readout dropzone (hero).** Big, central, inviting. Drop a pay stub, W-2, 1040, or 1095-A and get an instant private readout. This is the single most personal moment in the product and the strongest differentiator. It is the vaulytica pattern, reframed for personal finance: you give it your documents, it gives you a result, and nothing is uploaded anywhere.
 2. **A prominent search bar.** The same fuzzy command palette from Spec 1, shown inline. Search is how returning users and confident users navigate. This is the sophiewell hero search behavior.
-3. **Compact grouped browsing.** A small grid of category cards, one per pillar plus Your Plan plus an All Tools index. Cards expand to reveal their tools. This is the sophiewell density you preferred, not the long roughlogic scroll.
+3. **Compact grouped browsing.** A small grid of category cards, one per topic group plus an All Tools index. Cards expand to reveal their tools. This is the sophiewell density you preferred, not the long roughlogic scroll. (The grouping was reorganized from the original four pillars into eight smaller topic groups; see §1.5.)
 
 ### 1.2 The one refinement: do not use a single mega dropdown
 
@@ -92,6 +92,23 @@ A single dropdown listing all forty plus tools is awkward to operate, poor on mo
 ### 1.4 Why this beats the incumbents on first impression
 
 The lead generation calculators bury the tool under advertising and route the user toward a lender. enklayve leads with an action that helps immediately and visibly keeps the user's data on the device. The hero is the trust promise made tangible.
+
+### 1.5 Tool grouping: eight topic groups (adopted 2026-05-29)
+
+The original three pillars (Take Home & Taxes, What You're Owed, Safe Harbor) plus My Plan were the right *story* but the wrong *browse structure*. As the catalog grew past forty tools, "Take Home & Taxes" became a ~27-tool dumping ground spanning paychecks, taxes, investing, borrowing, budgeting, home buying, health plans, and college — which is the opposite of easy to scan — while "Safe Harbor" mixed calm-wealth, retirement income, and insurance.
+
+So the home cards and the All Tools index now group tools into **eight smaller, plainly-named money areas**, each holding roughly three to ten related tools:
+
+1. **Paycheck & Taxes** — take-home, W-4, hourly↔salary, federal income tax, self-employment tax, marginal explorer, paycheck optimizer.
+2. **Investing** — capital gains, cost-basis lot picker, tax-loss harvesting, compound growth, CPI inflation.
+3. **Retirement** — contribution optimizer, Roth conversion ladder, backdoor Roth, RMD, drawdown & RMD timeline, Social Security claiming, downshift point.
+4. **Borrowing & Debt** — loan/mortgage amortization, refinance, auto loan, balance transfer, freedom date.
+5. **Budgeting & Cash Flow** — 50/30/20, zero-based budget, cash-flow timeline, sinking fund.
+6. **Home, Family & Protection** — home affordability, rent vs buy, college cost, health-plan chooser, life insurance, disability, umbrella, estate checklist.
+7. **Benefits & Aid** — the What-You're-Owed pillar intact: FPL, the screener, EITC, CTC, ACA PTC, Saver's Credit, SNAP, Medicaid, FAFSA SAI, Pell.
+8. **Where You Stand** — the calm overview and the guide: Peace of Mind, My Plan, the sabbatical planner.
+
+The three-pillar narrative still describes the *product* (and the engine code is unchanged); the eight groups are purely the **browse taxonomy** (`Pillar` in `src/tiles/types.ts`, rendered by the home and the All Tools index). This is safe to reorganize precisely because **My Situation centralizes the shared inputs** — income, filing status, state, household size, savings, debts — so the tools never depended on their grouping; a value typed in one group still prefills any tool in any other. Search (the command palette) and the pre-rendered All Tools index remain the primary and the crawlable browse paths, so the regrouping changes only how the home cards are labeled and split, not any route or deep link.
 
 ---
 

@@ -241,7 +241,7 @@ export function mountRentVsBuy(ctx: TileContext): void {
 export const rentVsBuyTile: TileDefinition = {
   id: "rent-vs-buy",
   title: "Rent vs Buy",
-  pillar: "take-home",
+  pillar: "protect",
   description: "Compare renting and buying over a horizon you choose.",
   keywords: ["rent vs buy", "buy vs rent", "renting", "homeownership", "break even"],
   status: "ready",

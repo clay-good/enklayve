@@ -182,7 +182,7 @@ export function mountCompoundGrowth(ctx: TileContext): void {
 export const compoundGrowthTile: TileDefinition = {
   id: "compound-growth",
   title: "Compound Growth",
-  pillar: "take-home",
+  pillar: "investing",
   description: "Contribution growth at a rate you choose.",
   keywords: ["compound", "interest", "growth", "savings", "investment", "future value"],
   status: "ready",

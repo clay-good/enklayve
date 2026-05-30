@@ -137,7 +137,7 @@ export function mountAutoLoan(ctx: TileContext): void {
 export const autoLoanTile: TileDefinition = {
   id: "auto-loan",
   title: "Auto Loan & True Cost of Credit",
-  pillar: "take-home",
+  pillar: "debt",
   description: "APR to nominal rate and the real cost of borrowing.",
   keywords: ["auto loan", "car", "apr", "credit", "interest", "true cost"],
   status: "ready",

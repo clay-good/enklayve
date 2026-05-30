@@ -232,7 +232,7 @@ export function mountZeroBudget(ctx: TileContext): void {
 export const zeroBudgetTile: TileDefinition = {
   id: "zero-budget",
   title: "Zero-Based Budget",
-  pillar: "take-home",
+  pillar: "budget",
   description: "Give every dollar a job until nothing's left to assign.",
   keywords: ["zero based budget", "budget", "every dollar", "envelope", "cash flow", "categories"],
   status: "ready",

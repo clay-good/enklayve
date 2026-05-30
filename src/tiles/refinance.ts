@@ -177,7 +177,7 @@ export function mountRefinance(ctx: TileContext): void {
 export const refinanceTile: TileDefinition = {
   id: "refinance",
   title: "Refinance Break-Even",
-  pillar: "take-home",
+  pillar: "debt",
   description: "When refinancing pays for itself.",
   keywords: ["refinance", "break even", "mortgage", "closing costs", "rate"],
   status: "ready",

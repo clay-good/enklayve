@@ -145,7 +145,7 @@ export function mountDisability(ctx: TileContext): void {
 export const disabilityTile: TileDefinition = {
   id: "disability-insurance",
   title: "Disability Insurance Needs",
-  pillar: "safe-harbor",
+  pillar: "protect",
   description: "The monthly income gap if you couldn't work.",
   keywords: [
     "disability",

@@ -231,7 +231,7 @@ export function mountHealthPlan(ctx: TileContext): void {
 export const healthPlanTile: TileDefinition = {
   id: "health-plan",
   title: "Health Plan Chooser",
-  pillar: "take-home",
+  pillar: "protect",
   description: "Compare two health plans for a year of expected care.",
   keywords: ["health plan", "open enrollment", "hdhp", "ppo", "deductible", "hsa", "insurance"],
   status: "ready",

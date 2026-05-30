@@ -159,7 +159,7 @@ export function mountInflation(ctx: TileContext): void {
 export const inflationTile: TileDefinition = {
   id: "inflation",
   title: "CPI Inflation Adjuster",
-  pillar: "take-home",
+  pillar: "investing",
   description: "What a past dollar is worth today, from BLS data.",
   keywords: ["inflation", "cpi", "purchasing power", "dollar value", "bls"],
   status: "ready",

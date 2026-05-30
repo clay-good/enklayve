@@ -326,7 +326,7 @@ export function mountTakeHome(ctx: TileContext): void {
 export const takeHomeTile: TileDefinition = {
   id: "take-home",
   title: "Take-Home Pay",
-  pillar: "take-home",
+  pillar: "paycheck",
   description: "Your real paycheck after federal, FICA, state, and local taxes, across all states.",
   keywords: ["paycheck", "net pay", "salary", "withholding", "fica", "state tax"],
   status: "ready",

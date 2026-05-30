@@ -270,7 +270,7 @@ export function mountBackdoorRoth(ctx: TileContext): void {
 export const backdoorRothTile: TileDefinition = {
   id: "backdoor-roth",
   title: "Backdoor Roth",
-  pillar: "take-home",
+  pillar: "retirement",
   description: "Backdoor and mega-backdoor Roth math, with the pro-rata rule.",
   keywords: [
     "backdoor roth",

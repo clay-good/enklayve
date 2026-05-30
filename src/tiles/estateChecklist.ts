@@ -120,7 +120,7 @@ export function mountEstateChecklist(ctx: TileContext): void {
 export const estateChecklistTile: TileDefinition = {
   id: "estate-checklist",
   title: "Estate & Beneficiary Checklist",
-  pillar: "safe-harbor",
+  pillar: "protect",
   description: "Track the estate basics that protect your family.",
   keywords: ["estate", "will", "beneficiary", "power of attorney", "checklist", "directive"],
   status: "ready",

@@ -238,7 +238,7 @@ export function mountHourlySalary(ctx: TileContext): void {
 export const hourlySalaryTile: TileDefinition = {
   id: "hourly-salary",
   title: "Hourly ↔ Salary",
-  pillar: "take-home",
+  pillar: "paycheck",
   description: "Convert pay rates with overtime and multiple jobs.",
   keywords: ["hourly", "salary", "overtime", "wage", "annual", "convert"],
   status: "ready",

@@ -63,50 +63,70 @@ function soon(
   return { id, title, pillar, description, keywords, status: "coming-soon" };
 }
 
+// The catalog is ordered by topic group (see `Pillar` in types.ts). The home and
+// All Tools index render `tilesForPillar`, which preserves this order within each
+// group, so the array order is the on-screen order. Reorganized 2026-05-29 from
+// the original 4 pillars into 8 smaller money areas (BUILD-SPEC-2 §1.5).
 export const TILES: TileDefinition[] = [
-  // --- Pillar 1: Take Home & Taxes (§3) ---
+  // --- Paycheck & Taxes ---
   takeHomeTile,
   soon(
     "w4",
     "W-4 Withholding Estimator",
-    "take-home",
+    "paycheck",
     "Tune your W-4 from the published withholding method.",
     ["w4", "withholding", "allowances"],
   ),
   hourlySalaryTile,
   federalIncomeTaxTile,
   selfEmploymentTaxTile,
+  marginalExplorerTile,
+  paycheckOptimizerTile,
+
+  // --- Investing ---
   capitalGainsTile,
   lotPickerTile,
   taxLossHarvestingTile,
+  compoundGrowthTile,
+  inflationTile,
+
+  // --- Retirement ---
+  retirementOptimizerTile,
   rothLadderTile,
   backdoorRothTile,
-  marginalExplorerTile,
+  rmdTile,
+  drawdownTile,
+  socialSecurityTile,
+  downshiftTile,
+
+  // --- Borrowing & Debt ---
   loanAmortizationTile,
   refinanceTile,
   autoLoanTile,
   balanceTransferTile,
-  compoundGrowthTile,
-  retirementOptimizerTile,
-  paycheckOptimizerTile,
-  rmdTile,
-  inflationTile,
-  // Expansion tools (BUILD-SPEC-2 §6), cash-flow + home + open enrollment,
-  // grouped under Take Home.
+  freedomDateTile,
+
+  // --- Budgeting & Cash Flow ---
   spendingPlanTile,
   zeroBudgetTile,
   cashFlowTile,
-  homeAffordabilityTile,
   sinkingFundTile,
-  rentVsBuyTile,
-  healthPlanTile,
-  collegeCostTile,
 
-  // --- Pillar 2: What You're Owed (§4) ---
+  // --- Home, Family & Protection ---
+  homeAffordabilityTile,
+  rentVsBuyTile,
+  collegeCostTile,
+  healthPlanTile,
+  lifeInsuranceTile,
+  disabilityTile,
+  umbrellaTile,
+  estateChecklistTile,
+
+  // --- Benefits & Aid (What You're Owed, §4) ---
   fplTile,
+  owedScreenerTile,
   eitcTile,
   childTaxCreditTile,
-  owedScreenerTile,
   acaPtcTile,
   saversCreditTile,
   snapTile,
@@ -125,26 +145,13 @@ export const TILES: TileDefinition[] = [
     "aid",
   ]),
 
-  // --- Pillar 3: Safe Harbor (§5) ---
-  // The Peace of Mind dashboard consolidates the rainy-day cushion, runway,
-  // net worth (war chest), and My Enough Number into one calm overview, so the
-  // user enters shared inputs once instead of re-typing them into four
-  // near-identical calculators (the math was the same: savings ÷ monthly spend).
+  // --- Where You Stand (Safe Harbor calm overview + the guide, §5 / SPEC-2 §4) ---
+  // Peace of Mind consolidates the rainy-day cushion, runway, net worth (war
+  // chest), and My Enough Number into one calm overview (the math was the same:
+  // savings ÷ monthly spend), so shared inputs are entered once, not four times.
   peaceOfMindTile,
-  freedomDateTile,
-  downshiftTile,
-  sabbaticalTile,
-  // Long horizon (BUILD-SPEC-2 §6.7): retirement-income optionality.
-  socialSecurityTile,
-  drawdownTile,
-  // Protection (BUILD-SPEC-2 §6.6): securing your family's safe harbor.
-  lifeInsuranceTile,
-  disabilityTile,
-  umbrellaTile,
-  estateChecklistTile,
-
-  // --- My Plan (BUILD-SPEC-2 §4) ---
   yourPlanTile,
+  sabbaticalTile,
 ];
 
 const BY_ID = new Map(TILES.map((t) => [t.id, t]));

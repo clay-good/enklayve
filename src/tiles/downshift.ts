@@ -190,7 +190,7 @@ export function mountDownshift(ctx: TileContext): void {
 export const downshiftTile: TileDefinition = {
   id: "downshift",
   title: "Downshift Point",
-  pillar: "safe-harbor",
+  pillar: "retirement",
   description: "When continued saving becomes optional.",
   keywords: ["coast fire", "downshift", "retirement", "coast", "optional", "enough"],
   status: "ready",

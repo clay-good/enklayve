@@ -212,7 +212,7 @@ export function mountPaycheckOptimizer(ctx: TileContext): void {
 export const paycheckOptimizerTile: TileDefinition = {
   id: "paycheck-optimizer",
   title: "Paycheck Optimizer",
-  pillar: "take-home",
+  pillar: "paycheck",
   description: "See how 401(k) and HSA contributions move your take-home.",
   keywords: ["paycheck", "optimizer", "401k", "hsa", "pre-tax", "take home", "tax savings"],
   status: "ready",

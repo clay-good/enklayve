@@ -146,7 +146,7 @@ export function mountRmd(ctx: TileContext): void {
 export const rmdTile: TileDefinition = {
   id: "rmd",
   title: "Required Minimum Distribution",
-  pillar: "take-home",
+  pillar: "retirement",
   description: "Your RMD schedule from the IRS Uniform Lifetime Table.",
   keywords: ["rmd", "required minimum distribution", "retirement", "401k", "ira", "590-b"],
   status: "ready",

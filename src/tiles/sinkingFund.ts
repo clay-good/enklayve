@@ -185,7 +185,7 @@ export function mountSinkingFund(ctx: TileContext): void {
 export const sinkingFundTile: TileDefinition = {
   id: "sinking-fund",
   title: "Sinking Fund Planner",
-  pillar: "take-home",
+  pillar: "budget",
   description: "Save for a goal by a date: your monthly target.",
   keywords: ["sinking fund", "savings goal", "save for", "goal", "down payment", "college"],
   status: "ready",

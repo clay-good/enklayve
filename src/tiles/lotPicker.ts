@@ -309,7 +309,7 @@ export function mountLotPicker(ctx: TileContext): void {
 export const lotPickerTile: TileDefinition = {
   id: "cost-basis",
   title: "Cost-Basis Lot Picker",
-  pillar: "take-home",
+  pillar: "investing",
   description: "FIFO or specific-ID cost basis for a stock sale.",
   keywords: ["cost basis", "fifo", "specific identification", "lots", "capital gains", "shares"],
   status: "ready",

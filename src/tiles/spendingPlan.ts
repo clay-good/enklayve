@@ -176,7 +176,7 @@ export function mountSpendingPlan(ctx: TileContext): void {
 export const spendingPlanTile: TileDefinition = {
   id: "spending-plan",
   title: "50/30/20 Spending Plan",
-  pillar: "take-home",
+  pillar: "budget",
   description: "Split your take-home into needs, wants, and savings.",
   keywords: ["budget", "50/30/20", "spending plan", "needs wants savings", "cash flow"],
   status: "ready",

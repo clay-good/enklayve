@@ -185,7 +185,7 @@ export function mountSelfEmploymentTax(ctx: TileContext): void {
 export const selfEmploymentTaxTile: TileDefinition = {
   id: "self-employment-tax",
   title: "Self-Employment Tax",
-  pillar: "take-home",
+  pillar: "paycheck",
   description: "SE tax plus the quarterly estimated payment schedule.",
   keywords: ["1099", "se tax", "quarterly", "estimated", "self employed", "schedule c"],
   status: "ready",

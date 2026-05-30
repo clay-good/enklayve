@@ -170,7 +170,7 @@ export function mountCollegeCost(ctx: TileContext): void {
 export const collegeCostTile: TileDefinition = {
   id: "college-cost",
   title: "College Cost Planner",
-  pillar: "take-home",
+  pillar: "protect",
   description: "Project college costs and the monthly savings to fund them.",
   keywords: ["college", "529", "education", "tuition", "savings", "cost"],
   status: "ready",

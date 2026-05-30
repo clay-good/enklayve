@@ -229,7 +229,7 @@ export function mountHomeAffordability(ctx: TileContext): void {
 export const homeAffordabilityTile: TileDefinition = {
   id: "home-affordability",
   title: "Home Buying Readiness",
-  pillar: "take-home",
+  pillar: "protect",
   description: "How much house you can afford, all-in, on the 28/36 rule.",
   keywords: ["home", "house", "mortgage affordability", "28/36", "down payment", "buying"],
   status: "ready",

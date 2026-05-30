@@ -176,7 +176,7 @@ export function mountFreedomDate(ctx: TileContext): void {
 export const freedomDateTile: TileDefinition = {
   id: "freedom-date",
   title: "Freedom Date",
-  pillar: "safe-harbor",
+  pillar: "debt",
   description: "When your debts are gone, at a payment you choose.",
   keywords: ["debt payoff", "freedom", "debt free", "payoff date", "amortization"],
   status: "ready",

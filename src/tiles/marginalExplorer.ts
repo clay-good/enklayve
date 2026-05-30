@@ -208,7 +208,7 @@ export function mountMarginalExplorer(ctx: TileContext): void {
 export const marginalExplorerTile: TileDefinition = {
   id: "marginal-explorer",
   title: "Marginal Rate Explorer",
-  pillar: "take-home",
+  pillar: "paycheck",
   description: "What does my next $1,000 of income actually cost?",
   keywords: ["marginal", "next dollar", "bracket", "raise", "rate"],
   status: "ready",

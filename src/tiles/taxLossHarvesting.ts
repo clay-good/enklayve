@@ -209,7 +209,7 @@ export function mountTaxLossHarvesting(ctx: TileContext): void {
 export const taxLossHarvestingTile: TileDefinition = {
   id: "tax-loss-harvesting",
   title: "Tax-Loss Harvesting",
-  pillar: "take-home",
+  pillar: "investing",
   description: "Turn investment losses into a tax saving, deterministically.",
   keywords: ["tax loss harvesting", "capital loss", "wash sale", "carryforward", "schedule d"],
   status: "ready",

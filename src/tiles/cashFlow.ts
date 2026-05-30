@@ -288,7 +288,7 @@ export function mountCashFlow(ctx: TileContext): void {
 export const cashFlowTile: TileDefinition = {
   id: "cash-flow",
   title: "Cash-Flow Timeline",
-  pillar: "take-home",
+  pillar: "budget",
   description: "Map income and bills across the month to spot tight days.",
   keywords: ["cash flow", "timeline", "tight days", "paycheck timing", "bills", "calendar"],
   status: "ready",

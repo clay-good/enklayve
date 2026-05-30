@@ -575,7 +575,7 @@ export function mountYourPlan(ctx: TileContext): void {
 export const yourPlanTile: TileDefinition = {
   id: "your-plan",
   title: "My Plan",
-  pillar: "plan",
+  pillar: "stand",
   description: "The deterministic next right step, with the math shown.",
   keywords: ["plan", "next step", "guidance", "guide", "baby steps", "order of operations"],
   status: "ready",

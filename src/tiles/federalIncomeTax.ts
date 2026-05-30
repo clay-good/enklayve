@@ -291,7 +291,7 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
 export const federalIncomeTaxTile: TileDefinition = {
   id: "federal-income-tax",
   title: "Federal Income Tax",
-  pillar: "take-home",
+  pillar: "paycheck",
   description: "Marginal and effective breakdown, standard vs itemized.",
   keywords: ["federal", "tax", "marginal", "effective", "deduction", "itemized"],
   status: "ready",

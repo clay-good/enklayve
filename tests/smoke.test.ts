@@ -9,8 +9,10 @@ describe("shell home view", () => {
     expect(root.querySelector(".hero-title")?.textContent).toContain("Know where you stand");
     // The Readout dropzone is the hero (BUILD-SPEC-2 §1.1).
     expect(root.querySelector(".readout-dropzone")).not.toBeNull();
-    // One expandable card per pillar (Take Home, Owed, Safe Harbor, Your Plan).
-    expect(root.querySelectorAll("details.pillar-card").length).toBe(4);
+    // One expandable card per topic group (Paycheck & Taxes, Investing,
+    // Retirement, Borrowing & Debt, Budgeting, Home/Family/Protection,
+    // Benefits & Aid, Where You Stand).
+    expect(root.querySelectorAll("details.pillar-card").length).toBe(8);
     // Plus a dedicated All Tools index card, not a mega dropdown.
     expect(root.querySelector(".index-card")).not.toBeNull();
     // The fully-built Take-Home Pay tile is reachable from a card.

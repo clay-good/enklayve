@@ -214,7 +214,7 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
 export const retirementOptimizerTile: TileDefinition = {
   id: "retirement-optimizer",
   title: "Retirement Contribution Optimizer",
-  pillar: "take-home",
+  pillar: "retirement",
   description: "401(k), IRA, and HSA against the current IRS limits.",
   keywords: ["401k", "ira", "roth", "hsa", "retirement", "catch up", "limit"],
   status: "ready",

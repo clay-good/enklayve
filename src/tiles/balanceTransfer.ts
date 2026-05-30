@@ -199,7 +199,7 @@ export function mountBalanceTransfer(ctx: TileContext): void {
 export const balanceTransferTile: TileDefinition = {
   id: "balance-transfer",
   title: "Balance Transfer Break-Even",
-  pillar: "take-home",
+  pillar: "debt",
   description: "Does moving a balance beat the transfer fee?",
   keywords: ["balance transfer", "consolidation", "credit card", "0% apr", "break even", "debt"],
   status: "ready",

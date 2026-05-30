@@ -194,7 +194,7 @@ export function mountLifeInsurance(ctx: TileContext): void {
 export const lifeInsuranceTile: TileDefinition = {
   id: "life-insurance",
   title: "Life Insurance Needs",
-  pillar: "safe-harbor",
+  pillar: "protect",
   description: "A transparent, needs-based coverage estimate.",
   keywords: ["life insurance", "coverage", "dime", "needs", "protection", "term life"],
   status: "ready",

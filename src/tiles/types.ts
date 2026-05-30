@@ -8,8 +8,23 @@
 import type { BundledData } from "../data/browser";
 import type { SituationStore } from "../profile/situation";
 
-/** The three pillars plus the guide surfaces (BUILD-SPEC.md §3–5, BUILD-SPEC-2 §4). */
-export type Pillar = "take-home" | "owed" | "safe-harbor" | "plan";
+/**
+ * Topic groups for browsing (the home cards and the All Tools index group by
+ * these). Originally the spec's three pillars; reorganized 2026-05-29 into eight
+ * smaller, plainly-named money areas so no single card is a 27-tool dumping
+ * ground (the browse taxonomy; see BUILD-SPEC-2 §1.5). The
+ * shared inputs (income, filing status, state, household, savings, debts) still
+ * flow through My Situation, so a value entered in one group prefills any other.
+ */
+export type Pillar =
+  | "paycheck"
+  | "investing"
+  | "retirement"
+  | "debt"
+  | "budget"
+  | "protect"
+  | "owed"
+  | "stand";
 
 export interface PillarMeta {
   id: Pillar;
@@ -18,18 +33,34 @@ export interface PillarMeta {
 }
 
 export const PILLARS: PillarMeta[] = [
+  { id: "paycheck", title: "Paycheck & Taxes", blurb: "Your real take-home and what you owe." },
   {
-    id: "take-home",
-    title: "Take Home & Taxes",
-    blurb: "Your real paycheck, taxes, and borrowing math.",
+    id: "investing",
+    title: "Investing",
+    blurb: "Capital gains, growth, and the dollar over time.",
   },
-  { id: "owed", title: "What You're Owed", blurb: "Benefits and aid you may qualify for." },
   {
-    id: "safe-harbor",
-    title: "Safe Harbor",
-    blurb: "Calm wealth: cushion, runway, and your enough number.",
+    id: "retirement",
+    title: "Retirement",
+    blurb: "Contributions, Roth moves, Social Security, and drawdown.",
   },
-  { id: "plan", title: "My Plan", blurb: "The next right step, with the math shown." },
+  { id: "debt", title: "Borrowing & Debt", blurb: "Loans, mortgages, and a clear payoff date." },
+  {
+    id: "budget",
+    title: "Budgeting & Cash Flow",
+    blurb: "Give every dollar a job and spot tight days.",
+  },
+  {
+    id: "protect",
+    title: "Home, Family & Protection",
+    blurb: "Big purchases, insurance, and your estate basics.",
+  },
+  { id: "owed", title: "Benefits & Aid", blurb: "Benefits and aid you may qualify for." },
+  {
+    id: "stand",
+    title: "Where You Stand",
+    blurb: "Your calm overview and the next right step.",
+  },
 ];
 
 export interface TileContext {

@@ -333,7 +333,7 @@ export function mountPeaceOfMind(ctx: TileContext): void {
 export const peaceOfMindTile: TileDefinition = {
   id: "peace-of-mind",
   title: "Peace of Mind",
-  pillar: "safe-harbor",
+  pillar: "stand",
   description: "Your cushion, runway, net worth, and Enough Number, one calm overview.",
   keywords: [
     "dashboard",

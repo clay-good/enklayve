@@ -233,7 +233,7 @@ export function mountCapitalGains(ctx: TileContext): void {
 export const capitalGainsTile: TileDefinition = {
   id: "capital-gains",
   title: "Capital Gains",
-  pillar: "take-home",
+  pillar: "investing",
   description: "Short- and long-term gains with a cost-basis helper.",
   keywords: ["capital gains", "niit", "cost basis", "investments", "stocks", "long term"],
   status: "ready",

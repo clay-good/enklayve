@@ -163,7 +163,7 @@ export function mountRothLadder(ctx: TileContext): void {
 export const rothLadderTile: TileDefinition = {
   id: "roth-ladder",
   title: "Roth Conversion Ladder",
-  pillar: "take-home",
+  pillar: "retirement",
   description: "Schedule penalty-free Roth access with the 5-year rule.",
   keywords: ["roth", "conversion", "ladder", "early retirement", "5-year rule", "590-b"],
   status: "ready",

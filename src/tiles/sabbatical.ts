@@ -180,7 +180,7 @@ export function mountSabbatical(ctx: TileContext): void {
 export const sabbaticalTile: TileDefinition = {
   id: "sabbatical",
   title: "Sabbatical Planner",
-  pillar: "safe-harbor",
+  pillar: "stand",
   description: "Can I afford a break, and what does it cost?",
   keywords: ["sabbatical", "break", "big purchase", "career break", "time off", "leave"],
   status: "ready",

@@ -177,7 +177,7 @@ export function mountSocialSecurity(ctx: TileContext): void {
 export const socialSecurityTile: TileDefinition = {
   id: "social-security",
   title: "Social Security Claiming Age",
-  pillar: "safe-harbor",
+  pillar: "retirement",
   description: "Compare your benefit at 62, full retirement age, and 70.",
   keywords: [
     "social security",
