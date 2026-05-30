@@ -188,7 +188,7 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
     lines.push({
       label: "Note",
       value:
-        "We don't subtract the QBI (20% pass-through) deduction, so this errs a little high — the safe side when you're setting money aside.",
+        "We don't subtract the QBI (20% pass-through) deduction, so this errs a little high: the safe side when you're setting money aside.",
     });
 
     chartContainer.replaceChildren(
@@ -286,7 +286,7 @@ export const quarterlyTaxesTile: TileDefinition = {
     "schedule c",
   ],
   status: "ready",
-  how: "When you work for yourself, no employer withholds taxes from your pay, so you have to do it yourself — and you owe two taxes, not one. First is self-employment tax: both halves of Social Security and Medicare (15.3% on 92.35% of your profit). Second is regular income tax, federal and state, on your profit minus the deductible half of that SE tax. We add the two together to get your tax for the year.\n\nFrom that we show the share to skim off every payment you receive (move it to a separate tax account the day it lands) and the four equal estimated payments the IRS expects on the 1040-ES schedule. If you enter last year's total tax, we also show the safe-harbor minimum — pay at least that much across the year and you avoid the underpayment penalty even if you earn more than expected.\n\nWe don't subtract the QBI (20% qualified business income) deduction, so the number leans slightly high, which is the safe side when the whole point is setting enough aside. Filing status, state, and income flow to and from My Situation.",
+  how: "When you work for yourself, no employer withholds taxes from your pay, so you have to do it yourself, and you owe two taxes, not one. First is self-employment tax: both halves of Social Security and Medicare (15.3% on 92.35% of your profit). Second is regular income tax, federal and state, on your profit minus the deductible half of that SE tax. We add the two together to get your tax for the year.\n\nFrom that we show the share to skim off every payment you receive (move it to a separate tax account the day it lands) and the four equal estimated payments the IRS expects on the 1040-ES schedule. If you enter last year's total tax, we also show the safe-harbor minimum: pay at least that much across the year and you avoid the underpayment penalty even if you earn more than expected.\n\nWe don't subtract the QBI (20% qualified business income) deduction, so the number leans slightly high, which is the safe side when the whole point is setting enough aside. Filing status, state, and income flow to and from My Situation.",
   resources: [
     {
       label: "IRS, estimated taxes",

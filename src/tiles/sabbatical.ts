@@ -96,12 +96,12 @@ export function mountSabbatical(ctx: TileContext): void {
     const status: BreakdownLine = r.affordable
       ? {
           label: "Can you afford it?",
-          value: `Yes — you'd have ${fmt(r.remaining)} left, about ${monthsLabel(r.runwayAfterMonths)} of runway.`,
+          value: `Yes: you'd have ${fmt(r.remaining)} left, about ${monthsLabel(r.runwayAfterMonths)} of runway.`,
           emphasis: true,
         }
       : {
           label: "Can you afford it?",
-          value: `Not quite — you'd be ${fmt(r.remaining.abs())} short. A little more saved, a shorter break, or some income during it would close the gap.`,
+          value: `Not quite: you'd be ${fmt(r.remaining.abs())} short. A little more saved, a shorter break, or some income during it would close the gap.`,
           emphasis: true,
         };
 
@@ -128,7 +128,7 @@ export function mountSabbatical(ctx: TileContext): void {
         el("div", {
           class: "verify-banner",
           attrs: { role: "alert" },
-          text: `This plan costs ${fmt(r.totalCost)} but you've set aside ${fmt(Money.from(fields.savings))}. You're ${fmt(r.remaining.abs())} short — no rush, it just isn't covered yet.`,
+          text: `This plan costs ${fmt(r.totalCost)} but you've set aside ${fmt(Money.from(fields.savings))}. You're ${fmt(r.remaining.abs())} short, no rush, it just isn't covered yet.`,
         }),
       );
     }

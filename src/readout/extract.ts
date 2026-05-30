@@ -338,7 +338,7 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
         "Nonemployee compensation (box 1)",
         amountAfter(t.text, /1\s*nonemployee compensation/i),
         "annualIncome",
-        "Self-employment income — feeds Take-Home, Self-Employment Tax, and Quarterly Taxes.",
+        "Self-employment income: feeds Take-Home, Self-Employment Tax, and Quarterly Taxes.",
       );
       return nec ? [nec] : [];
     },

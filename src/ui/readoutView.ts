@@ -282,7 +282,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
           text:
             applied > 0
               ? `Added ${applied} value${applied === 1 ? "" : "s"} to My Situation (provenance: from a document). Open My Situation in the header to review or export them.`
-              : "These values are informational — review them above and carry them into the matching tile. Nothing was changed in My Situation.",
+              : "These values are informational: review them above and carry them into the matching tile. Nothing was changed in My Situation.",
         }),
         el(
           "div",

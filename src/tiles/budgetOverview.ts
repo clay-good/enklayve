@@ -15,7 +15,14 @@ import { cashFlowTimeline, type CashFlowEvent } from "../engine/finance";
 import { el, clear } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
-import { donutChart, flowBar, balanceTimeline, paletteVar } from "../ui/charts";
+import {
+  donutChart,
+  flowBar,
+  balanceTimeline,
+  statStrip,
+  paletteVar,
+  type Stat,
+} from "../ui/charts";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
 
@@ -168,6 +175,7 @@ export function mountBudgetOverview(ctx: TileContext): void {
 
   const chipsContainer = el("div", { class: "cat-chips" });
   const linesContainer = el("div", { class: "plan-debts" });
+  const statContainer = el("div", { class: "tile-stats", attrs: { "aria-live": "polite" } });
   const chartContainer = el("div", { class: "tile-charts" });
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
@@ -180,18 +188,24 @@ export function mountBudgetOverview(ctx: TileContext): void {
     const assigned = fields.lines.reduce((sum, l) => sum.add(Math.max(0, l.amount)), Money.zero());
     const remaining = income.subtract(assigned);
     const fmt = (m: Money): string => m.format(ctx.locale);
+    const balanced = remaining.isZero() && !income.isZero();
+    const over = remaining.isNegative();
 
-    const status: BreakdownLine = remaining.isZero()
-      ? { label: "Status", value: "Balanced — every dollar has a job. 🎉", emphasis: true }
-      : remaining.isNegative()
+    const status: BreakdownLine = balanced
+      ? {
+          label: "Status",
+          value: "Every dollar has a job. That is a zero-based budget, and you just nailed it. 🎉",
+          emphasis: true,
+        }
+      : over
         ? {
             label: "Status",
-            value: `Over-assigned by ${fmt(remaining.abs())}. Trim a line to balance.`,
+            value: `You have handed out ${fmt(remaining.abs())} more than you make. Trim a line until you are back to zero.`,
             emphasis: true,
           }
         : {
             label: "Status",
-            value: `${fmt(remaining)} still to assign. Give it a job, even saving counts.`,
+            value: `${fmt(remaining)} still needs a job. Send it to your emergency fund or your smallest debt before it wanders off.`,
             emphasis: true,
           };
 
@@ -211,19 +225,20 @@ export function mountBudgetOverview(ctx: TileContext): void {
         flow.goesNegative
           ? {
               label: "Heads up",
-              value: `Your balance dips below zero on day ${flow.minDay}. A buffer or a shifted due date helps.`,
+              value: `Your account dips to ${fmt(flow.minBalance)} on day ${flow.minDay}, before payday catches up. A small buffer or a shifted due date keeps you out of the red.`,
               emphasis: true,
             }
           : {
               label: "Tightest day",
               value:
                 flow.minDay === 0
-                  ? "Your balance never falls below where it started."
-                  : `Day ${flow.minDay}, at ${fmt(flow.minBalance)} — still above zero.`,
+                  ? "Your balance never falls below where it started this month."
+                  : `Day ${flow.minDay}, at ${fmt(flow.minBalance)}, still above zero.`,
             },
       );
     }
 
+    renderStats(income, assigned, remaining, flow, dated);
     renderCharts(income, remaining, flow, dated);
 
     resultContainer.replaceChildren(
@@ -235,6 +250,42 @@ export function mountBudgetOverview(ctx: TileContext): void {
         permalink: () => ctx.permalink(writeFields(fields)),
       }),
     );
+  }
+
+  /** The month's headline numbers as tinted stat cards: the glanceable hero. */
+  function renderStats(
+    income: Money,
+    assigned: Money,
+    remaining: Money,
+    flow: ReturnType<typeof cashFlowTimeline>,
+    dated: boolean,
+  ): void {
+    const balanced = remaining.isZero() && !income.isZero();
+    const over = remaining.isNegative();
+    const stats: Stat[] = [
+      { label: "Monthly income", value: income.format(ctx.locale), tone: "primary" },
+      { label: "Given a job", value: assigned.format(ctx.locale), tone: "neutral" },
+      {
+        label: over ? "Over by" : "Left to give a job",
+        value: remaining.abs().format(ctx.locale),
+        tone: balanced ? "good" : over ? "warn" : "accent",
+        hint: balanced ? "Zero. Nailed it." : over ? "Trim a line" : "Give it a job",
+      },
+    ];
+    if (dated) {
+      stats.push({
+        label: "Lowest this month",
+        value: flow.minBalance.format(ctx.locale),
+        tone: flow.goesNegative ? "warn" : "good",
+        hint:
+          flow.minDay === 0
+            ? "Never dips"
+            : flow.goesNegative
+              ? `dips on day ${flow.minDay}`
+              : `tightest on day ${flow.minDay}`,
+      });
+    }
+    statContainer.replaceChildren(statStrip(stats, "This month at a glance"));
   }
 
   function renderCharts(
@@ -286,6 +337,7 @@ export function mountBudgetOverview(ctx: TileContext): void {
           points: flow.days.map((d) => ({ day: d.day, balance: d.balance })),
           minDay: flow.minDay,
           goesNegative: flow.goesNegative,
+          payday: fields.payday,
           locale: ctx.locale,
           ariaLabel: flow.goesNegative
             ? `Running balance through the month, dipping to its lowest on day ${flow.minDay}`
@@ -338,7 +390,7 @@ export function mountBudgetOverview(ctx: TileContext): void {
       max: 31,
       step: 1,
       value: line.day || "",
-      placeholder: "—",
+      placeholder: "any",
       attrs: { "aria-label": `Line ${i + 1} due day of month (optional)`, inputmode: "numeric" },
       on: {
         input: (e) => {
@@ -451,6 +503,19 @@ export function mountBudgetOverview(ctx: TileContext): void {
     compute();
   });
 
+  const intro = el(
+    "div",
+    { class: "tile-intro" },
+    el("p", {
+      class: "tile-intro__lead",
+      text: "A budget is not a money diet. It is you telling every dollar where to go, instead of wondering where it went.",
+    }),
+    el("p", {
+      class: "tile-intro__sub",
+      text: "Give every dollar a job until what is left to assign reaches zero. Saving and paying off debt count as jobs too. Add a due day to any line and watch how the month actually flows, so a bill due before payday never catches you off guard.",
+    }),
+  );
+
   const form = el(
     "form",
     { class: "tile-form", on: { submit: (e) => e.preventDefault() } },
@@ -459,14 +524,14 @@ export function mountBudgetOverview(ctx: TileContext): void {
     field("Starting balance", startInput),
     el("p", {
       class: "field-group-label",
-      text: "Budget lines — set an amount, add a due day to put it on the month timeline, tap a chip to add",
+      text: "Budget lines: set an amount, add a due day to put it on the month timeline, tap a chip to add one.",
     }),
     linesContainer,
     chipsContainer,
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
-  root.append(form, chartContainer, resultContainer);
+  root.append(intro, form, statContainer, chartContainer, resultContainer);
   renderLines();
   compute();
 }
@@ -475,19 +540,21 @@ export const budgetOverviewTile: TileDefinition = {
   id: "budget-overview",
   title: "Budget Overview",
   pillar: "budget",
-  description: "One view of where your money goes and how the month flows.",
+  description: "Give every dollar a job, then watch how the whole month flows.",
   keywords: [
     "budget overview",
     "holistic budget",
     "dashboard",
     "cash flow",
     "zero based budget",
-    "donut",
     "every dollar",
+    "you need a budget",
+    "give every dollar a job",
+    "donut",
     "income",
   ],
   status: "ready",
-  how: "This is the whole month on one screen. Enter your monthly income and the day it lands, your starting balance, and your budget lines. Each line is a job for some of your income — housing, groceries, investing, and the rest — and we open with the big buckets most budgets share so you start from a shape, not a blank page.\n\nThe donut and the income-to-assigned flow bar show where the money goes and how much is still left to assign (the goal is zero — every dollar accounted for). Add a due day to any line and it also lands on the cash-flow timeline, which walks your balance day by day to surface the tightest point, the classic squeeze when a big bill is due before payday. So you get both halves of budgeting at once: the allocation and the timing. It pairs with the 50/30/20 plan for the big-picture split. Income defaults from My Situation if you've entered it.",
+  how: "A budget is just you telling your money where to go instead of wondering where it went. Enter your monthly income and the day it lands, your starting balance, and your budget lines. Every line is a job for some of your income: housing, groceries, investing, paying off debt, and the rest. We open with the big buckets most budgets share so you start from a shape, not a blank page.\n\nThe goal is a zero-based budget. Keep assigning until what is left to assign reaches zero, because every dollar without a job tends to disappear. The donut and the income-to-assigned flow bar show where the money goes; the stat cards keep the headline numbers in view. Saving and debt payoff are jobs too, so an emergency fund and your smallest debt belong right there in the list.\n\nAdd a due day to any line and it also lands on the cash-flow timeline, which walks your balance day by day and floats a zero line so a dip below it is impossible to miss. That is the classic squeeze, a big bill due before payday. You get both halves of budgeting at once: where the money goes and when it moves. It pairs with the 50/30/20 plan for the big-picture split. Income defaults from My Situation if you have entered it.",
   resources: [
     {
       label: "CFPB, making a budget",

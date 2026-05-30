@@ -100,7 +100,7 @@ export function mountRothLadder(ctx: TileContext): void {
 
     const lines: BreakdownLine[] = r.rungs.map((rung, i) => ({
       label: `Convert in ${rung.year}`,
-      value: `${fmt(rung.converted)} — penalty-free in ${rung.accessibleYear}`,
+      value: `${fmt(rung.converted)}: penalty-free in ${rung.accessibleYear}`,
       citation: i === 0 ? ROTH_5YR_CITATION : null,
     }));
     lines.push({ label: "Total converted", value: fmt(r.totalConverted), emphasis: true });
@@ -167,7 +167,7 @@ export const rothLadderTile: TileDefinition = {
   description: "Schedule penalty-free Roth access with the 5-year rule.",
   keywords: ["roth", "conversion", "ladder", "early retirement", "5-year rule", "590-b"],
   status: "ready",
-  how: "A Roth conversion ladder moves money from a traditional account to a Roth a slice at a time. Each converted amount can be withdrawn penalty-free five years after the conversion (the IRS 5-year rule for conversions), so a steady yearly conversion builds a steady yearly stream of penalty-free money — a common way to bridge spending before age 59½.\n\nWe lay out the schedule: what you convert each year, the year it becomes accessible, and the conversion tax estimated at the rate you enter (each conversion is taxable income that year). Converting in a low-income year keeps that tax down. This is a starting plan, not advice — confirm the rules for your accounts with the IRS or a qualified professional.",
+  how: "A Roth conversion ladder moves money from a traditional account to a Roth a slice at a time. Each converted amount can be withdrawn penalty-free five years after the conversion (the IRS 5-year rule for conversions), so a steady yearly conversion builds a steady yearly stream of penalty-free money, a common way to bridge spending before age 59½.\n\nWe lay out the schedule: what you convert each year, the year it becomes accessible, and the conversion tax estimated at the rate you enter (each conversion is taxable income that year). Converting in a low-income year keeps that tax down. This is a starting plan, not advice: confirm the rules for your accounts with the IRS or a qualified professional.",
   resources: [
     { label: "IRS Publication 590-B", url: "https://www.irs.gov/publications/p590b" },
     {

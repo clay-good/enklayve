@@ -135,7 +135,7 @@ export function mountRentVsBuy(ctx: TileContext): void {
 
     const verdict =
       r.cheaper === "tie"
-        ? "It's a wash over this horizon — the two cost about the same."
+        ? "It's a wash over this horizon: the two cost about the same."
         : `${r.cheaper === "buy" ? "Buying" : "Renting"} is cheaper by ${fmt(r.difference)} over ${fields.years} years.`;
 
     const lines: BreakdownLine[] = [
@@ -145,7 +145,7 @@ export function mountRentVsBuy(ctx: TileContext): void {
       { label: "Verdict", value: verdict, emphasis: true },
       {
         label: "Assumptions",
-        value: `${fields.appreciationPct}% appreciation, ${fields.rentGrowthPct}% rent growth, ${fields.investReturnPct}% investment return — all yours to change.`,
+        value: `${fields.appreciationPct}% appreciation, ${fields.rentGrowthPct}% rent growth, ${fields.investReturnPct}% investment return, all yours to change.`,
       },
     ];
 

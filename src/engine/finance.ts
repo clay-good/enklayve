@@ -121,6 +121,155 @@ export function debtPayoff(
   return { months, totalInterest: interestPaid, totalPaid: paid };
 }
 
+/** A debt the freedom planner pays down: a balance, its rate, and a minimum. */
+export interface PlannedDebt {
+  name: string;
+  /** Outstanding balance. */
+  balance: number;
+  /** Annual interest rate as a percentage (e.g. 22.99). */
+  ratePct: number;
+  /** Minimum monthly payment required on this debt. */
+  minPayment: number;
+}
+
+/** "snowball" pays the smallest balance first; "avalanche" the highest rate first. */
+export type DebtMethod = "snowball" | "avalanche";
+
+export interface DebtMethodResult {
+  method: DebtMethod;
+  /** Whole months until every debt is gone, or null when the budget can't retire them. */
+  months: number | null;
+  /** Total interest paid across all debts over the payoff. */
+  totalInterest: Money;
+  /** Each debt and the month it hits zero, in the order they are retired. */
+  payoffOrder: { name: string; month: number }[];
+}
+
+export interface DebtFreedomResult {
+  snowball: DebtMethodResult;
+  avalanche: DebtMethodResult;
+  /** Interest the avalanche saves over the snowball (≥ 0), or null if either never pays off. */
+  interestSaved: Money | null;
+  /** Months the avalanche saves over the snowball (≥ 0), or null if either never pays off. */
+  monthsSaved: number | null;
+  /** Total applied each month: the minimums plus the extra. */
+  monthlyTotal: number;
+  /** Sum of the minimum payments across all debts. */
+  totalMinimum: number;
+}
+
+/** Fixed payoff order for a method: snowball by balance ascending, avalanche by rate descending.
+ *  Ties (and ties only) fall back to the original entry order, so the result is deterministic. */
+function methodOrder(debts: PlannedDebt[], method: DebtMethod): number[] {
+  return debts
+    .map((d, i) => ({ i, d }))
+    .sort((a, b) =>
+      method === "snowball"
+        ? a.d.balance - b.d.balance || a.i - b.i
+        : b.d.ratePct - a.d.ratePct || a.i - b.i,
+    )
+    .map((x) => x.i);
+}
+
+/**
+ * Simulate paying off a set of debts with a fixed total monthly budget, rolling
+ * each cleared debt's payment into the next target (the "debt snowball" engine).
+ * Every active debt pays its minimum; whatever the budget has left lands on the
+ * target debt, and as debts clear their freed-up minimums grow the amount thrown
+ * at the next one. Deterministic, exact-decimal month-by-month arithmetic.
+ */
+function simulateDebtMethod(
+  debts: PlannedDebt[],
+  monthlyTotal: number,
+  method: DebtMethod,
+): DebtMethodResult {
+  const order = methodOrder(debts, method);
+  const bals = debts.map((d) => Money.from(Math.max(0, d.balance)));
+  const minPayments = debts.map((d) => Money.from(Math.max(0, d.minPayment)));
+  const monthlyRates = debts.map((d) => new Decimal(d.ratePct).div(100).div(12));
+  const cleared = debts.map((d) => Money.from(Math.max(0, d.balance)).isZero());
+
+  let totalInterest = Money.zero();
+  let months = 0;
+  const payoffOrder: { name: string; month: number }[] = [];
+  // Debts already at zero are "retired" at month 0, in method order.
+  for (const i of order) if (cleared[i]) payoffOrder.push({ name: debts[i]!.name, month: 0 });
+
+  const MAX_MONTHS = 1200; // 100 years; beyond this we treat the plan as "never".
+  while (order.some((i) => bals[i]!.greaterThan(0)) && months < MAX_MONTHS) {
+    months += 1;
+    // 1. Accrue this month's interest on every active debt.
+    for (const i of order) {
+      if (bals[i]!.isZero()) continue;
+      const interest = bals[i]!.multiply(monthlyRates[i]!);
+      bals[i] = bals[i]!.add(interest);
+      totalInterest = totalInterest.add(interest);
+    }
+    // 2. Pay each active debt its minimum (trimmed to the balance), tracking the leftover.
+    let budget = Money.from(monthlyTotal);
+    for (const i of order) {
+      if (bals[i]!.isZero()) continue;
+      const pay = minPayments[i]!.greaterThan(bals[i]!) ? bals[i]! : minPayments[i]!;
+      bals[i] = bals[i]!.subtract(pay);
+      budget = budget.subtract(pay);
+    }
+    // 3. Throw everything left at the target, cascading to the next as each clears.
+    for (const i of order) {
+      if (!budget.greaterThan(0)) break;
+      if (bals[i]!.isZero()) continue;
+      const pay = budget.greaterThan(bals[i]!) ? bals[i]! : budget;
+      bals[i] = bals[i]!.subtract(pay);
+      budget = budget.subtract(pay);
+    }
+    // 4. Record any debt that reached zero this month, in method order.
+    for (const i of order) {
+      if (!cleared[i] && bals[i]!.isZero()) {
+        cleared[i] = true;
+        payoffOrder.push({ name: debts[i]!.name, month: months });
+      }
+    }
+  }
+
+  const debtFree = order.every((i) => bals[i]!.isZero());
+  return {
+    method,
+    months: debtFree ? months : null,
+    totalInterest,
+    payoffOrder,
+  };
+}
+
+/**
+ * Compare the two classic debt-payoff orders (BUILD-SPEC-2 §6.2): the snowball
+ * (smallest balance first, for quick wins and momentum) and the avalanche
+ * (highest rate first, mathematically cheapest). Both run the same fixed monthly
+ * budget, the sum of the minimums plus an extra amount, and roll freed-up
+ * payments forward. Returns each method's months and interest, plus what the
+ * avalanche saves. Deterministic; nothing to cite (pure arithmetic on the user's
+ * own balances and rates).
+ *
+ * @param debts  the debts to retire (balance, rate, minimum)
+ * @param extra  extra paid each month beyond the sum of the minimums (≥ 0)
+ */
+export function debtFreedomPlan(debts: PlannedDebt[], extra: number): DebtFreedomResult {
+  const active = debts.filter((d) => d.balance > 0);
+  const totalMinimum = active.reduce((sum, d) => sum + Math.max(0, d.minPayment), 0);
+  const monthlyTotal = totalMinimum + Math.max(0, extra);
+
+  const snowball = simulateDebtMethod(active, monthlyTotal, "snowball");
+  const avalanche = simulateDebtMethod(active, monthlyTotal, "avalanche");
+
+  const bothPayOff = snowball.months !== null && avalanche.months !== null;
+  return {
+    snowball,
+    avalanche,
+    interestSaved: bothPayOff ? snowball.totalInterest.subtract(avalanche.totalInterest) : null,
+    monthsSaved: bothPayOff ? snowball.months! - avalanche.months! : null,
+    monthlyTotal,
+    totalMinimum,
+  };
+}
+
 /**
  * Level monthly payment that amortizes a loan (BUILD-SPEC.md §3.3). Standard
  * mortgage formula M = P·r / (1 − (1+r)^−n); a zero rate degenerates to P/n.

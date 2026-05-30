@@ -98,7 +98,7 @@ export function mountDrawdown(ctx: TileContext): void {
       {
         label: "Where you stand",
         value: r.lastsToMaxAge
-          ? `Still funded at age ${MAX_AGE} — your savings outlast the projection.`
+          ? `Still funded at age ${MAX_AGE}: your savings outlast the projection.`
           : `Your savings run dry around age ${r.depletedAtAge}.`,
         emphasis: true,
       },
@@ -107,7 +107,7 @@ export function mountDrawdown(ctx: TileContext): void {
       const firstRmd = r.timeline.find((y) => y.age === r.firstRmdAge);
       lines.push({
         label: `First required distribution (age ${r.firstRmdAge})`,
-        value: firstRmd ? fmt(firstRmd.rmd) : "—",
+        value: firstRmd ? fmt(firstRmd.rmd) : "-",
         citation: rmd.citation,
       });
     }
@@ -177,7 +177,7 @@ export const drawdownTile: TileDefinition = {
   description: "How long your savings last, with required distributions.",
   keywords: ["drawdown", "retirement", "rmd", "withdrawal", "4% rule", "decumulation"],
   status: "ready",
-  how: "This projects your retirement savings forward year by year. Each year it withdraws the amount you choose — or the required minimum distribution once you reach the required age (73 for 2024), whichever is larger — then grows what's left. Everything is in today's dollars: you enter a real (after-inflation) return, so the numbers stay comparable to today and we never have to guess at future inflation or markets.\n\nIt's a planning estimate, not advice. A real return is the return above inflation (for example, a 7% return with 3% inflation is roughly a 4% real return). The required-distribution figures come from the IRS Uniform Lifetime Table and cite it. Sequence-of-returns risk — a bad market early in retirement — isn't modeled here, so treat the 'lasts to' age as a calm guide, not a guarantee.",
+  how: "This projects your retirement savings forward year by year. Each year it withdraws the amount you choose (or the required minimum distribution once you reach the required age, 73 for 2024, whichever is larger) then grows what's left. Everything is in today's dollars: you enter a real (after-inflation) return, so the numbers stay comparable to today and we never have to guess at future inflation or markets.\n\nIt's a planning estimate, not advice. A real return is the return above inflation (for example, a 7% return with 3% inflation is roughly a 4% real return). The required-distribution figures come from the IRS Uniform Lifetime Table and cite it. Sequence-of-returns risk, a bad market early in retirement, isn't modeled here, so treat the 'lasts to' age as a calm guide, not a guarantee.",
   resources: [
     {
       label: "IRS, required minimum distributions",

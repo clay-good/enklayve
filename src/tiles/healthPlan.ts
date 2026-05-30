@@ -174,7 +174,7 @@ export function mountHealthPlan(ctx: TileContext): void {
       {
         label: "HSA note",
         value:
-          "A high-deductible plan may let you contribute to a triple-tax-advantaged HSA — worth weighing beyond the costs here.",
+          "A high-deductible plan may let you contribute to a triple-tax-advantaged HSA, worth weighing beyond the costs here.",
       },
     ];
 
@@ -235,7 +235,7 @@ export const healthPlanTile: TileDefinition = {
   description: "Compare two health plans for a year of expected care.",
   keywords: ["health plan", "open enrollment", "hdhp", "ppo", "deductible", "hsa", "insurance"],
   status: "ready",
-  how: "For the medical spending you expect this year, each plan costs its premiums (monthly × 12) plus your share of the care: you pay in full up to the deductible, then the coinsurance percentage above it, with your total out-of-pocket on care capped at the out-of-pocket maximum. We total both plans and show which is cheaper at that level of spending.\n\nTry a low and a high spend year to see how the answer changes — a low-premium high-deductible plan often wins in a healthy year and loses in an expensive one. A high-deductible plan may also unlock a tax-advantaged HSA, which can tip the decision.",
+  how: "For the medical spending you expect this year, each plan costs its premiums (monthly × 12) plus your share of the care: you pay in full up to the deductible, then the coinsurance percentage above it, with your total out-of-pocket on care capped at the out-of-pocket maximum. We total both plans and show which is cheaper at that level of spending.\n\nTry a low and a high spend year to see how the answer changes: a low-premium high-deductible plan often wins in a healthy year and loses in an expensive one. A high-deductible plan may also unlock a tax-advantaged HSA, which can tip the decision.",
   resources: [
     {
       label: "HealthCare.gov, choosing a plan",

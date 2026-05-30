@@ -202,49 +202,49 @@ const JOURNEY_LESSONS: Record<
     title: "Start with a small cushion",
     tileId: "peace-of-mind",
     lesson:
-      "Before anything else, a little buffer — around $1,000 — turns a flat tire or a vet bill into an annoyance instead of a new credit-card balance. It comes first because it stops the debt spiral before it can start.",
+      "Before anything else, a little buffer, around $1,000, turns a flat tire or a vet bill into an annoyance instead of a new credit-card balance. It comes first because it stops the debt spiral before it can start.",
     cta: "See where I stand →",
   },
   "employer-match": {
     title: "Grab every dollar of free money",
     tileId: "retirement-optimizer",
     lesson:
-      "If your job matches retirement contributions, that match is free money — an instant, guaranteed return no investment can beat. Capture all of it before paying down anything but the most toxic debt.",
+      "If your job matches retirement contributions, that match is free money, an instant, guaranteed return no investment can beat. Capture all of it before paying down anything but the most toxic debt.",
     cta: "Check my contributions →",
   },
   "high-cost-debt": {
     title: "Clear the expensive debt",
     tileId: "freedom-date",
     lesson:
-      "Debt above about 8% — most credit cards — costs you more than investing is likely to earn, so paying it off is a sure thing. Attack the highest-rate balance first, where each dollar kills the most interest, and watch your freedom date.",
+      "Debt above about 8%, most credit cards, costs you more than investing is likely to earn, so paying it off is a sure thing. Attack the highest-rate balance first, where each dollar kills the most interest, and watch your freedom date.",
     cta: "Find my freedom date →",
   },
   "rainy-day-fund": {
     title: "Build the real rainy-day fund",
     tileId: "peace-of-mind",
     lesson:
-      "Now grow the cushion into a few months of essential expenses, so a layoff or a big surprise can't undo your progress. This is the sleep-at-night number — security, not restriction.",
+      "Now grow the cushion into a few months of essential expenses, so a layoff or a big surprise can't undo your progress. This is the sleep-at-night number: security, not restriction.",
     cta: "Size my fund →",
   },
   retirement: {
     title: "Let compounding do the work",
     tileId: "retirement-optimizer",
     lesson:
-      "With the basics safe, put money into tax-advantaged accounts and let time work. Every dollar in a 401(k) or IRA grows untaxed for decades — the single biggest lever most people ever have.",
+      "With the basics safe, put money into tax-advantaged accounts and let time work. Every dollar in a 401(k) or IRA grows untaxed for decades, the single biggest lever most people ever have.",
     cta: "Optimize my contributions →",
   },
   "sinking-funds": {
     title: "Save for what's coming",
     tileId: "sinking-fund",
     lesson:
-      "A car, a wedding, a home, a sabbatical — name the goal and set aside a little each month, so the big expense is already paid for when it arrives and no borrowing is needed.",
+      "A car, a wedding, a home, a sabbatical: name the goal and set aside a little each month, so the big expense is already paid for when it arrives and no borrowing is needed.",
     cta: "Plan a goal →",
   },
   "war-chest": {
     title: "Grow toward enough",
     tileId: "peace-of-mind",
     lesson:
-      "Finally, build toward My Enough Number — the point where work becomes a choice rather than a requirement. It's not about escaping your job; it's about having options.",
+      "Finally, build toward My Enough Number, the point where work becomes a choice rather than a requirement. It's not about escaping your job; it's about having options.",
     cta: "See my enough number →",
   },
 };
@@ -268,7 +268,7 @@ function renderHome(container: HTMLElement, navigate: (id: string | null) => voi
     el("h1", { class: "hero-title", text: "Know where you stand, and what to do next." }),
     el("p", {
       class: "hero-sub",
-      text: "The honest money guidance the experts charge for — free, private, and showing its math. Drop a document, or follow the path below.",
+      text: "The honest money guidance the experts charge for: free, private, and showing its math. Drop a document, or follow the path below.",
     }),
     readoutDropzone(navigate),
   );
@@ -305,7 +305,7 @@ function renderHome(container: HTMLElement, navigate: (id: string | null) => voi
     el("h2", { class: "journey-title", text: "Your path to calm money" }),
     el("p", {
       class: "journey-intro",
-      text: "Seven steps, in order — each one builds on the last. You don't have to do them all today; just take the next one.",
+      text: "Seven steps, in order, each building on the last. You don't have to do them all today; just take the next one.",
     }),
     list,
     el("button", {
@@ -650,7 +650,7 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
   const onPageHide = (): void => profile.clear();
   window.addEventListener("pagehide", onPageHide);
 
-  router.start((route) => {
+  const renderRoute = (route: Route): void => {
     if (!route.tileId) {
       renderHome(content, navigate);
       return;
@@ -677,6 +677,24 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
       return;
     }
     renderTileView(content, tile, route, router, data, locale, navigate, profile);
+  };
+
+  // After any real navigation (a hashchange — input edits use replaceState and
+  // never reach the handler), return the reader to the top of the freshly
+  // rendered view and move focus into it. Without this, clicking a link near
+  // the bottom of a long page left you stranded at that same scroll offset on
+  // the new page instead of at its start.
+  let firstRoute = true;
+  router.start((route) => {
+    renderRoute(route);
+    if (typeof window.scrollTo === "function") window.scrollTo(0, 0);
+    // Keyboard and screen-reader users land in the new content, not back in the
+    // page chrome. Skip the first paint so we don't steal initial focus, and
+    // preventScroll so focusing can't fight the jump-to-top above.
+    if (!firstRoute && typeof content.focus === "function") {
+      content.focus({ preventScroll: true });
+    }
+    firstRoute = false;
   });
 
   return {

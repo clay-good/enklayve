@@ -186,33 +186,58 @@ export interface TimelineOptions {
   goesNegative: boolean;
   locale: string;
   ariaLabel: string;
+  /** Day income lands; that column gets a payday marker so timing reads at a glance. */
+  payday?: number;
 }
 
 /**
- * Running balance across the month as vertical bars, one per dated event. Bars
- * are scaled to the largest absolute balance; the tightest day is highlighted
- * and any below-zero day uses the warning color — the "rent's due before
- * payday" squeeze, seen at a glance.
+ * Running balance across the month as vertical bars, one per dated event. The
+ * zero line floats to wherever the data needs it: bars grow up from it when the
+ * balance is positive and hang below it when it goes negative, so the "rent's
+ * due before payday" squeeze is literally a dip beneath the line. The tightest
+ * day is highlighted, below-zero days use the warning color, and payday carries
+ * a small marker.
  */
 export function balanceTimeline(opts: TimelineOptions): HTMLElement {
   const { points, locale } = opts;
-  const peak = points.reduce((m, p) => Math.max(m, Math.abs(p.balance)), 0) || 1;
+  const maxPos = points.reduce((m, p) => Math.max(m, p.balance), 0);
+  const maxNeg = points.reduce((m, p) => Math.max(m, -p.balance), 0);
+  const range = maxPos + maxNeg || 1;
+  // Where the zero line sits, measured from the bottom of the track.
+  const zeroPct = (maxNeg / range) * 100;
 
-  const bars = points.map((p) => {
+  const cols = points.map((p) => {
     const isLow = p.day === opts.minDay && opts.minDay !== 0;
+    const isPayday = opts.payday !== undefined && p.day === opts.payday;
     const neg = p.balance < 0;
+    const h = (Math.abs(p.balance) / range) * 100;
     const bar = el("div", {
       class: `balance-bar${neg ? " balance-bar--neg" : ""}${isLow ? " balance-bar--low" : ""}`,
       attrs: { "aria-hidden": "true" },
     });
-    bar.style.height = `${(Math.abs(p.balance) / peak) * 100}%`;
+    bar.style.height = `${h}%`;
+    // Anchor at the zero line: positives rise above it, negatives hang below.
+    if (neg) bar.style.bottom = `${Math.max(0, zeroPct - h)}%`;
+    else bar.style.bottom = `${zeroPct}%`;
+
+    const zeroLine = el("div", { class: "balance-zero", attrs: { "aria-hidden": "true" } });
+    zeroLine.style.bottom = `${zeroPct}%`;
+
     return el(
       "div",
       {
-        class: "balance-col",
+        class: `balance-col${isLow ? " balance-col--low" : ""}${isPayday ? " balance-col--payday" : ""}`,
         attrs: { title: `Day ${p.day}: ${currency(locale, p.balance)}` },
       },
-      el("div", { class: "balance-track" }, bar),
+      el(
+        "div",
+        { class: "balance-track" },
+        zeroLine,
+        bar,
+        isPayday
+          ? el("span", { class: "balance-flag", attrs: { "aria-hidden": "true" }, text: "payday" })
+          : null,
+      ),
       el("span", { class: "balance-day", text: String(p.day) }),
     );
   });
@@ -220,6 +245,38 @@ export function balanceTimeline(opts: TimelineOptions): HTMLElement {
   return el(
     "figure",
     { class: "chart chart--timeline", attrs: { role: "img", "aria-label": opts.ariaLabel } },
-    el("div", { class: "balance-timeline" }, ...bars),
+    el("div", { class: "balance-timeline" }, ...cols),
+  );
+}
+
+export interface Stat {
+  /** Small caption under the figure (e.g. "Income"). */
+  label: string;
+  /** The pre-formatted figure shown large. */
+  value: string;
+  /** One short line of context under the value (optional). */
+  hint?: string;
+  /** Color cue: ties the card to the result's meaning. */
+  tone?: "neutral" | "good" | "warn" | "accent" | "primary";
+}
+
+/**
+ * A row of stat cards: the month's headline numbers at a glance, each tinted by
+ * meaning (a balanced budget glows good, an over-assigned one warns). A plain
+ * list of label/value pairs, so it reads cleanly to a screen reader.
+ */
+export function statStrip(stats: Stat[], ariaLabel: string): HTMLElement {
+  return el(
+    "ul",
+    { class: "stat-strip", attrs: { "aria-label": ariaLabel } },
+    ...stats.map((s) =>
+      el(
+        "li",
+        { class: `stat-card${s.tone && s.tone !== "neutral" ? ` stat-card--${s.tone}` : ""}` },
+        el("span", { class: "stat-card__value", text: s.value }),
+        el("span", { class: "stat-card__label", text: s.label }),
+        s.hint ? el("span", { class: "stat-card__hint", text: s.hint }) : null,
+      ),
+    ),
   );
 }

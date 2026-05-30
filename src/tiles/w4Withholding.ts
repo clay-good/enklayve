@@ -165,7 +165,7 @@ export function mountW4Withholding(ctx: TileContext): void {
       lines.push(
         {
           label: "What that refund really is",
-          value: `A ${fmt(gap)} interest-free loan to the government — your money, locked up for up to a year, then handed back with no interest.`,
+          value: `A ${fmt(gap)} interest-free loan to the government: your money, locked up for up to a year, then handed back with no interest.`,
         },
         {
           label: "Forgone interest (assumption)",
@@ -181,7 +181,7 @@ export function mountW4Withholding(ctx: TileContext): void {
       lines.push(
         {
           label: "Heads up",
-          value: `You're under-withholding — at tax time you'd owe about ${fmt(gap.abs())}, and a large gap can trigger an underpayment penalty.`,
+          value: `You're under-withholding: at tax time you'd owe about ${fmt(gap.abs())}, and a large gap can trigger an underpayment penalty.`,
         },
         {
           label: "To avoid a surprise bill",
@@ -192,7 +192,7 @@ export function mountW4Withholding(ctx: TileContext): void {
       lines.push({
         label: "You're dialed in",
         value:
-          "Your withholding lands within a paycheck of your projected tax — close to the ideal of a refund near zero, with the money in your hands all year.",
+          "Your withholding lands within a paycheck of your projected tax, close to the ideal of a refund near zero, with the money in your hands all year.",
       });
     }
 
@@ -241,7 +241,7 @@ export function mountW4Withholding(ctx: TileContext): void {
 
   const intro = el("p", {
     class: "screener-intro",
-    text: "A refund feels like a windfall, but it's really an interest-free loan you made to the government — your own money handed back with no interest. This checks whether your W-4 is over- or under-withholding and suggests a tweak to land near zero.",
+    text: "A refund feels like a windfall, but it's really an interest-free loan you made to the government: your own money handed back with no interest. This checks whether your W-4 is over- or under-withholding and suggests a tweak to land near zero.",
   });
 
   const form = el(
@@ -264,7 +264,7 @@ export const w4WithholdingTile: TileDefinition = {
   title: "W-4 Withholding & Refund Check",
   pillar: "paycheck",
   description:
-    "A refund is an interest-free loan to the government — tune your W-4 to land near zero.",
+    "A refund is an interest-free loan to the government: tune your W-4 to land near zero.",
   keywords: [
     "w4",
     "w-4",
@@ -277,7 +277,7 @@ export const w4WithholdingTile: TileDefinition = {
     "paycheck",
   ],
   status: "ready",
-  how: "Most people aim for a big tax refund, but a refund is not free money — it is an interest-free loan you made to the government. You overpaid your taxes a little out of every paycheck all year, and the refund is simply that overpayment handed back, with no interest. The ideal is a refund near zero: you keep your own money as you earn it (in a savings account, paying down debt, or invested) instead of lending it out for free.\n\nThis tool projects your federal income tax for the year from your wages and filing status using the same engine as the take-home tile, then compares it to what your current W-4 withholds (your per-paycheck federal withholding times your number of pay periods, plus any extra). If you are over-withholding it shows the refund, what that refund is really costing you in forgone interest, and how much less to withhold per paycheck. If you are under-withholding it shows the likely bill and how much more to withhold.\n\nThe W-4 controls federal income tax withholding only, so that is all this covers — Social Security and Medicare (FICA) are fixed and not on the W-4, and state withholding uses a separate state form. Adjust your real W-4 with your employer or in the IRS Tax Withholding Estimator; these figures point you in the right direction.",
+  how: "Most people aim for a big tax refund, but a refund is not free money: it is an interest-free loan you made to the government. You overpaid your taxes a little out of every paycheck all year, and the refund is simply that overpayment handed back, with no interest. The ideal is a refund near zero: you keep your own money as you earn it (in a savings account, paying down debt, or invested) instead of lending it out for free.\n\nThis tool projects your federal income tax for the year from your wages and filing status using the same engine as the take-home tile, then compares it to what your current W-4 withholds (your per-paycheck federal withholding times your number of pay periods, plus any extra). If you are over-withholding it shows the refund, what that refund is really costing you in forgone interest, and how much less to withhold per paycheck. If you are under-withholding it shows the likely bill and how much more to withhold.\n\nThe W-4 controls federal income tax withholding only, so that is all this covers. Social Security and Medicare (FICA) are fixed and not on the W-4, and state withholding uses a separate state form. Adjust your real W-4 with your employer or in the IRS Tax Withholding Estimator; these figures point you in the right direction.",
   resources: [
     {
       label: "IRS Tax Withholding Estimator",

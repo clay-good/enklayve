@@ -76,7 +76,7 @@ export function mountEstateChecklist(ctx: TileContext): void {
     lines.push({
       label: "A note",
       value:
-        "This is a checklist, not legal advice. Drafting and reviewing the documents belongs to a qualified attorney — the sibling product vaulytica can help you organize and review them.",
+        "This is a checklist, not legal advice. Drafting and reviewing the documents belongs to a qualified attorney; the sibling product vaulytica can help you organize and review them.",
     });
 
     resultContainer.replaceChildren(
@@ -124,7 +124,7 @@ export const estateChecklistTile: TileDefinition = {
   description: "Track the estate basics that protect your family.",
   keywords: ["estate", "will", "beneficiary", "power of attorney", "checklist", "directive"],
   status: "ready",
-  how: "Estate planning isn't only for the wealthy — it's how you spare your family confusion and delay at the hardest time. This is a plain checklist of the basics: a will, current beneficiaries on every account, powers of attorney for money and health, guardianship for young children, transfer-on-death designations, and a letter saying where everything is. Beneficiary designations on retirement and insurance accounts actually override your will, so keeping them current matters as much as the will itself.\n\nThis is a checklist, not legal advice, and it doesn't draft anything. Use it to see what's missing, then have the documents prepared and reviewed by a qualified attorney. The sibling product vaulytica can help you organize and review the documents themselves.",
+  how: "Estate planning isn't only for the wealthy: it's how you spare your family confusion and delay at the hardest time. This is a plain checklist of the basics: a will, current beneficiaries on every account, powers of attorney for money and health, guardianship for young children, transfer-on-death designations, and a letter saying where everything is. Beneficiary designations on retirement and insurance accounts actually override your will, so keeping them current matters as much as the will itself.\n\nThis is a checklist, not legal advice, and it doesn't draft anything. Use it to see what's missing, then have the documents prepared and reviewed by a qualified attorney. The sibling product vaulytica can help you organize and review the documents themselves.",
   resources: [
     { label: "Consumer Financial Protection Bureau", url: "https://www.consumerfinance.gov/" },
     { label: "USA.gov", url: "https://www.usa.gov/" },

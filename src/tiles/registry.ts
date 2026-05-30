@@ -55,6 +55,7 @@ import { snapTile } from "./snap";
 import { medicaidTile } from "./medicaid";
 import { peaceOfMindTile } from "./peaceOfMind";
 import { freedomDateTile } from "./freedomDate";
+import { debtFreedomTile } from "./debtFreedom";
 import { downshiftTile } from "./downshift";
 import { sabbaticalTile } from "./sabbatical";
 import { yourPlanTile } from "./yourPlan";
@@ -109,6 +110,7 @@ export const TILES: TileDefinition[] = [
   autoLoanTile,
   balanceTransferTile,
   freedomDateTile,
+  debtFreedomTile,
 
   // --- Budgeting & Cash Flow ---
   budgetOverviewTile,

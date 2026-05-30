@@ -89,7 +89,7 @@ export function mountSnap(ctx: TileContext): void {
     const lines: BreakdownLine[] = [
       {
         label: "Gross income test (≤130% FPL)",
-        value: `${fmt(r.grossMonthlyIncome)} vs ${fmt(r.grossLimit)} — ${yesno(r.passedGrossTest)}`,
+        value: `${fmt(r.grossMonthlyIncome)} vs ${fmt(r.grossLimit)}: ${yesno(r.passedGrossTest)}`,
         citation: fpl!.citation,
       },
       {
@@ -99,7 +99,7 @@ export function mountSnap(ctx: TileContext): void {
       },
       {
         label: "Net income test (≤100% FPL)",
-        value: `${fmt(r.netMonthlyIncome)} vs ${fmt(r.netLimit)} — ${yesno(r.passedNetTest)}`,
+        value: `${fmt(r.netMonthlyIncome)} vs ${fmt(r.netLimit)}: ${yesno(r.passedNetTest)}`,
         citation: fpl!.citation,
       },
       {

@@ -112,7 +112,7 @@ export function mountDownshift(ctx: TileContext): void {
     const status: BreakdownLine = r.reached
       ? {
           label: "Where you stand",
-          value: `Reached — you could stop adding and still coast to ${fmt(Money.from(fields.target))} by age ${fields.targetAge}.`,
+          value: `Reached: you could stop adding and still coast to ${fmt(Money.from(fields.target))} by age ${fields.targetAge}.`,
           emphasis: true,
         }
       : {
@@ -194,7 +194,7 @@ export const downshiftTile: TileDefinition = {
   description: "When continued saving becomes optional.",
   keywords: ["coast fire", "downshift", "retirement", "coast", "optional", "enough"],
   status: "ready",
-  how: "Your Downshift Point is the moment your invested savings are large enough that, left to grow on their own, they reach your Enough Number by your target age — so adding more becomes optional. We grow today's balance at the real (after-inflation) return you choose, with no further contributions, and compare it to your target. We also show the 'coast number': the balance today that would coast exactly to the target.\n\nThe return is your assumption, clearly labeled, never a forecast. Use a real return (e.g. 4–5%) so the target stays in today's dollars. This is about optionality, not pressure: reaching it means you could ease off, not that you must.",
+  how: "Your Downshift Point is the moment your invested savings are large enough that, left to grow on their own, they reach your Enough Number by your target age, so adding more becomes optional. We grow today's balance at the real (after-inflation) return you choose, with no further contributions, and compare it to your target. We also show the 'coast number': the balance today that would coast exactly to the target.\n\nThe return is your assumption, clearly labeled, never a forecast. Use a real return (e.g. 4–5%) so the target stays in today's dollars. This is about optionality, not pressure: reaching it means you could ease off, not that you must.",
   resources: [
     {
       label: "Investor.gov, compound interest",

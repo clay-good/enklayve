@@ -149,7 +149,7 @@ export function mountPaycheckOptimizer(ctx: TileContext): void {
       },
       {
         label: "Why the HSA saves more",
-        value: `An HSA contribution also skips Social Security and Medicare tax, so it beats the 401(k) by ${fmt(hsaSaving.subtract(k401Saving))} per $1,000 — though HSA money is for medical costs.`,
+        value: `An HSA contribution also skips Social Security and Medicare tax, so it beats the 401(k) by ${fmt(hsaSaving.subtract(k401Saving))} per $1,000, though HSA money is for medical costs.`,
       },
     ];
 
@@ -216,10 +216,10 @@ export const paycheckOptimizerTile: TileDefinition = {
   description: "See how 401(k) and HSA contributions move your take-home.",
   keywords: ["paycheck", "optimizer", "401k", "hsa", "pre-tax", "take home", "tax savings"],
   status: "ready",
-  how: "Pre-tax contributions lower your tax bill, but not all of them the same way. A traditional 401(k) deferral cuts your income tax. An HSA contribution through payroll cuts your income tax too — and it also skips Social Security and Medicare (FICA) tax, so each dollar saves a little more. This shows your take-home now and the tax saved by the next $1,000 into each, using the same federal + FICA + state engine as the take-home tile.\n\nThe figures are exact for the numbers you enter. HSA money is meant for medical costs and needs an HSA-eligible health plan, so it isn't a free lunch — but if you have one, it's the most tax-efficient dollar on your paycheck. Filing status, state, and income flow to and from My Situation. Tuning the W-4 itself arrives with the withholding estimator in a later wave.",
+  how: "Pre-tax contributions lower your tax bill, but not all of them the same way. A traditional 401(k) deferral cuts your income tax. An HSA contribution through payroll cuts your income tax too, and it also skips Social Security and Medicare (FICA) tax, so each dollar saves a little more. This shows your take-home now and the tax saved by the next $1,000 into each, using the same federal + FICA + state engine as the take-home tile.\n\nThe figures are exact for the numbers you enter. HSA money is meant for medical costs and needs an HSA-eligible health plan, so it isn't a free lunch, but if you have one, it's the most tax-efficient dollar on your paycheck. Filing status, state, and income flow to and from My Situation. Tuning the W-4 itself arrives with the withholding estimator in a later wave.",
   resources: [
     {
-      label: "IRS, retirement topics — contributions",
+      label: "IRS, retirement topics: contributions",
       url: "https://www.irs.gov/retirement-plans",
     },
     { label: "IRS Publication 969 (HSAs)", url: "https://www.irs.gov/publications/p969" },

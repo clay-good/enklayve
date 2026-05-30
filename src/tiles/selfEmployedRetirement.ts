@@ -158,7 +158,7 @@ export function mountSelfEmployedRetirement(ctx: TileContext): void {
       {
         label: "Which lets you save more",
         value: solo.greaterThan(sep)
-          ? `The Solo 401(k), by ${fmt(solo.subtract(sep))} — its employee deferral stacks on top of the same employer share.`
+          ? `The Solo 401(k), by ${fmt(solo.subtract(sep))}: its employee deferral stacks on top of the same employer share.`
           : "They're equal at this income; the SEP-IRA is simpler to open and run.",
       },
     ];
@@ -227,7 +227,7 @@ export const selfEmployedRetirementTile: TileDefinition = {
     "contribution",
   ],
   status: "ready",
-  how: "Self-employment doesn't shut you out of retirement accounts — the opposite. Two plans let you contribute as both the 'employer' and the 'employee' of your own business. We start from your net self-employment earnings (your profit minus the deductible half of self-employment tax), then compute each plan.\n\nA SEP-IRA lets you contribute about 20% of those net earnings (the employer share), capped at the annual defined-contribution limit. A Solo 401(k) lets you make that same ~20% employer contribution AND add an employee deferral on top, up to the 401(k) elective limit (plus a catch-up if you're 50 or older), with the combined total capped at the same overall limit. Because the deferral stacks on top, the Solo 401(k) almost always lets you save more — especially at low-to-moderate profit — while the SEP-IRA is simpler to open and administer.\n\nFiling status and income flow to and from My Situation. The limits carry their IRS citation; this is the contribution ceiling, not advice on how much to actually save.",
+  how: "Self-employment doesn't shut you out of retirement accounts; the opposite. Two plans let you contribute as both the 'employer' and the 'employee' of your own business. We start from your net self-employment earnings (your profit minus the deductible half of self-employment tax), then compute each plan.\n\nA SEP-IRA lets you contribute about 20% of those net earnings (the employer share), capped at the annual defined-contribution limit. A Solo 401(k) lets you make that same ~20% employer contribution AND add an employee deferral on top, up to the 401(k) elective limit (plus a catch-up if you're 50 or older), with the combined total capped at the same overall limit. Because the deferral stacks on top, the Solo 401(k) almost always lets you save more, especially at low-to-moderate profit, while the SEP-IRA is simpler to open and administer.\n\nFiling status and income flow to and from My Situation. The limits carry their IRS citation; this is the contribution ceiling, not advice on how much to actually save.",
   resources: [
     {
       label: "IRS, retirement plans for the self-employed",

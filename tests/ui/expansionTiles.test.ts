@@ -8,6 +8,7 @@ import { mountHealthPlan } from "../../src/tiles/healthPlan";
 import { mountZeroBudget } from "../../src/tiles/zeroBudget";
 import { mountCashFlow } from "../../src/tiles/cashFlow";
 import { mountBudgetOverview } from "../../src/tiles/budgetOverview";
+import { mountDebtFreedom } from "../../src/tiles/debtFreedom";
 import { mountLifeInsurance } from "../../src/tiles/lifeInsurance";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
@@ -430,6 +431,67 @@ describe("Budget Overview", () => {
   });
 });
 
+describe("Debt Freedom Planner", () => {
+  const params = (): URLSearchParams =>
+    new URLSearchParams({
+      k: "2",
+      c0: "Visa",
+      b0: "1000",
+      r0: "20",
+      m0: "50",
+      c1: "Car",
+      b1: "4000",
+      r1: "6",
+      m1: "150",
+      x: "300",
+      meth: "snowball",
+    });
+
+  it("shows the freedom date, the donut, and both method cards", () => {
+    const { root } = mount(mountDebtFreedom, params());
+    expect(rowValue(root, "Freedom date (Snowball)")).toBeTruthy();
+    expect(rowValue(root, "Total interest")).toBeTruthy();
+    expect(root.querySelector(".chart--donut")).not.toBeNull();
+    // Both methods compared; snowball is the chosen one by default.
+    expect(root.querySelectorAll(".compare-card").length).toBe(2);
+    expect(root.querySelector(".compare-card--chosen")).not.toBeNull();
+  });
+
+  it("recomputes for the chosen method when a compare card is clicked", () => {
+    const { root, lastParams } = mount(mountDebtFreedom, params());
+    const avalanche = Array.from(root.querySelectorAll("button")).find(
+      (b) => b.getAttribute("aria-label") === "Use the Avalanche method",
+    )!;
+    avalanche.click();
+    expect(lastParams()?.get("meth")).toBe("avalanche");
+    expect(rowValue(root, "Freedom date (Avalanche)")).toBeTruthy();
+  });
+
+  it("reads debts from My Situation when the URL has none", () => {
+    const profile = new SituationStore();
+    profile.set("debts", [{ name: "Card", balance: 2000, ratePct: 18 }]);
+    const { root } = mount(mountDebtFreedom, new URLSearchParams({ x: "200" }), profile);
+    expect(root.textContent).toContain("Card");
+    expect(rowValue(root, "Total owed")).toContain("$2,000");
+  });
+
+  it("warns plainly when the budget can't outrun the interest", () => {
+    const { root } = mount(
+      mountDebtFreedom,
+      new URLSearchParams({ k: "1", c0: "Trap", b0: "10000", r0: "30", m0: "10", x: "0" }),
+    );
+    expect(root.querySelector('[role="alert"]')).not.toBeNull();
+  });
+
+  it("celebrates when there is no debt to pay", () => {
+    const { root } = mount(
+      mountDebtFreedom,
+      new URLSearchParams({ k: "1", c0: "Paid", b0: "0", r0: "0", m0: "0", x: "0" }),
+    );
+    expect(root.querySelector(".ph-empty")).not.toBeNull();
+  });
+});
+
 describe("Life Insurance Needs", () => {
   it("sums the DIME need and subtracts offsets, reading income from My Situation", () => {
     const profile = new SituationStore();
@@ -498,6 +560,22 @@ describe("expansion tiles accessibility", () => {
         c1: "Groceries",
         a1: "600",
         d1: "8",
+      }),
+    },
+    {
+      name: "debt-freedom",
+      mount: mountDebtFreedom,
+      params: new URLSearchParams({
+        k: "2",
+        c0: "Visa",
+        b0: "1000",
+        r0: "20",
+        m0: "50",
+        c1: "Car",
+        b1: "4000",
+        r1: "6",
+        m1: "150",
+        x: "300",
       }),
     },
     {

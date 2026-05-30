@@ -115,7 +115,7 @@ export function mountMedicaid(ctx: TileContext): void {
       label: "Likely eligible (adult, by income)",
       value:
         r.eligible === null
-          ? "Limited — see note"
+          ? "Limited (see note)"
           : r.eligible
             ? "Yes, at this income"
             : "No, income is above the threshold",
@@ -126,7 +126,7 @@ export function mountMedicaid(ctx: TileContext): void {
       label: "Note",
       value: r.expansionState
         ? "Based on adult MAGI eligibility. Children, pregnancy, and disability have separate, often higher, thresholds."
-        : "This state hasn't expanded Medicaid, so most adults without children don't qualify on income alone. Parents, pregnant people, children (CHIP), and people with disabilities may still qualify under separate rules — check your state.",
+        : "This state hasn't expanded Medicaid, so most adults without children don't qualify on income alone. Parents, pregnant people, children (CHIP), and people with disabilities may still qualify under separate rules; check your state.",
     });
 
     resultContainer.replaceChildren(
@@ -186,7 +186,7 @@ export const medicaidTile: TileDefinition = {
   description: "MAGI thresholds by state, expansion vs non-expansion.",
   keywords: ["medicaid", "magi", "health", "expansion", "coverage"],
   status: "ready",
-  how: "Most adult Medicaid eligibility is based on modified adjusted gross income (MAGI) as a percentage of the federal poverty line. In states that expanded Medicaid under the Affordable Care Act, adults at or below 138% of the poverty line are generally eligible (DC covers adults to 215%). We compute your percentage of the line for your state's region and compare it to the threshold.\n\nIn states that did not expand, there is usually no broad coverage for adults on income alone — eligibility is limited to specific groups like parents, pregnant people, children, and people with disabilities, often at much lower income limits. We tell you your state's expansion status and flag this rather than guess a precise number. The agency makes the final determination.",
+  how: "Most adult Medicaid eligibility is based on modified adjusted gross income (MAGI) as a percentage of the federal poverty line. In states that expanded Medicaid under the Affordable Care Act, adults at or below 138% of the poverty line are generally eligible (DC covers adults to 215%). We compute your percentage of the line for your state's region and compare it to the threshold.\n\nIn states that did not expand, there is usually no broad coverage for adults on income alone; eligibility is limited to specific groups like parents, pregnant people, children, and people with disabilities, often at much lower income limits. We tell you your state's expansion status and flag this rather than guess a precise number. The agency makes the final determination.",
   resources: [
     {
       label: "Medicaid.gov, eligibility",

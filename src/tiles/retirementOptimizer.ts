@@ -221,7 +221,7 @@ export const retirementOptimizerTile: TileDefinition = {
   how: "Each account has a yearly IRS limit, and once you turn 50 (55 for an HSA) you get an extra 'catch-up' amount on top. We take this year's limit for your age and subtract what you've put in so far, so you can see exactly how much room is left to shelter from tax before the year ends.\n\nEvery limit here is read straight from the IRS notice for the current year and cites it, so you can check the figure yourself. Your 401(k) number flows into My Plan's 'capture the match' and 'fund retirement' steps.",
   resources: [
     {
-      label: "IRS, retirement topics — contribution limits",
+      label: "IRS, retirement topics: contribution limits",
       url: "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-contributions",
     },
     {

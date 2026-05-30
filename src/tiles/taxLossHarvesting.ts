@@ -213,7 +213,7 @@ export const taxLossHarvestingTile: TileDefinition = {
   description: "Turn investment losses into a tax saving, deterministically.",
   keywords: ["tax loss harvesting", "capital loss", "wash sale", "carryforward", "schedule d"],
   status: "ready",
-  how: "Selling an investment at a loss lets that loss offset capital gains, and any leftover loss offsets up to $3,000 of ordinary income each year ($1,500 if married filing separately), with the rest carried forward to future years.\n\nWe net your short-term and long-term gains and losses the way Schedule D does — like characters net first, then a net loss in one bucket offsets a net gain in the other — and estimate the tax saved at the rates you enter. Watch the wash-sale rule: if you buy the same or a substantially identical security within 30 days before or after the sale, the loss is disallowed.",
+  how: "Selling an investment at a loss lets that loss offset capital gains, and any leftover loss offsets up to $3,000 of ordinary income each year ($1,500 if married filing separately), with the rest carried forward to future years.\n\nWe net your short-term and long-term gains and losses the way Schedule D does (like characters net first, then a net loss in one bucket offsets a net gain in the other) and estimate the tax saved at the rates you enter. Watch the wash-sale rule: if you buy the same or a substantially identical security within 30 days before or after the sale, the loss is disallowed.",
   resources: [
     {
       label: "IRS Topic No. 409, Capital Gains and Losses",

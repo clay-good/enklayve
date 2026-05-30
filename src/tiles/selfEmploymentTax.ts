@@ -189,7 +189,7 @@ export const selfEmploymentTaxTile: TileDefinition = {
   description: "SE tax plus the quarterly estimated payment schedule.",
   keywords: ["1099", "se tax", "quarterly", "estimated", "self employed", "schedule c"],
   status: "ready",
-  how: "When you work for yourself you pay both halves of Social Security and Medicare, so the rate is the full 15.3% rather than the 7.65% an employee sees. We apply it to 92.35% of your net profit (the slice that excludes the employer-equivalent share), cap the 12.4% Social Security portion at the annual wage base, and add the 0.9% Additional Medicare surtax on earnings above your filing-status threshold.\n\nHalf of the total is deductible above the line, so it lowers the income your income tax is figured on. Because no employer withholds for you, the IRS expects four roughly equal estimated payments across the year — we split your total into the 1040-ES quarters so you can see each one.",
+  how: "When you work for yourself you pay both halves of Social Security and Medicare, so the rate is the full 15.3% rather than the 7.65% an employee sees. We apply it to 92.35% of your net profit (the slice that excludes the employer-equivalent share), cap the 12.4% Social Security portion at the annual wage base, and add the 0.9% Additional Medicare surtax on earnings above your filing-status threshold.\n\nHalf of the total is deductible above the line, so it lowers the income your income tax is figured on. Because no employer withholds for you, the IRS expects four roughly equal estimated payments across the year: we split your total into the 1040-ES quarters so you can see each one.",
   resources: [
     {
       label: "IRS, self-employment tax",

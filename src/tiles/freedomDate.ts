@@ -3,8 +3,9 @@
  * date your debts are gone. Deterministic month-by-month payoff at a fixed
  * payment (the engine's {@link debtPayoff}). Defaults pull the balance and a
  * balance-weighted rate from the debts in My Situation, so a number entered
- * once flows here. The full snowball-vs-avalanche comparison is the Debt Freedom
- * Planner (a later wave); this answers the single question "when am I free?".
+ * once flows here. The full multi-debt snowball-vs-avalanche comparison is the
+ * Debt Freedom Planner (debtFreedom.ts); this answers the single question
+ * "when am I free?" for one balance.
  */
 import { Money } from "../engine/money";
 import { debtPayoff } from "../engine/finance";

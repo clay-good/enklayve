@@ -188,7 +188,7 @@ export const socialSecurityTile: TileDefinition = {
     "ssa",
   ],
   status: "ready",
-  how: "Your Social Security retirement benefit is built around your Primary Insurance Amount (PIA) — the monthly benefit you'd get at your Full Retirement Age (FRA). Your SSA statement lists it. Claim before FRA and the benefit is permanently reduced (5/9 of 1% per month for the first 36 months early, then 5/12 of 1%); wait past FRA and you earn delayed-retirement credits of 2/3 of 1% per month (8% per year) up to age 70.\n\nWe apply that published formula to the PIA and birth year you enter, so you can compare claiming at 62, at FRA, and at 70. We don't estimate your earnings record — start from the PIA on your statement. When you actually claim depends on your health, other income, and a spouse's benefit, so treat this as a comparison, not advice.",
+  how: "Your Social Security retirement benefit is built around your Primary Insurance Amount (PIA): the monthly benefit you'd get at your Full Retirement Age (FRA). Your SSA statement lists it. Claim before FRA and the benefit is permanently reduced (5/9 of 1% per month for the first 36 months early, then 5/12 of 1%); wait past FRA and you earn delayed-retirement credits of 2/3 of 1% per month (8% per year) up to age 70.\n\nWe apply that published formula to the PIA and birth year you enter, so you can compare claiming at 62, at FRA, and at 70. We don't estimate your earnings record; start from the PIA on your statement. When you actually claim depends on your health, other income, and a spouse's benefit, so treat this as a comparison, not advice.",
   resources: [
     {
       label: "SSA, benefit reduction for early retirement",

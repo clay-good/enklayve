@@ -822,3 +822,90 @@ describe("balance transfer break-even", () => {
     expect(r.interestSaved).toBeNull(); // can't compare savings when one path never ends
   });
 });
+
+import { debtFreedomPlan } from "../../src/engine/finance";
+
+/**
+ * Golden cases for the debt-freedom planner (BUILD-SPEC-2 §6.2): the snowball
+ * (smallest balance first) vs the avalanche (highest rate first), both run on a
+ * fixed monthly budget of the minimums plus an extra, rolling freed-up payments
+ * forward. Deterministic; pure arithmetic on the user's own balances.
+ */
+describe("debt freedom planner", () => {
+  it("retires both methods in the same time and order at 0% interest", () => {
+    // No interest → the order can't change the months, only which clears first.
+    const r = debtFreedomPlan(
+      [
+        { name: "A", balance: 1000, ratePct: 0, minPayment: 50 },
+        { name: "B", balance: 500, ratePct: 0, minPayment: 50 },
+      ],
+      100,
+    );
+    expect(r.monthlyTotal).toBe(200); // 50 + 50 + 100 extra
+    expect(r.totalMinimum).toBe(100);
+    expect(r.snowball.months).toBe(8);
+    expect(r.avalanche.months).toBe(8);
+    expect(r.snowball.totalInterest.toNumber()).toBe(0);
+    expect(r.avalanche.totalInterest.toNumber()).toBe(0);
+    // Snowball clears the smaller balance (B) first; the rate tie keeps the
+    // avalanche in entry order, so it attacks A first.
+    expect(r.snowball.payoffOrder.map((p) => p.name)).toEqual(["B", "A"]);
+    expect(r.avalanche.payoffOrder.map((p) => p.name)).toEqual(["A", "B"]);
+    expect(r.interestSaved!.toNumber()).toBe(0);
+    expect(r.monthsSaved).toBe(0);
+  });
+
+  it("avalanche never costs more interest, and targets the highest rate first", () => {
+    const r = debtFreedomPlan(
+      [
+        { name: "Cheap", balance: 1000, ratePct: 5, minPayment: 50 },
+        { name: "Pricey", balance: 1000, ratePct: 25, minPayment: 50 },
+      ],
+      200,
+    );
+    expect(r.snowball.months).not.toBeNull();
+    expect(r.avalanche.months).not.toBeNull();
+    // Equal balances → snowball ties to entry order (Cheap first); avalanche
+    // always hits the 25% card first.
+    expect(r.snowball.payoffOrder[0]!.name).toBe("Cheap");
+    expect(r.avalanche.payoffOrder[0]!.name).toBe("Pricey");
+    // The avalanche minimizes interest, so it never pays more and here pays less.
+    expect(r.avalanche.totalInterest.toNumber()).toBeLessThan(r.snowball.totalInterest.toNumber());
+    expect(r.interestSaved!.toNumber()).toBeGreaterThan(0);
+    expect(r.monthsSaved!).toBeGreaterThanOrEqual(0);
+  });
+
+  it("matches single-debt debtPayoff when there is one debt", () => {
+    const plan = debtFreedomPlan(
+      [{ name: "Card", balance: 1000, ratePct: 12, minPayment: 0 }],
+      100,
+    );
+    const single = debtPayoff(1000, 12, 100);
+    expect(plan.snowball.months).toBe(single!.months);
+    expect(plan.snowball.totalInterest.toNumber()).toBeCloseTo(single!.totalInterest.toNumber(), 6);
+  });
+
+  it("reports 'never' when the budget can't cover the interest", () => {
+    const r = debtFreedomPlan([{ name: "Trap", balance: 10000, ratePct: 30, minPayment: 10 }], 0);
+    expect(r.snowball.months).toBeNull();
+    expect(r.avalanche.months).toBeNull();
+    expect(r.interestSaved).toBeNull();
+    expect(r.monthsSaved).toBeNull();
+  });
+
+  it("ignores zero-balance debts and is deterministic", () => {
+    const debts = [
+      { name: "Paid", balance: 0, ratePct: 20, minPayment: 0 },
+      { name: "Visa", balance: 2000, ratePct: 19, minPayment: 60 },
+      { name: "Car", balance: 8000, ratePct: 6, minPayment: 200 },
+    ];
+    const a = debtFreedomPlan(debts, 300);
+    const b = debtFreedomPlan(debts, 300);
+    expect(a.snowball.months).toBe(b.snowball.months);
+    expect(a.avalanche.totalInterest.toNumber()).toBe(b.avalanche.totalInterest.toNumber());
+    // The already-paid debt isn't counted into the minimums.
+    expect(a.totalMinimum).toBe(260);
+    // Snowball attacks the smaller live balance (Visa) first.
+    expect(a.snowball.payoffOrder[0]!.name).toBe("Visa");
+  });
+});

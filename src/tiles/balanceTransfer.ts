@@ -107,7 +107,7 @@ export function mountBalanceTransfer(ctx: TileContext): void {
         : r.interestSaved.isNegative()
           ? {
               label: "Verdict",
-              value: `Keeping your card is cheaper by ${fmt(r.interestSaved.abs())} — the fee outweighs the savings.`,
+              value: `Keeping your card is cheaper by ${fmt(r.interestSaved.abs())}: the fee outweighs the savings.`,
               emphasis: true,
             }
           : {
@@ -119,16 +119,16 @@ export function mountBalanceTransfer(ctx: TileContext): void {
     const lines: BreakdownLine[] = [
       {
         label: "Current card",
-        value: `${r.currentInterest ? fmt(r.currentInterest) : "—"} interest · ${monthsText(r.currentMonths)}`,
+        value: `${r.currentInterest ? fmt(r.currentInterest) : "-"} interest · ${monthsText(r.currentMonths)}`,
       },
       { label: "Transfer fee", value: fmt(r.transferFee) },
       {
         label: "Transfer card",
-        value: `${r.transferInterest ? fmt(r.transferInterest) : "—"} interest · ${monthsText(r.transferMonths)}`,
+        value: `${r.transferInterest ? fmt(r.transferInterest) : "-"} interest · ${monthsText(r.transferMonths)}`,
       },
       {
         label: "Transfer total cost (fee + interest)",
-        value: r.transferTotalCost ? fmt(r.transferTotalCost) : "—",
+        value: r.transferTotalCost ? fmt(r.transferTotalCost) : "-",
       },
       verdict,
     ];
@@ -203,7 +203,7 @@ export const balanceTransferTile: TileDefinition = {
   description: "Does moving a balance beat the transfer fee?",
   keywords: ["balance transfer", "consolidation", "credit card", "0% apr", "break even", "debt"],
   status: "ready",
-  how: "Moving a credit-card balance to a 0%-intro card can save real money — but the transfer fee (often 3%) is paid upfront, and if you don't clear the balance before the intro rate ends, the post-intro APR returns. This compares both paths at the same monthly payment: the interest you'd pay keeping your current card versus the fee plus any interest on the transferred balance.\n\nThe math is exact given the numbers you enter. The big lever is your monthly payment: the more you pay, the more likely you clear the balance inside the 0% window and capture the full saving. If a path 'never' pays off, your payment isn't covering the interest — raise it to see a real comparison. Information, not advice.",
+  how: "Moving a credit-card balance to a 0%-intro card can save real money, but the transfer fee (often 3%) is paid upfront, and if you don't clear the balance before the intro rate ends, the post-intro APR returns. This compares both paths at the same monthly payment: the interest you'd pay keeping your current card versus the fee plus any interest on the transferred balance.\n\nThe math is exact given the numbers you enter. The big lever is your monthly payment: the more you pay, the more likely you clear the balance inside the 0% window and capture the full saving. If a path 'never' pays off, your payment isn't covering the interest; raise it to see a real comparison. Information, not advice.",
   resources: [
     {
       label: "CFPB, balance transfer credit cards",

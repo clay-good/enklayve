@@ -109,7 +109,7 @@ export function mountCollegeCost(ctx: TileContext): void {
       },
       {
         label: "Assumptions",
-        value: `${fields.costInflationPct}% college inflation, ${fields.expectedReturnPct}% return — both yours to change. Targets the full cost by freshman year.`,
+        value: `${fields.costInflationPct}% college inflation, ${fields.expectedReturnPct}% return, both yours to change. Targets the full cost by freshman year.`,
       },
     ];
 
@@ -174,7 +174,7 @@ export const collegeCostTile: TileDefinition = {
   description: "Project college costs and the monthly savings to fund them.",
   keywords: ["college", "529", "education", "tuition", "savings", "cost"],
   status: "ready",
-  how: "College costs tend to rise faster than general inflation, so a price today understates the bill years from now. This grows each future year of college at the inflation rate you choose, adds them up, and solves for the level monthly amount that would fully fund the total by the time college starts — counting what you've already saved and an assumed return on it.\n\nThe inflation and return rates are your assumptions, shown so you can change them; we never forecast markets. To keep it simple and a touch conservative, it targets having the whole cost saved by freshman year, though in reality you draw it down across the college years. Pair it with the FAFSA Student Aid Index estimator (coming in a later wave) to weigh grants and aid against the sticker price.",
+  how: "College costs tend to rise faster than general inflation, so a price today understates the bill years from now. This grows each future year of college at the inflation rate you choose, adds them up, and solves for the level monthly amount that would fully fund the total by the time college starts, counting what you've already saved and an assumed return on it.\n\nThe inflation and return rates are your assumptions, shown so you can change them; we never forecast markets. To keep it simple and a touch conservative, it targets having the whole cost saved by freshman year, though in reality you draw it down across the college years. Pair it with the FAFSA Student Aid Index estimator (coming in a later wave) to weigh grants and aid against the sticker price.",
   resources: [
     { label: "Federal Student Aid", url: "https://studentaid.gov/" },
     {

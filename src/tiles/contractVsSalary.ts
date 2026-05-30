@@ -132,7 +132,7 @@ export function mountContractVsSalary(ctx: TileContext): void {
       { label: "Roughly equal to a W-2 salary of", value: fmt(equivalentSalary), emphasis: true },
       {
         label: "Flip it",
-        value: `To match a salary offer, charge about the salary plus that employer FICA and benefits back — a common rule of thumb is a contractor rate 1.25–1.4× the salary's hourly wage.`,
+        value: `To match a salary offer, charge about the salary plus that employer FICA and benefits back: a common rule of thumb is a contractor rate 1.25–1.4× the salary's hourly wage.`,
       },
       {
         label: "Rule of thumb",
@@ -208,7 +208,7 @@ export const contractVsSalaryTile: TileDefinition = {
     "rate",
   ],
   status: "ready",
-  how: "A contractor rate and a salary look comparable but aren't. As a W-2 employee, your employer quietly pays half of your Social Security and Medicare (about 7.65% of your wages) and often covers benefits like health insurance, retirement matching, and paid time off. As a 1099 contractor you pay all of that yourself — both halves of FICA via self-employment tax, and every benefit out of pocket.\n\nSo we take your contractor gross (rate × billable hours), subtract the employer-side FICA an employer would otherwise have paid, and subtract the benefits you have to self-fund, to land on the rough W-2 salary your contract is worth. Flip it the other way and it shows why contractors typically charge well above a salaried worker's hourly wage.\n\nThis is a rule-of-thumb comparison to weigh an offer, not an exact, take-home-equalizing tax calculation — for your real tax, use the Quarterly Taxes tool. Filing status flows to and from My Situation.",
+  how: "A contractor rate and a salary look comparable but aren't. As a W-2 employee, your employer quietly pays half of your Social Security and Medicare (about 7.65% of your wages) and often covers benefits like health insurance, retirement matching, and paid time off. As a 1099 contractor you pay all of that yourself: both halves of FICA via self-employment tax, and every benefit out of pocket.\n\nSo we take your contractor gross (rate × billable hours), subtract the employer-side FICA an employer would otherwise have paid, and subtract the benefits you have to self-fund, to land on the rough W-2 salary your contract is worth. Flip it the other way and it shows why contractors typically charge well above a salaried worker's hourly wage.\n\nThis is a rule-of-thumb comparison to weigh an offer, not an exact, take-home-equalizing tax calculation; for your real tax, use the Quarterly Taxes tool. Filing status flows to and from My Situation.",
   resources: [
     {
       label: "IRS, independent contractor vs employee",

@@ -145,16 +145,20 @@ export function mountZeroBudget(ctx: TileContext): void {
     const fmt = (m: Money): string => m.format(ctx.locale);
 
     const status: BreakdownLine = remaining.isZero()
-      ? { label: "Status", value: "Balanced — every dollar has a job. 🎉", emphasis: true }
+      ? {
+          label: "Status",
+          value: "Balanced. Every dollar has a job, and that is the whole game. 🎉",
+          emphasis: true,
+        }
       : remaining.isNegative()
         ? {
             label: "Status",
-            value: `Over-assigned by ${fmt(remaining.abs())}. Trim a category to balance.`,
+            value: `Over-assigned by ${fmt(remaining.abs())}. Trim a category until you are back to zero.`,
             emphasis: true,
           }
         : {
             label: "Status",
-            value: `${fmt(remaining)} still to assign. Give it a job, even saving counts.`,
+            value: `${fmt(remaining)} still needs a job. Saving and debt payoff count, so do not leave it floating.`,
             emphasis: true,
           };
 
@@ -396,7 +400,7 @@ export function mountZeroBudget(ctx: TileContext): void {
     field("Monthly income to assign", incomeInput),
     el("p", {
       class: "field-group-label",
-      text: "Categories — drag to reorder, tap a chip to add",
+      text: "Categories: drag to reorder, or tap a chip to add one.",
     }),
     categoriesContainer,
     chipsContainer,
@@ -415,7 +419,7 @@ export const zeroBudgetTile: TileDefinition = {
   description: "Give every dollar a job until nothing's left to assign.",
   keywords: ["zero based budget", "budget", "every dollar", "envelope", "cash flow", "categories"],
   status: "ready",
-  how: "A zero-based budget assigns every dollar of your monthly income to a category, savings and debt payoff included, until what's left to assign is exactly zero. We open with the big buckets most budgets share — housing, transport, groceries, investing, taxes, and the rest — so you start from a shape, not a blank page. Adjust the amounts, add or remove categories, drag to reorder, and watch the donut and the income-to-spent flow bar update live.\n\nWe add up your categories and show the remainder: assign it (don't leave it floating), and never go below zero (that means you've assigned money you don't have). It pairs with the 50/30/20 plan: use that for the big-picture split, this to name the actual jobs. Income defaults from My Situation if you've entered it.",
+  how: "A zero-based budget gives every dollar of your monthly income a job, savings and debt payoff included, until what's left to assign is exactly zero. That is the whole idea: tell your money where to go instead of wondering where it went. We open with the big buckets most budgets share, housing, transport, groceries, investing, taxes, and the rest, so you start from a shape, not a blank page. Adjust the amounts, add or remove categories, drag to reorder, and watch the donut and the income-to-spent flow bar update live.\n\nWe add up your categories and show the remainder: assign it, because a dollar without a job tends to disappear, and never go below zero, which would mean you have assigned money you don't have. It pairs with the 50/30/20 plan: use that for the big-picture split, and this to name the actual jobs. Income defaults from My Situation if you've entered it.",
   resources: [
     {
       label: "CFPB, making a budget",

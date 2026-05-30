@@ -156,7 +156,7 @@ export const disabilityTile: TileDefinition = {
     "protection",
   ],
   status: "ready",
-  how: "A disability is more likely than an early death during your working years, and it threatens the same thing — your income. This sizes the gap: pick the share of pay you'd want to replace (group long-term disability commonly covers around 60%, and benefits you pay for yourself are usually tax-free), then subtract any coverage you already have and other income that would continue. What's left is the monthly benefit worth shopping for.\n\nIt's a starting estimate, not advice. Check your employer's plan first, then compare an individual policy for the gap. Definitions like 'own-occupation' coverage matter a lot — confirm specifics with a licensed agent.",
+  how: "A disability is more likely than an early death during your working years, and it threatens the same thing: your income. This sizes the gap: pick the share of pay you'd want to replace (group long-term disability commonly covers around 60%, and benefits you pay for yourself are usually tax-free), then subtract any coverage you already have and other income that would continue. What's left is the monthly benefit worth shopping for.\n\nIt's a starting estimate, not advice. Check your employer's plan first, then compare an individual policy for the gap. Definitions like 'own-occupation' coverage matter a lot; confirm specifics with a licensed agent.",
   resources: [
     {
       label: "CFPB, disability insurance basics",

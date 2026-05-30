@@ -174,13 +174,13 @@ export function mountAcaPtc(ctx: TileContext): void {
       lines.push({
         label: "Heads up",
         value:
-          "Income below 100% of the poverty line usually points to Medicaid (in expansion states) rather than a marketplace credit — check the Medicaid tile.",
+          "Income below 100% of the poverty line usually points to Medicaid (in expansion states) rather than a marketplace credit. Check the Medicaid tile.",
       });
     } else if (!r.eligible) {
       lines.push({
         label: "Note",
         value:
-          "Your expected contribution already covers the benchmark plan, so there's no credit at this income — but a plan cheaper than the benchmark still costs you less.",
+          "Your expected contribution already covers the benchmark plan, so there's no credit at this income, but a plan cheaper than the benchmark still costs you less.",
       });
     }
 
@@ -240,7 +240,7 @@ export const acaPtcTile: TileDefinition = {
   description: "Marketplace subsidy from the applicable-percentage table.",
   keywords: ["aca", "obamacare", "premium tax credit", "subsidy", "marketplace", "healthcare.gov"],
   status: "ready",
-  how: "If you buy health coverage on the marketplace, the premium tax credit caps what you pay for a benchmark plan at a set share of your income. We compute that expected contribution — your income times the applicable percentage for your income relative to the federal poverty line — and subtract it from the benchmark premium to estimate your monthly credit. Under the enhanced rules in effect through 2025, that share tops out at 8.5% of income with no cliff above 400% of the poverty line.\n\nThe applicable-percentage table is bundled and cited. The one figure that's local — the benchmark (second-lowest-cost silver) plan premium for your county and ages — you enter yourself; look it up with the HealthCare.gov plan preview or your state marketplace. The actual credit is reconciled on your tax return (Form 8962) against your real income, so treat this as an estimate.",
+  how: "If you buy health coverage on the marketplace, the premium tax credit caps what you pay for a benchmark plan at a set share of your income. We compute that expected contribution (your income times the applicable percentage for your income relative to the federal poverty line) and subtract it from the benchmark premium to estimate your monthly credit. Under the enhanced rules in effect through 2025, that share tops out at 8.5% of income with no cliff above 400% of the poverty line.\n\nThe applicable-percentage table is bundled and cited. The one figure that's local, the benchmark (second-lowest-cost silver) plan premium for your county and ages, you enter yourself; look it up with the HealthCare.gov plan preview or your state marketplace. The actual credit is reconciled on your tax return (Form 8962) against your real income, so treat this as an estimate.",
   resources: [
     {
       label: "HealthCare.gov, see plans & prices",

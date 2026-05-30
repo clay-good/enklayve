@@ -101,7 +101,7 @@ export function mountSinkingFund(ctx: TileContext): void {
         },
         {
           label: "Where you stand",
-          value: "You're already on track — your savings alone reach the goal. 🎉",
+          value: "You're already on track: your savings alone reach the goal. 🎉",
           emphasis: true,
         },
       ];
