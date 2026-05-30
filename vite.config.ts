@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { renderToolsIndex } from "./scripts/tools-index";
+import { toolPages } from "./scripts/tool-pages";
+import { renderSitemap, renderRobots, SITE_ORIGIN } from "./scripts/sitemap";
 import { renderServiceWorker, renderWebManifest } from "./scripts/service-worker";
 
 const REPO_ROOT = resolve(__dirname);
@@ -18,6 +20,33 @@ function staticToolsIndex(): Plugin {
     apply: "build",
     generateBundle() {
       this.emitFile({ type: "asset", fileName: "tools.html", source: renderToolsIndex() });
+    },
+  };
+}
+
+/**
+ * Emit the crawlability surface (BUILD-SPEC.md §11, Phase 11): one pre-rendered
+ * static shell per tile, plus a sitemap listing every indexable URL and a
+ * robots.txt that advertises it. Each is rendered in scripts/ so a test guards
+ * it against registry drift.
+ */
+function staticSeo(): Plugin {
+  return {
+    name: "enklayve-static-seo",
+    apply: "build",
+    generateBundle() {
+      const pages = toolPages();
+      for (const page of pages) {
+        this.emitFile({ type: "asset", fileName: page.fileName, source: page.source });
+      }
+      // Indexable URLs: the home, the All Tools index, and every tool shell.
+      const paths = ["/", "/tools.html", ...pages.map((p) => `/${p.fileName}`)];
+      this.emitFile({
+        type: "asset",
+        fileName: "sitemap.xml",
+        source: renderSitemap(SITE_ORIGIN, paths),
+      });
+      this.emitFile({ type: "asset", fileName: "robots.txt", source: renderRobots(SITE_ORIGIN) });
     },
   };
 }
@@ -78,7 +107,7 @@ function offlinePwa(): Plugin {
 export default defineConfig({
   root: REPO_ROOT,
   publicDir: resolve(REPO_ROOT, "public"),
-  plugins: [staticToolsIndex(), offlinePwa()],
+  plugins: [staticToolsIndex(), staticSeo(), offlinePwa()],
   build: {
     outDir: resolve(REPO_ROOT, "dist"),
     emptyOutDir: true,
