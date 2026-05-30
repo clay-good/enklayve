@@ -43,6 +43,7 @@ import { rentVsBuyTile } from "./rentVsBuy";
 import { healthPlanTile } from "./healthPlan";
 import { zeroBudgetTile } from "./zeroBudget";
 import { cashFlowTile } from "./cashFlow";
+import { budgetOverviewTile } from "./budgetOverview";
 import { lifeInsuranceTile } from "./lifeInsurance";
 import { fplTile } from "./fpl";
 import { eitcTile } from "./eitc";
@@ -110,6 +111,7 @@ export const TILES: TileDefinition[] = [
   freedomDateTile,
 
   // --- Budgeting & Cash Flow ---
+  budgetOverviewTile,
   spendingPlanTile,
   zeroBudgetTile,
   cashFlowTile,

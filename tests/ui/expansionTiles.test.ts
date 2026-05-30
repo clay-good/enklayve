@@ -7,6 +7,7 @@ import { mountRentVsBuy } from "../../src/tiles/rentVsBuy";
 import { mountHealthPlan } from "../../src/tiles/healthPlan";
 import { mountZeroBudget } from "../../src/tiles/zeroBudget";
 import { mountCashFlow } from "../../src/tiles/cashFlow";
+import { mountBudgetOverview } from "../../src/tiles/budgetOverview";
 import { mountLifeInsurance } from "../../src/tiles/lifeInsurance";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
@@ -358,6 +359,77 @@ describe("Cash-Flow Timeline", () => {
   });
 });
 
+describe("Budget Overview", () => {
+  // income 5000, three lines summing 2700 → 2300 left to assign.
+  const params = (): URLSearchParams =>
+    new URLSearchParams({
+      inc: "5000",
+      pay: "1",
+      sb: "800",
+      k: "3",
+      c0: "Housing",
+      a0: "1600",
+      d0: "1",
+      c1: "Groceries",
+      a1: "600",
+      d1: "8",
+      c2: "Fun",
+      a2: "500",
+      d2: "0",
+    });
+
+  it("shows the allocation: income, assigned, and left to assign", () => {
+    const { root } = mount(mountBudgetOverview, params());
+    expect(rowValue(root, "Monthly income")).toContain("$5,000");
+    expect(rowValue(root, "Total assigned")).toContain("$2,700");
+    expect(rowValue(root, "Left to assign")).toContain("$2,300");
+  });
+
+  it("reads income from My Situation when not in the URL", () => {
+    const profile = new SituationStore();
+    profile.set("annualIncome", 72000);
+    const { root } = mount(mountBudgetOverview, new URLSearchParams(), profile);
+    // 72000 / 12 = 6000 monthly, nothing assigned yet → all 6000 left.
+    expect(rowValue(root, "Monthly income")).toContain("$6,000");
+  });
+
+  it("walks the month and surfaces the lowest balance when lines are dated", () => {
+    const { root } = mount(mountBudgetOverview, params());
+    // Day 1: 800 + 5000 income − 1600 housing = 4200; day 8: − 600 = 3600.
+    expect(rowValue(root, "Lowest balance this month")).toBeTruthy();
+    expect(root.querySelector(".chart--timeline")).not.toBeNull();
+  });
+
+  it("flags a below-zero day on the timeline", () => {
+    const { root } = mount(
+      mountBudgetOverview,
+      new URLSearchParams({
+        inc: "2000",
+        pay: "15",
+        sb: "200",
+        k: "1",
+        c0: "Rent",
+        a0: "1500",
+        d0: "1",
+      }),
+    );
+    // Day 1: 200 − 1500 = −1300 before the day-15 paycheck.
+    expect(root.querySelector(".balance-bar--neg")).not.toBeNull();
+    expect(rowValue(root, "Heads up")).toContain("day 1");
+  });
+
+  it("renders the allocation donut, and offers the timeline once a line is dated", () => {
+    // No dated lines → donut present, timeline replaced by a prompt.
+    const undated = mount(
+      mountBudgetOverview,
+      new URLSearchParams({ inc: "5000", k: "1", c0: "Housing", a0: "1600", d0: "0" }),
+    );
+    expect(undated.root.querySelector(".chart--donut")).not.toBeNull();
+    expect(undated.root.querySelector(".chart--timeline")).toBeNull();
+    expect(undated.root.textContent).toContain("Add a due day");
+  });
+});
+
 describe("Life Insurance Needs", () => {
   it("sums the DIME need and subtracts offsets, reading income from My Situation", () => {
     const profile = new SituationStore();
@@ -410,6 +482,22 @@ describe("expansion tiles accessibility", () => {
         l0: "Rent",
         t0: "bill",
         m0: "1500",
+      }),
+    },
+    {
+      name: "budget-overview",
+      mount: mountBudgetOverview,
+      params: new URLSearchParams({
+        inc: "5000",
+        pay: "1",
+        sb: "800",
+        k: "2",
+        c0: "Housing",
+        a0: "1600",
+        d0: "1",
+        c1: "Groceries",
+        a1: "600",
+        d1: "8",
       }),
     },
     {
