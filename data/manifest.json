@@ -315,6 +315,19 @@
       "contentHash": "28d5400b5ebf24eec8012433f629f87a6096347e2cc72718b0e760d3bafe4215"
     },
     {
+      "id": "aca-2024",
+      "kind": "aca",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "aca-2024.json",
+      "sourceUrl": "https://www.irs.gov/affordable-care-act/individuals-and-families/the-premium-tax-credit-the-basics",
+      "sourceDocument": "IRS Premium Tax Credit applicable percentages (ARPA, extended by the Inflation Reduction Act through 2025; IRC §36B(b)(3)(A)(iii))",
+      "dateRetrieved": "2026-05-29",
+      "contentHash": "9d8a833e8bb50c3df0a1412aeb79e5c727f956a384c0295e9b7c0f84f4bfa034"
+    },
+    {
       "id": "social-security-2024",
       "kind": "social-security",
       "version": "2024.0",

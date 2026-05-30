@@ -1,0 +1,17 @@
+{
+  "year": 2024,
+  "applicablePercentage": [
+    { "fplLow": 0, "fplHigh": 150, "percentageLow": 0, "percentageHigh": 0 },
+    { "fplLow": 150, "fplHigh": 200, "percentageLow": 0, "percentageHigh": 2.0 },
+    { "fplLow": 200, "fplHigh": 250, "percentageLow": 2.0, "percentageHigh": 4.0 },
+    { "fplLow": 250, "fplHigh": 300, "percentageLow": 4.0, "percentageHigh": 6.0 },
+    { "fplLow": 300, "fplHigh": 400, "percentageLow": 6.0, "percentageHigh": 8.5 },
+    { "fplLow": 400, "fplHigh": null, "percentageLow": 8.5, "percentageHigh": 8.5 }
+  ],
+  "citation": {
+    "sourceUrl": "https://www.irs.gov/affordable-care-act/individuals-and-families/the-premium-tax-credit-the-basics",
+    "sourceDocument": "IRS Premium Tax Credit applicable percentages (ARPA, extended by the Inflation Reduction Act through 2025; IRC §36B(b)(3)(A)(iii))",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2026-05-29"
+  }
+}

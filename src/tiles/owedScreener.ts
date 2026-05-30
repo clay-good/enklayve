@@ -219,11 +219,11 @@ export function mountOwedScreener(ctx: TileContext): void {
         citation: fpl.citation,
       });
     }
-    if (pctOfLine >= 100 && pctOfLine <= 400) {
+    if (pctOfLine >= 100) {
       findings.push({
         program: "ACA marketplace subsidies (likely)",
         estimate: "Premium tax credit",
-        note: `At ${pctOfLine.toFixed(0)}% of the poverty line you're in the 100–400% range where marketplace premium tax credits apply.`,
+        note: `At ${pctOfLine.toFixed(0)}% of the poverty line you likely qualify for a marketplace premium tax credit (enhanced rules through 2025 remove the old 400% cliff). Use the ACA Premium Tax Credit tool for a dollar estimate.`,
         citation: fpl.citation,
       });
     }

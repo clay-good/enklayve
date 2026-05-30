@@ -7,6 +7,7 @@ import { mountOwedScreener } from "../../src/tiles/owedScreener";
 import { mountSaversCredit } from "../../src/tiles/saversCredit";
 import { mountSnap } from "../../src/tiles/snap";
 import { mountMedicaid } from "../../src/tiles/medicaid";
+import { mountAcaPtc } from "../../src/tiles/acaPtc";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
@@ -160,6 +161,38 @@ describe("Medicaid tile", () => {
   });
 });
 
+describe("ACA Premium Tax Credit", () => {
+  it("credits the benchmark above the expected contribution at 200% FPL", () => {
+    // Household of 1 at $30,120 = 200% FPL; applicable % = 2.0%; benchmark $600/mo.
+    const root = mount(mountAcaPtc, new URLSearchParams({ hh: "1", inc: "30120", bm: "600" }));
+    expect(rowValue(root, "Income vs poverty line")).toContain("200% FPL");
+    expect(rowValue(root, "Expected contribution")).toContain("2.00%");
+    expect(rowValue(root, "Estimated premium tax credit")).toContain("$549.80/mo");
+    expect(root.querySelector("a.cite-link")).not.toBeNull();
+  });
+
+  it("prompts for the per-county benchmark premium before estimating", () => {
+    const root = mount(mountAcaPtc, new URLSearchParams({ hh: "1", inc: "35000", bm: "0" }));
+    expect(root.querySelector(".ph-empty")).not.toBeNull();
+  });
+
+  it("flags income below the Medicaid floor", () => {
+    const root = mount(mountAcaPtc, new URLSearchParams({ hh: "1", inc: "10000", bm: "500" }));
+    expect(rowValue(root, "Heads up")).toContain("Medicaid");
+  });
+
+  it("reads household size, region, and income from My Situation", () => {
+    const profile = new SituationStore();
+    profile.set("householdSize", 3);
+    profile.set("stateCode", "hi");
+    profile.set("annualIncome", 50000);
+    const root = mount(mountAcaPtc, new URLSearchParams({ bm: "500" }), profile);
+    expect(root.querySelector<HTMLInputElement>('input[name="hh"]')?.value).toBe("3");
+    expect(root.querySelector<HTMLSelectElement>('select[name="region"]')?.value).toBe("hawaii");
+    expect(root.querySelector<HTMLInputElement>('input[name="inc"]')?.value).toBe("50000");
+  });
+});
+
 describe("Pillar 2 accessibility", () => {
   for (const tc of [
     { name: "fpl", mount: mountFpl, params: new URLSearchParams({ hh: "4", inc: "62400" }) },
@@ -184,6 +217,11 @@ describe("Pillar 2 accessibility", () => {
       name: "medicaid",
       mount: mountMedicaid,
       params: new URLSearchParams({ st: "CA", hh: "1", inc: "18000" }),
+    },
+    {
+      name: "aca-ptc",
+      mount: mountAcaPtc,
+      params: new URLSearchParams({ hh: "1", inc: "30120", bm: "600" }),
     },
   ]) {
     it(`${tc.name} has no axe violations`, async () => {

@@ -43,6 +43,7 @@ import { fplTile } from "./fpl";
 import { eitcTile } from "./eitc";
 import { childTaxCreditTile } from "./childTaxCredit";
 import { owedScreenerTile } from "./owedScreener";
+import { acaPtcTile } from "./acaPtc";
 import { saversCreditTile } from "./saversCredit";
 import { snapTile } from "./snap";
 import { medicaidTile } from "./medicaid";
@@ -106,13 +107,7 @@ export const TILES: TileDefinition[] = [
   eitcTile,
   childTaxCreditTile,
   owedScreenerTile,
-  soon(
-    "aca-ptc",
-    "ACA Premium Tax Credit",
-    "owed",
-    "Marketplace subsidy from the applicable-percentage table.",
-    ["aca", "obamacare", "premium tax credit", "subsidy"],
-  ),
+  acaPtcTile,
   saversCreditTile,
   snapTile,
   medicaidTile,

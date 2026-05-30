@@ -207,14 +207,31 @@ export const EitcCtcSchema = z.object({
 export type EitcCtcData = z.infer<typeof EitcCtcSchema>;
 export type FederalPovertyLevelData = z.infer<typeof FederalPovertyLevelSchema>;
 
-/** ACA applicable percentage table and county benchmark silver plan (IRS/CMS). */
+/**
+ * ACA premium-tax-credit applicable-percentage table (BUILD-SPEC.md §4.2). The
+ * share of household income a family is expected to contribute toward the
+ * benchmark (second-lowest-cost silver) plan, sliding linearly within each FPL
+ * band from `percentageLow` (at `fplLow`) to `percentageHigh` (at `fplHigh`).
+ * The top band is open-ended (`fplHigh: null`) and flat. These are the
+ * ARPA-enhanced percentages extended by the Inflation Reduction Act through
+ * 2025 (no 400%-FPL cliff). The benchmark premium itself is per-county and is
+ * supplied by the user (looked up on HealthCare.gov), not bundled.
+ */
 export const AcaSchema = z.object({
   year: z.number().int(),
   applicablePercentage: z
-    .array(z.object({ fplLow: z.number(), fplHigh: z.number(), percentage: z.number() }))
+    .array(
+      z.object({
+        fplLow: z.number().gte(0),
+        fplHigh: z.number().nullable(),
+        percentageLow: z.number().gte(0),
+        percentageHigh: z.number().gte(0),
+      }),
+    )
     .min(1),
   citation: CitationSchema,
 });
+export type AcaData = z.infer<typeof AcaSchema>;
 
 /**
  * Saver's Credit — the Retirement Savings Contributions Credit (BUILD-SPEC.md

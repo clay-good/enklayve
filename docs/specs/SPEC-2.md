@@ -333,7 +333,8 @@ Seventh wave (added now) — finishing the verifiable, no-new-dataset gaps acros
 
 463 tests pass (added the golden corpora for the new helpers and the tiles' behavior + axe coverage); `format:check`, `lint`, `typecheck`, `build`, `wrangler deploy --dry-run`, and the release audit are all green.
 
-- Deferred, and now narrowed to the items that genuinely need large, hard-to-verify datasets seeded first (held rather than ship an unverifiable number — SPEC §2.1, §9): the **W-4 Withholding Estimator** (Phase 5 — the IRS Pub 15-T percentage-method tables; it would complete the Paycheck Optimizer's withholding half), the **ACA premium-tax-credit estimator** (Phase 6 — per-county benchmark silver-plan data), and the **FAFSA Student Aid Index + Pell Grant** (Phase 6 — the full federal-methodology SAI tables, which the College Cost Planner will fold in for the aid side).
+- The **ACA premium-tax-credit estimator** (Phase 6 §4.2) shipped in a later wave — see the Phase 6 status above. It sidesteps the per-county benchmark dataset by having the user supply that one local figure (HealthCare.gov), shipping only the cited applicable-percentage table.
+- Still deferred, held rather than ship an unverifiable number (SPEC §2.1, §9): the **W-4 Withholding Estimator** (Phase 5 — the IRS Pub 15-T percentage-method tables; it would complete the Paycheck Optimizer's withholding half) and the **FAFSA Student Aid Index + Pell Grant** (Phase 6 — the full federal-methodology SAI tables, which the College Cost Planner will fold in for the aid side).
 
 Prompt to Claude Code:
 

@@ -22,6 +22,7 @@ import {
   type SnapData,
   type MedicaidData,
   type SocialSecurityData,
+  type AcaData,
 } from "./schemas";
 
 /** Federal Poverty Level region (BUILD-SPEC.md §4.1). */
@@ -63,6 +64,8 @@ export interface BundledData {
   snap(): SnapData | null;
   /** Medicaid expansion status and thresholds by state (BUILD-SPEC.md §4.3). */
   medicaid(): MedicaidData | null;
+  /** ACA premium-tax-credit applicable-percentage table (BUILD-SPEC.md §4.2). */
+  aca(): AcaData | null;
   /** Social Security claiming-age benefit adjustment rules (BUILD-SPEC-2 §6.7). */
   socialSecurity(): SocialSecurityData | null;
   /** A state jurisdiction by two-letter code (e.g. "ca"); null if unavailable. */
@@ -117,6 +120,7 @@ async function build(): Promise<BundledData> {
     saversCredit: () => dataOf("savers-credit-2024") as SaversCreditData | null,
     snap: () => dataOf("snap-fy2024-contiguous") as SnapData | null,
     medicaid: () => dataOf("medicaid-2024") as MedicaidData | null,
+    aca: () => dataOf("aca-2024") as AcaData | null,
     socialSecurity: () => dataOf("social-security-2024") as SocialSecurityData | null,
     state: (code) => dataOf(`state-${code.toLowerCase()}-income-tax-2024`) as Jurisdiction | null,
     statusOf: (id) => loaded.byId.get(id)?.status ?? "missing",

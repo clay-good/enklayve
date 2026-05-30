@@ -6,6 +6,7 @@
  */
 import { Money } from "./money";
 import type {
+  AcaData,
   EitcCtcData,
   FederalPovertyLevelData,
   FilingStatus,
@@ -272,5 +273,74 @@ export function medicaidEligibility(
     thresholdPctFpl: threshold,
     eligible: pct <= threshold,
     fplPercent: pct,
+  };
+}
+
+/** The applicable percentage for an exact FPL%, interpolated within its band. */
+export function acaApplicablePercent(fplPct: number, data: AcaData): number {
+  for (const band of data.applicablePercentage) {
+    if (band.fplHigh === null) {
+      if (fplPct >= band.fplLow) return band.percentageHigh;
+      continue;
+    }
+    if (fplPct >= band.fplLow && fplPct < band.fplHigh) {
+      const span = band.fplHigh - band.fplLow;
+      const frac = span > 0 ? (fplPct - band.fplLow) / span : 0;
+      return band.percentageLow + (band.percentageHigh - band.percentageLow) * frac;
+    }
+  }
+  return 0;
+}
+
+export interface AcaResult {
+  /** Household income as a percentage of the poverty line. */
+  fplPercent: number;
+  /** Applicable percentage of income expected toward the benchmark plan. */
+  applicablePercent: number;
+  /** Annual income expected to go toward the benchmark plan. */
+  expectedAnnualContribution: Money;
+  /** Monthly version of the expected contribution. */
+  expectedMonthlyContribution: Money;
+  /** Estimated monthly premium tax credit (≥ 0). */
+  monthlyCredit: Money;
+  /** Estimated annual premium tax credit (≥ 0). */
+  annualCredit: Money;
+  /** True when a credit is available (income ≥ 100% FPL and the benchmark exceeds the contribution). */
+  eligible: boolean;
+  /** True when income is below 100% FPL (Medicaid territory in expansion states). */
+  belowMedicaidFloor: boolean;
+}
+
+/**
+ * Estimate the ACA premium tax credit (§4.2). The credit is the benchmark
+ * (second-lowest-cost silver) plan premium minus the household's expected
+ * contribution — income times the applicable percentage for its FPL band, on the
+ * ARPA/IRA-enhanced schedule (no 400%-FPL cliff). The benchmark premium is
+ * per-county, so the user supplies it (from HealthCare.gov); we ship the cited
+ * applicable-percentage table and compute the rest deterministically.
+ */
+export function estimatePremiumTaxCredit(
+  input: { householdSize: number; annualIncome: number; benchmarkMonthlyPremium: number },
+  aca: AcaData,
+  fpl: FederalPovertyLevelData,
+): AcaResult {
+  const pct = fplPercent(input.annualIncome, input.householdSize, fpl);
+  const applicablePercent = acaApplicablePercent(pct, aca);
+  const expectedAnnual = Money.from(Math.max(0, input.annualIncome)).multiply(
+    applicablePercent / 100,
+  );
+  const benchmarkAnnual = Money.from(Math.max(0, input.benchmarkMonthlyPremium)).multiply(12);
+  const rawCredit = benchmarkAnnual.subtract(expectedAnnual);
+  const annualCredit = rawCredit.isNegative() ? Money.zero() : rawCredit;
+  const belowMedicaidFloor = pct < 100;
+  return {
+    fplPercent: pct,
+    applicablePercent,
+    expectedAnnualContribution: expectedAnnual,
+    expectedMonthlyContribution: expectedAnnual.divide(12),
+    monthlyCredit: annualCredit.divide(12),
+    annualCredit,
+    eligible: pct >= 100 && annualCredit.greaterThan(0),
+    belowMedicaidFloor,
   };
 }

@@ -7,9 +7,12 @@ import {
   estimateSaversCredit,
   estimateSnap,
   medicaidEligibility,
+  acaApplicablePercent,
+  estimatePremiumTaxCredit,
 } from "../../src/engine/benefits";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import type {
+  AcaData,
   EitcCtcData,
   FederalPovertyLevelData,
   MedicaidData,
@@ -28,6 +31,7 @@ let eitcCtc: EitcCtcData;
 let savers: SaversCreditData;
 let snap: SnapData;
 let medicaid: MedicaidData;
+let aca: AcaData;
 beforeAll(async () => {
   data = await loadBundledData();
   fpl = data.fpl("contiguous")!;
@@ -35,6 +39,7 @@ beforeAll(async () => {
   savers = data.saversCredit()!;
   snap = data.snap()!;
   medicaid = data.medicaid()!;
+  aca = data.aca()!;
 });
 
 describe("Federal Poverty Level", () => {
@@ -233,5 +238,54 @@ describe("Medicaid eligibility (2024)", () => {
     );
     expect(r.thresholdPctFpl).toBe(215);
     expect(r.eligible).toBe(true);
+  });
+});
+
+describe("ACA premium tax credit (applicable percentages)", () => {
+  it("interpolates the applicable percentage within a band", () => {
+    expect(acaApplicablePercent(100, aca)).toBeCloseTo(0, 6); // ≤150% → 0%
+    expect(acaApplicablePercent(150, aca)).toBeCloseTo(0, 6);
+    expect(acaApplicablePercent(175, aca)).toBeCloseTo(1.0, 6); // halfway through 150–200 (0→2%)
+    expect(acaApplicablePercent(200, aca)).toBeCloseTo(2.0, 6);
+    expect(acaApplicablePercent(350, aca)).toBeCloseTo(7.25, 6); // halfway through 300–400 (6→8.5%)
+    expect(acaApplicablePercent(450, aca)).toBeCloseTo(8.5, 6); // top band is flat (no cliff)
+  });
+
+  it("credits the benchmark premium above the expected contribution (200% FPL, size 1)", () => {
+    // 200% FPL for a household of 1 = $30,120; applicable % = 2.0%.
+    const r = estimatePremiumTaxCredit(
+      { householdSize: 1, annualIncome: 30120, benchmarkMonthlyPremium: 600 },
+      aca,
+      fpl,
+    );
+    expect(r.fplPercent).toBeCloseTo(200, 5);
+    expect(r.applicablePercent).toBeCloseTo(2.0, 6);
+    expect(r.expectedAnnualContribution.roundToCents().toNumber()).toBe(602.4); // 30,120 × 2%
+    expect(r.annualCredit.roundToCents().toNumber()).toBe(6597.6); // 7,200 − 602.40
+    expect(r.monthlyCredit.roundToCents().toNumber()).toBe(549.8);
+    expect(r.eligible).toBe(true);
+    expect(r.belowMedicaidFloor).toBe(false);
+  });
+
+  it("gives no credit when the expected contribution exceeds the benchmark (high income)", () => {
+    // ~664% FPL → flat 8.5%; expected $8,500 > a $6,000 benchmark → no credit, no cliff.
+    const r = estimatePremiumTaxCredit(
+      { householdSize: 1, annualIncome: 100000, benchmarkMonthlyPremium: 500 },
+      aca,
+      fpl,
+    );
+    expect(r.applicablePercent).toBeCloseTo(8.5, 6);
+    expect(r.annualCredit.isZero()).toBe(true);
+    expect(r.eligible).toBe(false);
+  });
+
+  it("flags income below the 100% FPL Medicaid floor", () => {
+    const r = estimatePremiumTaxCredit(
+      { householdSize: 1, annualIncome: 10000, benchmarkMonthlyPremium: 500 },
+      aca,
+      fpl,
+    );
+    expect(r.belowMedicaidFloor).toBe(true);
+    expect(r.eligible).toBe(false);
   });
 });
