@@ -3,6 +3,13 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    // The data-refresh scripts (scripts/refresh/*) import sibling .ts modules
+    // with explicit extensions, which is what Node's native type-stripping
+    // requires at runtime; allow tsc to resolve them too (safe under --noEmit).
+    "allowImportingTsExtensions": true,
+    // tsc is type-check only here (the build is Vite/esbuild), so emitting is
+    // never wanted; this also satisfies allowImportingTsExtensions above.
+    "noEmit": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
     "strict": true,
     "noImplicitAny": true,

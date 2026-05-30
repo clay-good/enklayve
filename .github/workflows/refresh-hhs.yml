@@ -1,0 +1,14 @@
+# Federal Poverty Guidelines — HHS, annual (January). BUILD-SPEC.md §7.2.
+name: Refresh HHS poverty guidelines
+
+on:
+  schedule:
+    - cron: "0 12 20 1 *" # January 20, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: hhs-poverty
+      source_name: HHS Federal Poverty Guidelines (contiguous)

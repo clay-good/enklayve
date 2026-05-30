@@ -1,0 +1,96 @@
+# Reusable data-refresh job (BUILD-SPEC.md §7.3). Each source-group workflow
+# (refresh-*.yml) calls this with its `group`, on its own cadence. The job runs
+# the source-specific adapter, and then — only on the open-pr outcome — rebuilds
+# the manifest, runs the FULL golden test suite as the gate, and opens a data
+# PR. On a fetch/parse failure it opens a fail-safe alert PR instead. Data is
+# never committed to main without passing the test gate, and the job never
+# merges anything itself; a human reviews every PR.
+name: _data-refresh
+
+on:
+  workflow_call:
+    inputs:
+      group:
+        description: The refresh group (see scripts/refresh/adapters.ts).
+        required: true
+        type: string
+      source_name:
+        description: Human-readable source name for the PR title.
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      # Step 1: fetch + parse + diff + write the candidate shard and diff-log
+      # entry. Emits outcome / changed / shards for the steps below.
+      - id: refresh
+        run: node scripts/refresh/run.ts --group "${{ inputs.group }}"
+
+      # Steps 2–3 (open-pr only): rebuild the manifest + hashes, then run the
+      # golden suite as the gate. A failure here stops the job, so no PR is
+      # opened with data that breaks a golden case (§7.3 step 5, the "blocked"
+      # outcome).
+      - name: Rebuild manifest
+        if: steps.refresh.outputs.outcome == 'open-pr'
+        run: npm run data:manifest
+      - name: Golden test gate
+        if: steps.refresh.outputs.outcome == 'open-pr'
+        run: npm run test
+
+      - name: Open data pull request
+        if: steps.refresh.outputs.outcome == 'open-pr'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="data-refresh/${{ inputs.group }}-${{ github.run_id }}"
+          git config user.name "enklayve-data-refresh[bot]"
+          git config user.email "noreply@enklayve.com"
+          git checkout -b "$branch"
+          git add data/ docs/source-diff-log.md
+          git commit -m "Data refresh: ${{ inputs.source_name }}"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "Data refresh: ${{ inputs.source_name }}" \
+            --label data-refresh \
+            --body "Automated data refresh for **${{ inputs.source_name }}** (group \`${{ inputs.group }}\`).
+
+          Changed shards: \`${{ steps.refresh.outputs.shards }}\`.
+
+          The full golden test suite passed against this data (the BUILD-SPEC.md §7.3 gate). See \`docs/source-diff-log.md\` for the old-to-new values. A reviewer still owns any effective-year rollover and full bracket-table transcription."
+
+      # Fail-safe branch (§7.3 step 4): the source 404'd or failed to parse. The
+      # shard is left untouched; raise an alert PR carrying the diff-log note so
+      # a human investigates. The runtime fail-safe gate shows the verify banner
+      # if the dataset goes stale before a good refresh lands.
+      - name: Open fail-safe alert pull request
+        if: steps.refresh.outputs.outcome == 'alert-pr'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="data-refresh-alert/${{ inputs.group }}-${{ github.run_id }}"
+          git config user.name "enklayve-data-refresh[bot]"
+          git config user.email "noreply@enklayve.com"
+          git checkout -b "$branch"
+          git add docs/source-diff-log.md
+          git commit -m "ALERT: ${{ inputs.source_name }} refresh failed"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "ALERT: ${{ inputs.source_name }} refresh failed" \
+            --label data-refresh \
+            --label alert \
+            --body "The source for **${{ inputs.source_name }}** could not be fetched or parsed, so no data changed.
+
+          The committed shard is unchanged (last-good data keeps working), and the runtime fail-safe gate will show a verify-before-relying banner if this dataset falls outside its refresh window before a good refresh lands. Investigate the source URL and the adapter in \`scripts/refresh/adapters.ts\`. See \`docs/source-diff-log.md\`."

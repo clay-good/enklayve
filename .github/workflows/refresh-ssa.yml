@@ -1,0 +1,15 @@
+# FICA wage base — SSA Contribution and Benefit Base / COLA fact sheet, annual
+# (October). BUILD-SPEC.md §7.2.
+name: Refresh SSA FICA
+
+on:
+  schedule:
+    - cron: "0 12 15 10 *" # October 15, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: ssa
+      source_name: SSA FICA wage base

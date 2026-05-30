@@ -1,0 +1,15 @@
+# Federal income tax inflation adjustments — IRS annual revenue procedure,
+# annual (October–November). BUILD-SPEC.md §7.2.
+name: Refresh IRS federal income tax
+
+on:
+  schedule:
+    - cron: "0 12 8 11 *" # November 8, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: irs
+      source_name: IRS federal income tax (annual revenue procedure)

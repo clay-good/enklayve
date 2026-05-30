@@ -1,0 +1,15 @@
+# California income tax — CA FTB tax-rate schedules, annual (staggered). The
+# template for one-adapter-per-state refreshes. BUILD-SPEC.md §7.2, §8.
+name: Refresh California income tax
+
+on:
+  schedule:
+    - cron: "0 12 1 2 *" # February 1, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-ca
+      source_name: California FTB income tax

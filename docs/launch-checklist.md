@@ -44,7 +44,13 @@ npm run deploy:dry
 - [ ] `dist/tools.html` lists exactly the registry's tiles (drift test).
 - [ ] One pre-rendered shell per tile under `dist/tools/<id>.html`, each with a canonical and a deep link into the live tool (drift test).
 - [ ] `dist/sitemap.xml` lists the home, the index, and every tool shell; `dist/robots.txt` advertises the sitemap.
-- [ ] Docs present and current: [`data-sources.md`](data-sources.md), [`adding-a-state.md`](adding-a-state.md), [`contributing.md`](contributing.md), and the specs.
+- [ ] Docs present and current: [`data-sources.md`](data-sources.md), [`adding-a-state.md`](adding-a-state.md), [`contributing.md`](contributing.md), [`source-diff-log.md`](source-diff-log.md), and the specs.
+
+## Data refresh workflows (Phase 9)
+
+- [ ] One workflow per source group (`.github/workflows/refresh-*.yml`) runs on its §7.2 cadence and on manual dispatch (the first set: IRS, BLS CPI, SSA, HHS, California).
+- [ ] A refresh opens a data PR only when values changed **and** the full golden suite passes; a fetch/parse failure opens a fail-safe alert PR instead; nothing is auto-committed to `main`.
+- [ ] Each change is recorded in [`source-diff-log.md`](source-diff-log.md) with old-to-new values. (Repo setting: "Allow GitHub Actions to create and approve pull requests" must be enabled.)
 
 ## Content & correctness
 

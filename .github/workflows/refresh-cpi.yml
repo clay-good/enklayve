@@ -1,0 +1,14 @@
+# CPI-U (inflation) — BLS public API, monthly (~2nd week). BUILD-SPEC.md §7.2.
+name: Refresh CPI-U
+
+on:
+  schedule:
+    - cron: "0 13 12 * *" # 12th of each month, 13:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: cpi
+      source_name: BLS CPI-U annual averages
