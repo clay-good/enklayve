@@ -78,6 +78,12 @@ describe("50/30/20 Spending Plan", () => {
     expect(root.querySelector<HTMLInputElement>('input[name="th"]')?.value).toBe("5000");
     expect(lastParams()?.get("th")).toBe("5000");
   });
+
+  it("draws a needs/wants/savings donut", () => {
+    const { root } = mount(mountSpendingPlan, new URLSearchParams({ th: "5000" }));
+    expect(root.querySelector(".chart--donut")).not.toBeNull();
+    expect(root.textContent).toContain("Needs (50%)");
+  });
 });
 
 describe("Home Buying Readiness", () => {
@@ -248,6 +254,56 @@ describe("Zero-Based Budget", () => {
     expect(root.querySelector<HTMLInputElement>('input[name="inc"]')?.value).toBe("5000");
     expect(rowValue(root, "Status")).toContain("Balanced");
   });
+
+  it("opens with the big default categories when there are none saved", () => {
+    const { root } = mount(mountZeroBudget, new URLSearchParams());
+    const names = Array.from(
+      root.querySelectorAll<HTMLInputElement>('input[aria-label$="name"]'),
+    ).map((i) => i.value);
+    expect(names).toContain("Housing");
+    expect(names).toContain("Transportation");
+    expect(names).toContain("Investing & savings");
+    expect(names).toContain("Taxes");
+  });
+
+  it("draws a donut and a flow bar once dollars are assigned", () => {
+    const { root } = mount(
+      mountZeroBudget,
+      new URLSearchParams({
+        inc: "2500",
+        k: "2",
+        c0: "Housing",
+        a0: "1600",
+        c1: "Food",
+        a1: "400",
+      }),
+    );
+    expect(root.querySelector(".chart--donut")).not.toBeNull();
+    expect(root.querySelector(".chart--flow")).not.toBeNull();
+    // The donut legend includes the leftover the flow bar also shows.
+    expect(root.textContent).toContain("Left to assign");
+  });
+
+  it("reorders categories with the keyboard move buttons", () => {
+    const { root, lastParams } = mount(
+      mountZeroBudget,
+      new URLSearchParams({
+        inc: "2500",
+        k: "2",
+        c0: "Rent",
+        a0: "1600",
+        c1: "Savings",
+        a1: "900",
+      }),
+    );
+    const down = Array.from(root.querySelectorAll("button")).find(
+      (b) => b.getAttribute("aria-label") === "Move Rent down",
+    );
+    expect(down).toBeTruthy();
+    down!.click();
+    expect(lastParams()?.get("c0")).toBe("Savings");
+    expect(lastParams()?.get("c1")).toBe("Rent");
+  });
 });
 
 describe("Cash-Flow Timeline", () => {
@@ -278,6 +334,27 @@ describe("Cash-Flow Timeline", () => {
       new URLSearchParams({ s: "5000", k: "1", d0: "10", l0: "Utilities", t0: "bill", m0: "200" }),
     );
     expect(rowValue(root, "Looks steady")).toBeTruthy();
+  });
+
+  it("draws a balance timeline that flags the below-zero day", () => {
+    const { root } = mount(
+      mountCashFlow,
+      new URLSearchParams({
+        s: "200",
+        k: "2",
+        d0: "1",
+        l0: "Rent",
+        t0: "bill",
+        m0: "1500",
+        d1: "15",
+        l1: "Paycheck",
+        t1: "income",
+        m1: "2400",
+      }),
+    );
+    expect(root.querySelector(".chart--timeline")).not.toBeNull();
+    // Day 1 goes negative (200 − 1500), so a bar carries the warning style.
+    expect(root.querySelector(".balance-bar--neg")).not.toBeNull();
   });
 });
 

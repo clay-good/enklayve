@@ -8,6 +8,7 @@ import { Money } from "../engine/money";
 import { el } from "../ui/dom";
 import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { donutChart, paletteVar } from "../ui/charts";
 import type { TileContext, TileDefinition } from "./types";
 
 interface Fields {
@@ -79,6 +80,7 @@ export function mountSpendingPlan(ctx: TileContext): void {
     attrs: { "aria-label": "Wants percentage", inputmode: "decimal" },
   });
 
+  const chartContainer = el("div", { class: "tile-charts" });
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
   function compute(): void {
@@ -88,6 +90,24 @@ export function mountSpendingPlan(ctx: TileContext): void {
     const wants = th.multiply(fields.wantsPct / 100);
     const savings = th.multiply(savingsPct / 100);
     const fmt = (m: Money): string => m.format(ctx.locale);
+
+    chartContainer.replaceChildren(
+      donutChart({
+        slices: [
+          { label: `Needs (${fields.needsPct}%)`, value: needs.toNumber(), color: paletteVar(0) },
+          { label: `Wants (${fields.wantsPct}%)`, value: wants.toNumber(), color: paletteVar(1) },
+          {
+            label: `Savings & debt payoff (${savingsPct}%)`,
+            value: savings.toNumber(),
+            color: "var(--enk-accent)",
+          },
+        ],
+        locale: ctx.locale,
+        ariaLabel: "Your take-home split across needs, wants, and savings",
+        centerValue: th.format(ctx.locale),
+        centerLabel: "take-home",
+      }),
+    );
 
     const lines: BreakdownLine[] = [
       { label: `Needs (${pct(fields.needsPct / 100, 0)})`, value: fmt(needs) },
@@ -169,7 +189,7 @@ export function mountSpendingPlan(ctx: TileContext): void {
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
-  root.append(form, resultContainer);
+  root.append(form, chartContainer, resultContainer);
   compute();
 }
 

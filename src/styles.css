@@ -26,6 +26,17 @@
   --enk-focus: #8b5cf6;
   --enk-shadow: 0 1px 3px rgba(45, 27, 105, 0.08), 0 8px 24px rgba(45, 27, 105, 0.08);
   --enk-radius: 14px;
+  /* Chart palette — distinct, friendly hues that read on the light surface. */
+  --enk-chart-1: #6d28d9;
+  --enk-chart-2: #2563eb;
+  --enk-chart-3: #0d9488;
+  --enk-chart-4: #16a34a;
+  --enk-chart-5: #ca8a04;
+  --enk-chart-6: #ea580c;
+  --enk-chart-7: #db2777;
+  --enk-chart-8: #9333ea;
+  --enk-chart-9: #0891b2;
+  --enk-chart-10: #65a30d;
 }
 
 :root[data-theme="dark"] {
@@ -45,6 +56,17 @@
   --enk-focus: #c4b5fd;
   --enk-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.4);
   --enk-radius: 14px;
+  /* Chart palette — lifted toward pastel so hues stay legible on the dark surface. */
+  --enk-chart-1: #a78bfa;
+  --enk-chart-2: #60a5fa;
+  --enk-chart-3: #2dd4bf;
+  --enk-chart-4: #4ade80;
+  --enk-chart-5: #facc15;
+  --enk-chart-6: #fb923c;
+  --enk-chart-7: #f472b6;
+  --enk-chart-8: #c084fc;
+  --enk-chart-9: #22d3ee;
+  --enk-chart-10: #a3e635;
 }
 
 :root[data-theme="high-contrast"] {
@@ -64,6 +86,17 @@
   --enk-focus: #ffd400;
   --enk-shadow: none;
   --enk-radius: 6px;
+  /* Chart palette — maximally separated, all readable on pure black. */
+  --enk-chart-1: #d6bcfa;
+  --enk-chart-2: #6cb6ff;
+  --enk-chart-3: #50fa7b;
+  --enk-chart-4: #ffd400;
+  --enk-chart-5: #ff8c42;
+  --enk-chart-6: #ff79c6;
+  --enk-chart-7: #8be9fd;
+  --enk-chart-8: #bd93f9;
+  --enk-chart-9: #f1fa8c;
+  --enk-chart-10: #ffffff;
 }
 
 :root {
@@ -971,6 +1004,203 @@ body {
 }
 .plan-debt-row .field {
   margin: 0;
+}
+
+/* --- Charts (src/ui/charts.ts): donut, flow bar, balance timeline --------- */
+.chart {
+  margin: 0 0 1.25rem;
+}
+.chart--donut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+}
+.donut-wrap {
+  position: relative;
+  width: 9.5rem;
+  height: 9.5rem;
+  flex: none;
+}
+.donut {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+.donut-center {
+  position: absolute;
+  inset: 24%;
+  border-radius: 50%;
+  background: var(--enk-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.1;
+}
+.donut-total {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--enk-text);
+}
+.donut-cap {
+  font-size: 0.7rem;
+  color: var(--enk-text-muted);
+}
+.chart-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1 1 12rem;
+  min-width: 11rem;
+  font-variant-numeric: tabular-nums;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+  font-size: 0.9rem;
+}
+.legend-swatch {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 3px;
+  flex: none;
+}
+.legend-label {
+  flex: 1 1 auto;
+  color: var(--enk-text);
+}
+.legend-value {
+  font-weight: 600;
+  color: var(--enk-text);
+}
+.legend-pct {
+  width: 2.8rem;
+  text-align: right;
+  color: var(--enk-text-muted);
+}
+.chart--flow .flow-bar {
+  display: flex;
+  width: 100%;
+  height: 1.6rem;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--enk-surface-2);
+  border: 1px solid var(--enk-border);
+}
+.flow-seg {
+  height: 100%;
+}
+.flow-seg--rest {
+  background: var(--enk-accent);
+}
+.chart--flow .chart-legend {
+  margin-top: 0.75rem;
+  flex-basis: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+.chart--flow .legend-item {
+  width: auto;
+}
+.chart--flow .legend-label {
+  flex: 0 1 auto;
+}
+.balance-timeline {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  height: 8rem;
+  padding: 0.5rem 0;
+}
+.balance-col {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  height: 100%;
+  min-width: 1.5rem;
+}
+.balance-track {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+.balance-bar {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 5px 5px 0 0;
+  background: var(--enk-primary);
+}
+.balance-bar--low {
+  background: var(--enk-accent);
+}
+.balance-bar--neg {
+  background: var(--enk-warn);
+}
+.balance-day {
+  font-size: 0.7rem;
+  color: var(--enk-text-muted);
+}
+
+/* --- Category quick-add chips + drag-to-reorder (Zero-Based Budget) ------- */
+.cat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.25rem 0 0.5rem;
+}
+.cat-chip {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  border: 1px dashed var(--enk-border);
+  background: var(--enk-surface-2);
+  color: var(--enk-primary-strong);
+  cursor: pointer;
+}
+.cat-chip:hover {
+  border-color: var(--enk-primary);
+}
+.drag-handle {
+  font: inherit;
+  cursor: grab;
+  border: none;
+  background: transparent;
+  color: var(--enk-text-muted);
+  padding: 0 0.3rem;
+  align-self: center;
+}
+.row-moves {
+  display: inline-flex;
+  flex-direction: column;
+  align-self: center;
+}
+.row-move {
+  font: inherit;
+  line-height: 1;
+  border: none;
+  background: transparent;
+  color: var(--enk-text-muted);
+  cursor: pointer;
+  padding: 0 0.2rem;
+}
+.row-move:hover {
+  color: var(--enk-primary);
+}
+.plan-debt-row.is-dragging {
+  opacity: 0.5;
+}
+.plan-debt-row.drop-target {
+  outline: 2px dashed var(--enk-primary);
+  outline-offset: 2px;
 }
 
 /* --- The Readout, live view (BUILD-SPEC-2 §2) ---------------------------- */

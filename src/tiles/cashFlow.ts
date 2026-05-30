@@ -9,6 +9,7 @@ import { cashFlowTimeline, type CashFlowEvent } from "../engine/finance";
 import { el, clear, option } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { balanceTimeline } from "../ui/charts";
 import type { TileContext, TileDefinition } from "./types";
 
 interface Event {
@@ -89,6 +90,7 @@ export function mountCashFlow(ctx: TileContext): void {
   });
 
   const eventsContainer = el("div", { class: "plan-debts" });
+  const chartContainer = el("div", { class: "tile-charts" });
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
   function persist(): void {
@@ -125,6 +127,21 @@ export function mountCashFlow(ctx: TileContext): void {
         value: `${d.net >= 0 ? "+" : "−"}${dollars(Math.abs(d.net))} → ${dollars(d.balance)}`,
       })),
     ];
+
+    clear(chartContainer);
+    if (r.days.length > 0) {
+      chartContainer.append(
+        balanceTimeline({
+          points: r.days.map((d) => ({ day: d.day, balance: d.balance })),
+          minDay: r.minDay,
+          goesNegative: r.goesNegative,
+          locale: ctx.locale,
+          ariaLabel: r.goesNegative
+            ? `Running balance through the month, dipping to its lowest on day ${r.minDay}`
+            : "Running balance through the month",
+        }),
+      );
+    }
 
     resultContainer.replaceChildren(
       resultCard({
@@ -280,7 +297,7 @@ export function mountCashFlow(ctx: TileContext): void {
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
-  root.append(form, resultContainer);
+  root.append(form, chartContainer, resultContainer);
   renderEvents();
   compute();
 }

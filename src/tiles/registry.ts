@@ -10,6 +10,10 @@ import { takeHomeTile } from "./takeHome";
 import { hourlySalaryTile } from "./hourlySalary";
 import { federalIncomeTaxTile } from "./federalIncomeTax";
 import { selfEmploymentTaxTile } from "./selfEmploymentTax";
+import { quarterlyTaxesTile } from "./quarterlyTaxes";
+import { freelanceRateTile } from "./freelanceRate";
+import { contractVsSalaryTile } from "./contractVsSalary";
+import { selfEmployedRetirementTile } from "./selfEmployedRetirement";
 import { marginalExplorerTile } from "./marginalExplorer";
 import { loanAmortizationTile } from "./loanAmortization";
 import { refinanceTile } from "./refinance";
@@ -25,6 +29,7 @@ import { rothLadderTile } from "./rothLadder";
 import { backdoorRothTile } from "./backdoorRoth";
 import { balanceTransferTile } from "./balanceTransfer";
 import { paycheckOptimizerTile } from "./paycheckOptimizer";
+import { w4WithholdingTile } from "./w4Withholding";
 import { socialSecurityTile } from "./socialSecurity";
 import { drawdownTile } from "./drawdown";
 import { collegeCostTile } from "./collegeCost";
@@ -70,16 +75,13 @@ function soon(
 export const TILES: TileDefinition[] = [
   // --- Paycheck & Taxes ---
   takeHomeTile,
-  soon(
-    "w4",
-    "W-4 Withholding Estimator",
-    "paycheck",
-    "Tune your W-4 from the published withholding method.",
-    ["w4", "withholding", "allowances"],
-  ),
+  w4WithholdingTile,
   hourlySalaryTile,
   federalIncomeTaxTile,
   selfEmploymentTaxTile,
+  quarterlyTaxesTile,
+  freelanceRateTile,
+  contractVsSalaryTile,
   marginalExplorerTile,
   paycheckOptimizerTile,
 
@@ -92,6 +94,7 @@ export const TILES: TileDefinition[] = [
 
   // --- Retirement ---
   retirementOptimizerTile,
+  selfEmployedRetirementTile,
   rothLadderTile,
   backdoorRothTile,
   rmdTile,

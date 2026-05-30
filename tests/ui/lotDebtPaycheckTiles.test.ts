@@ -3,6 +3,7 @@ import axe from "axe-core";
 import { mountLotPicker } from "../../src/tiles/lotPicker";
 import { mountBalanceTransfer } from "../../src/tiles/balanceTransfer";
 import { mountPaycheckOptimizer } from "../../src/tiles/paycheckOptimizer";
+import { mountW4Withholding } from "../../src/tiles/w4Withholding";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
@@ -160,6 +161,45 @@ describe("Paycheck Optimizer", () => {
   });
 });
 
+describe("W-4 Withholding & Refund Check", () => {
+  it("frames a large over-withholding as an interest-free loan and suggests withholding less", () => {
+    // $600/paycheck × 26 ≈ $15,600 withheld, far above a single filer's tax on $70k.
+    const { root } = mount(
+      mountW4Withholding,
+      new URLSearchParams({ fs: "single", w: "70000", pf: "26", wh: "600" }),
+    );
+    const text = root.textContent ?? "";
+    expect(rowValue(root, "Projected refund")).toBeDefined();
+    expect(text).toContain("interest-free loan to the government");
+    expect(text).toContain("Reduce withholding by about");
+    // The projected federal income tax line carries its source.
+    expect(root.querySelector("a.cite-link")).not.toBeNull();
+  });
+
+  it("flags under-withholding and suggests withholding more", () => {
+    // $100/paycheck × 26 = $2,600 withheld, well below the tax on $70k.
+    const { root } = mount(
+      mountW4Withholding,
+      new URLSearchParams({ fs: "single", w: "70000", pf: "26", wh: "100" }),
+    );
+    const text = root.textContent ?? "";
+    expect(rowValue(root, "Projected balance due")).toBeDefined();
+    expect(text).toContain("under-withholding");
+    expect(text).toContain("Withhold about");
+  });
+
+  it("reads filing status and income from My Situation", () => {
+    const profile = new SituationStore();
+    profile.set("filingStatus", "head_of_household");
+    profile.set("annualIncome", 88000);
+    const { root } = mount(mountW4Withholding, new URLSearchParams(), profile);
+    expect(root.querySelector<HTMLSelectElement>('select[name="fs"]')?.value).toBe(
+      "head_of_household",
+    );
+    expect(root.querySelector<HTMLInputElement>('input[name="w"]')?.value).toBe("88000");
+  });
+});
+
 describe("seventh-wave tiles accessibility", () => {
   for (const tc of [
     {
@@ -176,6 +216,11 @@ describe("seventh-wave tiles accessibility", () => {
       name: "paycheck-optimizer",
       mount: mountPaycheckOptimizer,
       params: new URLSearchParams({ fs: "single", st: "ca", w: "95000", k: "8000", hsa: "2000" }),
+    },
+    {
+      name: "w4-withholding",
+      mount: mountW4Withholding,
+      params: new URLSearchParams({ fs: "single", w: "70000", pf: "26", wh: "600" }),
     },
   ]) {
     it(`${tc.name} has no axe violations`, async () => {
