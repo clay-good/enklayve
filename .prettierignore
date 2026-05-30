@@ -3,5 +3,7 @@ node_modules/
 coverage/
 package-lock.json
 *.md
+# Local, gitignored Claude Code settings — not ours to format.
+.claude/settings.local.json
 # Data shards are hashed byte-for-byte; reformatting would break integrity checks.
 data/

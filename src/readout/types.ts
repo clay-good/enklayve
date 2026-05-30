@@ -11,7 +11,16 @@ import type { CitationData } from "../data/schemas";
 import type { TextSource } from "./extractText";
 
 /** The personal-finance documents the Readout knows how to read (§2.1). */
-export type DocKind = "w2" | "form1040" | "paystub";
+export type DocKind =
+  | "w2"
+  | "form1040"
+  | "paystub"
+  | "form1099int"
+  | "form1099div"
+  | "form1099nec"
+  | "form1099b"
+  | "form1095a"
+  | "form1098";
 
 /** The My Situation fields the Readout can populate on confirmation. Kept
  * narrow (not all of {@link SituationKey}) so the mapping stays type-safe. */

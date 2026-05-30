@@ -103,6 +103,97 @@ describe("Readout, pay stub extraction", () => {
   });
 });
 
+const FORM_1099INT = typed(
+  "Form 1099-INT 2024 Interest Income Payer Big Bank " +
+    "1 Interest income 1250.00 4 Federal income tax withheld 0.00",
+);
+
+const FORM_1099DIV = typed(
+  "Form 1099-DIV 2024 Dividends and Distributions " +
+    "1a Total ordinary dividends 3200.00 1b Qualified dividends 2800.00 " +
+    "2a Total capital gain distr 540.00",
+);
+
+const FORM_1099NEC = typed(
+  "Form 1099-NEC 2024 Nonemployee Compensation Payer Acme LLC " +
+    "1 Nonemployee compensation 48000.00",
+);
+
+const FORM_1099B = typed(
+  "Form 1099-B 2024 Proceeds From Broker and Barter Exchange Transactions " +
+    "1d Proceeds 12000.00 1e Cost or other basis 9000.00",
+);
+
+const FORM_1095A = typed(
+  "Form 1095-A Health Insurance Marketplace Statement 2024 " +
+    "Part III Coverage Information Annual Totals 9600.00 9000.00 3600.00",
+);
+
+const FORM_1098 = typed(
+  "Form 1098 Mortgage Interest Statement 2024 Recipient Big Lender " +
+    "1 Mortgage interest received from payer 14200.00 " +
+    "2 Outstanding mortgage principal 312000.00",
+);
+
+describe("Readout, 1099 extraction", () => {
+  it("reads 1099-INT interest income, cited to the form revision", () => {
+    const r = extractDocument(FORM_1099INT);
+    expect(r.kind).toBe("form1099int");
+    expect(value(r, "1099int-box1")).toBe(1250);
+    expect(r.citation?.sourceUrl).toMatch(/about-form-1099-int/);
+    expect(r.citation?.effectiveYear).toBe(2024);
+  });
+
+  it("reads 1099-DIV ordinary, qualified, and capital-gain distributions", () => {
+    const r = extractDocument(FORM_1099DIV);
+    expect(r.kind).toBe("form1099div");
+    expect(value(r, "1099div-box1a")).toBe(3200);
+    expect(value(r, "1099div-box1b")).toBe(2800);
+    expect(value(r, "1099div-box2a")).toBe(540);
+  });
+
+  it("reads 1099-NEC nonemployee compensation and targets income", () => {
+    const r = extractDocument(FORM_1099NEC);
+    expect(r.kind).toBe("form1099nec");
+    expect(value(r, "1099nec-box1")).toBe(48000);
+    expect(r.fields.find((f) => f.id === "1099nec-box1")?.target).toBe("annualIncome");
+  });
+
+  it("reads 1099-B proceeds and basis and computes the realized gain", () => {
+    const r = extractDocument(FORM_1099B);
+    expect(r.kind).toBe("form1099b");
+    expect(value(r, "1099b-proceeds")).toBe(12000);
+    expect(value(r, "1099b-basis")).toBe(9000);
+    expect(value(r, "1099b-gain")).toBe(3000);
+  });
+});
+
+describe("Readout, 1095-A and 1098 extraction", () => {
+  it("reads the 1095-A annual totals: premium, benchmark, and advance credit", () => {
+    const r = extractDocument(FORM_1095A);
+    expect(r.kind).toBe("form1095a");
+    expect(value(r, "1095a-premium")).toBe(9600);
+    expect(value(r, "1095a-slcsp")).toBe(9000);
+    expect(value(r, "1095a-aptc")).toBe(3600);
+    expect(r.citation?.sourceUrl).toMatch(/about-form-1095-a/);
+  });
+
+  it("reads 1098 mortgage interest and outstanding principal", () => {
+    const r = extractDocument(FORM_1098);
+    expect(r.kind).toBe("form1098");
+    expect(value(r, "1098-box1")).toBe(14200);
+    expect(value(r, "1098-box2")).toBe(312000);
+    expect(r.citation?.sourceUrl).toMatch(/about-form-1098/);
+  });
+
+  it("does not mistake a 1098-T tuition statement for a mortgage statement", () => {
+    const r = extractDocument(
+      typed("Form 1098-T Tuition Statement 2024 1 Payments received 12000.00"),
+    );
+    expect(r.kind).toBe("unknown");
+  });
+});
+
 describe("Readout, flagging, not guessing (§2.2)", () => {
   it("flags an unrecognized form revision instead of extracting", () => {
     const oldW2 = typed(

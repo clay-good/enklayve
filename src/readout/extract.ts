@@ -51,6 +51,22 @@ function amountAfter(text: string, anchor: RegExp): number {
   return m ? parseAmount(m[1]) : NaN;
 }
 
+/**
+ * Read `count` consecutive currency-like amounts after `anchor`. Used for the
+ * single-row tables (e.g. the 1095-A "Annual Totals" line, whose three columns
+ * are premium, benchmark, and advance credit in order). Returns an empty array
+ * unless all `count` amounts are present, so we never pair a column with a
+ * number that belongs to a different one.
+ */
+function amountsAfter(text: string, anchor: RegExp, count: number): number[] {
+  const amount = String.raw`(\$?-?[0-9][0-9,]*(?:\.[0-9]{1,2})?)`;
+  const gap = String.raw`[^0-9$()-]{0,40}`;
+  const source = anchor.source + Array.from({ length: count }, () => gap + amount).join("");
+  const m = new RegExp(source, "i").exec(text);
+  if (!m) return [];
+  return m.slice(1, count + 1).map(parseAmount);
+}
+
 /** Filing-status phrases, longest/most-specific first so "single" can't shadow
  * "married filing separately". */
 const FILING_STATUS_PHRASES: { re: RegExp; status: string }[] = [
@@ -84,18 +100,33 @@ function detectYear(text: string): string | null {
   return m?.[1] ?? null;
 }
 
+/**
+ * Title markers, most-specific first. A document is the first kind whose `re`
+ * matches and whose `also` (a second required marker that disambiguates, e.g.
+ * "wage and tax statement" so a stray "W-2" mention can't win) also matches.
+ */
+const DOC_MARKERS: { kind: DocKind; re: RegExp; also?: RegExp }[] = [
+  { kind: "w2", re: /\bW-?2\b/i, also: /wage and tax statement/i },
+  { kind: "form1040", re: /\bform\s*1040\b/i, also: /individual income tax return/i },
+  { kind: "form1099int", re: /\b1099-?INT\b/i },
+  { kind: "form1099div", re: /\b1099-?DIV\b/i },
+  { kind: "form1099nec", re: /\b1099-?NEC\b/i },
+  { kind: "form1099b", re: /\b1099-?B\b/i },
+  { kind: "form1095a", re: /\b1095-?A\b/i },
+  // Anchored to "mortgage interest" so the 1098-T (tuition) and 1098-E (student
+  // loan) variants don't masquerade as a mortgage statement.
+  { kind: "form1098", re: /\b1098\b/, also: /mortgage interest/i },
+  { kind: "paystub", re: /(earnings statement|pay\s*stub|pay statement|payroll)/i },
+];
+
 /** Detect the document kind and revision by anchoring to title markers (§2.2). */
 export function detectDocument(t: ExtractedText): Detection {
   const text = t.text;
   const year = detectYear(text);
-  if (/\bW-?2\b/i.test(text) && /wage and tax statement/i.test(text)) {
-    return { kind: "w2", revision: year };
-  }
-  if (/\bform\s*1040\b/i.test(text) && /individual income tax return/i.test(text)) {
-    return { kind: "form1040", revision: year };
-  }
-  if (/(earnings statement|pay\s*stub|pay statement|payroll)/i.test(text)) {
-    return { kind: "paystub", revision: year };
+  for (const { kind, re, also } of DOC_MARKERS) {
+    if (re.test(text) && (!also || also.test(text))) {
+      return { kind, revision: year };
+    }
   }
   return { kind: "unknown", revision: null };
 }
@@ -115,6 +146,16 @@ function field(
   // A field we could not read is omitted entirely — we never ship a guessed 0.
   if (!Number.isFinite(value)) return null;
   return { id, label, value, confidence: "high", needsReview: false, target, note };
+}
+
+/** Citation for one 1099 variant (INT/DIV/NEC/B), pinned to the revision. */
+function f1099Citation(variant: string): (rev: string) => CitationData {
+  return (rev) =>
+    formCitation(
+      `IRS Form 1099-${variant}`,
+      rev,
+      `https://www.irs.gov/forms-pubs/about-form-1099-${variant.toLowerCase()}`,
+    );
 }
 
 const EXTRACTORS: Record<DocKind, Extractor> = {
@@ -241,6 +282,149 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
       return fields;
     },
   },
+  form1099int: {
+    citation: f1099Citation("INT"),
+    extract: (t) => {
+      const text = t.text;
+      return [
+        field(
+          "1099int-box1",
+          "Interest income (box 1)",
+          amountAfter(text, /1\s*interest income/i),
+          undefined,
+          "Feeds investment income on your return.",
+        ),
+        field(
+          "1099int-box4",
+          "Federal income tax withheld (box 4)",
+          amountAfter(text, /4\s*federal income tax withheld/i),
+          undefined,
+        ),
+      ].filter((f): f is ExtractedField => f !== null);
+    },
+  },
+  form1099div: {
+    citation: f1099Citation("DIV"),
+    extract: (t) => {
+      const text = t.text;
+      return [
+        field(
+          "1099div-box1a",
+          "Total ordinary dividends (box 1a)",
+          amountAfter(text, /1a\s*total ordinary dividends/i),
+          undefined,
+        ),
+        field(
+          "1099div-box1b",
+          "Qualified dividends (box 1b)",
+          amountAfter(text, /1b\s*qualified dividends/i),
+          undefined,
+        ),
+        field(
+          "1099div-box2a",
+          "Total capital gain distributions (box 2a)",
+          amountAfter(text, /2a\s*total capital gain/i),
+          undefined,
+          "Feeds the Capital Gains tile.",
+        ),
+      ].filter((f): f is ExtractedField => f !== null);
+    },
+  },
+  form1099nec: {
+    citation: f1099Citation("NEC"),
+    extract: (t) => {
+      const nec = field(
+        "1099nec-box1",
+        "Nonemployee compensation (box 1)",
+        amountAfter(t.text, /1\s*nonemployee compensation/i),
+        "annualIncome",
+        "Self-employment income — feeds Take-Home, Self-Employment Tax, and Quarterly Taxes.",
+      );
+      return nec ? [nec] : [];
+    },
+  },
+  form1099b: {
+    citation: f1099Citation("B"),
+    extract: (t) => {
+      const text = t.text;
+      const proceeds = amountAfter(text, /1d\s*proceeds/i);
+      const basis = amountAfter(text, /1e\s*cost or other basis/i);
+      const fields: ExtractedField[] = [];
+      const p = field("1099b-proceeds", "Proceeds (box 1d)", proceeds, undefined);
+      if (p) fields.push(p);
+      const b = field("1099b-basis", "Cost or other basis (box 1e)", basis, undefined);
+      if (b) fields.push(b);
+      // The realized gain feeds Capital Gains — computed, not inferred, only when
+      // both legs were read by anchor.
+      if (Number.isFinite(proceeds) && Number.isFinite(basis)) {
+        fields.push({
+          id: "1099b-gain",
+          label: "Realized gain (proceeds − basis)",
+          value: Math.round((proceeds - basis) * 100) / 100,
+          confidence: "high",
+          needsReview: false,
+          note: "Feeds the Capital Gains tile (short- vs long-term per box 2).",
+        });
+      }
+      return fields;
+    },
+  },
+  form1095a: {
+    citation: (rev) =>
+      formCitation(
+        "IRS Form 1095-A Health Insurance Marketplace Statement",
+        rev,
+        "https://www.irs.gov/forms-pubs/about-form-1095-a",
+      ),
+    extract: (t) => {
+      // Part III line 33 "Annual Totals": columns A (premiums), B (benchmark
+      // SLCSP premium), C (advance payment of the premium tax credit), in order.
+      const [premium, slcsp, aptc] = amountsAfter(t.text, /annual total[s]?/i, 3);
+      return [
+        field("1095a-premium", "Annual enrollment premiums (column A)", premium ?? NaN, undefined),
+        field(
+          "1095a-slcsp",
+          "Annual benchmark SLCSP premium (column B)",
+          slcsp ?? NaN,
+          undefined,
+          "The benchmark figure the ACA Premium Tax Credit tile needs.",
+        ),
+        field(
+          "1095a-aptc",
+          "Advance payment of the premium tax credit (column C)",
+          aptc ?? NaN,
+          undefined,
+        ),
+      ].filter((f): f is ExtractedField => f !== null);
+    },
+  },
+  form1098: {
+    citation: (rev) =>
+      formCitation(
+        "IRS Form 1098 Mortgage Interest Statement",
+        rev,
+        "https://www.irs.gov/forms-pubs/about-form-1098",
+      ),
+    extract: (t) => {
+      const text = t.text;
+      return [
+        field(
+          "1098-box1",
+          "Mortgage interest received (box 1)",
+          amountAfter(text, /1\s*mortgage interest received/i),
+          undefined,
+          "Feeds Refinance Break-Even and Amortization.",
+        ),
+        field(
+          "1098-box2",
+          "Outstanding mortgage principal (box 2)",
+          amountAfter(text, /2\s*outstanding mortgage principal/i),
+          undefined,
+          "Feeds Loan & Mortgage Amortization.",
+        ),
+      ].filter((f): f is ExtractedField => f !== null);
+    },
+  },
 };
 
 /**
@@ -255,7 +439,7 @@ export function extractDocument(t: ExtractedText): ExtractionResult {
 
   if (kind === "unknown") {
     warnings.push(
-      "We couldn't recognize this document. Supported: typed W-2, Form 1040, and pay stubs.",
+      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B), 1095-A, and 1098 mortgage statements.",
     );
     return {
       kind,
@@ -329,6 +513,18 @@ export function labelFor(kind: DocKind | "unknown"): string {
       return "Form 1040";
     case "paystub":
       return "pay stub";
+    case "form1099int":
+      return "1099-INT";
+    case "form1099div":
+      return "1099-DIV";
+    case "form1099nec":
+      return "1099-NEC";
+    case "form1099b":
+      return "1099-B";
+    case "form1095a":
+      return "1095-A";
+    case "form1098":
+      return "1098 mortgage statement";
     default:
       return "document";
   }

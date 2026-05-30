@@ -84,7 +84,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     el("h1", { class: "tile-title", text: "The Readout" }),
     el("p", {
       class: "tile-desc",
-      text: "Drop a typed pay stub, W-2, or 1040 and get an instant private readout. Parsed on your device, never uploaded.",
+      text: "Drop a typed pay stub, W-2, 1040, 1099, 1095-A, or 1098 mortgage statement and get an instant private readout. Parsed on your device, never uploaded.",
     }),
   );
 
@@ -282,7 +282,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
           text:
             applied > 0
               ? `Added ${applied} value${applied === 1 ? "" : "s"} to My Situation (provenance: from a document). Open My Situation in the header to review or export them.`
-              : "Nothing was added, adjust the values and confirm again.",
+              : "These values are informational — review them above and carry them into the matching tile. Nothing was changed in My Situation.",
         }),
         el(
           "div",
