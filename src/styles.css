@@ -326,92 +326,133 @@ body {
   max-width: 30rem;
 }
 
-.pillar-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: 1rem;
+/* --- The home journey: an ordered, teaching path (replaces the category grid,
+   2026-05-30). A numbered list of steps, each a lesson + a link to its tool. -- */
+.journey {
+  margin-top: 2.5rem;
 }
 
-.pillar-card,
-.index-card {
+.journey-title {
+  text-align: center;
+  margin: 0 0 0.3rem;
+  color: var(--enk-primary-strong);
+}
+
+.journey-intro {
+  text-align: center;
+  color: var(--enk-text-muted);
+  max-width: 40rem;
+  margin: 0 auto 1.75rem;
+}
+
+.journey-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  /* The vertical thread that ties the steps into one path. */
+  position: relative;
+}
+
+.journey-step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
   background: var(--enk-surface);
   border: 1px solid var(--enk-border);
   border-radius: var(--enk-radius);
   box-shadow: var(--enk-shadow);
+  padding: 1.1rem 1.25rem;
 }
 
-.pillar-card {
-  padding: 0;
-}
-
-/* Expandable category card (BUILD-SPEC-2 §1.1): collapsed by default. */
-.pillar-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 1.1rem 1.2rem;
-  cursor: pointer;
-  list-style: none;
-  border-radius: var(--enk-radius);
-}
-
-.pillar-summary::-webkit-details-marker {
-  display: none;
-}
-
-.pillar-summary::after {
-  content: "▸";
-  color: var(--enk-primary);
-  transition: transform 0.15s ease;
-}
-
-.pillar-card[open] .pillar-summary::after {
-  transform: rotate(90deg);
-}
-
-.pillar-summary:hover {
-  background: var(--enk-primary-soft);
-}
-
-.pillar-summary-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.pillar-count {
+.journey-num {
   flex: none;
-  font-size: 0.75rem;
-  color: var(--enk-text-muted);
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--enk-primary);
 }
 
-.index-card {
+.journey-body {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.15rem;
-  padding: 1.1rem 1.2rem;
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
+  gap: 0.3rem;
+}
+
+.journey-step-title {
+  margin: 0;
+  font-size: 1.1rem;
   color: var(--enk-text);
 }
 
-.index-card:hover {
-  border-color: var(--enk-primary);
+.journey-lesson {
+  margin: 0;
+  color: var(--enk-text-muted);
+  max-width: 60ch;
+}
+
+.journey-open {
+  align-self: flex-start;
+  margin-top: 0.2rem;
+  padding: 0.25rem 0;
+  font: inherit;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--enk-primary);
+}
+
+.journey-open:hover {
+  color: var(--enk-primary-strong);
+  text-decoration: underline;
+}
+
+.journey-cta {
+  display: block;
+  margin: 1.75rem auto 0;
+}
+
+/* The quiet escape hatch to the full catalog + search. */
+.home-browse {
+  margin-top: 2rem;
+  text-align: center;
+  color: var(--enk-text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.home-browse-link {
+  font: inherit;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--enk-primary);
+  padding: 0.25rem 0;
+}
+
+.home-browse-link:hover {
+  text-decoration: underline;
+}
+
+.home-browse-hint {
+  font-size: 0.9rem;
 }
 
 .pillar-title {
   margin: 0;
   font-size: 1.1rem;
   color: var(--enk-primary);
-}
-
-.pillar-blurb {
-  margin: 0;
-  color: var(--enk-text-muted);
-  font-size: 0.9rem;
 }
 
 /* --- All Tools index page --- */
@@ -432,12 +473,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-}
-
-/* Inside an expandable card the list sits below the summary, so it needs its
-   own inset since the card itself has no padding. */
-.pillar-card .tile-list {
-  padding: 0 0.7rem 0.8rem;
 }
 
 .tile-link {
@@ -1527,10 +1562,6 @@ body {
   border-top: 1px solid var(--enk-border);
   padding-top: 1.5rem;
 }
-.home-explainer-title {
-  color: var(--enk-primary-strong);
-  margin: 0 0 0.75rem;
-}
 .explainer-points {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
@@ -1546,19 +1577,8 @@ body {
   color: var(--enk-text-muted);
 }
 
-/* --- Hero disclaimer (the greeting carries the promise) ------------------ */
-.hero-disclaimer {
-  color: var(--enk-text-muted);
-  font-size: 0.85rem;
-  max-width: 40rem;
-  margin: 0.75rem auto 0;
-}
-
-/* --- "Why enklayve": centered, symmetrical cards ------------------------- */
+/* --- "Why enklayve" (the /about page): centered, symmetrical cards ------- */
 .home-explainer {
-  text-align: center;
-}
-.home-explainer-title {
   text-align: center;
 }
 .home-explainer-lede {
@@ -1593,6 +1613,12 @@ body {
   margin-top: 3rem;
   padding: 2rem 1rem;
   border-top: 1px solid var(--enk-border);
+}
+.footer-trust {
+  text-align: center;
+  color: var(--enk-text-muted);
+  font-size: 0.85rem;
+  margin: 0 0 1.25rem;
 }
 .footer-links {
   display: flex;
@@ -1632,8 +1658,7 @@ body {
   color: transparent;
 }
 @media (prefers-reduced-motion: no-preference) {
-  .pillar-card,
-  .index-card,
+  .journey-step,
   .explainer-point,
   .tile-link,
   .footer-link,
@@ -1644,11 +1669,14 @@ body {
       border-color 0.15s ease,
       color 0.15s ease;
   }
-  .index-card:hover,
+  .journey-step:hover,
   .explainer-point:hover,
   .readout-dropzone:hover {
     transform: translateY(-2px);
     box-shadow: var(--enk-shadow);
+  }
+  .journey-step:hover {
+    border-color: var(--enk-primary);
   }
   .tile-link:hover {
     transform: translateX(2px);
@@ -1674,6 +1702,8 @@ body {
   .footer-link,
   .palette-opt,
   .situation-pass,
+  .journey-open,
+  .home-browse-link,
   .readout-dropzone {
     min-height: 44px;
   }

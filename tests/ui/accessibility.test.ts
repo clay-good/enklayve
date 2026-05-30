@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import axe from "axe-core";
 import {
   renderHome,
+  renderAbout,
   renderAllTools,
   renderReadout,
   renderReport,
@@ -67,6 +68,13 @@ describe("accessibility (axe-core)", () => {
   it("the All Tools index has no violations", async () => {
     const main = document.createElement("main");
     renderAllTools(main, () => {});
+    document.body.append(main);
+    await expectNoViolations(main);
+  }, 30000);
+
+  it("the Why enklayve (about) view has no violations", async () => {
+    const main = document.createElement("main");
+    renderAbout(main, () => {});
     document.body.append(main);
     await expectNoViolations(main);
   }, 30000);
