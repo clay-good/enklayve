@@ -1,0 +1,16 @@
+# Georgia income tax — Georgia Dept. of Revenue individual income tax, annual
+# (staggered). One-adapter-per-state, the CA workflow is the template.
+# BUILD-SPEC.md §7.2, §8.
+name: Refresh Georgia income tax
+
+on:
+  schedule:
+    - cron: "0 12 1 3 *" # March 1, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-ga
+      source_name: Georgia income tax

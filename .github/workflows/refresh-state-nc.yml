@@ -1,0 +1,16 @@
+# North Carolina income tax — NCDOR individual income tax rates, annual
+# (staggered). One-adapter-per-state, the CA workflow is the template.
+# BUILD-SPEC.md §7.2, §8.
+name: Refresh North Carolina income tax
+
+on:
+  schedule:
+    - cron: "0 12 15 3 *" # March 15, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-nc
+      source_name: North Carolina income tax

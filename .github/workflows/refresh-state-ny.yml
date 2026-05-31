@@ -1,0 +1,16 @@
+# New York income tax — NYS Dept. of Taxation and Finance tax-rate schedules,
+# annual (staggered). One-adapter-per-state, the CA workflow is the template.
+# BUILD-SPEC.md §7.2, §8.
+name: Refresh New York income tax
+
+on:
+  schedule:
+    - cron: "0 12 15 2 *" # February 15, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-ny
+      source_name: New York income tax

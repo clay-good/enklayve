@@ -9,6 +9,13 @@
  * California state source. The second set extends the same anchored pattern to
  * the two remaining Pillar 2 benefit sources with seeded shards: the USDA FNS
  * SNAP cost-of-living adjustment and the CMS / Medicaid.gov expansion status.
+ * The third set adds the remaining *state income-tax* sources that publish a
+ * standard deduction by filing status — New York, Georgia, North Carolina, and
+ * DC — reusing the same generic standard-deduction parser as California (one
+ * adapter per state, the CA workflow is the template). The flat-rate /
+ * exemption-based states (PA, IL, OH, MI) carry no standard deduction to anchor,
+ * so they wait for a later set's rate/exemption parser rather than alert every
+ * run; the no-income-tax states (TX, FL) have nothing to refresh.
  *
  * Honesty boundaries (kept narrow on purpose, per the family's "be right before
  * being everywhere"):
@@ -39,6 +46,10 @@ export type RefreshGroup =
   | "hhs-poverty"
   | "cpi"
   | "state-ca"
+  | "state-ny"
+  | "state-ga"
+  | "state-nc"
+  | "state-dc"
   | "usda-snap"
   | "cms-medicaid";
 
@@ -298,6 +309,39 @@ export const ADAPTERS: RefreshAdapter[] = [
     group: "state-ca",
     source: "California FTB tax-rate schedules",
     sourceUrl: "https://www.ftb.ca.gov/forms/2024/2024-california-tax-rates-and-exemptions.html",
+    cadence: "Annual",
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-ny-income-tax-2024",
+    group: "state-ny",
+    source: "New York State Department of Taxation and Finance tax-rate schedules",
+    sourceUrl: "https://www.tax.ny.gov/pit/file/tax-tables/nys-tax-rate-schedule.htm",
+    cadence: "Annual",
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-ga-income-tax-2024",
+    group: "state-ga",
+    source: "Georgia Department of Revenue individual income tax",
+    sourceUrl: "https://dor.georgia.gov/taxes/individual-taxes",
+    cadence: "Annual",
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-nc-income-tax-2024",
+    group: "state-nc",
+    source: "North Carolina Department of Revenue individual income tax rates",
+    sourceUrl:
+      "https://www.ncdor.gov/taxes-forms/individual-income-tax/north-carolina-individual-income-tax-rates",
+    cadence: "Annual",
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-dc-income-tax-2024",
+    group: "state-dc",
+    source: "DC Office of Tax and Revenue individual income tax rates",
+    sourceUrl: "https://otr.cfo.dc.gov/page/dc-individual-and-fiduciary-income-tax-rates",
     cadence: "Annual",
     parse: parseStandardDeductions,
   },

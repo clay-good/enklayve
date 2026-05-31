@@ -110,7 +110,7 @@ describe("contract: renderDiffLogEntry", () => {
 });
 
 describe("adapters: registry", () => {
-  it("covers both sets across distinct groups", () => {
+  it("covers all three sets across distinct groups", () => {
     expect(REFRESH_GROUPS.sort()).toEqual([
       "cms-medicaid",
       "cpi",
@@ -118,13 +118,18 @@ describe("adapters: registry", () => {
       "irs",
       "ssa",
       "state-ca",
+      "state-dc",
+      "state-ga",
+      "state-nc",
+      "state-ny",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(7);
+    expect(ADAPTERS).toHaveLength(11);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
     expect(adaptersForGroup("cpi").map((a) => a.id)).toEqual(["cpi-u-annual"]);
+    expect(adaptersForGroup("state-ny").map((a) => a.id)).toEqual(["state-ny-income-tax-2024"]);
   });
 });
 
@@ -220,6 +225,30 @@ describe("adapters: jurisdiction standard deductions (IRS + CA)", () => {
 
   it("fails (-> alert) when no deduction can be anchored", () => {
     expect(adapter.parse("no dollar figures in this layout", current).ok).toBe(false);
+  });
+});
+
+describe("adapters: state income tax (NY, the per-state template)", () => {
+  const adapter = adaptersForGroup("state-ny")[0]!;
+  const current = readShard("state-ny-income-tax-2024.json");
+
+  it("overlays the NY standard deduction and validates as a jurisdiction", () => {
+    const raw =
+      "For 2025, the New York standard deduction for single filers is $8,200, for married filing jointly $16,450, and for head of household $11,500.";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const sd = result.shard.standardDeductionByFilingStatus as Record<string, number>;
+    expect(sd.single).toBe(8200);
+    expect(sd.married_jointly).toBe(16450);
+    expect(sd.head_of_household).toBe(11500);
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("fails (-> alert) when no deduction can be anchored (layout changed)", () => {
+    expect(
+      adapter.parse("the rate schedule was published without deduction figures", current).ok,
+    ).toBe(false);
   });
 });
 

@@ -1,0 +1,16 @@
+# District of Columbia income tax — DC Office of Tax and Revenue individual
+# income tax rates, annual (staggered). One-adapter-per-state, the CA workflow
+# is the template. BUILD-SPEC.md §7.2, §8.
+name: Refresh DC income tax
+
+on:
+  schedule:
+    - cron: "0 12 1 4 *" # April 1, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-dc
+      source_name: DC income tax
