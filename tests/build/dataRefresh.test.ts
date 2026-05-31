@@ -110,7 +110,7 @@ describe("contract: renderDiffLogEntry", () => {
 });
 
 describe("adapters: registry", () => {
-  it("covers all four sets across distinct groups", () => {
+  it("covers all five sets across distinct groups", () => {
     expect(REFRESH_GROUPS.sort()).toEqual([
       "cms-medicaid",
       "cpi",
@@ -124,15 +124,17 @@ describe("adapters: registry", () => {
       "state-mi",
       "state-nc",
       "state-ny",
+      "state-oh",
       "state-pa",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(14);
+    expect(ADAPTERS).toHaveLength(15);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
     expect(adaptersForGroup("cpi").map((a) => a.id)).toEqual(["cpi-u-annual"]);
     expect(adaptersForGroup("state-ny").map((a) => a.id)).toEqual(["state-ny-income-tax-2024"]);
+    expect(adaptersForGroup("state-oh").map((a) => a.id)).toEqual(["state-oh-income-tax-2024"]);
   });
 });
 
@@ -300,6 +302,65 @@ describe("adapters: flat-rate state income tax (PA / IL / MI)", () => {
     const adapter = adaptersForGroup("state-mi")[0]!;
     const current = readShard("state-mi-income-tax-2024.json");
     expect(adapter.parse("the combined tax rate is 35%", current).ok).toBe(false);
+  });
+});
+
+describe("adapters: graduated bracket-table state income tax (OH)", () => {
+  const adapter = adaptersForGroup("state-oh")[0]!;
+  const current = readShard("state-oh-income-tax-2024.json");
+
+  it("overlays the graduated schedule (rate + threshold) onto every status", () => {
+    const raw =
+      "For 2025, Ohio taxable nonbusiness income up to $26,150 is taxed at 0%. " +
+      "Income is taxed at 2.75% of the amount in excess of $26,150, " +
+      "and 3.50% of the amount in excess of $100,000.";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const brackets = result.shard.bracketsByFilingStatus as Record<
+      string,
+      { lowerBound: number; rate: number }[]
+    >;
+    expect(brackets.single).toEqual([
+      { lowerBound: 0, rate: 0 },
+      { lowerBound: 26150, rate: 0.0275 },
+      { lowerBound: 100000, rate: 0.035 },
+    ]);
+    // The same schedule is applied to every filing status.
+    expect(brackets.married_jointly![1]!.lowerBound).toBe(26150);
+    expect(brackets.head_of_household![2]!.rate).toBe(0.035);
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("does not let a 0% base tier wrongly pair with a higher threshold", () => {
+    const raw =
+      "The first $26,050 is taxed at 0%; 2.75% applies to the amount in excess of $26,050; " +
+      "3.50% applies to the amount in excess of $100,000.";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const brackets = result.shard.bracketsByFilingStatus as Record<
+      string,
+      { lowerBound: number; rate: number }[]
+    >;
+    // Base tier stays 0% at $0 — never 0% at $26,050.
+    expect(brackets.single![0]).toEqual({ lowerBound: 0, rate: 0 });
+    expect(brackets.single![1]!.rate).toBe(0.0275);
+  });
+
+  it("fails (-> alert) when no tier can be anchored", () => {
+    expect(adapter.parse("the schedule was published without rate figures", current).ok).toBe(
+      false,
+    );
+  });
+
+  it("fails (-> alert) on a structural change (a tier added)", () => {
+    // Four anchored tiers can't fit the committed three-bracket shape, so the
+    // reshape routes to a reviewer rather than being silently overlaid.
+    const raw =
+      "2.00% in excess of $26,050; 2.75% in excess of $50,000; " +
+      "3.50% in excess of $100,000; 4.00% in excess of $250,000.";
+    expect(adapter.parse(raw, current).ok).toBe(false);
   });
 });
 

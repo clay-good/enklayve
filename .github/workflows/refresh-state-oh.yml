@@ -1,0 +1,16 @@
+# Ohio income tax — Ohio Dept. of Taxation annual rate schedule, annual
+# (staggered). Graduated bracket-table state (the fifth-set parser); the CA
+# workflow is the template. BUILD-SPEC.md §7.2, §8.
+name: Refresh Ohio income tax
+
+on:
+  schedule:
+    - cron: "0 12 22 5 *" # May 22, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-oh
+      source_name: Ohio income tax

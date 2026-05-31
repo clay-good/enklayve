@@ -15,9 +15,12 @@
  * adapter per state, the CA workflow is the template). The fourth set covers
  * the flat-rate states whose anchorable figure is the rate, not a deduction —
  * Pennsylvania, Illinois, and Michigan — via a flat-rate parser (and the
- * personal exemption where IL/MI carry one). Only Ohio (graduated brackets, no
- * flat rate and no standard deduction) still waits for a bracket-table parser;
- * the no-income-tax states (TX, FL) have nothing to refresh.
+ * personal exemption where IL/MI carry one). The fifth set adds the graduated
+ * bracket-table parser the others deferred, landing the last seeded state with
+ * an income tax — Ohio — whose schedule is a multi-tier marginal table (no flat
+ * rate and no standard deduction). With it, every seeded state with an income
+ * tax has a refresh adapter; the no-income-tax states (TX, FL) have nothing to
+ * refresh.
  *
  * Honesty boundaries (kept narrow on purpose, per the family's "be right before
  * being everywhere"):
@@ -55,6 +58,7 @@ export type RefreshGroup =
   | "state-pa"
   | "state-il"
   | "state-mi"
+  | "state-oh"
   | "usda-snap"
   | "cms-medicaid";
 
@@ -278,6 +282,93 @@ function parseFlatRateJurisdiction(raw: string, current: Record<string, unknown>
   return { ok: true, shard };
 }
 
+// --- Graduated bracket-table state income tax (anchored prose) ---------------
+
+/**
+ * Overlay a graduated marginal schedule for a multi-tier jurisdiction (Ohio is
+ * the seeded case). Unlike a flat tax, the figures that move are the per-tier
+ * marginal *rate* and the *threshold* it kicks in at, so this parser anchors
+ * each taxable tier as a `(rate)% … in excess of $(threshold)` pair — exactly
+ * how a published rate schedule states it ("2.75% of the amount in excess of
+ * $26,050; 3.50% of the amount in excess of $100,000"). The lowest bracket
+ * (income from $0) is preserved from the committed shard, since its rate is the
+ * stable, often-zero base tier rather than an "in excess of" figure.
+ *
+ * Honesty boundaries, the same as the other state parsers:
+ *   - The gap between a rate and its threshold may not cross another `%` or `$`,
+ *     so a `0%` base-tier mention can never wrongly pair with a higher tier's
+ *     dollar figure.
+ *   - A plausibility guard rejects any rate outside (0%, 15%], and the assembled
+ *     schedule must match the committed shard's bracket *count* and stay
+ *     strictly ascending. A structural change — a tier added or removed — anchors
+ *     nothing and routes to the fail-safe alert, leaving the reviewer to
+ *     transcribe a reshaped table (the same data-only step as adding a state).
+ *   - One prose schedule is overlaid onto every graduated filing status, which
+ *     is correct for Ohio (one schedule for all statuses). A state whose tiers
+ *     differ by filing status would need per-status parsing; that stays deferred,
+ *     the same boundary as the flat-rate parser's paired-exemption handling.
+ */
+function parseGraduatedBracketJurisdiction(
+  raw: string,
+  current: Record<string, unknown>,
+): ParseOutcome {
+  const tierRe =
+    /([\d.]+)\s*(?:percent|%)[^%$]*?(?:in excess of|over|above|exceeding)\s*\$?([\d,]{3,})/gi;
+  const seen = new Set<number>();
+  const tiers: { lowerBound: number; rate: number }[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = tierRe.exec(raw)) !== null) {
+    const rate = Number(match[1]) / 100;
+    const lowerBound = parseAmount(match[2] as string);
+    if (!Number.isFinite(rate) || rate <= 0 || rate > 0.15) continue;
+    if (!Number.isFinite(lowerBound) || lowerBound <= 0) continue;
+    if (seen.has(lowerBound)) continue;
+    seen.add(lowerBound);
+    tiers.push({ lowerBound, rate });
+  }
+  if (tiers.length === 0) {
+    return {
+      ok: false,
+      reason: "could not anchor any graduated bracket tier (rate in excess of a threshold)",
+    };
+  }
+  tiers.sort((a, b) => a.lowerBound - b.lowerBound);
+
+  const shard = clone(current);
+  const brackets = shard.bracketsByFilingStatus as
+    | Record<string, { lowerBound: number; rate: number }[]>
+    | undefined;
+  if (!brackets) {
+    return { ok: false, reason: "shard has no bracketsByFilingStatus to overlay" };
+  }
+  let overlaid = 0;
+  for (const status of Object.keys(brackets)) {
+    const arr = brackets[status];
+    // A single-element bracket is a flat tax, not this parser's job.
+    if (!Array.isArray(arr) || arr.length <= 1) continue;
+    const base = arr[0];
+    if (!base || base.lowerBound !== 0) continue;
+    const assembled = [{ lowerBound: 0, rate: base.rate }, ...tiers.map((t) => ({ ...t }))];
+    // Same count as the committed schedule, or a reviewer owns the reshape.
+    if (assembled.length !== arr.length) continue;
+    let ascending = true;
+    for (let i = 1; i < assembled.length; i += 1) {
+      if (assembled[i]!.lowerBound <= assembled[i - 1]!.lowerBound) ascending = false;
+    }
+    if (!ascending) continue;
+    brackets[status] = assembled;
+    overlaid += 1;
+  }
+  if (overlaid === 0) {
+    return {
+      ok: false,
+      reason:
+        "no graduated schedule matched the committed bracket structure (count or shape changed)",
+    };
+  }
+  return { ok: true, shard };
+}
+
 // --- USDA FNS SNAP cost-of-living adjustment (anchored prose) ----------------
 
 /**
@@ -434,6 +525,14 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl: "https://www.michigan.gov/taxes/iit/tax-time/whats-new-for-tax-year-2024",
     cadence: "Annual",
     parse: parseFlatRateJurisdiction,
+  },
+  {
+    id: "state-oh-income-tax-2024",
+    group: "state-oh",
+    source: "Ohio Department of Taxation annual income tax rate schedule (graduated)",
+    sourceUrl: "https://tax.ohio.gov/individual/resources/annual-tax-rates",
+    cadence: "Annual",
+    parse: parseGraduatedBracketJurisdiction,
   },
   {
     id: "snap-fy2024-contiguous",
