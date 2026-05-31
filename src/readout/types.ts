@@ -20,7 +20,8 @@ export type DocKind =
   | "form1099nec"
   | "form1099b"
   | "form1095a"
-  | "form1098";
+  | "form1098"
+  | "fafsaSummary";
 
 /** The My Situation fields the Readout can populate on confirmation. Kept
  * narrow (not all of {@link SituationKey}) so the mapping stays type-safe. */

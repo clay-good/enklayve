@@ -89,7 +89,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     el("h1", { class: "tile-title", text: "The Readout" }),
     el("p", {
       class: "tile-desc",
-      text: "Drop a typed pay stub, W-2, 1040, 1099, 1095-A, or 1098 mortgage statement and get an instant private readout. Parsed on your device, never uploaded.",
+      text: "Drop a typed pay stub, W-2, 1040, 1099, 1095-A, 1098 mortgage statement, or FAFSA Submission Summary and get an instant private readout. Parsed on your device, never uploaded.",
     }),
   );
 

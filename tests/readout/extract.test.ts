@@ -194,6 +194,37 @@ describe("Readout, 1095-A and 1098 extraction", () => {
   });
 });
 
+const FAFSA_SUMMARY = typed(
+  "2024-25 FAFSA Submission Summary Federal Student Aid " +
+    "Eligibility Overview Student Aid Index (SAI): 4500 " +
+    "You may be eligible for a Federal Pell Grant.",
+);
+
+describe("Readout, FAFSA Submission Summary extraction", () => {
+  it("recognizes the summary and reads the official Student Aid Index", () => {
+    const r = extractDocument(FAFSA_SUMMARY);
+    expect(detectDocument(FAFSA_SUMMARY)).toEqual({ kind: "fafsaSummary", revision: "2024" });
+    expect(r.kind).toBe("fafsaSummary");
+    expect(value(r, "fafsa-sai")).toBe(4500);
+    expect(r.citation?.sourceUrl).toMatch(/studentaid\.gov/);
+    expect(r.citation?.effectiveYear).toBe(2024);
+  });
+
+  it("reads a negative SAI (the new methodology floors at −$1,500)", () => {
+    const r = extractDocument(
+      typed("2024-25 FAFSA Submission Summary Student Aid Index (SAI): -1500"),
+    );
+    expect(r.kind).toBe("fafsaSummary");
+    expect(value(r, "fafsa-sai")).toBe(-1500);
+  });
+
+  it("reads the SAI without the parenthetical and with no target (informational)", () => {
+    const r = extractDocument(typed("2024-25 FAFSA Submission Summary Student Aid Index 0"));
+    expect(value(r, "fafsa-sai")).toBe(0);
+    expect(r.fields.find((f) => f.id === "fafsa-sai")?.target).toBeUndefined();
+  });
+});
+
 describe("Readout, flagging, not guessing (§2.2)", () => {
   it("flags an unrecognized form revision instead of extracting", () => {
     const oldW2 = typed(

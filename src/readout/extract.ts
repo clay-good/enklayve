@@ -106,6 +106,9 @@ function detectYear(text: string): string | null {
  * "wage and tax statement" so a stray "W-2" mention can't win) also matches.
  */
 const DOC_MARKERS: { kind: DocKind; re: RegExp; also?: RegExp }[] = [
+  // The FAFSA Submission Summary's title is unmistakable; anchor it first so a
+  // tax-return line it references can't be mistaken for a 1040.
+  { kind: "fafsaSummary", re: /FAFSA Submission Summary/i },
   { kind: "w2", re: /\bW-?2\b/i, also: /wage and tax statement/i },
   { kind: "form1040", re: /\bform\s*1040\b/i, also: /individual income tax return/i },
   { kind: "form1099int", re: /\b1099-?INT\b/i },
@@ -425,6 +428,27 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
       ].filter((f): f is ExtractedField => f !== null);
     },
   },
+  fafsaSummary: {
+    citation: (rev) =>
+      formCitation(
+        "Federal Student Aid FAFSA Submission Summary",
+        rev,
+        "https://studentaid.gov/help/fafsa-submission-summary",
+      ),
+    extract: (t) => {
+      // The Student Aid Index is the one figure the Submission Summary exists to
+      // confirm (§2.1). The anchor consumes an optional "(SAI)" parenthetical and
+      // colon so the value (which can be negative, down to −$1,500) reads cleanly.
+      const sai = field(
+        "fafsa-sai",
+        "Student Aid Index (SAI)",
+        amountAfter(t.text, /student aid index(?:\s*\(sai\))?\s*:?/i),
+        undefined,
+        "The official SAI to check the FAFSA Student Aid Index and Pell Grant estimates against.",
+      );
+      return sai ? [sai] : [];
+    },
+  },
 };
 
 /**
@@ -439,7 +463,7 @@ export function extractDocument(t: ExtractedText): ExtractionResult {
 
   if (kind === "unknown") {
     warnings.push(
-      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B), 1095-A, and 1098 mortgage statements.",
+      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B), 1095-A, 1098 mortgage statements, and the FAFSA Submission Summary.",
     );
     return {
       kind,
@@ -525,6 +549,8 @@ export function labelFor(kind: DocKind | "unknown"): string {
       return "1095-A";
     case "form1098":
       return "1098 mortgage statement";
+    case "fafsaSummary":
+      return "FAFSA Submission Summary";
     default:
       return "document";
   }
