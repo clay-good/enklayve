@@ -2147,3 +2147,85 @@ body {
     max-width: 72rem;
   }
 }
+
+/* ======================================================================== *
+ * Overflow hardening — the page scrolls vertically, never sideways.
+ *
+ * The reported symptom was that several tools could be dragged horizontally on
+ * a phone. The fluid grids were not the leak; two things were:
+ *   1. Form controls — a <select> with a long option label ("Married filing
+ *      jointly") or a number input won't shrink below its intrinsic width inside
+ *      a grid/flex track unless it's given an explicit min-width: 0.
+ *   2. The "Show the math" breakdown table (on every tool with a result): its
+ *      nowrap currency column sets a hard minimum width that can exceed a narrow
+ *      phone.
+ * We let controls shrink, give wide tables their own contained scroll, wrap busy
+ * action rows, and clip any last stray overflow at the content edge.
+ * ======================================================================== */
+
+/* Controls fill their field and shrink with it. A grid/flex item needs
+   min-width: 0 to go narrower than its content's intrinsic width. */
+.field {
+  min-width: 0;
+}
+.field input,
+.field select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* A long button label or a row of several actions wraps instead of pushing the
+   form wider than the screen. */
+.tile-form-actions {
+  flex-wrap: wrap;
+}
+
+/* Wide tables keep their own horizontal scroll, so the table — not the whole
+   page — is what moves sideways when a row outgrows a narrow phone. The wrapper
+   has auto height, so the forced overflow-y never clips a tall, open table. */
+.breakdown {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Last line of defense: nothing in the content column may widen the page.
+   `clip` (not `hidden`) leaves vertical scrolling untouched and never turns the
+   column into a scroll container, so the sticky header (its sibling) is
+   unaffected; browsers without `clip` simply ignore this and rely on the
+   root-cause fixes above. */
+.content {
+  overflow-x: clip;
+}
+
+/* Respect the notch and rounded corners on modern phones (pairs with
+   viewport-fit=cover in index.html): the header, content, and footer keep clear
+   of the safe-area insets in landscape. */
+.app-header {
+  padding-left: max(1.5rem, env(safe-area-inset-left));
+  padding-right: max(1.5rem, env(safe-area-inset-right));
+}
+.content {
+  padding-left: max(1.5rem, env(safe-area-inset-left));
+  padding-right: max(1.5rem, env(safe-area-inset-right));
+}
+@media (max-width: 768px) {
+  .content {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+@media (max-width: 600px) {
+  .app-header {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* A small delight: in-page jumps glide rather than snap — but only for readers
+   who haven't asked the platform to minimize motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}

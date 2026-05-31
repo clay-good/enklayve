@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { renderToolPage, toolPages, toolPagePath } from "../../scripts/tool-pages";
 import { escapeHtml } from "../../scripts/tools-index";
 import { renderSitemap, renderRobots, SITE_ORIGIN } from "../../scripts/sitemap";
@@ -44,6 +46,50 @@ describe("per-tile static shells", () => {
       expect(/<link[^>]+href\s*=\s*"https?:\/\/(?!enklayve\.com\/tools\/)/i.test(html)).toBe(false);
       expect(/<img[^>]+src\s*=\s*"https?:\/\//i.test(html)).toBe(false);
     }
+  });
+});
+
+describe("home index.html SEO head", () => {
+  // The home is the primary indexable page (the SPA shell). Phase 11 added the
+  // full discovery + social surface to it; this guards that surface against
+  // accidental removal. The canonical/og URLs are self-referential to the
+  // production origin, which the release audit explicitly allows.
+  const html = readFileSync(resolve(__dirname, "../../index.html"), "utf8");
+
+  it("carries a canonical, robots, and a descriptive title + description", () => {
+    expect(html).toContain(`<link rel="canonical" href="${SITE_ORIGIN}/" />`);
+    expect(html).toMatch(/<meta name="robots" content="index, follow" \/>/);
+    expect(html).toMatch(/<title>enklayve —[^<]+<\/title>/);
+    expect(html).toMatch(/<meta\s+name="description"/);
+  });
+
+  it("carries Open Graph and Twitter card tags for social previews", () => {
+    for (const prop of [
+      "og:type",
+      "og:site_name",
+      "og:title",
+      "og:description",
+      "og:url",
+      "og:image",
+    ]) {
+      expect(html).toContain(`property="${prop}"`);
+    }
+    expect(html).toContain('name="twitter:card"');
+  });
+
+  it("carries WebApplication structured data (JSON-LD) and parses", () => {
+    const m = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+    expect(m).not.toBeNull();
+    const data = JSON.parse(m?.[1] ?? "null");
+    expect(data["@type"]).toBe("WebApplication");
+    expect(data.offers.price).toBe("0");
+  });
+
+  it("loads nothing cross-origin (only self-referential absolute URLs)", () => {
+    // Same guard the release audit applies: any absolute URL must be on the
+    // production origin (canonical/og), never a third-party CDN.
+    const crossOrigin = html.match(/\b(?:src|href)\s*=\s*"https?:\/\/(?!enklayve\.com[/"])/gi);
+    expect(crossOrigin).toBeNull();
   });
 });
 

@@ -2,16 +2,61 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+    <title>enklayve — private, free financial tools that show their math</title>
     <meta
       name="description"
-      content="Your private financial enclave. Every number is computed on your device. Nothing is ever sent anywhere."
+      content="Free, private financial tools that compute your taxes, benefits, take-home pay, and debt payoff entirely on your device. Nothing is ever sent anywhere, and every number shows its source."
     />
+    <link rel="canonical" href="https://enklayve.com/" />
+    <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#6D28D9" />
-    <title>enklayve</title>
+    <meta name="color-scheme" content="light dark" />
+
+    <!-- Open Graph (social previews) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="enklayve" />
+    <meta
+      property="og:title"
+      content="enklayve — private, free financial tools that show their math"
+    />
+    <meta
+      property="og:description"
+      content="Your taxes, benefits, take-home pay, and debt payoff — computed entirely on your device. Nothing is ever sent anywhere."
+    />
+    <meta property="og:url" content="https://enklayve.com/" />
+    <meta property="og:image" content="https://enklayve.com/icon.svg" />
+
+    <!-- Twitter card -->
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:title"
+      content="enklayve — private, free financial tools that show their math"
+    />
+    <meta
+      name="twitter:description"
+      content="Your taxes, benefits, take-home pay, and debt payoff — computed entirely on your device. Nothing is ever sent anywhere."
+    />
+    <meta name="twitter:image" content="https://enklayve.com/icon.svg" />
+
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icon.svg" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "enklayve",
+        "url": "https://enklayve.com/",
+        "description": "Free, private financial tools that compute your taxes, benefits, take-home pay, and debt payoff entirely on your device. Nothing is ever sent anywhere, and every number shows its source.",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Any (web browser)",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
   </head>
   <body>
     <div id="app" class="app"></div>

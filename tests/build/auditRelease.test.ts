@@ -30,6 +30,17 @@ describe("audit: no cross-origin resource loads in index.html", () => {
     const html = '<script src="https://cdn.example.com/x.js"></script>';
     expect(checkIndexHtml(html).length).toBe(1);
   });
+  it("allows a self-referential absolute canonical/og URL on the production origin", () => {
+    const html =
+      '<link rel="canonical" href="https://enklayve.com/" />' +
+      '<meta property="og:url" content="https://enklayve.com/" />' +
+      '<meta property="og:image" content="https://enklayve.com/icon.svg" />';
+    expect(checkIndexHtml(html)).toEqual([]);
+  });
+  it("still flags a look-alike origin that only starts with the production host", () => {
+    const html = '<link rel="preload" href="https://enklayve.com.evil.example/x.js" />';
+    expect(checkIndexHtml(html).length).toBe(1);
+  });
 });
 
 describe("audit: dataset provenance", () => {

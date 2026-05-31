@@ -9,6 +9,7 @@
  */
 import { tilesForPillar } from "../src/tiles/registry";
 import { PILLARS } from "../src/tiles/types";
+import { SITE_ORIGIN } from "./sitemap";
 
 /** Escape text for safe interpolation into HTML. */
 export function escapeHtml(s: string): string {
@@ -47,7 +48,18 @@ export function renderToolsIndex(): string {
       name="description"
       content="The full index of enklayve tools. Every figure is computed on your device; nothing is ever sent anywhere."
     />
-    <link rel="canonical" href="/tools.html" />
+    <link rel="canonical" href="${SITE_ORIGIN}/tools.html" />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="enklayve" />
+    <meta property="og:title" content="All tools · enklayve" />
+    <meta
+      property="og:description"
+      content="The full index of enklayve tools. Every figure is computed on your device; nothing is ever sent anywhere."
+    />
+    <meta property="og:url" content="${SITE_ORIGIN}/tools.html" />
+    <meta property="og:image" content="${SITE_ORIGIN}/icon.svg" />
+    <meta name="twitter:card" content="summary" />
     <style>
       :root { color-scheme: light dark; }
       body {

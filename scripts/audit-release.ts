@@ -26,10 +26,18 @@ export function checkCsp(workerSource: string): string[] {
     : ["worker CSP no longer sets connect-src 'none' for pages"];
 }
 
-/** 2. The built index.html must not load any cross-origin resource. */
+/** 2. The built index.html must not load any cross-origin resource.
+ *
+ * A self-referential absolute URL on the production origin (enklayve.com) is
+ * same-origin at runtime and permitted by the CSP's `'self'`, so it is allowed:
+ * the SEO surface (Phase 11) needs an absolute `<link rel="canonical">` and
+ * og:url/og:image, and those are metadata a crawler reads, not resources the
+ * page fetches. Any other origin (a CDN font, a third-party script) is still
+ * flagged. The host mirrors SITE_ORIGIN in scripts/sitemap.ts; it is inlined
+ * here to keep this a pure function of the HTML. */
 export function checkIndexHtml(html: string): string[] {
   const violations: string[] = [];
-  const crossOrigin = /\b(?:src|href)\s*=\s*"https?:\/\//gi;
+  const crossOrigin = /\b(?:src|href)\s*=\s*"https?:\/\/(?!enklayve\.com[/"])/gi;
   const matches = html.match(crossOrigin);
   if (matches) {
     violations.push(`index.html references cross-origin resources: ${matches.join(", ")}`);

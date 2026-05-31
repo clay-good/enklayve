@@ -38,12 +38,14 @@ npm run deploy:dry
 - [ ] Full keyboard navigation; visible focus; modals are never traps (Close + Done + Escape + click-outside).
 - [ ] Reduced-motion preference is respected (count-up and hover transitions).
 - [ ] Light, dark, and high-contrast themes all legible; red used only for genuine warnings.
+- [ ] The page scrolls vertically only on every device width — no horizontal drag on any tool (form controls shrink to their track, wide tables scroll within their own region, and an `overflow-x: clip` backstop guards the content column); `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch.
 
 ## Crawlability & docs (Phase 11)
 
 - [ ] `dist/tools.html` lists exactly the registry's tiles (drift test).
 - [ ] One pre-rendered shell per tile under `dist/tools/<id>.html`, each with a canonical and a deep link into the live tool (drift test).
 - [ ] `dist/sitemap.xml` lists the home, the index, and every tool shell; `dist/robots.txt` advertises the sitemap.
+- [ ] The home `index.html` carries a canonical, a descriptive title + description, Open Graph + Twitter Card tags, and JSON-LD `WebApplication` structured data; the tool shells and the index carry the same OG/Twitter/robots with absolute canonicals (guarded by `tests/ui/seo.test.ts`). No cross-origin resource loads anywhere (the release audit allows only self-referential absolute URLs on the production origin).
 - [ ] Docs present and current: [`data-sources.md`](data-sources.md), [`adding-a-state.md`](adding-a-state.md), [`contributing.md`](contributing.md), [`source-diff-log.md`](source-diff-log.md), and the specs.
 
 ## Data refresh workflows (Phase 9)

@@ -83,6 +83,16 @@ export function renderToolPage(tile: TileDefinition): string {
     <title>${escapeHtml(tile.title)} · enklayve</title>
     <meta name="description" content="${escapeHtml(tile.description)}" />
     <link rel="canonical" href="${canonical}" />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="enklayve" />
+    <meta property="og:title" content="${escapeHtml(tile.title)} · enklayve" />
+    <meta property="og:description" content="${escapeHtml(tile.description)}" />
+    <meta property="og:url" content="${canonical}" />
+    <meta property="og:image" content="${SITE_ORIGIN}/icon.svg" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="${escapeHtml(tile.title)} · enklayve" />
+    <meta name="twitter:description" content="${escapeHtml(tile.description)}" />
     <style>${PAGE_STYLE}
     </style>
   </head>

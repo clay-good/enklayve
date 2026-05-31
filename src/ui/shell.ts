@@ -260,7 +260,7 @@ function journeySteps(): JourneyStep[] {
 
 function renderHome(container: HTMLElement, navigate: (id: string | null) => void): void {
   clear(container);
-  document.title = "enklayve";
+  document.title = "enklayve — private, free financial tools that show their math";
 
   const hero = el(
     "section",
