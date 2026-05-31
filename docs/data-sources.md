@@ -21,11 +21,11 @@ The authoritative, machine-readable record is [`data/manifest.json`](../data/man
 | SNAP cost-of-living adjustment, deductions, allotments | USDA Food & Nutrition Service | Annual, Oct | 2 |
 | Medicaid MAGI expansion status by state | CMS / Medicaid.gov and state publications | Annual | 2 |
 
-> The ACA **county benchmark (second-lowest-cost silver) premium** and a Social Security **PIA** are deliberately *not* bundled — the per-county SLCSP table is enormous and changes annually. Those tools have the user supply that one local figure (pointed to HealthCare.gov / their SSA statement) so every *shipped* number stays verifiable. The same principle defers the **FAFSA Student Aid Index + Pell Grant** tables until they can be transcribed accurately rather than shipping an unverifiable number.
+> The ACA **county benchmark (second-lowest-cost silver) premium** and a Social Security **PIA** are deliberately *not* bundled — the per-county SLCSP table is enormous and changes annually. Those tools have the user supply that one local figure (pointed to HealthCare.gov / their SSA statement) so every *shipped* number stays verifiable. The **FAFSA Student Aid Index + Pell Grant** tables (ED SAI Formula Guide) are now seeded for the 2024-25 dependent-student methodology and cited; the tools frame the result as an estimate to verify against the official guide and the user's FAFSA Submission Summary (the independent-student variant and per-state aid stay out of scope).
 
 ## Currently seeded shards
 
-The 2024 tax year is seeded. Federal: income tax, FICA, retirement limits, capital gains, RMD Uniform Lifetime, CPI-U annual series, Social Security adjustment table. Benefits: Federal Poverty Level (×3 region variants), EITC/CTC, Saver's Credit, SNAP (contiguous), Medicaid expansion map, ACA applicable percentages. State income tax: the ten most populous states plus DC — CA, NY, TX, FL, PA, IL, OH, GA, NC, MI, DC (no-income-tax states are first-class records, not omissions).
+The 2024 tax year is seeded. Federal: income tax, FICA, retirement limits, capital gains, RMD Uniform Lifetime, CPI-U annual series, Social Security adjustment table. Benefits: Federal Poverty Level (×3 region variants), EITC/CTC, Saver's Credit, SNAP (contiguous), Medicaid expansion map, ACA applicable percentages, FAFSA SAI + Pell schedule (2024-25 dependent-student). State income tax: the ten most populous states plus DC — CA, NY, TX, FL, PA, IL, OH, GA, NC, MI, DC (no-income-tax states are first-class records, not omissions).
 
 Each shard has a sibling `.sha256` and an entry in the manifest. See [`adding-a-state.md`](adding-a-state.md) to add a jurisdiction and [`contributing.md`](contributing.md) for the workflow.
 

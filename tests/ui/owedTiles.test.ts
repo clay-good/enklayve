@@ -8,6 +8,8 @@ import { mountSaversCredit } from "../../src/tiles/saversCredit";
 import { mountSnap } from "../../src/tiles/snap";
 import { mountMedicaid } from "../../src/tiles/medicaid";
 import { mountAcaPtc } from "../../src/tiles/acaPtc";
+import { mountFafsaSai } from "../../src/tiles/fafsaSai";
+import { mountPell } from "../../src/tiles/pell";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
@@ -193,6 +195,53 @@ describe("ACA Premium Tax Credit", () => {
   });
 });
 
+describe("FAFSA Student Aid Index tile", () => {
+  it("estimates the SAI and the Pell it implies for a low-income family, cited", () => {
+    const root = mount(
+      mountFafsaSai,
+      new URLSearchParams({
+        pinc: "45000",
+        ptax: "1500",
+        size: "4",
+        earn2: "18000",
+        passet: "5000",
+        sinc: "4000",
+        stax: "0",
+        sasset: "1000",
+      }),
+    );
+    expect(rowValue(root, "Student Aid Index (SAI)")).toContain("-$293");
+    expect(rowValue(root, "Estimated Pell Grant")).toContain("$7,395");
+    expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/studentaid\.gov/);
+  });
+
+  it("writes income and household size back to Your Situation", () => {
+    const profile = new SituationStore();
+    const root = mount(mountFafsaSai, new URLSearchParams(), profile);
+    const pinc = root.querySelector<HTMLInputElement>('input[name="pinc"]')!;
+    pinc.value = "60000";
+    pinc.dispatchEvent(new Event("input"));
+    const size = root.querySelector<HTMLInputElement>('input[name="size"]')!;
+    size.value = "5";
+    size.dispatchEvent(new Event("input"));
+    expect(profile.get("annualIncome")).toBe(60000);
+    expect(profile.get("householdSize")).toBe(5);
+  });
+});
+
+describe("Pell Grant tile", () => {
+  it("reduces the award as the SAI rises, cited", () => {
+    const root = mount(mountPell, new URLSearchParams({ sai: "2000" }));
+    expect(rowValue(root, "Estimated Pell Grant")).toContain("$5,395");
+    expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/studentaid\.gov/);
+  });
+
+  it("reports ineligibility once the SAI reaches the maximum Pell", () => {
+    const root = mount(mountPell, new URLSearchParams({ sai: "8000" }));
+    expect(rowValue(root, "Estimated Pell Grant")).toContain("Not Pell-eligible");
+  });
+});
+
 describe("Pillar 2 accessibility", () => {
   for (const tc of [
     { name: "fpl", mount: mountFpl, params: new URLSearchParams({ hh: "4", inc: "62400" }) },
@@ -223,6 +272,12 @@ describe("Pillar 2 accessibility", () => {
       mount: mountAcaPtc,
       params: new URLSearchParams({ hh: "1", inc: "30120", bm: "600" }),
     },
+    {
+      name: "fafsa-sai",
+      mount: mountFafsaSai,
+      params: new URLSearchParams({ pinc: "45000", size: "4", earn2: "18000" }),
+    },
+    { name: "pell", mount: mountPell, params: new URLSearchParams({ sai: "2000" }) },
   ]) {
     it(`${tc.name} has no axe violations`, async () => {
       const root = mount(tc.mount, tc.params);

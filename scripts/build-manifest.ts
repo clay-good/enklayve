@@ -90,6 +90,7 @@ const SHARDS: ShardSource[] = [
   { id: "snap-fy2024-contiguous", kind: "snap", shard: "snap-fy2024-contiguous.json", ...ANNUAL },
   { id: "medicaid-2024", kind: "medicaid", shard: "medicaid-2024.json", ...ANNUAL },
   { id: "aca-2024", kind: "aca", shard: "aca-2024.json", ...ANNUAL },
+  { id: "fafsa-2024-2025", kind: "fafsa", shard: "fafsa-2024-2025.json", ...ANNUAL },
   // Pillar 3 / long-horizon (§6.7) — Social Security claiming.
   {
     id: "social-security-2024",

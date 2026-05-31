@@ -1,0 +1,36 @@
+{
+  "awardYear": "2024-2025",
+  "maxPellGrant": 7395,
+  "minPellGrant": 740,
+  "saiFloor": -1500,
+  "saiIncomeProtectionAllowance": {
+    "2": 24840,
+    "3": 30930,
+    "4": 38200,
+    "5": 45070,
+    "6": 52720
+  },
+  "ipaPerAdditionalPerson": 5960,
+  "studentIncomeProtectionAllowance": 11130,
+  "employmentExpenseAllowance": {
+    "rate": 0.35,
+    "cap": 4700
+  },
+  "parentAssetRate": 0.12,
+  "studentIncomeRate": 0.5,
+  "studentAssetRate": 0.2,
+  "aaiAssessment": [
+    { "lowerBound": 0, "rate": 0.22 },
+    { "lowerBound": 18200, "rate": 0.25 },
+    { "lowerBound": 22800, "rate": 0.29 },
+    { "lowerBound": 27400, "rate": 0.34 },
+    { "lowerBound": 32000, "rate": 0.4 },
+    { "lowerBound": 36600, "rate": 0.47 }
+  ],
+  "citation": {
+    "sourceUrl": "https://studentaid.gov/complete-aid-process/how-calculated",
+    "sourceDocument": "U.S. Department of Education (Federal Student Aid), 2024-25 SAI and Pell Grant Eligibility — Student Aid Index Formula Guide (dependent student)",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2026-05-30"
+  }
+}

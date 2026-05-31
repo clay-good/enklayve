@@ -23,6 +23,7 @@ import {
   type MedicaidData,
   type SocialSecurityData,
   type AcaData,
+  type FafsaData,
 } from "./schemas";
 
 /** Federal Poverty Level region (BUILD-SPEC.md §4.1). */
@@ -68,6 +69,8 @@ export interface BundledData {
   aca(): AcaData | null;
   /** Social Security claiming-age benefit adjustment rules (BUILD-SPEC-2 §6.7). */
   socialSecurity(): SocialSecurityData | null;
+  /** FAFSA Student Aid Index tables and Pell schedule (BUILD-SPEC.md §4.4). */
+  fafsa(): FafsaData | null;
   /** A state jurisdiction by two-letter code (e.g. "ca"); null if unavailable. */
   state(code: string): Jurisdiction | null;
   /** Status for a dataset id, for the fail-safe verify banner. */
@@ -122,6 +125,7 @@ async function build(): Promise<BundledData> {
     medicaid: () => dataOf("medicaid-2024") as MedicaidData | null,
     aca: () => dataOf("aca-2024") as AcaData | null,
     socialSecurity: () => dataOf("social-security-2024") as SocialSecurityData | null,
+    fafsa: () => dataOf("fafsa-2024-2025") as FafsaData | null,
     state: (code) => dataOf(`state-${code.toLowerCase()}-income-tax-2024`) as Jurisdiction | null,
     statusOf: (id) => loaded.byId.get(id)?.status ?? "missing",
     stateCodes: () =>

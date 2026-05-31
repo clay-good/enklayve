@@ -56,7 +56,7 @@ npm run deploy:dry
 
 - [ ] Federal/state/FICA golden cases cross-checked against published worked examples for the seeded tax year.
 - [ ] Every tile has a worked example, a "How this works" explainer, "Learn more" links, and the on-device / US-only / not-advice promise.
-- [ ] Deferred-for-accuracy items are still deferred, not faked: FAFSA SAI + Pell, the per-county ACA benchmark (user-supplied), and any state beyond the seeded eleven.
+- [ ] Deferred-for-accuracy items are still deferred, not faked: the per-county ACA benchmark (user-supplied), and any state beyond the seeded eleven. (FAFSA SAI + Pell now ship as an estimate the user verifies against the official SAI Formula Guide and their FAFSA Submission Summary, with every seeded table value cited; the independent-student variant and per-state aid stay out of scope.)
 
 ## Deploy
 

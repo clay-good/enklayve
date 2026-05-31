@@ -301,13 +301,50 @@ export const MedicaidSchema = z.object({
 });
 export type MedicaidData = z.infer<typeof MedicaidSchema>;
 
-/** FAFSA Student Aid Index tables and Pell schedule (Dept. of Education). */
+/**
+ * FAFSA Student Aid Index tables and Pell schedule (BUILD-SPEC.md §4.4, Dept. of
+ * Education SAI Formula Guide). The SAI is a published, fully deterministic
+ * formula; this carries the dependent-student tables it needs. Every figure is
+ * cited to the official guide and is an *estimate to verify* against it and the
+ * applicant's FAFSA Submission Summary — the formula structure is exact, the
+ * table values are the reviewer's data-only step (like a jurisdiction's brackets).
+ */
 export const FafsaSchema = z.object({
   awardYear: z.string().regex(/^\d{4}-\d{4}$/),
+  /** Maximum Pell Grant for the award year. */
   maxPellGrant: z.number().gte(0),
+  /** Minimum Pell Grant (the floor an otherwise-eligible student receives). */
+  minPellGrant: z.number().gte(0),
+  /** The lowest the SAI can be under the new methodology (negative allowed). */
+  saiFloor: z.number(),
+  /** Parents' income protection allowance by family size (string key). */
   saiIncomeProtectionAllowance: z.record(z.string(), z.number().gte(0)),
+  /** Added to the largest tabulated family size for each additional member. */
+  ipaPerAdditionalPerson: z.number().gte(0),
+  /** Dependent student's own income protection allowance. */
+  studentIncomeProtectionAllowance: z.number().gte(0),
+  /** Employment expense allowance: a rate of the lesser earned income, capped. */
+  employmentExpenseAllowance: z.object({
+    rate: z.number().gte(0).lte(1),
+    cap: z.number().gte(0),
+  }),
+  /** Rate at which parents' net worth converts to an asset contribution (0.12). */
+  parentAssetRate: z.number().gte(0).lte(1),
+  /** Rate at which the student's available income is assessed (0.50). */
+  studentIncomeRate: z.number().gte(0).lte(1),
+  /** Rate at which the student's net worth is assessed (0.20). */
+  studentAssetRate: z.number().gte(0).lte(1),
+  /**
+   * Progressive assessment of parents' adjusted available income, ascending by
+   * `lowerBound` (≥ 0). The lowest rate also applies to negative AAI, so the
+   * contribution can be negative (the new SAI allows a negative result).
+   */
+  aaiAssessment: z
+    .array(z.object({ lowerBound: z.number().gte(0), rate: z.number().gte(0).lte(1) }))
+    .min(1),
   citation: CitationSchema,
 });
+export type FafsaData = z.infer<typeof FafsaSchema>;
 
 /**
  * Social Security retirement benefit-adjustment rules (BUILD-SPEC-2 §6.7, SSA).

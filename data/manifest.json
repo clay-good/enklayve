@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-05-29",
+  "generatedAt": "2026-05-31",
   "datasets": [
     {
       "id": "federal-income-tax-2024",
@@ -326,6 +326,19 @@
       "sourceDocument": "IRS Premium Tax Credit applicable percentages (ARPA, extended by the Inflation Reduction Act through 2025; IRC §36B(b)(3)(A)(iii))",
       "dateRetrieved": "2026-05-29",
       "contentHash": "9d8a833e8bb50c3df0a1412aeb79e5c727f956a384c0295e9b7c0f84f4bfa034"
+    },
+    {
+      "id": "fafsa-2024-2025",
+      "kind": "fafsa",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "fafsa-2024-2025.json",
+      "sourceUrl": "https://studentaid.gov/complete-aid-process/how-calculated",
+      "sourceDocument": "U.S. Department of Education (Federal Student Aid), 2024-25 SAI and Pell Grant Eligibility — Student Aid Index Formula Guide (dependent student)",
+      "dateRetrieved": "2026-05-30",
+      "contentHash": "e4fe4ecc3a927ac8f2b2e43d7a7efc2fc0a20b4b1d97abf22e96cb506fdb7ac9"
     },
     {
       "id": "social-security-2024",

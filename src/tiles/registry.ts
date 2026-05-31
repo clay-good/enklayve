@@ -1,9 +1,8 @@
 /**
  * The tile catalog (BUILD-SPEC.md §3–5, BUILD-SPEC-2 §4/§6). The command palette
  * fuzzy-searches this list and the home grid groups it by pillar, so every
- * planned tool has a stable, linkable identity from Phase 4 onward. The
- * Take-Home Pay tile is fully built; the rest are registered as "coming soon"
- * and light up as their phases land — registering a tile never touches the shell.
+ * planned tool has a stable, linkable identity. Every catalog tile is now built
+ * and "ready"; registering a tile never touches the shell.
  */
 import type { Pillar, TileDefinition } from "./types";
 import { takeHomeTile } from "./takeHome";
@@ -53,22 +52,14 @@ import { acaPtcTile } from "./acaPtc";
 import { saversCreditTile } from "./saversCredit";
 import { snapTile } from "./snap";
 import { medicaidTile } from "./medicaid";
+import { fafsaSaiTile } from "./fafsaSai";
+import { pellTile } from "./pell";
 import { peaceOfMindTile } from "./peaceOfMind";
 import { freedomDateTile } from "./freedomDate";
 import { debtFreedomTile } from "./debtFreedom";
 import { downshiftTile } from "./downshift";
 import { sabbaticalTile } from "./sabbatical";
 import { yourPlanTile } from "./yourPlan";
-
-function soon(
-  id: string,
-  title: string,
-  pillar: Pillar,
-  description: string,
-  keywords: string[],
-): TileDefinition {
-  return { id, title, pillar, description, keywords, status: "coming-soon" };
-}
 
 // The catalog is ordered by topic group (see `Pillar` in types.ts). The home and
 // All Tools index render `tilesForPillar`, which preserves this order within each
@@ -138,19 +129,8 @@ export const TILES: TileDefinition[] = [
   saversCreditTile,
   snapTile,
   medicaidTile,
-  soon(
-    "fafsa-sai",
-    "FAFSA Student Aid Index",
-    "owed",
-    "The federal methodology Student Aid Index estimate.",
-    ["fafsa", "sai", "financial aid", "college"],
-  ),
-  soon("pell", "Pell Grant", "owed", "Estimated award from the Student Aid Index.", [
-    "pell",
-    "grant",
-    "college",
-    "aid",
-  ]),
+  fafsaSaiTile,
+  pellTile,
 
   // --- Where You Stand (Safe Harbor calm overview + the guide, §5 / SPEC-2 §4) ---
   // Peace of Mind consolidates the rainy-day cushion, runway, net worth (war
