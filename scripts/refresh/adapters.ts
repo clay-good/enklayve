@@ -12,10 +12,12 @@
  * The third set adds the remaining *state income-tax* sources that publish a
  * standard deduction by filing status — New York, Georgia, North Carolina, and
  * DC — reusing the same generic standard-deduction parser as California (one
- * adapter per state, the CA workflow is the template). The flat-rate /
- * exemption-based states (PA, IL, OH, MI) carry no standard deduction to anchor,
- * so they wait for a later set's rate/exemption parser rather than alert every
- * run; the no-income-tax states (TX, FL) have nothing to refresh.
+ * adapter per state, the CA workflow is the template). The fourth set covers
+ * the flat-rate states whose anchorable figure is the rate, not a deduction —
+ * Pennsylvania, Illinois, and Michigan — via a flat-rate parser (and the
+ * personal exemption where IL/MI carry one). Only Ohio (graduated brackets, no
+ * flat rate and no standard deduction) still waits for a bracket-table parser;
+ * the no-income-tax states (TX, FL) have nothing to refresh.
  *
  * Honesty boundaries (kept narrow on purpose, per the family's "be right before
  * being everywhere"):
@@ -50,6 +52,9 @@ export type RefreshGroup =
   | "state-ga"
   | "state-nc"
   | "state-dc"
+  | "state-pa"
+  | "state-il"
+  | "state-mi"
   | "usda-snap"
   | "cms-medicaid";
 
@@ -213,6 +218,66 @@ function parseStandardDeductions(raw: string, current: Record<string, unknown>):
   return { ok: true, shard };
 }
 
+// --- Flat-rate state income tax (anchored prose) -----------------------------
+
+/**
+ * Overlay the single flat income-tax rate (and the personal exemption where the
+ * shard carries one) for a flat-tax jurisdiction. PA, IL, and MI each levy one
+ * rate for every filing status, stored as a one-element bracket per status, so
+ * the cleanly-anchorable figure is the rate itself — exactly the figure that
+ * actually moves when a state cuts or raises its flat tax.
+ *
+ * The rate is anchored from prose like "the income tax rate is 4.95%" / "4.95
+ * percent" / "a flat 3.07% tax" and overlaid onto every single-element bracket
+ * (which is what a flat tax is). A graduated schedule (OH) has multi-element
+ * brackets, so nothing is overlaid and the parser fails to anchor — transcribing
+ * a full bracket table stays the reviewer's data-only step, the same honesty
+ * boundary as the standard-deduction parser. A plausibility guard rejects an
+ * out-of-range percentage so a stray figure routes to the fail-safe alert.
+ */
+function parseFlatRateJurisdiction(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const rateMatch =
+    /income[- ]?tax rate(?:\s+(?:is|of))?\s*:?\s*([\d.]+)\s*(?:percent|%)/i.exec(raw) ??
+    /\btax rate(?:\s+(?:is|of))?\s*:?\s*([\d.]+)\s*(?:percent|%)/i.exec(raw) ??
+    /\b([\d.]+)\s*(?:percent|%)\s+flat\b/i.exec(raw);
+  if (!rateMatch) {
+    return { ok: false, reason: "could not anchor the flat income-tax rate" };
+  }
+  const percent = Number(rateMatch[1]);
+  if (!Number.isFinite(percent) || percent <= 0 || percent > 15) {
+    return { ok: false, reason: `anchored an implausible flat rate (${rateMatch[1]}%)` };
+  }
+  const rate = percent / 100;
+
+  const shard = clone(current);
+  const brackets = shard.bracketsByFilingStatus as
+    | Record<string, { lowerBound: number; rate: number }[]>
+    | undefined;
+  if (!brackets) {
+    return { ok: false, reason: "shard has no bracketsByFilingStatus to overlay" };
+  }
+  let overlaid = 0;
+  for (const status of Object.keys(brackets)) {
+    const arr = brackets[status];
+    if (Array.isArray(arr) && arr.length === 1 && arr[0]) {
+      arr[0].rate = rate;
+      overlaid += 1;
+    }
+  }
+  if (overlaid === 0) {
+    return { ok: false, reason: "no single-rate bracket to overlay (graduated schedule?)" };
+  }
+
+  // Personal exemption (IL, MI): overlay the single-filer amount when the source
+  // states it; the paired statuses stay for the reviewer, like a bracket table.
+  const exemptions = shard.personalExemptionByFilingStatus as Record<string, number> | undefined;
+  if (exemptions && "single" in exemptions) {
+    const exMatch = /personal exemption[^$\d]*\$?([\d,]{3,})/i.exec(raw);
+    if (exMatch) exemptions.single = parseAmount(exMatch[1] as string);
+  }
+  return { ok: true, shard };
+}
+
 // --- USDA FNS SNAP cost-of-living adjustment (anchored prose) ----------------
 
 /**
@@ -344,6 +409,31 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl: "https://otr.cfo.dc.gov/page/dc-individual-and-fiduciary-income-tax-rates",
     cadence: "Annual",
     parse: parseStandardDeductions,
+  },
+  {
+    id: "state-pa-income-tax-2024",
+    group: "state-pa",
+    source: "Pennsylvania DOR personal income tax (flat rate)",
+    sourceUrl:
+      "https://www.pa.gov/agencies/revenue/forms-and-publications/pa-personal-income-tax-guide.html",
+    cadence: "Annual",
+    parse: parseFlatRateJurisdiction,
+  },
+  {
+    id: "state-il-income-tax-2024",
+    group: "state-il",
+    source: "Illinois DOR individual income tax (flat rate + personal exemption)",
+    sourceUrl: "https://tax.illinois.gov/individuals/rates.html",
+    cadence: "Annual",
+    parse: parseFlatRateJurisdiction,
+  },
+  {
+    id: "state-mi-income-tax-2024",
+    group: "state-mi",
+    source: "Michigan Treasury individual income tax (flat rate + personal exemption)",
+    sourceUrl: "https://www.michigan.gov/taxes/iit/tax-time/whats-new-for-tax-year-2024",
+    cadence: "Annual",
+    parse: parseFlatRateJurisdiction,
   },
   {
     id: "snap-fy2024-contiguous",

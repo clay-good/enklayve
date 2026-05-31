@@ -1,0 +1,16 @@
+# Pennsylvania income tax — PA DOR flat personal income tax rate, annual
+# (staggered). Flat-rate state, the CA workflow is the template. BUILD-SPEC.md
+# §7.2, §8.
+name: Refresh Pennsylvania income tax
+
+on:
+  schedule:
+    - cron: "0 12 15 4 *" # April 15, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-pa
+      source_name: Pennsylvania income tax

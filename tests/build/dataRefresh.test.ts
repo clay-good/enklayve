@@ -110,7 +110,7 @@ describe("contract: renderDiffLogEntry", () => {
 });
 
 describe("adapters: registry", () => {
-  it("covers all three sets across distinct groups", () => {
+  it("covers all four sets across distinct groups", () => {
     expect(REFRESH_GROUPS.sort()).toEqual([
       "cms-medicaid",
       "cpi",
@@ -120,11 +120,14 @@ describe("adapters: registry", () => {
       "state-ca",
       "state-dc",
       "state-ga",
+      "state-il",
+      "state-mi",
       "state-nc",
       "state-ny",
+      "state-pa",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(11);
+    expect(ADAPTERS).toHaveLength(14);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
@@ -249,6 +252,54 @@ describe("adapters: state income tax (NY, the per-state template)", () => {
     expect(
       adapter.parse("the rate schedule was published without deduction figures", current).ok,
     ).toBe(false);
+  });
+});
+
+describe("adapters: flat-rate state income tax (PA / IL / MI)", () => {
+  it("overlays the PA flat rate across every filing status", () => {
+    const adapter = adaptersForGroup("state-pa")[0]!;
+    const current = readShard("state-pa-income-tax-2024.json");
+    const raw = "For 2025 the Pennsylvania personal income tax rate is 3.00%.";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const brackets = result.shard.bracketsByFilingStatus as Record<
+      string,
+      { lowerBound: number; rate: number }[]
+    >;
+    expect(brackets.single![0]!.rate).toBe(0.03);
+    expect(brackets.married_jointly![0]!.rate).toBe(0.03);
+    expect(brackets.head_of_household![0]!.rate).toBe(0.03);
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("overlays the IL flat rate and the personal exemption", () => {
+    const adapter = adaptersForGroup("state-il")[0]!;
+    const current = readShard("state-il-income-tax-2024.json");
+    const raw = "The Illinois income tax rate is 4.95 percent. The personal exemption is $2,850.";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const brackets = result.shard.bracketsByFilingStatus as Record<
+      string,
+      { lowerBound: number; rate: number }[]
+    >;
+    expect(brackets.single![0]!.rate).toBe(0.0495);
+    const exemptions = result.shard.personalExemptionByFilingStatus as Record<string, number>;
+    expect(exemptions.single).toBe(2850);
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("fails (-> alert) when no rate can be anchored", () => {
+    const adapter = adaptersForGroup("state-mi")[0]!;
+    const current = readShard("state-mi-income-tax-2024.json");
+    expect(adapter.parse("the page no longer states a rate", current).ok).toBe(false);
+  });
+
+  it("fails (-> alert) on an implausible (out-of-range) rate", () => {
+    const adapter = adaptersForGroup("state-mi")[0]!;
+    const current = readShard("state-mi-income-tax-2024.json");
+    expect(adapter.parse("the combined tax rate is 35%", current).ok).toBe(false);
   });
 });
 

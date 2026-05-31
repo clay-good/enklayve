@@ -1,0 +1,16 @@
+# Illinois income tax — IL DOR flat tax rate and personal exemption, annual
+# (staggered). Flat-rate state, the CA workflow is the template. BUILD-SPEC.md
+# §7.2, §8.
+name: Refresh Illinois income tax
+
+on:
+  schedule:
+    - cron: "0 12 1 5 *" # May 1, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-il
+      source_name: Illinois income tax

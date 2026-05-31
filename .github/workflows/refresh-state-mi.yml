@@ -1,0 +1,16 @@
+# Michigan income tax — MI Treasury flat tax rate and personal exemption, annual
+# (staggered). Flat-rate state, the CA workflow is the template. BUILD-SPEC.md
+# §7.2, §8.
+name: Refresh Michigan income tax
+
+on:
+  schedule:
+    - cron: "0 12 15 5 *" # May 15, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-mi
+      source_name: Michigan income tax
