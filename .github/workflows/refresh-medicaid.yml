@@ -1,0 +1,16 @@
+# Medicaid MAGI expansion status — CMS / Medicaid.gov, annual. BUILD-SPEC.md
+# §7.2. The adapter anchors the effective expansion threshold (% FPL); flipping
+# a state's expansion status stays the reviewer's data-only step on the PR.
+name: Refresh Medicaid expansion
+
+on:
+  schedule:
+    - cron: "0 12 15 1 *" # January 15, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: cms-medicaid
+      source_name: CMS Medicaid expansion status

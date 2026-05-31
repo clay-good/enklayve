@@ -1,0 +1,15 @@
+# SNAP allotments & deductions — USDA FNS cost-of-living adjustment, annual
+# (~October). BUILD-SPEC.md §7.2.
+name: Refresh SNAP allotments
+
+on:
+  schedule:
+    - cron: "0 12 1 10 *" # October 1, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: usda-snap
+      source_name: USDA FNS SNAP cost-of-living adjustment

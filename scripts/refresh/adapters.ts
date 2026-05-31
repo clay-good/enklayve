@@ -4,9 +4,11 @@
  * the normalized shard the data layer already validates — by *anchoring* to
  * known labels, never by inference, exactly like the Readout extractors (§2.2).
  *
- * This is the first set called for in the Phase 9 prompt: the IRS annual
- * notice, the BLS CPI database, the SSA fact sheet, the HHS poverty guidelines,
- * and the California state source.
+ * The first set called for in the Phase 9 prompt is the IRS annual notice, the
+ * BLS CPI database, the SSA fact sheet, the HHS poverty guidelines, and the
+ * California state source. The second set extends the same anchored pattern to
+ * the two remaining Pillar 2 benefit sources with seeded shards: the USDA FNS
+ * SNAP cost-of-living adjustment and the CMS / Medicaid.gov expansion status.
  *
  * Honesty boundaries (kept narrow on purpose, per the family's "be right before
  * being everywhere"):
@@ -31,7 +33,14 @@
  */
 
 /** Which workflow runs an adapter; one group == one .github/workflows file. */
-export type RefreshGroup = "irs" | "ssa" | "hhs-poverty" | "cpi" | "state-ca";
+export type RefreshGroup =
+  | "irs"
+  | "ssa"
+  | "hhs-poverty"
+  | "cpi"
+  | "state-ca"
+  | "usda-snap"
+  | "cms-medicaid";
 
 export type ParseOutcome =
   | { ok: true; shard: Record<string, unknown> }
@@ -193,6 +202,63 @@ function parseStandardDeductions(raw: string, current: Record<string, unknown>):
   return { ok: true, shard };
 }
 
+// --- USDA FNS SNAP cost-of-living adjustment (anchored prose) ----------------
+
+/**
+ * The USDA FNS annual SNAP COLA memo states the maximum allotment table by
+ * household size and an each-additional-person increment. Like the HHS poverty
+ * parser (the same table-plus-increment shape) we anchor the two cleanest single
+ * figures — the one-person maximum allotment and the each-additional-person
+ * amount — and overlay them. Rolling the full size-2-through-8 allotment table
+ * stays the reviewer's data-only step on the resulting PR (the diff surfaces the
+ * size-1 move to prompt it), exactly like a jurisdiction's full bracket table.
+ */
+function parseSnap(raw: string, current: Record<string, unknown>): ParseOutcome {
+  // "Each additional person ... $219" or "$219 for each additional person".
+  const perMatch =
+    /each additional person[^$\d]*\$?([\d,]{2,})/i.exec(raw) ??
+    /\$?([\d,]{2,})\s+for each additional person/i.exec(raw);
+  // The one-person maximum allotment is the smallest household line: "1 $292".
+  const oneMatch = /(?:^|\n)\s*1\s+\$?([\d,]{3,})/.exec(raw);
+  if (!perMatch || !oneMatch) {
+    return {
+      ok: false,
+      reason: "could not anchor the one-person maximum allotment and each-additional-person amount",
+    };
+  }
+  const shard = clone(current);
+  const allotments = {
+    ...((shard.maxAllotmentByHouseholdSize as Record<string, number>) ?? {}),
+  };
+  allotments["1"] = parseAmount(oneMatch[1] as string);
+  shard.maxAllotmentByHouseholdSize = allotments;
+  shard.additionalPersonAllotment = parseAmount(perMatch[1] as string);
+  return { ok: true, shard };
+}
+
+// --- CMS / Medicaid.gov expansion status (anchored prose) --------------------
+
+/**
+ * Adult Medicaid MAGI eligibility in expansion states is "133% of the poverty
+ * line" plus a statutory 5-point income disregard, i.e. an effective 138% FPL.
+ * We anchor that effective threshold percentage; the per-state expansion map
+ * changes only when a state expands, so flipping a state stays the reviewer's
+ * deliberate data-only step (the same honesty boundary as a full bracket table),
+ * not a prose scrape. Failure here routes to the fail-safe alert.
+ */
+function parseMedicaidThreshold(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const match = /(\d{2,3}(?:\.\d+)?)\s*(?:percent|%)\s+of the (?:federal )?poverty/i.exec(raw);
+  if (!match) {
+    return {
+      ok: false,
+      reason: "could not anchor the expansion eligibility threshold (% of the poverty line)",
+    };
+  }
+  const shard = clone(current);
+  shard.expansionThresholdPctFpl = Number(match[1]);
+  return { ok: true, shard };
+}
+
 /** The first set of adapters (Phase 9 prompt). */
 export const ADAPTERS: RefreshAdapter[] = [
   {
@@ -234,6 +300,22 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl: "https://www.ftb.ca.gov/forms/2024/2024-california-tax-rates-and-exemptions.html",
     cadence: "Annual",
     parse: parseStandardDeductions,
+  },
+  {
+    id: "snap-fy2024-contiguous",
+    group: "usda-snap",
+    source: "USDA FNS SNAP cost-of-living adjustment (48 contiguous states and DC)",
+    sourceUrl: "https://www.fns.usda.gov/snap/allotment/COLA",
+    cadence: "Annual, October",
+    parse: parseSnap,
+  },
+  {
+    id: "medicaid-2024",
+    group: "cms-medicaid",
+    source: "CMS / Medicaid.gov MAGI eligibility and expansion status",
+    sourceUrl: "https://www.medicaid.gov/medicaid/eligibility/index.html",
+    cadence: "Annual",
+    parse: parseMedicaidThreshold,
   },
 ];
 

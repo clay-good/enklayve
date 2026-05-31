@@ -9,6 +9,8 @@ import {
   FederalPovertyLevelSchema,
   FicaSchema,
   JurisdictionSchema,
+  SnapSchema,
+  MedicaidSchema,
 } from "../../src/data/schemas";
 
 /**
@@ -108,9 +110,17 @@ describe("contract: renderDiffLogEntry", () => {
 });
 
 describe("adapters: registry", () => {
-  it("covers the first set across distinct groups", () => {
-    expect(REFRESH_GROUPS.sort()).toEqual(["cpi", "hhs-poverty", "irs", "ssa", "state-ca"]);
-    expect(ADAPTERS).toHaveLength(5);
+  it("covers both sets across distinct groups", () => {
+    expect(REFRESH_GROUPS.sort()).toEqual([
+      "cms-medicaid",
+      "cpi",
+      "hhs-poverty",
+      "irs",
+      "ssa",
+      "state-ca",
+      "usda-snap",
+    ]);
+    expect(ADAPTERS).toHaveLength(7);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
@@ -210,6 +220,59 @@ describe("adapters: jurisdiction standard deductions (IRS + CA)", () => {
 
   it("fails (-> alert) when no deduction can be anchored", () => {
     expect(adapter.parse("no dollar figures in this layout", current).ok).toBe(false);
+  });
+});
+
+describe("adapters: USDA SNAP (anchored prose)", () => {
+  const adapter = adaptersForGroup("usda-snap")[0]!;
+  const current = readShard("snap-fy2024-contiguous.json");
+
+  it("anchors the one-person allotment and each-additional-person amount", () => {
+    const raw =
+      "Maximum allotments, FY2025:\n1 $292\n2 $536\n8 $1,756\nEach additional person, add $220.";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect((result.shard.maxAllotmentByHouseholdSize as Record<string, number>)["1"]).toBe(292);
+    expect(result.shard.additionalPersonAllotment).toBe(220);
+    // The unstated sizes are preserved from the committed shard for review.
+    expect((result.shard.maxAllotmentByHouseholdSize as Record<string, number>)["4"]).toBe(973);
+    expect(SnapSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("accepts the reversed each-additional-person phrasing", () => {
+    const raw = "1 $292\n$220 for each additional person beyond eight.";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.shard.additionalPersonAllotment).toBe(220);
+  });
+
+  it("fails (-> alert) when the anchors are missing", () => {
+    expect(adapter.parse("the COLA memo did not state allotments this way", current).ok).toBe(
+      false,
+    );
+  });
+});
+
+describe("adapters: CMS Medicaid expansion (anchored prose)", () => {
+  const adapter = adaptersForGroup("cms-medicaid")[0]!;
+  const current = readShard("medicaid-2024.json");
+
+  it("anchors the effective expansion threshold and validates", () => {
+    const raw =
+      "In expansion states, adults qualify with income at or below 138 percent of the federal poverty level.";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.shard.expansionThresholdPctFpl).toBe(138);
+    // The per-state expansion map is preserved (a reviewer flips a state).
+    expect((result.shard.expansionByState as Record<string, boolean>).CA).toBe(true);
+    expect(MedicaidSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("fails (-> alert) when the threshold cannot be anchored", () => {
+    expect(adapter.parse("eligibility rules vary by state and category", current).ok).toBe(false);
   });
 });
 
