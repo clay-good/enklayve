@@ -21,7 +21,7 @@ See [docs/specs/SPEC.md](docs/specs/SPEC.md) (the vision + Phases 0–11) and [d
 
 - [What you can do with it](#what-you-can-do-with-it)
 - [The privacy guarantee, it's literal](#the-privacy-guarantee-its-literal)
-- [The home: a teaching journey](#the-home-a-teaching-journey)
+- [The home: three calm zones](#the-home-three-calm-zones)
 - [Architecture at a glance](#architecture-at-a-glance)
 - [The tax engine (the moat)](#the-tax-engine-the-moat)
 - [The data layer and refresh workflows](#the-data-layer-and-refresh-workflows)
@@ -170,31 +170,32 @@ The service worker is the one component allowed `connect-src 'self'` — it cach
 
 ---
 
-## The home: a teaching journey
+## The home: three calm zones
 
-The home leads with the **Readout dropzone** (drop a pay stub / W-2 / 1040 / 1095-A for an instant private readout), then inline **⌘K search**, then a **teaching journey** — the seven ordered steps of My Plan rendered as numbered cards, each explaining the lesson behind it and linking to the one tool that performs it. The full catalog is one click away ("Browse all tools" + the crawlable All Tools index).
+The home is spelled out plainly and stripped to the essentials (redesigned 2026-06-01; BUILD-SPEC-2 §0.7). The header is just the wordmark **enklayve** with the lowercase tagline *personal finance counsel* and a single large **sun/moon** light/dark toggle. Below it, three centered zones: the **Readout dropzone** (drop a pay stub / W-2 / tax form for an instant private readout), a **live search box** that drops matching tools in as you type, and then **every tool listed** under its plain-language category. A quiet "See your plan" link points first-timers to My Plan; the high-contrast theme and My Situation live in a uniform-button footer. The ⌘K palette and the crawlable All Tools index are unchanged.
 
 ```
 +---------------------------------------------------------------+
-|  enklayve                        [theme]   [⌘K]   [My Plan]    |
+|  enklayve  personal finance counsel                      [☾]  |
 |                                                               |
-|              Know where you stand. Privately.                 |
+|                  Your money, made simple.                     |
 |                                                               |
 |   +-------------------------------------------------------+   |
-|   |   Drop a pay stub, W-2, 1040, or 1095-A               |   |
-|   |        ->  instant private readout                    |   |
-|   |             (or browse the tools)                     |   |
+|   |   Drop a pay stub, W-2, or tax form                   |   |
+|   |        ->  instant private readout (never uploaded)   |   |
 |   +-------------------------------------------------------+   |
 |                                                               |
-|   [  Search any tool or question...                       ]   |
+|   [ 🔍  Search for a tool, like "take-home pay"…          ]   |
 |                                                               |
-|   1 ─ Starter cushion .............. → Peace of Mind          |
-|   2 ─ Capture the full match ....... → Paycheck Optimizer     |
-|   3 ─ Clear high-cost debt ......... → Debt Freedom Planner   |
-|   4 ─ Full rainy-day fund .......... → Peace of Mind          |
-|   5 ─ Tax-advantaged retirement .... → Contribution Optimizer |
-|   6 ─ Sinking funds ................ → Sinking Fund Planner   |
-|   7 ─ Build the war chest .......... → My Enough Number       |
+|              Not sure where to begin? See your plan →         |
+|                                                               |
+|   All tools                                                   |
+|   ┌── Paycheck & Taxes ──┐  ┌── Investing ─────────┐          |
+|   │ Take-Home Pay        │  │ Capital Gains        │   …      |
+|   │ Federal Income Tax…  │  │ Treasury I Bond…     │          |
+|   └──────────────────────┘  └──────────────────────┘          |
++---------------------------------------------------------------+
+|  [My situation] [High contrast] [Why enklayve] [GitHub] [♥]   |
 +---------------------------------------------------------------+
 ```
 
@@ -398,7 +399,7 @@ All phases from both specs are complete or at a deliberately-deferred boundary. 
 | 9 | ✅ | Data-refresh workflows for every seeded source with an anchorable figure |
 | 10 | ✅ | CI, the release audit, and Cloudflare Git-integration deploy |
 | 11 | ✅ | Crawlability (per-tile shells, sitemap, robots), on-page SEO/social, docs, mobile responsiveness |
-| 12–13 | ✅ | My Situation (session profile + encrypted export); the teaching-journey home |
+| 12–13 | ✅ | My Situation (session profile + encrypted export); the home (redesigned to three calm zones, §0.7) |
 | 14 | ✅ | The Readout — every document family has an anchored, revision-pinned extractor |
 | 15–16 | ✅ | My Plan (the guidance engine); My Readout Report |
 | 17 | ✅ | The §6 expansion catalog — budgeting, debt, home, open enrollment, tax moves, protection, long-horizon |

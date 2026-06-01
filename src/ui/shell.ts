@@ -10,44 +10,113 @@ import { CommandPalette } from "./commandPalette";
 import { SituationPanel } from "./situationPanel";
 import { renderReadout } from "./readoutView";
 import { renderReport } from "./reportView";
-import { applyStoredPreferences, setTheme, THEMES, getTheme, type Theme } from "./theme";
-import { el, option, clear } from "./dom";
+import { applyStoredPreferences, setTheme, type Theme } from "./theme";
+import { fuzzyFilter } from "./fuzzy";
+import { el, clear } from "./dom";
 import { loadBundledData, type BundledData } from "../data/browser";
-import { PILLARS, type TileContext, type TileDefinition } from "../tiles/types";
-import { getTile, tilesForPillar } from "../tiles/registry";
+import { PILLARS, searchText, type TileContext, type TileDefinition } from "../tiles/types";
+import { getTile, tilesForPillar, TILES } from "../tiles/registry";
 import { SituationStore } from "../profile/situation";
-import { DEFAULT_ORDER, PLAN_STEPS, type PlanStepId } from "../engine/plan";
 
-const THEME_LABELS: Record<Theme, string> = {
-  light: "Light",
-  dark: "Dark",
-  "high-contrast": "High contrast",
-};
+const SVG_NS = "http://www.w3.org/2000/svg";
 
-function themeControl(): HTMLElement {
-  const select = el(
-    "select",
+/**
+ * The theme currently applied, read from the live `data-theme` attribute rather
+ * than the persisted preference. `setTheme` always writes the attribute, but the
+ * stored preference may be unavailable (private browsing), so the attribute is
+ * the reliable source of truth for the toggles — without it, a stale read could
+ * leave the sun/moon stuck switching one way.
+ */
+function activeTheme(): Theme {
+  const t = document.documentElement.getAttribute("data-theme");
+  return t === "dark" || t === "high-contrast" ? t : "light";
+}
+
+/** Build an SVG node with attributes (no innerHTML — XSS-safe by construction). */
+function svgEl(tag: string, attrs: Record<string, string>, ...children: SVGElement[]): SVGElement {
+  const node = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  for (const child of children) node.append(child);
+  return node;
+}
+
+function iconSvg(...children: SVGElement[]): SVGElement {
+  return svgEl(
+    "svg",
     {
-      class: "theme-select",
-      attrs: { "aria-label": "Color theme" },
-      on: {
-        change: (e) => setTheme((e.target as HTMLSelectElement).value as Theme),
-      },
+      viewBox: "0 0 24 24",
+      width: "24",
+      height: "24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+      "aria-hidden": "true",
+      focusable: "false",
     },
-    ...THEMES.map((t) => option(t, THEME_LABELS[t], t === getTheme())),
+    ...children,
   );
-  return el(
-    "label",
-    { class: "theme-control" },
-    el("span", { class: "visually-hidden", text: "Theme" }),
-    select,
+}
+
+/** A crescent moon (shown in light mode — click to go dark). */
+function moonIcon(): SVGElement {
+  return iconSvg(svgEl("path", { d: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" }));
+}
+
+/** A sun (shown in dark mode — click to go light). */
+function sunIcon(): SVGElement {
+  const rays: [number, number, number, number][] = [
+    [12, 1, 12, 3],
+    [12, 21, 12, 23],
+    [4.22, 4.22, 5.64, 5.64],
+    [18.36, 18.36, 19.78, 19.78],
+    [1, 12, 3, 12],
+    [21, 12, 23, 12],
+    [4.22, 19.78, 5.64, 18.36],
+    [18.36, 5.64, 19.78, 4.22],
+  ];
+  return iconSvg(
+    svgEl("circle", { cx: "12", cy: "12", r: "5" }),
+    ...rays.map(([x1, y1, x2, y2]) =>
+      svgEl("line", { x1: String(x1), y1: String(y1), x2: String(x2), y2: String(y2) }),
+    ),
   );
+}
+
+/**
+ * The header sun/moon toggle: a single, large, obvious control that flips
+ * light ↔ dark (the 95% case). The third "high contrast" theme — kept for
+ * accessibility per SPEC §10 — lives on its own footer toggle so the header
+ * stays a clean binary switch. `sync()` re-renders the icon/label after any
+ * theme change (including one made from the footer), so the two controls never
+ * disagree.
+ */
+function themeToggle(setThemeSynced: (t: Theme) => void): { el: HTMLElement; sync: () => void } {
+  const btn = el("button", {
+    type: "button",
+    class: "theme-toggle",
+    attrs: { "aria-label": "Switch color theme" },
+    on: { click: () => setThemeSynced(activeTheme() === "dark" ? "light" : "dark") },
+  });
+  const sync = (): void => {
+    const dark = activeTheme() === "dark";
+    btn.replaceChildren(
+      dark ? sunIcon() : moonIcon(),
+      el("span", {
+        class: "visually-hidden",
+        text: dark ? "Switch to light theme" : "Switch to dark theme",
+      }),
+    );
+    btn.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+  };
+  sync();
+  return { el: btn, sync };
 }
 
 function buildHeader(
   navigate: (id: string | null) => void,
-  openPalette: () => void,
-  openSituation: () => void,
+  themeToggleEl: HTMLElement,
 ): HTMLElement {
   const wordmark = el(
     "button",
@@ -58,58 +127,74 @@ function buildHeader(
       on: { click: () => navigate(null) },
     },
     el("span", { class: "wordmark", text: "enklayve" }),
+    el("span", { class: "wordmark-tagline", text: "personal finance counsel" }),
   );
-
-  const search = el(
-    "button",
-    {
-      type: "button",
-      class: "btn btn--ghost search-trigger",
-      on: { click: openPalette },
-    },
-    el("span", { text: "Search tools" }),
-    el("kbd", { class: "kbd", text: "⌘K" }),
-  );
-
-  const situation = el("button", {
-    type: "button",
-    class: "btn btn--ghost situation-trigger",
-    text: "My Situation",
-    on: { click: openSituation },
-  });
 
   return el(
     "header",
     { class: "app-header" },
     wordmark,
-    el("div", { class: "header-actions" }, search, situation, themeControl()),
+    el("div", { class: "header-actions" }, themeToggleEl),
   );
 }
 
 /**
- * The site footer: a one-line trust note, then the links — an in-app "Why
- * enklayve" (the trust story now lives on its own page, not the home), the
- * author credit, and the source. Shown on every view. It's the only outbound
- * chrome, in keeping with the calm, non-transactional feel.
+ * The site footer: a one-line trust note, then a row of uniform buttons. These
+ * are the app's secondary controls (My Situation, the high-contrast toggle) and
+ * the trust links (Why enklayve, the source, the author credit), kept out of the
+ * now-minimal header. Every item is the same shape and size so the row reads as
+ * one tidy group and wraps cleanly on a phone. Shown on every view.
+ *
+ * The high-contrast toggle is the third theme's home (SPEC §10): the header
+ * sun/moon handles light ↔ dark, and this button turns the high-contrast theme
+ * on or off for older users and anyone who needs it. `sync()` keeps its
+ * pressed state honest after any theme change.
  */
-function buildFooter(navigate: (id: string | null) => void): HTMLElement {
-  const link = (text: string, href: string, extra = ""): HTMLElement =>
+function buildFooter(
+  navigate: (id: string | null) => void,
+  openSituation: () => void,
+  setThemeSynced: (t: Theme) => void,
+): { el: HTMLElement; syncContrast: () => void } {
+  const linkBtn = (text: string, href: string, extra = ""): HTMLElement =>
     el(
       "a",
       {
-        class: `footer-link ${extra}`.trim(),
+        class: `footer-btn ${extra}`.trim(),
         href,
         attrs: { rel: "noopener noreferrer", target: "_blank" },
       },
       text,
     );
-  const whyLink = el("button", {
+
+  const situationBtn = el("button", {
     type: "button",
-    class: "footer-link",
+    class: "footer-btn",
+    text: "My situation",
+    on: { click: openSituation },
+  });
+
+  const contrastBtn = el("button", {
+    type: "button",
+    class: "footer-btn",
+    on: {
+      click: () => setThemeSynced(activeTheme() === "high-contrast" ? "light" : "high-contrast"),
+    },
+  });
+  const syncContrast = (): void => {
+    const on = activeTheme() === "high-contrast";
+    contrastBtn.textContent = on ? "High contrast: on" : "High contrast";
+    contrastBtn.setAttribute("aria-pressed", String(on));
+  };
+  syncContrast();
+
+  const whyBtn = el("button", {
+    type: "button",
+    class: "footer-btn",
     text: "Why enklayve",
     on: { click: () => navigate("about") },
   });
-  return el(
+
+  const footer = el(
     "footer",
     { class: "app-footer" },
     el("p", {
@@ -119,11 +204,14 @@ function buildFooter(navigate: (id: string | null) => void): HTMLElement {
     el(
       "div",
       { class: "footer-links" },
-      whyLink,
-      link("Made with ♥ by Clay Good", "https://claygood.com", "footer-link--accent"),
-      link("GitHub", "https://github.com/clay-good/enklayve"),
+      situationBtn,
+      contrastBtn,
+      whyBtn,
+      linkBtn("GitHub", "https://github.com/clay-good/enklayve"),
+      linkBtn("Made with ♥ by Clay Good", "https://claygood.com", "footer-btn--accent"),
     ),
   );
+  return { el: footer, syncContrast };
 }
 
 function tileLink(tile: TileDefinition, navigate: (id: string) => void): HTMLElement {
@@ -166,171 +254,218 @@ function readoutDropzone(navigate: (id: string | null) => void): HTMLElement {
     el("span", { class: "readout-dropzone-icon", attrs: { "aria-hidden": "true" }, text: "⤓" }),
     el("span", {
       class: "readout-dropzone-title",
-      text: "Drop a pay stub, W-2, or 1040",
+      text: "Drop a pay stub, W-2, or tax form",
     }),
     el("span", {
       class: "readout-dropzone-sub",
-      text: "Get an instant private readout, parsed on your device, never uploaded.",
+      text: "We read it right here on your device and fill in your numbers for you. It is never uploaded.",
     }),
+  );
+}
+
+/** A small search-glass icon (paired with the home search input). */
+function searchIcon(): SVGElement {
+  return iconSvg(
+    svgEl("circle", { cx: "11", cy: "11", r: "7" }),
+    svgEl("line", { x1: "21", y1: "21", x2: "16.65", y2: "16.65" }),
   );
 }
 
 /**
- * The home journey (the browse spine, 2026-05-30): rather than a grid of 50
- * tools sorted into eight category cards — which sorts but teaches nothing — the
- * home leads with the ordered path My Plan already encodes (BUILD-SPEC-2 §4.1).
- * Each step teaches the lesson behind it and links to the one tool that does its
- * math, so browsing is a calm sequence, not a pile. The full catalog stays one
- * click away under "Browse all tools" and search (⌘K). The lessons are home
- * copy (the engine computes; the home teaches), keyed to the plan step ids so
- * order and titles stay in sync with the engine.
+ * The home live search (BUILD-SPEC-2 §1.1 zone 2): a single centered box that
+ * shows matching tools in a dropdown as you type. It's a proper combobox so it's
+ * keyboard- and screen-reader-friendly (arrows move, Enter opens, Escape
+ * clears). The ⌘K command palette still works everywhere; this is the visible,
+ * obvious search the home leads with.
  */
-interface JourneyStep {
-  id: PlanStepId;
-  title: string;
-  tileId: string;
-  lesson: string;
-  /** The label on the per-step link to its tool. */
-  cta: string;
+function homeSearch(navigate: (id: string | null) => void): HTMLElement {
+  const MAX = 8;
+  let results: TileDefinition[] = [];
+  let active = -1;
+
+  const list = el("ul", {
+    id: "home-search-results",
+    class: "home-search-results",
+    hidden: true,
+    attrs: { role: "listbox", "aria-label": "Search results" },
+  });
+
+  const input = el("input", {
+    type: "text",
+    class: "home-search-input",
+    placeholder: "Search for a tool, like “take-home pay” or “debt”…",
+    attrs: {
+      role: "combobox",
+      "aria-expanded": "false",
+      "aria-controls": "home-search-results",
+      "aria-autocomplete": "list",
+      "aria-label": "Search for a tool",
+      autocomplete: "off",
+    },
+  });
+
+  const choose = (i: number): void => {
+    const tile = results[i];
+    if (tile) navigate(tile.id);
+  };
+
+  const render = (): void => {
+    clear(list);
+    if (results.length === 0) {
+      list.hidden = true;
+      input.setAttribute("aria-expanded", "false");
+      input.removeAttribute("aria-activedescendant");
+      return;
+    }
+    results.forEach((tile, i) => {
+      const isActive = i === active;
+      list.append(
+        el(
+          "li",
+          {
+            id: `home-opt-${i}`,
+            class: isActive ? "home-search-opt home-search-opt--active" : "home-search-opt",
+            attrs: { role: "option", "aria-selected": isActive ? "true" : "false" },
+            on: {
+              click: () => choose(i),
+              mousemove: () => {
+                if (active !== i) {
+                  active = i;
+                  render();
+                }
+              },
+            },
+          },
+          el("span", { class: "home-search-opt-title", text: tile.title }),
+          el("span", { class: "home-search-opt-desc", text: tile.description }),
+        ),
+      );
+    });
+    list.hidden = false;
+    input.setAttribute("aria-expanded", "true");
+    if (active >= 0) input.setAttribute("aria-activedescendant", `home-opt-${active}`);
+    else input.removeAttribute("aria-activedescendant");
+  };
+
+  const refresh = (): void => {
+    const q = input.value.trim();
+    results = q
+      ? fuzzyFilter(q, TILES, searchText)
+          .slice(0, MAX)
+          .map((r) => r.item)
+      : [];
+    active = results.length > 0 ? 0 : -1;
+    render();
+  };
+
+  input.addEventListener("input", refresh);
+  input.addEventListener("keydown", (e) => {
+    const ev = e as KeyboardEvent;
+    if (results.length === 0) {
+      if (ev.key === "Escape") {
+        input.value = "";
+        refresh();
+      }
+      return;
+    }
+    switch (ev.key) {
+      case "ArrowDown":
+        ev.preventDefault();
+        active = (active + 1) % results.length;
+        render();
+        break;
+      case "ArrowUp":
+        ev.preventDefault();
+        active = (active - 1 + results.length) % results.length;
+        render();
+        break;
+      case "Enter":
+        ev.preventDefault();
+        choose(active);
+        break;
+      case "Escape":
+        ev.preventDefault();
+        input.value = "";
+        refresh();
+        break;
+    }
+  });
+
+  const box = el("div", { class: "home-search-box" });
+  box.append(
+    el("span", { class: "home-search-icon", attrs: { "aria-hidden": "true" } }, searchIcon()),
+    input,
+  );
+  return el("div", { class: "home-search" }, box, list);
 }
 
-const JOURNEY_LESSONS: Record<
-  PlanStepId,
-  { title: string; tileId: string; lesson: string; cta: string }
-> = {
-  "starter-cushion": {
-    title: "Start with a small cushion",
-    tileId: "peace-of-mind",
-    lesson:
-      "Before anything else, a little buffer, around $1,000, turns a flat tire or a vet bill into an annoyance instead of a new credit-card balance. It comes first because it stops the debt spiral before it can start.",
-    cta: "See where I stand →",
-  },
-  "employer-match": {
-    title: "Grab every dollar of free money",
-    tileId: "retirement-optimizer",
-    lesson:
-      "If your job matches retirement contributions, that match is free money, an instant, guaranteed return no investment can beat. Capture all of it before paying down anything but the most toxic debt.",
-    cta: "Check my contributions →",
-  },
-  "high-cost-debt": {
-    title: "Clear the expensive debt",
-    tileId: "freedom-date",
-    lesson:
-      "Debt above about 8%, most credit cards, costs you more than investing is likely to earn, so paying it off is a sure thing. Attack the highest-rate balance first, where each dollar kills the most interest, and watch your freedom date.",
-    cta: "Find my freedom date →",
-  },
-  "rainy-day-fund": {
-    title: "Build the real rainy-day fund",
-    tileId: "peace-of-mind",
-    lesson:
-      "Now grow the cushion into a few months of essential expenses, so a layoff or a big surprise can't undo your progress. This is the sleep-at-night number: security, not restriction.",
-    cta: "Size my fund →",
-  },
-  retirement: {
-    title: "Let compounding do the work",
-    tileId: "retirement-optimizer",
-    lesson:
-      "With the basics safe, put money into tax-advantaged accounts and let time work. Every dollar in a 401(k) or IRA grows untaxed for decades, the single biggest lever most people ever have.",
-    cta: "Optimize my contributions →",
-  },
-  "sinking-funds": {
-    title: "Save for what's coming",
-    tileId: "sinking-fund",
-    lesson:
-      "A car, a wedding, a home, a sabbatical: name the goal and set aside a little each month, so the big expense is already paid for when it arrives and no borrowing is needed.",
-    cta: "Plan a goal →",
-  },
-  "war-chest": {
-    title: "Grow toward enough",
-    tileId: "peace-of-mind",
-    lesson:
-      "Finally, build toward My Enough Number, the point where work becomes a choice rather than a requirement. It's not about escaping your job; it's about having options.",
-    cta: "See my enough number →",
-  },
-};
-
-/** The journey steps, in the engine's default order, joined to their lessons. */
-function journeySteps(): JourneyStep[] {
-  const titleById = new Map(PLAN_STEPS.map((s) => [s.id, s.title]));
-  return DEFAULT_ORDER.map((id) => {
-    const j = JOURNEY_LESSONS[id];
-    return { id, title: j.title, tileId: j.tileId, lesson: j.lesson, cta: j.cta };
-  }).filter((s) => titleById.has(s.id));
-}
-
+/**
+ * The home (redesigned 2026-06-01, BUILD-SPEC-2 §0.7): three calm, centered
+ * zones — the Readout dropzone, a live search box, and then every tool listed
+ * under plain-language headings. No teaching journey, no wall of value props:
+ * just the helper, spelled out simply. The trust story stays on `#/about`, and
+ * the full plan is one tap away under "See your plan".
+ */
 function renderHome(container: HTMLElement, navigate: (id: string | null) => void): void {
   clear(container);
-  document.title = "enklayve — private, free financial tools that show their math";
+  document.title = "enklayve — personal finance counsel";
 
   const hero = el(
     "section",
     { class: "hero" },
-    el("h1", { class: "hero-title", text: "Know where you stand, and what to do next." }),
+    el("h1", { class: "hero-title", text: "Your money, made simple." }),
     el("p", {
       class: "hero-sub",
-      text: "The honest money guidance the experts charge for: free, private, and showing its math. Drop a document, or follow the path below.",
+      text: "See your real paycheck, what you owe in taxes, what help you might qualify for, and the next smart move. It is free, it is private, and everything stays on your device.",
     }),
-    readoutDropzone(navigate),
   );
 
-  // The teaching journey replaces the eight-category grid: an ordered, numbered
-  // path that explains each step's lesson and links to the tool that performs it.
-  const steps = journeySteps();
-  const list = el("ol", { class: "journey-steps" });
-  steps.forEach((step, i) => {
-    list.append(
-      el(
-        "li",
-        { class: "journey-step" },
-        el("span", { class: "journey-num", attrs: { "aria-hidden": "true" }, text: String(i + 1) }),
-        el(
-          "div",
-          { class: "journey-body" },
-          el("h3", { class: "journey-step-title", text: step.title }),
-          el("p", { class: "journey-lesson", text: step.lesson }),
-          el("button", {
-            type: "button",
-            class: "journey-open",
-            text: step.cta,
-            on: { click: () => navigate(step.tileId) },
-          }),
-        ),
-      ),
-    );
-  });
-
-  const journey = el(
-    "section",
-    { class: "journey", attrs: { "aria-label": "Your path to calm money" } },
-    el("h2", { class: "journey-title", text: "Your path to calm money" }),
-    el("p", {
-      class: "journey-intro",
-      text: "Seven steps, in order, each building on the last. You don't have to do them all today; just take the next one.",
-    }),
-    list,
+  const startHint = el(
+    "p",
+    { class: "home-start-hint" },
+    el("span", { text: "Not sure where to begin? " }),
     el("button", {
       type: "button",
-      class: "btn btn--accent journey-cta",
-      text: "See my personalized plan →",
+      class: "home-start-link",
+      text: "See your plan →",
       on: { click: () => navigate("your-plan") },
     }),
   );
 
-  // Everything else stays one quiet click away (BUILD-SPEC-2 §1.2): the full,
-  // crawlable index for browsers, and ⌘K search in the header for the decisive.
-  const browse = el(
-    "p",
-    { class: "home-browse" },
-    el("button", {
-      type: "button",
-      class: "home-browse-link",
-      text: "Browse all tools →",
-      on: { click: () => navigate("all-tools") },
+  // Every tool, listed under its plain-language money area (BUILD-SPEC-2 §1.5).
+  const toolsHead = el(
+    "div",
+    { class: "home-tools-head" },
+    el("h2", { class: "home-tools-title", text: "All tools" }),
+    el("p", {
+      class: "home-tools-sub",
+      text: "Pick any tool below. A number you enter in one is shared with the rest, so you only type it once.",
     }),
-    el("span", { class: "home-browse-hint", text: "or press ⌘K to search" }),
   );
 
-  container.append(hero, journey, browse);
+  const groups = el("div", { class: "home-tools" });
+  for (const pillar of PILLARS) {
+    const tiles = tilesForPillar(pillar.id);
+    if (tiles.length === 0) continue;
+    groups.append(
+      el(
+        "section",
+        { class: "home-tools-group" },
+        el("h3", { class: "home-group-title", text: pillar.title }),
+        el("p", { class: "home-group-blurb", text: pillar.blurb }),
+        el("ul", { class: "tile-list" }, ...tiles.map((t) => tileLink(t, (id) => navigate(id)))),
+      ),
+    );
+  }
+
+  container.append(
+    hero,
+    readoutDropzone(navigate),
+    homeSearch(navigate),
+    startHint,
+    toolsHead,
+    groups,
+  );
 }
 
 /** Trusted U.S. resources to learn the public rules behind the numbers. */
@@ -618,7 +753,6 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
   const profile = new SituationStore();
 
   const palette = new CommandPalette((tile) => navigate(tile.id));
-  const openPalette = (): void => palette.show();
 
   let data: BundledData | null = null;
   try {
@@ -630,10 +764,22 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
   const situationPanel = new SituationPanel(profile, data);
   const openSituation = (): void => situationPanel.show();
 
-  const content = el("main", { id: "content", class: "content", attrs: { tabindex: "-1" } });
-  const header = buildHeader(navigate, openPalette, openSituation);
+  // One theme entry point keeps the header sun/moon and the footer high-contrast
+  // toggle in sync: any change re-renders both controls so they never disagree.
+  const themeSyncers: (() => void)[] = [];
+  const setThemeSynced = (t: Theme): void => {
+    setTheme(t);
+    for (const sync of themeSyncers) sync();
+  };
+  const toggle = themeToggle(setThemeSynced);
+  themeSyncers.push(toggle.sync);
 
-  root.replaceChildren(header, content, buildFooter(navigate));
+  const content = el("main", { id: "content", class: "content", attrs: { tabindex: "-1" } });
+  const header = buildHeader(navigate, toggle.el);
+  const footer = buildFooter(navigate, openSituation, setThemeSynced);
+  themeSyncers.push(footer.syncContrast);
+
+  root.replaceChildren(header, content, footer.el);
   document.body.append(palette.element, situationPanel.element);
 
   // Cmd/Ctrl-K toggles the palette from anywhere.
