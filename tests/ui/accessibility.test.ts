@@ -21,6 +21,7 @@ import { mountAutoLoan } from "../../src/tiles/autoLoan";
 import { mountRetirementOptimizer } from "../../src/tiles/retirementOptimizer";
 import { mountCapitalGains } from "../../src/tiles/capitalGains";
 import { mountInflation } from "../../src/tiles/inflation";
+import { mountSavingsBond } from "../../src/tiles/savingsBond";
 import { mountRmd } from "../../src/tiles/rmd";
 import { mountYourPlan } from "../../src/tiles/yourPlan";
 import { mountPeaceOfMind } from "../../src/tiles/peaceOfMind";
@@ -170,6 +171,11 @@ describe("accessibility (axe-core)", () => {
         name: "inflation",
         mount: mountInflation,
         params: new URLSearchParams({ amt: "100", from: "2000", to: "2024" }),
+      },
+      {
+        name: "savings-bond",
+        mount: mountSavingsBond,
+        params: new URLSearchParams({ amt: "10000", period: "2022-05" }),
       },
       {
         name: "rmd",

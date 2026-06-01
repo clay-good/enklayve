@@ -1,0 +1,16 @@
+{
+  "rates": [
+    { "period": "2021-11", "fixedRate": 0.0, "inflationRate": 0.0356 },
+    { "period": "2022-05", "fixedRate": 0.0, "inflationRate": 0.0481 },
+    { "period": "2022-11", "fixedRate": 0.004, "inflationRate": 0.0324 },
+    { "period": "2023-05", "fixedRate": 0.009, "inflationRate": 0.0169 },
+    { "period": "2023-11", "fixedRate": 0.013, "inflationRate": 0.0197 },
+    { "period": "2024-05", "fixedRate": 0.013, "inflationRate": 0.0148 }
+  ],
+  "citation": {
+    "sourceUrl": "https://www.treasurydirect.gov/savings-bonds/i-bonds/i-bonds-interest-rates/",
+    "sourceDocument": "U.S. Treasury (TreasuryDirect), Series I Savings Bond fixed rate and semiannual inflation rate by rate period",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2024-06-01"
+  }
+}

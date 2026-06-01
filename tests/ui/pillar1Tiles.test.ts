@@ -10,6 +10,7 @@ import { mountAutoLoan } from "../../src/tiles/autoLoan";
 import { mountRetirementOptimizer } from "../../src/tiles/retirementOptimizer";
 import { mountCapitalGains } from "../../src/tiles/capitalGains";
 import { mountInflation } from "../../src/tiles/inflation";
+import { mountSavingsBond } from "../../src/tiles/savingsBond";
 import { mountRmd } from "../../src/tiles/rmd";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
@@ -347,6 +348,35 @@ describe("CPI Inflation Adjuster tile", () => {
     ).map((o) => o.value);
     expect(fromOpts).toContain("2024");
     expect(fromOpts).not.toContain("1800");
+  });
+});
+
+describe("Treasury I Bond tile", () => {
+  it("values a bond from the bundled TreasuryDirect rates, cited to Treasury", () => {
+    const { root } = mount(
+      mountSavingsBond,
+      new URLSearchParams({ amt: "10000", period: "2022-05" }),
+    );
+    expect(root.querySelector(".result-card")).not.toBeNull();
+    expect(labels(root)).toContain("Value now");
+    expect(labels(root)).toContain("Fixed rate (locked at purchase)");
+    expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/treasurydirect\.gov/);
+  });
+
+  it("only offers purchase periods present in the dataset", () => {
+    const { root } = mount(mountSavingsBond, new URLSearchParams());
+    const opts = Array.from(
+      root.querySelectorAll<HTMLSelectElement>('select[name="period"] option'),
+    ).map((o) => o.value);
+    expect(opts).toContain("2024-05");
+    expect(opts).not.toContain("1999-05");
+  });
+
+  it("prefills a worked example", () => {
+    const { root, lastParams } = mount(mountSavingsBond, new URLSearchParams());
+    clickExample(root);
+    expect(lastParams()?.get("amt")).toBe("10000");
+    expect(root.querySelector(".result-card")).not.toBeNull();
   });
 });
 

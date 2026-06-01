@@ -20,7 +20,12 @@
  * an income tax — Ohio — whose schedule is a multi-tier marginal table (no flat
  * rate and no standard deduction). With it, every seeded state with an income
  * tax has a refresh adapter; the no-income-tax states (TX, FL) have nothing to
- * refresh.
+ * refresh. The sixth set adds the one remaining seeded Pillar 1/3 source — the
+ * TreasuryDirect Series I savings-bond rates (semiannual, May and November) —
+ * anchoring the currently-published fixed rate and semiannual inflation rate
+ * and refreshing the latest period's figures in place. Appending a newly-issued
+ * rate period (a structural roll) stays the reviewer's data-only step, exactly
+ * like the graduated bracket table and the new-effective-year roll.
  *
  * Honesty boundaries (kept narrow on purpose, per the family's "be right before
  * being everywhere"):
@@ -59,6 +64,7 @@ export type RefreshGroup =
   | "state-il"
   | "state-mi"
   | "state-oh"
+  | "treasurydirect"
   | "usda-snap"
   | "cms-medicaid";
 
@@ -426,6 +432,47 @@ function parseMedicaidThreshold(raw: string, current: Record<string, unknown>): 
   return { ok: true, shard };
 }
 
+// --- TreasuryDirect Series I savings bond (anchored prose) -------------------
+
+/**
+ * TreasuryDirect publishes the I-bond fixed rate and the semiannual inflation
+ * rate as plain percentages ("The fixed rate ... is 1.30%", "the semiannual
+ * inflation rate ... is 1.48%"). We anchor both, convert to decimals, and
+ * overlay them onto the latest committed rate period — refreshing its figures
+ * in place. A plausibility guard rejects an out-of-range read (fixed rates have
+ * run 0%-3.6% historically; a semiannual inflation rate outside -5%..10% is not
+ * a real I-bond figure), routing to the fail-safe alert rather than a wrong
+ * number. Appending a brand-new May/November period is the reviewer's data-only
+ * step on the PR, like rolling a shard to a new effective year.
+ */
+function parseTreasuryBonds(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const fixedMatch = /fixed rate[^%]*?([\d.]+)\s*%/i.exec(raw);
+  const inflMatch = /semiannual inflation rate[^%]*?(-?[\d.]+)\s*%/i.exec(raw);
+  if (!fixedMatch || !inflMatch) {
+    return {
+      ok: false,
+      reason: "could not anchor the I-bond fixed rate and semiannual inflation rate",
+    };
+  }
+  const fixedRate = Number(fixedMatch[1]) / 100;
+  const inflationRate = Number(inflMatch[1]) / 100;
+  if (!(fixedRate >= 0 && fixedRate <= 0.05)) {
+    return { ok: false, reason: `implausible I-bond fixed rate ${fixedMatch[1]}%` };
+  }
+  if (!(inflationRate >= -0.05 && inflationRate <= 0.1)) {
+    return { ok: false, reason: `implausible semiannual inflation rate ${inflMatch[1]}%` };
+  }
+  const shard = clone(current);
+  const rates = shard.rates as { fixedRate: number; inflationRate: number }[] | undefined;
+  if (!Array.isArray(rates) || rates.length === 0) {
+    return { ok: false, reason: "committed shard has no rate periods to refresh" };
+  }
+  const latest = rates[rates.length - 1]!;
+  latest.fixedRate = fixedRate;
+  latest.inflationRate = inflationRate;
+  return { ok: true, shard };
+}
+
 /** The first set of adapters (Phase 9 prompt). */
 export const ADAPTERS: RefreshAdapter[] = [
   {
@@ -533,6 +580,14 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl: "https://tax.ohio.gov/individual/resources/annual-tax-rates",
     cadence: "Annual",
     parse: parseGraduatedBracketJurisdiction,
+  },
+  {
+    id: "treasury-bonds-2024",
+    group: "treasurydirect",
+    source: "U.S. Treasury (TreasuryDirect) Series I savings bond rates",
+    sourceUrl: "https://www.treasurydirect.gov/savings-bonds/i-bonds/i-bonds-interest-rates/",
+    cadence: "Semiannual, May and November",
+    parse: parseTreasuryBonds,
   },
   {
     id: "snap-fy2024-contiguous",

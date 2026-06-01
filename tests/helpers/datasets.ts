@@ -9,6 +9,7 @@ import {
   type CpiData,
   type RmdData,
   type SocialSecurityData,
+  type TreasuryBondsData,
 } from "../../src/data/schemas";
 
 /**
@@ -32,6 +33,7 @@ export interface Datasets {
   cpi: CpiData;
   rmd: RmdData;
   socialSecurity: SocialSecurityData;
+  treasuryBonds: TreasuryBondsData;
 }
 
 let cached: Datasets | null = null;
@@ -54,6 +56,7 @@ export async function loadDatasets(): Promise<Datasets> {
     cpi: get("cpi-u-annual") as CpiData,
     rmd: get("rmd-uniform-lifetime-2024") as RmdData,
     socialSecurity: get("social-security-2024") as SocialSecurityData,
+    treasuryBonds: get("treasury-bonds-2024") as TreasuryBondsData,
   };
   return cached;
 }

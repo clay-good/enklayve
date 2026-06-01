@@ -1,0 +1,16 @@
+# Treasury I savings-bond rates — TreasuryDirect, semiannual (May and
+# November). The sixth-set adapter anchors the published fixed rate and
+# semiannual inflation rate onto the latest period. BUILD-SPEC.md §7.2, §3.4.
+name: Refresh Treasury I-bond rates
+
+on:
+  schedule:
+    - cron: "0 13 1 5,11 *" # May 1 and November 1, 13:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: treasurydirect
+      source_name: Treasury I-bond rates

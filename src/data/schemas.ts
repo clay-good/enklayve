@@ -168,6 +168,7 @@ export const TreasuryBondsSchema = z.object({
     .min(1),
   citation: CitationSchema,
 });
+export type TreasuryBondsData = z.infer<typeof TreasuryBondsSchema>;
 
 /** Federal Poverty Level guidelines with the three region variants (HHS). */
 export const FederalPovertyLevelSchema = z.object({

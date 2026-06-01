@@ -20,6 +20,7 @@ import { autoLoanTile } from "./autoLoan";
 import { compoundGrowthTile } from "./compoundGrowth";
 import { retirementOptimizerTile } from "./retirementOptimizer";
 import { capitalGainsTile } from "./capitalGains";
+import { savingsBondTile } from "./savingsBond";
 import { inflationTile } from "./inflation";
 import { rmdTile } from "./rmd";
 import { taxLossHarvestingTile } from "./taxLossHarvesting";
@@ -83,6 +84,7 @@ export const TILES: TileDefinition[] = [
   lotPickerTile,
   taxLossHarvestingTile,
   compoundGrowthTile,
+  savingsBondTile,
   inflationTile,
 
   // --- Retirement ---

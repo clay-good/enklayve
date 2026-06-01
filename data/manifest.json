@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-05-31",
+  "generatedAt": "2026-06-01",
   "datasets": [
     {
       "id": "federal-income-tax-2024",
@@ -66,6 +66,19 @@
       "sourceDocument": "IRS Publication 590-B, Appendix B, Uniform Lifetime Table (effective 2022)",
       "dateRetrieved": "2024-02-01",
       "contentHash": "7858eb4bcfe1636cffebbf4544f72b844a4c2c9bb733052fdc0577c0acef3732"
+    },
+    {
+      "id": "treasury-bonds-2024",
+      "kind": "treasury-bonds",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 6,
+      "staleAfterYears": 2,
+      "shard": "treasury-bonds-2024.json",
+      "sourceUrl": "https://www.treasurydirect.gov/savings-bonds/i-bonds/i-bonds-interest-rates/",
+      "sourceDocument": "U.S. Treasury (TreasuryDirect), Series I Savings Bond fixed rate and semiannual inflation rate by rate period",
+      "dateRetrieved": "2024-06-01",
+      "contentHash": "be1ca4162fc37f4a0038a7d6f67a1d878075cf364a93be84798a49d91fbf06f7"
     },
     {
       "id": "cpi-u-annual",

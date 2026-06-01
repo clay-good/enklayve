@@ -28,6 +28,9 @@ interface ShardSource {
 const STATE_CODES = ["ca", "ny", "tx", "fl", "pa", "il", "oh", "ga", "nc", "mi", "dc"];
 
 const ANNUAL = { effectiveYear: 2024, expectedRefreshMonths: 12, staleAfterYears: 2 } as const;
+// Treasury I-bond rates reset every six months (BUILD-SPEC.md §7.2: May and
+// November). The semiannual cadence is the only difference from ANNUAL.
+const SEMIANNUAL = { effectiveYear: 2024, expectedRefreshMonths: 6, staleAfterYears: 2 } as const;
 
 // The bundled shards. Source citation metadata is read from each shard's own
 // `citation` block below, so it is never duplicated here.
@@ -56,6 +59,13 @@ const SHARDS: ShardSource[] = [
     kind: "rmd",
     shard: "rmd-uniform-lifetime-2024.json",
     ...ANNUAL,
+  },
+  // Treasury I-bond / savings-bond rates (BUILD-SPEC.md §3.4, §7.2; Pillars 1 & 3).
+  {
+    id: "treasury-bonds-2024",
+    kind: "treasury-bonds",
+    shard: "treasury-bonds-2024.json",
+    ...SEMIANNUAL,
   },
   // CPI-U refreshes monthly (BUILD-SPEC.md §7.2); the latest annual average is
   // effective for the current year and stays usable for prior-year adjustments.

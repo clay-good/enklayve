@@ -41,7 +41,7 @@ See [docs/specs/SPEC.md](docs/specs/SPEC.md) (the vision + Phases 0–11) and [d
 
 ## What you can do with it
 
-**55 deterministic tools**, each with a worked example, per-figure citations, a plain-English "How this works," "Learn more" links, and deep-linkable URL state. They're organized into eight plainly-named money areas (the browse taxonomy; the underlying engine is shared so a number entered in one tool prefills every other):
+**56 deterministic tools**, each with a worked example, per-figure citations, a plain-English "How this works," "Learn more" links, and deep-linkable URL state. They're organized into eight plainly-named money areas (the browse taxonomy; the underlying engine is shared so a number entered in one tool prefills every other):
 
 ### Paycheck & Taxes
 
@@ -66,6 +66,7 @@ See [docs/specs/SPEC.md](docs/specs/SPEC.md) (the vision + Phases 0–11) and [d
 | Cost-Basis Lot Picker | FIFO / specific-ID realized gain, split short vs long |
 | Tax-Loss Harvesting | Schedule D netting, the $3,000 offset, the carryforward |
 | Compound Growth | Growth at a rate you supply (never a market prediction) |
+| Treasury I Bond | What a Series I savings bond earns and is worth (TreasuryDirect) |
 | CPI Inflation Adjuster | What a past dollar is worth in another year (BLS CPI-U) |
 
 ### Retirement
@@ -305,6 +306,7 @@ flowchart TD
 | Retirement / HSA / FSA limits, catch-ups, mileage | IRS annual notice | Annual | 1 |
 | FICA wage base, COLA, SS bend points | SSA fact sheets | Annual, Oct | 1 & 3 |
 | CPI-U (inflation) | BLS public API | Monthly, ~2nd week | 1 & 3 |
+| Treasury I savings-bond rates | TreasuryDirect | Semiannual, May & Nov | 1 & 3 |
 | 50-state income tax | State DOR pubs (one adapter/state) | Annual, staggered | 1 |
 | Federal Poverty Level | HHS | Annual, January | 2 |
 | EITC + Child Tax Credit | IRS annual rev. proc. | Annual | 2 |
@@ -361,7 +363,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 - **Accessibility.** axe-core runs inside the test suite across the home, About, All Tools, the Readout, the Report, and every tile form, with **zero violations**.
 - **Release audit.** `npm run audit` mechanically verifies CSP `connect-src 'none'`, no cross-origin loads in the built output, full citation coverage, and no sensitive persistence.
 
-**593 tests across 51 files pass today**, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**608 tests across 52 files pass today**, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -478,10 +480,11 @@ Deferred *for accuracy or scope*, not faked:
 
 - **International** (Europe → India, China, Russia) as each jurisdiction's rules are learned properly. Be right before being everywhere.
 - **States beyond the seeded eleven** — added through the staggered annual refresh.
+- **OCR + Word (.docx) document ingestion** — the anchored typed-PDF Readout ships today; the labeled OCR fallback and mammoth `.docx` parsing land on the same extractor contract.
 - **OCR for scans** and **Word (`.docx`) ingestion** — the lower-confidence OCR *flagging* is built; bundling the on-device engine and adding mammoth parsing are follow-ups.
 - **i18n string extraction** — the locale preference persists; a full pre-rendered-variant extraction is held rather than ship a speculative abstraction.
 - **Playwright live-offline e2e** — axe accessibility already runs in the Vitest suite; the browser-based offline run is a focused follow-up so CI stays fast and browser-free.
-- **Treasury I-bond refresh** and per-filing-status graduated state schedules — the schema exists; seeded when a consuming tool lands.
+- **Per-filing-status graduated state schedules** — for any future state whose marginal tiers differ by filing status (none of the seeded eleven do).
 
 ---
 

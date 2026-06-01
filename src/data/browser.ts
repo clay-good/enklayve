@@ -18,6 +18,7 @@ import {
   type CapitalGainsData,
   type CpiData,
   type RmdData,
+  type TreasuryBondsData,
   type SaversCreditData,
   type SnapData,
   type MedicaidData,
@@ -55,6 +56,8 @@ export interface BundledData {
   cpi(): CpiData | null;
   /** IRS Uniform Lifetime Table for RMDs (BUILD-SPEC.md §3.4). */
   rmd(): RmdData | null;
+  /** Treasury I-bond / savings-bond fixed + inflation rates (BUILD-SPEC.md §3.4). */
+  treasuryBonds(): TreasuryBondsData | null;
   /** Federal Poverty Level guidelines for a region (BUILD-SPEC.md §4.1). */
   fpl(region: FplRegion): FederalPovertyLevelData | null;
   /** EITC and Child Tax Credit parameters (BUILD-SPEC.md §4.2). */
@@ -117,6 +120,7 @@ async function build(): Promise<BundledData> {
     capitalGains: () => dataOf("capital-gains-2024") as CapitalGainsData | null,
     cpi: () => dataOf("cpi-u-annual") as CpiData | null,
     rmd: () => dataOf("rmd-uniform-lifetime-2024") as RmdData | null,
+    treasuryBonds: () => dataOf("treasury-bonds-2024") as TreasuryBondsData | null,
     fpl: (region) =>
       dataOf(`federal-poverty-level-2024-${region}`) as FederalPovertyLevelData | null,
     eitcCtc: () => dataOf("eitc-ctc-2024") as EitcCtcData | null,

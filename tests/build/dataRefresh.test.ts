@@ -11,6 +11,7 @@ import {
   JurisdictionSchema,
   SnapSchema,
   MedicaidSchema,
+  TreasuryBondsSchema,
 } from "../../src/data/schemas";
 
 /**
@@ -110,7 +111,7 @@ describe("contract: renderDiffLogEntry", () => {
 });
 
 describe("adapters: registry", () => {
-  it("covers all five sets across distinct groups", () => {
+  it("covers all six sets across distinct groups", () => {
     expect(REFRESH_GROUPS.sort()).toEqual([
       "cms-medicaid",
       "cpi",
@@ -126,15 +127,17 @@ describe("adapters: registry", () => {
       "state-ny",
       "state-oh",
       "state-pa",
+      "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(15);
+    expect(ADAPTERS).toHaveLength(16);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
     expect(adaptersForGroup("cpi").map((a) => a.id)).toEqual(["cpi-u-annual"]);
     expect(adaptersForGroup("state-ny").map((a) => a.id)).toEqual(["state-ny-income-tax-2024"]);
     expect(adaptersForGroup("state-oh").map((a) => a.id)).toEqual(["state-oh-income-tax-2024"]);
+    expect(adaptersForGroup("treasurydirect").map((a) => a.id)).toEqual(["treasury-bonds-2024"]);
   });
 });
 
@@ -393,6 +396,39 @@ describe("adapters: USDA SNAP (anchored prose)", () => {
     expect(adapter.parse("the COLA memo did not state allotments this way", current).ok).toBe(
       false,
     );
+  });
+});
+
+describe("adapters: TreasuryDirect I-bond rates (anchored prose)", () => {
+  const adapter = adaptersForGroup("treasurydirect")[0]!;
+  const current = readShard("treasury-bonds-2024.json");
+
+  it("anchors the fixed and semiannual inflation rates onto the latest period", () => {
+    const raw =
+      "The composite rate for I bonds issued from November 2024 through April 2025 is 3.11%. " +
+      "This rate applies for the first six months you own the bond. The fixed rate will be 1.20%. " +
+      "The semiannual inflation rate is 0.95%.";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const rates = result.shard.rates as { fixedRate: number; inflationRate: number }[];
+    const latest = rates[rates.length - 1]!;
+    expect(latest.fixedRate).toBeCloseTo(0.012, 6);
+    expect(latest.inflationRate).toBeCloseTo(0.0095, 6);
+    // Earlier periods are preserved (appending a new period is the reviewer's step).
+    expect(rates[0]!.inflationRate).toBe(0.0356);
+    expect(TreasuryBondsSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("fails (-> alert) when the rate anchors are missing", () => {
+    expect(adapter.parse("I bond rates are announced each May and November.", current).ok).toBe(
+      false,
+    );
+  });
+
+  it("fails (-> alert) on an implausible rate read", () => {
+    const raw = "The fixed rate will be 1.30%. The semiannual inflation rate is 47.0%.";
+    expect(adapter.parse(raw, current).ok).toBe(false);
   });
 });
 
