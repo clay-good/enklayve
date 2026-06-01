@@ -3,13 +3,14 @@
  * Royal purple primary (~#6D28D9) with a warm gold accent for good-news states
  * and primary calls to action. Red is reserved strictly for genuine warnings.
  *
- * Three themes are switched instantly by the `data-theme` attribute on <html>
- * (see src/ui/theme.ts): every color is a custom property, so a theme change is
- * a single attribute write with no reflow flash.
+ * A single, calm light theme (the dark and high-contrast themes and the toggle
+ * were removed 2026-06-01 for a simpler, more delightful, easy-on-the-eyes
+ * experience). Every color is still a custom property, so the palette stays in
+ * one place. The background is a soft off-white rather than stark #fff so long
+ * reading sessions stay gentle on the eyes.
  */
 
-:root,
-:root[data-theme="light"] {
+:root {
   --enk-bg: #faf8ff;
   --enk-surface: #ffffff;
   --enk-surface-2: #f3effe;
@@ -37,76 +38,14 @@
   --enk-chart-8: #9333ea;
   --enk-chart-9: #0891b2;
   --enk-chart-10: #65a30d;
-}
 
-:root[data-theme="dark"] {
-  --enk-bg: #14121f;
-  --enk-surface: #1e1b2e;
-  --enk-surface-2: #272238;
-  --enk-text: #f4f1fb;
-  --enk-text-muted: #b6afcc;
-  --enk-border: #352f4d;
-  --enk-primary: #a78bfa;
-  --enk-primary-strong: #c4b5fd;
-  --enk-primary-soft: #2a2440;
-  --enk-accent: #fbbf24;
-  --enk-accent-ink: #1e1b2e;
-  --enk-good: #4ade80;
-  --enk-warn: #f87171;
-  --enk-focus: #c4b5fd;
-  --enk-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.4);
-  --enk-radius: 14px;
-  /* Chart palette — lifted toward pastel so hues stay legible on the dark surface. */
-  --enk-chart-1: #a78bfa;
-  --enk-chart-2: #60a5fa;
-  --enk-chart-3: #2dd4bf;
-  --enk-chart-4: #4ade80;
-  --enk-chart-5: #facc15;
-  --enk-chart-6: #fb923c;
-  --enk-chart-7: #f472b6;
-  --enk-chart-8: #c084fc;
-  --enk-chart-9: #22d3ee;
-  --enk-chart-10: #a3e635;
-}
-
-:root[data-theme="high-contrast"] {
-  --enk-bg: #000000;
-  --enk-surface: #000000;
-  --enk-surface-2: #0a0a0a;
-  --enk-text: #ffffff;
-  --enk-text-muted: #f0f0f0;
-  --enk-border: #ffffff;
-  --enk-primary: #d6bcfa;
-  --enk-primary-strong: #ffffff;
-  --enk-primary-soft: #1a1024;
-  --enk-accent: #ffd400;
-  --enk-accent-ink: #000000;
-  --enk-good: #50fa7b;
-  --enk-warn: #ff5555;
-  --enk-focus: #ffd400;
-  --enk-shadow: none;
-  --enk-radius: 6px;
-  /* Chart palette — maximally separated, all readable on pure black. */
-  --enk-chart-1: #d6bcfa;
-  --enk-chart-2: #6cb6ff;
-  --enk-chart-3: #50fa7b;
-  --enk-chart-4: #ffd400;
-  --enk-chart-5: #ff8c42;
-  --enk-chart-6: #ff79c6;
-  --enk-chart-7: #8be9fd;
-  --enk-chart-8: #bd93f9;
-  --enk-chart-9: #f1fa8c;
-  --enk-chart-10: #ffffff;
-}
-
-:root {
   font-family:
     system-ui,
     -apple-system,
     "Segoe UI",
     Roboto,
     sans-serif;
-  color-scheme: light dark;
+  color-scheme: light;
   /* Keep our own type scale on rotate/zoom rather than letting mobile Safari
      inflate text unpredictably. */
   -webkit-text-size-adjust: 100%;
@@ -147,10 +86,6 @@ body {
   outline: 3px solid var(--enk-focus);
   outline-offset: 2px;
   border-radius: 4px;
-}
-
-[data-theme="high-contrast"] :focus-visible {
-  outline-width: 4px;
 }
 
 .visually-hidden {
@@ -205,36 +140,6 @@ body {
   font-weight: 500;
   color: var(--enk-text-muted);
   text-transform: lowercase;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-/* The sun/moon theme toggle: one large, obvious, square target. */
-.theme-toggle {
-  display: inline-grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  padding: 0;
-  border-radius: 12px;
-  border: 1px solid var(--enk-border);
-  background: var(--enk-surface);
-  color: var(--enk-text);
-  cursor: pointer;
-}
-
-.theme-toggle:hover {
-  background: var(--enk-surface-2);
-  color: var(--enk-primary);
-}
-
-.theme-toggle svg {
-  width: 1.5rem;
-  height: 1.5rem;
 }
 
 /* --- Buttons --- */
@@ -1975,11 +1880,6 @@ body {
   color: var(--enk-primary);
   border-color: var(--enk-primary);
 }
-.footer-btn[aria-pressed="true"] {
-  color: var(--enk-primary);
-  border-color: var(--enk-primary);
-  background: var(--enk-primary-soft);
-}
 .footer-btn--accent:hover {
   color: var(--enk-warn);
   border-color: var(--enk-warn);
@@ -2048,7 +1948,6 @@ body {
   .btn:active,
   .footer-btn:active,
   .home-start-link:active,
-  .theme-toggle:active,
   .readout-dropzone:active,
   .tile-link:active,
   .wordmark-link:active {
@@ -2063,7 +1962,6 @@ body {
 .footer-btn,
 .home-search-opt,
 .home-start-link,
-.theme-toggle,
 .readout-dropzone,
 .wordmark-link,
 .palette-opt {
@@ -2084,7 +1982,6 @@ body {
    AA target size), regardless of viewport width. */
 @media (pointer: coarse) {
   .btn,
-  .theme-toggle,
   .tile-link,
   .footer-btn,
   .palette-opt,

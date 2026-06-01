@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { getTheme, setTheme, applyStoredPreferences, THEMES } from "../../src/ui/theme";
+import { getLocale, setLocale, applyStoredPreferences, LOCALES } from "../../src/ui/theme";
 
 // happy-dom's localStorage is unreliable under the node test runner, so install
 // a minimal in-memory Storage. theme.ts wraps storage in try/catch, so this
@@ -18,38 +18,31 @@ function fakeStorage(): Storage {
   };
 }
 
-describe("theme preferences", () => {
+// enklayve ships a single light theme (the dark + high-contrast themes and the
+// toggle were removed 2026-06-01). The only remaining preference is the locale.
+describe("display preferences", () => {
   beforeEach(() => {
     vi.stubGlobal("localStorage", fakeStorage());
-    document.documentElement.removeAttribute("data-theme");
   });
-
   afterEach(() => vi.unstubAllGlobals());
 
-  it("defaults to light when nothing is stored", () => {
-    expect(getTheme()).toBe("light");
+  it("defaults to en-US when nothing is stored", () => {
+    expect(getLocale()).toBe("en-US");
   });
 
-  it("applies the theme instantly via the data-theme attribute and persists it", () => {
-    setTheme("dark");
-    expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
-    expect(getTheme()).toBe("dark");
+  it("supports exactly the US-English locale today", () => {
+    expect([...LOCALES]).toEqual(["en-US"]);
   });
 
-  it("ignores an unknown stored theme", () => {
-    localStorage.setItem("enklayve.theme", "neon");
-    expect(getTheme()).toBe("light");
+  it("ignores an unknown stored locale", () => {
+    localStorage.setItem("enklayve.locale", "fr-FR");
+    expect(getLocale()).toBe("en-US");
   });
 
-  it("supports exactly the three specified themes", () => {
-    expect([...THEMES]).toEqual(["light", "dark", "high-contrast"]);
-  });
-
-  it("restores the persisted theme on startup", () => {
-    setTheme("high-contrast");
-    document.documentElement.removeAttribute("data-theme");
-    const { theme } = applyStoredPreferences();
-    expect(theme).toBe("high-contrast");
-    expect(document.documentElement.getAttribute("data-theme")).toBe("high-contrast");
+  it("persists the locale and sets the document lang on startup", () => {
+    setLocale("en-US");
+    const { locale } = applyStoredPreferences();
+    expect(locale).toBe("en-US");
+    expect(document.documentElement.getAttribute("lang")).toBe("en");
   });
 });

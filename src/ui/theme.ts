@@ -1,29 +1,18 @@
 /**
- * Theme and locale preferences (BUILD-SPEC.md §10, §11).
+ * Display preferences (BUILD-SPEC.md §11).
  *
- * Three themes — light (default), dark, and high contrast — applied instantly
- * by toggling a single `data-theme` attribute on <html>, so the CSS custom
- * properties in styles.css switch with no reflow flash. These two preferences
- * are the ONLY values enklayve ever persists (§2 principle 3): they are not
- * sensitive, so they live in localStorage; everything financial stays in
- * memory and is cleared on unload.
+ * enklayve ships a single light theme — calm, easy on the eyes, and the same for
+ * everyone (the dark and high-contrast themes were removed 2026-06-01 for a
+ * simpler, more delightful experience). So the only preference left is the
+ * locale, which is not sensitive and may live in localStorage; everything
+ * financial stays in memory and is cleared on unload (§2 principle 3).
  */
-
-export const THEMES = ["light", "dark", "high-contrast"] as const;
-export type Theme = (typeof THEMES)[number];
 
 export const LOCALES = ["en-US"] as const;
 export type Locale = (typeof LOCALES)[number];
 
-const THEME_KEY = "enklayve.theme";
 const LOCALE_KEY = "enklayve.locale";
-
-const DEFAULT_THEME: Theme = "light";
 const DEFAULT_LOCALE: Locale = "en-US";
-
-function isTheme(value: string | null): value is Theme {
-  return value !== null && (THEMES as readonly string[]).includes(value);
-}
 
 function isLocale(value: string | null): value is Locale {
   return value !== null && (LOCALES as readonly string[]).includes(value);
@@ -46,17 +35,6 @@ function write(key: string, value: string): void {
   }
 }
 
-export function getTheme(): Theme {
-  const stored = read(THEME_KEY);
-  return isTheme(stored) ? stored : DEFAULT_THEME;
-}
-
-/** Apply a theme to <html> immediately and persist the choice. */
-export function setTheme(theme: Theme): void {
-  document.documentElement.setAttribute("data-theme", theme);
-  write(THEME_KEY, theme);
-}
-
 export function getLocale(): Locale {
   const stored = read(LOCALE_KEY);
   return isLocale(stored) ? stored : DEFAULT_LOCALE;
@@ -67,11 +45,9 @@ export function setLocale(locale: Locale): void {
   write(LOCALE_KEY, locale);
 }
 
-/** Apply the persisted (or default) theme and locale on startup. */
-export function applyStoredPreferences(): { theme: Theme; locale: Locale } {
-  const theme = getTheme();
+/** Apply the persisted (or default) locale on startup. */
+export function applyStoredPreferences(): { locale: Locale } {
   const locale = getLocale();
-  setTheme(theme);
   setLocale(locale);
-  return { theme, locale };
+  return { locale };
 }

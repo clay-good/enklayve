@@ -31,7 +31,7 @@ These mirror the conventions already proven in sophiewell, roughlogic, encryptal
 
 1. **100 percent deterministic.** Every output is a pure function of the inputs and the bundled dataset version. No AI, no inference, no randomness, no market prediction. Where an assumption is required (a rate of return, an inflation rate), the user supplies it or accepts a clearly labeled default, and we show the math.
 2. **No runtime network calls.** The Content Security Policy sets connect-src to none. The site cannot phone home even if a bug tried to.
-3. **No telemetry, no accounts, no third party anything.** No analytics, no fonts from a CDN, no trackers. The only persisted state is a single theme preference and a single locale preference in localStorage.
+3. **No telemetry, no accounts, no third party anything.** No analytics, no fonts from a CDN, no trackers. The only persisted state is a single locale preference in localStorage (the theme preference was retired when enklayve moved to a single light theme, 2026-06-01).
 4. **Offline first.** A service worker pre caches the shell and the data shards. The site works on a plane.
 5. **Every rule cites its source.** A tax bracket, a contribution limit, a poverty line: each carries its value, the source URL, the source document name, the effective year, the date retrieved, and a content hash. If a source goes stale past its expected refresh window, the affected calculator shows a verify before relying banner rather than silently presenting a stale number.
 6. **A worked example in every tile.** A Try an example button pre fills a realistic case so the user sees how the tool behaves before typing anything personal.
@@ -207,7 +207,7 @@ The jan.ai feeling (clean, airy, friendly, fast) expressed with a purple identit
 
 - **Primary color:** royal purple, around hex 6D28D9, with vivid violet accents. **Secondary accent:** warm gold or amber for good news states and primary calls to action. The purple and gold pairing reads as celebratory and royal rather than corporate.
 - **Red is for warnings only.** Money tools that use red as a primary color make people anxious, which is the opposite of the Safe Harbor pillar's purpose.
-- **Three themes:** light first, plus dark, plus a high contrast theme. High contrast matters for older users doing retirement math.
+- **One calm light theme (adopted 2026-06-01).** enklayve ships a single, easy-on-the-eyes light theme and no theme switcher, for the simplest possible experience. (Earlier drafts shipped light, dark, and high-contrast themes with a toggle; these were removed at the owner's direction in favor of one delightful default. The soft off-white background and high-contrast purple-on-near-black text keep it gentle and readable; `prefers-reduced-motion` is still honored.)
 - **Big, legible numbers.** Generous whitespace, rounded cards, soft shadows, and one delightful micro interaction on result reveal (a gentle count up that respects reduced motion preferences).
 - **Tone:** plain English, encouraging, never scolding. Here is where you stand, not you are behind.
 - **Result cards** show the answer large, the breakdown collapsible, and a one tap copy plus permalink. Every input has a worked example default.

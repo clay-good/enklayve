@@ -10,7 +10,7 @@ import { CommandPalette } from "./commandPalette";
 import { SituationPanel } from "./situationPanel";
 import { renderReadout } from "./readoutView";
 import { renderReport } from "./reportView";
-import { applyStoredPreferences, setTheme, type Theme } from "./theme";
+import { applyStoredPreferences } from "./theme";
 import { fuzzyFilter } from "./fuzzy";
 import { el, clear } from "./dom";
 import { loadBundledData, type BundledData } from "../data/browser";
@@ -19,18 +19,6 @@ import { getTile, tilesForPillar, TILES } from "../tiles/registry";
 import { SituationStore } from "../profile/situation";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-
-/**
- * The theme currently applied, read from the live `data-theme` attribute rather
- * than the persisted preference. `setTheme` always writes the attribute, but the
- * stored preference may be unavailable (private browsing), so the attribute is
- * the reliable source of truth for the toggles — without it, a stale read could
- * leave the sun/moon stuck switching one way.
- */
-function activeTheme(): Theme {
-  const t = document.documentElement.getAttribute("data-theme");
-  return t === "dark" || t === "high-contrast" ? t : "light";
-}
 
 /** Build an SVG node with attributes (no innerHTML — XSS-safe by construction). */
 function svgEl(tag: string, attrs: Record<string, string>, ...children: SVGElement[]): SVGElement {
@@ -59,65 +47,12 @@ function iconSvg(...children: SVGElement[]): SVGElement {
   );
 }
 
-/** A crescent moon (shown in light mode — click to go dark). */
-function moonIcon(): SVGElement {
-  return iconSvg(svgEl("path", { d: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" }));
-}
-
-/** A sun (shown in dark mode — click to go light). */
-function sunIcon(): SVGElement {
-  const rays: [number, number, number, number][] = [
-    [12, 1, 12, 3],
-    [12, 21, 12, 23],
-    [4.22, 4.22, 5.64, 5.64],
-    [18.36, 18.36, 19.78, 19.78],
-    [1, 12, 3, 12],
-    [21, 12, 23, 12],
-    [4.22, 19.78, 5.64, 18.36],
-    [18.36, 5.64, 19.78, 4.22],
-  ];
-  return iconSvg(
-    svgEl("circle", { cx: "12", cy: "12", r: "5" }),
-    ...rays.map(([x1, y1, x2, y2]) =>
-      svgEl("line", { x1: String(x1), y1: String(y1), x2: String(x2), y2: String(y2) }),
-    ),
-  );
-}
-
 /**
- * The header sun/moon toggle: a single, large, obvious control that flips
- * light ↔ dark (the 95% case). The third "high contrast" theme — kept for
- * accessibility per SPEC §10 — lives on its own footer toggle so the header
- * stays a clean binary switch. `sync()` re-renders the icon/label after any
- * theme change (including one made from the footer), so the two controls never
- * disagree.
+ * The header: just the wordmark and its lowercase tagline. No theme toggle, no
+ * search button — enklayve ships a single calm light theme, and search lives in
+ * the home and ⌘K (BUILD-SPEC-2 §0.7, simplified further 2026-06-01).
  */
-function themeToggle(setThemeSynced: (t: Theme) => void): { el: HTMLElement; sync: () => void } {
-  const btn = el("button", {
-    type: "button",
-    class: "theme-toggle",
-    attrs: { "aria-label": "Switch color theme" },
-    on: { click: () => setThemeSynced(activeTheme() === "dark" ? "light" : "dark") },
-  });
-  const sync = (): void => {
-    const dark = activeTheme() === "dark";
-    btn.replaceChildren(
-      dark ? sunIcon() : moonIcon(),
-      el("span", {
-        class: "visually-hidden",
-        text: dark ? "Switch to light theme" : "Switch to dark theme",
-      }),
-    );
-    btn.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
-  };
-  sync();
-  return { el: btn, sync };
-}
-
-function buildHeader(
-  navigate: (id: string | null) => void,
-  themeToggleEl: HTMLElement,
-): HTMLElement {
+function buildHeader(navigate: (id: string | null) => void): HTMLElement {
   const wordmark = el(
     "button",
     {
@@ -130,31 +65,19 @@ function buildHeader(
     el("span", { class: "wordmark-tagline", text: "personal finance counsel" }),
   );
 
-  return el(
-    "header",
-    { class: "app-header" },
-    wordmark,
-    el("div", { class: "header-actions" }, themeToggleEl),
-  );
+  return el("header", { class: "app-header" }, wordmark);
 }
 
 /**
- * The site footer: a one-line trust note, then a row of uniform buttons. These
- * are the app's secondary controls (My Situation, the high-contrast toggle) and
- * the trust links (Why enklayve, the source, the author credit), kept out of the
- * now-minimal header. Every item is the same shape and size so the row reads as
- * one tidy group and wraps cleanly on a phone. Shown on every view.
- *
- * The high-contrast toggle is the third theme's home (SPEC §10): the header
- * sun/moon handles light ↔ dark, and this button turns the high-contrast theme
- * on or off for older users and anyone who needs it. `sync()` keeps its
- * pressed state honest after any theme change.
+ * The site footer: a one-line trust note, then a row of uniform buttons — My
+ * Situation and the trust links (Why enklayve, the source, the author credit),
+ * kept out of the minimal header. Every item is the same shape and size so the
+ * row reads as one tidy group and wraps cleanly on a phone. Shown on every view.
  */
 function buildFooter(
   navigate: (id: string | null) => void,
   openSituation: () => void,
-  setThemeSynced: (t: Theme) => void,
-): { el: HTMLElement; syncContrast: () => void } {
+): HTMLElement {
   const linkBtn = (text: string, href: string, extra = ""): HTMLElement =>
     el(
       "a",
@@ -173,20 +96,6 @@ function buildFooter(
     on: { click: openSituation },
   });
 
-  const contrastBtn = el("button", {
-    type: "button",
-    class: "footer-btn",
-    on: {
-      click: () => setThemeSynced(activeTheme() === "high-contrast" ? "light" : "high-contrast"),
-    },
-  });
-  const syncContrast = (): void => {
-    const on = activeTheme() === "high-contrast";
-    contrastBtn.textContent = on ? "High contrast: on" : "High contrast";
-    contrastBtn.setAttribute("aria-pressed", String(on));
-  };
-  syncContrast();
-
   const whyBtn = el("button", {
     type: "button",
     class: "footer-btn",
@@ -194,7 +103,7 @@ function buildFooter(
     on: { click: () => navigate("about") },
   });
 
-  const footer = el(
+  return el(
     "footer",
     { class: "app-footer" },
     el("p", {
@@ -205,13 +114,11 @@ function buildFooter(
       "div",
       { class: "footer-links" },
       situationBtn,
-      contrastBtn,
       whyBtn,
       linkBtn("GitHub", "https://github.com/clay-good/enklayve"),
       linkBtn("Made with ♥ by Clay Good", "https://claygood.com", "footer-btn--accent"),
     ),
   );
-  return { el: footer, syncContrast };
 }
 
 function tileLink(tile: TileDefinition, navigate: (id: string) => void): HTMLElement {
@@ -764,22 +671,11 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
   const situationPanel = new SituationPanel(profile, data);
   const openSituation = (): void => situationPanel.show();
 
-  // One theme entry point keeps the header sun/moon and the footer high-contrast
-  // toggle in sync: any change re-renders both controls so they never disagree.
-  const themeSyncers: (() => void)[] = [];
-  const setThemeSynced = (t: Theme): void => {
-    setTheme(t);
-    for (const sync of themeSyncers) sync();
-  };
-  const toggle = themeToggle(setThemeSynced);
-  themeSyncers.push(toggle.sync);
-
   const content = el("main", { id: "content", class: "content", attrs: { tabindex: "-1" } });
-  const header = buildHeader(navigate, toggle.el);
-  const footer = buildFooter(navigate, openSituation, setThemeSynced);
-  themeSyncers.push(footer.syncContrast);
+  const header = buildHeader(navigate);
+  const footer = buildFooter(navigate, openSituation);
 
-  root.replaceChildren(header, content, footer.el);
+  root.replaceChildren(header, content, footer);
   document.body.append(palette.element, situationPanel.element);
 
   // Cmd/Ctrl-K toggles the palette from anywhere.

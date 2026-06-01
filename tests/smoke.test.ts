@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { renderHome, renderAbout, renderAllTools, renderReadout, mountApp } from "../src/ui/shell";
 import { SituationStore } from "../src/profile/situation";
 
@@ -57,32 +57,24 @@ describe("shell home view (redesigned 2026-06-01)", () => {
   });
 });
 
-describe("shell chrome (header + footer, redesigned 2026-06-01)", () => {
-  beforeEach(() => {
-    try {
-      localStorage.clear();
-    } catch {
-      /* ignore */
-    }
-    document.documentElement.removeAttribute("data-theme");
-    document.body.replaceChildren();
-  });
+describe("shell chrome (header + footer)", () => {
   afterEach(() => document.body.replaceChildren());
 
-  it("header is just the wordmark + lowercase tagline and a sun/moon toggle", async () => {
+  it("header is just the wordmark + lowercase tagline — no toggle, no buttons", async () => {
     const root = document.createElement("div");
     document.body.append(root);
     await mountApp(root);
     const header = root.querySelector(".app-header")!;
     expect(header.querySelector(".wordmark")?.textContent).toBe("enklayve");
     expect(header.querySelector(".wordmark-tagline")?.textContent).toBe("personal finance counsel");
-    expect(header.querySelector(".theme-toggle svg")).not.toBeNull();
-    // The old header controls are gone (BUILD-SPEC-2 §0.7).
+    // Single light theme: no theme toggle anywhere, and no old header controls.
+    expect(header.querySelector(".theme-toggle")).toBeNull();
+    expect(root.querySelector(".theme-toggle")).toBeNull();
     expect(header.textContent).not.toContain("Search tools");
     expect(header.textContent).not.toContain("My Situation");
   });
 
-  it("footer holds uniform buttons including My situation and the high-contrast toggle", async () => {
+  it("footer holds uniform buttons (My situation, Why enklayve, GitHub) and no theme control", async () => {
     const root = document.createElement("div");
     document.body.append(root);
     await mountApp(root);
@@ -90,33 +82,9 @@ describe("shell chrome (header + footer, redesigned 2026-06-01)", () => {
       (b) => b.textContent,
     );
     expect(labels).toContain("My situation");
-    expect(labels.some((t) => t?.startsWith("High contrast"))).toBe(true);
     expect(labels).toContain("Why enklayve");
-  });
-
-  it("the sun/moon flips light <-> dark, reading the live theme (works without storage)", async () => {
-    const root = document.createElement("div");
-    document.body.append(root);
-    await mountApp(root);
-    const toggle = root.querySelector<HTMLButtonElement>(".theme-toggle")!;
-    toggle.click();
-    expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
-    toggle.click();
-    expect(document.documentElement.getAttribute("data-theme")).toBe("light");
-  });
-
-  it("the footer high-contrast toggle turns the third theme on and off", async () => {
-    const root = document.createElement("div");
-    document.body.append(root);
-    await mountApp(root);
-    const hc = Array.from(root.querySelectorAll<HTMLButtonElement>(".app-footer .footer-btn")).find(
-      (b) => b.textContent?.startsWith("High contrast"),
-    )!;
-    hc.click();
-    expect(document.documentElement.getAttribute("data-theme")).toBe("high-contrast");
-    expect(hc.getAttribute("aria-pressed")).toBe("true");
-    hc.click();
-    expect(document.documentElement.getAttribute("data-theme")).toBe("light");
+    expect(labels).toContain("GitHub");
+    expect(labels.some((t) => t?.toLowerCase().includes("contrast"))).toBe(false);
   });
 });
 

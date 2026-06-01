@@ -161,7 +161,7 @@ flowchart LR
 ```
 
 - **`connect-src 'none'`** in the Content-Security-Policy means the page cannot open a network connection — no `fetch`, no `XHR`, no beacon, no websocket. A bug *cannot* exfiltrate your data because the browser refuses the connection.
-- **No telemetry, no accounts, no third-party anything.** No analytics, no CDN fonts, no trackers. The only persisted state is your theme and locale preference in `localStorage`.
+- **No telemetry, no accounts, no third-party anything.** No analytics, no CDN fonts, no trackers. The only persisted state is your locale preference in `localStorage`.
 - **Sensitive inputs never persist.** Income, balances, and parsed documents live in memory and are cleared on page unload (`pagehide`).
 - **Datasets are bundled, not fetched.** Every shard is inlined at build time and re-verified in the browser against its content hash before use, so the running app knows exactly what it's computing from while staying offline-capable.
 - The release audit (`npm run audit`) fails the build if any of these invariants is violated.
@@ -172,11 +172,11 @@ The service worker is the one component allowed `connect-src 'self'` — it cach
 
 ## The home: three calm zones
 
-The home is spelled out plainly and stripped to the essentials (redesigned 2026-06-01; BUILD-SPEC-2 §0.7). The header is just the wordmark **enklayve** with the lowercase tagline *personal finance counsel* and a single large **sun/moon** light/dark toggle. Below it, three centered zones: the **Readout dropzone** (drop a pay stub / W-2 / tax form for an instant private readout), a **live search box** that drops matching tools in as you type, and then **every tool listed** under its plain-language category. A quiet "See your plan" link points first-timers to My Plan; the high-contrast theme and My Situation live in a uniform-button footer. The ⌘K palette and the crawlable All Tools index are unchanged.
+The home is spelled out plainly and stripped to the essentials (redesigned 2026-06-01; BUILD-SPEC-2 §0.7). The header is just the wordmark **enklayve** with the lowercase tagline *personal finance counsel* — no theme toggle, no buttons. Below it, three centered zones: the **Readout dropzone** (drop a pay stub / W-2 / tax form for an instant private readout), a **live search box** that drops matching tools in as you type, and then **every tool listed** under its plain-language category. A quiet "See your plan" link points first-timers to My Plan; My Situation lives in a uniform-button footer. The site ships a single calm light theme. The ⌘K palette and the crawlable All Tools index are unchanged.
 
 ```
 +---------------------------------------------------------------+
-|  enklayve  personal finance counsel                      [☾]  |
+|  enklayve  personal finance counsel                           |
 |                                                               |
 |                  Your money, made simple.                     |
 |                                                               |
@@ -195,7 +195,7 @@ The home is spelled out plainly and stripped to the essentials (redesigned 2026-
 |   │ Federal Income Tax…  │  │ Treasury I Bond…     │          |
 |   └──────────────────────┘  └──────────────────────┘          |
 +---------------------------------------------------------------+
-|  [My situation] [High contrast] [Why enklayve] [GitHub] [♥]   |
+|  [My situation]   [Why enklayve]   [GitHub]   [♥ Clay Good]   |
 +---------------------------------------------------------------+
 ```
 
@@ -249,7 +249,7 @@ flowchart TD
 | `src/engine` | Exact decimal money math, the citation/provenance gate, the composable tax evaluator, and the per-domain math (benefits, finance, capital gains, RMD, Social Security, FAFSA, the guidance plan) |
 | `src/data` | zod schemas for every dataset kind, content-hash integrity, and the per-dataset fail-safe gate (stale or corrupt → a verify banner, never a wrong number) |
 | `src/tiles` | One module per calculator. Adding a tool never touches the shell |
-| `src/ui` | Render layer, three themes, result card, fuzzy palette, fragment router, accessible charts |
+| `src/ui` | Render layer, the light theme, result card, fuzzy palette, fragment router, accessible charts |
 | `src/profile` | My Situation — the in-memory session profile and the portable encrypted export |
 | `src/readout` | Anchored document extraction, the confirm flow, and the downloadable Readout Report |
 | `worker` | A minimal Cloudflare Worker: asset routing + the security headers |
@@ -377,7 +377,7 @@ The jan.ai feeling (clean, airy, friendly, fast) with a royal identity.
 | Primary | Royal purple, ~`#6D28D9`, with vivid violet accents |
 | Secondary | Warm gold / amber for good-news states and primary CTAs |
 | Red | **Warnings only** — money tools that use red as a primary color make people anxious |
-| Themes | Light (default), dark, and high-contrast (high-contrast matters for retirement math) |
+| Theme | A single calm light theme — soft off-white background, easy on the eyes, no toggle |
 | Numbers | Big and legible; one gentle count-up on reveal that respects `prefers-reduced-motion` |
 | Tone | Plain English, encouraging, never scolding — "here's where you stand," not "you're behind" |
 
@@ -415,7 +415,7 @@ See the spec files for the full per-wave history.
 | `src/engine` | Money math, citation/provenance, the tax evaluator, and per-domain math |
 | `src/data` | Dataset schemas, integrity check, manifest loader, fail-safe gate, browser loader |
 | `src/tiles` | One module per calculator (55 of them) + the registry |
-| `src/ui` | Render layer, themes, result card, command palette, router, charts, views |
+| `src/ui` | Render layer, the light theme, result card, command palette, router, charts, views |
 | `src/profile` | My Situation — the in-memory session profile and portable encrypted export |
 | `src/readout` | Anchored extractors, the confirm flow, and the Readout Report builder |
 | `data` | Sharded JSON datasets, sibling `.sha256` files, and the manifest |
