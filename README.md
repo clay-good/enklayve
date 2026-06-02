@@ -97,9 +97,8 @@ See [docs/specs/SPEC.md](docs/specs/SPEC.md) (the vision + Phases 0–11) and [d
 
 | Tool | What it answers |
 |---|---|
-| Budget Overview | Where the money goes *and* when it moves, on one screen |
+| Budget Overview | Give every dollar a job until $0 is left to assign — the anti-budget, on one calm page |
 | 50/30/20 Spending Plan | Needs / wants / savings from your take-home |
-| Zero-Based Budget | Give every dollar a job (the goal is $0 left) |
 | Cash-Flow Timeline | The running daily balance and the tightest day |
 | Sinking Fund Planner | The level monthly amount to reach a goal by a date |
 

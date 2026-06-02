@@ -353,6 +353,123 @@ body {
   text-decoration: underline;
 }
 
+/* --- The home mini-budget: a live taste of the full Budget tool ----------- */
+.home-budget {
+  width: 100%;
+  max-width: 40rem;
+  margin: 1.5rem auto 0;
+  padding: 1.25rem 1.35rem 1.4rem;
+  border: 1px solid var(--enk-border);
+  border-radius: var(--enk-radius);
+  background: var(--enk-surface);
+  box-shadow: var(--enk-shadow);
+}
+.home-budget__title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.home-budget__sub {
+  margin: 0.25rem 0 1rem;
+  color: var(--enk-text-muted);
+  font-size: 0.9rem;
+}
+.home-budget__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+.home-budget__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+}
+.home-budget__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  cursor: pointer;
+}
+.home-budget__dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  flex: none;
+  background: var(--enk-border);
+}
+.home-budget__row-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--enk-text);
+}
+.home-budget__row input {
+  width: 6.5rem;
+  min-width: 0;
+  flex: none;
+  font: inherit;
+  padding: 0.45rem 0.55rem;
+  border-radius: 10px;
+  border: 1px solid var(--enk-border);
+  background: var(--enk-bg);
+  color: var(--enk-text);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.home-budget__viz {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+}
+.home-budget__viz .chart {
+  margin: 0;
+  width: 100%;
+}
+.home-budget__viz .chart--donut {
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.home-budget__status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  margin: 0;
+  text-align: center;
+}
+.home-budget__status-label {
+  font-size: 0.78rem;
+  color: var(--enk-text-muted);
+}
+.home-budget__status-value {
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--enk-primary-strong);
+  font-variant-numeric: tabular-nums;
+}
+.home-budget__status-note {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--enk-text-muted);
+}
+.home-budget__status.is-balanced .home-budget__status-value,
+.home-budget__status.is-balanced .home-budget__status-note {
+  color: var(--enk-good);
+}
+.home-budget__status.is-over .home-budget__status-value,
+.home-budget__status.is-over .home-budget__status-note {
+  color: var(--enk-warn);
+}
+.home-budget__open {
+  width: 100%;
+}
+
 /* --- The home tool list: every tool under a plain-language heading. -------- */
 .home-tools-head {
   margin-top: 2.5rem;
@@ -531,6 +648,16 @@ body {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--enk-text-muted);
+}
+
+/* Section-spanning children of the form grid — a group label, an editable row
+   list, and the one-tap chips — take the full width rather than a single ~13rem
+   column, so each row lays its fields out horizontally and the form stays
+   compact (key to the budget fitting one calm page). */
+.tile-form > .field-group-label,
+.tile-form > .plan-debts,
+.tile-form > .cat-chips {
+  grid-column: 1 / -1;
 }
 
 .checkbox {
@@ -1297,6 +1424,42 @@ body {
   line-height: 1.5;
 }
 
+/* --- The Budget tile: a one-line lead, the "why it sticks" note, and a calm
+   "balanced" cue on the donut. --------------------------------------------- */
+.budget-lead {
+  margin: 0 0 1rem;
+}
+.budget-why {
+  margin-top: 1.75rem;
+  padding: 1.25rem 1.4rem;
+  border-radius: 12px;
+  border: 1px solid var(--enk-border);
+  background: linear-gradient(
+    135deg,
+    var(--enk-primary-soft) 0%,
+    color-mix(in srgb, var(--enk-accent) 12%, var(--enk-surface)) 100%
+  );
+}
+.budget-why__title {
+  margin: 0 0 0.6rem;
+  font-size: 1.1rem;
+  color: var(--enk-primary-strong);
+}
+.budget-why__p {
+  margin: 0 0 0.6rem;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--enk-text);
+}
+.budget-why__p:last-child {
+  margin-bottom: 0;
+}
+/* When the budget balances, a soft green ring settles around the donut — a calm
+   "done" cue, no motion or noise (consistent with the brand-calm delight). */
+.tile-charts.is-balanced .donut {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--enk-good) 32%, transparent);
+}
+
 /* --- Two-method comparison cards (Debt Freedom Planner) ------------------- */
 .compare {
   display: grid;
@@ -2042,6 +2205,21 @@ body {
   }
   .readout-dropzone {
     padding: 1.5rem 1rem;
+  }
+
+  /* The mini-budget stacks: controls above, the donut + result below. */
+  .home-budget {
+    padding: 1.1rem 1rem 1.2rem;
+  }
+  .home-budget__grid {
+    grid-template-columns: 1fr;
+    gap: 1.1rem;
+  }
+
+  /* Budget categories: the name takes the row, the amount + remove sit on the
+     next line so a category never gets squeezed thin on a phone. */
+  .plan-debt-row .field:first-of-type {
+    flex: 1 1 100%;
   }
 
   .tile-title {

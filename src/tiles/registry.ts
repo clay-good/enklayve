@@ -41,7 +41,6 @@ import { homeAffordabilityTile } from "./homeAffordability";
 import { sinkingFundTile } from "./sinkingFund";
 import { rentVsBuyTile } from "./rentVsBuy";
 import { healthPlanTile } from "./healthPlan";
-import { zeroBudgetTile } from "./zeroBudget";
 import { cashFlowTile } from "./cashFlow";
 import { budgetOverviewTile } from "./budgetOverview";
 import { lifeInsuranceTile } from "./lifeInsurance";
@@ -108,7 +107,6 @@ export const TILES: TileDefinition[] = [
   // --- Budgeting & Cash Flow ---
   budgetOverviewTile,
   spendingPlanTile,
-  zeroBudgetTile,
   cashFlowTile,
   sinkingFundTile,
 

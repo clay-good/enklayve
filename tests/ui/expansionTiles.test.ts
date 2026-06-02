@@ -5,7 +5,6 @@ import { mountHomeAffordability } from "../../src/tiles/homeAffordability";
 import { mountSinkingFund } from "../../src/tiles/sinkingFund";
 import { mountRentVsBuy } from "../../src/tiles/rentVsBuy";
 import { mountHealthPlan } from "../../src/tiles/healthPlan";
-import { mountZeroBudget } from "../../src/tiles/zeroBudget";
 import { mountCashFlow } from "../../src/tiles/cashFlow";
 import { mountBudgetOverview } from "../../src/tiles/budgetOverview";
 import { mountDebtFreedom } from "../../src/tiles/debtFreedom";
@@ -223,91 +222,6 @@ describe("Health Plan Chooser", () => {
   });
 });
 
-describe("Zero-Based Budget", () => {
-  it("balances when every dollar is assigned", () => {
-    const { root } = mount(
-      mountZeroBudget,
-      new URLSearchParams({
-        inc: "2500",
-        k: "2",
-        c0: "Rent",
-        a0: "1600",
-        c1: "Savings",
-        a1: "900",
-      }),
-    );
-    expect(rowValue(root, "Total assigned")).toContain("$2,500");
-    expect(rowValue(root, "Left to assign")).toContain("$0");
-    expect(rowValue(root, "Status")).toContain("Balanced");
-    expect(root.querySelector("a.cite-link")).toBeNull();
-  });
-
-  it("flags over-assignment (red is a genuine warning here)", () => {
-    const { root } = mount(
-      mountZeroBudget,
-      new URLSearchParams({ inc: "2000", k: "1", c0: "Rent", a0: "2500" }),
-    );
-    expect(rowValue(root, "Status")).toContain("Over-assigned by $500");
-  });
-
-  it("prefills a balanced worked example", () => {
-    const { root } = mount(mountZeroBudget, new URLSearchParams());
-    clickExample(root);
-    expect(root.querySelector<HTMLInputElement>('input[name="inc"]')?.value).toBe("5000");
-    expect(rowValue(root, "Status")).toContain("Balanced");
-  });
-
-  it("opens with the big default categories when there are none saved", () => {
-    const { root } = mount(mountZeroBudget, new URLSearchParams());
-    const names = Array.from(
-      root.querySelectorAll<HTMLInputElement>('input[aria-label$="name"]'),
-    ).map((i) => i.value);
-    expect(names).toContain("Housing");
-    expect(names).toContain("Transportation");
-    expect(names).toContain("Investing & savings");
-    expect(names).toContain("Taxes");
-  });
-
-  it("draws a donut and a flow bar once dollars are assigned", () => {
-    const { root } = mount(
-      mountZeroBudget,
-      new URLSearchParams({
-        inc: "2500",
-        k: "2",
-        c0: "Housing",
-        a0: "1600",
-        c1: "Food",
-        a1: "400",
-      }),
-    );
-    expect(root.querySelector(".chart--donut")).not.toBeNull();
-    expect(root.querySelector(".chart--flow")).not.toBeNull();
-    // The donut legend includes the leftover the flow bar also shows.
-    expect(root.textContent).toContain("Left to assign");
-  });
-
-  it("reorders categories with the keyboard move buttons", () => {
-    const { root, lastParams } = mount(
-      mountZeroBudget,
-      new URLSearchParams({
-        inc: "2500",
-        k: "2",
-        c0: "Rent",
-        a0: "1600",
-        c1: "Savings",
-        a1: "900",
-      }),
-    );
-    const down = Array.from(root.querySelectorAll("button")).find(
-      (b) => b.getAttribute("aria-label") === "Move Rent down",
-    );
-    expect(down).toBeTruthy();
-    down!.click();
-    expect(lastParams()?.get("c0")).toBe("Savings");
-    expect(lastParams()?.get("c1")).toBe("Rent");
-  });
-});
-
 describe("Cash-Flow Timeline", () => {
   it("finds a day the balance dips negative", () => {
     const { root } = mount(
@@ -361,22 +275,17 @@ describe("Cash-Flow Timeline", () => {
 });
 
 describe("Budget Overview", () => {
-  // income 5000, three lines summing 2700 → 2300 left to assign.
+  // income 5000, three categories summing 2700 → 2300 left to assign.
   const params = (): URLSearchParams =>
     new URLSearchParams({
       inc: "5000",
-      pay: "1",
-      sb: "800",
       k: "3",
       c0: "Housing",
       a0: "1600",
-      d0: "1",
       c1: "Groceries",
       a1: "600",
-      d1: "8",
       c2: "Fun",
       a2: "500",
-      d2: "0",
     });
 
   it("shows the allocation: income, assigned, and left to assign", () => {
@@ -384,6 +293,25 @@ describe("Budget Overview", () => {
     expect(rowValue(root, "Monthly income")).toContain("$5,000");
     expect(rowValue(root, "Total assigned")).toContain("$2,700");
     expect(rowValue(root, "Left to assign")).toContain("$2,300");
+    expect(rowValue(root, "Status")).toContain("still needs a job");
+    expect(root.querySelector("a.cite-link")).toBeNull();
+  });
+
+  it("celebrates when every dollar has a job", () => {
+    const { root } = mount(
+      mountBudgetOverview,
+      new URLSearchParams({ inc: "2500", k: "2", c0: "Rent", a0: "1600", c1: "Saving", a1: "900" }),
+    );
+    expect(rowValue(root, "Left to assign")).toContain("$0");
+    expect(rowValue(root, "Status")).toContain("Every dollar has a job");
+  });
+
+  it("flags over-assignment (red is a genuine warning here)", () => {
+    const { root } = mount(
+      mountBudgetOverview,
+      new URLSearchParams({ inc: "2000", k: "1", c0: "Rent", a0: "2500" }),
+    );
+    expect(rowValue(root, "Status")).toContain("Over-assigned by $500");
   });
 
   it("reads income from My Situation when not in the URL", () => {
@@ -394,40 +322,43 @@ describe("Budget Overview", () => {
     expect(rowValue(root, "Monthly income")).toContain("$6,000");
   });
 
-  it("walks the month and surfaces the lowest balance when lines are dated", () => {
+  it("opens with the big default categories when there are none saved", () => {
+    const { root } = mount(mountBudgetOverview, new URLSearchParams());
+    const names = Array.from(
+      root.querySelectorAll<HTMLInputElement>('input[aria-label$="name"]'),
+    ).map((i) => i.value);
+    expect(names).toContain("Housing");
+    expect(names).toContain("Transportation");
+    expect(names).toContain("Saving & debt payoff");
+  });
+
+  it("draws the allocation donut and flow bar once dollars are assigned", () => {
     const { root } = mount(mountBudgetOverview, params());
-    // Day 1: 800 + 5000 income − 1600 housing = 4200; day 8: − 600 = 3600.
-    expect(rowValue(root, "Lowest balance this month")).toBeTruthy();
-    expect(root.querySelector(".chart--timeline")).not.toBeNull();
+    expect(root.querySelector(".chart--donut")).not.toBeNull();
+    expect(root.querySelector(".chart--flow")).not.toBeNull();
+    // No month timeline here — that lives in the Cash-Flow Timeline tile now.
+    expect(root.querySelector(".chart--timeline")).toBeNull();
   });
 
-  it("flags a below-zero day on the timeline", () => {
-    const { root } = mount(
+  it("reorders categories with the keyboard move buttons", () => {
+    const { root, lastParams } = mount(
       mountBudgetOverview,
-      new URLSearchParams({
-        inc: "2000",
-        pay: "15",
-        sb: "200",
-        k: "1",
-        c0: "Rent",
-        a0: "1500",
-        d0: "1",
-      }),
+      new URLSearchParams({ inc: "2500", k: "2", c0: "Rent", a0: "1600", c1: "Saving", a1: "900" }),
     );
-    // Day 1: 200 − 1500 = −1300 before the day-15 paycheck.
-    expect(root.querySelector(".balance-bar--neg")).not.toBeNull();
-    expect(rowValue(root, "Heads up")).toContain("day 1");
+    const down = Array.from(root.querySelectorAll("button")).find(
+      (b) => b.getAttribute("aria-label") === "Move Rent down",
+    );
+    expect(down).toBeTruthy();
+    down!.click();
+    expect(lastParams()?.get("c0")).toBe("Saving");
+    expect(lastParams()?.get("c1")).toBe("Rent");
   });
 
-  it("renders the allocation donut, and offers the timeline once a line is dated", () => {
-    // No dated lines → donut present, timeline replaced by a prompt.
-    const undated = mount(
-      mountBudgetOverview,
-      new URLSearchParams({ inc: "5000", k: "1", c0: "Housing", a0: "1600", d0: "0" }),
-    );
-    expect(undated.root.querySelector(".chart--donut")).not.toBeNull();
-    expect(undated.root.querySelector(".chart--timeline")).toBeNull();
-    expect(undated.root.textContent).toContain("Add a due day");
+  it("spells out the anti-budget idea at the bottom of the page", () => {
+    const { root } = mount(mountBudgetOverview, params());
+    const why = root.querySelector(".budget-why");
+    expect(why).not.toBeNull();
+    expect(why?.textContent).toContain("willpower");
   });
 });
 
@@ -523,18 +454,6 @@ describe("expansion tiles accessibility", () => {
       params: new URLSearchParams({ th: "5000" }),
     },
     {
-      name: "zero-budget",
-      mount: mountZeroBudget,
-      params: new URLSearchParams({
-        inc: "5000",
-        k: "2",
-        c0: "Rent",
-        a0: "1600",
-        c1: "Food",
-        a1: "600",
-      }),
-    },
-    {
       name: "cash-flow",
       mount: mountCashFlow,
       params: new URLSearchParams({
@@ -551,15 +470,11 @@ describe("expansion tiles accessibility", () => {
       mount: mountBudgetOverview,
       params: new URLSearchParams({
         inc: "5000",
-        pay: "1",
-        sb: "800",
         k: "2",
         c0: "Housing",
         a0: "1600",
-        d0: "1",
         c1: "Groceries",
         a1: "600",
-        d1: "8",
       }),
     },
     {

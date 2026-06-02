@@ -5,7 +5,8 @@
  * shell knows tiles only through the registry and the {@link TileContext}
  * interface, so new tiles never require touching this file.
  */
-import { Router, permalinkFor, type Route } from "./router";
+import { Router, permalinkFor, buildHash, type Route } from "./router";
+import { donutChart, paletteVar, type Slice } from "./charts";
 import { CommandPalette } from "./commandPalette";
 import { SituationPanel } from "./situationPanel";
 import { renderReadout } from "./readoutView";
@@ -168,6 +169,147 @@ function readoutDropzone(navigate: (id: string | null) => void): HTMLElement {
       text: "We read it right here on your device and fill in your numbers for you. It is never uploaded.",
     }),
   );
+}
+
+/**
+ * The home mini-budget (sits right under the Readout dropzone): a live, hands-on
+ * taste of the whole idea — type your income, nudge the big buckets, and watch a
+ * donut fill while "left to assign" falls toward zero. It is immediate, useful
+ * help on the first screen, and the numbers you type carry straight into the
+ * full Budget tool when you open it, so nothing is lost.
+ */
+function homeBudgetWidget(): HTMLElement {
+  const fmt0 = (n: number): string =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(Math.round(n));
+
+  let income = 5000;
+  const cats = [
+    { name: "Housing", amount: 1500 },
+    { name: "Food", amount: 600 },
+    { name: "Saving & debt", amount: 900 },
+    { name: "Everything else", amount: 800 },
+  ];
+
+  const viz = el("div", { class: "home-budget__viz", attrs: { "aria-live": "polite" } });
+
+  const openFull = (): void => {
+    const p = new URLSearchParams();
+    p.set("inc", String(income));
+    p.set("k", String(cats.length));
+    cats.forEach((c, i) => {
+      p.set(`c${i}`, c.name);
+      p.set(`a${i}`, String(c.amount));
+    });
+    // Carry the numbers into the full Budget tile so the click feels seamless.
+    window.location.hash = buildHash("budget-overview", p);
+  };
+
+  const render = (): void => {
+    const assigned = cats.reduce((sum, c) => sum + Math.max(0, c.amount), 0);
+    const left = income - assigned;
+    const balanced = left === 0 && income > 0;
+    const over = left < 0;
+
+    const slices: Slice[] = cats
+      .map((c, i) => ({ label: c.name, value: Math.max(0, c.amount), color: paletteVar(i) }))
+      .filter((s) => s.value > 0);
+    if (left > 0) slices.push({ label: "Left to assign", value: left, color: "var(--enk-accent)" });
+
+    const status = el(
+      "p",
+      {
+        class: `home-budget__status${balanced ? " is-balanced" : ""}${over ? " is-over" : ""}`,
+      },
+      el("span", {
+        class: "home-budget__status-label",
+        text: over ? "Over by" : "Left to assign",
+      }),
+      el("span", { class: "home-budget__status-value", text: fmt0(Math.abs(left)) }),
+      el("span", {
+        class: "home-budget__status-note",
+        text: balanced ? "Every dollar has a job 🎉" : over ? "Trim a little" : "Give it a job",
+      }),
+    );
+
+    clear(viz);
+    viz.append(
+      donutChart({
+        slices,
+        locale: "en-US",
+        ariaLabel: "How this income is split across categories",
+        centerValue: fmt0(income),
+        centerLabel: "income",
+      }),
+      status,
+      el("button", {
+        type: "button",
+        class: "btn btn--accent home-budget__open",
+        text: "Open the full budget →",
+        on: { click: openFull },
+      }),
+    );
+  };
+
+  const row = (
+    name: string,
+    value: number,
+    dotColor: string | null,
+    onInput: (n: number) => void,
+  ): HTMLElement => {
+    const input = el("input", {
+      type: "number",
+      min: 0,
+      step: 50,
+      value,
+      attrs: { inputmode: "decimal" },
+      on: {
+        input: (e) => {
+          onInput(Math.max(0, Number((e.target as HTMLInputElement).value) || 0));
+          render();
+        },
+      },
+    });
+    const dot = el("span", { class: "home-budget__dot", attrs: { "aria-hidden": "true" } });
+    if (dotColor) dot.style.background = dotColor;
+    return el(
+      "label",
+      { class: "home-budget__row" },
+      dotColor ? dot : null,
+      el("span", { class: "home-budget__row-name", text: name }),
+      input,
+    );
+  };
+
+  const controls = el(
+    "div",
+    { class: "home-budget__controls" },
+    row("Monthly income", income, null, (n) => {
+      income = n;
+    }),
+    ...cats.map((c, i) =>
+      row(c.name, c.amount, paletteVar(i), (n) => {
+        c.amount = n;
+      }),
+    ),
+  );
+
+  const section = el(
+    "section",
+    { class: "home-budget" },
+    el("h2", { class: "home-budget__title", text: "Try a 60-second budget" }),
+    el("p", {
+      class: "home-budget__sub",
+      text: "Give every dollar a job. Watch what's left to assign fall to zero — that's the whole idea.",
+    }),
+    el("div", { class: "home-budget__grid" }, controls, viz),
+  );
+
+  render();
+  return section;
 }
 
 /** A small search-glass icon (paired with the home search input). */
@@ -368,6 +510,7 @@ function renderHome(container: HTMLElement, navigate: (id: string | null) => voi
   container.append(
     hero,
     readoutDropzone(navigate),
+    homeBudgetWidget(),
     homeSearch(navigate),
     startHint,
     toolsHead,
@@ -726,10 +869,26 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
   // rendered view and move focus into it. Without this, clicking a link near
   // the bottom of a long page left you stranded at that same scroll offset on
   // the new page instead of at its start.
+  //
+  // The jump is forced *instant* (overriding the global `scroll-behavior:
+  // smooth`, which would otherwise animate a long, distracting scroll up) and
+  // repeated on the next frame: on mobile the page height isn't settled the
+  // instant we replace the content, so a single synchronous scroll can land
+  // short and leave you near the bottom. The rAF pass corrects that once layout
+  // has settled.
+  const jumpToTop = (): void => {
+    if (typeof window.scrollTo !== "function") return;
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+    } catch {
+      window.scrollTo(0, 0);
+    }
+  };
   let firstRoute = true;
   router.start((route) => {
     renderRoute(route);
-    if (typeof window.scrollTo === "function") window.scrollTo(0, 0);
+    jumpToTop();
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(jumpToTop);
     // Keyboard and screen-reader users land in the new content, not back in the
     // page chrome. Skip the first paint so we don't steal initial focus, and
     // preventScroll so focusing can't fight the jump-to-top above.
