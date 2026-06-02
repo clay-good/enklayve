@@ -199,7 +199,7 @@ The home is spelled out plainly and stripped to the essentials (redesigned 2026-
 +---------------------------------------------------------------+
 ```
 
-Every view is **vertical-scroll only on every device width** — form controls shrink inside their grid track (`min-width: 0`), wide "show the math" tables and chart timelines get their own contained horizontal scroll, and an `overflow-x: clip` backstop on both the content column *and the document root* guarantees the viewport itself never scrolls sideways (the root clip keeps vertical scroll and the sticky header intact, so even the header and footer can't leak width). `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch.
+Every view is **vertical-scroll only on every device width** — form controls shrink inside their grid track (`min-width: 0`), wide "show the math" tables and chart timelines get their own contained horizontal scroll, and an `overflow-x: clip` backstop on both the content column *and the document root* guarantees the viewport itself never scrolls sideways (the root clip keeps vertical scroll and the sticky header intact, so even the header and footer can't leak width). `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch. A Playwright suite **measures** this — every view and all 56 tools, from 320px to 1440px — so a regression fails CI rather than shipping.
 
 ---
 
@@ -363,8 +363,9 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 - **Provenance gate.** Every shipped figure must resolve to a non-empty citation — no orphan numbers ship.
 - **Accessibility.** axe-core runs inside the test suite across the home, About, All Tools, the Readout, the Report, and every tile form, with **zero violations**.
 - **Release audit.** `npm run audit` mechanically verifies CSP `connect-src 'none'`, no cross-origin loads in the built output, full citation coverage, and no sensitive persistence.
+- **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 56 tools** at a 360px phone, the **offline** service worker (loads with the network cut), and the deep-link → compute path. It runs as its own CI job so the unit suite stays fast.
 
-**612 tests across 53 files pass today**, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**612 unit/golden tests across 53 files** (plus 11 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -395,9 +396,9 @@ All phases from both specs are complete or at a deliberately-deferred boundary. 
 | 5 | ✅ | Every Pillar 1 tile (paycheck, taxes, investing, borrowing, growth, RMD, CPI) |
 | 6 | ✅ | Every Pillar 2 tile + the combined "What Am I Owed?" screener |
 | 7 | ✅ | Safe Harbor: Peace of Mind, Freedom Date, Downshift, Sabbatical |
-| 8 | ✅ | Offline PWA — service worker precache + runtime cache, installable, manifest |
+| 8 | ✅ | Offline PWA — service worker precache + runtime cache, installable, manifest (offline load verified end-to-end) |
 | 9 | ✅ | Data-refresh workflows for every seeded source with an anchorable figure |
-| 10 | ✅ | CI, the release audit, and Cloudflare Git-integration deploy |
+| 10 | ✅ | CI, the release audit, the Cloudflare Git-integration deploy, and the Playwright e2e job (responsiveness + offline + smoke) |
 | 11 | ✅ | Crawlability (per-tile shells, sitemap, robots), on-page SEO/social, docs, mobile responsiveness |
 | 12–13 | ✅ | My Situation (session profile + encrypted export); the home (redesigned to three calm zones, §0.7) |
 | 14 | ✅ | The Readout — every document family has an anchored, revision-pinned extractor; reads typed PDF (pdf.js) and Word `.docx` (mammoth) on-device |
@@ -432,6 +433,7 @@ See the spec files for the full per-wave history.
 npm install
 npm run dev            # local dev server (Vite)
 npm run test           # unit + golden corpus + axe accessibility (Vitest)
+npm run test:e2e       # responsiveness + offline + smoke in a real browser (Playwright)
 npm run typecheck      # tsc --noEmit
 npm run lint           # eslint
 npm run format         # prettier --write
@@ -452,7 +454,9 @@ Node 20+ for the app (Node 24 in CI runs the TypeScript build scripts directly).
 flowchart LR
     PUSH["push / PR to main"] --> CI
     subgraph CI["GitHub Actions — the quality gate"]
+        direction TB
         FMT["format:check"] --> LINT["lint"] --> TC["typecheck"] --> TEST["test (golden + axe)"] --> BUILD["build"] --> AUDIT["audit"]
+        E2E["e2e job: Playwright<br/>(responsiveness · offline · smoke)"]
     end
     CI -->|"merge to main"| CF["Cloudflare Workers Builds<br/>(native Git integration)"]
     CF --> LIVE["live site, auto-updated"]
@@ -483,8 +487,9 @@ Deferred *for accuracy or scope*, not faked:
 - **States beyond the seeded eleven** — added through the staggered annual refresh.
 - **OCR for scanned/photographed documents** — typed PDF and Word `.docx` ingestion ship today; the lower-confidence OCR *flagging* is already built, and bundling the on-device OCR engine itself is the remaining follow-up (it lands with the offline-cached lazy chunks).
 - **i18n string extraction** — the locale preference persists; a full pre-rendered-variant extraction is held rather than ship a speculative abstraction.
-- **Playwright live-offline e2e** — axe accessibility already runs in the Vitest suite; the browser-based offline run is a focused follow-up so CI stays fast and browser-free.
 - **Per-filing-status graduated state schedules** — for any future state whose marginal tiers differ by filing status (none of the seeded eleven do).
+
+The Playwright live-offline + responsiveness e2e suite, previously deferred, now ships as its own CI job (see [Determinism & verification](#determinism--verification)).
 
 ---
 

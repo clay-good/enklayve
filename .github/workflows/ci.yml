@@ -27,3 +27,19 @@ jobs:
       # cross-origin resource loads, every rule cited, no sensitive persistence.
       # Runs after the build so it can inspect dist/. Fails on any violation.
       - run: npm run audit
+
+  # End-to-end (BUILD-SPEC.md §6/§10/§11): a real browser over the production
+  # build verifies layout (no horizontal scroll on any view at any device
+  # width), the offline service worker, and the deep-link → compute path —
+  # things happy-dom cannot. Kept a separate job so the unit suite stays fast.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

@@ -1461,6 +1461,9 @@ body {
   margin-top: 0.75rem;
   color: var(--enk-text-muted);
   font: inherit;
+  /* Native file inputs carry a wide intrinsic min-width that overflows a narrow
+     phone; let it shrink to the dropzone. */
+  max-width: 100%;
 }
 .readout-status {
   color: var(--enk-text-muted);
@@ -1656,6 +1659,15 @@ body {
 }
 .report-table {
   margin-top: 0.25rem;
+}
+/* Report value cells hold prose (a next-action sentence, a method name), not the
+   single-line currency the tile breakdowns use, so they must wrap — the shared
+   `.bd-value { white-space: nowrap }` would otherwise force the table wider than
+   a phone. `anywhere` also breaks any long unspaced token (e.g. a version). */
+.report-table .bd-value,
+.report-table .bd-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .report-note {
   color: var(--enk-text-muted);
