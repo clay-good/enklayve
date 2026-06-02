@@ -93,7 +93,10 @@ describe("flat-rate states", () => {
 });
 
 describe("no-income-tax states are first-class records", () => {
-  for (const code of ["tx", "fl"]) {
+  // All nine states that levy no personal income tax on wages (BUILD-SPEC.md §8):
+  // TX and FL at launch, plus AK, NV, NH, SD, TN, WA, WY added as first-class
+  // records so a resident of any of them sees their state by name.
+  for (const code of ["tx", "fl", "ak", "nv", "nh", "sd", "tn", "wa", "wy"]) {
     it(`${code.toUpperCase()} levies no state or local income tax`, () => {
       const r = evaluateTaxes(
         { filingStatus: "single", wages: 80000 },

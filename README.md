@@ -172,11 +172,11 @@ The service worker is the one component allowed `connect-src 'self'` — it cach
 
 ## The home: three calm zones
 
-The home is spelled out plainly and stripped to the essentials (redesigned 2026-06-01; BUILD-SPEC-2 §0.7). The header is just the wordmark **enklayve** with the lowercase tagline *personal finance counsel* — no theme toggle, no buttons. Below it, three centered zones: the **Readout dropzone** (drop a pay stub / W-2 / tax form for an instant private readout), a **live search box** that drops matching tools in as you type, and then **every tool listed** under its plain-language category. A quiet "See your plan" link points first-timers to My Plan; My Situation lives in a uniform-button footer. The site ships a single calm light theme. The ⌘K palette and the crawlable All Tools index are unchanged.
+The home is spelled out plainly and stripped to the essentials (redesigned 2026-06-01; BUILD-SPEC-2 §0.7). The header is just the wordmark **enklayve** with the lowercase tagline *personal finance* — no theme toggle, no buttons. Below it, three centered zones: the **Readout dropzone** (drop a pay stub / W-2 / tax form for an instant private readout), a **live search box** that drops matching tools in as you type, and then **every tool listed** under its plain-language category. A quiet "See your plan" link points first-timers to My Plan; My Situation lives in a uniform-button footer. The site ships a single calm light theme. The ⌘K palette and the crawlable All Tools index are unchanged.
 
 ```
 +---------------------------------------------------------------+
-|  enklayve  personal finance counsel                           |
+|  enklayve  personal finance                                   |
 |                                                               |
 |                  Your money, made simple.                     |
 |                                                               |
@@ -274,9 +274,9 @@ flowchart LR
     EV --> RES["TaxResult: federal · FICA · state · local<br/>· marginal % · effective % · take-home<br/>(every line carries its citation)"]
 ```
 
-- Seeded with the **ten most populous states + DC** (CA, NY, TX, FL, PA, IL, OH, GA, NC, MI, DC). **No-income-tax states (TX, FL) are first-class records,** not omissions.
+- Seeded with the **ten most populous states + DC** (CA, NY, TX, FL, PA, IL, OH, GA, NC, MI, DC) **plus every remaining no-income-tax state** (AK, NV, NH, SD, TN, WA, WY) — **18 jurisdictions**. **No-income-tax states are first-class records,** not omissions, so a resident of any of the nine sees their state by name with $0 state tax confirmed (and its citation), not a generic "no state tax modeled."
 - Handles ordered marginal brackets, filing statuses, standard vs itemized (the "big four": SALT capped, mortgage interest, charitable, medical above the floor), FICA with the wage base + 0.9% Additional Medicare, special rules (e.g. the CA mental-health surtax), and opt-in local add-ons.
-- **Fail-safe is per jurisdiction:** if the California source is stale, California shows a verify banner while the other 50 keep working.
+- **Fail-safe is per jurisdiction:** if the California source is stale, California shows a verify banner while every other jurisdiction keeps working.
 
 ---
 
@@ -316,7 +316,7 @@ flowchart TD
 | Medicaid MAGI thresholds | CMS / state pubs | Annual | 2 |
 | FAFSA SAI + Pell schedule | Dept. of Education | Annual | 2 |
 
-State adapters cover the seeded eleven by shape: standard-deduction states (CA, NY, GA, NC, DC), flat-rate states (PA, IL, MI), and graduated bracket-table states (OH). See [docs/data-sources.md](docs/data-sources.md) and [docs/source-diff-log.md](docs/source-diff-log.md).
+State refresh adapters cover the income-tax states by shape: standard-deduction states (CA, NY, GA, NC, DC), flat-rate states (PA, IL, MI), and graduated bracket-table states (OH); the no-income-tax records have nothing to refresh. See [docs/data-sources.md](docs/data-sources.md) and [docs/source-diff-log.md](docs/source-diff-log.md).
 
 ---
 
@@ -484,10 +484,10 @@ The [launch checklist](docs/launch-checklist.md) walks every acceptance criterio
 Deferred *for accuracy or scope*, not faked:
 
 - **International** (Europe → India, China, Russia) as each jurisdiction's rules are learned properly. Be right before being everywhere.
-- **States beyond the seeded eleven** — added through the staggered annual refresh.
+- **Income-tax states beyond the seeded set** — added through the staggered annual refresh (all nine no-income-tax states already ship as first-class records).
 - **OCR for scanned/photographed documents** — typed PDF and Word `.docx` ingestion ship today; the lower-confidence OCR *flagging* is already built, and bundling the on-device OCR engine itself is the remaining follow-up (it lands with the offline-cached lazy chunks).
 - **i18n string extraction** — the locale preference persists; a full pre-rendered-variant extraction is held rather than ship a speculative abstraction.
-- **Per-filing-status graduated state schedules** — for any future state whose marginal tiers differ by filing status (none of the seeded eleven do).
+- **Per-filing-status graduated state schedules** — for any future state whose marginal tiers differ by filing status (none of the seeded income-tax states do).
 
 The Playwright live-offline + responsiveness e2e suite, previously deferred, now ships as its own CI job (see [Determinism & verification](#determinism--verification)).
 

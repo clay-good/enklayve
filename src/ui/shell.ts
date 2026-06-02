@@ -62,7 +62,7 @@ function buildHeader(navigate: (id: string | null) => void): HTMLElement {
       on: { click: () => navigate(null) },
     },
     el("span", { class: "wordmark", text: "enklayve" }),
-    el("span", { class: "wordmark-tagline", text: "personal finance counsel" }),
+    el("span", { class: "wordmark-tagline", text: "personal finance" }),
   );
 
   return el("header", { class: "app-header" }, wordmark);
@@ -315,7 +315,7 @@ function homeSearch(navigate: (id: string | null) => void): HTMLElement {
  */
 function renderHome(container: HTMLElement, navigate: (id: string | null) => void): void {
   clear(container);
-  document.title = "enklayve — personal finance counsel";
+  document.title = "enklayve — personal finance";
 
   const hero = el(
     "section",

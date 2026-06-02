@@ -25,7 +25,30 @@ interface ShardSource {
 
 // The ten most populous states plus DC (BUILD-SPEC.md §14). Adding a state is a
 // data file plus one code here — no engine change.
-const STATE_CODES = ["ca", "ny", "tx", "fl", "pa", "il", "oh", "ga", "nc", "mi", "dc"];
+// The ten most populous states + DC (seeded at launch), plus the remaining
+// no-income-tax states added as first-class records (BUILD-SPEC.md §8, §14.3):
+// AK, NV, NH, SD, TN, WA, WY join TX and FL so a resident of any of the nine
+// no-income-tax states sees their state by name, not a generic "no state tax".
+const STATE_CODES = [
+  "ca",
+  "ny",
+  "tx",
+  "fl",
+  "pa",
+  "il",
+  "oh",
+  "ga",
+  "nc",
+  "mi",
+  "dc",
+  "ak",
+  "nv",
+  "nh",
+  "sd",
+  "tn",
+  "wa",
+  "wy",
+];
 
 const ANNUAL = { effectiveYear: 2024, expectedRefreshMonths: 12, staleAfterYears: 2 } as const;
 // Treasury I-bond rates reset every six months (BUILD-SPEC.md §7.2: May and

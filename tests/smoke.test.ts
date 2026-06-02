@@ -66,7 +66,7 @@ describe("shell chrome (header + footer)", () => {
     await mountApp(root);
     const header = root.querySelector(".app-header")!;
     expect(header.querySelector(".wordmark")?.textContent).toBe("enklayve");
-    expect(header.querySelector(".wordmark-tagline")?.textContent).toBe("personal finance counsel");
+    expect(header.querySelector(".wordmark-tagline")?.textContent).toBe("personal finance");
     // Single light theme: no theme toggle anywhere, and no old header controls.
     expect(header.querySelector(".theme-toggle")).toBeNull();
     expect(root.querySelector(".theme-toggle")).toBeNull();

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-06-01",
+  "generatedAt": "2026-06-02",
   "datasets": [
     {
       "id": "federal-income-tax-2024",
@@ -235,6 +235,97 @@
       "sourceDocument": "DC Office of Tax and Revenue, 2024 individual income tax rates",
       "dateRetrieved": "2024-02-01",
       "contentHash": "8a1005813c9455f9437b6d0f3a2bc20b00c8a82e1dec5d41faf97cd95f578e7a"
+    },
+    {
+      "id": "state-ak-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-ak-income-tax-2024.json",
+      "sourceUrl": "https://tax.alaska.gov/",
+      "sourceDocument": "Alaska Department of Revenue, no state personal income tax",
+      "dateRetrieved": "2026-06-01",
+      "contentHash": "7934bba7c9a0f651e55fcfba4f1f2f09e4cf845e3de24da9580d018dfaa71358"
+    },
+    {
+      "id": "state-nv-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-nv-income-tax-2024.json",
+      "sourceUrl": "https://tax.nv.gov/",
+      "sourceDocument": "Nevada Department of Taxation, no state personal income tax",
+      "dateRetrieved": "2026-06-01",
+      "contentHash": "e62101334d2b40116fe301bbd847cda992288564efde70f10ed6b11822fad19b"
+    },
+    {
+      "id": "state-nh-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-nh-income-tax-2024.json",
+      "sourceUrl": "https://www.revenue.nh.gov/",
+      "sourceDocument": "New Hampshire Department of Revenue Administration, no tax on earned wages (the Interest & Dividends Tax was repealed effective January 1, 2025)",
+      "dateRetrieved": "2026-06-01",
+      "contentHash": "07865fd91374779d3f0463ad26134016c1f9e95d9716cf2658ac8f8ac7f6ea12"
+    },
+    {
+      "id": "state-sd-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-sd-income-tax-2024.json",
+      "sourceUrl": "https://dor.sd.gov/",
+      "sourceDocument": "South Dakota Department of Revenue, no state personal income tax",
+      "dateRetrieved": "2026-06-01",
+      "contentHash": "a26e62e5da6e58e3bff50bc2748ac01ab6bc7211e4e7cc95bdb8d4cc0e362c18"
+    },
+    {
+      "id": "state-tn-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-tn-income-tax-2024.json",
+      "sourceUrl": "https://www.tn.gov/revenue/taxes.html",
+      "sourceDocument": "Tennessee Department of Revenue, no personal income tax (the Hall tax on investment income was fully repealed in 2021)",
+      "dateRetrieved": "2026-06-01",
+      "contentHash": "92583609895599e091bf435532f7c1b9c2bafd774febea9e6eaffb3b880774a2"
+    },
+    {
+      "id": "state-wa-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-wa-income-tax-2024.json",
+      "sourceUrl": "https://dor.wa.gov/taxes-rates/income-tax",
+      "sourceDocument": "Washington Department of Revenue, no personal income tax on wages (a separate 7% capital-gains excise tax applies to certain high earners)",
+      "dateRetrieved": "2026-06-01",
+      "contentHash": "eb4150ed9cbf87aa7c96b3445395e2186955214c9f2c9dca2605b0d7480368bc"
+    },
+    {
+      "id": "state-wy-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2024.0",
+      "effectiveYear": 2024,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-wy-income-tax-2024.json",
+      "sourceUrl": "https://revenue.wyo.gov/",
+      "sourceDocument": "Wyoming Department of Revenue, no state personal income tax",
+      "dateRetrieved": "2026-06-01",
+      "contentHash": "dec0dc321e47869fcd2b0273ba91119c93faaad73fbcec63a1c854121802cfd3"
     },
     {
       "id": "federal-poverty-level-2024-contiguous",
