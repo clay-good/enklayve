@@ -28,12 +28,12 @@ import type { TileContext, TileDefinition } from "./types";
 
 // If the integrity gate rejects the bundled limits, the plan still works and
 // stays sourced: the same public IRS figure, cited without a content hash.
-const FALLBACK_LIMIT = 23000;
+const FALLBACK_LIMIT = 24500;
 const FALLBACK_CITATION: CitationData = {
-  sourceUrl: "https://www.irs.gov/pub/irs-drop/n-23-75.pdf",
-  sourceDocument: "IRS Notice 2023-75 (2024 retirement plan limits)",
-  effectiveYear: 2024,
-  dateRetrieved: "2024-02-01",
+  sourceUrl: "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
+  sourceDocument: "IRS Notice 2025-67 (2026 retirement plan limits)",
+  effectiveYear: 2026,
+  dateRetrieved: "2026-06-02",
 };
 
 const STRATEGY_PARAM: Record<DebtStrategy, string> = {

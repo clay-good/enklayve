@@ -150,7 +150,7 @@ export const rmdTile: TileDefinition = {
   description: "Your RMD schedule from the IRS Uniform Lifetime Table.",
   keywords: ["rmd", "required minimum distribution", "retirement", "401k", "ira", "590-b"],
   status: "ready",
-  how: "Once you reach the required age (73 for 2024 under the SECURE 2.0 Act), the IRS requires you to withdraw a minimum amount from tax-deferred retirement accounts each year. We divide your account balance on December 31 of last year by the distribution period (a life-expectancy factor) for your age from the IRS Uniform Lifetime Table.\n\nThe Uniform Lifetime Table applies to most owners. A different table applies if your sole beneficiary is a spouse more than ten years younger, so verify your situation with the IRS or your plan administrator.",
+  how: "Once you reach the required age (73 for 2026 under the SECURE 2.0 Act), the IRS requires you to withdraw a minimum amount from tax-deferred retirement accounts each year. We divide your account balance on December 31 of last year by the distribution period (a life-expectancy factor) for your age from the IRS Uniform Lifetime Table.\n\nThe Uniform Lifetime Table applies to most owners. A different table applies if your sole beneficiary is a spouse more than ten years younger, so verify your situation with the IRS or your plan administrator.",
   resources: [
     {
       label: "IRS, required minimum distributions",

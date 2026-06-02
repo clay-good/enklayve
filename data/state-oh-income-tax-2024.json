@@ -1,24 +1,43 @@
 {
   "id": "US-OH",
   "name": "Ohio",
-  "taxYear": 2024,
+  "taxYear": 2026,
   "hasIncomeTax": true,
-  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "supportedFilingStatuses": [
+    "single",
+    "married_jointly",
+    "head_of_household"
+  ],
   "bracketsByFilingStatus": {
     "single": [
-      { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 26050, "rate": 0.0275 },
-      { "lowerBound": 100000, "rate": 0.035 }
+      {
+        "lowerBound": 0,
+        "rate": 0
+      },
+      {
+        "lowerBound": 26050,
+        "rate": 0.0275
+      }
     ],
     "married_jointly": [
-      { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 26050, "rate": 0.0275 },
-      { "lowerBound": 100000, "rate": 0.035 }
+      {
+        "lowerBound": 0,
+        "rate": 0
+      },
+      {
+        "lowerBound": 26050,
+        "rate": 0.0275
+      }
     ],
     "head_of_household": [
-      { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 26050, "rate": 0.0275 },
-      { "lowerBound": 100000, "rate": 0.035 }
+      {
+        "lowerBound": 0,
+        "rate": 0
+      },
+      {
+        "lowerBound": 26050,
+        "rate": 0.0275
+      }
     ]
   },
   "standardDeductionByFilingStatus": {
@@ -35,9 +54,12 @@
   ],
   "citation": {
     "sourceUrl": "https://tax.ohio.gov/individual/resources/annual-tax-rates",
-    "sourceDocument": "Ohio Department of Taxation, 2024 income tax rate schedule",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2024-02-01"
+    "sourceDocument": "Ohio Department of Taxation, HB 96 flat 2.75% individual income tax on nonbusiness income over $26,050 (2026)",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   },
-  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+  "effectiveDateRange": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  }
 }

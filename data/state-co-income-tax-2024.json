@@ -1,24 +1,46 @@
 {
   "id": "US-CO",
   "name": "Colorado",
-  "taxYear": 2024,
+  "taxYear": 2026,
   "hasIncomeTax": true,
-  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "supportedFilingStatuses": [
+    "single",
+    "married_jointly",
+    "head_of_household"
+  ],
   "bracketsByFilingStatus": {
-    "single": [{ "lowerBound": 0, "rate": 0.044 }],
-    "married_jointly": [{ "lowerBound": 0, "rate": 0.044 }],
-    "head_of_household": [{ "lowerBound": 0, "rate": 0.044 }]
+    "single": [
+      {
+        "lowerBound": 0,
+        "rate": 0.044
+      }
+    ],
+    "married_jointly": [
+      {
+        "lowerBound": 0,
+        "rate": 0.044
+      }
+    ],
+    "head_of_household": [
+      {
+        "lowerBound": 0,
+        "rate": 0.044
+      }
+    ]
   },
   "standardDeductionByFilingStatus": {
-    "single": 14600,
-    "married_jointly": 29200,
-    "head_of_household": 21900
+    "single": 16100,
+    "married_jointly": 32200,
+    "head_of_household": 24150
   },
   "citation": {
     "sourceUrl": "https://tax.colorado.gov/individual-income-tax",
     "sourceDocument": "Colorado DOR, 4.40% flat tax on federal taxable income (2024); federal standard deduction applies",
-    "effectiveYear": 2024,
+    "effectiveYear": 2026,
     "dateRetrieved": "2026-06-02"
   },
-  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+  "effectiveDateRange": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  }
 }

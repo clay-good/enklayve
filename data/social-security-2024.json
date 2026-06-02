@@ -1,5 +1,5 @@
 {
-  "effectiveYear": 2024,
+  "effectiveYear": 2026,
   "earliestClaimAge": 62,
   "delayedCreditMaxAge": 70,
   "fullRetirementAge": [
@@ -22,8 +22,8 @@
   "delayedCreditPerMonthDenom": 3,
   "citation": {
     "sourceUrl": "https://www.ssa.gov/benefits/retirement/planner/agereduction.html",
-    "sourceDocument": "Social Security Administration, Benefit Reduction for Early Retirement & Delayed Retirement Credits",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2026-05-29"
+    "sourceDocument": "Social Security Administration, Benefit Reduction for Early Retirement & Delayed Retirement Credits (statutory rules, unchanged for 2026)",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   }
 }

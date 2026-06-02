@@ -1,12 +1,12 @@
 {
-  "year": 2024,
+  "year": 2026,
   "region": "contiguous",
-  "base": 15060,
-  "perAdditionalPerson": 5380,
+  "base": 15960,
+  "perAdditionalPerson": 5680,
   "citation": {
     "sourceUrl": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
-    "sourceDocument": "HHS 2024 Poverty Guidelines (48 contiguous states and DC)",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2024-02-01"
+    "sourceDocument": "HHS 2026 Poverty Guidelines (48 contiguous states and DC), Federal Register 2026-00755",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   }
 }

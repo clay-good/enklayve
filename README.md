@@ -263,7 +263,7 @@ A **declarative rule corpus, not a pile of conditionals.** Each jurisdiction is 
 flowchart LR
     F[("US federal<br/>brackets, std deduction")]
     S[("US-CA, US-NY, ...<br/>+ DC, + no-tax records")]
-    K[("FICA 2024<br/>wage base, Add'l Medicare")]
+    K[("FICA 2026<br/>wage base, Add'l Medicare")]
     L["local add-ons<br/>(NYC, Columbus, ...)"]
     EV{{"one generic evaluator"}}
     F --> EV
@@ -279,7 +279,7 @@ flowchart LR
 
 ### State coverage cheat sheet
 
-Every seeded state is modeled at one consistent launch fidelity — **brackets + standard deduction + personal exemption**, cross-checked against the Tax Foundation's 2024 state-rate table and cited to the state DOR — with state-specific credits, county/municipal add-ons, and state itemized deductions deferred to a later wave.
+Every seeded state is modeled at one consistent launch fidelity — **brackets + standard deduction + personal exemption**, cross-checked against the Tax Foundation's 2026 state-rate table and cited to the state DOR — with state-specific credits, county/municipal add-ons, and state itemized deductions deferred to a later wave.
 
 | Shape | States | How it's modeled |
 |---|---|---|

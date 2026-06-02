@@ -61,10 +61,10 @@ const STATE_CODES = [
   "ms",
 ];
 
-const ANNUAL = { effectiveYear: 2024, expectedRefreshMonths: 12, staleAfterYears: 2 } as const;
+const ANNUAL = { effectiveYear: 2026, expectedRefreshMonths: 12, staleAfterYears: 2 } as const;
 // Treasury I-bond rates reset every six months (BUILD-SPEC.md §7.2: May and
 // November). The semiannual cadence is the only difference from ANNUAL.
-const SEMIANNUAL = { effectiveYear: 2024, expectedRefreshMonths: 6, staleAfterYears: 2 } as const;
+const SEMIANNUAL = { effectiveYear: 2026, expectedRefreshMonths: 6, staleAfterYears: 2 } as const;
 
 // The bundled shards. Source citation metadata is read from each shard's own
 // `citation` block below, so it is never duplicated here.

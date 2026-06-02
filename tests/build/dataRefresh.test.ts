@@ -227,7 +227,7 @@ describe("adapters: jurisdiction standard deductions (IRS + CA)", () => {
     expect(sd.single).toBe(15000);
     expect(sd.head_of_household).toBe(22500);
     // Unstated statuses are preserved from the committed shard for review.
-    expect(sd.married_separately).toBe(14600);
+    expect(sd.married_separately).toBe(16100);
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
   });
 
@@ -314,9 +314,8 @@ describe("adapters: graduated bracket-table state income tax (OH)", () => {
 
   it("overlays the graduated schedule (rate + threshold) onto every status", () => {
     const raw =
-      "For 2025, Ohio taxable nonbusiness income up to $26,150 is taxed at 0%. " +
-      "Income is taxed at 2.75% of the amount in excess of $26,150, " +
-      "and 3.50% of the amount in excess of $100,000.";
+      "For 2026, Ohio taxable nonbusiness income up to $26,150 is taxed at 0%. " +
+      "Income is taxed at 2.75% of the amount in excess of $26,150.";
     const result = adapter.parse(raw, current);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -327,18 +326,16 @@ describe("adapters: graduated bracket-table state income tax (OH)", () => {
     expect(brackets.single).toEqual([
       { lowerBound: 0, rate: 0 },
       { lowerBound: 26150, rate: 0.0275 },
-      { lowerBound: 100000, rate: 0.035 },
     ]);
     // The same schedule is applied to every filing status.
     expect(brackets.married_jointly![1]!.lowerBound).toBe(26150);
-    expect(brackets.head_of_household![2]!.rate).toBe(0.035);
+    expect(brackets.head_of_household![1]!.rate).toBe(0.0275);
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
   });
 
   it("does not let a 0% base tier wrongly pair with a higher threshold", () => {
     const raw =
-      "The first $26,050 is taxed at 0%; 2.75% applies to the amount in excess of $26,050; " +
-      "3.50% applies to the amount in excess of $100,000.";
+      "The first $26,050 is taxed at 0%; 2.75% applies to the amount in excess of $26,050.";
     const result = adapter.parse(raw, current);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -358,7 +355,7 @@ describe("adapters: graduated bracket-table state income tax (OH)", () => {
   });
 
   it("fails (-> alert) on a structural change (a tier added)", () => {
-    // Four anchored tiers can't fit the committed three-bracket shape, so the
+    // Four anchored tiers can't fit the committed two-bracket shape, so the
     // reshape routes to a reviewer rather than being silently overlaid.
     const raw =
       "2.00% in excess of $26,050; 2.75% in excess of $50,000; " +
@@ -380,7 +377,7 @@ describe("adapters: USDA SNAP (anchored prose)", () => {
     expect((result.shard.maxAllotmentByHouseholdSize as Record<string, number>)["1"]).toBe(292);
     expect(result.shard.additionalPersonAllotment).toBe(220);
     // The unstated sizes are preserved from the committed shard for review.
-    expect((result.shard.maxAllotmentByHouseholdSize as Record<string, number>)["4"]).toBe(973);
+    expect((result.shard.maxAllotmentByHouseholdSize as Record<string, number>)["4"]).toBe(994);
     expect(SnapSchema.safeParse(result.shard).success).toBe(true);
   });
 
@@ -465,7 +462,7 @@ describe("runner: planRefresh (no I/O)", () => {
   });
 
   it("no-ops when the source repeats the committed values", () => {
-    const raw = `1 $15,060\nadd $5,380 for each additional person`;
+    const raw = `1 $15,960\nadd $5,680 for each additional person`;
     const plan = planRefresh(adapter, current, { ok: true, raw }, TODAY);
     expect(plan.outcome).toBe("no-op");
     expect(plan.shard).toBeNull();
@@ -477,7 +474,7 @@ describe("runner: planRefresh (no I/O)", () => {
     expect(plan.outcome).toBe("open-pr");
     expect(plan.shard).not.toBeNull();
     expect((plan.shard!.citation as Record<string, unknown>).dateRetrieved).toBe(TODAY);
-    expect(plan.logEntry).toContain("base: 15060 -> 15600");
+    expect(plan.logEntry).toContain("base: 15960 -> 15600");
   });
 });
 

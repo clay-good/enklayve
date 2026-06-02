@@ -1,12 +1,12 @@
 {
-  "year": 2024,
+  "year": 2026,
   "region": "hawaii",
-  "base": 17310,
-  "perAdditionalPerson": 6190,
+  "base": 18360,
+  "perAdditionalPerson": 6530,
   "citation": {
     "sourceUrl": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
-    "sourceDocument": "HHS 2024 Poverty Guidelines (Hawaii)",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2024-02-01"
+    "sourceDocument": "HHS 2026 Poverty Guidelines (Hawaii), Federal Register 2026-00755",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   }
 }

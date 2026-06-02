@@ -1,13 +1,32 @@
 {
   "id": "US-NC",
   "name": "North Carolina",
-  "taxYear": 2024,
+  "taxYear": 2026,
   "hasIncomeTax": true,
-  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "supportedFilingStatuses": [
+    "single",
+    "married_jointly",
+    "head_of_household"
+  ],
   "bracketsByFilingStatus": {
-    "single": [{ "lowerBound": 0, "rate": 0.045 }],
-    "married_jointly": [{ "lowerBound": 0, "rate": 0.045 }],
-    "head_of_household": [{ "lowerBound": 0, "rate": 0.045 }]
+    "single": [
+      {
+        "lowerBound": 0,
+        "rate": 0.0399
+      }
+    ],
+    "married_jointly": [
+      {
+        "lowerBound": 0,
+        "rate": 0.0399
+      }
+    ],
+    "head_of_household": [
+      {
+        "lowerBound": 0,
+        "rate": 0.0399
+      }
+    ]
   },
   "standardDeductionByFilingStatus": {
     "single": 12750,
@@ -15,10 +34,13 @@
     "head_of_household": 19125
   },
   "citation": {
-    "sourceUrl": "https://www.ncdor.gov/taxes-forms/individual-income-tax/north-carolina-individual-income-tax-rates",
-    "sourceDocument": "NCDOR, 4.5% flat tax; 2024 standard deduction",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2024-02-01"
+    "sourceUrl": "https://www.ncdor.gov/taxes-forms/individual-income-tax/tax-rate-schedules",
+    "sourceDocument": "NCDOR, 3.99% flat tax (2026, down from 4.25% in 2025); 2026 standard deduction $12,750/$25,500/$19,125",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   },
-  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+  "effectiveDateRange": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  }
 }

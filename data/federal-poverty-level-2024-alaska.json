@@ -1,12 +1,12 @@
 {
-  "year": 2024,
+  "year": 2026,
   "region": "alaska",
-  "base": 18810,
-  "perAdditionalPerson": 6730,
+  "base": 19950,
+  "perAdditionalPerson": 7100,
   "citation": {
     "sourceUrl": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
-    "sourceDocument": "HHS 2024 Poverty Guidelines (Alaska)",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2024-02-01"
+    "sourceDocument": "HHS 2026 Poverty Guidelines (Alaska), Federal Register 2026-00755",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   }
 }

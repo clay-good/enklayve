@@ -1,5 +1,5 @@
 {
-  "year": 2024,
+  "year": 2026,
   "expansionThresholdPctFpl": 138,
   "thresholdOverridesPctFpl": { "DC": 215 },
   "expansionByState": {
@@ -57,8 +57,8 @@
   },
   "citation": {
     "sourceUrl": "https://www.medicaid.gov/medicaid/program-information/medicaid-and-chip-enrollment-data/report-highlights/index.html",
-    "sourceDocument": "Medicaid.gov / KFF Status of State Medicaid Expansion Decisions (2024); ACA adult eligibility at 138% FPL",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2024-06-01"
+    "sourceDocument": "Medicaid.gov / KFF Status of State Medicaid Expansion Decisions (2026); ACA adult eligibility at 138% FPL",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   }
 }

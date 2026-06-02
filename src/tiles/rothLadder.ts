@@ -18,7 +18,7 @@ import type { TileContext, TileDefinition } from "./types";
 const ROTH_5YR_CITATION: CitationData = {
   sourceUrl: "https://www.irs.gov/publications/p590b",
   sourceDocument: "IRS Publication 590-B, Roth IRA 5-year rule (IRC §408A(d)(3))",
-  effectiveYear: 2024,
+  effectiveYear: 2026,
   dateRetrieved: "2026-05-29",
 };
 

@@ -1,30 +1,30 @@
 {
-  "taxYear": 2024,
+  "taxYear": 2026,
   "longTermBracketsByFilingStatus": {
     "single": [
       { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 47025, "rate": 0.15 },
-      { "lowerBound": 518900, "rate": 0.2 }
+      { "lowerBound": 49450, "rate": 0.15 },
+      { "lowerBound": 545500, "rate": 0.2 }
     ],
     "married_jointly": [
       { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 94050, "rate": 0.15 },
-      { "lowerBound": 583750, "rate": 0.2 }
+      { "lowerBound": 98900, "rate": 0.15 },
+      { "lowerBound": 613700, "rate": 0.2 }
     ],
     "married_separately": [
       { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 47025, "rate": 0.15 },
-      { "lowerBound": 291850, "rate": 0.2 }
+      { "lowerBound": 49450, "rate": 0.15 },
+      { "lowerBound": 306850, "rate": 0.2 }
     ],
     "head_of_household": [
       { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 63000, "rate": 0.15 },
-      { "lowerBound": 551350, "rate": 0.2 }
+      { "lowerBound": 66200, "rate": 0.15 },
+      { "lowerBound": 579600, "rate": 0.2 }
     ],
     "qualifying_surviving_spouse": [
       { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 94050, "rate": 0.15 },
-      { "lowerBound": 583750, "rate": 0.2 }
+      { "lowerBound": 98900, "rate": 0.15 },
+      { "lowerBound": 613700, "rate": 0.2 }
     ]
   },
   "netInvestmentIncomeTaxRate": 0.038,
@@ -36,10 +36,10 @@
     "qualifying_surviving_spouse": 250000
   },
   "citation": {
-    "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-23-34.pdf",
-    "sourceDocument": "IRS Revenue Procedure 2023-34 (2024 long-term capital gains brackets); IRC §1411 (Net Investment Income Tax)",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2024-02-01"
+    "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+    "sourceDocument": "IRS Revenue Procedure 2025-32 (2026 long-term capital gains brackets); IRC §1411 (Net Investment Income Tax)",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   },
-  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
 }

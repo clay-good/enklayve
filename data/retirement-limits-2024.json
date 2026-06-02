@@ -1,20 +1,21 @@
 {
-  "taxYear": 2024,
+  "taxYear": 2026,
   "limits": {
-    "elective_deferral_401k": 23000,
-    "catch_up_401k_50plus": 7500,
-    "ira_contribution": 7000,
-    "ira_catch_up_50plus": 1000,
-    "hsa_self_only": 4150,
-    "hsa_family": 8300,
+    "elective_deferral_401k": 24500,
+    "catch_up_401k_50plus": 8000,
+    "catch_up_401k_60to63": 11250,
+    "ira_contribution": 7500,
+    "ira_catch_up_50plus": 1100,
+    "hsa_self_only": 4400,
+    "hsa_family": 8750,
     "hsa_catch_up_55plus": 1000,
-    "fsa_health": 3200,
-    "defined_contribution_415c": 69000
+    "fsa_health": 3400,
+    "defined_contribution_415c": 72000
   },
   "citation": {
-    "sourceUrl": "https://www.irs.gov/pub/irs-drop/n-23-75.pdf",
-    "sourceDocument": "IRS Notice 2023-75 (2024 retirement plan limits)",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2024-02-01"
+    "sourceUrl": "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
+    "sourceDocument": "IRS Notice 2025-67 (2026 retirement plan limits); IRS Rev. Proc. 2025-19 (2026 HSA limits)",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   }
 }

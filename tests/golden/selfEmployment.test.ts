@@ -5,8 +5,8 @@ import { loadDatasets, type Datasets } from "../helpers/datasets";
 
 /**
  * Hand-verified self-employment tax cases (BUILD-SPEC.md §3.2, §9). Every
- * expected figure is computed by hand from the published 2024 FICA parameters
- * (wage base $168,600; SE rates 12.4% + 2.9% on 92.35% of net), independent of
+ * expected figure is computed by hand from the published 2026 FICA parameters
+ * (wage base $184,500; SE rates 12.4% + 2.9% on 92.35% of net), independent of
  * the engine, so the case catches a wrong engine as much as a wrong dataset.
  */
 let ds: Datasets;
@@ -16,7 +16,7 @@ beforeAll(async () => {
 
 const cents = (m: Money): string => m.roundToCents().toString();
 
-describe("self-employment tax (2024)", () => {
+describe("self-employment tax (2026)", () => {
   it("$50,000 net profit, single → $7,065.00", () => {
     // base = 50,000 × 0.9235 = 46,175. SS 12.4%·46,175 = 5,725.70.
     // Medicare 2.9%·46,175 = 1,339.075 → 1,339.08. total = 7,064.78.
@@ -30,10 +30,10 @@ describe("self-employment tax (2024)", () => {
   });
 
   it("caps the Social Security portion at the wage base", () => {
-    // base = 250,000 × 0.9235 = 230,875 > 168,600 → SS capped at 168,600.
-    // SS = 12.4%·168,600 = 20,906.40.
+    // base = 250,000 × 0.9235 = 230,875 > 184,500 → SS capped at 184,500.
+    // SS = 12.4%·184,500 = 22,878.00.
     const r = selfEmploymentTax(Money.from(250000), "single", ds.fica);
-    expect(cents(r.socialSecurity)).toBe("20906.4");
+    expect(cents(r.socialSecurity)).toBe("22878");
     // Medicare still on the full base: 2.9%·230,875 = 6,695.375 → 6,695.38.
     expect(cents(r.medicare)).toBe("6695.38");
   });

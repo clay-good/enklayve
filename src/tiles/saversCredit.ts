@@ -178,7 +178,7 @@ export const saversCreditTile: TileDefinition = {
   description: "Eligibility and amount for retirement savers.",
   keywords: ["savers credit", "retirement", "credit", "form 8880", "8880"],
   status: "ready",
-  how: "The Saver's Credit rewards retirement contributions if your income is modest. The credit is 50%, 20%, or 10% of up to $2,000 of contributions ($4,000 if married filing jointly), and the rate steps down as your adjusted gross income rises through the limits for your filing status. We use the published 2024 figures.\n\nIt's non-refundable, so it reduces tax you owe but won't pay out beyond that. You also must be at least 18, not a full-time student, and not claimed as someone's dependent.",
+  how: "The Saver's Credit rewards retirement contributions if your income is modest. The credit is 50%, 20%, or 10% of up to $2,000 of contributions ($4,000 if married filing jointly), and the rate steps down as your adjusted gross income rises through the limits for your filing status. We use the published 2026 figures.\n\nIt's non-refundable, so it reduces tax you owe but won't pay out beyond that. You also must be at least 18, not a full-time student, and not claimed as someone's dependent.",
   resources: [
     {
       label: "IRS, Retirement Savings Contributions Credit",

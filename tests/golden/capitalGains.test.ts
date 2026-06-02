@@ -4,7 +4,7 @@ import { loadDatasets, type Datasets } from "../helpers/datasets";
 
 /**
  * Hand-verified capital-gains cases (BUILD-SPEC.md §3.2, §9). Long-term gains
- * are walked through the 2024 0/15/20% brackets by hand; short-term gains are
+ * are walked through the 2026 0/15/20% brackets by hand; short-term gains are
  * walked through the federal ordinary brackets; NIIT is checked against the
  * §1411 threshold test. Independent of the engine, so a wrong engine or a wrong
  * dataset both trip these.
@@ -16,9 +16,9 @@ beforeAll(async () => {
 
 const num = (m: { roundToCents(): { toNumber(): number } }): number => m.roundToCents().toNumber();
 
-describe("long-term capital gains (2024)", () => {
+describe("long-term capital gains (2026)", () => {
   it("single, $10k LT gain stacked above the 0% ceiling → 15%", () => {
-    // Ordinary 50,000 already exceeds the single 0% top of 47,025, so the whole
+    // Ordinary 50,000 already exceeds the single 0% top of 49,450, so the whole
     // $10k long-term gain is in the 15% band: 10,000 × 0.15 = 1,500.
     const r = estimateCapitalGains(
       {
@@ -38,7 +38,7 @@ describe("long-term capital gains (2024)", () => {
   });
 
   it("single, gain entirely inside the 0% band → no tax", () => {
-    // Ordinary 30,000 + 10,000 gain = 40,000, all below 47,025 → 0%.
+    // Ordinary 30,000 + 10,000 gain = 40,000, all below 49,450 → 0%.
     const r = estimateCapitalGains(
       {
         filingStatus: "single",
@@ -56,8 +56,8 @@ describe("long-term capital gains (2024)", () => {
   });
 
   it("single, gain straddling the 0%/15% boundary splits into two bands", () => {
-    // Ordinary 40,000; gain 10,000 spans [40,000, 50,000]. 0% to 47,025 → 7,025
-    // at 0%; 15% above → 2,975 × 0.15 = 446.25.
+    // Ordinary 40,000; gain 10,000 spans [40,000, 50,000]. 0% to 49,450 → 9,450
+    // at 0%; 15% above → 550 × 0.15 = 82.50.
     const r = estimateCapitalGains(
       {
         filingStatus: "single",
@@ -70,9 +70,9 @@ describe("long-term capital gains (2024)", () => {
       ds.capitalGains,
     );
     expect(r.longTermBands).toHaveLength(2);
-    expect(num(r.longTermBands[0]!.amount)).toBe(7025);
-    expect(num(r.longTermBands[1]!.amount)).toBe(2975);
-    expect(num(r.longTermTax)).toBe(446.25);
+    expect(num(r.longTermBands[0]!.amount)).toBe(9450);
+    expect(num(r.longTermBands[1]!.amount)).toBe(550);
+    expect(num(r.longTermTax)).toBe(82.5);
   });
 });
 
@@ -98,9 +98,9 @@ describe("Net Investment Income Tax (§1411)", () => {
 });
 
 describe("short-term capital gains (ordinary rates)", () => {
-  it("single, $10k ST gain stacked on $50k ordinary income → $2,200 (22% band)", () => {
-    // 50,000 and 60,000 both sit in the single 22% bracket, so the $10k gain is
-    // taxed at 22% = 2,200.
+  it("single, $10k ST gain stacked on $50k ordinary income → $2,160", () => {
+    // The gain spans [50,000, 60,000], straddling the single 22% boundary at
+    // 50,400: 400 at 12% (48) + 9,600 at 22% (2,112) = 2,160.
     const r = estimateCapitalGains(
       {
         filingStatus: "single",
@@ -112,8 +112,8 @@ describe("short-term capital gains (ordinary rates)", () => {
       ds.federal,
       ds.capitalGains,
     );
-    expect(num(r.shortTermTax)).toBe(2200);
+    expect(num(r.shortTermTax)).toBe(2160);
     expect(num(r.longTermTax)).toBe(0);
-    expect(num(r.totalTax)).toBe(2200);
+    expect(num(r.totalTax)).toBe(2160);
   });
 });

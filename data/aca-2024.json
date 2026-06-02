@@ -1,17 +1,17 @@
 {
-  "year": 2024,
+  "year": 2026,
   "applicablePercentage": [
-    { "fplLow": 0, "fplHigh": 150, "percentageLow": 0, "percentageHigh": 0 },
-    { "fplLow": 150, "fplHigh": 200, "percentageLow": 0, "percentageHigh": 2.0 },
-    { "fplLow": 200, "fplHigh": 250, "percentageLow": 2.0, "percentageHigh": 4.0 },
-    { "fplLow": 250, "fplHigh": 300, "percentageLow": 4.0, "percentageHigh": 6.0 },
-    { "fplLow": 300, "fplHigh": 400, "percentageLow": 6.0, "percentageHigh": 8.5 },
-    { "fplLow": 400, "fplHigh": null, "percentageLow": 8.5, "percentageHigh": 8.5 }
+    { "fplLow": 0, "fplHigh": 133, "percentageLow": 2.1, "percentageHigh": 2.1 },
+    { "fplLow": 133, "fplHigh": 150, "percentageLow": 3.14, "percentageHigh": 4.19 },
+    { "fplLow": 150, "fplHigh": 200, "percentageLow": 4.19, "percentageHigh": 6.6 },
+    { "fplLow": 200, "fplHigh": 250, "percentageLow": 6.6, "percentageHigh": 8.44 },
+    { "fplLow": 250, "fplHigh": 300, "percentageLow": 8.44, "percentageHigh": 9.96 },
+    { "fplLow": 300, "fplHigh": 400, "percentageLow": 9.96, "percentageHigh": 9.96 }
   ],
   "citation": {
-    "sourceUrl": "https://www.irs.gov/affordable-care-act/individuals-and-families/the-premium-tax-credit-the-basics",
-    "sourceDocument": "IRS Premium Tax Credit applicable percentages (ARPA, extended by the Inflation Reduction Act through 2025; IRC §36B(b)(3)(A)(iii))",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2026-05-29"
+    "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-25.pdf",
+    "sourceDocument": "IRS Revenue Procedure 2025-25 (2026 §36B applicable percentages). The ARPA/IRA enhanced subsidies expired after 2025, so the 400% FPL eligibility cliff returns for plan year 2026 and there is no premium tax credit above 400% FPL.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   }
 }

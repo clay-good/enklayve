@@ -1,50 +1,50 @@
 {
-  "taxYear": 2024,
+  "taxYear": 2026,
   "eitc": [
     {
       "qualifyingChildren": 0,
       "phaseInRate": 0.0765,
-      "maxCredit": 632,
+      "maxCredit": 664,
       "phaseOutRate": 0.0765,
-      "phaseOutThresholdSingle": 10330,
-      "phaseOutThresholdMarried": 17250
+      "phaseOutThresholdSingle": 10860,
+      "phaseOutThresholdMarried": 18140
     },
     {
       "qualifyingChildren": 1,
       "phaseInRate": 0.34,
-      "maxCredit": 4213,
+      "maxCredit": 4427,
       "phaseOutRate": 0.1598,
-      "phaseOutThresholdSingle": 22720,
-      "phaseOutThresholdMarried": 29640
+      "phaseOutThresholdSingle": 23890,
+      "phaseOutThresholdMarried": 31160
     },
     {
       "qualifyingChildren": 2,
       "phaseInRate": 0.4,
-      "maxCredit": 6960,
+      "maxCredit": 7316,
       "phaseOutRate": 0.2106,
-      "phaseOutThresholdSingle": 22720,
-      "phaseOutThresholdMarried": 29640
+      "phaseOutThresholdSingle": 23890,
+      "phaseOutThresholdMarried": 31160
     },
     {
       "qualifyingChildren": 3,
       "phaseInRate": 0.45,
-      "maxCredit": 7830,
+      "maxCredit": 8231,
       "phaseOutRate": 0.2106,
-      "phaseOutThresholdSingle": 22720,
-      "phaseOutThresholdMarried": 29640
+      "phaseOutThresholdSingle": 23890,
+      "phaseOutThresholdMarried": 31160
     }
   ],
   "childTaxCredit": {
-    "perChild": 2000,
+    "perChild": 2200,
     "refundableCap": 1700,
     "phaseOutThresholdSingle": 200000,
     "phaseOutThresholdMarried": 400000,
     "phaseOutPerThousand": 50
   },
   "citation": {
-    "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-23-34.pdf",
-    "sourceDocument": "IRS Revenue Procedure 2023-34 (2024 EITC) and IRC §24 (Child Tax Credit)",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2024-02-01"
+    "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+    "sourceDocument": "IRS Revenue Procedure 2025-32 (2026 EITC) and IRC §24 (Child Tax Credit, $2,200 per child under the One Big Beautiful Bill Act)",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   }
 }

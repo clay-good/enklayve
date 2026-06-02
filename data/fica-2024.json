@@ -1,6 +1,6 @@
 {
-  "taxYear": 2024,
-  "socialSecurityWageBase": 168600,
+  "taxYear": 2026,
+  "socialSecurityWageBase": 184500,
   "socialSecurityRate": 0.062,
   "medicareRate": 0.0145,
   "additionalMedicareRate": 0.009,
@@ -13,8 +13,8 @@
   },
   "citation": {
     "sourceUrl": "https://www.ssa.gov/oact/cola/cbb.html",
-    "sourceDocument": "SSA Contribution and Benefit Base 2024; IRS Topic No. 751",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2024-02-01"
+    "sourceDocument": "SSA Contribution and Benefit Base 2026 ($184,500); IRS Topic No. 751 (Medicare and Additional Medicare rates)",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   }
 }

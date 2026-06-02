@@ -1,5 +1,5 @@
 {
-  "awardYear": "2024-2025",
+  "awardYear": "2026-2027",
   "maxPellGrant": 7395,
   "minPellGrant": 740,
   "saiFloor": -1500,
@@ -11,7 +11,7 @@
     "6": 52720
   },
   "ipaPerAdditionalPerson": 5960,
-  "studentIncomeProtectionAllowance": 11130,
+  "studentIncomeProtectionAllowance": 11770,
   "employmentExpenseAllowance": {
     "rate": 0.35,
     "cap": 4700
@@ -28,9 +28,9 @@
     { "lowerBound": 36600, "rate": 0.47 }
   ],
   "citation": {
-    "sourceUrl": "https://studentaid.gov/complete-aid-process/how-calculated",
-    "sourceDocument": "U.S. Department of Education (Federal Student Aid), 2024-25 SAI and Pell Grant Eligibility: Student Aid Index Formula Guide (dependent student)",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2026-05-30"
+    "sourceUrl": "https://fsapartners.ed.gov/knowledge-center/library/handbooks-manuals-or-guides/2025-06-13/2026-27-student-aid-index-sai-and-pell-grant-eligibility-guide-updated-aug-25-2025",
+    "sourceDocument": "U.S. Department of Education (Federal Student Aid), 2026-27 SAI and Pell Grant Eligibility Guide (dependent student; max Pell $7,395, student income protection allowance $11,770). Parents' income-protection-allowance table retains the most recent published values pending the official 2026-27 indexed table; verify against the Guide.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   }
 }

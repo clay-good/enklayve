@@ -103,9 +103,9 @@ export function mountSelfEmployedRetirement(ctx: TileContext): void {
 
   function compute(): void {
     const limits = limitsData!.limits;
-    const elective = limits["elective_deferral_401k"] ?? 23000;
-    const catchUp = fields.age >= 50 ? (limits["catch_up_401k_50plus"] ?? 7500) : 0;
-    const dc415 = limits["defined_contribution_415c"] ?? 69000;
+    const elective = limits["elective_deferral_401k"] ?? 24500;
+    const catchUp = fields.age >= 50 ? (limits["catch_up_401k_50plus"] ?? 8000) : 0;
+    const dc415 = limits["defined_contribution_415c"] ?? 72000;
     const overallCap = dc415 + catchUp; // §415(c) plus the 50+ catch-up
 
     const se = selfEmploymentTax(Money.from(fields.profit), fields.fs, fica!);

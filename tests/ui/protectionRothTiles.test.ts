@@ -59,10 +59,10 @@ describe("Backdoor Roth", () => {
   it("is a clean, tax-free conversion with no pre-tax IRA balance, citing the IRS limit", () => {
     const { root } = mount(
       mountBackdoorRoth,
-      new URLSearchParams({ age: "35", c: "7000", ord: "24" }),
+      new URLSearchParams({ age: "35", c: "7500", ord: "24" }),
     );
-    expect(rowValue(root, "IRA limit")).toContain("$7,000");
-    expect(rowValue(root, "Into your Roth")).toContain("$7,000");
+    expect(rowValue(root, "IRA limit")).toContain("$7,500");
+    expect(rowValue(root, "Into your Roth")).toContain("$7,500");
     expect(rowValue(root, "Tax owed")).toContain("$0");
     expect(rowValue(root, "A clean backdoor")).toBeTruthy();
     expect(root.querySelector("a.cite-link")).not.toBeNull();
@@ -83,9 +83,9 @@ describe("Backdoor Roth", () => {
       mountBackdoorRoth,
       new URLSearchParams({ age: "55", c: "99999", ord: "24" }),
     );
-    // 2024 IRA limit $7,000 + $1,000 catch-up = $8,000.
-    expect(rowValue(root, "IRA limit (with catch-up)")).toContain("$8,000");
-    expect(rowValue(root, "Into your Roth")).toContain("$8,000");
+    // 2026 IRA limit $7,500 + $1,100 catch-up = $8,600.
+    expect(rowValue(root, "IRA limit (with catch-up)")).toContain("$8,600");
+    expect(rowValue(root, "Into your Roth")).toContain("$8,600");
   });
 
   it("computes the mega-backdoor after-tax room from §415(c)", () => {
@@ -93,17 +93,17 @@ describe("Backdoor Roth", () => {
       mountBackdoorRoth,
       new URLSearchParams({ m: "mega", ed: "23000", er: "10000" }),
     );
-    // 2024 §415(c) $69,000 − 23,000 − 10,000 = $36,000.
-    expect(rowValue(root, "Total 401(k) limit")).toContain("$69,000");
-    expect(rowValue(root, "After-tax room")).toContain("$36,000");
+    // 2026 §415(c) $72,000 − 23,000 − 10,000 = $39,000.
+    expect(rowValue(root, "Total 401(k) limit")).toContain("$72,000");
+    expect(rowValue(root, "After-tax room")).toContain("$39,000");
     expect(root.querySelector("a.cite-link")).not.toBeNull();
   });
 
   it("prefills a worked example and deep-links it", () => {
     const { root, lastParams } = mount(mountBackdoorRoth, new URLSearchParams());
     clickExample(root);
-    expect(root.querySelector<HTMLInputElement>('input[name="c"]')?.value).toBe("7000");
-    expect(lastParams()?.get("c")).toBe("7000");
+    expect(root.querySelector<HTMLInputElement>('input[name="c"]')?.value).toBe("7500");
+    expect(lastParams()?.get("c")).toBe("7500");
   });
 });
 

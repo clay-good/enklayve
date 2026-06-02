@@ -55,8 +55,8 @@ afterEach(() => document.body.replaceChildren());
 
 describe("Federal Poverty Level tile", () => {
   it("reports income as a percentage of the poverty line, cited", () => {
-    const root = mount(mountFpl, new URLSearchParams({ hh: "4", inc: "62400" }));
-    expect(rowValue(root, "Poverty line (100% FPL)")).toContain("$31,200");
+    const root = mount(mountFpl, new URLSearchParams({ hh: "4", inc: "66000" }));
+    expect(rowValue(root, "Poverty line (100% FPL)")).toContain("$33,000");
     expect(rowValue(root, "Income as % of poverty line")).toBe("200%");
     expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/hhs\.gov/);
   });
@@ -65,7 +65,7 @@ describe("Federal Poverty Level tile", () => {
 describe("EITC tile", () => {
   it("estimates a phased-out credit for one child at $30,000, cited", () => {
     const root = mount(mountEitc, new URLSearchParams({ inc: "30000", kids: "1" }));
-    expect(rowValue(root, "Estimated EITC")).toContain("$3,0");
+    expect(rowValue(root, "Estimated EITC")).toContain("$3,450");
     expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/irs\.gov/);
   });
 });
@@ -76,7 +76,7 @@ describe("Child Tax Credit tile", () => {
       mountChildTaxCredit,
       new URLSearchParams({ kids: "2", inc: "120000", mfj: "1" }),
     );
-    expect(rowValue(root, "Estimated Child Tax Credit")).toContain("$4,000");
+    expect(rowValue(root, "Estimated Child Tax Credit")).toContain("$4,400");
     expect(rowValue(root, "Refundable portion")).toContain("$3,400");
   });
 });
@@ -138,7 +138,7 @@ describe("Saver's Credit tile", () => {
 describe("SNAP tile", () => {
   it("estimates a monthly benefit for an eligible household, cited", () => {
     const root = mount(mountSnap, new URLSearchParams({ hh: "3", inc: "2200" }));
-    expect(rowValue(root, "Estimated monthly benefit")).toContain("$297");
+    expect(rowValue(root, "Estimated monthly benefit")).toContain("$319");
     expect(root.querySelectorAll("a.cite-link").length).toBeGreaterThanOrEqual(2);
   });
 
@@ -165,11 +165,11 @@ describe("Medicaid tile", () => {
 
 describe("ACA Premium Tax Credit", () => {
   it("credits the benchmark above the expected contribution at 200% FPL", () => {
-    // Household of 1 at $30,120 = 200% FPL; applicable % = 2.0%; benchmark $600/mo.
-    const root = mount(mountAcaPtc, new URLSearchParams({ hh: "1", inc: "30120", bm: "600" }));
+    // Household of 1 at $31,920 = 200% FPL; 2026 applicable % = 6.60%; benchmark $600/mo.
+    const root = mount(mountAcaPtc, new URLSearchParams({ hh: "1", inc: "31920", bm: "600" }));
     expect(rowValue(root, "Income vs poverty line")).toContain("200% FPL");
-    expect(rowValue(root, "Expected contribution")).toContain("2.00%");
-    expect(rowValue(root, "Estimated premium tax credit")).toContain("$549.80/mo");
+    expect(rowValue(root, "Expected contribution")).toContain("6.60%");
+    expect(rowValue(root, "Estimated premium tax credit")).toContain("$424.44/mo");
     expect(root.querySelector("a.cite-link")).not.toBeNull();
   });
 
@@ -212,7 +212,7 @@ describe("FAFSA Student Aid Index tile", () => {
     );
     expect(rowValue(root, "Student Aid Index (SAI)")).toContain("-$293");
     expect(rowValue(root, "Estimated Pell Grant")).toContain("$7,395");
-    expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/studentaid\.gov/);
+    expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/ed\.gov/);
   });
 
   it("writes income and household size back to Your Situation", () => {
@@ -233,7 +233,7 @@ describe("Pell Grant tile", () => {
   it("reduces the award as the SAI rises, cited", () => {
     const root = mount(mountPell, new URLSearchParams({ sai: "2000" }));
     expect(rowValue(root, "Estimated Pell Grant")).toContain("$5,395");
-    expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/studentaid\.gov/);
+    expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/ed\.gov/);
   });
 
   it("reports ineligibility once the SAI reaches the maximum Pell", () => {

@@ -28,8 +28,8 @@ const QUARTERS = ["Apr 15", "Jun 15", "Sep 15", "Jan 15 (next year)"];
 const ESTIMATED_PAYMENT_CITATION: CitationData = {
   sourceUrl: "https://www.irs.gov/forms-pubs/about-form-1040-es",
   sourceDocument: "IRS Form 1040-ES, Estimated Tax for Individuals",
-  effectiveYear: 2024,
-  dateRetrieved: "2024-02-01",
+  effectiveYear: 2026,
+  dateRetrieved: "2026-06-02",
 };
 
 interface Fields {

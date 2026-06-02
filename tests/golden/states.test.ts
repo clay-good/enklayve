@@ -6,7 +6,7 @@ import { loadDatasets, type Datasets } from "../helpers/datasets";
  * Hand-verified state and local cases (BUILD-SPEC.md §8, §9). Covers a graduated
  * state (CA, NY, DC), flat states (PA/IL/MI/GA/NC), no-income-tax states as
  * first-class records (TX, FL), special rules, and opt-in local add-ons (NYC,
- * Columbus). Each expected figure is computed by hand from the 2024 schedules.
+ * Columbus). Each expected figure is computed by hand from the 2026 schedules.
  */
 let ds: Datasets;
 beforeAll(async () => {
@@ -17,24 +17,24 @@ const cents = (m: { roundToCents(): { toString(): string } }): string =>
   m.roundToCents().toString();
 
 describe("graduated states", () => {
-  it("California single $50k → $1,290.62 (std deduction $5,540)", () => {
+  it("California single $50k → $1,280.66 (std deduction $5,706)", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 50000 },
       { federal: ds.federal, state: ds.state("ca"), fica: ds.fica },
     );
-    expect(cents(r.state!.incomeTax)).toBe("1290.62");
-    // Combined: federal 4,016 + FICA 3,825 + CA 1,290.62.
-    expect(cents(r.totals.totalTax)).toBe("9131.62");
-    expect(cents(r.totals.takeHome)).toBe("40868.38");
+    expect(cents(r.state!.incomeTax)).toBe("1280.66");
+    // Combined: federal 3,820 + FICA 3,825 + CA 1,280.66.
+    expect(cents(r.totals.totalTax)).toBe("8925.66");
+    expect(cents(r.totals.takeHome)).toBe("41074.34");
     expect(r.totals.marginalRate).toBeCloseTo(0.2565, 5); // 12 + 7.65 + 6
   });
 
-  it("New York single $100k (no NYC) → $4,951.75", () => {
+  it("New York single $100k (no NYC) → $4,859.75", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 100000 },
       { federal: ds.federal, state: ds.state("ny"), fica: ds.fica },
     );
-    expect(cents(r.state!.incomeTax)).toBe("4951.75");
+    expect(cents(r.state!.incomeTax)).toBe("4859.75");
     expect(r.local.lines).toHaveLength(0);
   });
 
@@ -49,12 +49,12 @@ describe("graduated states", () => {
     expect(cents(r.local.total)).toBe("3441.09");
   });
 
-  it("DC single $60k → $2,551.00", () => {
+  it("DC single $60k → $2,453.50", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 60000 },
       { federal: ds.federal, state: ds.state("dc"), fica: ds.fica },
     );
-    expect(cents(r.state!.incomeTax)).toBe("2551");
+    expect(cents(r.state!.incomeTax)).toBe("2453.5");
   });
 
   it("Ohio single $60k → $933.63, plus opt-in Columbus 2.5%", () => {
@@ -78,14 +78,14 @@ describe("flat-rate states", () => {
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction
     ["il", 60000, "2832.64"], // 4.95%·(60,000 − 2,775 exemption)
     ["mi", 60000, "2312"], // 4.25%·(60,000 − 5,600 exemption)
-    ["ga", 60000, "2587.2"], // 5.39%·(60,000 − 12,000 std)
-    ["nc", 60000, "2126.25"], // 4.5%·(60,000 − 12,750 std)
-    ["az", 60000, "1135"], // 2.5%·(60,000 − 14,600 federal std)
-    ["co", 60000, "1997.6"], // 4.4%·(60,000 − 14,600 federal std)
-    ["in", 60000, "1799.5"], // 3.05%·(60,000 − 1,000 exemption), no std
-    ["ky", 60000, "2273.6"], // 4.0%·(60,000 − 3,160 std)
+    ["ga", 60000, "2395.2"], // 4.99%·(60,000 − 12,000 std)
+    ["nc", 60000, "1885.28"], // 3.99%·(60,000 − 12,750 std)
+    ["az", 60000, "1097.5"], // 2.5%·(60,000 − 16,100 federal std)
+    ["co", 60000, "1931.6"], // 4.4%·(60,000 − 16,100 federal std)
+    ["in", 60000, "1740.5"], // 2.95%·(60,000 − 1,000 exemption), no std
+    ["ky", 60000, "1982.4"], // 3.5%·(60,000 − 3,360 std)
     ["ma", 60000, "2780"], // 5.0%·(60,000 − 4,400 exemption), below the surtax
-    ["ms", 60000, "1959.9"], // 0% on first $10k of taxable, 4.7%·(51,700 − 10,000)
+    ["ms", 60000, "1668"], // 0% on first $10k of taxable, 4.0%·(51,700 − 10,000)
   ];
   for (const [code, wages, expected] of cases) {
     it(`${code.toUpperCase()} single $${wages.toLocaleString()} → $${expected}`, () => {
@@ -121,7 +121,7 @@ describe("no-income-tax states are first-class records", () => {
 });
 
 describe("Massachusetts 4% millionaire surtax (top bracket)", () => {
-  it("adds the 4% surtax (9% total) on taxable income over $1,053,750", () => {
+  it("adds the 4% surtax (9% total) on taxable income over $1,107,750", () => {
     const over = evaluateTaxes(
       { filingStatus: "single", wages: 1200000 },
       { federal: ds.federal, state: ds.state("ma"), fica: ds.fica },
@@ -130,18 +130,18 @@ describe("Massachusetts 4% millionaire surtax (top bracket)", () => {
     // flat 5% would be 59,780; the 9% top band on the excess pushes it higher.
     const flatFive = 1195600 * 0.05;
     expect(Number(cents(over.state!.incomeTax))).toBeGreaterThan(flatFive);
-    // 5%·1,053,750 + 9%·(1,195,600 − 1,053,750) = 52,687.50 + 12,766.50 = 65,454.
-    expect(cents(over.state!.incomeTax)).toBe("65454");
+    // 5%·1,107,750 + 9%·(1,195,600 − 1,107,750) = 55,387.50 + 7,906.50 = 63,294.
+    expect(cents(over.state!.incomeTax)).toBe("63294");
   });
 });
 
-describe("California mental-health-services surtax (special rule)", () => {
+describe("California behavioral-health-services surtax (special rule)", () => {
   it("adds 1% on taxable income over $1,000,000", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 1100000 },
       { federal: ds.federal, state: ds.state("ca"), fica: ds.fica },
     );
-    // CA taxable = 1,100,000 − 5,540 = 1,094,460; surtax = 1%·(1,094,460 − 1,000,000) = 944.60.
+    // CA taxable = 1,100,000 − 5,706 = 1,094,294; surtax = 1%·(1,094,294 − 1,000,000) = 942.94.
     const noSurtax = evaluateTaxes(
       { filingStatus: "single", wages: 1000000 },
       { federal: ds.federal, state: ds.state("ca"), fica: ds.fica },

@@ -1,13 +1,32 @@
 {
   "id": "US-SD",
   "name": "South Dakota",
-  "taxYear": 2024,
+  "taxYear": 2026,
   "hasIncomeTax": false,
-  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "supportedFilingStatuses": [
+    "single",
+    "married_jointly",
+    "head_of_household"
+  ],
   "bracketsByFilingStatus": {
-    "single": [{ "lowerBound": 0, "rate": 0 }],
-    "married_jointly": [{ "lowerBound": 0, "rate": 0 }],
-    "head_of_household": [{ "lowerBound": 0, "rate": 0 }]
+    "single": [
+      {
+        "lowerBound": 0,
+        "rate": 0
+      }
+    ],
+    "married_jointly": [
+      {
+        "lowerBound": 0,
+        "rate": 0
+      }
+    ],
+    "head_of_household": [
+      {
+        "lowerBound": 0,
+        "rate": 0
+      }
+    ]
   },
   "standardDeductionByFilingStatus": {
     "single": 0,
@@ -17,8 +36,11 @@
   "citation": {
     "sourceUrl": "https://dor.sd.gov/",
     "sourceDocument": "South Dakota Department of Revenue, no state personal income tax",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2026-06-01"
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   },
-  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+  "effectiveDateRange": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  }
 }

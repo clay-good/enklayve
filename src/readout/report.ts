@@ -27,12 +27,12 @@ function regionFromState(code: string | undefined): FplRegion {
 }
 
 /** Same public IRS figure the plan cites when the bundled limits are unavailable. */
-const FALLBACK_LIMIT = 23000;
+const FALLBACK_LIMIT = 24500;
 const FALLBACK_CITATION: CitationData = {
-  sourceUrl: "https://www.irs.gov/pub/irs-drop/n-23-75.pdf",
-  sourceDocument: "IRS Notice 2023-75 (2024 retirement plan limits)",
-  effectiveYear: 2024,
-  dateRetrieved: "2024-02-01",
+  sourceUrl: "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
+  sourceDocument: "IRS Notice 2025-67 (2026 retirement plan limits)",
+  effectiveYear: 2026,
+  dateRetrieved: "2026-06-02",
 };
 
 export interface ReportLine {
@@ -121,7 +121,7 @@ export function buildReport(
   const stateCode = profile.get("stateCode") ?? "";
   const state = stateCode ? (data?.state(stateCode) ?? undefined) : undefined;
   const filingStatus = profile.get("filingStatus") ?? "single";
-  const effectiveYear = federal?.taxYear ?? 2024;
+  const effectiveYear = federal?.taxYear ?? 2026;
 
   const citations: CitationData[] = [];
   const sections: ReportSection[] = [];

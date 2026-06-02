@@ -20,14 +20,14 @@ import type { TileContext, TileDefinition } from "./types";
 const LOSS_LIMIT_CITATION: CitationData = {
   sourceUrl: "https://www.irs.gov/taxtopics/tc409",
   sourceDocument: "IRS Topic No. 409, Capital Gains and Losses (IRC §1211(b))",
-  effectiveYear: 2024,
+  effectiveYear: 2026,
   dateRetrieved: "2026-05-29",
 };
 /** The wash-sale rule (IRC §1091). */
 const WASH_SALE_CITATION: CitationData = {
   sourceUrl: "https://www.irs.gov/publications/p550",
   sourceDocument: "IRS Publication 550, Wash Sales (IRC §1091)",
-  effectiveYear: 2024,
+  effectiveYear: 2026,
   dateRetrieved: "2026-05-29",
 };
 

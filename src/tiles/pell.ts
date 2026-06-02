@@ -126,7 +126,7 @@ export const pellTile: TileDefinition = {
   description: "Estimate your Pell Grant award from your Student Aid Index.",
   keywords: ["pell", "grant", "college", "aid", "financial aid", "sai"],
   status: "ready",
-  how: "The Pell Grant is the foundation of federal student aid, and it never has to be paid back. The award is set by your Student Aid Index (SAI): you get the maximum Pell minus your SAI, so a lower SAI means a larger grant. An otherwise-eligible student is floored at the minimum Pell, and once your SAI reaches the maximum Pell there is no award.\n\nEnter your SAI from the Student Aid Index estimator or straight off your FAFSA Submission Summary. The maximum award assumes full-time enrollment for the full year and is prorated for part-time; your school sets the final figure. We use the published 2024-25 maximum and minimum Pell. Verify with Federal Student Aid before relying on it.",
+  how: "The Pell Grant is the foundation of federal student aid, and it never has to be paid back. The award is set by your Student Aid Index (SAI): you get the maximum Pell minus your SAI, so a lower SAI means a larger grant. An otherwise-eligible student is floored at the minimum Pell, and once your SAI reaches the maximum Pell there is no award.\n\nEnter your SAI from the Student Aid Index estimator or straight off your FAFSA Submission Summary. The maximum award assumes full-time enrollment for the full year and is prorated for part-time; your school sets the final figure. We use the published 2026-27 maximum and minimum Pell. Verify with Federal Student Aid before relying on it.",
   resources: [
     {
       label: "Federal Student Aid, Pell Grants",

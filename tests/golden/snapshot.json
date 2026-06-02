@@ -63,382 +63,382 @@
     "effectiveRate": 0
   },
   "single|25000|federal": {
-    "federalIncomeTax": "1040",
+    "federalIncomeTax": "890",
     "ficaTotal": "1912.5",
     "stateIncomeTax": "0",
-    "totalTax": "2952.5",
-    "takeHome": "22047.5",
+    "totalTax": "2802.5",
+    "takeHome": "22197.5",
     "marginalRate": 0.1765,
-    "effectiveRate": 0.1181
+    "effectiveRate": 0.1121
   },
   "single|25000|ca": {
-    "federalIncomeTax": "1040",
+    "federalIncomeTax": "890",
     "ficaTotal": "1912.5",
-    "stateIncomeTax": "285.08",
-    "totalTax": "3237.58",
-    "takeHome": "21762.42",
+    "stateIncomeTax": "281.76",
+    "totalTax": "3084.26",
+    "takeHome": "21915.74",
     "marginalRate": 0.1965,
-    "effectiveRate": 0.129503
+    "effectiveRate": 0.12337
   },
   "single|25000|ny": {
-    "federalIncomeTax": "1040",
+    "federalIncomeTax": "890",
     "ficaTotal": "1912.5",
-    "stateIncomeTax": "770",
-    "totalTax": "3722.5",
-    "takeHome": "21277.5",
-    "marginalRate": 0.2315,
-    "effectiveRate": 0.1489
+    "stateIncomeTax": "753",
+    "totalTax": "3555.5",
+    "takeHome": "21444.5",
+    "marginalRate": 0.2305,
+    "effectiveRate": 0.14222
   },
   "single|25000|tx": {
-    "federalIncomeTax": "1040",
+    "federalIncomeTax": "890",
     "ficaTotal": "1912.5",
     "stateIncomeTax": "0",
-    "totalTax": "2952.5",
-    "takeHome": "22047.5",
+    "totalTax": "2802.5",
+    "takeHome": "22197.5",
     "marginalRate": 0.1765,
-    "effectiveRate": 0.1181
+    "effectiveRate": 0.1121
   },
   "single|25000|pa": {
-    "federalIncomeTax": "1040",
+    "federalIncomeTax": "890",
     "ficaTotal": "1912.5",
     "stateIncomeTax": "767.5",
-    "totalTax": "3720",
-    "takeHome": "21280",
+    "totalTax": "3570",
+    "takeHome": "21430",
     "marginalRate": 0.2072,
-    "effectiveRate": 0.1488
+    "effectiveRate": 0.1428
   },
   "single|25000|oh": {
-    "federalIncomeTax": "1040",
+    "federalIncomeTax": "890",
     "ficaTotal": "1912.5",
     "stateIncomeTax": "0",
-    "totalTax": "2952.5",
-    "takeHome": "22047.5",
+    "totalTax": "2802.5",
+    "takeHome": "22197.5",
     "marginalRate": 0.1765,
-    "effectiveRate": 0.1181
+    "effectiveRate": 0.1121
   },
   "single|25000|dc": {
-    "federalIncomeTax": "1040",
+    "federalIncomeTax": "890",
     "ficaTotal": "1912.5",
-    "stateIncomeTax": "424",
-    "totalTax": "3376.5",
-    "takeHome": "21623.5",
-    "marginalRate": 0.2365,
-    "effectiveRate": 0.13506
+    "stateIncomeTax": "356",
+    "totalTax": "3158.5",
+    "takeHome": "21841.5",
+    "marginalRate": 0.2165,
+    "effectiveRate": 0.12634
   },
   "single|50000|federal": {
-    "federalIncomeTax": "4016",
+    "federalIncomeTax": "3820",
     "ficaTotal": "3825",
     "stateIncomeTax": "0",
-    "totalTax": "7841",
-    "takeHome": "42159",
+    "totalTax": "7645",
+    "takeHome": "42355",
     "marginalRate": 0.1965,
-    "effectiveRate": 0.15682
+    "effectiveRate": 0.1529
   },
   "single|50000|ca": {
-    "federalIncomeTax": "4016",
+    "federalIncomeTax": "3820",
     "ficaTotal": "3825",
-    "stateIncomeTax": "1290.62",
-    "totalTax": "9131.62",
-    "takeHome": "40868.38",
+    "stateIncomeTax": "1280.66",
+    "totalTax": "8925.66",
+    "takeHome": "41074.34",
     "marginalRate": 0.2565,
-    "effectiveRate": 0.182632
+    "effectiveRate": 0.178513
   },
   "single|50000|ny": {
-    "federalIncomeTax": "4016",
+    "federalIncomeTax": "3820",
     "ficaTotal": "3825",
-    "stateIncomeTax": "2145",
-    "totalTax": "9986",
-    "takeHome": "40014",
-    "marginalRate": 0.2515,
-    "effectiveRate": 0.19972
+    "stateIncomeTax": "2103",
+    "totalTax": "9748",
+    "takeHome": "40252",
+    "marginalRate": 0.2505,
+    "effectiveRate": 0.19496
   },
   "single|50000|tx": {
-    "federalIncomeTax": "4016",
+    "federalIncomeTax": "3820",
     "ficaTotal": "3825",
     "stateIncomeTax": "0",
-    "totalTax": "7841",
-    "takeHome": "42159",
+    "totalTax": "7645",
+    "takeHome": "42355",
     "marginalRate": 0.1965,
-    "effectiveRate": 0.15682
+    "effectiveRate": 0.1529
   },
   "single|50000|pa": {
-    "federalIncomeTax": "4016",
+    "federalIncomeTax": "3820",
     "ficaTotal": "3825",
     "stateIncomeTax": "1535",
-    "totalTax": "9376",
-    "takeHome": "40624",
+    "totalTax": "9180",
+    "takeHome": "40820",
     "marginalRate": 0.2272,
-    "effectiveRate": 0.18752
+    "effectiveRate": 0.1836
   },
   "single|50000|oh": {
-    "federalIncomeTax": "4016",
+    "federalIncomeTax": "3820",
     "ficaTotal": "3825",
     "stateIncomeTax": "658.63",
-    "totalTax": "8499.63",
-    "takeHome": "41500.38",
+    "totalTax": "8303.63",
+    "takeHome": "41696.38",
     "marginalRate": 0.224,
-    "effectiveRate": 0.169993
+    "effectiveRate": 0.166073
   },
   "single|50000|dc": {
-    "federalIncomeTax": "4016",
+    "federalIncomeTax": "3820",
     "ficaTotal": "3825",
-    "stateIncomeTax": "1924",
-    "totalTax": "9765",
-    "takeHome": "40235",
+    "stateIncomeTax": "1834",
+    "totalTax": "9479",
+    "takeHome": "40521",
     "marginalRate": 0.2565,
-    "effectiveRate": 0.1953
+    "effectiveRate": 0.18958
   },
   "single|75000|federal": {
-    "federalIncomeTax": "8341",
+    "federalIncomeTax": "7670",
     "ficaTotal": "5737.5",
     "stateIncomeTax": "0",
-    "totalTax": "14078.5",
-    "takeHome": "60921.5",
+    "totalTax": "13407.5",
+    "takeHome": "61592.5",
     "marginalRate": 0.2965,
-    "effectiveRate": 0.187713
+    "effectiveRate": 0.178767
   },
   "single|75000|ca": {
-    "federalIncomeTax": "8341",
+    "federalIncomeTax": "7670",
     "ficaTotal": "5737.5",
-    "stateIncomeTax": "3112.63",
-    "totalTax": "17191.13",
-    "takeHome": "57808.87",
+    "stateIncomeTax": "3097.19",
+    "totalTax": "16504.69",
+    "takeHome": "58495.31",
     "marginalRate": 0.3895,
-    "effectiveRate": 0.229215
+    "effectiveRate": 0.220063
   },
   "single|75000|ny": {
-    "federalIncomeTax": "8341",
+    "federalIncomeTax": "7670",
     "ficaTotal": "5737.5",
-    "stateIncomeTax": "3520",
-    "totalTax": "17598.5",
-    "takeHome": "57401.5",
-    "marginalRate": 0.3515,
-    "effectiveRate": 0.234647
+    "stateIncomeTax": "3453",
+    "totalTax": "16860.5",
+    "takeHome": "58139.5",
+    "marginalRate": 0.3505,
+    "effectiveRate": 0.224807
   },
   "single|75000|tx": {
-    "federalIncomeTax": "8341",
+    "federalIncomeTax": "7670",
     "ficaTotal": "5737.5",
     "stateIncomeTax": "0",
-    "totalTax": "14078.5",
-    "takeHome": "60921.5",
+    "totalTax": "13407.5",
+    "takeHome": "61592.5",
     "marginalRate": 0.2965,
-    "effectiveRate": 0.187713
+    "effectiveRate": 0.178767
   },
   "single|75000|pa": {
-    "federalIncomeTax": "8341",
+    "federalIncomeTax": "7670",
     "ficaTotal": "5737.5",
     "stateIncomeTax": "2302.5",
-    "totalTax": "16381",
-    "takeHome": "58619",
+    "totalTax": "15710",
+    "takeHome": "59290",
     "marginalRate": 0.3272,
-    "effectiveRate": 0.218413
+    "effectiveRate": 0.209467
   },
   "single|75000|oh": {
-    "federalIncomeTax": "8341",
+    "federalIncomeTax": "7670",
     "ficaTotal": "5737.5",
     "stateIncomeTax": "1346.13",
-    "totalTax": "15424.63",
-    "takeHome": "59575.38",
+    "totalTax": "14753.63",
+    "takeHome": "60246.38",
     "marginalRate": 0.324,
-    "effectiveRate": 0.205662
+    "effectiveRate": 0.196715
   },
   "single|75000|dc": {
-    "federalIncomeTax": "8341",
+    "federalIncomeTax": "7670",
     "ficaTotal": "5737.5",
-    "stateIncomeTax": "3534",
-    "totalTax": "17612.5",
-    "takeHome": "57387.5",
-    "marginalRate": 0.3815,
-    "effectiveRate": 0.234833
+    "stateIncomeTax": "3428.5",
+    "totalTax": "16836",
+    "takeHome": "58164",
+    "marginalRate": 0.3615,
+    "effectiveRate": 0.22448
   },
   "single|100000|federal": {
-    "federalIncomeTax": "13841",
+    "federalIncomeTax": "13170",
     "ficaTotal": "7650",
     "stateIncomeTax": "0",
-    "totalTax": "21491",
-    "takeHome": "78509",
+    "totalTax": "20820",
+    "takeHome": "79180",
     "marginalRate": 0.2965,
-    "effectiveRate": 0.21491
+    "effectiveRate": 0.2082
   },
   "single|100000|ca": {
-    "federalIncomeTax": "13841",
+    "federalIncomeTax": "13170",
     "ficaTotal": "7650",
-    "stateIncomeTax": "5437.63",
-    "totalTax": "26928.63",
-    "takeHome": "73071.37",
+    "stateIncomeTax": "5422.19",
+    "totalTax": "26242.19",
+    "takeHome": "73757.81",
     "marginalRate": 0.3895,
-    "effectiveRate": 0.269286
+    "effectiveRate": 0.262422
   },
   "single|100000|ny": {
-    "federalIncomeTax": "13841",
+    "federalIncomeTax": "13170",
     "ficaTotal": "7650",
-    "stateIncomeTax": "4951.75",
-    "totalTax": "26442.75",
-    "takeHome": "73557.25",
-    "marginalRate": 0.3565,
-    "effectiveRate": 0.264428
+    "stateIncomeTax": "4859.75",
+    "totalTax": "25679.75",
+    "takeHome": "74320.25",
+    "marginalRate": 0.3555,
+    "effectiveRate": 0.256798
   },
   "single|100000|tx": {
-    "federalIncomeTax": "13841",
+    "federalIncomeTax": "13170",
     "ficaTotal": "7650",
     "stateIncomeTax": "0",
-    "totalTax": "21491",
-    "takeHome": "78509",
+    "totalTax": "20820",
+    "takeHome": "79180",
     "marginalRate": 0.2965,
-    "effectiveRate": 0.21491
+    "effectiveRate": 0.2082
   },
   "single|100000|pa": {
-    "federalIncomeTax": "13841",
+    "federalIncomeTax": "13170",
     "ficaTotal": "7650",
     "stateIncomeTax": "3070",
-    "totalTax": "24561",
-    "takeHome": "75439",
+    "totalTax": "23890",
+    "takeHome": "76110",
     "marginalRate": 0.3272,
-    "effectiveRate": 0.24561
+    "effectiveRate": 0.2389
   },
   "single|100000|oh": {
-    "federalIncomeTax": "13841",
+    "federalIncomeTax": "13170",
     "ficaTotal": "7650",
     "stateIncomeTax": "2033.63",
-    "totalTax": "23524.63",
-    "takeHome": "76475.38",
-    "marginalRate": 0.3315,
-    "effectiveRate": 0.235246
+    "totalTax": "22853.63",
+    "takeHome": "77146.38",
+    "marginalRate": 0.324,
+    "effectiveRate": 0.228536
   },
   "single|100000|dc": {
-    "federalIncomeTax": "13841",
+    "federalIncomeTax": "13170",
     "ficaTotal": "7650",
-    "stateIncomeTax": "5659",
-    "totalTax": "27150",
-    "takeHome": "72850",
+    "stateIncomeTax": "5531.5",
+    "totalTax": "26351.5",
+    "takeHome": "73648.5",
     "marginalRate": 0.3815,
-    "effectiveRate": 0.2715
+    "effectiveRate": 0.263515
   },
   "single|200000|federal": {
-    "federalIncomeTax": "37538.5",
-    "ficaTotal": "13353.2",
+    "federalIncomeTax": "36734",
+    "ficaTotal": "14339",
     "stateIncomeTax": "0",
-    "totalTax": "50891.7",
-    "takeHome": "149108.3",
+    "totalTax": "51073",
+    "takeHome": "148927",
     "marginalRate": 0.2635,
-    "effectiveRate": 0.254458
+    "effectiveRate": 0.255365
   },
   "single|200000|ca": {
-    "federalIncomeTax": "37538.5",
-    "ficaTotal": "13353.2",
-    "stateIncomeTax": "14737.63",
-    "totalTax": "65629.33",
-    "takeHome": "134370.67",
+    "federalIncomeTax": "36734",
+    "ficaTotal": "14339",
+    "stateIncomeTax": "14722.19",
+    "totalTax": "65795.19",
+    "takeHome": "134204.81",
     "marginalRate": 0.3565,
-    "effectiveRate": 0.328147
+    "effectiveRate": 0.328976
   },
   "single|200000|ny": {
-    "federalIncomeTax": "37538.5",
-    "ficaTotal": "13353.2",
-    "stateIncomeTax": "10951.75",
-    "totalTax": "61843.45",
-    "takeHome": "138156.55",
-    "marginalRate": 0.3235,
-    "effectiveRate": 0.309217
+    "federalIncomeTax": "36734",
+    "ficaTotal": "14339",
+    "stateIncomeTax": "10759.75",
+    "totalTax": "61832.75",
+    "takeHome": "138167.25",
+    "marginalRate": 0.3225,
+    "effectiveRate": 0.309164
   },
   "single|200000|tx": {
-    "federalIncomeTax": "37538.5",
-    "ficaTotal": "13353.2",
+    "federalIncomeTax": "36734",
+    "ficaTotal": "14339",
     "stateIncomeTax": "0",
-    "totalTax": "50891.7",
-    "takeHome": "149108.3",
+    "totalTax": "51073",
+    "takeHome": "148927",
     "marginalRate": 0.2635,
-    "effectiveRate": 0.254458
+    "effectiveRate": 0.255365
   },
   "single|200000|pa": {
-    "federalIncomeTax": "37538.5",
-    "ficaTotal": "13353.2",
+    "federalIncomeTax": "36734",
+    "ficaTotal": "14339",
     "stateIncomeTax": "6140",
-    "totalTax": "57031.7",
-    "takeHome": "142968.3",
+    "totalTax": "57213",
+    "takeHome": "142787",
     "marginalRate": 0.2942,
-    "effectiveRate": 0.285159
+    "effectiveRate": 0.286065
   },
   "single|200000|oh": {
-    "federalIncomeTax": "37538.5",
-    "ficaTotal": "13353.2",
-    "stateIncomeTax": "5533.63",
-    "totalTax": "56425.33",
-    "takeHome": "143574.68",
-    "marginalRate": 0.2985,
-    "effectiveRate": 0.282127
+    "federalIncomeTax": "36734",
+    "ficaTotal": "14339",
+    "stateIncomeTax": "4783.63",
+    "totalTax": "55856.63",
+    "takeHome": "144143.38",
+    "marginalRate": 0.291,
+    "effectiveRate": 0.279283
   },
   "single|200000|dc": {
-    "federalIncomeTax": "37538.5",
-    "ficaTotal": "13353.2",
-    "stateIncomeTax": "14159",
-    "totalTax": "65050.7",
-    "takeHome": "134949.3",
+    "federalIncomeTax": "36734",
+    "ficaTotal": "14339",
+    "stateIncomeTax": "14031.5",
+    "totalTax": "65104.5",
+    "takeHome": "134895.5",
     "marginalRate": 0.3485,
-    "effectiveRate": 0.325254
+    "effectiveRate": 0.325523
   },
   "single|500000|federal": {
-    "federalIncomeTax": "140264.75",
-    "ficaTotal": "20403.2",
+    "federalIncomeTax": "138134.25",
+    "ficaTotal": "21389",
     "stateIncomeTax": "0",
-    "totalTax": "160667.95",
-    "takeHome": "339332.05",
+    "totalTax": "159523.25",
+    "takeHome": "340476.75",
     "marginalRate": 0.3735,
-    "effectiveRate": 0.321336
+    "effectiveRate": 0.319047
   },
   "single|500000|ca": {
-    "federalIncomeTax": "140264.75",
-    "ficaTotal": "20403.2",
-    "stateIncomeTax": "44845.85",
-    "totalTax": "205513.8",
-    "takeHome": "294486.2",
+    "federalIncomeTax": "138134.25",
+    "ficaTotal": "21389",
+    "stateIncomeTax": "44827.09",
+    "totalTax": "204350.34",
+    "takeHome": "295649.66",
     "marginalRate": 0.4865,
-    "effectiveRate": 0.411028
+    "effectiveRate": 0.408701
   },
   "single|500000|ny": {
-    "federalIncomeTax": "140264.75",
-    "ficaTotal": "20403.2",
-    "stateIncomeTax": "31302.85",
-    "totalTax": "191970.8",
-    "takeHome": "308029.2",
+    "federalIncomeTax": "138134.25",
+    "ficaTotal": "21389",
+    "stateIncomeTax": "31087.45",
+    "totalTax": "190610.7",
+    "takeHome": "309389.3",
     "marginalRate": 0.442,
-    "effectiveRate": 0.383942
+    "effectiveRate": 0.381221
   },
   "single|500000|tx": {
-    "federalIncomeTax": "140264.75",
-    "ficaTotal": "20403.2",
+    "federalIncomeTax": "138134.25",
+    "ficaTotal": "21389",
     "stateIncomeTax": "0",
-    "totalTax": "160667.95",
-    "takeHome": "339332.05",
+    "totalTax": "159523.25",
+    "takeHome": "340476.75",
     "marginalRate": 0.3735,
-    "effectiveRate": 0.321336
+    "effectiveRate": 0.319047
   },
   "single|500000|pa": {
-    "federalIncomeTax": "140264.75",
-    "ficaTotal": "20403.2",
+    "federalIncomeTax": "138134.25",
+    "ficaTotal": "21389",
     "stateIncomeTax": "15350",
-    "totalTax": "176017.95",
-    "takeHome": "323982.05",
+    "totalTax": "174873.25",
+    "takeHome": "325126.75",
     "marginalRate": 0.4042,
-    "effectiveRate": 0.352036
+    "effectiveRate": 0.349747
   },
   "single|500000|oh": {
-    "federalIncomeTax": "140264.75",
-    "ficaTotal": "20403.2",
-    "stateIncomeTax": "16033.63",
-    "totalTax": "176701.58",
-    "takeHome": "323298.43",
-    "marginalRate": 0.4085,
-    "effectiveRate": 0.353403
+    "federalIncomeTax": "138134.25",
+    "ficaTotal": "21389",
+    "stateIncomeTax": "13033.63",
+    "totalTax": "172556.88",
+    "takeHome": "327443.13",
+    "marginalRate": 0.401,
+    "effectiveRate": 0.345114
   },
   "single|500000|dc": {
-    "federalIncomeTax": "140264.75",
-    "ficaTotal": "20403.2",
-    "stateIncomeTax": "41424.5",
-    "totalTax": "202092.45",
-    "takeHome": "297907.55",
+    "federalIncomeTax": "138134.25",
+    "ficaTotal": "21389",
+    "stateIncomeTax": "41285.75",
+    "totalTax": "200809",
+    "takeHome": "299191",
     "marginalRate": 0.466,
-    "effectiveRate": 0.404185
+    "effectiveRate": 0.401618
   },
   "married_jointly|0|federal": {
     "federalIncomeTax": "0",
@@ -515,20 +515,20 @@
   "married_jointly|25000|ca": {
     "federalIncomeTax": "0",
     "ficaTotal": "1912.5",
-    "stateIncomeTax": "139.2",
-    "totalTax": "2051.7",
-    "takeHome": "22948.3",
+    "stateIncomeTax": "135.88",
+    "totalTax": "2048.38",
+    "takeHome": "22951.62",
     "marginalRate": 0.0865,
-    "effectiveRate": 0.082068
+    "effectiveRate": 0.081935
   },
   "married_jointly|25000|ny": {
     "federalIncomeTax": "0",
     "ficaTotal": "1912.5",
-    "stateIncomeTax": "358",
-    "totalTax": "2270.5",
-    "takeHome": "22729.5",
-    "marginalRate": 0.1165,
-    "effectiveRate": 0.09082
+    "stateIncomeTax": "349.05",
+    "totalTax": "2261.55",
+    "takeHome": "22738.45",
+    "marginalRate": 0.1155,
+    "effectiveRate": 0.090462
   },
   "married_jointly|25000|tx": {
     "federalIncomeTax": "0",
@@ -567,319 +567,319 @@
     "effectiveRate": 0.0765
   },
   "married_jointly|50000|federal": {
-    "federalIncomeTax": "2080",
+    "federalIncomeTax": "1780",
     "ficaTotal": "3825",
     "stateIncomeTax": "0",
-    "totalTax": "5905",
-    "takeHome": "44095",
+    "totalTax": "5605",
+    "takeHome": "44395",
     "marginalRate": 0.1765,
-    "effectiveRate": 0.1181
+    "effectiveRate": 0.1121
   },
   "married_jointly|50000|ca": {
-    "federalIncomeTax": "2080",
+    "federalIncomeTax": "1780",
     "ficaTotal": "3825",
-    "stateIncomeTax": "570.16",
-    "totalTax": "6475.16",
-    "takeHome": "43524.84",
+    "stateIncomeTax": "563.52",
+    "totalTax": "6168.52",
+    "takeHome": "43831.48",
     "marginalRate": 0.1965,
-    "effectiveRate": 0.129503
+    "effectiveRate": 0.12337
   },
   "married_jointly|50000|ny": {
-    "federalIncomeTax": "2080",
+    "federalIncomeTax": "1780",
     "ficaTotal": "3825",
-    "stateIncomeTax": "1534.75",
-    "totalTax": "7439.75",
-    "takeHome": "42560.25",
-    "marginalRate": 0.2315,
-    "effectiveRate": 0.148795
+    "stateIncomeTax": "1500.8",
+    "totalTax": "7105.8",
+    "takeHome": "42894.2",
+    "marginalRate": 0.2305,
+    "effectiveRate": 0.142116
   },
   "married_jointly|50000|tx": {
-    "federalIncomeTax": "2080",
+    "federalIncomeTax": "1780",
     "ficaTotal": "3825",
     "stateIncomeTax": "0",
-    "totalTax": "5905",
-    "takeHome": "44095",
+    "totalTax": "5605",
+    "takeHome": "44395",
     "marginalRate": 0.1765,
-    "effectiveRate": 0.1181
+    "effectiveRate": 0.1121
   },
   "married_jointly|50000|pa": {
-    "federalIncomeTax": "2080",
+    "federalIncomeTax": "1780",
     "ficaTotal": "3825",
     "stateIncomeTax": "1535",
-    "totalTax": "7440",
-    "takeHome": "42560",
+    "totalTax": "7140",
+    "takeHome": "42860",
     "marginalRate": 0.2072,
-    "effectiveRate": 0.1488
+    "effectiveRate": 0.1428
   },
   "married_jointly|50000|oh": {
-    "federalIncomeTax": "2080",
+    "federalIncomeTax": "1780",
     "ficaTotal": "3825",
     "stateIncomeTax": "658.63",
-    "totalTax": "6563.63",
-    "takeHome": "43436.38",
+    "totalTax": "6263.63",
+    "takeHome": "43736.38",
     "marginalRate": 0.204,
-    "effectiveRate": 0.131273
+    "effectiveRate": 0.125273
   },
   "married_jointly|50000|dc": {
-    "federalIncomeTax": "2080",
+    "federalIncomeTax": "1780",
     "ficaTotal": "3825",
-    "stateIncomeTax": "1048",
-    "totalTax": "6953",
-    "takeHome": "43047",
+    "stateIncomeTax": "868",
+    "totalTax": "6473",
+    "takeHome": "43527",
     "marginalRate": 0.2365,
-    "effectiveRate": 0.13906
+    "effectiveRate": 0.12946
   },
   "married_jointly|75000|federal": {
-    "federalIncomeTax": "5032",
+    "federalIncomeTax": "4640",
     "ficaTotal": "5737.5",
     "stateIncomeTax": "0",
-    "totalTax": "10769.5",
-    "takeHome": "64230.5",
+    "totalTax": "10377.5",
+    "takeHome": "64622.5",
     "marginalRate": 0.1965,
-    "effectiveRate": 0.143593
+    "effectiveRate": 0.138367
   },
   "married_jointly|75000|ca": {
-    "federalIncomeTax": "5032",
+    "federalIncomeTax": "4640",
     "ficaTotal": "5737.5",
-    "stateIncomeTax": "1361.2",
-    "totalTax": "12130.7",
-    "takeHome": "62869.3",
+    "stateIncomeTax": "1347.92",
+    "totalTax": "11725.42",
+    "takeHome": "63274.58",
     "marginalRate": 0.2365,
-    "effectiveRate": 0.161743
+    "effectiveRate": 0.156339
   },
   "married_jointly|75000|ny": {
-    "federalIncomeTax": "5032",
+    "federalIncomeTax": "4640",
     "ficaTotal": "5737.5",
-    "stateIncomeTax": "2909.75",
-    "totalTax": "13679.25",
-    "takeHome": "61320.75",
-    "marginalRate": 0.2515,
-    "effectiveRate": 0.18239
+    "stateIncomeTax": "2850.8",
+    "totalTax": "13228.3",
+    "takeHome": "61771.7",
+    "marginalRate": 0.2505,
+    "effectiveRate": 0.176377
   },
   "married_jointly|75000|tx": {
-    "federalIncomeTax": "5032",
+    "federalIncomeTax": "4640",
     "ficaTotal": "5737.5",
     "stateIncomeTax": "0",
-    "totalTax": "10769.5",
-    "takeHome": "64230.5",
+    "totalTax": "10377.5",
+    "takeHome": "64622.5",
     "marginalRate": 0.1965,
-    "effectiveRate": 0.143593
+    "effectiveRate": 0.138367
   },
   "married_jointly|75000|pa": {
-    "federalIncomeTax": "5032",
+    "federalIncomeTax": "4640",
     "ficaTotal": "5737.5",
     "stateIncomeTax": "2302.5",
-    "totalTax": "13072",
-    "takeHome": "61928",
+    "totalTax": "12680",
+    "takeHome": "62320",
     "marginalRate": 0.2272,
-    "effectiveRate": 0.174293
+    "effectiveRate": 0.169067
   },
   "married_jointly|75000|oh": {
-    "federalIncomeTax": "5032",
+    "federalIncomeTax": "4640",
     "ficaTotal": "5737.5",
     "stateIncomeTax": "1346.13",
-    "totalTax": "12115.63",
-    "takeHome": "62884.38",
+    "totalTax": "11723.63",
+    "takeHome": "63276.38",
     "marginalRate": 0.224,
-    "effectiveRate": 0.161542
+    "effectiveRate": 0.156315
   },
   "married_jointly|75000|dc": {
-    "federalIncomeTax": "5032",
+    "federalIncomeTax": "4640",
     "ficaTotal": "5737.5",
-    "stateIncomeTax": "2577",
-    "totalTax": "13346.5",
-    "takeHome": "61653.5",
+    "stateIncomeTax": "2382",
+    "totalTax": "12759.5",
+    "takeHome": "62240.5",
     "marginalRate": 0.2615,
-    "effectiveRate": 0.177953
+    "effectiveRate": 0.170127
   },
   "married_jointly|100000|federal": {
-    "federalIncomeTax": "8032",
+    "federalIncomeTax": "7640",
     "ficaTotal": "7650",
     "stateIncomeTax": "0",
-    "totalTax": "15682",
-    "takeHome": "84318",
+    "totalTax": "15290",
+    "takeHome": "84710",
     "marginalRate": 0.1965,
-    "effectiveRate": 0.15682
+    "effectiveRate": 0.1529
   },
   "married_jointly|100000|ca": {
-    "federalIncomeTax": "8032",
+    "federalIncomeTax": "7640",
     "ficaTotal": "7650",
-    "stateIncomeTax": "2581.24",
-    "totalTax": "18263.24",
-    "takeHome": "81736.76",
+    "stateIncomeTax": "2561.32",
+    "totalTax": "17851.32",
+    "takeHome": "82148.68",
     "marginalRate": 0.2565,
-    "effectiveRate": 0.182632
+    "effectiveRate": 0.178513
   },
   "married_jointly|100000|ny": {
-    "federalIncomeTax": "8032",
+    "federalIncomeTax": "7640",
     "ficaTotal": "7650",
-    "stateIncomeTax": "4284.75",
-    "totalTax": "19966.75",
-    "takeHome": "80033.25",
-    "marginalRate": 0.2515,
-    "effectiveRate": 0.199668
+    "stateIncomeTax": "4200.8",
+    "totalTax": "19490.8",
+    "takeHome": "80509.2",
+    "marginalRate": 0.2505,
+    "effectiveRate": 0.194908
   },
   "married_jointly|100000|tx": {
-    "federalIncomeTax": "8032",
+    "federalIncomeTax": "7640",
     "ficaTotal": "7650",
     "stateIncomeTax": "0",
-    "totalTax": "15682",
-    "takeHome": "84318",
+    "totalTax": "15290",
+    "takeHome": "84710",
     "marginalRate": 0.1965,
-    "effectiveRate": 0.15682
+    "effectiveRate": 0.1529
   },
   "married_jointly|100000|pa": {
-    "federalIncomeTax": "8032",
+    "federalIncomeTax": "7640",
     "ficaTotal": "7650",
     "stateIncomeTax": "3070",
-    "totalTax": "18752",
-    "takeHome": "81248",
+    "totalTax": "18360",
+    "takeHome": "81640",
     "marginalRate": 0.2272,
-    "effectiveRate": 0.18752
+    "effectiveRate": 0.1836
   },
   "married_jointly|100000|oh": {
-    "federalIncomeTax": "8032",
+    "federalIncomeTax": "7640",
     "ficaTotal": "7650",
     "stateIncomeTax": "2033.63",
-    "totalTax": "17715.63",
-    "takeHome": "82284.38",
-    "marginalRate": 0.2315,
-    "effectiveRate": 0.177156
+    "totalTax": "17323.63",
+    "takeHome": "82676.38",
+    "marginalRate": 0.224,
+    "effectiveRate": 0.173236
   },
   "married_jointly|100000|dc": {
-    "federalIncomeTax": "8032",
+    "federalIncomeTax": "7640",
     "ficaTotal": "7650",
-    "stateIncomeTax": "4418",
-    "totalTax": "20100",
-    "takeHome": "79900",
+    "stateIncomeTax": "4163",
+    "totalTax": "19453",
+    "takeHome": "80547",
     "marginalRate": 0.2815,
-    "effectiveRate": 0.201
+    "effectiveRate": 0.19453
   },
   "married_jointly|200000|federal": {
-    "federalIncomeTax": "27682",
-    "ficaTotal": "13353.2",
+    "federalIncomeTax": "26340",
+    "ficaTotal": "14339",
     "stateIncomeTax": "0",
-    "totalTax": "41035.2",
-    "takeHome": "158964.8",
+    "totalTax": "40679",
+    "takeHome": "159321",
     "marginalRate": 0.2345,
-    "effectiveRate": 0.205176
+    "effectiveRate": 0.203395
   },
   "married_jointly|200000|ca": {
-    "federalIncomeTax": "27682",
-    "ficaTotal": "13353.2",
-    "stateIncomeTax": "10875.26",
-    "totalTax": "51910.46",
-    "takeHome": "148089.54",
+    "federalIncomeTax": "26340",
+    "ficaTotal": "14339",
+    "stateIncomeTax": "10844.38",
+    "totalTax": "51523.38",
+    "takeHome": "148476.62",
     "marginalRate": 0.3275,
-    "effectiveRate": 0.259552
+    "effectiveRate": 0.257617
   },
   "married_jointly|200000|ny": {
-    "federalIncomeTax": "27682",
-    "ficaTotal": "13353.2",
-    "stateIncomeTax": "9896.75",
-    "totalTax": "50931.95",
-    "takeHome": "149068.05",
-    "marginalRate": 0.2945,
-    "effectiveRate": 0.25466
+    "federalIncomeTax": "26340",
+    "ficaTotal": "14339",
+    "stateIncomeTax": "9712.8",
+    "totalTax": "50391.8",
+    "takeHome": "149608.2",
+    "marginalRate": 0.2935,
+    "effectiveRate": 0.251959
   },
   "married_jointly|200000|tx": {
-    "federalIncomeTax": "27682",
-    "ficaTotal": "13353.2",
+    "federalIncomeTax": "26340",
+    "ficaTotal": "14339",
     "stateIncomeTax": "0",
-    "totalTax": "41035.2",
-    "takeHome": "158964.8",
+    "totalTax": "40679",
+    "takeHome": "159321",
     "marginalRate": 0.2345,
-    "effectiveRate": 0.205176
+    "effectiveRate": 0.203395
   },
   "married_jointly|200000|pa": {
-    "federalIncomeTax": "27682",
-    "ficaTotal": "13353.2",
+    "federalIncomeTax": "26340",
+    "ficaTotal": "14339",
     "stateIncomeTax": "6140",
-    "totalTax": "47175.2",
-    "takeHome": "152824.8",
+    "totalTax": "46819",
+    "takeHome": "153181",
     "marginalRate": 0.2652,
-    "effectiveRate": 0.235876
+    "effectiveRate": 0.234095
   },
   "married_jointly|200000|oh": {
-    "federalIncomeTax": "27682",
-    "ficaTotal": "13353.2",
-    "stateIncomeTax": "5533.63",
-    "totalTax": "46568.83",
-    "takeHome": "153431.18",
-    "marginalRate": 0.2695,
-    "effectiveRate": 0.232844
+    "federalIncomeTax": "26340",
+    "ficaTotal": "14339",
+    "stateIncomeTax": "4783.63",
+    "totalTax": "45462.63",
+    "takeHome": "154537.38",
+    "marginalRate": 0.262,
+    "effectiveRate": 0.227313
   },
   "married_jointly|200000|dc": {
-    "federalIncomeTax": "27682",
-    "ficaTotal": "13353.2",
-    "stateIncomeTax": "12918",
-    "totalTax": "53953.2",
-    "takeHome": "146046.8",
+    "federalIncomeTax": "26340",
+    "ficaTotal": "14339",
+    "stateIncomeTax": "12663",
+    "totalTax": "53342",
+    "takeHome": "146658",
     "marginalRate": 0.3195,
-    "effectiveRate": 0.269766
+    "effectiveRate": 0.26671
   },
   "married_jointly|500000|federal": {
-    "federalIncomeTax": "106029",
-    "ficaTotal": "19953.2",
+    "federalIncomeTax": "102608",
+    "ficaTotal": "20939",
     "stateIncomeTax": "0",
-    "totalTax": "125982.2",
-    "takeHome": "374017.8",
+    "totalTax": "123547",
+    "takeHome": "376453",
     "marginalRate": 0.3435,
-    "effectiveRate": 0.251964
+    "effectiveRate": 0.247094
   },
   "married_jointly|500000|ca": {
-    "federalIncomeTax": "106029",
-    "ficaTotal": "19953.2",
-    "stateIncomeTax": "38775.26",
-    "totalTax": "164757.46",
-    "takeHome": "335242.54",
+    "federalIncomeTax": "102608",
+    "ficaTotal": "20939",
+    "stateIncomeTax": "38744.38",
+    "totalTax": "162291.38",
+    "takeHome": "337708.62",
     "marginalRate": 0.4365,
-    "effectiveRate": 0.329515
+    "effectiveRate": 0.324583
   },
   "married_jointly|500000|ny": {
-    "federalIncomeTax": "106029",
-    "ficaTotal": "19953.2",
-    "stateIncomeTax": "29263.13",
-    "totalTax": "155245.33",
-    "takeHome": "344754.68",
+    "federalIncomeTax": "102608",
+    "ficaTotal": "20939",
+    "stateIncomeTax": "28939.93",
+    "totalTax": "152486.93",
+    "takeHome": "347513.08",
     "marginalRate": 0.412,
-    "effectiveRate": 0.310491
+    "effectiveRate": 0.304974
   },
   "married_jointly|500000|tx": {
-    "federalIncomeTax": "106029",
-    "ficaTotal": "19953.2",
+    "federalIncomeTax": "102608",
+    "ficaTotal": "20939",
     "stateIncomeTax": "0",
-    "totalTax": "125982.2",
-    "takeHome": "374017.8",
+    "totalTax": "123547",
+    "takeHome": "376453",
     "marginalRate": 0.3435,
-    "effectiveRate": 0.251964
+    "effectiveRate": 0.247094
   },
   "married_jointly|500000|pa": {
-    "federalIncomeTax": "106029",
-    "ficaTotal": "19953.2",
+    "federalIncomeTax": "102608",
+    "ficaTotal": "20939",
     "stateIncomeTax": "15350",
-    "totalTax": "141332.2",
-    "takeHome": "358667.8",
+    "totalTax": "138897",
+    "takeHome": "361103",
     "marginalRate": 0.3742,
-    "effectiveRate": 0.282664
+    "effectiveRate": 0.277794
   },
   "married_jointly|500000|oh": {
-    "federalIncomeTax": "106029",
-    "ficaTotal": "19953.2",
-    "stateIncomeTax": "16033.63",
-    "totalTax": "142015.83",
-    "takeHome": "357984.18",
-    "marginalRate": 0.3785,
-    "effectiveRate": 0.284032
+    "federalIncomeTax": "102608",
+    "ficaTotal": "20939",
+    "stateIncomeTax": "13033.63",
+    "totalTax": "136580.63",
+    "takeHome": "363419.38",
+    "marginalRate": 0.371,
+    "effectiveRate": 0.273161
   },
   "married_jointly|500000|dc": {
-    "federalIncomeTax": "106029",
-    "ficaTotal": "19953.2",
-    "stateIncomeTax": "40074",
-    "totalTax": "166056.2",
-    "takeHome": "333943.8",
+    "federalIncomeTax": "102608",
+    "ficaTotal": "20939",
+    "stateIncomeTax": "39796.5",
+    "totalTax": "163343.5",
+    "takeHome": "336656.5",
     "marginalRate": 0.436,
-    "effectiveRate": 0.332112
+    "effectiveRate": 0.326687
   },
   "head_of_household|0|federal": {
     "federalIncomeTax": "0",
@@ -945,381 +945,381 @@
     "effectiveRate": 0
   },
   "head_of_household|25000|federal": {
-    "federalIncomeTax": "310",
+    "federalIncomeTax": "85",
     "ficaTotal": "1912.5",
     "stateIncomeTax": "0",
-    "totalTax": "2222.5",
-    "takeHome": "22777.5",
+    "totalTax": "1997.5",
+    "takeHome": "23002.5",
     "marginalRate": 0.1765,
-    "effectiveRate": 0.0889
+    "effectiveRate": 0.0799
   },
   "head_of_household|25000|ca": {
-    "federalIncomeTax": "310",
+    "federalIncomeTax": "85",
     "ficaTotal": "1912.5",
-    "stateIncomeTax": "139.2",
-    "totalTax": "2361.7",
-    "takeHome": "22638.3",
+    "stateIncomeTax": "135.88",
+    "totalTax": "2133.38",
+    "takeHome": "22866.62",
     "marginalRate": 0.1865,
-    "effectiveRate": 0.094468
+    "effectiveRate": 0.085335
   },
   "head_of_household|25000|ny": {
-    "federalIncomeTax": "310",
+    "federalIncomeTax": "85",
     "ficaTotal": "1912.5",
-    "stateIncomeTax": "557",
-    "totalTax": "2779.5",
-    "takeHome": "22220.5",
-    "marginalRate": 0.2215,
-    "effectiveRate": 0.11118
+    "stateIncomeTax": "543.2",
+    "totalTax": "2540.7",
+    "takeHome": "22459.3",
+    "marginalRate": 0.2205,
+    "effectiveRate": 0.101628
   },
   "head_of_household|25000|tx": {
-    "federalIncomeTax": "310",
+    "federalIncomeTax": "85",
     "ficaTotal": "1912.5",
     "stateIncomeTax": "0",
-    "totalTax": "2222.5",
-    "takeHome": "22777.5",
+    "totalTax": "1997.5",
+    "takeHome": "23002.5",
     "marginalRate": 0.1765,
-    "effectiveRate": 0.0889
+    "effectiveRate": 0.0799
   },
   "head_of_household|25000|pa": {
-    "federalIncomeTax": "310",
+    "federalIncomeTax": "85",
     "ficaTotal": "1912.5",
     "stateIncomeTax": "767.5",
-    "totalTax": "2990",
-    "takeHome": "22010",
+    "totalTax": "2765",
+    "takeHome": "22235",
     "marginalRate": 0.2072,
-    "effectiveRate": 0.1196
+    "effectiveRate": 0.1106
   },
   "head_of_household|25000|oh": {
-    "federalIncomeTax": "310",
+    "federalIncomeTax": "85",
     "ficaTotal": "1912.5",
     "stateIncomeTax": "0",
-    "totalTax": "2222.5",
-    "takeHome": "22777.5",
+    "totalTax": "1997.5",
+    "takeHome": "23002.5",
     "marginalRate": 0.1765,
-    "effectiveRate": 0.0889
+    "effectiveRate": 0.0799
   },
   "head_of_household|25000|dc": {
-    "federalIncomeTax": "310",
+    "federalIncomeTax": "85",
     "ficaTotal": "1912.5",
-    "stateIncomeTax": "124",
-    "totalTax": "2346.5",
-    "takeHome": "22653.5",
+    "stateIncomeTax": "34",
+    "totalTax": "2031.5",
+    "takeHome": "22968.5",
     "marginalRate": 0.2165,
-    "effectiveRate": 0.09386
+    "effectiveRate": 0.08126
   },
   "head_of_household|50000|federal": {
-    "federalIncomeTax": "3041",
+    "federalIncomeTax": "2748",
     "ficaTotal": "3825",
     "stateIncomeTax": "0",
-    "totalTax": "6866",
-    "takeHome": "43134",
+    "totalTax": "6573",
+    "takeHome": "43427",
     "marginalRate": 0.1965,
-    "effectiveRate": 0.13732
+    "effectiveRate": 0.13146
   },
   "head_of_household|50000|ca": {
-    "federalIncomeTax": "3041",
+    "federalIncomeTax": "2748",
     "ficaTotal": "3825",
-    "stateIncomeTax": "570.01",
-    "totalTax": "7436.01",
-    "takeHome": "42563.99",
+    "stateIncomeTax": "563.37",
+    "totalTax": "7136.37",
+    "takeHome": "42863.63",
     "marginalRate": 0.2165,
-    "effectiveRate": 0.14872
+    "effectiveRate": 0.142727
   },
   "head_of_household|50000|ny": {
-    "federalIncomeTax": "3041",
+    "federalIncomeTax": "2748",
     "ficaTotal": "3825",
-    "stateIncomeTax": "1885.38",
-    "totalTax": "8751.38",
-    "takeHome": "41248.63",
-    "marginalRate": 0.2515,
-    "effectiveRate": 0.175028
+    "stateIncomeTax": "1846.58",
+    "totalTax": "8419.58",
+    "takeHome": "41580.43",
+    "marginalRate": 0.2505,
+    "effectiveRate": 0.168392
   },
   "head_of_household|50000|tx": {
-    "federalIncomeTax": "3041",
+    "federalIncomeTax": "2748",
     "ficaTotal": "3825",
     "stateIncomeTax": "0",
-    "totalTax": "6866",
-    "takeHome": "43134",
+    "totalTax": "6573",
+    "takeHome": "43427",
     "marginalRate": 0.1965,
-    "effectiveRate": 0.13732
+    "effectiveRate": 0.13146
   },
   "head_of_household|50000|pa": {
-    "federalIncomeTax": "3041",
+    "federalIncomeTax": "2748",
     "ficaTotal": "3825",
     "stateIncomeTax": "1535",
-    "totalTax": "8401",
-    "takeHome": "41599",
+    "totalTax": "8108",
+    "takeHome": "41892",
     "marginalRate": 0.2272,
-    "effectiveRate": 0.16802
+    "effectiveRate": 0.16216
   },
   "head_of_household|50000|oh": {
-    "federalIncomeTax": "3041",
+    "federalIncomeTax": "2748",
     "ficaTotal": "3825",
     "stateIncomeTax": "658.63",
-    "totalTax": "7524.63",
-    "takeHome": "42475.38",
+    "totalTax": "7231.63",
+    "takeHome": "42768.38",
     "marginalRate": 0.224,
-    "effectiveRate": 0.150493
+    "effectiveRate": 0.144633
   },
   "head_of_household|50000|dc": {
-    "federalIncomeTax": "3041",
+    "federalIncomeTax": "2748",
     "ficaTotal": "3825",
-    "stateIncomeTax": "1486",
-    "totalTax": "8352",
-    "takeHome": "41648",
+    "stateIncomeTax": "1351",
+    "totalTax": "7924",
+    "takeHome": "42076",
     "marginalRate": 0.2565,
-    "effectiveRate": 0.16704
+    "effectiveRate": 0.15848
   },
   "head_of_household|75000|federal": {
-    "federalIncomeTax": "6041",
+    "federalIncomeTax": "5748",
     "ficaTotal": "5737.5",
     "stateIncomeTax": "0",
-    "totalTax": "11778.5",
-    "takeHome": "63221.5",
+    "totalTax": "11485.5",
+    "takeHome": "63514.5",
     "marginalRate": 0.1965,
-    "effectiveRate": 0.157047
+    "effectiveRate": 0.15314
   },
   "head_of_household|75000|ca": {
-    "federalIncomeTax": "6041",
+    "federalIncomeTax": "5748",
     "ficaTotal": "5737.5",
-    "stateIncomeTax": "1366.51",
-    "totalTax": "13145.01",
-    "takeHome": "61854.99",
-    "marginalRate": 0.2565,
-    "effectiveRate": 0.175267
+    "stateIncomeTax": "1347.71",
+    "totalTax": "12833.21",
+    "takeHome": "62166.79",
+    "marginalRate": 0.2453,
+    "effectiveRate": 0.171109
   },
   "head_of_household|75000|ny": {
-    "federalIncomeTax": "6041",
+    "federalIncomeTax": "5748",
     "ficaTotal": "5737.5",
-    "stateIncomeTax": "3260.38",
-    "totalTax": "15038.88",
-    "takeHome": "59961.13",
-    "marginalRate": 0.2515,
-    "effectiveRate": 0.200518
+    "stateIncomeTax": "3196.58",
+    "totalTax": "14682.08",
+    "takeHome": "60317.93",
+    "marginalRate": 0.2505,
+    "effectiveRate": 0.195761
   },
   "head_of_household|75000|tx": {
-    "federalIncomeTax": "6041",
+    "federalIncomeTax": "5748",
     "ficaTotal": "5737.5",
     "stateIncomeTax": "0",
-    "totalTax": "11778.5",
-    "takeHome": "63221.5",
+    "totalTax": "11485.5",
+    "takeHome": "63514.5",
     "marginalRate": 0.1965,
-    "effectiveRate": 0.157047
+    "effectiveRate": 0.15314
   },
   "head_of_household|75000|pa": {
-    "federalIncomeTax": "6041",
+    "federalIncomeTax": "5748",
     "ficaTotal": "5737.5",
     "stateIncomeTax": "2302.5",
-    "totalTax": "14081",
-    "takeHome": "60919",
+    "totalTax": "13788",
+    "takeHome": "61212",
     "marginalRate": 0.2272,
-    "effectiveRate": 0.187747
+    "effectiveRate": 0.18384
   },
   "head_of_household|75000|oh": {
-    "federalIncomeTax": "6041",
+    "federalIncomeTax": "5748",
     "ficaTotal": "5737.5",
     "stateIncomeTax": "1346.13",
-    "totalTax": "13124.63",
-    "takeHome": "61875.38",
+    "totalTax": "12831.63",
+    "takeHome": "62168.38",
     "marginalRate": 0.224,
-    "effectiveRate": 0.174995
+    "effectiveRate": 0.171088
   },
   "head_of_household|75000|dc": {
-    "federalIncomeTax": "6041",
+    "federalIncomeTax": "5748",
     "ficaTotal": "5737.5",
-    "stateIncomeTax": "3051.5",
-    "totalTax": "14830",
-    "takeHome": "60170",
+    "stateIncomeTax": "2905.25",
+    "totalTax": "14390.75",
+    "takeHome": "60609.25",
     "marginalRate": 0.2615,
-    "effectiveRate": 0.197733
+    "effectiveRate": 0.191877
   },
   "head_of_household|100000|federal": {
-    "federalIncomeTax": "10541",
+    "federalIncomeTax": "9588",
     "ficaTotal": "7650",
     "stateIncomeTax": "0",
-    "totalTax": "18191",
-    "takeHome": "81809",
+    "totalTax": "17238",
+    "takeHome": "82762",
     "marginalRate": 0.2965,
-    "effectiveRate": 0.18191
+    "effectiveRate": 0.17238
   },
   "head_of_household|100000|ca": {
-    "federalIncomeTax": "10541",
+    "federalIncomeTax": "9588",
     "ficaTotal": "7650",
-    "stateIncomeTax": "3069.61",
-    "totalTax": "21260.61",
-    "takeHome": "78739.39",
+    "stateIncomeTax": "3043.05",
+    "totalTax": "20281.05",
+    "takeHome": "79718.95",
     "marginalRate": 0.3765,
-    "effectiveRate": 0.212606
+    "effectiveRate": 0.202811
   },
   "head_of_household|100000|ny": {
-    "federalIncomeTax": "10541",
+    "federalIncomeTax": "9588",
     "ficaTotal": "7650",
-    "stateIncomeTax": "4635.38",
-    "totalTax": "22826.38",
-    "takeHome": "77173.63",
-    "marginalRate": 0.3515,
-    "effectiveRate": 0.228264
+    "stateIncomeTax": "4546.58",
+    "totalTax": "21784.58",
+    "takeHome": "78215.43",
+    "marginalRate": 0.3505,
+    "effectiveRate": 0.217846
   },
   "head_of_household|100000|tx": {
-    "federalIncomeTax": "10541",
+    "federalIncomeTax": "9588",
     "ficaTotal": "7650",
     "stateIncomeTax": "0",
-    "totalTax": "18191",
-    "takeHome": "81809",
+    "totalTax": "17238",
+    "takeHome": "82762",
     "marginalRate": 0.2965,
-    "effectiveRate": 0.18191
+    "effectiveRate": 0.17238
   },
   "head_of_household|100000|pa": {
-    "federalIncomeTax": "10541",
+    "federalIncomeTax": "9588",
     "ficaTotal": "7650",
     "stateIncomeTax": "3070",
-    "totalTax": "21261",
-    "takeHome": "78739",
+    "totalTax": "20308",
+    "takeHome": "79692",
     "marginalRate": 0.3272,
-    "effectiveRate": 0.21261
+    "effectiveRate": 0.20308
   },
   "head_of_household|100000|oh": {
-    "federalIncomeTax": "10541",
+    "federalIncomeTax": "9588",
     "ficaTotal": "7650",
     "stateIncomeTax": "2033.63",
-    "totalTax": "20224.63",
-    "takeHome": "79775.38",
-    "marginalRate": 0.3315,
-    "effectiveRate": 0.202246
+    "totalTax": "19271.63",
+    "takeHome": "80728.38",
+    "marginalRate": 0.324,
+    "effectiveRate": 0.192716
   },
   "head_of_household|100000|dc": {
-    "federalIncomeTax": "10541",
+    "federalIncomeTax": "9588",
     "ficaTotal": "7650",
-    "stateIncomeTax": "5038.5",
-    "totalTax": "23229.5",
-    "takeHome": "76770.5",
+    "stateIncomeTax": "4847.25",
+    "totalTax": "22085.25",
+    "takeHome": "77914.75",
     "marginalRate": 0.3815,
-    "effectiveRate": 0.232295
+    "effectiveRate": 0.220853
   },
   "head_of_household|200000|federal": {
-    "federalIncomeTax": "34093",
-    "ficaTotal": "13353.2",
+    "federalIncomeTax": "32991",
+    "ficaTotal": "14339",
     "stateIncomeTax": "0",
-    "totalTax": "47446.2",
-    "takeHome": "152553.8",
+    "totalTax": "47330",
+    "takeHome": "152670",
     "marginalRate": 0.2635,
-    "effectiveRate": 0.237231
+    "effectiveRate": 0.23665
   },
   "head_of_household|200000|ca": {
-    "federalIncomeTax": "34093",
-    "ficaTotal": "13353.2",
-    "stateIncomeTax": "12316.09",
-    "totalTax": "59762.29",
-    "takeHome": "140237.71",
+    "federalIncomeTax": "32991",
+    "ficaTotal": "14339",
+    "stateIncomeTax": "12285.21",
+    "totalTax": "59615.21",
+    "takeHome": "140384.79",
     "marginalRate": 0.3565,
-    "effectiveRate": 0.298811
+    "effectiveRate": 0.298076
   },
   "head_of_household|200000|ny": {
-    "federalIncomeTax": "34093",
-    "ficaTotal": "13353.2",
-    "stateIncomeTax": "10541.13",
-    "totalTax": "57987.33",
-    "takeHome": "142012.68",
-    "marginalRate": 0.3235,
-    "effectiveRate": 0.289937
+    "federalIncomeTax": "32991",
+    "ficaTotal": "14339",
+    "stateIncomeTax": "10352.33",
+    "totalTax": "57682.33",
+    "takeHome": "142317.68",
+    "marginalRate": 0.3225,
+    "effectiveRate": 0.288412
   },
   "head_of_household|200000|tx": {
-    "federalIncomeTax": "34093",
-    "ficaTotal": "13353.2",
+    "federalIncomeTax": "32991",
+    "ficaTotal": "14339",
     "stateIncomeTax": "0",
-    "totalTax": "47446.2",
-    "takeHome": "152553.8",
+    "totalTax": "47330",
+    "takeHome": "152670",
     "marginalRate": 0.2635,
-    "effectiveRate": 0.237231
+    "effectiveRate": 0.23665
   },
   "head_of_household|200000|pa": {
-    "federalIncomeTax": "34093",
-    "ficaTotal": "13353.2",
+    "federalIncomeTax": "32991",
+    "ficaTotal": "14339",
     "stateIncomeTax": "6140",
-    "totalTax": "53586.2",
-    "takeHome": "146413.8",
+    "totalTax": "53470",
+    "takeHome": "146530",
     "marginalRate": 0.2942,
-    "effectiveRate": 0.267931
+    "effectiveRate": 0.26735
   },
   "head_of_household|200000|oh": {
-    "federalIncomeTax": "34093",
-    "ficaTotal": "13353.2",
-    "stateIncomeTax": "5533.63",
-    "totalTax": "52979.83",
-    "takeHome": "147020.18",
-    "marginalRate": 0.2985,
-    "effectiveRate": 0.264899
+    "federalIncomeTax": "32991",
+    "ficaTotal": "14339",
+    "stateIncomeTax": "4783.63",
+    "totalTax": "52113.63",
+    "takeHome": "147886.38",
+    "marginalRate": 0.291,
+    "effectiveRate": 0.260568
   },
   "head_of_household|200000|dc": {
-    "federalIncomeTax": "34093",
-    "ficaTotal": "13353.2",
-    "stateIncomeTax": "13538.5",
-    "totalTax": "60984.7",
-    "takeHome": "139015.3",
+    "federalIncomeTax": "32991",
+    "ficaTotal": "14339",
+    "stateIncomeTax": "13347.25",
+    "totalTax": "60677.25",
+    "takeHome": "139322.75",
     "marginalRate": 0.3485,
-    "effectiveRate": 0.304924
+    "effectiveRate": 0.303386
   },
   "head_of_household|500000|federal": {
-    "federalIncomeTax": "136017",
-    "ficaTotal": "20403.2",
+    "federalIncomeTax": "133506.5",
+    "ficaTotal": "21389",
     "stateIncomeTax": "0",
-    "totalTax": "156420.2",
-    "takeHome": "343579.8",
+    "totalTax": "154895.5",
+    "takeHome": "345104.5",
     "marginalRate": 0.3735,
-    "effectiveRate": 0.31284
+    "effectiveRate": 0.309791
   },
   "head_of_household|500000|ca": {
-    "federalIncomeTax": "136017",
-    "ficaTotal": "20403.2",
-    "stateIncomeTax": "40357.05",
-    "totalTax": "196777.25",
-    "takeHome": "303222.75",
+    "federalIncomeTax": "133506.5",
+    "ficaTotal": "21389",
+    "stateIncomeTax": "40322.85",
+    "totalTax": "195218.35",
+    "takeHome": "304781.65",
     "marginalRate": 0.4765,
-    "effectiveRate": 0.393554
+    "effectiveRate": 0.390437
   },
   "head_of_household|500000|ny": {
-    "federalIncomeTax": "136017",
-    "ficaTotal": "20403.2",
-    "stateIncomeTax": "30406.88",
-    "totalTax": "186827.08",
-    "takeHome": "313172.93",
+    "federalIncomeTax": "133506.5",
+    "ficaTotal": "21389",
+    "stateIncomeTax": "30137.58",
+    "totalTax": "185033.08",
+    "takeHome": "314966.93",
     "marginalRate": 0.442,
-    "effectiveRate": 0.373654
+    "effectiveRate": 0.370066
   },
   "head_of_household|500000|tx": {
-    "federalIncomeTax": "136017",
-    "ficaTotal": "20403.2",
+    "federalIncomeTax": "133506.5",
+    "ficaTotal": "21389",
     "stateIncomeTax": "0",
-    "totalTax": "156420.2",
-    "takeHome": "343579.8",
+    "totalTax": "154895.5",
+    "takeHome": "345104.5",
     "marginalRate": 0.3735,
-    "effectiveRate": 0.31284
+    "effectiveRate": 0.309791
   },
   "head_of_household|500000|pa": {
-    "federalIncomeTax": "136017",
-    "ficaTotal": "20403.2",
+    "federalIncomeTax": "133506.5",
+    "ficaTotal": "21389",
     "stateIncomeTax": "15350",
-    "totalTax": "171770.2",
-    "takeHome": "328229.8",
+    "totalTax": "170245.5",
+    "takeHome": "329754.5",
     "marginalRate": 0.4042,
-    "effectiveRate": 0.34354
+    "effectiveRate": 0.340491
   },
   "head_of_household|500000|oh": {
-    "federalIncomeTax": "136017",
-    "ficaTotal": "20403.2",
-    "stateIncomeTax": "16033.63",
-    "totalTax": "172453.83",
-    "takeHome": "327546.18",
-    "marginalRate": 0.4085,
-    "effectiveRate": 0.344908
+    "federalIncomeTax": "133506.5",
+    "ficaTotal": "21389",
+    "stateIncomeTax": "13033.63",
+    "totalTax": "167929.13",
+    "takeHome": "332070.88",
+    "marginalRate": 0.401,
+    "effectiveRate": 0.335858
   },
   "head_of_household|500000|dc": {
-    "federalIncomeTax": "136017",
-    "ficaTotal": "20403.2",
-    "stateIncomeTax": "40749.25",
-    "totalTax": "197169.45",
-    "takeHome": "302830.55",
+    "federalIncomeTax": "133506.5",
+    "ficaTotal": "21389",
+    "stateIncomeTax": "40541.13",
+    "totalTax": "195436.63",
+    "takeHome": "304563.38",
     "marginalRate": 0.466,
-    "effectiveRate": 0.394339
+    "effectiveRate": 0.390873
   }
 }

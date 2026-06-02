@@ -1,24 +1,46 @@
 {
   "id": "US-KY",
   "name": "Kentucky",
-  "taxYear": 2024,
+  "taxYear": 2026,
   "hasIncomeTax": true,
-  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "supportedFilingStatuses": [
+    "single",
+    "married_jointly",
+    "head_of_household"
+  ],
   "bracketsByFilingStatus": {
-    "single": [{ "lowerBound": 0, "rate": 0.04 }],
-    "married_jointly": [{ "lowerBound": 0, "rate": 0.04 }],
-    "head_of_household": [{ "lowerBound": 0, "rate": 0.04 }]
+    "single": [
+      {
+        "lowerBound": 0,
+        "rate": 0.035
+      }
+    ],
+    "married_jointly": [
+      {
+        "lowerBound": 0,
+        "rate": 0.035
+      }
+    ],
+    "head_of_household": [
+      {
+        "lowerBound": 0,
+        "rate": 0.035
+      }
+    ]
   },
   "standardDeductionByFilingStatus": {
-    "single": 3160,
-    "married_jointly": 6320,
-    "head_of_household": 3160
+    "single": 3360,
+    "married_jointly": 6720,
+    "head_of_household": 3360
   },
   "citation": {
     "sourceUrl": "https://revenue.ky.gov/Individual/Individual-Income-Tax/Pages/default.aspx",
-    "sourceDocument": "Kentucky DOR, 4.0% flat tax (2024); standard deduction $3,160 per taxpayer",
-    "effectiveYear": 2024,
+    "sourceDocument": "Kentucky DOR, 3.5% flat tax (2026, down from 4.0%); 2026 standard deduction $3,360 per taxpayer",
+    "effectiveYear": 2026,
     "dateRetrieved": "2026-06-02"
   },
-  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+  "effectiveDateRange": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  }
 }

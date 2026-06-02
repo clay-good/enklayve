@@ -48,8 +48,8 @@ describe("auto deduction picks the larger", () => {
     );
     expect(r.federal.deduction.kind).toBe("itemized");
     expect(cents(r.federal.deduction.amount)).toBe("33000");
-    // taxable 167,000 → $33,122.50.
-    expect(cents(r.federal.incomeTax)).toBe("33122.5");
+    // taxable 167,000 → $32,678.00.
+    expect(cents(r.federal.incomeTax)).toBe("32678");
   });
 
   it("falls back to the standard deduction when itemized is smaller", () => {
@@ -58,7 +58,7 @@ describe("auto deduction picks the larger", () => {
       { federal: ds.federal, fica: ds.fica },
     );
     expect(r.federal.deduction.kind).toBe("standard");
-    expect(cents(r.federal.deduction.amount)).toBe("14600");
+    expect(cents(r.federal.deduction.amount)).toBe("16100");
   });
 
   it("forced standard mode ignores larger itemized totals", () => {
@@ -72,6 +72,6 @@ describe("auto deduction picks the larger", () => {
       { federal: ds.federal, fica: ds.fica },
     );
     expect(r.federal.deduction.kind).toBe("standard");
-    expect(cents(r.federal.incomeTax)).toBe("37538.5"); // taxable 185,400
+    expect(cents(r.federal.incomeTax)).toBe("36734"); // taxable 183,900
   });
 });

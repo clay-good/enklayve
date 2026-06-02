@@ -1,5 +1,5 @@
 {
-  "taxYear": 2024,
+  "taxYear": 2026,
   "beginAge": 73,
   "distributionPeriodByAge": {
     "72": 27.4,
@@ -54,8 +54,8 @@
   },
   "citation": {
     "sourceUrl": "https://www.irs.gov/publications/p590b",
-    "sourceDocument": "IRS Publication 590-B, Appendix B, Uniform Lifetime Table (effective 2022)",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2024-02-01"
+    "sourceDocument": "IRS Publication 590-B, Appendix B, Uniform Lifetime Table (effective 2022, current for 2026)",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   }
 }

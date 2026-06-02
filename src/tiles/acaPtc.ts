@@ -2,8 +2,9 @@
  * ACA Premium Tax Credit tile (BUILD-SPEC.md §4.2): the marketplace subsidy
  * estimate. The credit is your benchmark (second-lowest-cost silver) plan
  * premium minus your expected contribution — income times the applicable
- * percentage for your FPL band, on the ARPA/IRA-enhanced schedule with no
- * 400%-FPL cliff. The applicable-percentage table is bundled and cited; the
+ * percentage for your FPL band. For plan year 2026 the enhanced subsidies have
+ * expired, so the applicable percentages rise and the 400%-FPL cliff returns
+ * (no credit above it). The applicable-percentage table is bundled and cited; the
  * benchmark premium is per-county, so you enter it (look it up on
  * HealthCare.gov). Reads household size, state, and income from My Situation.
  */
@@ -176,6 +177,12 @@ export function mountAcaPtc(ctx: TileContext): void {
         value:
           "Income below 100% of the poverty line usually points to Medicaid (in expansion states) rather than a marketplace credit. Check the Medicaid tile.",
       });
+    } else if (r.aboveSubsidyCap) {
+      lines.push({
+        label: "Heads up",
+        value:
+          "Above 400% of the poverty line there is no premium tax credit for 2026: the enhanced subsidies expired at the end of 2025 and the cliff returned, so you pay the full premium.",
+      });
     } else if (!r.eligible) {
       lines.push({
         label: "Note",
@@ -240,7 +247,7 @@ export const acaPtcTile: TileDefinition = {
   description: "Marketplace subsidy from the applicable-percentage table.",
   keywords: ["aca", "obamacare", "premium tax credit", "subsidy", "marketplace", "healthcare.gov"],
   status: "ready",
-  how: "If you buy health coverage on the marketplace, the premium tax credit caps what you pay for a benchmark plan at a set share of your income. We compute that expected contribution (your income times the applicable percentage for your income relative to the federal poverty line) and subtract it from the benchmark premium to estimate your monthly credit. Under the enhanced rules in effect through 2025, that share tops out at 8.5% of income with no cliff above 400% of the poverty line.\n\nThe applicable-percentage table is bundled and cited. The one figure that's local, the benchmark (second-lowest-cost silver) plan premium for your county and ages, you enter yourself; look it up with the HealthCare.gov plan preview or your state marketplace. The actual credit is reconciled on your tax return (Form 8962) against your real income, so treat this as an estimate.",
+  how: "If you buy health coverage on the marketplace, the premium tax credit caps what you pay for a benchmark plan at a set share of your income. We compute that expected contribution (your income times the applicable percentage for your income relative to the federal poverty line) and subtract it from the benchmark premium to estimate your monthly credit. The ARPA/IRA-enhanced subsidies expired at the end of 2025, so for 2026 the applicable percentages rise across the board and the 400%-of-poverty cliff returns: above that line there is no credit and you pay the full premium.\n\nThe applicable-percentage table is bundled and cited. The one figure that's local, the benchmark (second-lowest-cost silver) plan premium for your county and ages, you enter yourself; look it up with the HealthCare.gov plan preview or your state marketplace. The actual credit is reconciled on your tax return (Form 8962) against your real income, so treat this as an estimate.",
   resources: [
     {
       label: "HealthCare.gov, see plans & prices",

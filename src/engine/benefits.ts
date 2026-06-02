@@ -292,6 +292,23 @@ export function acaApplicablePercent(fplPct: number, data: AcaData): number {
   return 0;
 }
 
+/**
+ * Whether an exact FPL% falls within a credit-eligible band. With the post-2025
+ * table the top band ends at 400% FPL (the subsidy cliff returns), so income
+ * above it is not covered and earns no credit; an open-ended top band (the
+ * ARPA-enhanced schedule) instead covers everything above its floor.
+ */
+export function acaCovered(fplPct: number, data: AcaData): boolean {
+  for (const band of data.applicablePercentage) {
+    if (band.fplHigh === null) {
+      if (fplPct >= band.fplLow) return true;
+    } else if (fplPct >= band.fplLow && fplPct < band.fplHigh) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export interface AcaResult {
   /** Household income as a percentage of the poverty line. */
   fplPercent: number;
@@ -309,15 +326,19 @@ export interface AcaResult {
   eligible: boolean;
   /** True when income is below 100% FPL (Medicaid territory in expansion states). */
   belowMedicaidFloor: boolean;
+  /** True when income is above the top subsidy band (the 400% FPL cliff, restored for 2026). */
+  aboveSubsidyCap: boolean;
 }
 
 /**
  * Estimate the ACA premium tax credit (§4.2). The credit is the benchmark
  * (second-lowest-cost silver) plan premium minus the household's expected
- * contribution — income times the applicable percentage for its FPL band, on the
- * ARPA/IRA-enhanced schedule (no 400%-FPL cliff). The benchmark premium is
- * per-county, so the user supplies it (from HealthCare.gov); we ship the cited
- * applicable-percentage table and compute the rest deterministically.
+ * contribution — income times the applicable percentage for its FPL band. For
+ * plan year 2026 the ARPA/IRA-enhanced subsidies have expired, so the table
+ * reverts to the higher applicable percentages and the 400%-FPL cliff returns:
+ * above 400% FPL there is no credit. The benchmark premium is per-county, so the
+ * user supplies it (from HealthCare.gov); we ship the cited applicable-percentage
+ * table and compute the rest deterministically.
  */
 export function estimatePremiumTaxCredit(
   input: { householdSize: number; annualIncome: number; benchmarkMonthlyPremium: number },
@@ -325,14 +346,17 @@ export function estimatePremiumTaxCredit(
   fpl: FederalPovertyLevelData,
 ): AcaResult {
   const pct = fplPercent(input.annualIncome, input.householdSize, fpl);
+  const belowMedicaidFloor = pct < 100;
+  // Above the top band (the 400% FPL cliff, restored for plan year 2026 once the
+  // enhanced subsidies expired) there is no premium tax credit at all.
+  const aboveSubsidyCap = pct >= 100 && !acaCovered(pct, aca);
   const applicablePercent = acaApplicablePercent(pct, aca);
   const expectedAnnual = Money.from(Math.max(0, input.annualIncome)).multiply(
     applicablePercent / 100,
   );
   const benchmarkAnnual = Money.from(Math.max(0, input.benchmarkMonthlyPremium)).multiply(12);
   const rawCredit = benchmarkAnnual.subtract(expectedAnnual);
-  const annualCredit = rawCredit.isNegative() ? Money.zero() : rawCredit;
-  const belowMedicaidFloor = pct < 100;
+  const annualCredit = aboveSubsidyCap || rawCredit.isNegative() ? Money.zero() : rawCredit;
   return {
     fplPercent: pct,
     applicablePercent,
@@ -340,7 +364,8 @@ export function estimatePremiumTaxCredit(
     expectedMonthlyContribution: expectedAnnual.divide(12),
     monthlyCredit: annualCredit.divide(12),
     annualCredit,
-    eligible: pct >= 100 && annualCredit.greaterThan(0),
+    eligible: pct >= 100 && !aboveSubsidyCap && annualCredit.greaterThan(0),
     belowMedicaidFloor,
+    aboveSubsidyCap,
   };
 }

@@ -1,13 +1,32 @@
 {
   "id": "US-GA",
   "name": "Georgia",
-  "taxYear": 2024,
+  "taxYear": 2026,
   "hasIncomeTax": true,
-  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "supportedFilingStatuses": [
+    "single",
+    "married_jointly",
+    "head_of_household"
+  ],
   "bracketsByFilingStatus": {
-    "single": [{ "lowerBound": 0, "rate": 0.0539 }],
-    "married_jointly": [{ "lowerBound": 0, "rate": 0.0539 }],
-    "head_of_household": [{ "lowerBound": 0, "rate": 0.0539 }]
+    "single": [
+      {
+        "lowerBound": 0,
+        "rate": 0.0499
+      }
+    ],
+    "married_jointly": [
+      {
+        "lowerBound": 0,
+        "rate": 0.0499
+      }
+    ],
+    "head_of_household": [
+      {
+        "lowerBound": 0,
+        "rate": 0.0499
+      }
+    ]
   },
   "standardDeductionByFilingStatus": {
     "single": 12000,
@@ -15,10 +34,13 @@
     "head_of_household": 12000
   },
   "citation": {
-    "sourceUrl": "https://dor.georgia.gov/taxes/individual-taxes",
-    "sourceDocument": "Georgia DOR, 5.39% flat tax (2024); standard deduction $12,000/$24,000",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2024-02-01"
+    "sourceUrl": "https://dor.georgia.gov/taxes/important-tax-updates",
+    "sourceDocument": "Georgia DOR / HB 463, 4.99% flat individual income tax effective Jan 1, 2026; standard deduction $12,000/$24,000 (rises in 2027)",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   },
-  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+  "effectiveDateRange": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  }
 }

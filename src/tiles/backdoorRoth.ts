@@ -25,7 +25,7 @@ type Mode = "backdoor" | "mega";
 const PRO_RATA_CITATION: CitationData = {
   sourceUrl: "https://www.irs.gov/publications/p590a",
   sourceDocument: "IRS Publication 590-A, IRA conversion pro-rata rule (IRC §408(d)(2))",
-  effectiveYear: 2024,
+  effectiveYear: 2026,
   dateRetrieved: "2026-05-29",
 };
 
@@ -47,10 +47,10 @@ function iraLimitFor(age: number, l: RetirementLimitsData["limits"]): number {
 const EXAMPLE: Fields = {
   mode: "backdoor",
   age: 35,
-  contribution: 7000,
+  contribution: 7500,
   pretaxIra: 0,
   ordinaryRatePct: 24,
-  electiveDeferral: 23000,
+  electiveDeferral: 24500,
   employerContributions: 8000,
 };
 
@@ -59,10 +59,10 @@ function readFields(p: URLSearchParams): Fields {
   return {
     mode,
     age: Math.round(parseNonNegative(p.get("age"), 35)),
-    contribution: p.has("c") ? parseNonNegative(p.get("c"), 0) : 7000,
+    contribution: p.has("c") ? parseNonNegative(p.get("c"), 0) : 7500,
     pretaxIra: parseNonNegative(p.get("pt"), 0),
     ordinaryRatePct: parseNonNegative(p.get("ord"), 24),
-    electiveDeferral: parseNonNegative(p.get("ed"), 23000),
+    electiveDeferral: parseNonNegative(p.get("ed"), 24500),
     employerContributions: parseNonNegative(p.get("er"), 0),
   };
 }
@@ -229,7 +229,7 @@ export function mountBackdoorRoth(ctx: TileContext): void {
       contribution: parseNonNegative(contribInput.value, 0),
       pretaxIra: parseNonNegative(pretaxInput.value, 0),
       ordinaryRatePct: parseNonNegative(ordInput.value, 24),
-      electiveDeferral: parseNonNegative(edInput.value, 23000),
+      electiveDeferral: parseNonNegative(edInput.value, 24500),
       employerContributions: parseNonNegative(erInput.value, 0),
     };
     syncGroups();
