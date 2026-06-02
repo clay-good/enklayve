@@ -457,7 +457,7 @@ function homeSearch(navigate: (id: string | null) => void): HTMLElement {
  */
 function renderHome(container: HTMLElement, navigate: (id: string | null) => void): void {
   clear(container);
-  document.title = "enklayve — personal finance";
+  document.title = "enklayve — free, private money tools that show their math";
 
   const hero = el(
     "section",
@@ -465,7 +465,7 @@ function renderHome(container: HTMLElement, navigate: (id: string | null) => voi
     el("h1", { class: "hero-title", text: "Your money, made simple." }),
     el("p", {
       class: "hero-sub",
-      text: "See your real paycheck, what you owe in taxes, what help you might qualify for, and the next smart move. It is free, it is private, and everything stays on your device.",
+      text: "Your real take-home pay, the taxes you owe, the benefits you might be missing, and your next smart move. Free forever, truly private, and every number shows its math — computed right here on your device, never uploaded.",
     }),
   );
 
@@ -651,7 +651,7 @@ function renderAllTools(container: HTMLElement, navigate: (id: string | null) =>
     el("h1", { class: "tile-title", text: "All tools" }),
     el("p", {
       class: "tile-desc",
-      text: "Every enklayve tool, grouped by pillar. Each runs entirely on your device.",
+      text: "Every enklayve tool, grouped by topic. Each runs entirely on your device.",
     }),
   );
 

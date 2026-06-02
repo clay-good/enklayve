@@ -130,7 +130,7 @@ See [docs/specs/SPEC.md](docs/specs/SPEC.md) (the vision + Phases 0–11) and [d
 | FAFSA Student Aid Index | The published need-analysis methodology, every step shown |
 | Pell Grant | The award from the SAI |
 
-### Where You Stand
+### Your big picture
 
 | Tool | What it answers |
 |---|---|

@@ -58,8 +58,8 @@ export const PILLARS: PillarMeta[] = [
   { id: "owed", title: "Benefits & Aid", blurb: "Benefits and aid you may qualify for." },
   {
     id: "stand",
-    title: "Where You Stand",
-    blurb: "Your calm overview and the next right step.",
+    title: "Your big picture",
+    blurb: "Your calm overview and your next right step.",
   },
 ];
 
@@ -104,12 +104,6 @@ export interface TileDefinition {
   how?: string;
   /** Trusted external resources to learn more (shown as "Learn more" links). */
   resources?: { label: string; url: string }[];
-}
-
-/** A learn-more resource link. */
-export interface ResourceLink {
-  label: string;
-  url: string;
 }
 
 /** The text the fuzzy palette searches for a tile. */
