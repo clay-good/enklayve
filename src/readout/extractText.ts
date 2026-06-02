@@ -93,6 +93,6 @@ export const extractTextFromFile: TextExtractor = async (file) => {
     return extractPlainText(file);
   }
   throw new Error(
-    "Unsupported file. Drop a typed PDF, a Word (.docx) document, or paste the text. Scanned images need OCR, which is coming with offline support.",
+    "Unsupported file. Drop a typed PDF, a Word (.docx) document, or paste the text. Scanned images need OCR, which is coming soon.",
   );
 };

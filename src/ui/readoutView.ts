@@ -135,7 +135,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     el("span", { class: "readout-dropzone-title", text: "Drop a file here, or choose one" }),
     el("span", {
       class: "readout-dropzone-sub",
-      text: "Typed PDF, Word (.docx), or text. Scanned images need OCR, which lands with offline support.",
+      text: "Typed PDF, Word (.docx), or text. Scanned images need OCR, which is coming soon.",
     }),
     fileInput,
   );

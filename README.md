@@ -15,6 +15,20 @@ Scope is the **United States** today (federal and state taxes and benefits); Eur
 
 See [docs/specs/SPEC.md](docs/specs/SPEC.md) (the vision + Phases 0–11) and [docs/specs/SPEC-2.md](docs/specs/SPEC-2.md) (experience, ingestion, guidance + Phases 12–17) for the full plan.
 
+### By the numbers
+
+A verifiable snapshot — every figure here is reproducible from the repo, not marketing.
+
+| Metric | Value | Where to check |
+|---|---|---|
+| Deterministic tools | **55** across 8 money areas | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
+| Tax jurisdictions | **24** — 14 income-tax states + DC + 9 no-income-tax | [`data/state-*-income-tax-*.json`](data) |
+| Cited dataset shards | **41**, each with a sibling `.sha256` + manifest entry | [`data/manifest.json`](data/manifest.json) |
+| Tests | **623** unit/golden across 53 files, **+11** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
+| Auto-persisted user data | **0** — only the locale preference touches `localStorage` | `npm run audit` |
+| UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
+
 ---
 
 ## Table of contents
@@ -41,7 +55,7 @@ See [docs/specs/SPEC.md](docs/specs/SPEC.md) (the vision + Phases 0–11) and [d
 
 ## What you can do with it
 
-**56 deterministic tools**, each with a worked example, per-figure citations, a plain-English "How this works," "Learn more" links, and deep-linkable URL state. They're organized into eight plainly-named money areas (the browse taxonomy; the underlying engine is shared so a number entered in one tool prefills every other):
+**55 deterministic tools**, each with a worked example, per-figure citations, a plain-English "How this works," "Learn more" links, and deep-linkable URL state. They're organized into eight plainly-named money areas (the browse taxonomy; the underlying engine is shared so a number entered in one tool prefills every other):
 
 ### Paycheck & Taxes
 
@@ -198,7 +212,7 @@ The home is spelled out plainly and stripped to the essentials (redesigned 2026-
 +---------------------------------------------------------------+
 ```
 
-Every view is **vertical-scroll only on every device width** — form controls shrink inside their grid track (`min-width: 0`), wide "show the math" tables and chart timelines get their own contained horizontal scroll, and an `overflow-x: clip` backstop on both the content column *and the document root* guarantees the viewport itself never scrolls sideways (the root clip keeps vertical scroll and the sticky header intact, so even the header and footer can't leak width). `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch. A Playwright suite **measures** this — every view and all 56 tools, from 320px to 1440px — so a regression fails CI rather than shipping.
+Every view is **vertical-scroll only on every device width** — form controls shrink inside their grid track (`min-width: 0`), wide "show the math" tables and chart timelines get their own contained horizontal scroll, and an `overflow-x: clip` backstop on both the content column *and the document root* guarantees the viewport itself never scrolls sideways (the root clip keeps vertical scroll and the sticky header intact, so even the header and footer can't leak width). `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch. A Playwright suite **measures** this — every view and all 55 tools, from 320px to 1440px — so a regression fails CI rather than shipping.
 
 ---
 
@@ -214,7 +228,7 @@ flowchart TD
         CP["⌘K command palette (fuzzy)"]
         CH["accessible charts (donut / flow / timeline)"]
     end
-    subgraph TILES["src/tiles — 56 calculators"]
+    subgraph TILES["src/tiles — 55 calculators"]
         T1["one module per tool"]
     end
     subgraph PROFILE["src/profile — My Situation"]
@@ -376,9 +390,9 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 - **Provenance gate.** Every shipped figure must resolve to a non-empty citation — no orphan numbers ship.
 - **Accessibility.** axe-core runs inside the test suite across the home, About, All Tools, the Readout, the Report, and every tile form, with **zero violations**.
 - **Release audit.** `npm run audit` mechanically verifies CSP `connect-src 'none'`, no cross-origin loads in the built output, full citation coverage, and no sensitive persistence.
-- **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 56 tools** at a 360px phone, the **offline** service worker (loads with the network cut), and the deep-link → compute path. It runs as its own CI job so the unit suite stays fast.
+- **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 55 tools** at a 360px phone, the **offline** service worker (loads with the network cut), and the deep-link → compute path. It runs as its own CI job so the unit suite stays fast.
 
-**626 unit/golden tests across 53 files** (plus 11 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**623 unit/golden tests across 53 files** (plus 11 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -428,7 +442,7 @@ See the spec files for the full per-wave history.
 |---|---|
 | `src/engine` | Money math, citation/provenance, the tax evaluator, and per-domain math |
 | `src/data` | Dataset schemas, integrity check, manifest loader, fail-safe gate, browser loader |
-| `src/tiles` | One module per calculator (56 of them) + the registry |
+| `src/tiles` | One module per calculator (55 of them) + the registry |
 | `src/ui` | Render layer, the light theme, result card, command palette, router, charts, views |
 | `src/profile` | My Situation — the in-memory session profile and portable encrypted export |
 | `src/readout` | Anchored extractors, the confirm flow, and the Readout Report builder |
@@ -497,7 +511,7 @@ The [launch checklist](docs/launch-checklist.md) walks every acceptance criterio
 Deferred *for accuracy or scope*, not faked:
 
 - **International** (Europe → India, China, Russia) as each jurisdiction's rules are learned properly. Be right before being everywhere.
-- **Income-tax states beyond the seeded 24** — added through the staggered annual refresh (16 income-tax states + DC and all nine no-income-tax states already ship). Idaho and Utah are held this wave for accuracy (see the [state coverage cheat sheet](#state-coverage-cheat-sheet)).
+- **Income-tax states beyond the seeded 24** — added through the staggered annual refresh (14 income-tax states + DC and all nine no-income-tax states already ship). Idaho and Utah are held this wave for accuracy (see the [state coverage cheat sheet](#state-coverage-cheat-sheet)).
 - **OCR for scanned/photographed documents** — typed PDF and Word `.docx` ingestion ship today; the lower-confidence OCR *flagging* is already built, and bundling the on-device OCR engine itself is the remaining follow-up (it lands with the offline-cached lazy chunks).
 - **i18n string extraction** — the locale preference persists; a full pre-rendered-variant extraction is held rather than ship a speculative abstraction.
 - **Per-filing-status graduated state schedules** — for any future state whose marginal tiers differ by filing status (none of the seeded income-tax states do).
