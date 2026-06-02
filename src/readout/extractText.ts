@@ -50,6 +50,22 @@ async function extractPdf(file: File): Promise<ExtractedText> {
   return { text: pages.join("\n"), pages, source: "typed" };
 }
 
+/** Read a Word (.docx) document on the device with mammoth, dynamically imported
+ * so it never weighs down the shell and loads only when a Word file is read.
+ * mammoth resolves its browser build via package `browser` fields, so unzipping
+ * and file reads happen in the browser with no network access — honoring
+ * `connect-src 'none'`. We take the raw text (not HTML), since the anchored
+ * extractors read labels and box numbers, not markup. */
+async function extractDocx(file: File): Promise<ExtractedText> {
+  const mammoth = await import("mammoth");
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer });
+  const text = result.value.replace(/\r\n/g, "\n").trim();
+  // mammoth flattens a .docx to a single text stream; there are no hard page
+  // boundaries in the XML, so the whole document is one "page" to anchor within.
+  return { text, pages: [text], source: "typed" };
+}
+
 /** Read a plain-text file (also used as the manual paste/upload fallback). */
 async function extractPlainText(file: File): Promise<ExtractedText> {
   const text = await file.text();
@@ -57,19 +73,26 @@ async function extractPlainText(file: File): Promise<ExtractedText> {
 }
 
 /**
- * Extract text from a supported document. Typed PDFs and plain text are read
- * deterministically on the device. Scanned images would need the OCR fallback
- * (a clearly-labeled, lower-confidence path that lands with offline support).
+ * Extract text from a supported document. Typed PDFs, Word documents, and plain
+ * text are read deterministically on the device. Scanned images would need the
+ * OCR fallback (a clearly-labeled, lower-confidence path that lands with offline
+ * support).
  */
 export const extractTextFromFile: TextExtractor = async (file) => {
   const name = file.name.toLowerCase();
   if (name.endsWith(".pdf") || file.type === "application/pdf") {
     return extractPdf(file);
   }
+  if (
+    name.endsWith(".docx") ||
+    file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  ) {
+    return extractDocx(file);
+  }
   if (name.endsWith(".txt") || name.endsWith(".text") || file.type.startsWith("text/")) {
     return extractPlainText(file);
   }
   throw new Error(
-    "Unsupported file. Drop a typed PDF or paste the text. Scanned images need OCR, which is coming with offline support.",
+    "Unsupported file. Drop a typed PDF, a Word (.docx) document, or paste the text. Scanned images need OCR, which is coming with offline support.",
   );
 };

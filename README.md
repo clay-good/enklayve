@@ -199,7 +199,7 @@ The home is spelled out plainly and stripped to the essentials (redesigned 2026-
 +---------------------------------------------------------------+
 ```
 
-Every view is **vertical-scroll only on every device width** — form controls shrink inside their grid track (`min-width: 0`), wide "show the math" tables get their own contained horizontal scroll, an `overflow-x: clip` backstop guards the content column, and `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch.
+Every view is **vertical-scroll only on every device width** — form controls shrink inside their grid track (`min-width: 0`), wide "show the math" tables and chart timelines get their own contained horizontal scroll, and an `overflow-x: clip` backstop on both the content column *and the document root* guarantees the viewport itself never scrolls sideways (the root clip keeps vertical scroll and the sticky header intact, so even the header and footer can't leak width). `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch.
 
 ---
 
@@ -215,7 +215,7 @@ flowchart TD
         CP["⌘K command palette (fuzzy)"]
         CH["accessible charts (donut / flow / timeline)"]
     end
-    subgraph TILES["src/tiles — 55 calculators"]
+    subgraph TILES["src/tiles — 56 calculators"]
         T1["one module per tool"]
     end
     subgraph PROFILE["src/profile — My Situation"]
@@ -330,8 +330,8 @@ sequenceDiagram
     participant V as Readout view
     participant X as Extractor (anchored, versioned)
     participant P as My Situation
-    U->>V: drop a typed PDF (W-2, 1040, 1099, 1095-A, 1098, pay stub, FAFSA SS)
-    V->>X: extract text on-device (pdf.js, dynamically imported)
+    U->>V: drop a typed PDF or Word .docx (W-2, 1040, 1099, 1095-A, 1098, pay stub, FAFSA SS)
+    V->>X: extract text on-device (pdf.js / mammoth, dynamically imported)
     X->>X: detect kind + form revision → revision-pinned anchors
     X-->>V: typed fields, each with confidence + needs-review
     Note over X: unrecognized revision → flagged, not guessed<br/>OCR text → flagged lower-confidence
@@ -341,7 +341,7 @@ sequenceDiagram
     V-->>U: instant summary — effective rate, take-home, next right step
 ```
 
-Every document family in the spec has an extractor: the **typed W-2 / 1040 / pay stub**, the **1099 series** (INT, DIV, NEC, B), **1095-A**, **1098**, and the **FAFSA Submission Summary**. pdf.js is code-split into its own chunk and its worker is a same-origin asset configured to fetch nothing, so `connect-src 'none'` stays literally true.
+Every document family in the spec has an extractor: the **typed W-2 / 1040 / pay stub**, the **1099 series** (INT, DIV, NEC, B), **1095-A**, **1098**, and the **FAFSA Submission Summary**. Typed PDFs are read with **pdf.js** and **Word `.docx`** files with **mammoth** — both dynamically imported (each code-splits into its own lazy chunk, so the shell stays light), and both run fully on-device (pdf.js's worker is a same-origin asset configured to fetch nothing; mammoth unzips in memory via JSZip and fetches nothing), so `connect-src 'none'` stays literally true. The same anchored, revision-pinned extractors read either source, since both reduce to text.
 
 ---
 
@@ -364,7 +364,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 - **Accessibility.** axe-core runs inside the test suite across the home, About, All Tools, the Readout, the Report, and every tile form, with **zero violations**.
 - **Release audit.** `npm run audit` mechanically verifies CSP `connect-src 'none'`, no cross-origin loads in the built output, full citation coverage, and no sensitive persistence.
 
-**608 tests across 52 files pass today**, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**612 tests across 53 files pass today**, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -400,7 +400,7 @@ All phases from both specs are complete or at a deliberately-deferred boundary. 
 | 10 | ✅ | CI, the release audit, and Cloudflare Git-integration deploy |
 | 11 | ✅ | Crawlability (per-tile shells, sitemap, robots), on-page SEO/social, docs, mobile responsiveness |
 | 12–13 | ✅ | My Situation (session profile + encrypted export); the home (redesigned to three calm zones, §0.7) |
-| 14 | ✅ | The Readout — every document family has an anchored, revision-pinned extractor |
+| 14 | ✅ | The Readout — every document family has an anchored, revision-pinned extractor; reads typed PDF (pdf.js) and Word `.docx` (mammoth) on-device |
 | 15–16 | ✅ | My Plan (the guidance engine); My Readout Report |
 | 17 | ✅ | The §6 expansion catalog — budgeting, debt, home, open enrollment, tax moves, protection, long-horizon |
 
@@ -414,7 +414,7 @@ See the spec files for the full per-wave history.
 |---|---|
 | `src/engine` | Money math, citation/provenance, the tax evaluator, and per-domain math |
 | `src/data` | Dataset schemas, integrity check, manifest loader, fail-safe gate, browser loader |
-| `src/tiles` | One module per calculator (55 of them) + the registry |
+| `src/tiles` | One module per calculator (56 of them) + the registry |
 | `src/ui` | Render layer, the light theme, result card, command palette, router, charts, views |
 | `src/profile` | My Situation — the in-memory session profile and portable encrypted export |
 | `src/readout` | Anchored extractors, the confirm flow, and the Readout Report builder |
@@ -481,8 +481,7 @@ Deferred *for accuracy or scope*, not faked:
 
 - **International** (Europe → India, China, Russia) as each jurisdiction's rules are learned properly. Be right before being everywhere.
 - **States beyond the seeded eleven** — added through the staggered annual refresh.
-- **OCR + Word (.docx) document ingestion** — the anchored typed-PDF Readout ships today; the labeled OCR fallback and mammoth `.docx` parsing land on the same extractor contract.
-- **OCR for scans** and **Word (`.docx`) ingestion** — the lower-confidence OCR *flagging* is built; bundling the on-device engine and adding mammoth parsing are follow-ups.
+- **OCR for scanned/photographed documents** — typed PDF and Word `.docx` ingestion ship today; the lower-confidence OCR *flagging* is already built, and bundling the on-device OCR engine itself is the remaining follow-up (it lands with the offline-cached lazy chunks).
 - **i18n string extraction** — the locale preference persists; a full pre-rendered-variant extraction is held rather than ship a speculative abstraction.
 - **Playwright live-offline e2e** — axe accessibility already runs in the Vitest suite; the browser-based offline run is a focused follow-up so CI stays fast and browser-free.
 - **Per-filing-status graduated state schedules** — for any future state whose marginal tiers differ by filing status (none of the seeded eleven do).

@@ -2152,6 +2152,17 @@ body {
   overflow-x: clip;
 }
 
+/* Absolute guarantee, every view: the viewport itself never scrolls sideways.
+   `overflow-x: clip` on the root with `overflow-y` left visible keeps vertical
+   scrolling and `position: sticky` intact (per spec, `clip` is exempt from the
+   visible→auto promotion that `hidden` would trigger), so even the header and
+   footer — siblings of `.content`, outside its clip — can never produce a
+   horizontal scrollbar. Older engines without `clip` fall back to the
+   per-element fixes above. */
+html {
+  overflow-x: clip;
+}
+
 /* Respect the notch and rounded corners on modern phones (pairs with
    viewport-fit=cover in index.html): the header, content, and footer keep clear
    of the safe-area insets in landscape. */
@@ -2174,6 +2185,13 @@ body {
     padding-left: max(1rem, env(safe-area-inset-left));
     padding-right: max(1rem, env(safe-area-inset-right));
   }
+}
+/* The footer is a sibling of .content, so it needs its own inset clearance to
+   stay clear of the notch/rounded corners in landscape. */
+.app-footer {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  padding-bottom: max(2rem, env(safe-area-inset-bottom));
 }
 
 /* A small delight: in-page jumps glide rather than snap — but only for readers

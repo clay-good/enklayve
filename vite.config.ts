@@ -123,5 +123,13 @@ export default defineConfig({
     environment: "happy-dom",
     include: ["tests/**/*.test.ts", "src/**/*.test.ts"],
     globals: false,
+    // The app runs in the browser, where mammoth resolves its `browser` package
+    // field (an arrayBuffer-based unzip). Node's vitest resolver would otherwise
+    // pull mammoth's Node build (which wants a Buffer), so the .docx extraction
+    // test would exercise a code path the shipped bundle never uses. Aliasing to
+    // the prebuilt browser bundle makes the test mirror production exactly.
+    alias: {
+      mammoth: resolve(REPO_ROOT, "node_modules/mammoth/mammoth.browser.min.js"),
+    },
   },
 });
