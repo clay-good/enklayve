@@ -210,7 +210,7 @@ describe("FAFSA Student Aid Index tile", () => {
         sasset: "1000",
       }),
     );
-    expect(rowValue(root, "Student Aid Index (SAI)")).toContain("-$293");
+    expect(rowValue(root, "Student Aid Index (SAI)")).toContain("-$1,500");
     expect(rowValue(root, "Estimated Pell Grant")).toContain("$7,395");
     expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/ed\.gov/);
   });

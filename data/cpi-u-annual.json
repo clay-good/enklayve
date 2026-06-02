@@ -23,12 +23,13 @@
     "2021": 270.97,
     "2022": 292.655,
     "2023": 304.702,
-    "2024": 313.689
+    "2024": 313.689,
+    "2025": 321.943
   },
   "citation": {
     "sourceUrl": "https://www.bls.gov/cpi/",
-    "sourceDocument": "U.S. Bureau of Labor Statistics, CPI for All Urban Consumers (CPI-U), U.S. city average, all items, annual averages (1982-84=100)",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2025-01-15"
+    "sourceDocument": "U.S. Bureau of Labor Statistics, CPI for All Urban Consumers (CPI-U), U.S. city average, all items, annual averages (1982-84=100). The 2025 figure reflects the Jan-Sep average; the October 2025 release was delayed by the 2025 appropriations lapse.",
+    "effectiveYear": 2025,
+    "dateRetrieved": "2026-06-02"
   }
 }

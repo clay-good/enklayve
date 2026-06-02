@@ -6,7 +6,7 @@ import type { FafsaData } from "../../src/data/schemas";
 /**
  * Golden cases for the FAFSA Student Aid Index and Pell estimate (BUILD-SPEC.md
  * §4.4, §9). The SAI methodology is a published, deterministic formula; these
- * pin the formula's composition and its invariants against the bundled 2024-25
+ * pin the formula's composition and its invariants against the bundled 2026-27
  * tables. The figures are an estimate to verify against the official SAI Formula
  * Guide — so the asserts cover the structure (monotonicity, the floor, the Pell
  * schedule) and the seeded headline figures, not a claim of audited table values.
@@ -18,7 +18,7 @@ beforeAll(async () => {
   fafsa = data.fafsa()!;
 });
 
-const WAGE_BASE = 168600;
+const WAGE_BASE = 184500;
 function sai(over: Partial<Parameters<typeof estimateSai>[0]> = {}) {
   return estimateSai(
     {
@@ -37,7 +37,7 @@ function sai(over: Partial<Parameters<typeof estimateSai>[0]> = {}) {
   );
 }
 
-describe("FAFSA dataset (2024-25 headline figures)", () => {
+describe("FAFSA dataset (2026-27 headline figures)", () => {
   it("carries the published Pell maxima and SAI floor", () => {
     expect(fafsa.maxPellGrant).toBe(7395);
     expect(fafsa.minPellGrant).toBe(740);
@@ -56,10 +56,10 @@ describe("estimateSai (dependent student)", () => {
       studentIncome: 4000,
       studentAssets: 1000,
     });
-    expect(r.incomeProtectionAllowance).toBe(38200);
-    expect(r.employmentExpenseAllowance).toBe(4700); // capped
+    expect(r.incomeProtectionAllowance).toBe(44880);
+    expect(r.employmentExpenseAllowance).toBe(5000); // capped
     expect(r.assetContribution).toBe(600);
-    expect(r.sai).toBe(-293);
+    expect(r.sai).toBe(-1500); // higher 2026-27 allowances push it to the floor
   });
 
   it("computes a middle-income family to a positive SAI", () => {
@@ -72,9 +72,9 @@ describe("estimateSai (dependent student)", () => {
       studentIncome: 5000,
       studentAssets: 2000,
     });
-    expect(r.parentContribution).toBe(9738);
+    expect(r.parentContribution).toBe(7112);
     expect(r.studentContribution).toBe(400);
-    expect(r.sai).toBe(10138);
+    expect(r.sai).toBe(7512);
   });
 
   it("floors the SAI at the dataset's negative floor", () => {

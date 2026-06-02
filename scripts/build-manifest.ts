@@ -107,7 +107,7 @@ const SHARDS: ShardSource[] = [
     id: "cpi-u-annual",
     kind: "cpi",
     shard: "cpi-u-annual.json",
-    effectiveYear: 2024,
+    effectiveYear: 2025,
     expectedRefreshMonths: 1,
     staleAfterYears: 2,
   },

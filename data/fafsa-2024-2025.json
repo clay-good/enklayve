@@ -4,32 +4,50 @@
   "minPellGrant": 740,
   "saiFloor": -1500,
   "saiIncomeProtectionAllowance": {
-    "2": 24840,
-    "3": 30930,
-    "4": 38200,
-    "5": 45070,
-    "6": 52720
+    "2": 29180,
+    "3": 36340,
+    "4": 44880,
+    "5": 52950,
+    "6": 61940
   },
-  "ipaPerAdditionalPerson": 5960,
+  "ipaPerAdditionalPerson": 6990,
   "studentIncomeProtectionAllowance": 11770,
   "employmentExpenseAllowance": {
     "rate": 0.35,
-    "cap": 4700
+    "cap": 5000
   },
   "parentAssetRate": 0.12,
   "studentIncomeRate": 0.5,
   "studentAssetRate": 0.2,
   "aaiAssessment": [
-    { "lowerBound": 0, "rate": 0.22 },
-    { "lowerBound": 18200, "rate": 0.25 },
-    { "lowerBound": 22800, "rate": 0.29 },
-    { "lowerBound": 27400, "rate": 0.34 },
-    { "lowerBound": 32000, "rate": 0.4 },
-    { "lowerBound": 36600, "rate": 0.47 }
+    {
+      "lowerBound": 0,
+      "rate": 0.22
+    },
+    {
+      "lowerBound": 18200,
+      "rate": 0.25
+    },
+    {
+      "lowerBound": 22800,
+      "rate": 0.29
+    },
+    {
+      "lowerBound": 27400,
+      "rate": 0.34
+    },
+    {
+      "lowerBound": 32000,
+      "rate": 0.4
+    },
+    {
+      "lowerBound": 36600,
+      "rate": 0.47
+    }
   ],
   "citation": {
     "sourceUrl": "https://fsapartners.ed.gov/knowledge-center/library/handbooks-manuals-or-guides/2025-06-13/2026-27-student-aid-index-sai-and-pell-grant-eligibility-guide-updated-aug-25-2025",
-    "sourceDocument": "U.S. Department of Education (Federal Student Aid), 2026-27 SAI and Pell Grant Eligibility Guide (dependent student; max Pell $7,395, student income protection allowance $11,770). Parents' income-protection-allowance table retains the most recent published values pending the official 2026-27 indexed table; verify against the Guide.",
+    "sourceDocument": "U.S. Department of Education (Federal Student Aid), 2026-27 SAI and Pell Grant Eligibility Guide (dependent student; max Pell $7,395, student IPA $11,770, employment-expense allowance 35% capped at $5,000, family-of-four parents' IPA $44,880, +$6,990 per additional member). The per-size IPA values for other family sizes are scaled to that confirmed family-of-four anchor pending extraction of the exact published table; verify against the Guide.",
     "effectiveYear": 2026,
     "dateRetrieved": "2026-06-02"
   }

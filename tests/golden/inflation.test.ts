@@ -38,7 +38,7 @@ describe("CPI inflation adjuster", () => {
   it("exposes the available years ascending", () => {
     const years = availableYears(ds.cpi);
     expect(years[0]).toBe(1913);
-    expect(years[years.length - 1]).toBe(2024);
+    expect(years[years.length - 1]).toBe(2025);
     expect([...years]).toEqual([...years].sort((a, b) => a - b));
   });
 });

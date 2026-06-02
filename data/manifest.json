@@ -83,15 +83,15 @@
     {
       "id": "cpi-u-annual",
       "kind": "cpi",
-      "version": "2024.0",
-      "effectiveYear": 2024,
+      "version": "2025.0",
+      "effectiveYear": 2025,
       "expectedRefreshMonths": 1,
       "staleAfterYears": 2,
       "shard": "cpi-u-annual.json",
       "sourceUrl": "https://www.bls.gov/cpi/",
-      "sourceDocument": "U.S. Bureau of Labor Statistics, CPI for All Urban Consumers (CPI-U), U.S. city average, all items, annual averages (1982-84=100)",
-      "dateRetrieved": "2025-01-15",
-      "contentHash": "1c3d8c46b3ef27a28ba91ed6ee41c8f03287a701ba51cc1af086e7bf66f13e25"
+      "sourceDocument": "U.S. Bureau of Labor Statistics, CPI for All Urban Consumers (CPI-U), U.S. city average, all items, annual averages (1982-84=100). The 2025 figure reflects the Jan-Sep average; the October 2025 release was delayed by the 2025 appropriations lapse.",
+      "dateRetrieved": "2026-06-02",
+      "contentHash": "ccfd88d6e3c96279d1ea103538c56ddfadc71ba35c5cd04d3a93219064c779ff"
     },
     {
       "id": "state-ca-income-tax-2024",
@@ -518,9 +518,9 @@
       "staleAfterYears": 2,
       "shard": "fafsa-2024-2025.json",
       "sourceUrl": "https://fsapartners.ed.gov/knowledge-center/library/handbooks-manuals-or-guides/2025-06-13/2026-27-student-aid-index-sai-and-pell-grant-eligibility-guide-updated-aug-25-2025",
-      "sourceDocument": "U.S. Department of Education (Federal Student Aid), 2026-27 SAI and Pell Grant Eligibility Guide (dependent student; max Pell $7,395, student income protection allowance $11,770). Parents' income-protection-allowance table retains the most recent published values pending the official 2026-27 indexed table; verify against the Guide.",
+      "sourceDocument": "U.S. Department of Education (Federal Student Aid), 2026-27 SAI and Pell Grant Eligibility Guide (dependent student; max Pell $7,395, student IPA $11,770, employment-expense allowance 35% capped at $5,000, family-of-four parents' IPA $44,880, +$6,990 per additional member). The per-size IPA values for other family sizes are scaled to that confirmed family-of-four anchor pending extraction of the exact published table; verify against the Guide.",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "40fc495b010f99195605b6f5bc3a4a831fa17da060835d988b27fe67a9ad407c"
+      "contentHash": "9800c7442e81f2fcbe7740d3f1be7b82bdd7896f91a5bb997e1865b554079579"
     },
     {
       "id": "social-security-2024",
