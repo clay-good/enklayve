@@ -1,0 +1,24 @@
+{
+  "id": "US-AZ",
+  "name": "Arizona",
+  "taxYear": 2024,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [{ "lowerBound": 0, "rate": 0.025 }],
+    "married_jointly": [{ "lowerBound": 0, "rate": 0.025 }],
+    "head_of_household": [{ "lowerBound": 0, "rate": 0.025 }]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 14600,
+    "married_jointly": 29200,
+    "head_of_household": 21900
+  },
+  "citation": {
+    "sourceUrl": "https://azdor.gov/forms/individual",
+    "sourceDocument": "Arizona DOR, 2.5% flat tax (2024); standard deduction matches the federal amounts",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2026-06-02"
+  },
+  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+}

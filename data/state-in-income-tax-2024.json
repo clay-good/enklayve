@@ -1,0 +1,29 @@
+{
+  "id": "US-IN",
+  "name": "Indiana",
+  "taxYear": 2024,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [{ "lowerBound": 0, "rate": 0.0305 }],
+    "married_jointly": [{ "lowerBound": 0, "rate": 0.0305 }],
+    "head_of_household": [{ "lowerBound": 0, "rate": 0.0305 }]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 0,
+    "married_jointly": 0,
+    "head_of_household": 0
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 1000,
+    "married_jointly": 2000,
+    "head_of_household": 1000
+  },
+  "citation": {
+    "sourceUrl": "https://www.in.gov/dor/individual-income-taxes/",
+    "sourceDocument": "Indiana DOR, 3.05% flat tax (2024); $1,000 personal exemption per filer. County income taxes are not modeled.",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2026-06-02"
+  },
+  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+}

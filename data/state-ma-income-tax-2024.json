@@ -1,0 +1,38 @@
+{
+  "id": "US-MA",
+  "name": "Massachusetts",
+  "taxYear": 2024,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.05 },
+      { "lowerBound": 1053750, "rate": 0.09 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.05 },
+      { "lowerBound": 1053750, "rate": 0.09 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.05 },
+      { "lowerBound": 1053750, "rate": 0.09 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 0,
+    "married_jointly": 0,
+    "head_of_household": 0
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 4400,
+    "married_jointly": 8800,
+    "head_of_household": 6800
+  },
+  "citation": {
+    "sourceUrl": "https://www.mass.gov/info-details/massachusetts-4-surtax-on-taxable-income",
+    "sourceDocument": "Massachusetts DOR, 5.0% flat tax plus the 4% surtax (9.0% total) on taxable income over $1,053,750 (2024); personal exemptions $4,400/$8,800/$6,800",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2026-06-02"
+  },
+  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+}

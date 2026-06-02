@@ -1,0 +1,38 @@
+{
+  "id": "US-MS",
+  "name": "Mississippi",
+  "taxYear": 2024,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0 },
+      { "lowerBound": 10000, "rate": 0.047 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0 },
+      { "lowerBound": 10000, "rate": 0.047 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0 },
+      { "lowerBound": 10000, "rate": 0.047 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 2300,
+    "married_jointly": 4600,
+    "head_of_household": 3400
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 6000,
+    "married_jointly": 12000,
+    "head_of_household": 8000
+  },
+  "citation": {
+    "sourceUrl": "https://www.dor.ms.gov/individual/tax-rates",
+    "sourceDocument": "Mississippi DOR, 4.7% flat tax on taxable income over $10,000 (2024); standard deduction $2,300/$4,600/$3,400, personal exemption $6,000/$12,000/$8,000",
+    "effectiveYear": 2024,
+    "dateRetrieved": "2026-06-02"
+  },
+  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+}

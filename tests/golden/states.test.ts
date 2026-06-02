@@ -80,6 +80,12 @@ describe("flat-rate states", () => {
     ["mi", 60000, "2312"], // 4.25%·(60,000 − 5,600 exemption)
     ["ga", 60000, "2587.2"], // 5.39%·(60,000 − 12,000 std)
     ["nc", 60000, "2126.25"], // 4.5%·(60,000 − 12,750 std)
+    ["az", 60000, "1135"], // 2.5%·(60,000 − 14,600 federal std)
+    ["co", 60000, "1997.6"], // 4.4%·(60,000 − 14,600 federal std)
+    ["in", 60000, "1799.5"], // 3.05%·(60,000 − 1,000 exemption), no std
+    ["ky", 60000, "2273.6"], // 4.0%·(60,000 − 3,160 std)
+    ["ma", 60000, "2780"], // 5.0%·(60,000 − 4,400 exemption), below the surtax
+    ["ms", 60000, "1959.9"], // 0% on first $10k of taxable, 4.7%·(51,700 − 10,000)
   ];
   for (const [code, wages, expected] of cases) {
     it(`${code.toUpperCase()} single $${wages.toLocaleString()} → $${expected}`, () => {
@@ -112,6 +118,21 @@ describe("no-income-tax states are first-class records", () => {
       expect(cents(r.totals.totalTax)).toBe(cents(fedOnly.totals.totalTax));
     });
   }
+});
+
+describe("Massachusetts 4% millionaire surtax (top bracket)", () => {
+  it("adds the 4% surtax (9% total) on taxable income over $1,053,750", () => {
+    const over = evaluateTaxes(
+      { filingStatus: "single", wages: 1200000 },
+      { federal: ds.federal, state: ds.state("ma"), fica: ds.fica },
+    );
+    // MA taxable = 1,200,000 − 4,400 exemption = 1,195,600. Below the surtax a
+    // flat 5% would be 59,780; the 9% top band on the excess pushes it higher.
+    const flatFive = 1195600 * 0.05;
+    expect(Number(cents(over.state!.incomeTax))).toBeGreaterThan(flatFive);
+    // 5%·1,053,750 + 9%·(1,195,600 − 1,053,750) = 52,687.50 + 12,766.50 = 65,454.
+    expect(cents(over.state!.incomeTax)).toBe("65454");
+  });
 });
 
 describe("California mental-health-services surtax (special rule)", () => {

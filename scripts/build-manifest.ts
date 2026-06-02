@@ -23,12 +23,17 @@ interface ShardSource {
   staleAfterYears: number;
 }
 
-// The ten most populous states plus DC (BUILD-SPEC.md §14). Adding a state is a
-// data file plus one code here — no engine change.
-// The ten most populous states + DC (seeded at launch), plus the remaining
-// no-income-tax states added as first-class records (BUILD-SPEC.md §8, §14.3):
-// AK, NV, NH, SD, TN, WA, WY join TX and FL so a resident of any of the nine
-// no-income-tax states sees their state by name, not a generic "no state tax".
+// Adding a state is a data file plus one code here — no engine change
+// (BUILD-SPEC.md §8). The roster grows through the staggered annual refresh
+// (§14.3), in three layers:
+//   1. The ten most populous states + DC, seeded at launch (CA, NY, TX, FL, PA,
+//      IL, OH, GA, NC, MI, DC).
+//   2. Every no-income-tax state as a first-class record (AK, NV, NH, SD, TN,
+//      WA, WY join TX and FL) so a resident sees their state by name with $0
+//      confirmed, not a generic "no state tax modeled".
+//   3. "Fill in the rest": additional income-tax states as their 2024 schedules
+//      are transcribed and golden-tested. The flat-rate wave — AZ, CO, IN, KY,
+//      MA (5% + the 4% surtax over $1,053,750), MS (4.7% over $10,000) — is in.
 const STATE_CODES = [
   "ca",
   "ny",
@@ -48,6 +53,12 @@ const STATE_CODES = [
   "tn",
   "wa",
   "wy",
+  "az",
+  "co",
+  "in",
+  "ky",
+  "ma",
+  "ms",
 ];
 
 const ANNUAL = { effectiveYear: 2024, expectedRefreshMonths: 12, staleAfterYears: 2 } as const;
