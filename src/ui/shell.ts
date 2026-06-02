@@ -303,7 +303,7 @@ function homeBudgetWidget(): HTMLElement {
     el("h2", { class: "home-budget__title", text: "Try a 60-second budget" }),
     el("p", {
       class: "home-budget__sub",
-      text: "Give every dollar a job. Watch what's left to assign fall to zero — that's the whole idea.",
+      text: "Give every dollar a job. Watch what's left to assign fall to zero. That's the whole idea.",
     }),
     el("div", { class: "home-budget__grid" }, controls, viz),
   );
@@ -457,7 +457,7 @@ function homeSearch(navigate: (id: string | null) => void): HTMLElement {
  */
 function renderHome(container: HTMLElement, navigate: (id: string | null) => void): void {
   clear(container);
-  document.title = "enklayve — free, private money tools that show their math";
+  document.title = "enklayve: free, private money tools that show their math";
 
   const hero = el(
     "section",
@@ -465,7 +465,25 @@ function renderHome(container: HTMLElement, navigate: (id: string | null) => voi
     el("h1", { class: "hero-title", text: "Your money, made simple." }),
     el("p", {
       class: "hero-sub",
-      text: "Your real take-home pay, the taxes you owe, the benefits you might be missing, and your next smart move. Free forever, truly private, and every number shows its math — computed right here on your device, never uploaded.",
+      text: "Your real take-home pay, the taxes you owe, the benefits you might be missing, and your next smart move. Free forever, truly private, and every number shows its math, computed right here on your device, never uploaded.",
+    }),
+  );
+
+  // The front door: the plan is enklayve's strongest, simplest thing, so it
+  // leads. One bold action hands a newcomer their ordered money plan; the
+  // dropzone, the mini-budget, and search follow as other ways in.
+  const planCta = el(
+    "div",
+    { class: "hero-cta" },
+    el("button", {
+      type: "button",
+      class: "btn btn--accent hero-cta-btn",
+      text: "Show me my next step →",
+      on: { click: () => navigate("your-plan") },
+    }),
+    el("p", {
+      class: "hero-cta-note",
+      text: "A calm, ordered plan with your single next right move on top. Free, private, and fully yours to adjust.",
     }),
   );
 
@@ -509,6 +527,7 @@ function renderHome(container: HTMLElement, navigate: (id: string | null) => voi
 
   container.append(
     hero,
+    planCta,
     readoutDropzone(navigate),
     homeBudgetWidget(),
     homeSearch(navigate),

@@ -48,6 +48,14 @@ describe("shell home view (redesigned 2026-06-01)", () => {
     expect(navigate).toHaveBeenCalledWith("take-home");
   });
 
+  it("the front-door CTA opens My Plan", () => {
+    const root = document.createElement("main");
+    const navigate = vi.fn();
+    renderHome(root, navigate);
+    root.querySelector<HTMLButtonElement>(".hero-cta-btn")?.click();
+    expect(navigate).toHaveBeenCalledWith("your-plan");
+  });
+
   it("the 'see your plan' hint opens My Plan", () => {
     const root = document.createElement("main");
     const navigate = vi.fn();

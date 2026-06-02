@@ -518,9 +518,9 @@
       "staleAfterYears": 2,
       "shard": "fafsa-2024-2025.json",
       "sourceUrl": "https://studentaid.gov/complete-aid-process/how-calculated",
-      "sourceDocument": "U.S. Department of Education (Federal Student Aid), 2024-25 SAI and Pell Grant Eligibility — Student Aid Index Formula Guide (dependent student)",
+      "sourceDocument": "U.S. Department of Education (Federal Student Aid), 2024-25 SAI and Pell Grant Eligibility: Student Aid Index Formula Guide (dependent student)",
       "dateRetrieved": "2026-05-30",
-      "contentHash": "e4fe4ecc3a927ac8f2b2e43d7a7efc2fc0a20b4b1d97abf22e96cb506fdb7ac9"
+      "contentHash": "3d6553705e7d4897b42a7ca80a3e85a600413abc03832fef631168d0f015779c"
     },
     {
       "id": "social-security-2024",
