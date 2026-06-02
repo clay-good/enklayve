@@ -102,7 +102,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     name: "readout-file",
     attrs: {
       accept:
-        ".pdf,.docx,.txt,.text,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain",
+        ".pdf,.docx,.txt,.text,.png,.jpg,.jpeg,.webp,.bmp,.gif,.tif,.tiff,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,image/*",
       "aria-label": "Choose a document to read on your device",
     },
     on: {
@@ -135,7 +135,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     el("span", { class: "readout-dropzone-title", text: "Drop a file here, or choose one" }),
     el("span", {
       class: "readout-dropzone-sub",
-      text: "Typed PDF, Word (.docx), or text. Scanned images need OCR, which is coming soon.",
+      text: "Typed PDF, Word (.docx), text, or a scanned image (PNG/JPG). Images are read on-device with OCR and flagged for review.",
     }),
     fileInput,
   );

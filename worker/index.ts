@@ -24,14 +24,28 @@ export interface Env {
  * datasets are bundled at build time, so nothing is ever fetched at runtime.
  */
 function cspFor(pathname: string): string {
-  // The offline service worker (BUILD-SPEC.md §8) must fetch SAME-ORIGIN static
-  // assets to populate its cache, so its own script is served with
-  // `connect-src 'self'`. It has no server endpoint and never touches user data,
-  // so nothing can leave the device. Every page keeps `connect-src 'none'`.
-  const connectSrc = pathname === "/sw.js" ? "connect-src 'self'" : "connect-src 'none'";
+  // Two SAME-ORIGIN worker scripts are the only exceptions to `connect-src
+  // 'none'`, and each is justified the same way: it fetches same-origin static
+  // assets only, has no server endpoint, and never touches the user's in-memory
+  // data, so nothing can leave the device. EVERY PAGE keeps `connect-src 'none'`.
+  //
+  //   /sw.js          the offline service worker (BUILD-SPEC.md §8) — caches
+  //                   same-origin assets.
+  //   /ocr/*          the tesseract.js OCR worker + its wasm core + the bundled
+  //                   language model (BUILD-SPEC-2 §2.2) — loads the scanned-image
+  //                   reader on demand. WebAssembly compilation also needs
+  //                   `'wasm-unsafe-eval'`, scoped to these asset responses only.
+  //
+  // A dedicated/service worker's CSP comes from its OWN response headers, not the
+  // owner page's, so relaxing /ocr/* here does not loosen any page (the page that
+  // spawns the worker stays `connect-src 'none'`; the worker, created from a
+  // same-origin URL rather than a blob:, adopts the policy below).
+  const isOcr = pathname.startsWith("/ocr/");
+  const connectSrc = pathname === "/sw.js" || isOcr ? "connect-src 'self'" : "connect-src 'none'";
+  const scriptSrc = isOcr ? "script-src 'self' 'wasm-unsafe-eval'" : "script-src 'self'";
   return [
     "default-src 'self'",
-    "script-src 'self'",
+    scriptSrc,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data:",
     "font-src 'self'",

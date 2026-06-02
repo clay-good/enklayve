@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import JSZip from "jszip";
-import { extractTextFromFile } from "../../src/readout/extractText";
+import { extractTextFromFile, isImageFile } from "../../src/readout/extractText";
 
 /**
  * I/O-boundary tests for on-device text extraction (BUILD-SPEC-2 §2). The
@@ -66,8 +66,30 @@ describe("extractTextFromFile — Word (.docx)", () => {
     expect(result.text).toContain("Form W-2");
   });
 
-  it("rejects an unsupported file kind with a helpful message", async () => {
-    const file = new File(["not a document"], "photo.png", { type: "image/png" });
-    await expect(extractTextFromFile(file)).rejects.toThrow(/Word|PDF|paste/);
+  it("rejects a genuinely unsupported file kind with a helpful message", async () => {
+    // Images now route to OCR (below), so an unsupported file is one that is
+    // neither a document nor an image — e.g. an archive.
+    const file = new File(["PK binary"], "data.zip", { type: "application/zip" });
+    await expect(extractTextFromFile(file)).rejects.toThrow(/Word|PDF|image|paste/);
+  });
+});
+
+describe("isImageFile — OCR routing", () => {
+  it("recognizes raster image formats by MIME type", () => {
+    for (const type of ["image/png", "image/jpeg", "image/webp", "image/tiff"]) {
+      expect(isImageFile(new File([""], "scan", { type }))).toBe(true);
+    }
+  });
+
+  it("recognizes raster image formats by extension when the MIME type is missing", () => {
+    for (const name of ["w2.png", "stub.JPG", "form.jpeg", "scan.tiff", "photo.bmp", "img.gif"]) {
+      expect(isImageFile(new File([""], name, { type: "" }))).toBe(true);
+    }
+  });
+
+  it("does not route documents or text to OCR", () => {
+    expect(isImageFile(new File([""], "return.pdf", { type: "application/pdf" }))).toBe(false);
+    expect(isImageFile(new File([""], "w2.docx", { type: "" }))).toBe(false);
+    expect(isImageFile(new File([""], "notes.txt", { type: "text/plain" }))).toBe(false);
   });
 });

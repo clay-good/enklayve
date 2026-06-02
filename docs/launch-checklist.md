@@ -28,7 +28,7 @@ npm run deploy:dry
 
 ## Offline & PWA (Phase 8)
 
-- [ ] After a first visit, the site loads and computes with the network cut (the service worker serves the cached shell; lazily-loaded chunks like pdf.js are runtime-cached on first use).
+- [ ] After a first visit, the site loads and computes with the network cut (the service worker serves the cached shell; lazily-loaded chunks like pdf.js, mammoth, and the OCR engine + its `/ocr/` wasm core and language model are runtime-cached on first use).
 - [ ] A code or data change bumps the SW cache version (hashed from the asset list + `data/manifest.json`) so stale caches are dropped on activate.
 - [ ] The app installs as a PWA with the royal-purple theme and a maskable icon.
 

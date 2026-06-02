@@ -52,6 +52,50 @@ function staticSeo(): Plugin {
 }
 
 /**
+ * Emit the on-device OCR engine assets into `dist/ocr/` (BUILD-SPEC-2 §2.2, the
+ * lower-confidence scanned-image fallback). tesseract.js spawns a same-origin
+ * Web Worker that loads the wasm core and the bundled English language model
+ * (`public/ocr/eng.traineddata.gz`, vendored) — all fetched same-origin, never
+ * from a CDN. The worker's own response carries a relaxed CSP (`connect-src
+ * 'self'` + `'wasm-unsafe-eval'`, see worker/index.ts) so the page stays
+ * `connect-src 'none'`. The trio is large but lazy: it loads only when an image
+ * is dropped, and the service worker runtime-caches it on first use (like
+ * pdf.js), so it is never in the shell bundle and works offline thereafter.
+ */
+function ocrAssets(): Plugin {
+  const coreDir = resolve(REPO_ROOT, "node_modules/tesseract.js-core");
+  const workerFile = resolve(REPO_ROOT, "node_modules/tesseract.js/dist/worker.min.js");
+  // LSTM cores only (tesseract.js defaults to OEM 1); ship the SIMD build that
+  // every modern browser uses plus the plain build as a fallback.
+  const coreFiles = [
+    "tesseract-core-simd-lstm.wasm.js",
+    "tesseract-core-simd-lstm.wasm",
+    "tesseract-core-simd-lstm.js",
+    "tesseract-core-lstm.wasm.js",
+    "tesseract-core-lstm.wasm",
+    "tesseract-core-lstm.js",
+  ];
+  return {
+    name: "enklayve-ocr-assets",
+    apply: "build",
+    generateBundle() {
+      this.emitFile({
+        type: "asset",
+        fileName: "ocr/worker.min.js",
+        source: readFileSync(workerFile),
+      });
+      for (const name of coreFiles) {
+        this.emitFile({
+          type: "asset",
+          fileName: `ocr/${name}`,
+          source: readFileSync(resolve(coreDir, name)),
+        });
+      }
+    },
+  };
+}
+
+/**
  * Emit the offline service worker and the web app manifest (BUILD-SPEC.md §8,
  * §11). The worker precaches a small core shell (index.html, the entry JS/CSS,
  * the static pages, the manifest, and the icons) and runtime-caches everything
@@ -107,7 +151,7 @@ function offlinePwa(): Plugin {
 export default defineConfig({
   root: REPO_ROOT,
   publicDir: resolve(REPO_ROOT, "public"),
-  plugins: [staticToolsIndex(), staticSeo(), offlinePwa()],
+  plugins: [staticToolsIndex(), staticSeo(), ocrAssets(), offlinePwa()],
   build: {
     outDir: resolve(REPO_ROOT, "dist"),
     emptyOutDir: true,
