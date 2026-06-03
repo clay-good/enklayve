@@ -95,6 +95,36 @@ describe("home budget — the one and only budget (consolidated 2026-06-02)", ()
     expect(aria("Brokerage")).not.toBeNull();
   });
 
+  it("lists all 50 states plus DC in the state dropdown", () => {
+    const root = document.createElement("main");
+    renderHome(root, () => {}, data);
+    const state = root.querySelector<HTMLSelectElement>('[aria-label="State"]')!;
+    const labels = Array.from(state.options).map((o) => o.textContent);
+    // Placeholder + 50 states + District of Columbia.
+    expect(state.options.length).toBe(52);
+    expect(labels).toContain("California");
+    expect(labels).toContain("Texas");
+    expect(labels).toContain("Wyoming");
+    expect(labels).toContain("District of Columbia");
+  });
+
+  it("shows an honest note when a state's income tax isn't modeled yet", () => {
+    const root = document.createElement("main");
+    renderHome(root, () => {}, data);
+    const note = root.querySelector<HTMLElement>(".home-budget__note")!;
+    expect(note.hidden).toBe(true); // no state selected yet
+    const state = root.querySelector<HTMLSelectElement>('[aria-label="State"]')!;
+    // New Jersey has an income tax but isn't modeled → the note appears.
+    state.value = "nj";
+    state.dispatchEvent(new Event("change"));
+    expect(note.hidden).toBe(false);
+    expect(note.textContent).toContain("New Jersey");
+    // California IS modeled → no note.
+    state.value = "ca";
+    state.dispatchEvent(new Event("change"));
+    expect(note.hidden).toBe(true);
+  });
+
   it("auto-computes taxes through the tax engine (not a manual field)", () => {
     const root = document.createElement("main");
     renderHome(root, () => {}, data);

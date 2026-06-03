@@ -215,6 +215,63 @@ const BUDGET_INVEST_ROWS: { key: string; label: string }[] = [
   { key: "brokerage", label: "Brokerage" },
 ];
 
+/** All 50 states + DC, alphabetical by name. Not every state's income tax is
+ *  modeled yet; the budget computes state tax for the ones it has and falls back
+ *  to federal + FICA (with an honest note) for the rest. */
+const US_STATES: { code: string; name: string }[] = [
+  { code: "al", name: "Alabama" },
+  { code: "ak", name: "Alaska" },
+  { code: "az", name: "Arizona" },
+  { code: "ar", name: "Arkansas" },
+  { code: "ca", name: "California" },
+  { code: "co", name: "Colorado" },
+  { code: "ct", name: "Connecticut" },
+  { code: "de", name: "Delaware" },
+  { code: "dc", name: "District of Columbia" },
+  { code: "fl", name: "Florida" },
+  { code: "ga", name: "Georgia" },
+  { code: "hi", name: "Hawaii" },
+  { code: "id", name: "Idaho" },
+  { code: "il", name: "Illinois" },
+  { code: "in", name: "Indiana" },
+  { code: "ia", name: "Iowa" },
+  { code: "ks", name: "Kansas" },
+  { code: "ky", name: "Kentucky" },
+  { code: "la", name: "Louisiana" },
+  { code: "me", name: "Maine" },
+  { code: "md", name: "Maryland" },
+  { code: "ma", name: "Massachusetts" },
+  { code: "mi", name: "Michigan" },
+  { code: "mn", name: "Minnesota" },
+  { code: "ms", name: "Mississippi" },
+  { code: "mo", name: "Missouri" },
+  { code: "mt", name: "Montana" },
+  { code: "ne", name: "Nebraska" },
+  { code: "nv", name: "Nevada" },
+  { code: "nh", name: "New Hampshire" },
+  { code: "nj", name: "New Jersey" },
+  { code: "nm", name: "New Mexico" },
+  { code: "ny", name: "New York" },
+  { code: "nc", name: "North Carolina" },
+  { code: "nd", name: "North Dakota" },
+  { code: "oh", name: "Ohio" },
+  { code: "ok", name: "Oklahoma" },
+  { code: "or", name: "Oregon" },
+  { code: "pa", name: "Pennsylvania" },
+  { code: "ri", name: "Rhode Island" },
+  { code: "sc", name: "South Carolina" },
+  { code: "sd", name: "South Dakota" },
+  { code: "tn", name: "Tennessee" },
+  { code: "tx", name: "Texas" },
+  { code: "ut", name: "Utah" },
+  { code: "vt", name: "Vermont" },
+  { code: "va", name: "Virginia" },
+  { code: "wa", name: "Washington" },
+  { code: "wv", name: "West Virginia" },
+  { code: "wi", name: "Wisconsin" },
+  { code: "wy", name: "Wyoming" },
+];
+
 /**
  * The home budget — now enklayve's one and only budget (consolidated 2026-06-02,
  * replacing the standalone Budget Overview tile). A live, hands-on calculator
@@ -241,7 +298,6 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
   // failed to load) the budget still works with taxes held at zero.
   const fed = data?.federal() ?? null;
   const fica = data?.fica() ?? null;
-  const stateCodes = data?.stateCodes() ?? [];
 
   let income = 5000;
   let freq = "monthly";
@@ -271,18 +327,41 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
 
   const periodsFor = (f: string): number =>
     BUDGET_FREQUENCIES.find((x) => x.value === f)?.periods ?? 12;
+  const perPeriodLabel = (f: string): string =>
+    ({ weekly: "a week", biweekly: "every 2 weeks", monthly: "a month", annually: "a year" })[f] ??
+    "a month";
+  // True only for the 24 states whose income tax is modeled (the rest fall back
+  // to federal + FICA with an honest note).
+  const isModeled = (code: string): boolean => !!(code && data && data.state(code));
 
   /** Annual total tax (federal income + FICA + state) via the shared engine. */
   const annualTax = (): number => {
     if (!fed || !fica) return 0;
     const annualWages = income * periodsFor(freq);
-    const stateJ = stateCode && data ? (data.state(stateCode) ?? undefined) : undefined;
+    const stateJ = isModeled(stateCode) ? (data!.state(stateCode) ?? undefined) : undefined;
     const input: TaxInput = { filingStatus: fs, wages: annualWages };
     return evaluateTaxes(input, { federal: fed, fica, state: stateJ }).totals.totalTax.toNumber();
   };
 
   const viz = el("div", { class: "home-budget__viz", attrs: { "aria-live": "polite" } });
   const taxesValue = el("span", { class: "home-budget__derived-value" });
+  const incomeHint = el("p", { class: "home-budget__hint" });
+  const taxNote = el("p", { class: "home-budget__note", attrs: { role: "note" } });
+
+  const refreshChrome = (): void => {
+    // The annualized-income caption: the same money, restated, for context.
+    const annual = income * periodsFor(freq);
+    incomeHint.textContent = income > 0 ? `That's about ${fmt0(annual)} a year` : "";
+    // Honesty: if a state's income tax isn't modeled yet, say so plainly.
+    if (stateCode && !isModeled(stateCode)) {
+      const name = US_STATES.find((s) => s.code === stateCode)?.name ?? stateCode.toUpperCase();
+      taxNote.textContent = `We don't model ${name}'s state income tax yet, so this shows federal + FICA only.`;
+      taxNote.hidden = false;
+    } else {
+      taxNote.hidden = true;
+      taxNote.textContent = "";
+    }
+  };
 
   const render = (): void => {
     const periods = periodsFor(freq);
@@ -296,16 +375,20 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
     const over = left < 0;
 
     taxesValue.textContent = fmt0(taxes);
+    refreshChrome();
 
     const slices: Slice[] = [];
+    // Whole-dollar slices so the legend matches the rest of the budget (taxes and
+    // "left" can carry cents from the division above).
     const push = (label: string, value: number, c: string): void => {
-      if (value > 0) slices.push({ label, value, color: c });
+      if (value > 0) slices.push({ label, value: Math.round(value), color: c });
     };
     push("Taxes", taxes, color.taxes!);
     for (const r of BUDGET_SPEND_ROWS) push(r.label, Math.max(0, spend[r.key] ?? 0), color[r.key]!);
     for (const r of BUDGET_INVEST_ROWS)
       push(r.label, Math.max(0, invest[r.key] ?? 0), color[r.key]!);
-    if (left > 0) slices.push({ label: "Left to assign", value: left, color: "var(--enk-accent)" });
+    if (left > 0)
+      slices.push({ label: "Left to assign", value: Math.round(left), color: "var(--enk-accent)" });
 
     const status = el(
       "p",
@@ -319,7 +402,11 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
       el("span", { class: "home-budget__status-value", text: fmt0(Math.abs(left)) }),
       el("span", {
         class: "home-budget__status-note",
-        text: balanced ? "Every dollar has a job 🎉" : over ? "Trim a little" : "Give it a job",
+        text: balanced
+          ? "Every dollar has a job 🎉"
+          : over
+            ? "Trim a category to get back to zero"
+            : "Send it to savings or a debt",
       }),
     );
 
@@ -332,27 +419,62 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
         el("span", { class: "home-budget__stat-label", text: label }),
         el("span", { class: "home-budget__stat-value", text: value }),
       );
-    const stats = el(
+    // The two investment rates are the hero metrics: side-by-side tinted cards.
+    const rates = el(
       "div",
-      { class: "home-budget__stats" },
-      stat("Total expenses", fmt0(totalExpenses)),
-      stat("Total investments", fmt0(totalInvest)),
-      stat("Net income (after tax & expenses)", fmt0(net)),
+      { class: "home-budget__rates" },
       stat("Investment rate, of gross income", pct0(grossRate), true),
       stat("Investment rate, of net income", net > 0 ? pct0(netRate) : "—", true),
     );
+    const totals = el(
+      "div",
+      { class: "home-budget__totals" },
+      stat("Total expenses", fmt0(totalExpenses)),
+      stat("Total investments", fmt0(totalInvest)),
+      stat("Net income (after tax & expenses)", fmt0(net)),
+    );
+    const stats = el("div", { class: "home-budget__stats" }, rates, totals);
 
     clear(viz);
+    viz.classList.toggle("is-balanced", balanced);
     viz.append(
       donutChart({
         slices,
         locale: "en-US",
         ariaLabel: "How your income is split across taxes, expenses, investments, and what is left",
         centerValue: fmt0(income),
-        centerLabel: "income",
+        centerLabel: perPeriodLabel(freq),
       }),
       status,
       stats,
+    );
+  };
+
+  // A whole-dollar input wrapped with a leading "$" so the money reads clearly.
+  const moneyInput = (
+    value: number,
+    step: number,
+    ariaLabel: string,
+    onInput: (n: number) => void,
+  ): HTMLElement => {
+    const input = el("input", {
+      type: "number",
+      min: 0,
+      step,
+      value,
+      attrs: { inputmode: "numeric", "aria-label": ariaLabel },
+      on: {
+        input: (e) => {
+          onInput(toInt((e.target as HTMLInputElement).value));
+          render();
+        },
+      },
+    });
+    return el(
+      "span",
+      { class: "home-budget__money" },
+      el("span", { class: "home-budget__money-sign", attrs: { "aria-hidden": "true" }, text: "$" }),
+      input,
     );
   };
 
@@ -363,19 +485,6 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
     step: number,
     onInput: (n: number) => void,
   ): HTMLElement => {
-    const input = el("input", {
-      type: "number",
-      min: 0,
-      step,
-      value,
-      attrs: { inputmode: "numeric", "aria-label": label },
-      on: {
-        input: (e) => {
-          onInput(toInt((e.target as HTMLInputElement).value));
-          render();
-        },
-      },
-    });
     const dot = el("span", { class: "home-budget__dot", attrs: { "aria-hidden": "true" } });
     if (dotColor) dot.style.background = dotColor;
     return el(
@@ -383,19 +492,20 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
       { class: "home-budget__row" },
       dotColor ? dot : null,
       el("span", { class: "home-budget__row-name", text: label }),
-      input,
+      moneyInput(value, step, label, onInput),
     );
   };
 
-  const selectRow = (
+  const makeSelect = (
     label: string,
     opts: { value: string; label: string }[],
     current: string,
+    extraClass: string,
     onChange: (v: string) => void,
-  ): HTMLElement => {
+  ): HTMLSelectElement => {
     const sel = el(
       "select",
-      { class: "home-budget__select", attrs: { "aria-label": label } },
+      { class: `home-budget__select ${extraClass}`.trim(), attrs: { "aria-label": label } },
       ...opts.map((o) => option(o.value, o.label, o.value === current)),
     );
     sel.value = current;
@@ -403,21 +513,51 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
       onChange(sel.value);
       render();
     });
-    return el(
+    return sel;
+  };
+
+  const selectRow = (
+    label: string,
+    opts: { value: string; label: string }[],
+    current: string,
+    onChange: (v: string) => void,
+  ): HTMLElement =>
+    el(
       "label",
       { class: "home-budget__row home-budget__row--select" },
       el("span", { class: "home-budget__row-name", text: label }),
-      sel,
+      makeSelect(label, opts, current, "", onChange),
     );
-  };
 
   const stateOptions = [
-    { value: "", label: "No state income tax" },
-    ...stateCodes.map((code) => ({
-      value: code,
-      label: data?.state(code)?.name ?? code.toUpperCase(),
-    })),
+    { value: "", label: "Select your state…" },
+    ...US_STATES.map((s) => ({ value: s.code, label: s.name })),
   ];
+
+  // Income + how-often sit on one line ("$5,000 a month"), with the annual
+  // equivalent restated underneath.
+  const incomeBlock = el(
+    "div",
+    { class: "home-budget__income" },
+    el(
+      "label",
+      { class: "home-budget__row home-budget__row--income" },
+      el("span", { class: "home-budget__row-name", text: "Income" }),
+      moneyInput(income, 100, "Income", (n) => {
+        income = n;
+      }),
+      makeSelect(
+        "How often you're paid",
+        BUDGET_FREQUENCIES,
+        freq,
+        "home-budget__select--freq",
+        (v) => {
+          freq = v;
+        },
+      ),
+    ),
+    incomeHint,
+  );
 
   const taxesDot = el("span", { class: "home-budget__dot", attrs: { "aria-hidden": "true" } });
   taxesDot.style.background = color.taxes!;
@@ -435,12 +575,7 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
     "div",
     { class: "home-budget__controls" },
     groupLabel("Your income"),
-    numRow("Income", income, null, 100, (n) => {
-      income = n;
-    }),
-    selectRow("How often you're paid", BUDGET_FREQUENCIES, freq, (v) => {
-      freq = v;
-    }),
+    incomeBlock,
     selectRow("Filing status", BUDGET_FILING_STATUSES, fs, (v) => {
       fs = v as FilingStatus;
     }),
@@ -448,6 +583,7 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
       stateCode = v;
     }),
     taxesRow,
+    taxNote,
     groupLabel("Living expenses"),
     ...BUDGET_SPEND_ROWS.map((r) =>
       numRow(r.label, spend[r.key]!, color[r.key]!, 50, (n) => {
