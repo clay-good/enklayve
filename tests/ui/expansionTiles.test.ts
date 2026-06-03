@@ -6,7 +6,6 @@ import { mountSinkingFund } from "../../src/tiles/sinkingFund";
 import { mountRentVsBuy } from "../../src/tiles/rentVsBuy";
 import { mountHealthPlan } from "../../src/tiles/healthPlan";
 import { mountCashFlow } from "../../src/tiles/cashFlow";
-import { mountBudgetOverview } from "../../src/tiles/budgetOverview";
 import { mountDebtFreedom } from "../../src/tiles/debtFreedom";
 import { mountLifeInsurance } from "../../src/tiles/lifeInsurance";
 import { SituationStore } from "../../src/profile/situation";
@@ -274,94 +273,6 @@ describe("Cash-Flow Timeline", () => {
   });
 });
 
-describe("Budget Overview", () => {
-  // income 5000, three categories summing 2700 → 2300 left to assign.
-  const params = (): URLSearchParams =>
-    new URLSearchParams({
-      inc: "5000",
-      k: "3",
-      c0: "Housing",
-      a0: "1600",
-      c1: "Groceries",
-      a1: "600",
-      c2: "Fun",
-      a2: "500",
-    });
-
-  it("shows the allocation: income, assigned, and left to assign", () => {
-    const { root } = mount(mountBudgetOverview, params());
-    expect(rowValue(root, "Monthly income")).toContain("$5,000");
-    expect(rowValue(root, "Total assigned")).toContain("$2,700");
-    expect(rowValue(root, "Left to assign")).toContain("$2,300");
-    expect(rowValue(root, "Status")).toContain("still needs a job");
-    expect(root.querySelector("a.cite-link")).toBeNull();
-  });
-
-  it("celebrates when every dollar has a job", () => {
-    const { root } = mount(
-      mountBudgetOverview,
-      new URLSearchParams({ inc: "2500", k: "2", c0: "Rent", a0: "1600", c1: "Saving", a1: "900" }),
-    );
-    expect(rowValue(root, "Left to assign")).toContain("$0");
-    expect(rowValue(root, "Status")).toContain("Every dollar has a job");
-  });
-
-  it("flags over-assignment (red is a genuine warning here)", () => {
-    const { root } = mount(
-      mountBudgetOverview,
-      new URLSearchParams({ inc: "2000", k: "1", c0: "Rent", a0: "2500" }),
-    );
-    expect(rowValue(root, "Status")).toContain("Over-assigned by $500");
-  });
-
-  it("reads income from My Situation when not in the URL", () => {
-    const profile = new SituationStore();
-    profile.set("annualIncome", 72000);
-    const { root } = mount(mountBudgetOverview, new URLSearchParams(), profile);
-    // 72000 / 12 = 6000 monthly, nothing assigned yet → all 6000 left.
-    expect(rowValue(root, "Monthly income")).toContain("$6,000");
-  });
-
-  it("opens with the big default categories when there are none saved", () => {
-    const { root } = mount(mountBudgetOverview, new URLSearchParams());
-    const names = Array.from(
-      root.querySelectorAll<HTMLInputElement>('input[aria-label$="name"]'),
-    ).map((i) => i.value);
-    expect(names).toContain("Housing");
-    expect(names).toContain("Transportation");
-    expect(names).toContain("Saving & debt payoff");
-  });
-
-  it("draws the allocation donut and flow bar once dollars are assigned", () => {
-    const { root } = mount(mountBudgetOverview, params());
-    expect(root.querySelector(".chart--donut")).not.toBeNull();
-    expect(root.querySelector(".chart--flow")).not.toBeNull();
-    // No month timeline here — that lives in the Cash-Flow Timeline tile now.
-    expect(root.querySelector(".chart--timeline")).toBeNull();
-  });
-
-  it("reorders categories with the keyboard move buttons", () => {
-    const { root, lastParams } = mount(
-      mountBudgetOverview,
-      new URLSearchParams({ inc: "2500", k: "2", c0: "Rent", a0: "1600", c1: "Saving", a1: "900" }),
-    );
-    const down = Array.from(root.querySelectorAll("button")).find(
-      (b) => b.getAttribute("aria-label") === "Move Rent down",
-    );
-    expect(down).toBeTruthy();
-    down!.click();
-    expect(lastParams()?.get("c0")).toBe("Saving");
-    expect(lastParams()?.get("c1")).toBe("Rent");
-  });
-
-  it("spells out the anti-budget idea at the bottom of the page", () => {
-    const { root } = mount(mountBudgetOverview, params());
-    const why = root.querySelector(".budget-why");
-    expect(why).not.toBeNull();
-    expect(why?.textContent).toContain("willpower");
-  });
-});
-
 describe("Debt Freedom Planner", () => {
   const params = (): URLSearchParams =>
     new URLSearchParams({
@@ -463,18 +374,6 @@ describe("expansion tiles accessibility", () => {
         l0: "Rent",
         t0: "bill",
         m0: "1500",
-      }),
-    },
-    {
-      name: "budget-overview",
-      mount: mountBudgetOverview,
-      params: new URLSearchParams({
-        inc: "5000",
-        k: "2",
-        c0: "Housing",
-        a0: "1600",
-        c1: "Groceries",
-        a1: "600",
       }),
     },
     {

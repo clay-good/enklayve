@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { CommandPalette } from "../../src/ui/commandPalette";
-import type { TileDefinition } from "../../src/tiles/types";
+import type { SearchEntry } from "../../src/tiles/registry";
 
 function input(p: CommandPalette): HTMLInputElement {
   return p.element.querySelector<HTMLInputElement>(".palette-input")!;
@@ -14,8 +14,8 @@ function press(el: HTMLElement, key: string): void {
 
 describe("command palette", () => {
   it("opens, filters by fuzzy query, and is keyboard operable", () => {
-    let chosen: TileDefinition | null = null;
-    const palette = new CommandPalette((t) => (chosen = t));
+    let chosen: SearchEntry | null = null;
+    const palette = new CommandPalette((e) => (chosen = e));
     document.body.append(palette.element);
 
     palette.show();

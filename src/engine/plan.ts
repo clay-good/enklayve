@@ -104,6 +104,8 @@ export interface StepResult {
   title: string;
   /** The tile that performs this step (the registry id to link to). */
   tileId: string;
+  /** Optional hub sub-tool to deep-link to (the `?tool=` value). */
+  tool?: string;
   /** Whether this step's goal is already met. */
   satisfied: boolean;
   /** Assigned by the orchestrator from order + satisfaction. */
@@ -145,6 +147,7 @@ interface StepDef {
   id: PlanStepId;
   title: string;
   tileId: string;
+  tool?: string;
   evaluate(input: PlanInput, config: PlanConfig): StepEval;
 }
 
@@ -169,7 +172,7 @@ export const PLAN_STEPS: StepDef[] = [
   {
     id: "starter-cushion",
     title: "Starter cushion",
-    tileId: "peace-of-mind",
+    tileId: "where-you-stand",
     evaluate(input, config) {
       const target = config.starterCushion;
       const have = input.liquidSavings;
@@ -190,7 +193,7 @@ export const PLAN_STEPS: StepDef[] = [
   {
     id: "employer-match",
     title: "Capture the full employer match",
-    tileId: "retirement-optimizer",
+    tileId: "retirement",
     evaluate(input) {
       const available = input.employerMatchAnnual;
       const captured = input.employerMatchCaptured;
@@ -214,7 +217,7 @@ export const PLAN_STEPS: StepDef[] = [
     // The multi-debt planner is the tool that performs this step: it lists every
     // debt and compares the same two orders this step's debtStrategy selects
     // (avalanche = highest rate first, snowball = smallest balance first).
-    tileId: "debt-freedom",
+    tileId: "debt",
     evaluate(input, config) {
       const threshold = config.highCostThresholdPct;
       const highCost = input.debts.filter((d) => d.ratePct >= threshold && d.balance > 0);
@@ -252,7 +255,7 @@ export const PLAN_STEPS: StepDef[] = [
   {
     id: "rainy-day-fund",
     title: "Full rainy-day fund",
-    tileId: "peace-of-mind",
+    tileId: "where-you-stand",
     evaluate(input, config) {
       const essential = input.essentialMonthlyExpenses;
       if (essential <= 0) {
@@ -286,7 +289,7 @@ export const PLAN_STEPS: StepDef[] = [
   {
     id: "retirement",
     title: "Fund tax-advantaged retirement",
-    tileId: "retirement-optimizer",
+    tileId: "retirement",
     evaluate(input) {
       const limit = input.retirementLimitAnnual;
       const contributing = input.retirementContributionsAnnual;
@@ -308,7 +311,8 @@ export const PLAN_STEPS: StepDef[] = [
   {
     id: "sinking-funds",
     title: "Sinking funds for known expenses",
-    tileId: "sabbatical",
+    tileId: "budget-cashflow",
+    tool: "sinking-fund",
     evaluate(input) {
       const goals = input.sinkingGoals;
       const underfunded = goals.filter((g) => g.saved < g.target);
@@ -339,7 +343,7 @@ export const PLAN_STEPS: StepDef[] = [
   {
     id: "war-chest",
     title: "Build the war chest",
-    tileId: "peace-of-mind",
+    tileId: "where-you-stand",
     evaluate(input, config) {
       const essential = input.essentialMonthlyExpenses;
       if (essential <= 0) {
@@ -402,6 +406,7 @@ export function evaluatePlan(input: PlanInput, config: PlanConfig = DEFAULT_CONF
       id: def.id,
       title: def.title,
       tileId: def.tileId,
+      tool: def.tool,
       satisfied: e.satisfied,
       status,
       // A satisfied step has nothing to do — frame it as progress, not a task

@@ -76,7 +76,11 @@ test.describe("no horizontal scrolling, every view", () => {
     await page.setViewportSize({ width: 360, height: 740 });
     const leaks: string[] = [];
     for (const id of unique) {
-      await page.goto(`/#/${id}`);
+      // A tool may be hosted inside a hub behind `?tool=`, so use the real
+      // in-app link printed on its static page rather than assuming `/#/<id>`.
+      const pageHtml = await (await request.get(`/tools/${id}.html`)).text();
+      const m = pageHtml.match(/href="(\/#\/[^"]+)"/);
+      await page.goto(m ? m[1]! : `/#/${id}`);
       await waitForApp(page);
       const overflow = await horizontalOverflow(page);
       if (overflow > 1) leaks.push(`${id} (+${overflow}px)`);
@@ -88,7 +92,7 @@ test.describe("no horizontal scrolling, every view", () => {
   // source) must still fit — exercise the worked example, then the open math.
   test("a computed result with the math open still fits at 360px", async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 740 });
-    await page.goto("/#/take-home");
+    await page.goto("/#/paycheck-taxes?tool=take-home");
     await waitForApp(page);
     const example = page.getByRole("button", { name: /example/i }).first();
     if (await example.isVisible().catch(() => false)) {

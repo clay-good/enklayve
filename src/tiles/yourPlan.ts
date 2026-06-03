@@ -219,7 +219,13 @@ export function mountYourPlan(ctx: TileContext): void {
       type: "button",
       class: "btn btn--ghost plan-open",
       text: "Open the tool →",
-      on: { click: () => ctx.navigate(step.tileId) },
+      on: {
+        click: () =>
+          ctx.navigate(
+            step.tileId,
+            step.tool ? new URLSearchParams({ tool: step.tool }) : undefined,
+          ),
+      },
     });
 
     const statusLine = step.satisfied
@@ -287,7 +293,13 @@ export function mountYourPlan(ctx: TileContext): void {
               type: "button",
               class: "btn btn--accent",
               text: "Open the tool that does this →",
-              on: { click: () => ctx.navigate(c.tileId) },
+              on: {
+                click: () =>
+                  ctx.navigate(
+                    c.tileId,
+                    c.tool ? new URLSearchParams({ tool: c.tool }) : undefined,
+                  ),
+              },
             }),
             el("button", {
               type: "button",

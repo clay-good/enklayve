@@ -7,8 +7,7 @@
  */
 import { el, clear } from "./dom";
 import { fuzzyFilter } from "./fuzzy";
-import { TILES } from "../tiles/registry";
-import { searchText, type TileDefinition } from "../tiles/types";
+import { SEARCH_ENTRIES, searchEntryText, type SearchEntry } from "../tiles/registry";
 
 const MAX_RESULTS = 8;
 
@@ -16,12 +15,12 @@ export class CommandPalette {
   readonly element: HTMLElement;
   private readonly input: HTMLInputElement;
   private readonly list: HTMLElement;
-  private results: TileDefinition[] = [];
+  private results: SearchEntry[] = [];
   private activeIndex = 0;
   private open = false;
-  private readonly onSelect: (tile: TileDefinition) => void;
+  private readonly onSelect: (entry: SearchEntry) => void;
 
-  constructor(onSelect: (tile: TileDefinition) => void) {
+  constructor(onSelect: (entry: SearchEntry) => void) {
     this.onSelect = onSelect;
 
     this.input = el("input", {
@@ -97,7 +96,7 @@ export class CommandPalette {
 
   private refresh(): void {
     const query = this.input.value;
-    this.results = fuzzyFilter(query, TILES, searchText)
+    this.results = fuzzyFilter(query, SEARCH_ENTRIES, searchEntryText)
       .slice(0, MAX_RESULTS)
       .map((r) => r.item);
     this.activeIndex = 0;
@@ -111,7 +110,7 @@ export class CommandPalette {
       this.input.setAttribute("aria-activedescendant", "");
       return;
     }
-    this.results.forEach((tile, i) => {
+    this.results.forEach((entry, i) => {
       const active = i === this.activeIndex;
       const item = el(
         "li",
@@ -129,11 +128,8 @@ export class CommandPalette {
             },
           },
         },
-        el("span", { class: "palette-opt-title", text: tile.title }),
-        el("span", { class: "palette-opt-desc", text: tile.description }),
-        tile.status === "coming-soon"
-          ? el("span", { class: "badge badge--soon", text: "soon" })
-          : null,
+        el("span", { class: "palette-opt-title", text: entry.title }),
+        el("span", { class: "palette-opt-desc", text: entry.description }),
       );
       this.list.append(item);
     });
@@ -169,9 +165,9 @@ export class CommandPalette {
   }
 
   private choose(index: number): void {
-    const tile = this.results[index];
-    if (!tile) return;
+    const entry = this.results[index];
+    if (!entry) return;
     this.close();
-    this.onSelect(tile);
+    this.onSelect(entry);
   }
 }

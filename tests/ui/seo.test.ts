@@ -4,7 +4,11 @@ import { resolve } from "node:path";
 import { renderToolPage, toolPages, toolPagePath } from "../../scripts/tool-pages";
 import { escapeHtml } from "../../scripts/tools-index";
 import { renderSitemap, renderRobots, SITE_ORIGIN } from "../../scripts/sitemap";
-import { TILES } from "../../src/tiles/registry";
+import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
+
+/** Every indexable tool page: the registered tiles (hubs + My Plan) plus each
+ *  hosted sub-tool calculator. */
+const PAGE_COUNT = TILES.length + SUB_TOOLS.length;
 
 /**
  * The crawlability surface (BUILD-SPEC.md §11, Phase 11): one pre-rendered shell
@@ -12,12 +16,15 @@ import { TILES } from "../../src/tiles/registry";
  * three against registry drift — every tool must keep a stable, indexable home.
  */
 describe("per-tile static shells", () => {
-  it("emits exactly one shell per registered tile", () => {
+  it("emits one shell per registered tile and per hosted sub-tool", () => {
     const pages = toolPages();
-    expect(pages.length).toBe(TILES.length);
+    expect(pages.length).toBe(PAGE_COUNT);
     const names = new Set(pages.map((p) => p.fileName));
     expect(names.size).toBe(pages.length);
     for (const tile of TILES) {
+      expect(names.has(toolPagePath(tile.id))).toBe(true);
+    }
+    for (const { tile } of SUB_TOOLS) {
       expect(names.has(toolPagePath(tile.id))).toBe(true);
     }
   });
@@ -108,9 +115,9 @@ describe("sitemap.xml", () => {
     }
   });
 
-  it("has exactly one <loc> per indexable URL (home + index + every tile)", () => {
+  it("has exactly one <loc> per indexable URL (home + index + every tool page)", () => {
     const locs = xml.match(/<loc>/g) ?? [];
-    expect(locs.length).toBe(TILES.length + 2);
+    expect(locs.length).toBe(PAGE_COUNT + 2);
   });
 });
 

@@ -73,8 +73,9 @@ export interface TileContext {
   /** Shareable URL for the given params (defaults to the tile's current params). */
   permalink(params?: URLSearchParams): string;
   /** Navigate to another tile (or home, with null) — used by My Plan to link
-   * each step to the tile that performs it. */
-  navigate(tileId: string | null): void;
+   * each step to the tile that performs it. The optional params deep-link into
+   * a hub's specific sub-tool (e.g. `?tool=eitc`). */
+  navigate(tileId: string | null, params?: URLSearchParams): void;
   /** Active display locale. */
   locale: string;
   /** Bundled, integrity-gated datasets; null when data failed to load. */

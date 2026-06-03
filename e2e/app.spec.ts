@@ -13,7 +13,8 @@ test("the home boots and the wordmark renders", async ({ page }) => {
 });
 
 test("a deep link computes a real result on-device", async ({ page }) => {
-  await page.goto("/#/take-home");
+  // Take-Home Pay now lives inside the Paycheck & Taxes hub (its default tool).
+  await page.goto("/#/paycheck-taxes?tool=take-home");
   await page.waitForSelector(".content");
   await page.getByRole("button", { name: /try an example/i }).click();
   // The result card shows a large headline figure; it must be a currency value.

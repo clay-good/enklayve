@@ -12,7 +12,7 @@
  * and nothing cross-origin is *loaded* — only the "learn more" anchors point
  * out, exactly as the live app does — so the privacy promise is intact.
  */
-import { TILES } from "../src/tiles/registry";
+import { TILES, SUB_TOOLS } from "../src/tiles/registry";
 import type { TileDefinition } from "../src/tiles/types";
 import { escapeHtml } from "./tools-index";
 import { SITE_ORIGIN } from "./sitemap";
@@ -51,9 +51,14 @@ const PAGE_STYLE = `
       .note { color: #5b5570; font-size: 0.85rem; margin-top: 2rem; }
       ul { padding-left: 1.1rem; }`;
 
-/** Render the static landing page for one tile. */
-export function renderToolPage(tile: TileDefinition): string {
-  const appUrl = `/#/${encodeURIComponent(tile.id)}`;
+/**
+ * Render the static landing page for one tile. `appUrl` defaults to the tile's
+ * own fragment; a hosted sub-tool passes its hub deep link (`/#/<hub>?tool=<id>`).
+ */
+export function renderToolPage(
+  tile: TileDefinition,
+  appUrl = `/#/${encodeURIComponent(tile.id)}`,
+): string {
   const canonical = `${SITE_ORIGIN}/${toolPagePath(tile.id)}`;
 
   const how = (tile.how ?? "")
@@ -111,7 +116,21 @@ ${howSection}${resourcesSection}    <p class="note">
 `;
 }
 
-/** Every tile's shell, as build assets ({ fileName, source }). */
+/**
+ * Every crawlable shell, as build assets ({ fileName, source }): one per
+ * registered tile (the hubs + My Plan) and one per hosted sub-tool calculator
+ * (its "Open" link deep-links into the hub at `?tool=<id>`), so every tool keeps
+ * a stable, indexable landing page after the consolidation.
+ */
 export function toolPages(): { fileName: string; source: string }[] {
-  return TILES.map((t) => ({ fileName: toolPagePath(t.id), source: renderToolPage(t) }));
+  return [
+    ...TILES.map((t) => ({ fileName: toolPagePath(t.id), source: renderToolPage(t) })),
+    ...SUB_TOOLS.map(({ tile, hubId }) => ({
+      fileName: toolPagePath(tile.id),
+      source: renderToolPage(
+        tile,
+        `/#/${encodeURIComponent(hubId)}?tool=${encodeURIComponent(tile.id)}`,
+      ),
+    })),
+  ];
 }

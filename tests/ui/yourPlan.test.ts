@@ -68,7 +68,8 @@ describe("Your Plan tile", () => {
       b.textContent?.startsWith("Open the tool that does this"),
     );
     open?.click();
-    expect(navigatedTo()).toBe("debt-freedom");
+    // The debt step now opens the Borrowing & Debt hub (default tool: Debt Freedom).
+    expect(navigatedTo()).toBe("debt");
   });
 
   it("cites the IRS retirement limit somewhere in the plan", () => {

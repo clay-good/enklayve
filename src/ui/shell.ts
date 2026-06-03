@@ -5,7 +5,7 @@
  * shell knows tiles only through the registry and the {@link TileContext}
  * interface, so new tiles never require touching this file.
  */
-import { Router, permalinkFor, buildHash, type Route } from "./router";
+import { Router, permalinkFor, type Route } from "./router";
 import { donutChart, paletteVar, type Slice } from "./charts";
 import { CommandPalette } from "./commandPalette";
 import { SituationPanel } from "./situationPanel";
@@ -13,11 +13,23 @@ import { renderReadout } from "./readoutView";
 import { renderReport } from "./reportView";
 import { applyStoredPreferences } from "./theme";
 import { fuzzyFilter } from "./fuzzy";
-import { el, clear } from "./dom";
+import { el, clear, option } from "./dom";
+import { tileHowResources } from "./explainer";
+import { evaluateTaxes, type TaxInput } from "../engine/tax";
+import type { FilingStatus } from "../data/schemas";
 import { loadBundledData, type BundledData } from "../data/browser";
-import { PILLARS, searchText, type TileContext, type TileDefinition } from "../tiles/types";
-import { getTile, tilesForPillar, TILES } from "../tiles/registry";
+import { PILLARS, type TileContext, type TileDefinition } from "../tiles/types";
+import {
+  getTile,
+  tilesForPillar,
+  SEARCH_ENTRIES,
+  searchEntryText,
+  type SearchEntry,
+} from "../tiles/registry";
 import { SituationStore } from "../profile/situation";
+
+/** Navigate to a tile/home, optionally deep-linking into a hub sub-tool. */
+type NavigateFn = (id: string | null, params?: URLSearchParams) => void;
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -171,52 +183,128 @@ function readoutDropzone(navigate: (id: string | null) => void): HTMLElement {
   );
 }
 
+/** Pay frequencies the budget income can be entered at, with periods/year so we
+ *  can annualize wages for the tax engine and divide the tax back down again. */
+const BUDGET_FREQUENCIES: { value: string; label: string; periods: number }[] = [
+  { value: "weekly", label: "Weekly", periods: 52 },
+  { value: "biweekly", label: "Bi-Weekly", periods: 26 },
+  { value: "monthly", label: "Monthly", periods: 12 },
+  { value: "annually", label: "Annually", periods: 1 },
+];
+
+const BUDGET_FILING_STATUSES: { value: FilingStatus; label: string }[] = [
+  { value: "single", label: "Single" },
+  { value: "married_jointly", label: "Married filing jointly" },
+  { value: "married_separately", label: "Married filing separately" },
+  { value: "head_of_household", label: "Head of household" },
+  { value: "qualifying_surviving_spouse", label: "Qualifying surviving spouse" },
+];
+
+/** Living-expense buckets (everything that isn't tax or investing). */
+const BUDGET_SPEND_ROWS: { key: string; label: string }[] = [
+  { key: "housing", label: "Housing" },
+  { key: "transport", label: "Transport" },
+  { key: "food", label: "Food" },
+  { key: "debt", label: "Debt" },
+  { key: "other", label: "All other expenses" },
+];
+
+/** The two investing lines that count toward your investment rate. */
+const BUDGET_INVEST_ROWS: { key: string; label: string }[] = [
+  { key: "retirement", label: "Retirement investments" },
+  { key: "brokerage", label: "Brokerage" },
+];
+
 /**
- * The home mini-budget (sits right under the Readout dropzone): a live, hands-on
- * taste of the whole idea — type your income, nudge the big buckets, and watch a
- * donut fill while "left to assign" falls toward zero. It is immediate, useful
- * help on the first screen, and the numbers you type carry straight into the
- * full Budget tool when you open it, so nothing is lost.
+ * The home budget — now enklayve's one and only budget (consolidated 2026-06-02,
+ * replacing the standalone Budget Overview tile). A live, hands-on calculator
+ * that takes anyone from "where do I stand?" to a clear answer in about a minute:
+ * enter your income at any pay frequency, pick your filing status and state, and
+ * the same deterministic tax engine the Take-Home tile uses fills in your taxes
+ * automatically. Split the rest across the big living-expense buckets and two
+ * investing lines, and watch a donut fill while "left to assign" falls toward
+ * zero. It reports your total expenses, total investments, honest net income, and
+ * your investment rate against both gross and net. US dollars, US defaults.
  */
-function homeBudgetWidget(): HTMLElement {
+function homeBudgetWidget(data: BundledData | null): HTMLElement {
   const fmt0 = (n: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       maximumFractionDigits: 0,
     }).format(Math.round(n));
+  const pct0 = (r: number): string => `${Math.round(r * 100)}%`;
+  // The fields only accept whole dollars — floor every keystroke to an integer.
+  const toInt = (v: string): number => Math.max(0, Math.floor(Number(v) || 0));
+
+  // Federal + FICA tables drive the auto-computed tax line; absent them (the data
+  // failed to load) the budget still works with taxes held at zero.
+  const fed = data?.federal() ?? null;
+  const fica = data?.fica() ?? null;
+  const stateCodes = data?.stateCodes() ?? [];
 
   let income = 5000;
-  const cats = [
-    { name: "Housing", amount: 1500 },
-    { name: "Food", amount: 600 },
-    { name: "Saving & debt", amount: 900 },
-    { name: "Everything else", amount: 800 },
-  ];
+  let freq = "monthly";
+  let fs: FilingStatus = "single";
+  let stateCode = "";
+  const spend: Record<string, number> = {
+    housing: 1500,
+    transport: 400,
+    food: 600,
+    debt: 300,
+    other: 500,
+  };
+  const invest: Record<string, number> = { retirement: 500, brokerage: 200 };
 
-  const viz = el("div", { class: "home-budget__viz", attrs: { "aria-live": "polite" } });
-
-  const openFull = (): void => {
-    const p = new URLSearchParams();
-    p.set("inc", String(income));
-    p.set("k", String(cats.length));
-    cats.forEach((c, i) => {
-      p.set(`c${i}`, c.name);
-      p.set(`a${i}`, String(c.amount));
-    });
-    // Carry the numbers into the full Budget tile so the click feels seamless.
-    window.location.hash = buildHash("budget-overview", p);
+  // Fixed colors so each donut slice matches its row dot. Taxes read as a muted,
+  // "unavoidable" slate rather than a bright discretionary color.
+  const color: Record<string, string> = {
+    taxes: "var(--enk-text-muted)",
+    housing: paletteVar(0),
+    transport: paletteVar(1),
+    food: paletteVar(2),
+    debt: paletteVar(3),
+    other: paletteVar(4),
+    retirement: paletteVar(5),
+    brokerage: paletteVar(6),
   };
 
+  const periodsFor = (f: string): number =>
+    BUDGET_FREQUENCIES.find((x) => x.value === f)?.periods ?? 12;
+
+  /** Annual total tax (federal income + FICA + state) via the shared engine. */
+  const annualTax = (): number => {
+    if (!fed || !fica) return 0;
+    const annualWages = income * periodsFor(freq);
+    const stateJ = stateCode && data ? (data.state(stateCode) ?? undefined) : undefined;
+    const input: TaxInput = { filingStatus: fs, wages: annualWages };
+    return evaluateTaxes(input, { federal: fed, fica, state: stateJ }).totals.totalTax.toNumber();
+  };
+
+  const viz = el("div", { class: "home-budget__viz", attrs: { "aria-live": "polite" } });
+  const taxesValue = el("span", { class: "home-budget__derived-value" });
+
   const render = (): void => {
-    const assigned = cats.reduce((sum, c) => sum + Math.max(0, c.amount), 0);
-    const left = income - assigned;
-    const balanced = left === 0 && income > 0;
+    const periods = periodsFor(freq);
+    const taxes = annualTax() / periods; // the engine works annually; bring it back
+    const totalExpenses = BUDGET_SPEND_ROWS.reduce((s, r) => s + Math.max(0, spend[r.key] ?? 0), 0);
+    const totalInvest = BUDGET_INVEST_ROWS.reduce((s, r) => s + Math.max(0, invest[r.key] ?? 0), 0);
+    // Honest net: what's left after taxes and living costs — the pool you invest from.
+    const net = income - taxes - totalExpenses;
+    const left = net - totalInvest;
+    const balanced = Math.round(left) === 0 && income > 0;
     const over = left < 0;
 
-    const slices: Slice[] = cats
-      .map((c, i) => ({ label: c.name, value: Math.max(0, c.amount), color: paletteVar(i) }))
-      .filter((s) => s.value > 0);
+    taxesValue.textContent = fmt0(taxes);
+
+    const slices: Slice[] = [];
+    const push = (label: string, value: number, c: string): void => {
+      if (value > 0) slices.push({ label, value, color: c });
+    };
+    push("Taxes", taxes, color.taxes!);
+    for (const r of BUDGET_SPEND_ROWS) push(r.label, Math.max(0, spend[r.key] ?? 0), color[r.key]!);
+    for (const r of BUDGET_INVEST_ROWS)
+      push(r.label, Math.max(0, invest[r.key] ?? 0), color[r.key]!);
     if (left > 0) slices.push({ label: "Left to assign", value: left, color: "var(--enk-accent)" });
 
     const status = el(
@@ -235,40 +323,55 @@ function homeBudgetWidget(): HTMLElement {
       }),
     );
 
+    const grossRate = income > 0 ? totalInvest / income : 0;
+    const netRate = net > 0 ? totalInvest / net : 0;
+    const stat = (label: string, value: string, strong = false): HTMLElement =>
+      el(
+        "div",
+        { class: `home-budget__stat${strong ? " home-budget__stat--strong" : ""}` },
+        el("span", { class: "home-budget__stat-label", text: label }),
+        el("span", { class: "home-budget__stat-value", text: value }),
+      );
+    const stats = el(
+      "div",
+      { class: "home-budget__stats" },
+      stat("Total expenses", fmt0(totalExpenses)),
+      stat("Total investments", fmt0(totalInvest)),
+      stat("Net income (after tax & expenses)", fmt0(net)),
+      stat("Investment rate, of gross income", pct0(grossRate), true),
+      stat("Investment rate, of net income", net > 0 ? pct0(netRate) : "—", true),
+    );
+
     clear(viz);
     viz.append(
       donutChart({
         slices,
         locale: "en-US",
-        ariaLabel: "How this income is split across categories",
+        ariaLabel: "How your income is split across taxes, expenses, investments, and what is left",
         centerValue: fmt0(income),
         centerLabel: "income",
       }),
       status,
-      el("button", {
-        type: "button",
-        class: "btn btn--accent home-budget__open",
-        text: "Open the full budget →",
-        on: { click: openFull },
-      }),
+      stats,
     );
   };
 
-  const row = (
-    name: string,
+  const numRow = (
+    label: string,
     value: number,
     dotColor: string | null,
+    step: number,
     onInput: (n: number) => void,
   ): HTMLElement => {
     const input = el("input", {
       type: "number",
       min: 0,
-      step: 50,
+      step,
       value,
-      attrs: { inputmode: "decimal" },
+      attrs: { inputmode: "numeric", "aria-label": label },
       on: {
         input: (e) => {
-          onInput(Math.max(0, Number((e.target as HTMLInputElement).value) || 0));
+          onInput(toInt((e.target as HTMLInputElement).value));
           render();
         },
       },
@@ -279,20 +382,82 @@ function homeBudgetWidget(): HTMLElement {
       "label",
       { class: "home-budget__row" },
       dotColor ? dot : null,
-      el("span", { class: "home-budget__row-name", text: name }),
+      el("span", { class: "home-budget__row-name", text: label }),
       input,
     );
   };
 
+  const selectRow = (
+    label: string,
+    opts: { value: string; label: string }[],
+    current: string,
+    onChange: (v: string) => void,
+  ): HTMLElement => {
+    const sel = el(
+      "select",
+      { class: "home-budget__select", attrs: { "aria-label": label } },
+      ...opts.map((o) => option(o.value, o.label, o.value === current)),
+    );
+    sel.value = current;
+    sel.addEventListener("change", () => {
+      onChange(sel.value);
+      render();
+    });
+    return el(
+      "label",
+      { class: "home-budget__row home-budget__row--select" },
+      el("span", { class: "home-budget__row-name", text: label }),
+      sel,
+    );
+  };
+
+  const stateOptions = [
+    { value: "", label: "No state income tax" },
+    ...stateCodes.map((code) => ({
+      value: code,
+      label: data?.state(code)?.name ?? code.toUpperCase(),
+    })),
+  ];
+
+  const taxesDot = el("span", { class: "home-budget__dot", attrs: { "aria-hidden": "true" } });
+  taxesDot.style.background = color.taxes!;
+  const taxesRow = el(
+    "div",
+    { class: "home-budget__row home-budget__derived" },
+    taxesDot,
+    el("span", { class: "home-budget__row-name", text: "Taxes (estimated for you)" }),
+    taxesValue,
+  );
+
+  const groupLabel = (text: string): HTMLElement => el("p", { class: "home-budget__group", text });
+
   const controls = el(
     "div",
     { class: "home-budget__controls" },
-    row("Monthly income", income, null, (n) => {
+    groupLabel("Your income"),
+    numRow("Income", income, null, 100, (n) => {
       income = n;
     }),
-    ...cats.map((c, i) =>
-      row(c.name, c.amount, paletteVar(i), (n) => {
-        c.amount = n;
+    selectRow("How often you're paid", BUDGET_FREQUENCIES, freq, (v) => {
+      freq = v;
+    }),
+    selectRow("Filing status", BUDGET_FILING_STATUSES, fs, (v) => {
+      fs = v as FilingStatus;
+    }),
+    selectRow("State", stateOptions, stateCode, (v) => {
+      stateCode = v;
+    }),
+    taxesRow,
+    groupLabel("Living expenses"),
+    ...BUDGET_SPEND_ROWS.map((r) =>
+      numRow(r.label, spend[r.key]!, color[r.key]!, 50, (n) => {
+        spend[r.key] = n;
+      }),
+    ),
+    groupLabel("Investing"),
+    ...BUDGET_INVEST_ROWS.map((r) =>
+      numRow(r.label, invest[r.key]!, color[r.key]!, 50, (n) => {
+        invest[r.key] = n;
       }),
     ),
   );
@@ -300,16 +465,39 @@ function homeBudgetWidget(): HTMLElement {
   const section = el(
     "section",
     { class: "home-budget" },
-    el("h2", { class: "home-budget__title", text: "Try a 60-second budget" }),
+    el("h2", { class: "home-budget__title", text: "Your whole money picture in 60 seconds" }),
     el("p", {
       class: "home-budget__sub",
-      text: "Give every dollar a job. Watch what's left to assign fall to zero. That's the whole idea.",
+      text: "Enter your income and where it goes. We estimate your taxes with the same engine as the Take-Home tool, then show what you invest and what's left. Give every dollar a job until what's left to assign reaches zero.",
     }),
     el("div", { class: "home-budget__grid" }, controls, viz),
   );
 
   render();
   return section;
+}
+
+/**
+ * The anti-budget note that closes the home budget (moved here from the retired
+ * standalone Budget Overview tile, 2026-06-02). Why assigning every dollar up
+ * front beats a month of willpower — the "why" that follows the calculator.
+ */
+function budgetWhy(): HTMLElement {
+  const para = (text: string): HTMLElement => el("p", { class: "budget-why__p", text });
+  return el(
+    "section",
+    { class: "budget-why home-budget-why" },
+    el("h2", { class: "budget-why__title", text: "Zero Dollar Based Budget or Anti-Budget" }),
+    para(
+      "This is the anti-budget. Most budgets fail because they run on willpower: you try to spend a little less in the moment, hundreds of moments a month, and willpower always runs out. Giving every dollar a job flips that. You make the decisions once, before the month starts, so by the time you are standing in the store the choice is already made and there is nothing left to resist.",
+    ),
+    para(
+      "That is a change at the structural layer, not a motivational one. When the money is assigned up front (rent here, groceries here, savings moved the day you are paid), the default quietly does the work. You are not fighting yourself; you have changed the shape of the choice. Habits that live in the structure stay. Habits that lean on willpower fade by the third week.",
+    ),
+    para(
+      "So give every dollar a job, saving and debt payoff included, until what is left to assign reaches exactly zero. A dollar without a job drifts away. A dollar with one tends to stay.",
+    ),
+  );
 }
 
 /** A small search-glass icon (paired with the home search input). */
@@ -327,9 +515,9 @@ function searchIcon(): SVGElement {
  * clears). The ⌘K command palette still works everywhere; this is the visible,
  * obvious search the home leads with.
  */
-function homeSearch(navigate: (id: string | null) => void): HTMLElement {
+function homeSearch(navigate: NavigateFn): HTMLElement {
   const MAX = 8;
-  let results: TileDefinition[] = [];
+  let results: SearchEntry[] = [];
   let active = -1;
 
   const list = el("ul", {
@@ -354,8 +542,9 @@ function homeSearch(navigate: (id: string | null) => void): HTMLElement {
   });
 
   const choose = (i: number): void => {
-    const tile = results[i];
-    if (tile) navigate(tile.id);
+    const entry = results[i];
+    if (entry)
+      navigate(entry.hubId, entry.tool ? new URLSearchParams({ tool: entry.tool }) : undefined);
   };
 
   const render = (): void => {
@@ -366,7 +555,7 @@ function homeSearch(navigate: (id: string | null) => void): HTMLElement {
       input.removeAttribute("aria-activedescendant");
       return;
     }
-    results.forEach((tile, i) => {
+    results.forEach((entry, i) => {
       const isActive = i === active;
       list.append(
         el(
@@ -385,8 +574,8 @@ function homeSearch(navigate: (id: string | null) => void): HTMLElement {
               },
             },
           },
-          el("span", { class: "home-search-opt-title", text: tile.title }),
-          el("span", { class: "home-search-opt-desc", text: tile.description }),
+          el("span", { class: "home-search-opt-title", text: entry.title }),
+          el("span", { class: "home-search-opt-desc", text: entry.description }),
         ),
       );
     });
@@ -399,7 +588,7 @@ function homeSearch(navigate: (id: string | null) => void): HTMLElement {
   const refresh = (): void => {
     const q = input.value.trim();
     results = q
-      ? fuzzyFilter(q, TILES, searchText)
+      ? fuzzyFilter(q, SEARCH_ENTRIES, searchEntryText)
           .slice(0, MAX)
           .map((r) => r.item)
       : [];
@@ -455,7 +644,11 @@ function homeSearch(navigate: (id: string | null) => void): HTMLElement {
  * just the helper, spelled out simply. The trust story stays on `#/about`, and
  * the full plan is one tap away under "See your plan".
  */
-function renderHome(container: HTMLElement, navigate: (id: string | null) => void): void {
+function renderHome(
+  container: HTMLElement,
+  navigate: (id: string | null) => void,
+  data: BundledData | null = null,
+): void {
   clear(container);
   document.title = "enklayve: free, private money tools that show their math";
 
@@ -529,7 +722,8 @@ function renderHome(container: HTMLElement, navigate: (id: string | null) => voi
     hero,
     planCta,
     readoutDropzone(navigate),
-    homeBudgetWidget(),
+    homeBudgetWidget(data),
+    budgetWhy(),
     homeSearch(navigate),
     startHint,
     toolsHead,
@@ -698,7 +892,7 @@ function renderTileView(
   router: Router,
   data: BundledData | null,
   locale: string,
-  navigate: (id: string | null) => void,
+  navigate: NavigateFn,
   profile: SituationStore,
 ): void {
   clear(container);
@@ -761,36 +955,10 @@ function renderTileView(
 function tileExplainer(tile: TileDefinition): HTMLElement | null {
   const section = el("section", { class: "tile-explainer" });
 
-  if (tile.how) {
-    const how = el("details", { class: "explainer-how", attrs: { open: "" } });
-    how.append(el("summary", { text: "How this works" }));
-    for (const para of tile.how.split(/\n\n+/)) {
-      how.append(el("p", { class: "explainer-para", text: para.trim() }));
-    }
-    section.append(how);
-  }
-
-  if (tile.resources && tile.resources.length > 0) {
-    const list = el(
-      "ul",
-      { class: "explainer-resources" },
-      ...tile.resources.map((r) =>
-        el(
-          "li",
-          {},
-          el(
-            "a",
-            {
-              href: r.url,
-              attrs: { rel: "noopener noreferrer", target: "_blank" },
-            },
-            r.label,
-          ),
-        ),
-      ),
-    );
-    section.append(el("h3", { class: "explainer-subhead", text: "Learn more" }), list);
-  }
+  // Hubs carry no `how`/`resources` of their own (their active sub-tool renders
+  // those); for an ordinary tile this adds its "How this works" + "Learn more".
+  const howres = tileHowResources(tile);
+  if (howres) section.append(howres);
 
   section.append(
     el("p", {
@@ -816,12 +984,14 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
   const { locale } = applyStoredPreferences();
 
   const router = new Router();
-  const navigate = (id: string | null): void => router.navigate(id);
+  const navigate: NavigateFn = (id, params) => router.navigate(id, params);
 
   // The single in-memory session profile every tile shares (SPEC-2 §3).
   const profile = new SituationStore();
 
-  const palette = new CommandPalette((tile) => navigate(tile.id));
+  const palette = new CommandPalette((entry) =>
+    navigate(entry.hubId, entry.tool ? new URLSearchParams({ tool: entry.tool }) : undefined),
+  );
 
   let data: BundledData | null = null;
   try {
@@ -856,7 +1026,7 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
 
   const renderRoute = (route: Route): void => {
     if (!route.tileId) {
-      renderHome(content, navigate);
+      renderHome(content, navigate, data);
       return;
     }
     if (route.tileId === "all-tools") {

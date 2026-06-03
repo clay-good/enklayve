@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeAll } from "vitest";
 import { renderHome, renderAbout, renderAllTools, renderReadout, mountApp } from "../src/ui/shell";
+import { loadBundledData, type BundledData } from "../src/data/browser";
 import { SituationStore } from "../src/profile/situation";
 
 describe("shell home view (redesigned 2026-06-01)", () => {
@@ -18,9 +19,13 @@ describe("shell home view (redesigned 2026-06-01)", () => {
     // journey and the eight-category grid are both gone).
     expect(root.querySelector(".journey-step")).toBeNull();
     expect(root.querySelectorAll(".home-tools-group").length).toBeGreaterThanOrEqual(8);
+    // The grid now lists topic hubs, not every individual calculator.
     const titles = Array.from(root.querySelectorAll(".tile-link-title")).map((n) => n.textContent);
-    expect(titles).toContain("Take-Home Pay");
+    expect(titles).toContain("Paycheck & Taxes");
     expect(titles).toContain("My Plan");
+    // Consolidated: the individual calculators are reachable inside their hub,
+    // no longer as top-level grid entries.
+    expect(titles).not.toContain("Take-Home Pay");
   });
 
   it("the dropzone navigates to the Readout", () => {
@@ -45,7 +50,10 @@ describe("shell home view (redesigned 2026-06-01)", () => {
     const first = results.querySelector<HTMLElement>(".home-search-opt");
     expect(first?.textContent).toContain("Take-Home Pay");
     first?.click();
-    expect(navigate).toHaveBeenCalledWith("take-home");
+    // Deep-links into the Paycheck & Taxes hub, pre-switched to Take-Home Pay.
+    const [id, params] = navigate.mock.calls[0]!;
+    expect(id).toBe("paycheck-taxes");
+    expect((params as URLSearchParams | undefined)?.get("tool")).toBe("take-home");
   });
 
   it("the front-door CTA opens My Plan", () => {
@@ -62,6 +70,75 @@ describe("shell home view (redesigned 2026-06-01)", () => {
     renderHome(root, navigate);
     root.querySelector<HTMLButtonElement>(".home-start-link")?.click();
     expect(navigate).toHaveBeenCalledWith("your-plan");
+  });
+});
+
+describe("home budget — the one and only budget (consolidated 2026-06-02)", () => {
+  let data: BundledData;
+  beforeAll(async () => {
+    data = await loadBundledData();
+  });
+
+  it("renders the full calculator: income + frequency + filing + state controls", () => {
+    const root = document.createElement("main");
+    renderHome(root, () => {}, data);
+    const budget = root.querySelector(".home-budget")!;
+    expect(budget.querySelector(".home-budget__title")?.textContent).toContain("60 seconds");
+    const aria = (label: string): Element | null => budget.querySelector(`[aria-label="${label}"]`);
+    expect(aria("Income")).not.toBeNull();
+    expect(aria("How often you're paid")?.tagName).toBe("SELECT");
+    expect(aria("Filing status")?.tagName).toBe("SELECT");
+    expect(aria("State")?.tagName).toBe("SELECT");
+    // The expense and investing rows are present.
+    expect(aria("Housing")).not.toBeNull();
+    expect(aria("Retirement investments")).not.toBeNull();
+    expect(aria("Brokerage")).not.toBeNull();
+  });
+
+  it("auto-computes taxes through the tax engine (not a manual field)", () => {
+    const root = document.createElement("main");
+    renderHome(root, () => {}, data);
+    // Taxes is a derived, read-only line, not an editable input.
+    expect(root.querySelector('[aria-label="Taxes"]')).toBeNull();
+    const taxes = root.querySelector(".home-budget__derived-value")?.textContent ?? "";
+    // $5,000/mo single, no state → real federal + FICA, well above zero.
+    expect(taxes.startsWith("$")).toBe(true);
+    expect(taxes).not.toBe("$0");
+  });
+
+  it("reports total expenses, total investments, net income, and both investment rates", () => {
+    const root = document.createElement("main");
+    renderHome(root, () => {}, data);
+    const labels = Array.from(root.querySelectorAll(".home-budget__stat-label")).map(
+      (n) => n.textContent,
+    );
+    expect(labels).toContain("Total expenses");
+    expect(labels).toContain("Total investments");
+    expect(labels.some((l) => l?.includes("Net income"))).toBe(true);
+    expect(labels.some((l) => l?.includes("gross income"))).toBe(true);
+    expect(labels.some((l) => l?.includes("net income"))).toBe(true);
+    // The investment rates render as percentages.
+    const values = Array.from(
+      root.querySelectorAll(".home-budget__stat--strong .home-budget__stat-value"),
+    ).map((n) => n.textContent);
+    expect(values.every((v) => v?.endsWith("%") || v === "—")).toBe(true);
+  });
+
+  it("drops the 'open the full budget' hop and closes with the retitled anti-budget note", () => {
+    const root = document.createElement("main");
+    renderHome(root, () => {}, data);
+    const buttons = Array.from(root.querySelectorAll("button")).map((b) => b.textContent ?? "");
+    expect(buttons.some((t) => t.toLowerCase().includes("open the full budget"))).toBe(false);
+    expect(root.querySelector(".budget-why__title")?.textContent).toBe(
+      "Zero Dollar Based Budget or Anti-Budget",
+    );
+  });
+
+  it("the budget still renders without data (taxes held at zero, no crash)", () => {
+    const root = document.createElement("main");
+    renderHome(root, () => {}); // no data argument
+    expect(root.querySelector(".home-budget")).not.toBeNull();
+    expect(root.querySelector(".home-budget__derived-value")?.textContent).toBe("$0");
   });
 });
 
@@ -119,9 +196,9 @@ describe("All Tools index view", () => {
     const root = document.createElement("main");
     renderAllTools(root, () => {});
     const titles = Array.from(root.querySelectorAll(".tile-link-title")).map((n) => n.textContent);
-    // Every registry tile appears exactly once (the static tools.html mirrors this).
-    expect(titles).toContain("Take-Home Pay");
-    expect(titles).toContain("What Am I Owed Screener");
+    // Every registry tile (the hubs + My Plan) appears exactly once.
+    expect(titles).toContain("Paycheck & Taxes");
+    expect(titles).toContain("Benefits & Aid");
     expect(titles).toContain("My Plan");
     expect(new Set(titles).size).toBe(titles.length);
   });

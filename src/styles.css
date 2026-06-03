@@ -431,7 +431,8 @@ body {
   font-weight: 600;
   color: var(--enk-text);
 }
-.home-budget__row input {
+.home-budget__row input,
+.home-budget__select {
   width: 6.5rem;
   min-width: 0;
   flex: none;
@@ -443,6 +444,70 @@ body {
   color: var(--enk-text);
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+/* The selects (frequency, filing status, state) need more room for their labels
+   than a dollar field, and sit left-aligned like normal dropdowns. */
+.home-budget__select {
+  width: 9.5rem;
+  text-align: left;
+}
+.home-budget__row--select .home-budget__row-name {
+  font-weight: 500;
+}
+/* A small all-caps divider between the income, expense, and investing groups. */
+.home-budget__group {
+  margin: 0.7rem 0 0.1rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--enk-text-muted);
+}
+.home-budget__group:first-child {
+  margin-top: 0;
+}
+/* The estimated-taxes line: computed for the user, so it reads, not edits. */
+.home-budget__derived {
+  cursor: default;
+}
+.home-budget__derived-value {
+  flex: none;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--enk-text);
+}
+/* The at-a-glance results under the donut: totals, net income, investment rate. */
+.home-budget__stats {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  border-top: 1px solid var(--enk-border);
+  padding-top: 0.7rem;
+}
+.home-budget__stat {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.home-budget__stat-label {
+  font-size: 0.82rem;
+  color: var(--enk-text-muted);
+}
+.home-budget__stat-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--enk-text);
+}
+.home-budget__stat--strong .home-budget__stat-label {
+  color: var(--enk-text);
+  font-weight: 600;
+}
+.home-budget__stat--strong .home-budget__stat-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--enk-primary-strong);
 }
 .home-budget__viz {
   display: flex;
@@ -491,8 +556,13 @@ body {
 .home-budget__status.is-over .home-budget__status-note {
   color: var(--enk-warn);
 }
-.home-budget__open {
+/* The anti-budget "why" note follows the budget on the home, matched to its
+   width and centered so the two read as one block. */
+.home-budget-why {
   width: 100%;
+  max-width: 40rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* --- The home tool list: every tool under a plain-language heading. -------- */
@@ -1570,60 +1640,6 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* --- Category quick-add chips + drag-to-reorder (Budget Overview) -------- */
-.cat-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin: 0.25rem 0 0.5rem;
-}
-.cat-chip {
-  font: inherit;
-  font-size: 0.85rem;
-  padding: 0.3rem 0.7rem;
-  border-radius: 999px;
-  border: 1px dashed var(--enk-border);
-  background: var(--enk-surface-2);
-  color: var(--enk-primary-strong);
-  cursor: pointer;
-}
-.cat-chip:hover {
-  border-color: var(--enk-primary);
-}
-.drag-handle {
-  font: inherit;
-  cursor: grab;
-  border: none;
-  background: transparent;
-  color: var(--enk-text-muted);
-  padding: 0 0.3rem;
-  align-self: center;
-}
-.row-moves {
-  display: inline-flex;
-  flex-direction: column;
-  align-self: center;
-}
-.row-move {
-  font: inherit;
-  line-height: 1;
-  border: none;
-  background: transparent;
-  color: var(--enk-text-muted);
-  cursor: pointer;
-  padding: 0 0.2rem;
-}
-.row-move:hover {
-  color: var(--enk-primary);
-}
-.plan-debt-row.is-dragging {
-  opacity: 0.5;
-}
-.plan-debt-row.drop-target {
-  outline: 2px dashed var(--enk-primary);
-  outline-offset: 2px;
-}
-
 /* --- The Readout, live view (BUILD-SPEC-2 §2) ---------------------------- */
 .badge--good {
   background: color-mix(in srgb, var(--enk-good) 16%, transparent);
@@ -1949,6 +1965,50 @@ body {
 }
 
 /* --- Explainers: "How this works" + resources (warm, helpful, US-only) --- */
+/* --- Hub segmented control: switch calculators within one topic tile -------- */
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 1.4rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--enk-border);
+}
+.segmented__btn {
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--enk-border);
+  background: var(--enk-surface);
+  color: var(--enk-text-muted);
+  cursor: pointer;
+}
+.segmented__btn:hover {
+  border-color: var(--enk-primary);
+  color: var(--enk-text);
+}
+.segmented__btn.is-active {
+  background: var(--enk-primary-soft);
+  border-color: var(--enk-primary);
+  color: var(--enk-primary-strong);
+}
+.segmented__btn:focus-visible {
+  outline: 2px solid var(--enk-primary);
+  outline-offset: 2px;
+}
+.hub-tool {
+  min-width: 0;
+}
+/* The active sub-tool's "How this works" sits inside the hub, above the shared
+   privacy promise the shell appends. */
+.hub-howres:not(:empty) {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--enk-border);
+}
+
 .tile-explainer {
   margin-top: 1.75rem;
   padding-top: 1.25rem;

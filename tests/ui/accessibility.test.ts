@@ -29,6 +29,7 @@ import { mountFreedomDate } from "../../src/tiles/freedomDate";
 import { mountDownshift } from "../../src/tiles/downshift";
 import { mountSabbatical } from "../../src/tiles/sabbatical";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
+import { getTile } from "../../src/tiles/registry";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
 
@@ -223,6 +224,38 @@ describe("accessibility (axe-core)", () => {
         profile: new SituationStore(),
       };
       tc.mount(ctx);
+      document.body.append(main);
+      await expectNoViolations(main);
+    }, 30000);
+  }
+
+  // Each topic hub, mounted at its default sub-tool, exercises the segmented
+  // control (the consolidation's one new primitive) alongside a real calculator.
+  for (const hubId of [
+    "paycheck-taxes",
+    "self-employed",
+    "investing",
+    "retirement",
+    "debt",
+    "budget-cashflow",
+    "home-purchases",
+    "protection",
+    "benefits",
+    "where-you-stand",
+  ]) {
+    it(`the ${hubId} hub has no violations`, async () => {
+      const main = document.createElement("main");
+      const ctx: TileContext = {
+        root: main,
+        params: new URLSearchParams(),
+        setParams: () => {},
+        permalink: () => "https://enklayve.com/#/x",
+        navigate: () => {},
+        locale: "en-US",
+        data,
+        profile: new SituationStore(),
+      };
+      getTile(hubId)?.mount?.(ctx);
       document.body.append(main);
       await expectNoViolations(main);
     }, 30000);
