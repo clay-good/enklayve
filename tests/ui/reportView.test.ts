@@ -54,14 +54,6 @@ describe("Readout Report view", () => {
     );
   });
 
-  it("links onward to Your Plan", () => {
-    const { container, dest } = mount(fundedProfile());
-    Array.from(container.querySelectorAll("button"))
-      .find((b) => b.textContent === "See My Plan →")!
-      .click();
-    expect(dest()).toBe("your-plan");
-  });
-
   it("has no axe violations", async () => {
     const { container } = mount(fundedProfile());
     const results = await axe.run(container, { rules: { "color-contrast": { enabled: false } } });

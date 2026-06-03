@@ -173,8 +173,8 @@ export function renderReadout(opts: RenderReadoutOptions): void {
           el("button", {
             type: "button",
             class: "btn btn--accent",
-            text: "Enter values in My Situation →",
-            on: { click: () => navigate("your-plan") },
+            text: "Enter your numbers in the budget →",
+            on: { click: () => navigate(null) },
           }),
         ),
       );
@@ -334,12 +334,6 @@ export function renderReadout(opts: RenderReadoutOptions): void {
           el("button", {
             type: "button",
             class: "btn btn--accent",
-            text: "See My Plan →",
-            on: { click: () => navigate("your-plan") },
-          }),
-          el("button", {
-            type: "button",
-            class: "btn btn--ghost",
             text: "My Readout Report →",
             on: { click: () => navigate("report") },
           }),

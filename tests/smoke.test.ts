@@ -50,17 +50,10 @@ describe("shell home view (redesigned 2026-06-01)", () => {
     expect((params as URLSearchParams | undefined)?.get("tool")).toBe("take-home");
   });
 
-  it("the front-door CTA opens My Plan", () => {
-    const root = document.createElement("main");
-    const navigate = vi.fn();
-    renderHome(root, navigate);
-    root.querySelector<HTMLButtonElement>(".hero-cta-btn")?.click();
-    expect(navigate).toHaveBeenCalledWith("your-plan");
-  });
-
-  it("no longer shows the 'see your plan' hint at the bottom", () => {
+  it("no longer shows the hero CTA or the 'see your plan' hint (My Plan retired)", () => {
     const root = document.createElement("main");
     renderHome(root, () => {});
+    expect(root.querySelector(".hero-cta-btn")).toBeNull();
     expect(root.querySelector(".home-start-hint")).toBeNull();
   });
 });
@@ -156,7 +149,7 @@ describe("home budget — the one and only budget (consolidated 2026-06-02)", ()
       "The anti-budget: give every dollar a job",
     );
     // Split into labeled parts so it reads fast and scans well.
-    expect(root.querySelectorAll(".budget-why__subhead").length).toBe(2);
+    expect(root.querySelectorAll(".budget-why__subhead").length).toBe(3);
   });
 
   it("the budget still renders without data (taxes held at zero, no crash)", () => {
@@ -184,16 +177,18 @@ describe("shell chrome (header + footer)", () => {
     expect(header.textContent).not.toContain("My Situation");
   });
 
-  it("footer holds uniform buttons (My situation, Why enklayve, GitHub) and no theme control", async () => {
+  it("footer holds uniform buttons (All tools, Why enklayve, GitHub); My situation is gone", async () => {
     const root = document.createElement("div");
     document.body.append(root);
     await mountApp(root);
     const labels = Array.from(root.querySelectorAll(".app-footer .footer-btn")).map(
       (b) => b.textContent,
     );
-    expect(labels).toContain("My situation");
+    expect(labels).toContain("All tools");
     expect(labels).toContain("Why enklayve");
     expect(labels).toContain("GitHub");
+    // The My Situation panel was retired; its footer button is gone.
+    expect(labels).not.toContain("My situation");
     expect(labels.some((t) => t?.toLowerCase().includes("contrast"))).toBe(false);
   });
 });
@@ -221,10 +216,10 @@ describe("All Tools index view", () => {
     const root = document.createElement("main");
     renderAllTools(root, () => {});
     const titles = Array.from(root.querySelectorAll(".tile-link-title")).map((n) => n.textContent);
-    // Every registry tile (the hubs + My Plan) appears exactly once.
+    // Every registry tile (the topic hubs) appears exactly once.
     expect(titles).toContain("Paycheck & Taxes");
     expect(titles).toContain("Benefits & Aid");
-    expect(titles).toContain("My Plan");
+    expect(titles).not.toContain("My Plan");
     expect(new Set(titles).size).toBe(titles.length);
   });
 });

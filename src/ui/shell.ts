@@ -8,7 +8,6 @@
 import { Router, permalinkFor, type Route } from "./router";
 import { donutChart, paletteVar, type Slice } from "./charts";
 import { CommandPalette } from "./commandPalette";
-import { SituationPanel } from "./situationPanel";
 import { renderReadout } from "./readoutView";
 import { renderReport } from "./reportView";
 import { applyStoredPreferences } from "./theme";
@@ -87,10 +86,7 @@ function buildHeader(navigate: (id: string | null) => void): HTMLElement {
  * kept out of the minimal header. Every item is the same shape and size so the
  * row reads as one tidy group and wraps cleanly on a phone. Shown on every view.
  */
-function buildFooter(
-  navigate: (id: string | null) => void,
-  openSituation: () => void,
-): HTMLElement {
+function buildFooter(navigate: (id: string | null) => void): HTMLElement {
   const linkBtn = (text: string, href: string, extra = ""): HTMLElement =>
     el(
       "a",
@@ -101,13 +97,6 @@ function buildFooter(
       },
       text,
     );
-
-  const situationBtn = el("button", {
-    type: "button",
-    class: "footer-btn",
-    text: "My situation",
-    on: { click: openSituation },
-  });
 
   const whyBtn = el("button", {
     type: "button",
@@ -135,7 +124,6 @@ function buildFooter(
       "div",
       { class: "footer-links" },
       allToolsBtn,
-      situationBtn,
       whyBtn,
       linkBtn("GitHub", "https://github.com/clay-good/enklayve"),
       linkBtn("Made with ♥ by Clay Good", "https://claygood.com", "footer-btn--accent"),
@@ -647,6 +635,10 @@ function budgetWhy(): HTMLElement {
     para(
       "Grab your full 401(k) match first, because it is free money. Then pay off high-interest debt fast, since clearing a 24% card is a guaranteed 24% raise. Then save six months of expenses in a high-yield savings account. After that, invest in this order: 401(k), traditional IRA, HSA, then a regular brokerage. Once it all runs on autopilot, buy whatever future you believe in, from a rental house to index funds to a rare Charizard.",
     ),
+    subhead("Just do the next thing"),
+    para(
+      "That is the whole plan, and you do not need a separate dashboard to run it. Look at the budget above to see where you stand, then find the first line here you have not finished and do only that one. Cushion, match, debt, six-month fund, then invest, one move at a time. Knowing where you stand is just knowing which line you are on. The rest is patience and autopay.",
+    ),
   );
 }
 
@@ -812,30 +804,11 @@ function renderHome(
     }),
   );
 
-  // The front door: the plan is enklayve's strongest, simplest thing, so it
-  // leads. One bold action hands a newcomer their ordered money plan; the
-  // dropzone, the mini-budget, and search follow as other ways in.
-  const planCta = el(
-    "div",
-    { class: "hero-cta" },
-    el("button", {
-      type: "button",
-      class: "btn btn--accent hero-cta-btn",
-      text: "Show me my next step →",
-      on: { click: () => navigate("your-plan") },
-    }),
-    el("p", {
-      class: "hero-cta-note",
-      text: "A calm, ordered plan with your single next right move on top. Free, private, and fully yours to adjust.",
-    }),
-  );
-
-  // The full tool grid used to live here; tools are now reached through the
-  // search box above (and the All Tools index in the footer), so the home stays
-  // a short, calm column. The per-tool SEO pages and `#/all-tools` index remain.
+  // The home leads with the budget (your situation and your plan, in one live
+  // picture) and the search box; the tool grid moved behind search + the All
+  // Tools index. The per-tool SEO pages and `#/all-tools` index remain.
   container.append(
     hero,
-    planCta,
     readoutDropzone(navigate),
     homeBudgetWidget(data),
     budgetWhy(),
@@ -1112,15 +1085,12 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
     data = null;
   }
 
-  const situationPanel = new SituationPanel(profile, data);
-  const openSituation = (): void => situationPanel.show();
-
   const content = el("main", { id: "content", class: "content", attrs: { tabindex: "-1" } });
   const header = buildHeader(navigate);
-  const footer = buildFooter(navigate, openSituation);
+  const footer = buildFooter(navigate);
 
   root.replaceChildren(header, content, footer);
-  document.body.append(palette.element, situationPanel.element);
+  document.body.append(palette.element);
 
   // Cmd/Ctrl-K toggles the palette from anywhere.
   const onKeyDown = (e: KeyboardEvent): void => {
@@ -1206,7 +1176,6 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("pagehide", onPageHide);
       palette.element.remove();
-      situationPanel.element.remove();
     },
   };
 }

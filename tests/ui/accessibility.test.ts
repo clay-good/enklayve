@@ -8,7 +8,6 @@ import {
   renderReport,
   mountApp,
 } from "../../src/ui/shell";
-import { SituationPanel } from "../../src/ui/situationPanel";
 import { mountTakeHome } from "../../src/tiles/takeHome";
 import { mountFederalIncomeTax } from "../../src/tiles/federalIncomeTax";
 import { mountMarginalExplorer } from "../../src/tiles/marginalExplorer";
@@ -23,7 +22,6 @@ import { mountCapitalGains } from "../../src/tiles/capitalGains";
 import { mountInflation } from "../../src/tiles/inflation";
 import { mountSavingsBond } from "../../src/tiles/savingsBond";
 import { mountRmd } from "../../src/tiles/rmd";
-import { mountYourPlan } from "../../src/tiles/yourPlan";
 import { mountPeaceOfMind } from "../../src/tiles/peaceOfMind";
 import { mountFreedomDate } from "../../src/tiles/freedomDate";
 import { mountDownshift } from "../../src/tiles/downshift";
@@ -184,11 +182,6 @@ describe("accessibility (axe-core)", () => {
         params: new URLSearchParams({ age: "75", bal: "500000" }),
       },
       {
-        name: "your-plan",
-        mount: mountYourPlan,
-        params: new URLSearchParams(),
-      },
-      {
         name: "peace-of-mind",
         mount: mountPeaceOfMind,
         params: new URLSearchParams(),
@@ -267,15 +260,5 @@ describe("accessibility (axe-core)", () => {
     const handle = await mountApp(root);
     await expectNoViolations(document.body);
     handle.destroy();
-  }, 30000);
-
-  it("the open Your Situation panel has no violations", async () => {
-    const profile = new SituationStore();
-    profile.set("annualIncome", 85000);
-    const panel = new SituationPanel(profile, data);
-    document.body.append(panel.element);
-    panel.show();
-    await expectNoViolations(document.body);
-    panel.close();
   }, 30000);
 });

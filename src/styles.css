@@ -204,31 +204,6 @@ body {
   margin: 0 auto;
 }
 
-/* The front-door CTA: the plan is the boldest action on the home, with the
-   other entry points (dropzone, mini-budget, search) following below it. */
-.hero-cta {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 1.25rem auto 0;
-  max-width: 40rem;
-}
-.hero-cta-btn {
-  font-size: 1.3rem;
-  font-weight: 800;
-  padding: 1.15rem 2.6rem;
-  border-radius: 999px;
-  box-shadow: var(--enk-shadow);
-}
-.hero-cta-note {
-  margin: 0;
-  max-width: 32rem;
-  text-align: center;
-  font-size: 0.9rem;
-  color: var(--enk-text-muted);
-}
-
 /* --- The Readout dropzone (hero) --- */
 .readout-dropzone {
   display: flex;
@@ -986,97 +961,6 @@ body {
   color: var(--enk-text-muted);
 }
 
-/* --- My Situation panel --- */
-.situation-dialog {
-  width: min(44rem, 94vw);
-  max-height: 80vh;
-  overflow-y: auto;
-  padding: 1.4rem 1.5rem;
-}
-
-.situation-title {
-  margin: 0 0 0.2rem;
-  color: var(--enk-primary);
-}
-
-.situation-blurb {
-  margin: 0 0 1rem;
-  color: var(--enk-text-muted);
-  font-size: 0.9rem;
-}
-
-.situation-subhead {
-  margin: 1.25rem 0 0.5rem;
-  font-size: 1rem;
-}
-
-.situation-editor {
-  box-shadow: none;
-  padding: 1rem;
-}
-
-.situation-list {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.35rem 1rem;
-  margin: 0;
-}
-
-.situation-list dt {
-  font-weight: 600;
-  color: var(--enk-text-muted);
-}
-
-.situation-list dd {
-  margin: 0;
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.situation-empty {
-  color: var(--enk-text-muted);
-}
-
-.situation-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem;
-  margin-top: 1.25rem;
-}
-
-.situation-pass {
-  font: inherit;
-  padding: 0.5rem 0.65rem;
-  border-radius: 10px;
-  border: 1px solid var(--enk-border);
-  background: var(--enk-bg);
-  color: var(--enk-text);
-  flex: 1 1 12rem;
-}
-
-.situation-import-label {
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.situation-import {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.situation-status {
-  margin: 0.75rem 0 0;
-  color: var(--enk-text-muted);
-  font-size: 0.9rem;
-  min-height: 1.2em;
-}
-
 /* --- Reduced motion: no non-essential animation (§10, §11). --- */
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -1085,155 +969,14 @@ body {
   }
 }
 
-/* --- My Plan (BUILD-SPEC-2 §4) ----------------------------------------- */
-.plan-intro {
-  color: var(--enk-text-muted);
-  margin: 0 0 1.25rem;
-  max-width: 60ch;
-}
-
-/* The hero: the single next right step. */
+/* The accent result-card hero, reused by the RMD tool. (Originally My Plan's
+   "next step" card; My Plan was retired 2026-06-02.) */
 .plan-next {
   border: 1px solid var(--enk-primary);
   background: var(--enk-primary-soft);
   border-radius: var(--enk-radius);
   padding: 1.25rem 1.5rem;
   box-shadow: var(--enk-shadow);
-}
-.plan-next--done {
-  border-color: var(--enk-good);
-  background: var(--enk-surface-2);
-}
-.plan-next-eyebrow {
-  margin: 0;
-  font-size: 0.85rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--enk-primary-strong);
-}
-.plan-next-title {
-  margin: 0.2rem 0 0.5rem;
-  font-size: 1.4rem;
-  color: var(--enk-text);
-}
-.plan-next-action {
-  margin: 0;
-  color: var(--enk-text);
-  max-width: 62ch;
-}
-.plan-next-amount {
-  margin: 0.6rem 0 0;
-  font-size: 1.9rem;
-  font-weight: 800;
-  color: var(--enk-primary-strong);
-}
-.plan-next-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.plan-list-head {
-  margin: 1.75rem 0 0.5rem;
-  color: var(--enk-primary-strong);
-}
-.plan-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.6rem;
-}
-.plan-step {
-  border: 1px solid var(--enk-border);
-  border-radius: var(--enk-radius);
-  background: var(--enk-surface);
-  padding: 0.85rem 1rem;
-}
-.plan-step--active {
-  border-color: var(--enk-primary);
-  box-shadow: var(--enk-shadow);
-}
-.plan-step--complete .plan-step-mark {
-  color: var(--enk-good);
-}
-.plan-step--active .plan-step-mark {
-  color: var(--enk-primary);
-}
-.plan-step-head {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-.plan-step-mark {
-  font-size: 1.1rem;
-  font-weight: 800;
-  width: 1.2rem;
-  text-align: center;
-}
-.plan-step-titles {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-.plan-step-title {
-  font-weight: 700;
-  color: var(--enk-text);
-}
-.plan-step-tag {
-  font-size: 0.8rem;
-  color: var(--enk-text-muted);
-}
-.plan-step-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-.plan-move {
-  padding: 0.25rem 0.45rem;
-  line-height: 1;
-}
-.plan-step-status {
-  margin: 0.5rem 0 0;
-  color: var(--enk-text-muted);
-}
-.plan-step-status--action {
-  color: var(--enk-text);
-  font-weight: 600;
-}
-.plan-step-cite {
-  margin: 0.5rem 0 0;
-  font-size: 0.85rem;
-  color: var(--enk-text-muted);
-}
-.plan-open {
-  margin-top: 0.5rem;
-}
-
-/* Settings drawer. */
-.plan-config {
-  margin-top: 1.75rem;
-  border: 1px solid var(--enk-border);
-  border-radius: var(--enk-radius);
-  background: var(--enk-surface);
-  padding: 0.5rem 1rem 1rem;
-}
-.plan-config > summary {
-  cursor: pointer;
-  font-weight: 700;
-  color: var(--enk-primary-strong);
-  padding: 0.5rem 0;
-}
-.plan-config-note {
-  color: var(--enk-text-muted);
-  font-size: 0.9rem;
-}
-.plan-subhead {
-  margin: 1rem 0 0.4rem;
-  color: var(--enk-primary-strong);
 }
 .plan-debt-row {
   display: flex;
@@ -1979,28 +1722,6 @@ body {
   color: var(--enk-text-muted);
 }
 
-/* --- My Situation dialog: header + close (always dismissable) ------------ */
-.situation-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.25rem;
-}
-.situation-header .situation-title {
-  margin: 0;
-}
-.situation-close {
-  flex: none;
-}
-.situation-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 1.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--enk-border);
-}
-
 /* --- Explainers: "How this works" + resources (warm, helpful, US-only) --- */
 /* --- Hub segmented control: switch calculators within one topic tile -------- */
 .segmented {
@@ -2281,14 +2002,9 @@ body {
   .tile-link,
   .footer-btn,
   .palette-opt,
-  .situation-pass,
   .home-search-opt,
   .home-search-input,
   .readout-dropzone {
-    min-height: 44px;
-  }
-  .plan-move {
-    min-width: 44px;
     min-height: 44px;
   }
   /* The "source" links live in a dense table; give them room to be tapped
@@ -2378,11 +2094,6 @@ body {
   .palette-panel {
     width: min(40rem, 96vw);
   }
-  .situation-dialog {
-    width: min(44rem, 96vw);
-    max-height: 88vh;
-    padding: 1.1rem 1.1rem;
-  }
   .palette-list {
     max-height: 60vh;
   }
@@ -2394,7 +2105,6 @@ body {
   .result-value {
     font-size: 1.9rem;
   }
-  .plan-next-amount,
   .ph-reading-value {
     font-size: 1.6rem;
   }

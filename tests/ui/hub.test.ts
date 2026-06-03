@@ -140,8 +140,8 @@ describe("hub factory", () => {
     expect(navCalls.at(-1)![1]?.get("tool")).toBe("beta");
 
     // A non-sibling id passes straight through.
-    captured.alpha!.navigate("your-plan");
-    expect(navCalls.at(-1)).toEqual(["your-plan", undefined]);
+    captured.alpha!.navigate("about");
+    expect(navCalls.at(-1)).toEqual(["about", undefined]);
   });
 });
 
@@ -154,8 +154,6 @@ describe("search index (deep links)", () => {
     expect(SEARCH_ENTRIES.some((e) => e.tool === "refinance" && e.hubId === "debt")).toBe(true);
     // Hubs themselves are searchable with no tool (open at their default).
     expect(SEARCH_ENTRIES.some((e) => e.hubId === "paycheck-taxes" && !e.tool)).toBe(true);
-    // My Plan stays a standalone, tool-less entry.
-    expect(SEARCH_ENTRIES.some((e) => e.hubId === "your-plan" && !e.tool)).toBe(true);
     expect(eitc).toBeTruthy();
   });
 });

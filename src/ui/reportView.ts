@@ -76,13 +76,7 @@ export function renderReport(opts: RenderReportOptions): void {
       },
     },
   });
-  const planLink = el("button", {
-    type: "button",
-    class: "btn btn--ghost",
-    text: "See My Plan →",
-    on: { click: () => navigate("your-plan") },
-  });
-  const actions = el("div", { class: "report-actions" }, download, print, planLink);
+  const actions = el("div", { class: "report-actions" }, download, print);
 
   const sections = el("div", { class: "report-body" }, ...model.sections.map(sectionEl));
 

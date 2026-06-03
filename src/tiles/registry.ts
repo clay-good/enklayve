@@ -63,7 +63,6 @@ import { freedomDateTile } from "./freedomDate";
 import { debtFreedomTile } from "./debtFreedom";
 import { downshiftTile } from "./downshift";
 import { sabbaticalTile } from "./sabbatical";
-import { yourPlanTile } from "./yourPlan";
 
 // The ~10 topic hubs, ordered by pillar so `tilesForPillar` and the home grid
 // preserve the on-screen order. Each hub's first tool is its default (the one a
@@ -192,7 +191,7 @@ const HUB_CONFIGS: HubConfig[] = [
   },
 ];
 
-export const TILES: TileDefinition[] = [...HUB_CONFIGS.map(defineHub), yourPlanTile];
+export const TILES: TileDefinition[] = HUB_CONFIGS.map(defineHub);
 
 /**
  * Every calculator hosted inside a hub, paired with its hub id. Used to emit a
@@ -222,7 +221,7 @@ export interface SearchEntry {
   title: string;
   description: string;
   keywords: string[];
-  /** Registry tile id to navigate to (a hub, or your-plan). */
+  /** Registry tile id to navigate to (a hub). */
   hubId: string;
   /** Sub-tool id to pre-select inside the hub (the `?tool=` value). */
   tool?: string;
@@ -251,11 +250,4 @@ export const SEARCH_ENTRIES: SearchEntry[] = [
       tool: t.id,
     })),
   ),
-  // The standalone plan.
-  {
-    title: yourPlanTile.title,
-    description: yourPlanTile.description,
-    keywords: yourPlanTile.keywords,
-    hubId: yourPlanTile.id,
-  },
 ];
