@@ -58,12 +58,10 @@ describe("shell home view (redesigned 2026-06-01)", () => {
     expect(navigate).toHaveBeenCalledWith("your-plan");
   });
 
-  it("the 'see your plan' hint opens My Plan", () => {
+  it("no longer shows the 'see your plan' hint at the bottom", () => {
     const root = document.createElement("main");
-    const navigate = vi.fn();
-    renderHome(root, navigate);
-    root.querySelector<HTMLButtonElement>(".home-start-link")?.click();
-    expect(navigate).toHaveBeenCalledWith("your-plan");
+    renderHome(root, () => {});
+    expect(root.querySelector(".home-start-hint")).toBeNull();
   });
 });
 

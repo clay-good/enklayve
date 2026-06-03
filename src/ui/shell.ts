@@ -830,18 +830,6 @@ function renderHome(
     }),
   );
 
-  const startHint = el(
-    "p",
-    { class: "home-start-hint" },
-    el("span", { text: "Not sure where to begin? " }),
-    el("button", {
-      type: "button",
-      class: "home-start-link",
-      text: "See your plan →",
-      on: { click: () => navigate("your-plan") },
-    }),
-  );
-
   // The full tool grid used to live here; tools are now reached through the
   // search box above (and the All Tools index in the footer), so the home stays
   // a short, calm column. The per-tool SEO pages and `#/all-tools` index remain.
@@ -852,7 +840,6 @@ function renderHome(
     homeBudgetWidget(data),
     budgetWhy(),
     homeSearch(navigate),
-    startHint,
   );
 }
 

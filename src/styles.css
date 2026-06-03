@@ -215,9 +215,9 @@ body {
   max-width: 40rem;
 }
 .hero-cta-btn {
-  font-size: 1.05rem;
-  font-weight: 700;
-  padding: 0.85rem 1.7rem;
+  font-size: 1.3rem;
+  font-weight: 800;
+  padding: 1.15rem 2.6rem;
   border-radius: 999px;
   box-shadow: var(--enk-shadow);
 }
@@ -275,15 +275,15 @@ body {
 .home-search {
   position: relative;
   width: 100%;
-  max-width: 40rem;
-  margin: 1.25rem auto 0;
+  max-width: 44rem;
+  margin: 1.5rem auto 0;
 }
 
 .home-search-box {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0 0.85rem;
+  gap: 0.6rem;
+  padding: 0 1.1rem;
   border: 1px solid var(--enk-border);
   border-radius: 999px;
   background: var(--enk-surface);
@@ -303,15 +303,16 @@ body {
 }
 
 .home-search-icon svg {
-  width: 1.2rem;
-  height: 1.2rem;
+  width: 1.4rem;
+  height: 1.4rem;
 }
 
 .home-search-input {
   flex: 1;
   min-width: 0;
   font: inherit;
-  padding: 0.8rem 0.25rem;
+  font-size: 1.1rem;
+  padding: 1.05rem 0.3rem;
   border: none;
   background: none;
   color: var(--enk-text);
@@ -355,27 +356,6 @@ body {
 .home-search-opt-desc {
   font-size: 0.85rem;
   color: var(--enk-text-muted);
-}
-
-/* The single, quiet pointer to the guided plan for first-timers. */
-.home-start-hint {
-  margin: 1rem 0 0;
-  text-align: center;
-  color: var(--enk-text-muted);
-}
-
-.home-start-link {
-  font: inherit;
-  font-weight: 600;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--enk-primary);
-  padding: 0.25rem 0;
-}
-
-.home-start-link:hover {
-  text-decoration: underline;
 }
 
 /* --- The home mini-budget: a live taste of the full Budget tool ----------- */
@@ -874,12 +854,20 @@ body {
   text-align: left;
   font-weight: 500;
   padding: 0.35rem 0.5rem;
+  /* Wrap at spaces only — labels are short phrases, so never break mid-word. */
+  overflow-wrap: break-word;
 }
 
 .bd-value {
   text-align: right;
   padding: 0.35rem 0.5rem;
-  white-space: nowrap;
+  /* Wrap instead of nowrap: some tiles (e.g. the W-4 refund check) put a full
+     sentence in the value column, and nowrap forced the table wider than the
+     phone, producing a horizontal scroll. `anywhere` (not `break-word`) also
+     lets the cell shrink below its longest line, so the table fits the phone;
+     short currency values still sit on one line when there's room. */
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .bd-cite {
@@ -2257,7 +2245,6 @@ body {
      landed, which matters most on touch where there's no hover to confirm it. */
   .btn:active,
   .footer-btn:active,
-  .home-start-link:active,
   .readout-dropzone:active,
   .tile-link:active,
   .wordmark-link:active {
@@ -2271,7 +2258,6 @@ body {
 .tile-link,
 .footer-btn,
 .home-search-opt,
-.home-start-link,
 .readout-dropzone,
 .wordmark-link,
 .palette-opt {
@@ -2298,7 +2284,6 @@ body {
   .situation-pass,
   .home-search-opt,
   .home-search-input,
-  .home-start-link,
   .readout-dropzone {
     min-height: 44px;
   }

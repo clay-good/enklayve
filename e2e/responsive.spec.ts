@@ -106,4 +106,29 @@ test.describe("no horizontal scrolling, every view", () => {
     const overflow = await horizontalOverflow(page);
     expect(overflow, `take-home with math open overflowed by ${overflow}px`).toBeLessThanOrEqual(1);
   });
+
+  // The W-4 refund check puts whole sentences in the breakdown's value column;
+  // with the math auto-open, those must wrap, not force an inner sideways scroll.
+  test("the W-4 breakdown wraps instead of scrolling sideways", async ({ page }) => {
+    for (const width of [360, 414, 768]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/#/paycheck-taxes?tool=w4");
+      await waitForApp(page);
+      const example = page.getByRole("button", { name: /example/i }).first();
+      if (await example.isVisible().catch(() => false)) await example.click();
+      await page.waitForSelector(".breakdown-table");
+      // No breakdown box or table may scroll sideways — it must wrap.
+      const worst = await page.evaluate(() => {
+        let w = 0;
+        for (const el of Array.from(
+          document.querySelectorAll<HTMLElement>(".breakdown, .breakdown-table"),
+        )) {
+          w = Math.max(w, el.scrollWidth - el.clientWidth);
+        }
+        return w;
+      });
+      expect(worst, `W-4 breakdown overflowed by ${worst}px @ ${width}px`).toBeLessThanOrEqual(1);
+      expect(await horizontalOverflow(page)).toBeLessThanOrEqual(1);
+    }
+  });
 });
