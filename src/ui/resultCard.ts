@@ -122,10 +122,12 @@ export function resultCard(options: ResultCardOptions): HTMLElement {
     el("tbody", {}, ...options.breakdown.map(breakdownRow)),
   );
 
+  // Open by default so the math is front and center, not hidden behind a tap.
+  // The summary reads as a neutral label ("The math") since it's shown, not hidden.
   const details = el(
     "details",
-    { class: "breakdown" },
-    el("summary", { text: "Show the math" }),
+    { class: "breakdown", attrs: { open: "" } },
+    el("summary", { text: "The math" }),
     table,
   );
 

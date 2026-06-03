@@ -145,8 +145,8 @@ function stepMath(step: StepResult): HTMLElement {
     : null;
   return el(
     "details",
-    { class: "breakdown" },
-    el("summary", { text: "Show the math" }),
+    { class: "breakdown", attrs: { open: "" } },
+    el("summary", { text: "The math" }),
     table,
     cite,
   );
@@ -565,7 +565,7 @@ export function mountYourPlan(ctx: TileContext): void {
 
   const situationDetails = el(
     "details",
-    { class: "plan-config" },
+    { class: "plan-config", attrs: { open: "" } },
     el("summary", { text: "My Situation & plan settings" }),
     el("p", {
       class: "plan-config-note",

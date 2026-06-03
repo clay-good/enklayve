@@ -633,6 +633,12 @@ function budgetWhy(): HTMLElement {
     para(
       "So give every dollar a job, saving and debt payoff included, until what is left to assign reaches exactly zero. A dollar without a job drifts away. A dollar with one tends to stay.",
     ),
+    para(
+      "Once the plan is set, the next move is to get yourself out of the way, because willpower fades but a standing order does not. So automate the whole thing. Turn on automatic 401(k), IRA, and HSA contributions inside each platform so the money is gone before it ever lands in checking. Put every bill on autopay so a late fee can never again tax your forgetfulness. Set up automatic sweeps that shuttle money to the right account the day you are paid. You are not being lazy; you are building a small, tireless robot whose only job is to make you richer while you sleep, and the robot is never once tempted by a 2 a.m. shopping cart.",
+    ),
+    para(
+      "Then point that robot in the right order. Grab your full employer 401(k) match first, because it is the one place your money doubles the instant it lands, and walking past it is like leaving cash on the sidewalk in the rain. Next, throw everything at high-interest debt: paying off a 24% credit card is a guaranteed 24% return, and no stock tip on earth can promise that. With the debt dead and buried, sweep your cash into a high-yield savings account until you have about six months of expenses parked safely, the quiet fund that turns “I lost my job” into “I am taking a little break.” After that, open the investing firehose in tax-smart order: 401(k), then a traditional IRA, then an HSA (the only triple-tax-free account in the whole code, basically a cheat code the IRS forgot to patch), then a plain taxable brokerage. Once all of that is humming on autopilot, go buy whatever future you actually believe in: a rental property, index funds, a mint-condition Charizard, or a tasteful parcel of land in whatever digital world you have decided is going to win. Give every dollar a job, automate the handoffs, and let compounding do the boring, beautiful work while you go live your one wild and precious life.",
+    ),
   );
 }
 

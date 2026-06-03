@@ -307,7 +307,7 @@ export function mountPeaceOfMind(ctx: TileContext): void {
 
   const inputs = el(
     "details",
-    { class: "ph-config" },
+    { class: "ph-config", attrs: { open: "" } },
     el("summary", { text: "My Situation & assumptions" }),
     el("p", {
       class: "ph-config-note",
