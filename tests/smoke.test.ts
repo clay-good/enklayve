@@ -4,28 +4,22 @@ import { loadBundledData, type BundledData } from "../src/data/browser";
 import { SituationStore } from "../src/profile/situation";
 
 describe("shell home view (redesigned 2026-06-01)", () => {
-  it("renders the three calm zones: hero, dropzone, live search, then all tools grouped", () => {
+  it("leads with hero, dropzone, the budget, and a live search box (no tool grid)", () => {
     const root = document.createElement("main");
     renderHome(root, () => {});
     expect(root.querySelector(".hero-title")?.textContent).toContain("made simple");
-    // Zone 1: the Readout dropzone (BUILD-SPEC-2 §1.1).
+    // The Readout dropzone (BUILD-SPEC-2 §1.1).
     expect(root.querySelector(".readout-dropzone")).not.toBeNull();
-    // Zone 2: a live search combobox (no longer only the ⌘K palette).
+    // The live search combobox is now the primary way to reach a tool.
     const search = root.querySelector<HTMLInputElement>(".home-search-input");
     expect(search).not.toBeNull();
     expect(search?.getAttribute("role")).toBe("combobox");
     expect(search?.getAttribute("aria-expanded")).toBe("false");
-    // Zone 3: every tool, grouped under plain-language headings (the teaching
-    // journey and the eight-category grid are both gone).
+    // The home tool grid was removed: tools live behind search + the All Tools
+    // index (linked from the footer), not tiled on the home.
     expect(root.querySelector(".journey-step")).toBeNull();
-    expect(root.querySelectorAll(".home-tools-group").length).toBeGreaterThanOrEqual(8);
-    // The grid now lists topic hubs, not every individual calculator.
-    const titles = Array.from(root.querySelectorAll(".tile-link-title")).map((n) => n.textContent);
-    expect(titles).toContain("Paycheck & Taxes");
-    expect(titles).toContain("My Plan");
-    // Consolidated: the individual calculators are reachable inside their hub,
-    // no longer as top-level grid entries.
-    expect(titles).not.toContain("Take-Home Pay");
+    expect(root.querySelector(".home-tools-group")).toBeNull();
+    expect(root.querySelectorAll(".tile-link-title").length).toBe(0);
   });
 
   it("the dropzone navigates to the Readout", () => {
@@ -136,7 +130,7 @@ describe("home budget — the one and only budget (consolidated 2026-06-02)", ()
     expect(taxes).not.toBe("$0");
   });
 
-  it("reports total expenses, total investments, net income, and both investment rates", () => {
+  it("reports total expenses, total investments, take-home pay, and both investment rates", () => {
     const root = document.createElement("main");
     renderHome(root, () => {}, data);
     const labels = Array.from(root.querySelectorAll(".home-budget__stat-label")).map(
@@ -144,9 +138,10 @@ describe("home budget — the one and only budget (consolidated 2026-06-02)", ()
     );
     expect(labels).toContain("Total expenses");
     expect(labels).toContain("Total investments");
-    expect(labels.some((l) => l?.includes("Net income"))).toBe(true);
+    // Net income is now take-home pay (income minus taxes only, not expenses).
+    expect(labels.some((l) => l?.includes("Take-home pay"))).toBe(true);
     expect(labels.some((l) => l?.includes("gross income"))).toBe(true);
-    expect(labels.some((l) => l?.includes("net income"))).toBe(true);
+    expect(labels.some((l) => l?.includes("take-home pay"))).toBe(true);
     // The investment rates render as percentages.
     const values = Array.from(
       root.querySelectorAll(".home-budget__stat--strong .home-budget__stat-value"),
@@ -154,14 +149,16 @@ describe("home budget — the one and only budget (consolidated 2026-06-02)", ()
     expect(values.every((v) => v?.endsWith("%") || v === "—")).toBe(true);
   });
 
-  it("drops the 'open the full budget' hop and closes with the retitled anti-budget note", () => {
+  it("drops the 'open the full budget' hop and closes with the anti-budget note", () => {
     const root = document.createElement("main");
     renderHome(root, () => {}, data);
     const buttons = Array.from(root.querySelectorAll("button")).map((b) => b.textContent ?? "");
     expect(buttons.some((t) => t.toLowerCase().includes("open the full budget"))).toBe(false);
     expect(root.querySelector(".budget-why__title")?.textContent).toBe(
-      "Zero Dollar Based Budget or Anti-Budget",
+      "The anti-budget: give every dollar a job",
     );
+    // Split into labeled parts so it reads fast and scans well.
+    expect(root.querySelectorAll(".budget-why__subhead").length).toBe(2);
   });
 
   it("the budget still renders without data (taxes held at zero, no crash)", () => {

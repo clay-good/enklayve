@@ -654,53 +654,8 @@ body {
   margin-right: auto;
 }
 
-/* --- The home tool list: every tool under a plain-language heading. -------- */
-.home-tools-head {
-  margin-top: 2.5rem;
-  text-align: center;
-}
-
-.home-tools-title {
-  margin: 0 0 0.3rem;
-  color: var(--enk-primary-strong);
-}
-
-.home-tools-sub {
-  margin: 0 auto;
-  max-width: 40rem;
-  color: var(--enk-text-muted);
-}
-
-.home-tools {
-  margin-top: 1.5rem;
-  display: grid;
-  /* min(100%, 18rem) keeps a column from ever exceeding the container on a tiny
-     phone (a bare 18rem min can overflow below ~320px). */
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
-  gap: 1.25rem;
-  align-items: start;
-}
-
-.home-tools-group {
-  background: var(--enk-surface);
-  border: 1px solid var(--enk-border);
-  border-radius: var(--enk-radius);
-  box-shadow: var(--enk-shadow);
-  padding: 1.1rem 1.2rem 1rem;
-}
-
-.home-group-title {
-  margin: 0;
-  font-size: 1.1rem;
-  color: var(--enk-primary);
-}
-
-.home-group-blurb {
-  margin: 0.15rem 0 0.6rem;
-  font-size: 0.9rem;
-  color: var(--enk-text-muted);
-}
-
+/* The home tool grid was retired (tools are reached via search + the All Tools
+   index); the All Tools index page below keeps its own `.all-tools*` styles. */
 .pillar-title {
   margin: 0;
   font-size: 1.1rem;
@@ -1627,6 +1582,11 @@ body {
 .budget-why__title {
   margin: 0 0 0.6rem;
   font-size: 1.1rem;
+  color: var(--enk-primary-strong);
+}
+.budget-why__subhead {
+  margin: 1rem 0 0.35rem;
+  font-size: 0.98rem;
   color: var(--enk-primary-strong);
 }
 .budget-why__p {

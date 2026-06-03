@@ -116,6 +116,14 @@ function buildFooter(
     on: { click: () => navigate("about") },
   });
 
+  // The browse-everything path now that the home leads with search, not a grid.
+  const allToolsBtn = el("button", {
+    type: "button",
+    class: "footer-btn",
+    text: "All tools",
+    on: { click: () => navigate("all-tools") },
+  });
+
   return el(
     "footer",
     { class: "app-footer" },
@@ -126,6 +134,7 @@ function buildFooter(
     el(
       "div",
       { class: "footer-links" },
+      allToolsBtn,
       situationBtn,
       whyBtn,
       linkBtn("GitHub", "https://github.com/clay-good/enklayve"),
@@ -368,9 +377,11 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
     const taxes = annualTax() / periods; // the engine works annually; bring it back
     const totalExpenses = BUDGET_SPEND_ROWS.reduce((s, r) => s + Math.max(0, spend[r.key] ?? 0), 0);
     const totalInvest = BUDGET_INVEST_ROWS.reduce((s, r) => s + Math.max(0, invest[r.key] ?? 0), 0);
-    // Honest net: what's left after taxes and living costs — the pool you invest from.
-    const net = income - taxes - totalExpenses;
-    const left = net - totalInvest;
+    // Take-home pay: what you actually keep after taxes (the money you live on
+    // and invest from). "Left to assign" is the zero-based leftover after every
+    // expense and investment is given a job.
+    const takeHome = income - taxes;
+    const left = takeHome - totalExpenses - totalInvest;
     const balanced = Math.round(left) === 0 && income > 0;
     const over = left < 0;
 
@@ -411,7 +422,7 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
     );
 
     const grossRate = income > 0 ? totalInvest / income : 0;
-    const netRate = net > 0 ? totalInvest / net : 0;
+    const takeHomeRate = takeHome > 0 ? totalInvest / takeHome : 0;
     const stat = (label: string, value: string, strong = false): HTMLElement =>
       el(
         "div",
@@ -424,14 +435,14 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
       "div",
       { class: "home-budget__rates" },
       stat("Investment rate, of gross income", pct0(grossRate), true),
-      stat("Investment rate, of net income", net > 0 ? pct0(netRate) : "—", true),
+      stat("Investment rate, of take-home pay", takeHome > 0 ? pct0(takeHomeRate) : "—", true),
     );
     const totals = el(
       "div",
       { class: "home-budget__totals" },
       stat("Total expenses", fmt0(totalExpenses)),
       stat("Total investments", fmt0(totalInvest)),
-      stat("Net income (after tax & expenses)", fmt0(net)),
+      stat("Take-home pay (after taxes)", fmt0(takeHome)),
     );
     const stats = el("div", { class: "home-budget__stats" }, rates, totals);
 
@@ -614,30 +625,27 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
 }
 
 /**
- * The anti-budget note that closes the home budget (moved here from the retired
- * standalone Budget Overview tile, 2026-06-02). Why assigning every dollar up
- * front beats a month of willpower — the "why" that follows the calculator.
+ * The anti-budget note that closes the home budget. Short, plain-English (about a
+ * 7th-grade reading level), split into "why it works", "make it automatic", and
+ * "the order to fund things" so the idea sticks and people act on it.
  */
 function budgetWhy(): HTMLElement {
   const para = (text: string): HTMLElement => el("p", { class: "budget-why__p", text });
+  const subhead = (text: string): HTMLElement => el("h3", { class: "budget-why__subhead", text });
   return el(
     "section",
     { class: "budget-why home-budget-why" },
-    el("h2", { class: "budget-why__title", text: "Zero Dollar Based Budget or Anti-Budget" }),
+    el("h2", { class: "budget-why__title", text: "The anti-budget: give every dollar a job" }),
     para(
-      "This is the anti-budget. Most budgets fail because they run on willpower: you try to spend a little less in the moment, hundreds of moments a month, and willpower always runs out. Giving every dollar a job flips that. You make the decisions once, before the month starts, so by the time you are standing in the store the choice is already made and there is nothing left to resist.",
+      "Most budgets fail because they run on willpower, and willpower runs out by week three. So flip it. Decide where every dollar goes before the month starts. When the choice is already made, there is nothing left to fight at the store.",
     ),
+    subhead("Then make it automatic"),
     para(
-      "That is a change at the structural layer, not a motivational one. When the money is assigned up front (rent here, groceries here, savings moved the day you are paid), the default quietly does the work. You are not fighting yourself; you have changed the shape of the choice. Habits that live in the structure stay. Habits that lean on willpower fade by the third week.",
+      "Get yourself out of the way. Turn on automatic 401(k), IRA, and HSA contributions so the money moves before you can spend it. Put every bill on autopay. Set money to move to savings on payday. You are building a little robot that grows your money while you sleep, and the robot never gets tired or tempted.",
     ),
+    subhead("Fund things in this order"),
     para(
-      "So give every dollar a job, saving and debt payoff included, until what is left to assign reaches exactly zero. A dollar without a job drifts away. A dollar with one tends to stay.",
-    ),
-    para(
-      "Once the plan is set, the next move is to get yourself out of the way, because willpower fades but a standing order does not. So automate the whole thing. Turn on automatic 401(k), IRA, and HSA contributions inside each platform so the money is gone before it ever lands in checking. Put every bill on autopay so a late fee can never again tax your forgetfulness. Set up automatic sweeps that shuttle money to the right account the day you are paid. You are not being lazy; you are building a small, tireless robot whose only job is to make you richer while you sleep, and the robot is never once tempted by a 2 a.m. shopping cart.",
-    ),
-    para(
-      "Then point that robot in the right order. Grab your full employer 401(k) match first, because it is the one place your money doubles the instant it lands, and walking past it is like leaving cash on the sidewalk in the rain. Next, throw everything at high-interest debt: paying off a 24% credit card is a guaranteed 24% return, and no stock tip on earth can promise that. With the debt dead and buried, sweep your cash into a high-yield savings account until you have about six months of expenses parked safely, the quiet fund that turns “I lost my job” into “I am taking a little break.” After that, open the investing firehose in tax-smart order: 401(k), then a traditional IRA, then an HSA (the only triple-tax-free account in the whole code, basically a cheat code the IRS forgot to patch), then a plain taxable brokerage. Once all of that is humming on autopilot, go buy whatever future you actually believe in: a rental property, index funds, a mint-condition Charizard, or a tasteful parcel of land in whatever digital world you have decided is going to win. Give every dollar a job, automate the handoffs, and let compounding do the boring, beautiful work while you go live your one wild and precious life.",
+      "Grab your full 401(k) match first, because it is free money. Then pay off high-interest debt fast, since clearing a 24% card is a guaranteed 24% raise. Then save six months of expenses in a high-yield savings account. After that, invest in this order: 401(k), traditional IRA, HSA, then a regular brokerage. Once it all runs on autopilot, buy whatever future you believe in, from a rental house to index funds to a rare Charizard.",
     ),
   );
 }
@@ -834,32 +842,9 @@ function renderHome(
     }),
   );
 
-  // Every tool, listed under its plain-language money area (BUILD-SPEC-2 §1.5).
-  const toolsHead = el(
-    "div",
-    { class: "home-tools-head" },
-    el("h2", { class: "home-tools-title", text: "All tools" }),
-    el("p", {
-      class: "home-tools-sub",
-      text: "Pick any tool below. A number you enter in one is shared with the rest, so you only type it once.",
-    }),
-  );
-
-  const groups = el("div", { class: "home-tools" });
-  for (const pillar of PILLARS) {
-    const tiles = tilesForPillar(pillar.id);
-    if (tiles.length === 0) continue;
-    groups.append(
-      el(
-        "section",
-        { class: "home-tools-group" },
-        el("h3", { class: "home-group-title", text: pillar.title }),
-        el("p", { class: "home-group-blurb", text: pillar.blurb }),
-        el("ul", { class: "tile-list" }, ...tiles.map((t) => tileLink(t, (id) => navigate(id)))),
-      ),
-    );
-  }
-
+  // The full tool grid used to live here; tools are now reached through the
+  // search box above (and the All Tools index in the footer), so the home stays
+  // a short, calm column. The per-tool SEO pages and `#/all-tools` index remain.
   container.append(
     hero,
     planCta,
@@ -868,8 +853,6 @@ function renderHome(
     budgetWhy(),
     homeSearch(navigate),
     startHint,
-    toolsHead,
-    groups,
   );
 }
 
