@@ -245,94 +245,6 @@ body {
   max-width: 30rem;
 }
 
-/* --- The home live search (redesigned 2026-06-01): a centered box that drops
-   matching tools below it as you type. --------------------------------------- */
-.home-search {
-  position: relative;
-  width: 100%;
-  max-width: 44rem;
-  margin: 1.5rem auto 0;
-}
-
-.home-search-box {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0 1.1rem;
-  border: 1px solid var(--enk-border);
-  border-radius: 999px;
-  background: var(--enk-surface);
-  box-shadow: var(--enk-shadow);
-}
-
-.home-search-box:focus-within {
-  border-color: var(--enk-primary);
-  box-shadow: 0 0 0 3px var(--enk-primary-soft);
-}
-
-.home-search-icon {
-  display: inline-grid;
-  place-items: center;
-  color: var(--enk-text-muted);
-  flex: none;
-}
-
-.home-search-icon svg {
-  width: 1.4rem;
-  height: 1.4rem;
-}
-
-.home-search-input {
-  flex: 1;
-  min-width: 0;
-  font: inherit;
-  font-size: 1.1rem;
-  padding: 1.05rem 0.3rem;
-  border: none;
-  background: none;
-  color: var(--enk-text);
-}
-
-.home-search-input:focus {
-  outline: none;
-}
-
-.home-search-results {
-  list-style: none;
-  margin: 0.4rem 0 0;
-  padding: 0.3rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  border: 1px solid var(--enk-border);
-  border-radius: var(--enk-radius);
-  background: var(--enk-surface);
-  box-shadow: var(--enk-shadow);
-}
-
-.home-search-opt {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  padding: 0.55rem 0.7rem;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.home-search-opt--active {
-  background: var(--enk-primary-soft);
-}
-
-.home-search-opt-title {
-  font-weight: 700;
-  color: var(--enk-text);
-}
-
-.home-search-opt-desc {
-  font-size: 0.85rem;
-  color: var(--enk-text-muted);
-}
-
 /* --- The home mini-budget: a live taste of the full Budget tool ----------- */
 .home-budget {
   width: 100%;
@@ -1978,7 +1890,6 @@ body {
 .btn,
 .tile-link,
 .footer-btn,
-.home-search-opt,
 .readout-dropzone,
 .wordmark-link,
 .palette-opt {
@@ -2002,8 +1913,6 @@ body {
   .tile-link,
   .footer-btn,
   .palette-opt,
-  .home-search-opt,
-  .home-search-input,
   .readout-dropzone {
     min-height: 44px;
   }

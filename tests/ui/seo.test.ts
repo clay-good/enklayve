@@ -66,7 +66,7 @@ describe("home index.html SEO head", () => {
   it("carries a canonical, robots, and a descriptive title + description", () => {
     expect(html).toContain(`<link rel="canonical" href="${SITE_ORIGIN}/" />`);
     expect(html).toMatch(/<meta name="robots" content="index, follow" \/>/);
-    expect(html).toMatch(/<title>enklayve: [^<]+<\/title>/);
+    expect(html).toMatch(/<title>enklayve<\/title>/);
     expect(html).toMatch(/<meta\s+name="description"/);
   });
 

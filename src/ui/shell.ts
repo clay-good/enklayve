@@ -11,58 +11,22 @@ import { CommandPalette } from "./commandPalette";
 import { renderReadout } from "./readoutView";
 import { renderReport } from "./reportView";
 import { applyStoredPreferences } from "./theme";
-import { fuzzyFilter } from "./fuzzy";
 import { el, clear, option } from "./dom";
 import { tileHowResources } from "./explainer";
 import { evaluateTaxes, type TaxInput } from "../engine/tax";
 import type { FilingStatus } from "../data/schemas";
 import { loadBundledData, type BundledData } from "../data/browser";
 import { PILLARS, type TileContext, type TileDefinition } from "../tiles/types";
-import {
-  getTile,
-  tilesForPillar,
-  SEARCH_ENTRIES,
-  searchEntryText,
-  type SearchEntry,
-} from "../tiles/registry";
+import { getTile, tilesForPillar } from "../tiles/registry";
 import { SituationStore } from "../profile/situation";
 
 /** Navigate to a tile/home, optionally deep-linking into a hub sub-tool. */
 type NavigateFn = (id: string | null, params?: URLSearchParams) => void;
 
-const SVG_NS = "http://www.w3.org/2000/svg";
-
-/** Build an SVG node with attributes (no innerHTML — XSS-safe by construction). */
-function svgEl(tag: string, attrs: Record<string, string>, ...children: SVGElement[]): SVGElement {
-  const node = document.createElementNS(SVG_NS, tag);
-  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
-  for (const child of children) node.append(child);
-  return node;
-}
-
-function iconSvg(...children: SVGElement[]): SVGElement {
-  return svgEl(
-    "svg",
-    {
-      viewBox: "0 0 24 24",
-      width: "24",
-      height: "24",
-      fill: "none",
-      stroke: "currentColor",
-      "stroke-width": "2",
-      "stroke-linecap": "round",
-      "stroke-linejoin": "round",
-      "aria-hidden": "true",
-      focusable: "false",
-    },
-    ...children,
-  );
-}
-
 /**
  * The header: just the wordmark and its lowercase tagline. No theme toggle, no
- * search button — enklayve ships a single calm light theme, and search lives in
- * the home and ⌘K (BUILD-SPEC-2 §0.7, simplified further 2026-06-01).
+ * search button — enklayve ships a single calm light theme, and tools are
+ * reached from the All Tools index and ⌘K (BUILD-SPEC-2 §0.7).
  */
 function buildHeader(navigate: (id: string | null) => void): HTMLElement {
   const wordmark = el(
@@ -642,149 +606,11 @@ function budgetWhy(): HTMLElement {
   );
 }
 
-/** A small search-glass icon (paired with the home search input). */
-function searchIcon(): SVGElement {
-  return iconSvg(
-    svgEl("circle", { cx: "11", cy: "11", r: "7" }),
-    svgEl("line", { x1: "21", y1: "21", x2: "16.65", y2: "16.65" }),
-  );
-}
-
 /**
- * The home live search (BUILD-SPEC-2 §1.1 zone 2): a single centered box that
- * shows matching tools in a dropdown as you type. It's a proper combobox so it's
- * keyboard- and screen-reader-friendly (arrows move, Enter opens, Escape
- * clears). The ⌘K command palette still works everywhere; this is the visible,
- * obvious search the home leads with.
- */
-function homeSearch(navigate: NavigateFn): HTMLElement {
-  const MAX = 8;
-  let results: SearchEntry[] = [];
-  let active = -1;
-
-  const list = el("ul", {
-    id: "home-search-results",
-    class: "home-search-results",
-    hidden: true,
-    attrs: { role: "listbox", "aria-label": "Search results" },
-  });
-
-  const input = el("input", {
-    type: "text",
-    class: "home-search-input",
-    placeholder: "Search for a tool, like “take-home pay” or “debt”…",
-    attrs: {
-      role: "combobox",
-      "aria-expanded": "false",
-      "aria-controls": "home-search-results",
-      "aria-autocomplete": "list",
-      "aria-label": "Search for a tool",
-      autocomplete: "off",
-    },
-  });
-
-  const choose = (i: number): void => {
-    const entry = results[i];
-    if (entry)
-      navigate(entry.hubId, entry.tool ? new URLSearchParams({ tool: entry.tool }) : undefined);
-  };
-
-  const render = (): void => {
-    clear(list);
-    if (results.length === 0) {
-      list.hidden = true;
-      input.setAttribute("aria-expanded", "false");
-      input.removeAttribute("aria-activedescendant");
-      return;
-    }
-    results.forEach((entry, i) => {
-      const isActive = i === active;
-      list.append(
-        el(
-          "li",
-          {
-            id: `home-opt-${i}`,
-            class: isActive ? "home-search-opt home-search-opt--active" : "home-search-opt",
-            attrs: { role: "option", "aria-selected": isActive ? "true" : "false" },
-            on: {
-              click: () => choose(i),
-              mousemove: () => {
-                if (active !== i) {
-                  active = i;
-                  render();
-                }
-              },
-            },
-          },
-          el("span", { class: "home-search-opt-title", text: entry.title }),
-          el("span", { class: "home-search-opt-desc", text: entry.description }),
-        ),
-      );
-    });
-    list.hidden = false;
-    input.setAttribute("aria-expanded", "true");
-    if (active >= 0) input.setAttribute("aria-activedescendant", `home-opt-${active}`);
-    else input.removeAttribute("aria-activedescendant");
-  };
-
-  const refresh = (): void => {
-    const q = input.value.trim();
-    results = q
-      ? fuzzyFilter(q, SEARCH_ENTRIES, searchEntryText)
-          .slice(0, MAX)
-          .map((r) => r.item)
-      : [];
-    active = results.length > 0 ? 0 : -1;
-    render();
-  };
-
-  input.addEventListener("input", refresh);
-  input.addEventListener("keydown", (e) => {
-    const ev = e as KeyboardEvent;
-    if (results.length === 0) {
-      if (ev.key === "Escape") {
-        input.value = "";
-        refresh();
-      }
-      return;
-    }
-    switch (ev.key) {
-      case "ArrowDown":
-        ev.preventDefault();
-        active = (active + 1) % results.length;
-        render();
-        break;
-      case "ArrowUp":
-        ev.preventDefault();
-        active = (active - 1 + results.length) % results.length;
-        render();
-        break;
-      case "Enter":
-        ev.preventDefault();
-        choose(active);
-        break;
-      case "Escape":
-        ev.preventDefault();
-        input.value = "";
-        refresh();
-        break;
-    }
-  });
-
-  const box = el("div", { class: "home-search-box" });
-  box.append(
-    el("span", { class: "home-search-icon", attrs: { "aria-hidden": "true" } }, searchIcon()),
-    input,
-  );
-  return el("div", { class: "home-search" }, box, list);
-}
-
-/**
- * The home (redesigned 2026-06-01, BUILD-SPEC-2 §0.7): three calm, centered
- * zones — the Readout dropzone, a live search box, and then every tool listed
- * under plain-language headings. No teaching journey, no wall of value props:
- * just the helper, spelled out simply. The trust story stays on `#/about`, and
- * the full plan is one tap away under "See your plan".
+ * The home: a short, calm column — the hero line, the Readout dropzone, the
+ * budget (your situation and your plan in one live picture), and the anti-budget
+ * note. Tools are reached from the All Tools index (footer) and the ⌘K palette;
+ * the per-tool SEO pages and `#/all-tools` index remain.
  */
 function renderHome(
   container: HTMLElement,
@@ -792,7 +618,7 @@ function renderHome(
   data: BundledData | null = null,
 ): void {
   clear(container);
-  document.title = "enklayve: free, private money tools that show their math";
+  document.title = "enklayve";
 
   const hero = el(
     "section",
@@ -804,16 +630,7 @@ function renderHome(
     }),
   );
 
-  // The home leads with the budget (your situation and your plan, in one live
-  // picture) and the search box; the tool grid moved behind search + the All
-  // Tools index. The per-tool SEO pages and `#/all-tools` index remain.
-  container.append(
-    hero,
-    readoutDropzone(navigate),
-    homeBudgetWidget(data),
-    budgetWhy(),
-    homeSearch(navigate),
-  );
+  container.append(hero, readoutDropzone(navigate), homeBudgetWidget(data), budgetWhy());
 }
 
 /** Trusted U.S. resources to learn the public rules behind the numbers. */

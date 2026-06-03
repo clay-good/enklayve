@@ -4,22 +4,24 @@ import { loadBundledData, type BundledData } from "../src/data/browser";
 import { SituationStore } from "../src/profile/situation";
 
 describe("shell home view (redesigned 2026-06-01)", () => {
-  it("leads with hero, dropzone, the budget, and a live search box (no tool grid)", () => {
+  it("leads with hero, dropzone, and the budget (no tool grid, no search box)", () => {
     const root = document.createElement("main");
     renderHome(root, () => {});
     expect(root.querySelector(".hero-title")?.textContent).toContain("made simple");
-    // The Readout dropzone (BUILD-SPEC-2 §1.1).
+    // The Readout dropzone (BUILD-SPEC-2 §1.1) and the budget remain.
     expect(root.querySelector(".readout-dropzone")).not.toBeNull();
-    // The live search combobox is now the primary way to reach a tool.
-    const search = root.querySelector<HTMLInputElement>(".home-search-input");
-    expect(search).not.toBeNull();
-    expect(search?.getAttribute("role")).toBe("combobox");
-    expect(search?.getAttribute("aria-expanded")).toBe("false");
-    // The home tool grid was removed: tools live behind search + the All Tools
-    // index (linked from the footer), not tiled on the home.
-    expect(root.querySelector(".journey-step")).toBeNull();
+    expect(root.querySelector(".home-budget")).not.toBeNull();
+    // The home search box and the tool grid are both gone; tools are reached via
+    // the All Tools index (footer) and the ⌘K palette.
+    expect(root.querySelector(".home-search")).toBeNull();
     expect(root.querySelector(".home-tools-group")).toBeNull();
     expect(root.querySelectorAll(".tile-link-title").length).toBe(0);
+  });
+
+  it("the document title is just the brand", () => {
+    const root = document.createElement("main");
+    renderHome(root, () => {});
+    expect(document.title).toBe("enklayve");
   });
 
   it("the dropzone navigates to the Readout", () => {
@@ -28,26 +30,6 @@ describe("shell home view (redesigned 2026-06-01)", () => {
     renderHome(root, navigate);
     root.querySelector<HTMLButtonElement>(".readout-dropzone")?.click();
     expect(navigate).toHaveBeenCalledWith("readout");
-  });
-
-  it("live search reveals matching tools as you type, and a result opens its tool", () => {
-    const root = document.createElement("main");
-    const navigate = vi.fn();
-    renderHome(root, navigate);
-    const input = root.querySelector<HTMLInputElement>(".home-search-input")!;
-    const results = root.querySelector<HTMLElement>(".home-search-results")!;
-    expect(results.hidden).toBe(true);
-    input.value = "take home";
-    input.dispatchEvent(new Event("input"));
-    expect(results.hidden).toBe(false);
-    expect(input.getAttribute("aria-expanded")).toBe("true");
-    const first = results.querySelector<HTMLElement>(".home-search-opt");
-    expect(first?.textContent).toContain("Take-Home Pay");
-    first?.click();
-    // Deep-links into the Paycheck & Taxes hub, pre-switched to Take-Home Pay.
-    const [id, params] = navigate.mock.calls[0]!;
-    expect(id).toBe("paycheck-taxes");
-    expect((params as URLSearchParams | undefined)?.get("tool")).toBe("take-home");
   });
 
   it("no longer shows the hero CTA or the 'see your plan' hint (My Plan retired)", () => {
