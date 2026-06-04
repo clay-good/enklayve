@@ -86,6 +86,7 @@ describe("flat-rate states", () => {
     ["ky", 60000, "1982.4"], // 3.5%·(60,000 − 3,360 std)
     ["ma", 60000, "2780"], // 5.0%·(60,000 − 4,400 exemption), below the surtax
     ["ms", 60000, "1668"], // 0% on first $10k of taxable, 4.0%·(51,700 − 10,000)
+    ["id", 60000, "2326.7"], // 5.3%·(60,000 − 16,100 federal std), HB 40 flat
   ];
   for (const [code, wages, expected] of cases) {
     it(`${code.toUpperCase()} single $${wages.toLocaleString()} → $${expected}`, () => {

@@ -50,7 +50,7 @@ npm run deploy:dry
 
 ## Data refresh workflows (Phase 9)
 
-- [ ] One workflow per source group (`.github/workflows/refresh-*.yml`) runs on its §7.2 cadence and on manual dispatch (IRS, BLS CPI, SSA, HHS, USDA SNAP, CMS Medicaid, the standard-deduction states CA / NY / GA / NC / DC, and the flat-rate states PA / IL / MI).
+- [ ] One workflow per source group (`.github/workflows/refresh-*.yml`) runs on its §7.2 cadence and on manual dispatch (IRS, BLS CPI, SSA, HHS, USDA SNAP, CMS Medicaid, the TreasuryDirect I-bond rates, the standard-deduction states CA / NY / GA / NC / DC, the flat-rate states PA / IL / MI, and the graduated state OH). The later flat-rate states (AZ / CO / IN / KY / MA / MS / ID) ship data-only; their adapters reuse the existing flat-rate parser and are a follow-up.
 - [ ] A refresh opens a data PR only when values changed **and** the full golden suite passes; a fetch/parse failure opens a fail-safe alert PR instead; nothing is auto-committed to `main`.
 - [ ] Each change is recorded in [`source-diff-log.md`](source-diff-log.md) with old-to-new values. (Repo setting: "Allow GitHub Actions to create and approve pull requests" must be enabled.)
 
@@ -58,7 +58,7 @@ npm run deploy:dry
 
 - [ ] Federal/state/FICA golden cases cross-checked against published worked examples for the seeded tax year.
 - [ ] Every tile has a worked example, a "How this works" explainer, "Learn more" links, and the on-device / US-only / not-advice promise.
-- [ ] Deferred-for-accuracy items are still deferred, not faked: the per-county ACA benchmark (user-supplied), and any income-tax state beyond the seeded 24 jurisdictions (14 income-tax states + DC + the 9 no-income-tax states); within the seeded states, state-specific credits, county/municipal add-ons, and itemized deductions stay deferred at launch fidelity. (FAFSA SAI + Pell now ship as an estimate the user verifies against the official SAI Formula Guide and their FAFSA Submission Summary, with every seeded table value cited; the independent-student variant and per-state aid stay out of scope.)
+- [ ] Deferred-for-accuracy items are still deferred, not faked: the per-county ACA benchmark (user-supplied), and any income-tax state beyond the seeded 25 jurisdictions (15 income-tax states + DC + the 9 no-income-tax states); within the seeded states, state-specific credits, county/municipal add-ons, and itemized deductions stay deferred at launch fidelity. Utah stays held because its deduction is a phasing-out taxpayer tax credit the bracket-plus-standard-deduction model cannot represent. (FAFSA SAI + Pell now ship as an estimate the user verifies against the official SAI Formula Guide and their FAFSA Submission Summary, with every seeded table value cited; the independent-student variant and per-state aid stay out of scope.)
 
 ## Deploy
 

@@ -21,10 +21,10 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 
 | Metric | Value | Where to check |
 |---|---|---|
-| Deterministic tools | **55** across 8 money areas | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
-| Tax jurisdictions | **24** — 14 income-tax states + DC + 9 no-income-tax | [`data/state-*-income-tax-*.json`](data) |
-| Cited dataset shards | **41**, each with a sibling `.sha256` + manifest entry | [`data/manifest.json`](data/manifest.json) |
-| Tests | **623** unit/golden across 53 files, **+11** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Deterministic calculators | **53** in **10 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
+| Tax jurisdictions | **25** — 15 income-tax states + DC + 9 no-income-tax | [`data/state-*-income-tax-*.json`](data) |
+| Cited dataset shards | **42**, each with a sibling `.sha256` + manifest entry | [`data/manifest.json`](data/manifest.json) |
+| Tests | **626** unit/golden across 53 files, **+12** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale preference touches `localStorage` | `npm run audit` |
 | UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
@@ -40,7 +40,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 - [The tax engine (the moat)](#the-tax-engine-the-moat)
 - [The data layer and refresh workflows](#the-data-layer-and-refresh-workflows)
 - [The Readout: deterministic document ingestion](#the-readout-deterministic-document-ingestion)
-- [My Situation, My Plan, My Readout Report](#my-situation-my-plan-my-readout-report)
+- [My Situation, the plan, and My Readout Report](#my-situation-the-plan-and-my-readout-report)
 - [Determinism & verification](#determinism--verification)
 - [Design language](#design-language)
 - [Build status](#build-status)
@@ -55,22 +55,28 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 
 ## What you can do with it
 
-**55 deterministic tools**, each with a worked example, per-figure citations, a plain-English "How this works," "Learn more" links, and deep-linkable URL state. They're organized into eight plainly-named money areas (the browse taxonomy; the underlying engine is shared so a number entered in one tool prefills every other):
+**53 deterministic calculators**, each with a worked example, per-figure citations, a plain-English "How this works," "Learn more" links, and deep-linkable URL state. They're grouped into **10 plainly-named topic hubs** (a hub is one page with a segmented control switching between its calculators; the underlying engine is shared, so a number entered in one tool prefills every other). The **anti-budget** that gives every dollar a job lives directly on the home — it *is* the plan, in written form. Reach any calculator by ⌘K search or the crawlable [All Tools index](#cicd-and-deploy).
 
 ### Paycheck & Taxes
 
 | Tool | What it answers |
 |---|---|
-| Take-Home Pay | Your real net pay (federal + FICA + state + local) across every modeled state — 24 jurisdictions today, growing data-only |
+| Take-Home Pay | Your real net pay (federal + FICA + state + local) across every modeled state — 25 jurisdictions today, growing data-only |
 | W-4 Withholding & Refund Check | Is my withholding right? The per-paycheck tweak to land near $0 |
 | Hourly ↔ Salary | Convert either way, with overtime and a second-job stack |
 | Federal Income Tax | Marginal + effective breakdown, standard vs itemized (the big four) |
+| Marginal Rate Explorer | What your next $1,000 of income actually costs |
+| Paycheck Optimizer | Tax saved per $1,000 into a 401(k) vs an HSA |
+
+### Self-Employed & 1099
+
+| Tool | What it answers |
+|---|---|
 | Self-Employment Tax | The full 15.3%, the deductible half, the four 1040-ES installments |
 | Quarterly Taxes & Set-Aside | What to skim off each 1099 payment; the safe-harbor minimum |
 | What Should I Charge? | Work backward from take-home to the billable hourly rate |
 | 1099 Contract vs W-2 Salary | The rough salary a contractor rate equals |
-| Marginal Rate Explorer | What your next $1,000 of income actually costs |
-| Paycheck Optimizer | Tax saved per $1,000 into a 401(k) vs an HSA |
+| Self-Employed Retirement | SEP-IRA vs Solo 401(k), capped at the §415(c) limit |
 
 ### Investing
 
@@ -88,7 +94,6 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Tool | What it answers |
 |---|---|
 | Contribution Optimizer | 401(k)/IRA/HSA room left this year against IRS limits + catch-ups |
-| Self-Employed Retirement | SEP-IRA vs Solo 401(k), capped at the §415(c) limit |
 | Roth Conversion Ladder | The 5-year seasoning schedule and the bridge stream it builds |
 | Backdoor / Mega-Backdoor Roth | The pro-rata rule; after-tax 401(k) room |
 | Required Minimum Distribution | Balance ÷ the IRS Uniform Lifetime factor for your age |
@@ -100,29 +105,35 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 
 | Tool | What it answers |
 |---|---|
+| Debt Freedom Planner | Snowball vs avalanche, the freedom date and interest for each |
 | Loan & Mortgage Amortization | Full schedule + extra-payment what-ifs |
 | Refinance Break-Even | Months to recoup the closing costs |
 | Auto Loan & True Cost of Credit | Total of payments and the effective annual rate |
 | Balance Transfer Break-Even | Net saving after the fee across the intro window |
 | Freedom Date | The date a single balance is gone |
-| Debt Freedom Planner | Snowball vs avalanche, the freedom date and interest for each |
 
 ### Budgeting & Cash Flow
 
 | Tool | What it answers |
 |---|---|
-| Budget Overview | Give every dollar a job until $0 is left to assign — the anti-budget, on one calm page |
 | 50/30/20 Spending Plan | Needs / wants / savings from your take-home |
 | Cash-Flow Timeline | The running daily balance and the tightest day |
 | Sinking Fund Planner | The level monthly amount to reach a goal by a date |
 
-### Home, Family & Protection
+> The full **zero-based budget** ("give every dollar a job until $0 is left to assign") is the home page itself — it auto-computes taxes through the same engine, splits the rest across living-expense and investing lines, and closes with the anti-budget order-of-operations. It needs no separate tile.
+
+### Home & Big Purchases
 
 | Tool | What it answers |
 |---|---|
 | Home Buying Readiness | The all-in price you can afford on the 28/36 guideline |
 | Rent vs Buy | A net-cost comparison over a chosen horizon |
 | College Cost Planner | The monthly contribution to fully fund it by enrollment |
+
+### Insurance & Protection
+
+| Tool | What it answers |
+|---|---|
 | Health Plan Chooser | The cheaper plan for a year of expected spend |
 | Life Insurance Needs | The transparent DIME method |
 | Disability Insurance Needs | The monthly income gap if you couldn't work |
@@ -133,8 +144,8 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 
 | Tool | What it answers |
 |---|---|
-| Federal Poverty Level | Your % of the FPL (contiguous / Alaska / Hawaii) |
 | What Am I Owed? (screener) | A plain-English list of likely-eligible programs + dollars |
+| Federal Poverty Level | Your % of the FPL (contiguous / Alaska / Hawaii) |
 | Earned Income Tax Credit | The estimate from the published phase-in/out |
 | Child Tax Credit | CTC + the refundable Additional CTC |
 | ACA Premium Tax Credit | The marketplace subsidy (you supply the benchmark premium) |
@@ -144,12 +155,11 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | FAFSA Student Aid Index | The published need-analysis methodology, every step shown |
 | Pell Grant | The award from the SAI |
 
-### Your big picture
+### Where You Stand
 
 | Tool | What it answers |
 |---|---|
 | Peace of Mind | Rainy-day cushion, runway, net worth, My Enough Number — one calm view |
-| My Plan | The single next right step, with the math and a link to the tool |
 | Sabbatical / Big-Purchase Planner | What a break costs your runway |
 
 ---
@@ -183,36 +193,37 @@ Two same-origin **workers** are the only carve-outs from `connect-src 'none'`, a
 
 ---
 
-## The home: three calm zones
+## The home: the budget is the plan
 
-The home is spelled out plainly and stripped to the essentials (redesigned 2026-06-01; BUILD-SPEC-2 §0.7). The header is just the wordmark **enklayve** with the lowercase tagline *personal finance* — no theme toggle, no buttons. Below it, three centered zones: the **Readout dropzone** (drop a pay stub / W-2 / tax form for an instant private readout), a **live search box** that drops matching tools in as you type, and then **every tool listed** under its plain-language category. A quiet "See your plan" link points first-timers to My Plan; My Situation lives in a uniform-button footer. The site ships a single calm light theme. The ⌘K palette and the crawlable All Tools index are unchanged.
+The home is stripped to the essentials (redesigned through 2026-06-02; BUILD-SPEC-2 §0.7 and the later consolidation notes). The header is just the wordmark **enklayve** with the lowercase tagline *personal finance* — no theme toggle, no buttons. The body is three stacked zones: a one-line hero, the **Readout dropzone** (drop a pay stub / W-2 / tax form for an instant private readout, never uploaded), and then the centerpiece — the **anti-budget**. The budget takes an income at any pay frequency, a filing status, and a state, auto-computes taxes through the **same `evaluateTaxes` engine** the Take-Home tile uses, and lets you split the rest across living-expense and investing lines while a donut fills and "left to assign" falls toward zero. It closes with the plain-English **anti-budget order-of-operations** (automate everything, then fund things in order: full match → kill high-interest debt → six months of cash → 401(k)/IRA/HSA → brokerage → whatever future you believe in). There is no separate "My Plan" page anymore: **the live budget plus that order-of-operations *is* the plan.** Every other calculator is reached by the **⌘K command palette** or the crawlable **All Tools index** (linked in the footer).
 
 ```
 +---------------------------------------------------------------+
 |  enklayve  personal finance                                   |
 |                                                               |
 |                  Your money, made simple.                     |
+|     Your real take-home, the taxes you owe, the benefits      |
+|        you might be missing, and your next smart move.        |
 |                                                               |
 |   +-------------------------------------------------------+   |
 |   |   Drop a pay stub, W-2, or tax form                   |   |
 |   |        ->  instant private readout (never uploaded)   |   |
 |   +-------------------------------------------------------+   |
 |                                                               |
-|   [ 🔍  Search for a tool, like "take-home pay"…          ]   |
+|   Your budget                          ╭───────────╮          |
+|   Income [ $ 60,000 ] [Annually ▾]     │   donut   │          |
+|   Filing [ Single ▾ ]  State [ ID ▾ ]  │  fills to │          |
+|   Taxes (auto)        − $11,234        │    $0     │          |
+|   Housing/Transport/Food/Debt/Other …  ╰───────────╯          |
+|   Retirement / Brokerage …          Left to assign: $0        |
 |                                                               |
-|              Not sure where to begin? See your plan →         |
-|                                                               |
-|   All tools                                                   |
-|   ┌── Paycheck & Taxes ──┐  ┌── Investing ─────────┐          |
-|   │ Take-Home Pay        │  │ Capital Gains        │   …      |
-|   │ Federal Income Tax…  │  │ Treasury I Bond…     │          |
-|   └──────────────────────┘  └──────────────────────┘          |
+|   The anti-budget: give every dollar a job …                  |
 +---------------------------------------------------------------+
-|  [My situation]   [Why enklayve]   [GitHub]   [♥ Clay Good]   |
+|  [Why enklayve]      [GitHub]          [♥ Clay Good]          |
 +---------------------------------------------------------------+
 ```
 
-Every view is **vertical-scroll only on every device width** — form controls shrink inside their grid track (`min-width: 0`), wide "show the math" tables and chart timelines get their own contained horizontal scroll, and an `overflow-x: clip` backstop on both the content column *and the document root* guarantees the viewport itself never scrolls sideways (the root clip keeps vertical scroll and the sticky header intact, so even the header and footer can't leak width). `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch. A Playwright suite **measures** this — every view and all 55 tools, from 320px to 1440px — so a regression fails CI rather than shipping.
+A state whose income tax isn't modeled yet shows an **honest amber note** ("we don't model X's state income tax yet, so this shows federal + FICA only") rather than silently under-counting. Every view is **vertical-scroll only on every device width** — form controls shrink inside their grid track (`min-width: 0`), wide "show the math" tables and chart timelines get their own contained horizontal scroll, and an `overflow-x: clip` backstop on both the content column *and the document root* guarantees the viewport itself never scrolls sideways. `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch. A Playwright suite **measures** this — every view and all 53 calculators, from 320px to 1440px — so a regression fails CI rather than shipping.
 
 ---
 
@@ -228,8 +239,8 @@ flowchart TD
         CP["⌘K command palette (fuzzy)"]
         CH["accessible charts (donut / flow / timeline)"]
     end
-    subgraph TILES["src/tiles — 55 calculators"]
-        T1["one module per tool"]
+    subgraph TILES["src/tiles — 53 calculators in 10 hubs"]
+        T1["one module per tool; a hub hosts several"]
     end
     subgraph PROFILE["src/profile — My Situation"]
         PS["in-memory store (cleared on unload) + encrypted export"]
@@ -287,7 +298,7 @@ flowchart LR
     EV --> RES["TaxResult: federal · FICA · state · local<br/>· marginal % · effective % · take-home<br/>(every line carries its citation)"]
 ```
 
-- Seeded with **24 jurisdictions** and growing data-only through the staggered annual refresh (SPEC §14.3). **No-income-tax states are first-class records,** not omissions, so a resident sees their state by name with $0 state tax confirmed (and its citation), not a generic "no state tax modeled."
+- Seeded with **25 jurisdictions** and growing data-only through the staggered annual refresh (SPEC §14.3). **No-income-tax states are first-class records,** not omissions, so a resident sees their state by name with $0 state tax confirmed (and its citation), not a generic "no state tax modeled."
 - Handles ordered marginal brackets, filing statuses, standard vs itemized (the "big four": SALT capped, mortgage interest, charitable, medical above the floor), FICA with the wage base + 0.9% Additional Medicare, personal exemptions, special rules (e.g. the CA mental-health surtax), top-bracket surtaxes (e.g. the MA 4% millionaire surtax, modeled as a clean second bracket), and opt-in local add-ons.
 - **Fail-safe is per jurisdiction:** if the California source is stale, California shows a verify banner while every other jurisdiction keeps working.
 
@@ -298,12 +309,12 @@ Every seeded state is modeled at one consistent launch fidelity — **brackets +
 | Shape | States | How it's modeled |
 |---|---|---|
 | Graduated brackets | CA, NY, DC, OH | Ordered marginal tiers; CA adds the 1% mental-health surtax, OH the opt-in Columbus municipal tax |
-| Flat rate | PA (3.07%), IL (4.95%), MI (4.25%), GA (5.39%), NC (4.50%), AZ (2.50%), CO (4.40%), IN (3.05%), KY (4.00%) | A single bracket; standard deduction and/or personal exemption where the state grants one |
-| Flat + top surtax | MA (5.0% + 4% over $1,053,750) | Two brackets — the surtax is just the top marginal tier |
+| Flat rate | PA (3.07%), IL (4.95%), MI (4.25%), GA (5.39%), NC (3.99%), AZ (2.50%), CO (4.40%), IN (3.05%), KY (3.50%), ID (5.30%) | A single bracket; standard deduction and/or personal exemption where the state grants one. ID conforms to the federal standard deduction (the CO pattern) |
+| Flat + top surtax | MA (5.0% + 4% over $1,107,750) | Two brackets — the surtax is just the top marginal tier |
 | Flat over a floor | MS (4.7% over the first $10,000) | A `[{0, 0%}, {10000, 4.7%}]` schedule — the exempt floor is the zero-rate tier |
 | No income tax | TX, FL, AK, NV, NH, SD, TN, WA, WY | First-class records: empty brackets, $0 confirmed, citation noting any non-wage tax (e.g. WA's capital-gains excise) |
 
-Deferred for accuracy this wave: **Idaho** (its 2024 rate was reduced mid-year) and **Utah** (its standard deduction is delivered as a phasing-out credit, so a flat model would overstate low-income tax) — held rather than shipped as an approximation that could be wrong.
+**Idaho** joined this wave: its 2025 mid-year rate cut (HB 40) settled into a clean 5.3% flat tax, so it now models exactly like Colorado. **Utah is still held** — HB 106 (2025) gave it a clean 4.5% flat rate, but its deduction is delivered as a *6%-of-federal-deduction taxpayer tax credit that phases out with income*, which the bracket-plus-standard-deduction model cannot represent without overstating low-income tax. It waits on an exemption-credit engine feature rather than ship an approximation that could be wrong.
 
 ---
 
@@ -343,7 +354,7 @@ flowchart TD
 | Medicaid MAGI thresholds | CMS / state pubs | Annual | 2 |
 | FAFSA SAI + Pell schedule | Dept. of Education | Annual | 2 |
 
-State refresh adapters cover the income-tax states by shape: standard-deduction states (CA, NY, GA, NC, DC), flat-rate states (PA, IL, MI), and graduated bracket-table states (OH); the no-income-tax records have nothing to refresh. The newest flat-rate states (AZ, CO, IN, KY, MA, MS) ship data-only for now — adding their adapters reuses the existing flat-rate parser and is a follow-up. See [docs/data-sources.md](docs/data-sources.md) and [docs/source-diff-log.md](docs/source-diff-log.md).
+State refresh adapters cover the income-tax states by shape: standard-deduction states (CA, NY, GA, NC, DC), flat-rate states (PA, IL, MI), and graduated bracket-table states (OH); the no-income-tax records have nothing to refresh. The newer flat-rate states (AZ, CO, IN, KY, MA, MS, ID) ship data-only for now — adding their adapters reuses the existing flat-rate parser and is a follow-up. See [docs/data-sources.md](docs/data-sources.md) and [docs/source-diff-log.md](docs/source-diff-log.md).
 
 ---
 
@@ -374,11 +385,11 @@ Every document family in the spec has an extractor: the **typed W-2 / 1040 / pay
 
 ---
 
-## My Situation, My Plan, My Readout Report
+## My Situation, the plan, and My Readout Report
 
-- **My Situation** — a single in-memory profile every tool reads from and writes to, so you enter income once. Per-field provenance (typed / extracted / assumed). Never persisted automatically; cleared on unload. Continuity is opt-in via a user-held export that can be passphrase-encrypted on-device (PBKDF2 → AES-GCM).
-- **My Plan** — the default ordered plan (starter cushion → full employer match → high-cost debt → full rainy-day fund → tax-advantaged retirement → sinking funds → war chest) encoded as **data**, so steps reorder and toggle. It reads My Situation, determines the current step, and surfaces one concrete next action with its dollar figure and a link to the tool that performs it. Opinionated by default, fully adjustable, never scolding.
-- **My Readout Report** — a downloadable, self-contained, script-free HTML summary generated entirely on-device: the snapshot, the tax picture, what you may be owed, your next right step, and an assumptions-and-sources appendix. **Byte-identical** when regenerated from the same profile + dataset versions (a golden test asserts it).
+- **My Situation** — a single in-memory profile every tool reads from and writes to, so you enter income once. Per-field provenance (typed / extracted / assumed). Never persisted automatically; cleared on unload. Continuity is opt-in via a user-held export that can be passphrase-encrypted on-device (PBKDF2 → AES-GCM). It is invisible plumbing now (the standalone "My Situation" panel was retired) — ~34 tiles share it so a value entered once prefills the rest.
+- **The plan** — the default ordered plan (starter cushion → full employer match → high-cost debt → full rainy-day fund → tax-advantaged retirement → sinking funds → war chest) is encoded as **data** in a pure engine (`src/engine/plan.ts`), so steps reorder and toggle. Its user-facing form is now the **home anti-budget** (the live budget *is* your situation; the order-of-operations *is* the next right step) rather than a separate "My Plan" page, which was retired. The engine lives on: it computes the single next right step that the Readout Report prints.
+- **My Readout Report** — a downloadable, self-contained, script-free HTML summary generated entirely on-device: the snapshot, the tax picture, what you may be owed, your next right step (from the plan engine above), and an assumptions-and-sources appendix. **Byte-identical** when regenerated from the same profile + dataset versions (a golden test asserts it).
 
 ---
 
@@ -392,9 +403,9 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 - **Provenance gate.** Every shipped figure must resolve to a non-empty citation — no orphan numbers ship.
 - **Accessibility.** axe-core runs inside the test suite across the home, About, All Tools, the Readout, the Report, and every tile form, with **zero violations**.
 - **Release audit.** `npm run audit` mechanically verifies CSP `connect-src 'none'`, no cross-origin loads in the built output, full citation coverage, and no sensitive persistence.
-- **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 55 tools** at a 360px phone, the **offline** service worker (loads with the network cut), and the deep-link → compute path. It runs as its own CI job so the unit suite stays fast.
+- **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 53 calculators** at a 360px phone, the **offline** service worker (loads with the network cut), and the deep-link → compute path. It runs as its own CI job so the unit suite stays fast.
 
-**623 unit/golden tests across 53 files** (plus 11 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**626 unit/golden tests across 53 files** (plus 12 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -431,7 +442,7 @@ All phases from both specs are complete or at a deliberately-deferred boundary. 
 | 11 | ✅ | Crawlability (per-tile shells, sitemap, robots), on-page SEO/social, docs, mobile responsiveness |
 | 12–13 | ✅ | My Situation (session profile + encrypted export); the home (redesigned to three calm zones, §0.7) |
 | 14 | ✅ | The Readout — every document family has an anchored, revision-pinned extractor; reads typed PDF (pdf.js), Word `.docx` (mammoth), and scanned images (on-device OCR, tesseract.js) on-device |
-| 15–16 | ✅ | My Plan (the guidance engine); My Readout Report |
+| 15–16 | ✅ | The guidance engine (`plan.ts`, now surfaced as the home anti-budget); My Readout Report |
 | 17 | ✅ | The §6 expansion catalog — budgeting, debt, home, open enrollment, tax moves, protection, long-horizon |
 
 See the spec files for the full per-wave history.
@@ -444,7 +455,7 @@ See the spec files for the full per-wave history.
 |---|---|
 | `src/engine` | Money math, citation/provenance, the tax evaluator, and per-domain math |
 | `src/data` | Dataset schemas, integrity check, manifest loader, fail-safe gate, browser loader |
-| `src/tiles` | One module per calculator (55 of them) + the registry |
+| `src/tiles` | One module per calculator (53 of them), the hub factory, and the registry |
 | `src/ui` | Render layer, the light theme, result card, command palette, router, charts, views |
 | `src/profile` | My Situation — the in-memory session profile and portable encrypted export |
 | `src/readout` | Anchored extractors, the confirm flow, and the Readout Report builder |
@@ -513,7 +524,7 @@ The [launch checklist](docs/launch-checklist.md) walks every acceptance criterio
 Deferred *for accuracy or scope*, not faked:
 
 - **International** (Europe → India, China, Russia) as each jurisdiction's rules are learned properly. Be right before being everywhere.
-- **Income-tax states beyond the seeded 24** — added through the staggered annual refresh (14 income-tax states + DC and all nine no-income-tax states already ship). Idaho and Utah are held this wave for accuracy (see the [state coverage cheat sheet](#state-coverage-cheat-sheet)).
+- **Income-tax states beyond the seeded 25** — added through the staggered annual refresh (15 income-tax states + DC and all nine no-income-tax states already ship). Utah is still held for accuracy — its phasing-out taxpayer tax credit isn't representable as a standard deduction (see the [state coverage cheat sheet](#state-coverage-cheat-sheet)).
 - **i18n string extraction** — the locale preference persists; a full pre-rendered-variant extraction is held rather than ship a speculative abstraction.
 - **Per-filing-status graduated state schedules** — for any future state whose marginal tiers differ by filing status (none of the seeded income-tax states do).
 

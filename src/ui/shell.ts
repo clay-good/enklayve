@@ -291,7 +291,7 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
   const perPeriodLabel = (f: string): string =>
     ({ weekly: "a week", biweekly: "every 2 weeks", monthly: "a month", annually: "a year" })[f] ??
     "a month";
-  // True only for the 24 states whose income tax is modeled (the rest fall back
+  // True only for the 25 states whose income tax is modeled (the rest fall back
   // to federal + FICA with an honest note).
   const isModeled = (code: string): boolean => !!(code && data && data.state(code));
 

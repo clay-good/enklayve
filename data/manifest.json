@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-06-02",
+  "generatedAt": "2026-06-03",
   "datasets": [
     {
       "id": "federal-income-tax-2024",
@@ -404,6 +404,19 @@
       "sourceDocument": "Mississippi DOR, 4.0% flat tax on taxable income over $10,000 (2026); standard deduction $2,300/$4,600/$3,400, personal exemption $6,000/$12,000/$8,000",
       "dateRetrieved": "2026-06-02",
       "contentHash": "f17c62a6d41eb4beb593f2751421f03d6580de7bbc49263e495f3555abf95ba9"
+    },
+    {
+      "id": "state-id-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-id-income-tax-2024.json",
+      "sourceUrl": "https://tax.idaho.gov/taxes/income-tax/individual-income/individual-income-tax-rate-schedule/",
+      "sourceDocument": "Idaho State Tax Commission, 5.3% flat tax on Idaho taxable income (HB 40, 2025); Idaho conforms to the federal standard deduction. The rate schedule's small 0% floor on the first ~$4,811 (single) / ~$9,622 (MFJ) of taxable income is omitted, so the figure errs slightly high (the conservative side for setting money aside); the 2026 floor is not yet published.",
+      "dateRetrieved": "2026-06-03",
+      "contentHash": "adc7e962aa275ebbed6c1b6b364fece57f69581a21eacc307bc1104c5033a22c"
     },
     {
       "id": "federal-poverty-level-2024-contiguous",

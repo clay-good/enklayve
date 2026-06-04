@@ -1,0 +1,46 @@
+{
+  "id": "US-ID",
+  "name": "Idaho",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": [
+    "single",
+    "married_jointly",
+    "head_of_household"
+  ],
+  "bracketsByFilingStatus": {
+    "single": [
+      {
+        "lowerBound": 0,
+        "rate": 0.053
+      }
+    ],
+    "married_jointly": [
+      {
+        "lowerBound": 0,
+        "rate": 0.053
+      }
+    ],
+    "head_of_household": [
+      {
+        "lowerBound": 0,
+        "rate": 0.053
+      }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 16100,
+    "married_jointly": 32200,
+    "head_of_household": 24150
+  },
+  "citation": {
+    "sourceUrl": "https://tax.idaho.gov/taxes/income-tax/individual-income/individual-income-tax-rate-schedule/",
+    "sourceDocument": "Idaho State Tax Commission, 5.3% flat tax on Idaho taxable income (HB 40, 2025); Idaho conforms to the federal standard deduction. The rate schedule's small 0% floor on the first ~$4,811 (single) / ~$9,622 (MFJ) of taxable income is omitted, so the figure errs slightly high (the conservative side for setting money aside); the 2026 floor is not yet published.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-03"
+  },
+  "effectiveDateRange": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  }
+}
