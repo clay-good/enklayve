@@ -82,17 +82,27 @@ function compute(profile: SituationStore, config: Config): Readings {
     downshiftMonths: essential > 0 ? savings / essential : 0,
     annualEssentials,
     enough,
-    enoughProgressPct: enough > 0 ? Math.min(100, (netWorth / enough) * 100) : 0,
+    // Both netWorth and `enough` can overflow to Infinity on absurd inputs
+    // (essentials near Number.MAX_VALUE), and Infinity / Infinity is NaN — guard
+    // it so the "% of the way" copy and the progress bar never render NaN.
+    enoughProgressPct:
+      enough > 0 && Number.isFinite(netWorth) ? Math.min(100, (netWorth / enough) * 100) : 0,
   };
 }
 
+// Both helpers guard non-finite the same way the shared formatters do
+// (Money.format, the pct helper, the count-up): an overflowing or NaN reading
+// renders the neutral "(out of range)" sentinel, never "$NaN" / "$∞" / "NaN".
 const usd = (n: number, locale: string): string =>
-  new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(n);
-const months = (n: number): string => `${n.toFixed(1)} months`;
+  Number.isFinite(n)
+    ? new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(n)
+    : "(out of range)";
+const months = (n: number): string =>
+  Number.isFinite(n) ? `${n.toFixed(1)} months` : "(out of range)";
 
 /** One calm reading: a label, an animated headline, a sub-line, and an optional
  * progress bar. */

@@ -99,7 +99,8 @@ export function mountFreelanceRate(ctx: TileContext): void {
       { label: "Revenue you must bill for the year", value: fmt(Money.from(revenueNeeded)) },
       {
         label: "Billable hours per year",
-        value: `${billableHours.toLocaleString(ctx.locale)} (${fields.billableHoursPerWeek}/wk × ${fields.weeksPerYear} wks)`,
+        // toLocaleString renders Infinity as "∞"; guard it like the money fields.
+        value: `${Number.isFinite(billableHours) ? billableHours.toLocaleString(ctx.locale) : "(out of range)"} (${fields.billableHoursPerWeek}/wk × ${fields.weeksPerYear} wks)`,
       },
       { label: "Rate to bill per hour", value: fmt(Money.from(hourly)), emphasis: true },
       { label: "Day rate (8 hours)", value: fmt(Money.from(hourly * HOURS_PER_DAY)) },

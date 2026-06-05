@@ -27,7 +27,9 @@ async function setAllNumbers(page: Page, value: string): Promise<void> {
   }, value);
 }
 
-const BROKEN = /NaN|Infinity|\$NaN|undefined|null%/;
+// Intl/`toLocaleString` render a non-finite number as the "∞" glyph, not the
+// word "Infinity", so the guard has to match the glyph too.
+const BROKEN = /NaN|Infinity|\$NaN|undefined|null%|∞/;
 
 test("no tool hangs or renders NaN/Infinity for absurd inputs", async ({ page, request }) => {
   const sitemap = await (await request.get("/sitemap.xml")).text();
@@ -45,7 +47,11 @@ test("no tool hangs or renders NaN/Infinity for absurd inputs", async ({ page, r
     await page.goto(m ? m[1]! : `/#/${id}`);
     await page.waitForSelector(".content", { state: "attached" });
 
-    for (const value of ["999999999", "0"]) {
+    // A big-but-finite value, zero (divide-by-zero bait), a negative (a crafted
+    // deep link can supply one), and magnitudes near/over Number.MAX_VALUE that
+    // overflow intermediate math to Infinity — the case a 9-digit value misses,
+    // where Infinity / Infinity surfaces as NaN and Intl prints "∞".
+    for (const value of ["999999999", "0", "-999999999", "1e308", "1.5e308"]) {
       await setAllNumbers(page, value);
       // If a recompute spun a runaway loop, this read would never resolve and
       // the test would time out — so reaching the assertion is itself the
