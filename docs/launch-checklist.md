@@ -38,7 +38,7 @@ npm run deploy:dry
 - [ ] Full keyboard navigation; visible focus; modals are never traps (Close + Done + Escape + click-outside) and restore focus to the prior element on dismiss. A skip-to-content link (WCAG 2.4.1) is the first focusable element and focuses `<main>` directly; focus moves into the content region after each route change.
 - [ ] Reduced-motion preference is respected (count-up and hover transitions).
 - [ ] The single calm light theme is legible throughout (the dark and high-contrast themes and the toggle were retired 2026-06-01 for the simplest default); red used only for genuine warnings.
-- [ ] The page scrolls vertically only on every device width — no horizontal drag on any tool (form controls shrink to their track, wide tables scroll within their own region, and an `overflow-x: clip` backstop guards the content column); `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch.
+- [ ] The page scrolls vertically only on every device width **and orientation** (portrait widths 320–1440px and landscape phones are both measured in the e2e) — no horizontal drag on any tool (form controls shrink to their track, wide tables scroll within their own region, and an `overflow-x: clip` backstop guards the content column); the ⌘K palette stays within a short landscape viewport; `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch.
 - [ ] Printing any view (notably the Readout Report's Print action) drops the app chrome and interactive controls via `@media print` and lays the content out black-on-white without breaking tables across pages; the Report appendix prints each citation's URL (guarded by a print-media e2e).
 
 ## Crawlability & docs (Phase 11)

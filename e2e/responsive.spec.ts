@@ -131,4 +131,40 @@ test.describe("no horizontal scrolling, every view", () => {
       expect(await horizontalOverflow(page)).toBeLessThanOrEqual(1);
     }
   });
+
+  // Phone in landscape — a short viewport, the one orientation the width sweep
+  // (all height 800) never exercises. Content still scrolls vertically only, and
+  // the command palette (its own fixed overlay) must stay within the viewport so
+  // its input and results are reachable rather than clipped off-screen.
+  test("landscape phones scroll vertically only and the palette stays usable", async ({ page }) => {
+    for (const size of [
+      { width: 740, height: 360 }, // small phone, landscape
+      { width: 932, height: 430 }, // large phone, landscape
+    ]) {
+      await page.setViewportSize(size);
+      for (const hash of [
+        "/",
+        "/#/paycheck-taxes?tool=take-home",
+        "/#/budget-cashflow?tool=cash-flow",
+      ]) {
+        await page.goto(hash);
+        await waitForApp(page);
+        const overflow = await horizontalOverflow(page);
+        expect(
+          overflow,
+          `${hash} @ ${size.width}x${size.height} overflowed by ${overflow}px`,
+        ).toBeLessThanOrEqual(1);
+      }
+      // Open ⌘K and confirm the panel fits within the short viewport.
+      await page.keyboard.press("ControlOrMeta+k");
+      const panel = page.getByRole("dialog", { name: "Command palette" });
+      await expect(panel).toBeVisible();
+      const fits = await panel.evaluate(
+        (el, vh) => el.getBoundingClientRect().bottom <= vh + 1,
+        size.height,
+      );
+      expect(fits, `palette panel exceeded the ${size.height}px viewport`).toBe(true);
+      await page.keyboard.press("Escape");
+    }
+  });
 });

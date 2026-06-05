@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **53** in **10 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **25** — 15 income-tax states + DC + 9 no-income-tax | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **42**, each with a sibling `.sha256` + manifest entry | [`data/manifest.json`](data/manifest.json) |
-| Tests | **656** unit/golden across 55 files, **+14** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | **656** unit/golden across 55 files, **+15** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale preference touches `localStorage` | `npm run audit` |
 | UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
@@ -225,7 +225,7 @@ The home is stripped to the essentials (redesigned through 2026-06-02; BUILD-SPE
 +---------------------------------------------------------------+
 ```
 
-A state whose income tax isn't modeled yet shows an **honest amber note** ("we don't model X's state income tax yet, so this shows federal + FICA only") rather than silently under-counting. Every view is **vertical-scroll only on every device width** — form controls shrink inside their grid track (`min-width: 0`), wide "show the math" tables and chart timelines get their own contained horizontal scroll, and an `overflow-x: clip` backstop on both the content column *and the document root* guarantees the viewport itself never scrolls sideways. `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch. A Playwright suite **measures** this — every view and all 53 calculators, from 320px to 1440px — so a regression fails CI rather than shipping.
+A state whose income tax isn't modeled yet shows an **honest amber note** ("we don't model X's state income tax yet, so this shows federal + FICA only") rather than silently under-counting. Every view is **vertical-scroll only on every device width** — form controls shrink inside their grid track (`min-width: 0`), wide "show the math" tables and chart timelines get their own contained horizontal scroll, and an `overflow-x: clip` backstop on both the content column *and the document root* guarantees the viewport itself never scrolls sideways. `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch. A Playwright suite **measures** this — every view and all 53 calculators, from 320px to 1440px, plus landscape phones — so a regression fails CI rather than shipping.
 
 ---
 
@@ -407,9 +407,9 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 - **Provenance gate.** Every shipped figure must resolve to a non-empty citation — no orphan numbers ship.
 - **Accessibility.** axe-core runs inside the test suite across the home, About, All Tools, the Readout, the Report, and every tile form, with **zero violations**. A **skip-to-content link** (WCAG 2.4.1) is the first focusable element on every page — it focuses the `<main>` directly (no hash navigation), and focus moves into the content region after each route change; visible focus rings throughout, and the command palette is fully keyboard-operable, never traps, and restores focus to the prior element when dismissed.
 - **Release audit.** `npm run audit` mechanically verifies CSP `connect-src 'none'`, no cross-origin loads in the built output, full citation coverage, and no sensitive persistence.
-- **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 53 calculators** at a 360px phone, the **offline** service worker (loads with the network cut), the deep-link → compute path, that **print media strips the app chrome** so the Report prints as a clean document, and that **no tool hangs or renders NaN/Infinity** when every field is set to an absurd value. It runs as its own CI job so the unit suite stays fast.
+- **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 53 calculators** at a 360px phone, **plus landscape phones** (short viewports, where the ⌘K palette must also stay within the screen), the **offline** service worker (loads with the network cut), the deep-link → compute path, that **print media strips the app chrome** so the Report prints as a clean document, and that **no tool hangs or renders NaN/Infinity** when every field is set to an absurd value. It runs as its own CI job so the unit suite stays fast.
 
-**656 unit/golden tests across 55 files** (plus 14 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**656 unit/golden tests across 55 files** (plus 15 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
