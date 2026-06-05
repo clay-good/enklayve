@@ -17,6 +17,17 @@ export interface Route {
   params: URLSearchParams;
 }
 
+/** Percent-decode, tolerating a malformed sequence. A garbled link like `#/%`
+ *  (or `#/%zz`) would otherwise throw URIError and leave the content blank; we
+ *  fall back to the raw text, which resolves to an unknown tile → the home. */
+function safeDecode(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+}
+
 /** Parse the current location fragment into a {@link Route}. */
 export function parseHash(hash: string): Route {
   const raw = hash.startsWith("#") ? hash.slice(1) : hash;
@@ -26,7 +37,7 @@ export function parseHash(hash: string): Route {
   const qIndex = trimmed.indexOf("?");
   const tileId = qIndex === -1 ? trimmed : trimmed.slice(0, qIndex);
   const query = qIndex === -1 ? "" : trimmed.slice(qIndex + 1);
-  return { tileId: decodeURIComponent(tileId), params: new URLSearchParams(query) };
+  return { tileId: safeDecode(tileId), params: new URLSearchParams(query) };
 }
 
 /** Serialize a route to a fragment string (including the leading `#`). */

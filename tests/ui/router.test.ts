@@ -28,4 +28,21 @@ describe("fragment router", () => {
     expect(buildHash("take-home")).toBe("#/take-home");
     expect(buildHash(null)).toBe("#");
   });
+
+  it("tolerates a malformed percent-sequence instead of throwing", () => {
+    // A garbled link must not crash routing (it would blank the page); it falls
+    // back to the raw text, which resolves to an unknown tile → the home.
+    expect(() => parseHash("#/%")).not.toThrow();
+    expect(() => parseHash("#/%zz")).not.toThrow();
+    expect(parseHash("#/%").tileId).toBe("%");
+    // A malformed percent in a query value is likewise tolerated.
+    expect(() => parseHash("#/debt?c0=%E0%A4%A")).not.toThrow();
+  });
+
+  it("round-trips text values with URL-special characters", () => {
+    const params = new URLSearchParams({ c0: "Card & Loan #1 = 50%" });
+    const route = parseHash(buildHash("debt", params));
+    expect(route.tileId).toBe("debt");
+    expect(route.params.get("c0")).toBe("Card & Loan #1 = 50%");
+  });
 });
