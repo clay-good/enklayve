@@ -12,6 +12,7 @@ import { field } from "./form";
 import { extractDocument, labelFor } from "../readout/extract";
 import { applyToSituation } from "../readout/toSituation";
 import { extractTextFromFile, type TextExtractor } from "../readout/extractText";
+import { importProfile, isEncrypted, readFileText } from "../profile/portable";
 import { buildReport } from "../readout/report";
 import type { ExtractedField, ExtractionResult } from "../readout/types";
 import type { SituationStore } from "../profile/situation";
@@ -31,6 +32,15 @@ const CONFIDENCE_LABEL = {
   "needs-review": "review",
   low: "low confidence",
 } as const;
+
+/**
+ * A dropped `.json` is a previously-saved situation to restore, not a tax
+ * document to parse — no document the extractors read is JSON, so this split is
+ * unambiguous and keeps the extraction path untouched.
+ */
+function isSituationFile(file: File): boolean {
+  return file.name.toLowerCase().endsWith(".json") || file.type === "application/json";
+}
 
 export interface RenderReadoutOptions {
   container: HTMLElement;
@@ -102,8 +112,8 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     name: "readout-file",
     attrs: {
       accept:
-        ".pdf,.docx,.txt,.text,.png,.jpg,.jpeg,.webp,.bmp,.gif,.tif,.tiff,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,image/*",
-      "aria-label": "Choose a document to read on your device",
+        ".pdf,.docx,.txt,.text,.png,.jpg,.jpeg,.webp,.bmp,.gif,.tif,.tiff,.json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/json,image/*",
+      "aria-label": "Choose a document to read, or a saved situation (.json) to restore",
     },
     on: {
       change: (e) => {
@@ -135,13 +145,18 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     el("span", { class: "readout-dropzone-title", text: "Drop a file here, or choose one" }),
     el("span", {
       class: "readout-dropzone-sub",
-      text: "Typed PDF, Word (.docx), text, or a scanned image (PNG/JPG). Images are read on-device with OCR and flagged for review.",
+      text: "Typed PDF, Word (.docx), text, or a scanned image (PNG/JPG). Images are read on-device with OCR and flagged for review. Already have a saved situation? Drop its .json here to restore it.",
     }),
     fileInput,
   );
 
   async function handleFile(file: File): Promise<void> {
     clear(resultRegion);
+    // A saved enklayve situation (.json) is a restore, not a document to parse.
+    if (isSituationFile(file)) {
+      await handleRestore(file);
+      return;
+    }
     status.textContent = "Reading on your device…";
     try {
       const text = await extractor(file);
@@ -151,6 +166,114 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     } catch (err) {
       status.textContent = (err as Error).message;
     }
+  }
+
+  /** Restore a saved situation file (plain or encrypted) into the profile. */
+  async function handleRestore(file: File): Promise<void> {
+    status.textContent = "";
+    try {
+      const text = await readFileText(file);
+      if (isEncrypted(text)) {
+        renderUnlock(text);
+        return;
+      }
+      await importProfile(profile, text);
+      renderRestored();
+    } catch (e) {
+      status.textContent = `That .json isn't a saved enklayve situation: ${(e as Error).message}`;
+    }
+  }
+
+  /** An encrypted situation needs its passphrase before it can be restored. */
+  function renderUnlock(text: string): void {
+    clear(resultRegion);
+    const pass = el("input", {
+      type: "password",
+      class: "portable-pass",
+      name: "restore-passphrase",
+      attrs: {
+        placeholder: "Passphrase",
+        autocomplete: "off",
+        "aria-label": "Passphrase to open the encrypted situation file",
+      },
+    });
+    const msg = el("p", {
+      class: "readout-note",
+      attrs: { "aria-live": "polite" },
+      text: "That file is encrypted. Enter its passphrase to restore your situation.",
+    });
+    async function doUnlock(): Promise<void> {
+      try {
+        await importProfile(profile, text, pass.value.trim());
+        renderRestored();
+      } catch (e) {
+        msg.textContent = (e as Error).message;
+      }
+    }
+    const unlock = el("button", {
+      type: "button",
+      class: "btn btn--accent",
+      text: "Unlock & restore",
+      on: {
+        click: () => {
+          void doUnlock();
+        },
+      },
+    });
+    resultRegion.append(
+      el(
+        "div",
+        { class: "readout-fields" },
+        msg,
+        el("div", { class: "portable-actions" }, pass, unlock),
+      ),
+    );
+  }
+
+  /** Confirm a restore and show where the restored situation stands. */
+  function renderRestored(): void {
+    clear(resultRegion);
+    const count = profile.entries().length;
+    resultRegion.append(
+      el(
+        "section",
+        { class: "readout-summary", attrs: { "aria-label": "Restored situation" } },
+        el("p", {
+          class: "readout-summary-line",
+          text:
+            count > 0
+              ? `Restored your situation — ${count} value${count === 1 ? "" : "s"}.`
+              : "Restored, but that file held no values.",
+        }),
+        standingBlock(),
+        el("p", {
+          class: "readout-note",
+          text: "These prefill the matching tools. Everything stays in this browser tab and is cleared when you leave; nothing is uploaded.",
+        }),
+        el(
+          "div",
+          { class: "readout-actions" },
+          el("button", {
+            type: "button",
+            class: "btn btn--accent",
+            text: "My Readout Report →",
+            on: { click: () => navigate("report") },
+          }),
+          el("button", {
+            type: "button",
+            class: "btn btn--ghost",
+            text: "Read another file",
+            on: {
+              click: () => {
+                fileInput.value = "";
+                clear(resultRegion);
+                status.textContent = "";
+              },
+            },
+          }),
+        ),
+      ),
+    );
   }
 
   function renderResult(result: ExtractionResult): void {

@@ -3,6 +3,7 @@ import axe from "axe-core";
 import { renderReadout } from "../../src/ui/readoutView";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
+import { serialize } from "../../src/profile/portable";
 import type { TextExtractor } from "../../src/readout/extractText";
 
 let bundled: BundledData;
@@ -115,4 +116,58 @@ describe("Readout view", () => {
     const results = await axe.run(container, { rules: { "color-contrast": { enabled: false } } });
     expect(results.violations.map((v) => v.id).join(", ")).toBe("");
   }, 30000);
+
+  describe("restoring a saved situation (.json)", () => {
+    /** Drop a saved-situation file (not a document) into the dropzone. */
+    async function dropSituation(container: HTMLElement, content: string): Promise<void> {
+      const input = container.querySelector<HTMLInputElement>('input[type="file"]')!;
+      const file = new File([content], "my-situation.json", { type: "application/json" });
+      Object.defineProperty(input, "files", { value: { 0: file, length: 1 }, configurable: true });
+      input.dispatchEvent(new Event("change"));
+      await new Promise((r) => setTimeout(r, 0));
+    }
+
+    it("restores a dropped .json into the profile without running extraction", async () => {
+      const { container, profile } = setup();
+      const saved = (() => {
+        const p = new SituationStore();
+        p.set("annualIncome", 88000);
+        p.set("filingStatus", "head_of_household");
+        return serialize(p);
+      })();
+      await dropSituation(container, saved);
+      expect(profile.get("annualIncome")).toBe(88000);
+      expect(profile.get("filingStatus")).toBe("head_of_household");
+      // It's a restore, not a parse: no detected-document block, a restored summary.
+      expect(container.querySelector(".readout-detected")).toBeNull();
+      expect(container.querySelector(".readout-summary-line")?.textContent).toContain("Restored");
+    });
+
+    it("asks for a passphrase when the dropped .json is encrypted", async () => {
+      const { container, profile } = setup();
+      const envelope = JSON.stringify({
+        format: "enklayve.situation.encrypted",
+        version: 1,
+        kdf: "PBKDF2-SHA256",
+        iterations: 210000,
+        salt: "x",
+        iv: "y",
+        ciphertext: "z",
+      });
+      await dropSituation(container, envelope);
+      const unlock = Array.from(container.querySelectorAll("button")).find(
+        (b) => b.textContent === "Unlock & restore",
+      );
+      expect(unlock).toBeDefined();
+      expect(profile.get("annualIncome")).toBeUndefined();
+    });
+
+    it("shows a friendly error for a .json that isn't a saved situation", async () => {
+      const { container } = setup();
+      await dropSituation(container, '{"hello":"world"}');
+      expect(container.querySelector(".readout-status")?.textContent).toContain(
+        "isn't a saved enklayve situation",
+      );
+    });
+  });
 });
