@@ -32,8 +32,11 @@ export function parseNumber(value: string | null, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
-/** Format a 0–1 rate as a percentage string (e.g. 0.2235 -> "22.35%"). */
+/** Format a 0–1 rate as a percentage string (e.g. 0.2235 -> "22.35%"). A
+ *  non-finite rate (only reachable via nonsensical input) shows a sentinel
+ *  rather than "NaN%"/"Infinity%". */
 export function pct(rate: number, digits = 2): string {
+  if (!Number.isFinite(rate)) return "(out of range)";
   return `${(rate * 100).toFixed(digits)}%`;
 }
 

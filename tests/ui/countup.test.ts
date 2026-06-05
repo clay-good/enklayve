@@ -28,4 +28,14 @@ describe("count-up reveal", () => {
     cancel();
     expect(node.textContent).toBe("$500");
   });
+
+  it("never renders a non-finite headline — it shows a sentinel instead", () => {
+    stubReducedMotion(true);
+    const fmt = (n: number): string => `$${n}`; // would yield "$Infinity" / "$NaN" unguarded
+    for (const bad of [Infinity, -Infinity, NaN]) {
+      const node = document.createElement("output");
+      countUp(node, bad, fmt);
+      expect(node.textContent).toBe("(out of range)");
+    }
+  });
 });

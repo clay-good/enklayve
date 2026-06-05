@@ -31,7 +31,13 @@ export function countUp(
   target: number,
   format: (value: number) => string,
 ): () => void {
-  const finalText = format(target);
+  // A non-finite target (only reachable via nonsensical input that overflows
+  // Number range or produces NaN) must never render as "$NaN"/"$∞" — neither on
+  // the final frame nor mid-tween. Guarding here protects every caller, whatever
+  // unit its `format` produces.
+  const fmt = (value: number): string =>
+    Number.isFinite(value) ? format(value) : "(out of range)";
+  const finalText = fmt(target);
 
   if (prefersReducedMotion() || typeof requestAnimationFrame !== "function") {
     node.textContent = finalText;
@@ -45,7 +51,7 @@ export function countUp(
     if (start === null) start = now;
     const elapsed = now - start;
     const t = Math.min(1, elapsed / DURATION_MS);
-    node.textContent = t >= 1 ? finalText : format(target * easeOut(t));
+    node.textContent = t >= 1 ? finalText : fmt(target * easeOut(t));
     if (t < 1) raf = requestAnimationFrame(step);
   };
 

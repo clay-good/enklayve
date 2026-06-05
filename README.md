@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **53** in **10 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **25** — 15 income-tax states + DC + 9 no-income-tax | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **42**, each with a sibling `.sha256` + manifest entry | [`data/manifest.json`](data/manifest.json) |
-| Tests | **652** unit/golden across 55 files, **+13** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | **654** unit/golden across 55 files, **+14** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale preference touches `localStorage` | `npm run audit` |
 | UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
@@ -403,13 +403,13 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 - **Golden corpus.** Hundreds of `inputs + dataset → expected output` cases under [`tests/golden`](tests). CI fails if any case drifts; it's also the gate every data-refresh PR must pass. Regenerate an intended change with `npm run golden:regen`.
 - **Cross-validation.** Federal/state/FICA cases are checked against published worked examples for the seeded tax year.
 - **Bounds & fuzz.** More income never decreases tax owed within a bracket; take-home is never negative; marginal rate is never below zero (seeded fuzz, thousands of iterations).
-- **No-hang robustness.** Every horizon (years / months / compounding periods) and dynamic-row count is clamped at the engine, so an absurd input — or a crafted deep link — can never spin a runaway loop or an astronomically large `Decimal.pow` and freeze the tab; an all-tools sweep at `999,999,999` recomputes in ≤ ~200 ms with zero NaN/Infinity, and a `horizonCaps` test holds the bound.
+- **No-hang, no-NaN robustness.** Every horizon (years / months / compounding periods) and dynamic-row count is clamped at the engine, so an absurd input — or a crafted deep link — can never spin a runaway loop or an astronomically large `Decimal.pow` and freeze the tab. And the display layer is the last line of defense: a value that overflows JS `Number` range or computes to NaN renders a neutral "(out of range)" sentinel rather than "$NaN"/"$∞" — guarded at the formatting chokepoints (`Money.format`, the percent helper, and the count-up animation). An all-tools e2e sweeps the whole catalog at `999,999,999` and asserts zero hangs and zero NaN/Infinity; `horizonCaps`, `money`, and `countup` unit tests hold the individual bounds.
 - **Provenance gate.** Every shipped figure must resolve to a non-empty citation — no orphan numbers ship.
 - **Accessibility.** axe-core runs inside the test suite across the home, About, All Tools, the Readout, the Report, and every tile form, with **zero violations**. A **skip-to-content link** (WCAG 2.4.1) is the first focusable element on every page — it focuses the `<main>` directly (no hash navigation), and focus moves into the content region after each route change; visible focus rings throughout, and the command palette is fully keyboard-operable, never traps, and restores focus to the prior element when dismissed.
 - **Release audit.** `npm run audit` mechanically verifies CSP `connect-src 'none'`, no cross-origin loads in the built output, full citation coverage, and no sensitive persistence.
-- **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 53 calculators** at a 360px phone, the **offline** service worker (loads with the network cut), the deep-link → compute path, and that **print media strips the app chrome** so the Report prints as a clean document. It runs as its own CI job so the unit suite stays fast.
+- **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 53 calculators** at a 360px phone, the **offline** service worker (loads with the network cut), the deep-link → compute path, that **print media strips the app chrome** so the Report prints as a clean document, and that **no tool hangs or renders NaN/Infinity** when every field is set to an absurd value. It runs as its own CI job so the unit suite stays fast.
 
-**652 unit/golden tests across 55 files** (plus 13 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**654 unit/golden tests across 55 files** (plus 14 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 

@@ -86,4 +86,11 @@ describe("Money formatting", () => {
     expect(Money.from("1234.5").format()).toBe("$1,234.50");
     expect(Money.from("-1234.567").format()).toBe("-$1,234.57");
   });
+
+  it("shows a sentinel instead of $NaN/$∞ when a value exceeds Number range", () => {
+    // Decimal arithmetic on absurd inputs can produce a value beyond JS Number
+    // range; its `.toNumber()` is Infinity, which must not render as "$∞".
+    expect(Money.from("1e400").format()).toBe("(out of range)");
+    expect(Money.from("1e400").multiply(10).format()).toBe("(out of range)");
+  });
 });

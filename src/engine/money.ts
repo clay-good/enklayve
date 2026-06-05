@@ -126,11 +126,18 @@ export class Money {
    * Locale-aware currency formatting via Intl. Rounds to cents first so the
    * displayed string always matches {@link roundToCents}. Defaults to US
    * dollars in the en-US locale (the launch locale, BUILD-SPEC.md §11).
+   *
+   * Decimal arithmetic on absurd inputs (e.g. a 999,999,999% growth rate) can
+   * exceed JS `Number` range or produce NaN; rather than render "$NaN"/"$∞" we
+   * show a neutral sentinel. Real figures are always finite, so this only ever
+   * appears for nonsensical inputs — never a legitimate calculation.
    */
   format(locale = "en-US", currency = "USD"): string {
+    const n = this.roundToCents().toNumber();
+    if (!Number.isFinite(n)) return "(out of range)";
     return new Intl.NumberFormat(locale, {
       style: "currency",
       currency,
-    }).format(this.roundToCents().toNumber());
+    }).format(n);
   }
 }
