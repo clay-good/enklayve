@@ -132,6 +132,69 @@ test.describe("no horizontal scrolling, every view", () => {
     }
   });
 
+  // The Readout's post-extraction states — the only major views the sweep above
+  // skips, because they render dynamically only after a file is dropped. A plain
+  // .txt flows through the same anchored extractors as a typed PDF, so we can
+  // drive the real confirm flow deterministically (no binary fixture, no OCR):
+  // the editable confirm fields, then the post-confirm "where you stand" summary
+  // (its standing grid is a classic phone-overflow source). Asserts the viewport
+  // and the field rows/standing grid all stay scroll-free at tight widths.
+  test("the Readout confirm + summary fit on a phone", async ({ page }) => {
+    // A minimal W-2 the anchored extractor recognizes (title markers + boxes).
+    const w2 = [
+      "Form W-2 Wage and Tax Statement 2024",
+      "1 Wages, tips, other compensation  $128,500.00",
+      "2 Federal income tax withheld  $18,250.00",
+      "12a D 19,500.00",
+      "17 State income tax  $7,420.00",
+    ].join("\n");
+
+    for (const width of [320, 360, 414]) {
+      await page.setViewportSize({ width, height: 740 });
+      await page.goto("/#/readout");
+      await waitForApp(page);
+
+      await page.setInputFiles("input.readout-file", {
+        name: "w2.txt",
+        mimeType: "text/plain",
+        buffer: Buffer.from(w2, "utf-8"),
+      });
+
+      // The confirm state: editable fields + the "Confirm and add" button.
+      const confirm = page.getByRole("button", { name: /confirm and add/i });
+      await expect(confirm).toBeVisible();
+      let overflow = await horizontalOverflow(page);
+      expect(
+        overflow,
+        `Readout confirm @ ${width}px overflowed by ${overflow}px`,
+      ).toBeLessThanOrEqual(1);
+
+      await confirm.click();
+
+      // The summary state: the §2.3 "where you stand" block.
+      await page.waitForSelector(".readout-summary");
+      overflow = await horizontalOverflow(page);
+      expect(
+        overflow,
+        `Readout summary @ ${width}px overflowed by ${overflow}px`,
+      ).toBeLessThanOrEqual(1);
+      // The standing grid (if income produced one) must not scroll internally.
+      const innerLeak = await page.evaluate(() => {
+        let w = 0;
+        for (const el of Array.from(
+          document.querySelectorAll<HTMLElement>(".readout-standing, .readout-fields"),
+        )) {
+          w = Math.max(w, el.scrollWidth - el.clientWidth);
+        }
+        return w;
+      });
+      expect(
+        innerLeak,
+        `Readout inner box overflowed by ${innerLeak}px @ ${width}px`,
+      ).toBeLessThanOrEqual(1);
+    }
+  });
+
   // Phone in landscape — a short viewport, the one orientation the width sweep
   // (all height 800) never exercises. Content still scrolls vertically only, and
   // the command palette (its own fixed overlay) must stay within the viewport so
