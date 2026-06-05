@@ -56,6 +56,23 @@ describe("command palette", () => {
     palette.element.remove();
   });
 
+  it("restores focus to the prior element when dismissed with Escape", () => {
+    const trigger = document.createElement("button");
+    document.body.append(trigger);
+    trigger.focus();
+    const palette = new CommandPalette(() => {});
+    document.body.append(palette.element);
+
+    palette.show();
+    expect(document.activeElement).toBe(input(palette)); // focus moved into the dialog
+    press(input(palette), "Escape");
+    expect(palette.isOpen()).toBe(false);
+    expect(document.activeElement).toBe(trigger); // ...and came back on dismiss
+
+    palette.element.remove();
+    trigger.remove();
+  });
+
   it("shows an empty state for a non-matching query", () => {
     const palette = new CommandPalette(() => {});
     document.body.append(palette.element);

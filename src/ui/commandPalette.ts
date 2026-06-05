@@ -18,6 +18,8 @@ export class CommandPalette {
   private results: SearchEntry[] = [];
   private activeIndex = 0;
   private open = false;
+  /** Where focus was before the palette opened, so Escape can return it there. */
+  private lastFocused: HTMLElement | null = null;
   private readonly onSelect: (entry: SearchEntry) => void;
 
   constructor(onSelect: (entry: SearchEntry) => void) {
@@ -73,6 +75,7 @@ export class CommandPalette {
   }
 
   show(): void {
+    this.lastFocused = (document.activeElement as HTMLElement) ?? null;
     this.open = true;
     this.element.hidden = false;
     this.input.value = "";
@@ -83,6 +86,16 @@ export class CommandPalette {
   close(): void {
     this.open = false;
     this.element.hidden = true;
+    // Return focus where it was before opening (proper modal behavior), so a
+    // keyboard user who dismisses with Escape isn't dropped onto <body>. A
+    // selection navigates instead and the shell then moves focus to <main>, so
+    // this only meaningfully fires on dismiss; guarded by `isConnected` in case
+    // the previous element was torn down.
+    const prev = this.lastFocused;
+    this.lastFocused = null;
+    if (prev && prev !== document.body && prev.isConnected && typeof prev.focus === "function") {
+      prev.focus();
+    }
   }
 
   isOpen(): boolean {
