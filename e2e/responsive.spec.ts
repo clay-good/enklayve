@@ -195,6 +195,115 @@ test.describe("no horizontal scrolling, every view", () => {
     }
   });
 
+  // The Readout's *other* dynamic states — the ones neither the route sweep nor
+  // the confirm/summary test above reach: an unrecognized document (a warning
+  // note), the encrypted-restore unlock (a passphrase input + button row, a
+  // classic phone-overflow source), the wrong-passphrase error (a long sentence
+  // in that row), a successful restore summary, and the Report rendered from the
+  // restored (in-memory) profile. A dropped `.json` flows through the real
+  // restore path, so no crypto fixture is needed to exercise the unlock layout.
+  test("the Readout error, unlock, and restore states fit on a phone", async ({ page }) => {
+    const encrypted = JSON.stringify({
+      format: "enklayve.situation.encrypted",
+      version: 1,
+      kdf: "PBKDF2-SHA256",
+      salt: "AAAA",
+      iv: "BBBB",
+      ciphertext: "CCCC",
+    });
+    const saved = JSON.stringify({
+      format: "enklayve.situation",
+      version: 1,
+      snapshot: {
+        values: {
+          annualIncome: 128500,
+          filingStatus: "single",
+          stateCode: "ca",
+          liquidSavings: 25000,
+          essentialMonthlyExpenses: 3200,
+          totalMonthlyExpenses: 5000,
+        },
+        sources: {
+          annualIncome: "typed",
+          filingStatus: "typed",
+          stateCode: "typed",
+          liquidSavings: "typed",
+          essentialMonthlyExpenses: "typed",
+          totalMonthlyExpenses: "typed",
+        },
+      },
+    });
+    const drop = (name: string, mimeType: string, body: string): Promise<void> =>
+      page.setInputFiles("input.readout-file", {
+        name,
+        mimeType,
+        buffer: Buffer.from(body, "utf-8"),
+      });
+
+    for (const width of [320, 360, 414]) {
+      await page.setViewportSize({ width, height: 740 });
+
+      // 1) Unrecognized document → a warning note that must wrap, not scroll.
+      await page.goto("/#/readout");
+      await waitForApp(page);
+      await drop("junk.txt", "text/plain", "random prose not any known tax form ".repeat(30));
+      await page.waitForSelector(".readout-note--warn");
+      expect(
+        await horizontalOverflow(page),
+        `Readout unrecognized @ ${width}px scrolled sideways`,
+      ).toBeLessThanOrEqual(1);
+
+      // 2) Encrypted restore → the passphrase input + "Unlock & restore" row.
+      await page.goto("/#/readout");
+      await waitForApp(page);
+      await drop("saved.json", "application/json", encrypted);
+      await page.waitForSelector(".portable-actions");
+      expect(
+        await horizontalOverflow(page),
+        `Readout unlock @ ${width}px scrolled sideways`,
+      ).toBeLessThanOrEqual(1);
+      const unlockInner = await page.evaluate(() => {
+        let w = 0;
+        for (const el of Array.from(
+          document.querySelectorAll<HTMLElement>(".portable-actions, .readout-fields"),
+        )) {
+          w = Math.max(w, el.scrollWidth - el.clientWidth);
+        }
+        return w;
+      });
+      expect(
+        unlockInner,
+        `unlock row overflowed by ${unlockInner}px @ ${width}px`,
+      ).toBeLessThanOrEqual(1);
+
+      // 3) Wrong passphrase → a long error sentence inside that same row.
+      await page.fill(".portable-pass", "wrongpass");
+      await page.getByRole("button", { name: /unlock/i }).click();
+      await page.waitForTimeout(150);
+      expect(
+        await horizontalOverflow(page),
+        `Readout unlock error @ ${width}px scrolled sideways`,
+      ).toBeLessThanOrEqual(1);
+
+      // 4) A successful restore summary, then the Report it populates.
+      await page.goto("/#/readout");
+      await waitForApp(page);
+      await drop("saved.json", "application/json", saved);
+      await page.waitForSelector(".readout-summary");
+      expect(
+        await horizontalOverflow(page),
+        `Readout restore @ ${width}px scrolled sideways`,
+      ).toBeLessThanOrEqual(1);
+
+      await page.goto("/#/report");
+      await waitForApp(page);
+      expect(
+        await horizontalOverflow(page),
+        `Report (populated) @ ${width}px scrolled sideways`,
+      ).toBeLessThanOrEqual(1);
+    }
+  });
+
   // Phone in landscape — a short viewport, the one orientation the width sweep
   // (all height 800) never exercises. Content still scrolls vertically only, and
   // the command palette (its own fixed overlay) must stay within the viewport so
