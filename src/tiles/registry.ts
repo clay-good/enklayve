@@ -227,9 +227,16 @@ export interface SearchEntry {
   tool?: string;
 }
 
-/** The text the fuzzy search matches for a {@link SearchEntry}. */
+/**
+ * The text the fuzzy search matches for a {@link SearchEntry}: the title and the
+ * curated keywords only — never the free-text description. Subsequence-matching
+ * a long prose description produced confusing false positives (typing
+ * "refinance" surfaced "Life Insurance Needs", "roth" surfaced "Home Buying
+ * Readiness"), so the description is shown in the result but not searched, the
+ * way a command palette matches a label and its tags rather than its blurb.
+ */
 export function searchEntryText(e: SearchEntry): string {
-  return `${e.title} ${e.description} ${e.keywords.join(" ")}`;
+  return `${e.title} ${e.keywords.join(" ")}`;
 }
 
 export const SEARCH_ENTRIES: SearchEntry[] = [

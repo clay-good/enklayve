@@ -96,9 +96,23 @@ export class CommandPalette {
 
   private refresh(): void {
     const query = this.input.value;
-    this.results = fuzzyFilter(query, SEARCH_ENTRIES, searchEntryText)
-      .slice(0, MAX_RESULTS)
-      .map((r) => r.item);
+    const ranked = fuzzyFilter(query, SEARCH_ENTRIES, searchEntryText);
+    const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    let chosen = ranked;
+    if (tokens.length > 0) {
+      // The fuzzy matcher accepts any subsequence, so a short query ("roth",
+      // "aca", "thp") otherwise drags in unrelated tools via scattered character
+      // hits. Prefer results where every query token appears as a contiguous
+      // substring of the name/keywords (a genuine hit), and fall back to the
+      // single best fuzzy match for a pure abbreviation that no substring covers
+      // ("thp" → "Take-Home Pay"). The strongest match therefore always shows.
+      const strong = ranked.filter((r) => {
+        const text = searchEntryText(r.item).toLowerCase();
+        return tokens.every((tok) => text.includes(tok));
+      });
+      chosen = strong.length > 0 ? strong : ranked.slice(0, 1);
+    }
+    this.results = chosen.slice(0, MAX_RESULTS).map((r) => r.item);
     this.activeIndex = 0;
     this.renderList();
   }

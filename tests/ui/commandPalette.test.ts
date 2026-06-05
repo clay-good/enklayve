@@ -66,4 +66,26 @@ describe("command palette", () => {
     expect(palette.element.querySelector(".palette-empty")).not.toBeNull();
     palette.element.remove();
   });
+
+  it("keeps results relevant: a specific name returns only related tools", () => {
+    const palette = new CommandPalette(() => {});
+    document.body.append(palette.element);
+    palette.show();
+    const field = input(palette);
+    const titlesFor = (q: string): string[] => {
+      field.value = q;
+      field.dispatchEvent(new Event("input"));
+      return options(palette).map((o) => o.querySelector(".palette-opt-title")?.textContent ?? "");
+    };
+    // "roth" must surface the Roth tools — and nothing unrelated like a home or
+    // insurance tool that the old subsequence-over-description match dragged in.
+    const roth = titlesFor("roth");
+    expect(roth[0]).toBe("Roth Conversion Ladder");
+    expect(roth.every((t) => /roth/i.test(t) || /retirement|backdoor/i.test(t))).toBe(true);
+    expect(roth).not.toContain("Home Buying Readiness");
+    expect(roth).not.toContain("Life Insurance Needs");
+    // A pure abbreviation no substring covers still resolves to its tool.
+    expect(titlesFor("thp")).toEqual(["Take-Home Pay"]);
+    palette.element.remove();
+  });
 });
