@@ -98,9 +98,9 @@ function buildFooter(navigate: (id: string | null) => void): HTMLElement {
 /**
  * The Readout dropzone — the hero of the home experience (BUILD-SPEC-2 §1.1,
  * §2). It is the single most personal moment in the product: drop a document
- * and get an instant private readout, parsed on the device. The parsing engine
- * lands in Phase 14; for now the dropzone is the inviting entry point that
- * navigates into the Readout view.
+ * and get an instant private readout, parsed on the device. This is the inviting
+ * entry point that navigates into the Readout view, where the deterministic,
+ * anchored extraction engine (Phase 14) reads the document.
  */
 function readoutDropzone(navigate: (id: string | null) => void): HTMLElement {
   return el(
