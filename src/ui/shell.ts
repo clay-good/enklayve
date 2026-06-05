@@ -916,7 +916,27 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
   const header = buildHeader(navigate);
   const footer = buildFooter(navigate);
 
-  root.replaceChildren(header, content, footer);
+  // Skip-to-content link (WCAG 2.4.1 "bypass blocks"): the first focusable thing
+  // on the page, hidden until focused. It focuses the <main> directly rather than
+  // navigating to `#content` — a bare hash fragment would be parsed by the
+  // fragment router and bounce the reader to the home.
+  const skipLink = el(
+    "a",
+    {
+      class: "skip-link",
+      href: "#content",
+      on: {
+        click: (e) => {
+          e.preventDefault();
+          content.focus();
+          content.scrollIntoView();
+        },
+      },
+    },
+    "Skip to content",
+  );
+
+  root.replaceChildren(skipLink, header, content, footer);
   document.body.append(palette.element);
 
   // Cmd/Ctrl-K toggles the palette from anywhere.

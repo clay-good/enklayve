@@ -159,6 +159,22 @@ describe("shell chrome (header + footer)", () => {
     expect(header.textContent).not.toContain("My Situation");
   });
 
+  it("opens with a skip-to-content link that focuses main without navigating", async () => {
+    const root = document.createElement("div");
+    document.body.append(root);
+    await mountApp(root);
+    // It is the very first element, before the header (WCAG 2.4.1 bypass blocks).
+    const skip = root.firstElementChild as HTMLAnchorElement;
+    expect(skip.classList.contains("skip-link")).toBe(true);
+    expect(skip.textContent).toBe("Skip to content");
+    expect(skip.getAttribute("href")).toBe("#content");
+    // Activating it focuses <main> and must NOT change the route to "#content".
+    const hashBefore = location.hash;
+    skip.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    expect(document.activeElement?.id).toBe("content");
+    expect(location.hash).toBe(hashBefore);
+  });
+
   it("footer holds uniform buttons (All tools, Why enklayve, GitHub); My situation is gone", async () => {
     const root = document.createElement("div");
     document.body.append(root);

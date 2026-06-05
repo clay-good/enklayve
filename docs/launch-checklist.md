@@ -35,7 +35,7 @@ npm run deploy:dry
 ## Accessibility (Phase 4, SPEC §11)
 
 - [ ] axe-core: zero violations across all views (in CI).
-- [ ] Full keyboard navigation; visible focus; modals are never traps (Close + Done + Escape + click-outside).
+- [ ] Full keyboard navigation; visible focus; modals are never traps (Close + Done + Escape + click-outside). A skip-to-content link (WCAG 2.4.1) is the first focusable element and focuses `<main>` directly; focus moves into the content region after each route change.
 - [ ] Reduced-motion preference is respected (count-up and hover transitions).
 - [ ] The single calm light theme is legible throughout (the dark and high-contrast themes and the toggle were retired 2026-06-01 for the simplest default); red used only for genuine warnings.
 - [ ] The page scrolls vertically only on every device width — no horizontal drag on any tool (form controls shrink to their track, wide tables scroll within their own region, and an `overflow-x: clip` backstop guards the content column); `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch.

@@ -100,6 +100,32 @@ body {
   white-space: nowrap;
 }
 
+/* Skip-to-content link: off-screen until a keyboard user focuses it, then it
+   slides in at the top-left above the sticky header. */
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 100;
+  padding: 0.5rem 0.9rem;
+  background: var(--enk-primary);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 8px;
+  transform: translateY(-150%);
+  transition: transform 0.15s ease;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .skip-link {
+    transition: none;
+  }
+}
+
 /* --- Header --- */
 .app-header {
   display: flex;
