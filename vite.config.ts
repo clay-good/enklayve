@@ -157,6 +157,14 @@ export default defineConfig({
     emptyOutDir: true,
     target: "es2022",
     sourcemap: true,
+    // The shell deliberately bundles all ~53 calculators into one eager chunk:
+    // it is a single-page app precached whole by the service worker for instant
+    // offline use, and the eager JS is ~140 kB gzipped. The genuinely heavy,
+    // optional libraries (pdf.js, mammoth, tesseract.js) are already dynamically
+    // imported into their own lazy chunks. So Vite's default 500 kB nudge is a
+    // standing false alarm here; raise it past the shell's size while still
+    // tripping on a real regression (a chunk ballooning well beyond today's).
+    chunkSizeWarningLimit: 700,
   },
   resolve: {
     alias: {
