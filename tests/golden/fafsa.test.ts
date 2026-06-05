@@ -72,9 +72,11 @@ describe("estimateSai (dependent student)", () => {
       studentIncome: 5000,
       studentAssets: 2000,
     });
-    expect(r.parentContribution).toBe(7112);
+    // AAI 29,235 through the exact 2026-27 Table A5: 22%·21,800 + 25%·5,500 +
+    // 29%·1,935 = 6,732. Student: $2,000 assets · 20% = 400.
+    expect(r.parentContribution).toBe(6732);
     expect(r.studentContribution).toBe(400);
-    expect(r.sai).toBe(7512);
+    expect(r.sai).toBe(7132);
   });
 
   it("floors the SAI at the dataset's negative floor", () => {

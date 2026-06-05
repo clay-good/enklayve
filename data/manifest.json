@@ -570,9 +570,9 @@
       "staleAfterYears": 2,
       "shard": "fafsa-2024-2025.json",
       "sourceUrl": "https://fsapartners.ed.gov/knowledge-center/library/handbooks-manuals-or-guides/2025-06-13/2026-27-student-aid-index-sai-and-pell-grant-eligibility-guide-updated-aug-25-2025",
-      "sourceDocument": "U.S. Department of Education (Federal Student Aid), 2026-27 SAI and Pell Grant Eligibility Guide (dependent student; max Pell $7,395, student IPA $11,770, employment-expense allowance 35% capped at $5,000, family-of-four parents' IPA $44,880, +$6,990 per additional member). The per-size IPA values for other family sizes are scaled to that confirmed family-of-four anchor pending extraction of the exact published table; verify against the Guide.",
+      "sourceDocument": "U.S. Department of Education (Federal Student Aid), 2026-27 SAI and Pell Grant Eligibility Guide (dependent student). Parents' income protection allowance is the guide's exact Table A2 ($29,190 / $36,330 / $44,880 / $52,950 / $61,930 for family sizes 2-6, +$6,990 per additional member); the parents' AAI assessment is the exact Table A5 marginal schedule (22% to $21,800, then 25% / 29% / 34% / 40% / 47% at $21,800 / $27,300 / $32,800 / $38,400 / $43,900). Student IPA $11,770, employment-expense allowance 35% capped at $5,000, parent asset rate 12%, student income rate 50%, student asset rate 20%, SAI floor -$1,500. Max Pell $7,395 / min $740 (2026-27 ED Dear Colleague Letter). The Table A5 -$8,500/-$1,870 negative-AAI floor is approximated by the lowest rate applied to negative AAI; the SAI floor at -$1,500 dominates that region.",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "9800c7442e81f2fcbe7740d3f1be7b82bdd7896f91a5bb997e1865b554079579"
+      "contentHash": "ab66b1bbe03d069fc384b6e529f78e4957ef1b0c6b3fd72e9136e4d57b7f579a"
     },
     {
       "id": "social-security-2024",

@@ -3,7 +3,7 @@
  *
  * The federal need-analysis methodology is a published, fully deterministic
  * formula (Dept. of Education SAI Formula Guide). This implements the
- * **dependent-student** path of the 2024-25 methodology as a pure function of
+ * **dependent-student** path of the 2026-27 methodology as a pure function of
  * the inputs and the bundled, cited tables — no inference, no prediction.
  *
  * It is an *estimate to verify*: the formula structure here is exact, but the
@@ -107,7 +107,7 @@ export interface SaiResult {
   assetContribution: number;
 }
 
-/** Estimate the dependent-student SAI from the 2024-25 methodology and tables. */
+/** Estimate the dependent-student SAI from the 2026-27 methodology and tables. */
 export function estimateSai(input: SaiInput, data: FafsaData): SaiResult {
   const ipa = incomeProtectionAllowance(input.familySize, data);
   const payroll = payrollAllowance(input.parentIncome, input.ssWageBase);
