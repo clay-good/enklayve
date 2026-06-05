@@ -134,10 +134,11 @@ describe("adapters: registry", () => {
       "state-ny",
       "state-oh",
       "state-pa",
+      "state-ut",
       "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(23);
+    expect(ADAPTERS).toHaveLength(24);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
@@ -442,6 +443,22 @@ describe("adapters: seventh set — the remaining seeded states", () => {
       expect(b.single![0]!.rate).toBe(0.053);
       expect(JurisdictionSchema.safeParse(idShard.shard).success).toBe(true);
     }
+  });
+
+  it("overlays the UT flat rate, preserving its taxpayer tax credit (flat parser reused)", () => {
+    const ut = adaptersForGroup("state-ut")[0]!;
+    const result = ut.parse(
+      "The Utah income tax rate is 4.45%.",
+      readShard("state-ut-income-tax-2024.json"),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const b = result.shard.bracketsByFilingStatus as Record<string, { rate: number }[]>;
+    expect(b.single![0]!.rate).toBe(0.0445);
+    // The credit (which the flat parser leaves untouched) survives the refresh.
+    const credit = result.shard.taxpayerCredit as { creditRate: number } | undefined;
+    expect(credit?.creditRate).toBe(0.06);
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
   });
 
   it("overlays the MS two-tier '0% then a flat rate over a floor' (graduated parser reused)", () => {

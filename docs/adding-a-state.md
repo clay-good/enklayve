@@ -48,4 +48,8 @@ States like Texas and Florida are **first-class records, not omissions**: set `"
 
 ## Scope notes (intentionally deferred)
 
-State-level itemized deductions, exemption *credits* (vs. modeled income exemptions), Yonkers' percent-of-state-tax surcharge, and state AMT are deferred — keep new shards to brackets, the standard deduction, and documented local add-ons until those land. When a state's data is stale past its refresh window, only that state shows the "verify before relying" banner; the other jurisdictions keep working (fail-safe is per jurisdiction).
+State-level itemized deductions, Yonkers' percent-of-state-tax surcharge, and state AMT are deferred — keep new shards to brackets, the standard deduction, and documented local add-ons until those land.
+
+A **taxpayer tax credit** (the Utah pattern — a nonrefundable credit that substitutes for a standard deduction) **is** supported: set `standardDeductionByFilingStatus` to 0 (the state taxes federal AGI directly) and add the optional `taxpayerCredit` block — `{ creditRate, phaseOutRate, basePhaseOutByFilingStatus }`. The evaluator credits `creditRate` of the *federal* deduction back, phased out at `phaseOutRate` of taxable income above the filing-status base, floored at zero. Per-dependent exemptions that would enlarge the credit are modeled as zero (the engine's no-dependent assumption), so the figure errs slightly high. See [`data/state-ut-income-tax-2024.json`](../data/state-ut-income-tax-2024.json).
+
+When a state's data is stale past its refresh window, only that state shows the "verify before relying" banner; the other jurisdictions keep working (fail-safe is per jurisdiction).

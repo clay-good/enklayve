@@ -92,3 +92,20 @@ export function personalExemptionFor(jurisdiction: Jurisdiction, status: FilingS
   }
   return 0;
 }
+
+/**
+ * The taxpayer-tax-credit phase-out base for a status (via {@link fallbackChain}),
+ * 0 when the jurisdiction has no such credit or no base for the status. Resolves
+ * married-filing-separately → single and qualifying surviving spouse → married
+ * jointly the same way the brackets do, so an unlisted status is never charged a
+ * $0 base (which would phase the credit out from the first dollar).
+ */
+export function taxpayerCreditBaseFor(jurisdiction: Jurisdiction, status: FilingStatus): number {
+  const table = jurisdiction.taxpayerCredit?.basePhaseOutByFilingStatus;
+  if (!table) return 0;
+  for (const candidate of fallbackChain(status)) {
+    const amount = table[candidate];
+    if (amount !== undefined) return amount;
+  }
+  return 0;
+}

@@ -1,0 +1,38 @@
+{
+  "id": "US-UT",
+  "name": "Utah",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [{ "lowerBound": 0, "rate": 0.0445 }],
+    "married_jointly": [{ "lowerBound": 0, "rate": 0.0445 }],
+    "head_of_household": [{ "lowerBound": 0, "rate": 0.0445 }]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 0,
+    "married_jointly": 0,
+    "head_of_household": 0
+  },
+  "taxpayerCredit": {
+    "creditRate": 0.06,
+    "phaseOutRate": 0.013,
+    "basePhaseOutByFilingStatus": {
+      "single": 18213,
+      "married_separately": 18213,
+      "head_of_household": 27320,
+      "married_jointly": 36426,
+      "qualifying_surviving_spouse": 36426
+    }
+  },
+  "citation": {
+    "sourceUrl": "https://incometax.utah.gov/credits/taxpayer-tax-credit",
+    "sourceDocument": "Utah State Tax Commission: 4.45% flat tax on Utah taxable income for tax year 2026 (SB 60, 2026 session, cutting the 2025 rate of 4.5%). Utah has no standard deduction — it taxes federal AGI directly and grants relief through the nonrefundable taxpayer tax credit (Utah Code §59-10-1018): 6% of the federal deduction, reduced by 1.3% of taxable income above a filing-status base ($18,213 single/MFS, $27,320 HoH, $36,426 MFJ/QSS), at the most recent published (2025) base amounts pending the 2026-indexed figures. The $2,111-per-dependent personal exemption that would enlarge the credit base is omitted (the engine models the no-dependent filer, like every other state), so the figure errs slightly high — the conservative side for setting money aside.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-05"
+  },
+  "effectiveDateRange": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  }
+}

@@ -99,6 +99,50 @@ describe("flat-rate states", () => {
   }
 });
 
+describe("Utah taxpayer tax credit (a credit standing in for a standard deduction)", () => {
+  // Utah taxes federal AGI at 4.45% (SB 60, 2026), then subtracts a nonrefundable
+  // taxpayer tax credit = 6%·(federal deduction) − 1.3%·(AGI − base), floored at 0.
+  it("single $60k → $2,247.23 (4.45%·60,000 − [6%·16,100 − 1.3%·(60,000−18,213)])", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ut"), fica: ds.fica },
+    );
+    // 2,670 − (966 − 543.231) = 2,670 − 422.769 = 2,247.231.
+    expect(cents(r.state!.incomeTax)).toBe("2247.23");
+  });
+
+  it("married jointly $60k → $1,044.46 (larger deduction and base)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ut"), fica: ds.fica },
+    );
+    // 2,670 − (6%·32,200 − 1.3%·(60,000−36,426)) = 2,670 − (1,932 − 306.462).
+    expect(cents(r.state!.incomeTax)).toBe("1044.46");
+  });
+
+  it("is nonrefundable: a low earner whose credit exceeds the tax owes $0", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 18000 },
+      { federal: ds.federal, state: ds.state("ut"), fica: ds.fica },
+    );
+    // Below the base the full 6%·16,100 = 966 credit exceeds 4.45%·18,000 = 801.
+    expect(r.state!.incomeTax.isZero()).toBe(true);
+  });
+
+  it("the credit phase-out lifts the state marginal rate to 5.75% (4.45% + 1.3%) in its band", () => {
+    const at60 = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ut"), fica: ds.fica },
+    );
+    const at61 = evaluateTaxes(
+      { filingStatus: "single", wages: 61000 },
+      { federal: ds.federal, state: ds.state("ut"), fica: ds.fica },
+    );
+    const deltaState = at61.state!.incomeTax.subtract(at60.state!.incomeTax);
+    expect(cents(deltaState)).toBe("57.5"); // 5.75% of the extra $1,000
+  });
+});
+
 describe("no-income-tax states are first-class records", () => {
   // All nine states that levy no personal income tax on wages (BUILD-SPEC.md §8):
   // TX and FL at launch, plus AK, NV, NH, SD, TN, WA, WY added as first-class

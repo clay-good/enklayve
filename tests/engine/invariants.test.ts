@@ -24,7 +24,10 @@ function makeRng(seed: number): () => number {
 }
 
 const STATUSES: FilingStatus[] = ["single", "married_jointly", "head_of_household"];
-const STATE_CODES = [null, "ca", "ny", "tx", "fl", "pa", "il", "oh", "ga", "nc", "mi", "dc"];
+// "ut" exercises the taxpayer-tax-credit path (a nonrefundable credit with a
+// phase-out) under the bounds and monotonicity fuzz, since it is the one
+// jurisdiction whose state tax is not a plain bracket function of taxable income.
+const STATE_CODES = [null, "ca", "ny", "tx", "fl", "pa", "il", "oh", "ga", "nc", "mi", "dc", "ut"];
 
 function contextFor(code: string | null): TaxContext {
   return code

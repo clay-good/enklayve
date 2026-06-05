@@ -36,7 +36,13 @@
  * reused), and Massachusetts (a 5% base rate plus the constitutional 4% surtax
  * over an inflation-adjusted threshold — the one seeded state whose shape fits
  * neither existing parser, so it gets a small dedicated parser that anchors the
- * two figures that actually move: the base rate and the surtax threshold). With
+ * two figures that actually move: the base rate and the surtax threshold).
+ *
+ * The eighth set adds Utah — a clean flat tax (4.45%, SB 60 2026) whose rate is
+ * the figure that moves, so the PA/IL/MI flat parser is reused verbatim (like
+ * ID). Utah has no standard deduction; its relief is the nonrefundable taxpayer
+ * tax credit, whose inflation-indexed phase-out base amounts roll the same way a
+ * bracket table does — the reviewer's data-only step on the resulting PR. With
  * it, *every* seeded jurisdiction with an income tax has a refresh adapter.
  *
  * Honesty boundaries (kept narrow on purpose, per the family's "be right before
@@ -81,6 +87,7 @@ export type RefreshGroup =
   | "state-in"
   | "state-ky"
   | "state-id"
+  | "state-ut"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -722,6 +729,14 @@ export const ADAPTERS: RefreshAdapter[] = [
     group: "state-id",
     source: "Idaho State Tax Commission individual income tax (flat rate)",
     sourceUrl: "https://tax.idaho.gov/taxes/income-tax/individual-income/",
+    cadence: "Annual",
+    parse: parseFlatRateJurisdiction,
+  },
+  {
+    id: "state-ut-income-tax-2024",
+    group: "state-ut",
+    source: "Utah State Tax Commission individual income tax (flat rate + taxpayer tax credit)",
+    sourceUrl: "https://incometax.utah.gov/instructions/tax-calculation",
     cadence: "Annual",
     parse: parseFlatRateJurisdiction,
   },

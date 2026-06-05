@@ -66,6 +66,27 @@ export const SpecialRuleSchema = z.object({
 });
 
 /**
+ * A "taxpayer tax credit" (the Utah pattern): a nonrefundable credit that
+ * substitutes for a standard deduction. The state taxes federal AGI directly
+ * (no standard deduction subtracted), then grants `creditRate` of the *federal*
+ * deduction back as a credit, reduced by `phaseOutRate` of state taxable income
+ * above a filing-status `basePhaseOut`, floored at zero (Utah Code §59-10-1018;
+ * TC-40 taxpayer-tax-credit worksheet). Per-dependent personal exemptions that
+ * would add to the credit base are deferred — like every other state's dependent
+ * handling, the engine models the no-dependent filer — so the modeled credit
+ * errs slightly small (state tax slightly high), the conservative side.
+ */
+export const TaxpayerCreditSchema = z.object({
+  /** Fraction of the federal deduction granted as the initial credit (Utah: 0.06). */
+  creditRate: z.number().gte(0).lte(1),
+  /** Fraction of taxable income above the base by which the credit phases out (Utah: 0.013). */
+  phaseOutRate: z.number().gte(0).lte(1),
+  /** Taxable income above which the credit begins to phase out, by filing status. */
+  basePhaseOutByFilingStatus: amountByStatus,
+});
+export type TaxpayerCreditData = z.infer<typeof TaxpayerCreditSchema>;
+
+/**
  * A tax jurisdiction (federal, a state, or a no-income-tax state as a
  * first-class record). One generic evaluator consumes any number of these —
  * adding a state means adding a data file, not code (BUILD-SPEC.md §8).
@@ -83,6 +104,8 @@ export const JurisdictionSchema = z.object({
   personalExemptionByFilingStatus: amountByStatus.optional(),
   localAddOns: z.array(LocalAddOnSchema).optional(),
   specialRules: z.array(SpecialRuleSchema).optional(),
+  /** A taxpayer tax credit that substitutes for a standard deduction (Utah). */
+  taxpayerCredit: TaxpayerCreditSchema.optional(),
   citation: CitationSchema,
   effectiveDateRange: z.object({
     start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

@@ -1,6 +1,12 @@
 import { Money } from "../money";
 import type { FicaData, Jurisdiction } from "../../data/schemas";
-import { bracketTax, bracketsFor, personalExemptionFor, standardDeductionFor } from "./brackets";
+import {
+  bracketTax,
+  bracketsFor,
+  personalExemptionFor,
+  standardDeductionFor,
+  taxpayerCreditBaseFor,
+} from "./brackets";
 import { chooseFederalDeduction } from "./deductions";
 import { computeFica } from "./fica";
 import type {
@@ -59,6 +65,7 @@ function computeState(
   input: TaxInput,
   agi: Money,
   state: Jurisdiction,
+  federalDeduction: Money,
 ): { computation: JurisdictionComputation; localLines: LocalTaxLine[] } {
   if (!state.hasIncomeTax) {
     return {
@@ -86,6 +93,22 @@ function computeState(
         );
       }
     }
+  }
+
+  // Taxpayer tax credit (the Utah pattern): a nonrefundable credit standing in
+  // for a standard deduction. The state taxes AGI directly (its standard
+  // deduction is 0 above), then credits back `creditRate` of the *federal*
+  // deduction, phased out at `phaseOutRate` of taxable income over a
+  // filing-status base, floored at zero — so it never refunds (Utah Code
+  // §59-10-1018; TC-40 worksheet). The phase-out naturally raises the effective
+  // marginal rate in its band, which the $100 wage probe measures correctly.
+  const credit = state.taxpayerCredit;
+  if (credit) {
+    const initial = federalDeduction.multiply(credit.creditRate);
+    const base = taxpayerCreditBaseFor(state, input.filingStatus);
+    const overBase = clampZero(taxableIncome.subtract(base));
+    const reduced = clampZero(initial.subtract(overBase.multiply(credit.phaseOutRate)));
+    incomeTax = clampZero(incomeTax.subtract(reduced));
   }
 
   // Local add-ons apply only when the caller opts in by id (a NYC resident, say).
@@ -135,7 +158,7 @@ function computeBreakdown(input: TaxInput, ctx: TaxContext): Breakdown {
   let state: JurisdictionComputation | null = null;
   let localLines: LocalTaxLine[] = [];
   if (ctx.state) {
-    const s = computeState(input, agi, ctx.state);
+    const s = computeState(input, agi, ctx.state, federal.deduction.amount);
     state = s.computation;
     localLines = s.localLines;
   }

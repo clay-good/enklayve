@@ -1,0 +1,14 @@
+# Utah income tax — Utah State Tax Commission flat rate, annual (staggered). Flat-rate state, the PA workflow is the template (the taxpayer-tax-credit base amounts roll as the reviewer's data-only step). BUILD-SPEC.md §7.2, §8.
+name: Refresh Utah income tax
+
+on:
+  schedule:
+    - cron: "0 12 9 4 *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-ut
+      source_name: Utah income tax
