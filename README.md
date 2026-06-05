@@ -245,7 +245,7 @@ flowchart TD
         T1["one module per tool; a hub hosts several"]
     end
     subgraph PROFILE["src/profile — My Situation"]
-        PS["in-memory store (cleared on unload) + encrypted export"]
+        PS["in-memory store (cleared on unload) + encrypted-export module"]
     end
     subgraph READOUT["src/readout — document ingestion + report"]
         RX["anchored extractors → confirm → flow in"]
@@ -276,7 +276,7 @@ flowchart TD
 | `src/data` | zod schemas for every dataset kind, content-hash integrity, and the per-dataset fail-safe gate (stale or corrupt → a verify banner, never a wrong number) |
 | `src/tiles` | One module per calculator. Adding a tool never touches the shell |
 | `src/ui` | Render layer, the light theme, result card, fuzzy palette, fragment router, accessible charts |
-| `src/profile` | My Situation — the in-memory session profile and the portable encrypted export |
+| `src/profile` | My Situation — the in-memory session profile and the portable encrypted-export module (retained; not currently surfaced) |
 | `src/readout` | Anchored document extraction, the confirm flow, and the downloadable Readout Report |
 | `worker` | A minimal Cloudflare Worker: asset routing + the security headers |
 
@@ -389,7 +389,7 @@ Every document family in the spec has an extractor: the **typed W-2 / 1040 / pay
 
 ## My Situation, the plan, and My Readout Report
 
-- **My Situation** — a single in-memory profile every tool reads from and writes to, so you enter income once. Per-field provenance (typed / extracted / assumed). Never persisted automatically; cleared on unload. Continuity is opt-in via a user-held export that can be passphrase-encrypted on-device (PBKDF2 → AES-GCM). It is invisible plumbing now (the standalone "My Situation" panel was retired) — ~34 tiles share it so a value entered once prefills the rest.
+- **My Situation** — a single in-memory profile every tool reads from and writes to, so you enter income once. Per-field provenance (typed / extracted / assumed). Never persisted automatically; cleared on unload. It is invisible plumbing now — ~34 tiles share it so a value entered once prefills the rest, and the Readout flows confirmed document fields into it. (The portable, passphrase-encryptable export — PBKDF2 → AES-GCM, [`src/profile/portable.ts`](src/profile/portable.ts) — was surfaced through the standalone "My Situation" panel, which was retired when the home budget became the plan; the module is retained, ready to re-surface, but is not currently wired to a button.)
 - **The plan** — the default ordered plan (starter cushion → full employer match → high-cost debt → full rainy-day fund → tax-advantaged retirement → sinking funds → war chest) is encoded as **data** in a pure engine (`src/engine/plan.ts`), so steps reorder and toggle. Its user-facing form is now the **home anti-budget** (the live budget *is* your situation; the order-of-operations *is* the next right step) rather than a separate "My Plan" page, which was retired. The engine lives on: it computes the single next right step that the Readout Report prints.
 - **My Readout Report** — a downloadable, self-contained, script-free HTML summary generated entirely on-device: the snapshot, the tax picture, what you may be owed, your next right step (from the plan engine above), and an assumptions-and-sources appendix. **Byte-identical** when regenerated from the same profile + dataset versions (a golden test asserts it). It can also be printed straight from the app: a `@media print` stylesheet strips the site chrome and interactive controls, lays the content out black-on-white, keeps tables and sections from breaking across pages, and prints each citation's URL so the appendix stays verifiable on paper.
 
@@ -459,7 +459,7 @@ See the spec files for the full per-wave history.
 | `src/data` | Dataset schemas, integrity check, manifest loader, fail-safe gate, browser loader |
 | `src/tiles` | One module per calculator (53 of them), the hub factory, and the registry |
 | `src/ui` | Render layer, the light theme, result card, command palette, router, charts, views |
-| `src/profile` | My Situation — the in-memory session profile and portable encrypted export |
+| `src/profile` | My Situation — the in-memory session profile and the portable encrypted-export module |
 | `src/readout` | Anchored extractors, the confirm flow, and the Readout Report builder |
 | `data` | Sharded JSON datasets, sibling `.sha256` files, and the manifest |
 | `scripts` | Data-refresh adapters, the manifest builder, static-page generators, the social-card (`og:image`) generator, the release audit |

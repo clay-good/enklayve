@@ -311,7 +311,7 @@ export function mountPeaceOfMind(ctx: TileContext): void {
     el("summary", { text: "My Situation & assumptions" }),
     el("p", {
       class: "ph-config-note",
-      text: "These live only in this session and are cleared when you leave. Open My Situation in the header to export a private copy.",
+      text: "These live only in this session and are cleared when you leave. Nothing is ever uploaded.",
     }),
     el(
       "div",
