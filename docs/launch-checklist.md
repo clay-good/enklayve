@@ -37,8 +37,9 @@ npm run deploy:dry
 - [ ] axe-core: zero violations across all views (in CI).
 - [ ] Full keyboard navigation; visible focus; modals are never traps (Close + Done + Escape + click-outside).
 - [ ] Reduced-motion preference is respected (count-up and hover transitions).
-- [ ] Light, dark, and high-contrast themes all legible; red used only for genuine warnings.
+- [ ] The single calm light theme is legible throughout (the dark and high-contrast themes and the toggle were retired 2026-06-01 for the simplest default); red used only for genuine warnings.
 - [ ] The page scrolls vertically only on every device width — no horizontal drag on any tool (form controls shrink to their track, wide tables scroll within their own region, and an `overflow-x: clip` backstop guards the content column); `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch.
+- [ ] Printing any view (notably the Readout Report's Print action) drops the app chrome and interactive controls via `@media print` and lays the content out black-on-white without breaking tables across pages; the Report appendix prints each citation's URL (guarded by a print-media e2e).
 
 ## Crawlability & docs (Phase 11)
 

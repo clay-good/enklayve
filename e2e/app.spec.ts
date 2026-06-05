@@ -32,6 +32,20 @@ test("the command palette opens with the keyboard", async ({ page }) => {
   await expect(page.getByRole("dialog", { name: "Command palette" })).toBeVisible();
 });
 
+test("printing the Readout Report strips the app chrome", async ({ page }) => {
+  // The Report offers a Print action; under print media the site chrome and
+  // interactive controls must drop away so the printout is a clean document
+  // (BUILD-SPEC-2 §5). happy-dom has no media engine, so this is verified here.
+  await page.goto("/#/report");
+  await page.waitForSelector(".report-body");
+  await page.emulateMedia({ media: "print" });
+  await expect(page.locator(".app-header")).toBeHidden();
+  await expect(page.locator(".app-footer")).toBeHidden();
+  await expect(page.locator(".report-actions")).toBeHidden();
+  // The report content itself stays on the page.
+  await expect(page.locator(".report-body")).toBeVisible();
+});
+
 test("works offline after the first visit", async ({ page, context }) => {
   // First visit: let the service worker install and precache the core shell.
   await page.goto("/");

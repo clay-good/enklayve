@@ -2163,3 +2163,67 @@ html {
     scroll-behavior: smooth;
   }
 }
+
+/* --- Print (BUILD-SPEC-2 §5: the Report offers a Print action, and any tool's
+   result should print cleanly). Strip the app chrome and interactive controls,
+   lay the content out as plain black-on-white, and keep tables and result/report
+   sections from breaking across pages. The downloadable report HTML carries its
+   own styles; this covers printing straight from the app. */
+@media print {
+  /* Drop tinted backgrounds so ink isn't wasted and text stays legible. */
+  html,
+  body,
+  .content,
+  .tile,
+  .result-card,
+  .breakdown,
+  .report-section,
+  .tile-stats {
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+  }
+
+  /* Site chrome and anything you can't act on with a printout. */
+  .app-header,
+  .app-footer,
+  .back-link,
+  .result-actions,
+  .report-actions,
+  .tile-form-actions,
+  .readout-dropzone,
+  .palette-backdrop,
+  .palette-panel {
+    display: none !important;
+  }
+
+  .content {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Keep coherent blocks together on the page. */
+  .result-card,
+  .report-section,
+  .breakdown-table,
+  .tile-stats,
+  .bd-row,
+  tr {
+    break-inside: avoid;
+  }
+
+  /* The Report's citation appendix is worth keeping verifiable on paper: print
+     each source's URL after its link text. (Scoped to the appendix so per-line
+     breakdown citations in a tool result stay uncluttered.) */
+  .report-list a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+
+  a {
+    color: #000 !important;
+    text-decoration: underline;
+  }
+}
