@@ -12,8 +12,18 @@ import type { CitationData } from "../data/schemas";
 import type { ExtractedText } from "./extractText";
 import type { DocKind, ExtractedField, ExtractionResult, FieldConfidence } from "./types";
 
-/** Form revisions (tax years) each extractor is validated against. */
-const SUPPORTED_REVISIONS = ["2023", "2024"];
+/**
+ * Form revisions (tax years) each extractor is validated against. The IRS box
+ * numbering and labels these extractors anchor on (W-2 boxes 1/2/12/16/17, the
+ * 1040 line numbers, the 1099 series, 1095-A, 1098) are stable across these
+ * years, so the same anchors read every one. We carry the two most recent filing
+ * years plus the prior two: in 2026 a user reconciling a prior year still drops a
+ * 2024 return, while the current filing season's forms are 2025, and 2026 forms
+ * are already in hand for in-year pay stubs and 1095-As. An older or unlisted
+ * revision is flagged (never guessed) per §2.2 — a renumbered future form must be
+ * re-validated and added deliberately rather than silently trusted.
+ */
+const SUPPORTED_REVISIONS = ["2023", "2024", "2025", "2026"];
 
 /** Pay frequencies, most-specific first so "bi-weekly" isn't shadowed by
  * "weekly" (nor "semi-monthly" by "monthly"). */

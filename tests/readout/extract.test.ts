@@ -68,6 +68,26 @@ describe("Readout, W-2 extraction", () => {
     expect(result.citation?.sourceUrl).toMatch(/irs\.gov/);
     expect(result.citation?.effectiveYear).toBe(2024);
   });
+
+  it("recognizes the current filing season's W-2 (2025), not just prior years", () => {
+    // Same stable box layout, a newer tax year. Before the revision list was
+    // brought current, a 2025 W-2 — the form a user files in early 2026 — was
+    // recognized but had every field dropped as an "unvalidated revision."
+    const w2_2025 = typed(
+      "Form W-2 Wage and Tax Statement 2025 Employer ABC Inc " +
+        "1 Wages, tips, other compensation 75000.00 " +
+        "2 Federal income tax withheld 9200.00 " +
+        "12a D 8000.00 " +
+        "16 State wages 75000.00 17 State income tax 3100.00",
+    );
+    const r = extractDocument(w2_2025);
+    expect(r.kind).toBe("w2");
+    expect(r.revision).toBe("2025");
+    expect(value(r, "w2-box1")).toBe(75000);
+    expect(value(r, "w2-box2")).toBe(9200);
+    expect(r.citation?.effectiveYear).toBe(2025);
+    expect(r.warnings.join(" ")).not.toMatch(/revision/i);
+  });
 });
 
 describe("Readout, Form 1040 extraction", () => {
