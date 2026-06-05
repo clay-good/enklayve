@@ -123,6 +123,7 @@ describe("adapters: registry", () => {
       "state-co",
       "state-dc",
       "state-ga",
+      "state-ia",
       "state-id",
       "state-il",
       "state-in",
@@ -139,7 +140,7 @@ describe("adapters: registry", () => {
       "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(25);
+    expect(ADAPTERS).toHaveLength(26);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
@@ -446,6 +447,21 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     }
   });
 
+  it("overlays the IA flat rate, preserving its federal-conformity deduction (flat parser reused)", () => {
+    const ia = adaptersForGroup("state-ia")[0]!;
+    const result = ia.parse(
+      "The Iowa income tax rate is 3.8%.",
+      readShard("state-ia-income-tax-2024.json"),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const b = result.shard.bracketsByFilingStatus as Record<string, { rate: number }[]>;
+    expect(b.single![0]!.rate).toBe(0.038);
+    const std = result.shard.standardDeductionByFilingStatus as Record<string, number>;
+    expect(std.single).toBe(16100); // federal-conformity, the reviewer's IRS-roll step
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
   it("overlays the LA flat rate, preserving its standard deduction (flat parser reused)", () => {
     const la = adaptersForGroup("state-la")[0]!;
     const result = la.parse(
@@ -458,7 +474,7 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     expect(b.single![0]!.rate).toBe(0.03);
     // The indexed standard deduction (the reviewer's data-only roll) is untouched.
     const std = result.shard.standardDeductionByFilingStatus as Record<string, number>;
-    expect(std.head_of_household).toBe(25000);
+    expect(std.head_of_household).toBe(25750);
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
   });
 

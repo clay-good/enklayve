@@ -87,7 +87,8 @@ describe("flat-rate states", () => {
     ["ma", 60000, "2780"], // 5.0%·(60,000 − 4,400 exemption), below the surtax
     ["ms", 60000, "1668"], // 0% on first $10k of taxable, 4.0%·(51,700 − 10,000)
     ["id", 60000, "2326.7"], // 5.3%·(60,000 − 16,100 federal std), HB 40 flat
-    ["la", 60000, "1425"], // 3.0%·(60,000 − 12,500 std), Act 11 flat
+    ["la", 60000, "1413.75"], // 3.0%·(60,000 − 12,875 std), Act 11 flat (2026 indexed)
+    ["ia", 60000, "1668.2"], // 3.8%·(60,000 − 16,100 federal std), SF 2442 flat
   ];
   for (const [code, wages, expected] of cases) {
     it(`${code.toUpperCase()} single $${wages.toLocaleString()} → $${expected}`, () => {
@@ -100,11 +101,11 @@ describe("flat-rate states", () => {
   }
 });
 
-describe("Louisiana flat 3% with the $25,000 head-of-household deduction", () => {
-  // Louisiana's standard deduction is $25,000 for MFJ *and* head of household
-  // (Act 11), unlike the federal split where HoH sits below MFJ — so HoH and MFJ
-  // owe the same flat 3% tax at equal income.
-  it("married jointly and head of household both → $1,050 at $60k (60,000 − 25,000)·3%", () => {
+describe("Louisiana flat 3% with the $25,750 head-of-household deduction (2026 indexed)", () => {
+  // Louisiana's standard deduction is $25,750 for MFJ *and* head of household
+  // (Act 11, 2026 CPI-indexed), unlike the federal split where HoH sits below
+  // MFJ — so HoH and MFJ owe the same flat 3% tax at equal income.
+  it("married jointly and head of household both → $1,027.50 at $60k (60,000 − 25,750)·3%", () => {
     const mfj = evaluateTaxes(
       { filingStatus: "married_jointly", wages: 60000 },
       { federal: ds.federal, state: ds.state("la"), fica: ds.fica },
@@ -113,8 +114,8 @@ describe("Louisiana flat 3% with the $25,000 head-of-household deduction", () =>
       { filingStatus: "head_of_household", wages: 60000 },
       { federal: ds.federal, state: ds.state("la"), fica: ds.fica },
     );
-    expect(cents(mfj.state!.incomeTax)).toBe("1050");
-    expect(cents(hoh.state!.incomeTax)).toBe("1050");
+    expect(cents(mfj.state!.incomeTax)).toBe("1027.5");
+    expect(cents(hoh.state!.incomeTax)).toBe("1027.5");
   });
 });
 

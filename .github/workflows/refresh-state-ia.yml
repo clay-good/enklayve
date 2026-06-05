@@ -1,0 +1,14 @@
+# Iowa income tax — Iowa Department of Revenue flat rate, annual (staggered). Flat-rate state, the PA workflow is the template (the federal-conformity standard deduction rolls with the IRS refresh). BUILD-SPEC.md §7.2, §8.
+name: Refresh Iowa income tax
+
+on:
+  schedule:
+    - cron: "0 12 11 4 *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-ia
+      source_name: Iowa income tax

@@ -10,13 +10,13 @@
     "head_of_household": [{ "lowerBound": 0, "rate": 0.03 }]
   },
   "standardDeductionByFilingStatus": {
-    "single": 12500,
-    "married_jointly": 25000,
-    "head_of_household": 25000
+    "single": 12875,
+    "married_jointly": 25750,
+    "head_of_household": 25750
   },
   "citation": {
     "sourceUrl": "https://dam.ldr.la.gov/lawspolicies/RIB-25-012-Louisiana-Individual-Income-Tax-Reform-1.pdf",
-    "sourceDocument": "Louisiana Department of Revenue, RIB 25-012: a flat 3% individual income tax for tax years on or after 2025 (Act 11, 2024 Third Extraordinary Session), replacing the graduated 1.85%/3.5%/4.25% brackets and the federal-tax deduction. Standard deduction $12,500 single/MFS, $25,000 MFJ/qualifying surviving spouse/head of household (the $25,000 covers HoH, unlike the federal split). The standard deduction is inflation-indexed beginning 2026; the 2025-enacted base is used pending the published 2026 amount, so the figure errs slightly high — the conservative side. Per-dependent deductions are deferred (the engine's no-dependent assumption, shared by every modeled state).",
+    "sourceDocument": "Louisiana Department of Revenue, RIB 25-012: a flat 3% individual income tax for tax years on or after 2025 (Act 11, 2024 Third Extraordinary Session), replacing the graduated 1.85%/3.5%/4.25% brackets and the federal-tax deduction. Standard deduction $12,875 single/MFS, $25,750 MFJ/qualifying surviving spouse/head of household (the doubled amount covers HoH, unlike the federal split) — the 2026 CPI-U-indexed figures (the 2025 base of $12,500/$25,000 grown 3.0%), per Act 11's annual inflation adjustment first applied January 1, 2026, cross-checked against the Tax Foundation 2026 state table. Per-dependent deductions are deferred (the engine's no-dependent assumption, shared by every modeled state).",
     "effectiveYear": 2026,
     "dateRetrieved": "2026-06-05"
   },

@@ -1,0 +1,27 @@
+{
+  "id": "US-IA",
+  "name": "Iowa",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [{ "lowerBound": 0, "rate": 0.038 }],
+    "married_jointly": [{ "lowerBound": 0, "rate": 0.038 }],
+    "head_of_household": [{ "lowerBound": 0, "rate": 0.038 }]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 16100,
+    "married_jointly": 32200,
+    "head_of_household": 24150
+  },
+  "citation": {
+    "sourceUrl": "https://revenue.iowa.gov/press-release/2025-10-21/idr-announces-2026-individual-income-tax-and-interest-rates",
+    "sourceDocument": "Iowa Department of Revenue: a flat 3.8% individual income tax for tax years 2025 and after (Senate File 2442, 2024), replacing the prior graduated schedule. Iowa conforms to the federal standard deduction (the Idaho/Colorado pattern), $16,100/$32,200/$24,150 for 2026. Cross-checked against the Tax Foundation 2026 state table. Iowa's $40 single / $80 married personal-exemption credit (a small flat nonrefundable credit) and the opt-in local school-district surtaxes are omitted at launch fidelity, like every state's credits and county/municipal add-ons, so the figure errs slightly high (by at most $40/$80) — the conservative side for setting money aside.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-05"
+  },
+  "effectiveDateRange": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  }
+}

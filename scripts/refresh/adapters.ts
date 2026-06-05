@@ -45,10 +45,14 @@
  * bracket table does — the reviewer's data-only step on the resulting PR.
  *
  * The ninth set adds Louisiana — another clean flat tax (3%, Act 11 2024), so
- * the same flat parser is reused once more. Its $12,500 / $25,000 standard
+ * the same flat parser is reused once more. Its $12,875 / $25,750 standard
  * deduction is inflation-indexed from 2026; that annual roll stays the reviewer's
  * data-only step (the rate is the legislatively-fixed figure the parser anchors).
- * With it, *every* seeded jurisdiction with an income tax has a refresh adapter.
+ *
+ * The tenth set adds Iowa — a flat 3.8% tax (SF 2442 2024) over the federal
+ * standard deduction (the Idaho pattern), so the flat parser is reused again; the
+ * federal-conformity deduction rolls with the IRS refresh, not Iowa's. With it,
+ * *every* seeded jurisdiction with an income tax has a refresh adapter.
  *
  * Honesty boundaries (kept narrow on purpose, per the family's "be right before
  * being everywhere"):
@@ -94,6 +98,7 @@ export type RefreshGroup =
   | "state-id"
   | "state-ut"
   | "state-la"
+  | "state-ia"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -752,6 +757,16 @@ export const ADAPTERS: RefreshAdapter[] = [
     source:
       "Louisiana Department of Revenue individual income tax (flat rate + standard deduction)",
     sourceUrl: "https://revenue.louisiana.gov/individuals/general-resources/individual-income-tax/",
+    cadence: "Annual",
+    parse: parseFlatRateJurisdiction,
+  },
+  {
+    id: "state-ia-income-tax-2024",
+    group: "state-ia",
+    source:
+      "Iowa Department of Revenue individual income tax (flat rate, federal-conformity deduction)",
+    sourceUrl:
+      "https://revenue.iowa.gov/taxes/tax-guidance/individual-income-tax/individual-income-tax-provisions",
     cadence: "Annual",
     parse: parseFlatRateJurisdiction,
   },
