@@ -42,7 +42,7 @@ npm run deploy:dry
 
 ## Crawlability & docs (Phase 11)
 
-- [ ] `dist/tools.html` lists exactly the registry's tiles (drift test).
+- [ ] `dist/tools.html` lists exactly the registry's hubs **and names every hosted calculator, linking its `/tools/<id>.html` landing page** (drift test); the in-app `#/all-tools` mirrors it, listing every calculator under its hub.
 - [ ] One pre-rendered shell per tile under `dist/tools/<id>.html`, each with a canonical and a deep link into the live tool (drift test).
 - [ ] `dist/sitemap.xml` lists the home, the index, and every tool shell; `dist/robots.txt` advertises the sitemap.
 - [ ] The home `index.html` carries a canonical, a descriptive title + description, Open Graph + Twitter Card tags, and JSON-LD `WebApplication` structured data; the tool shells and the index carry the same OG/Twitter/robots with absolute canonicals (guarded by `tests/ui/seo.test.ts`). No cross-origin resource loads anywhere (the release audit allows only self-referential absolute URLs on the production origin).

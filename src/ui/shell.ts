@@ -16,8 +16,8 @@ import { tileHowResources } from "./explainer";
 import { evaluateTaxes, type TaxInput } from "../engine/tax";
 import type { FilingStatus } from "../data/schemas";
 import { loadBundledData, type BundledData } from "../data/browser";
-import { PILLARS, type TileContext, type TileDefinition } from "../tiles/types";
-import { getTile, tilesForPillar } from "../tiles/registry";
+import { type TileContext, type TileDefinition } from "../tiles/types";
+import { getTile, TILES, SUB_TOOLS } from "../tiles/registry";
 import { SituationStore } from "../profile/situation";
 
 /** Navigate to a tile/home, optionally deep-linking into a hub sub-tool. */
@@ -91,25 +91,6 @@ function buildFooter(navigate: (id: string | null) => void): HTMLElement {
       whyBtn,
       linkBtn("GitHub", "https://github.com/clay-good/enklayve"),
       linkBtn("Made with ♥ by Clay Good", "https://claygood.com", "footer-btn--accent"),
-    ),
-  );
-}
-
-function tileLink(tile: TileDefinition, navigate: (id: string) => void): HTMLElement {
-  return el(
-    "li",
-    {},
-    el(
-      "button",
-      {
-        type: "button",
-        class: tile.status === "ready" ? "tile-link" : "tile-link tile-link--soon",
-        on: { click: () => navigate(tile.id) },
-      },
-      el("span", { class: "tile-link-title", text: tile.title }),
-      tile.status === "coming-soon"
-        ? el("span", { class: "badge badge--soon", text: "soon" })
-        : null,
     ),
   );
 }
@@ -749,7 +730,7 @@ function renderAbout(container: HTMLElement, navigate: (id: string | null) => vo
  * tool, grouped by pillar. The client route mirrors the static `tools.html`
  * emitted at build time for search-engine crawlability.
  */
-function renderAllTools(container: HTMLElement, navigate: (id: string | null) => void): void {
+function renderAllTools(container: HTMLElement, navigate: NavigateFn): void {
   clear(container);
   document.title = "All tools · enklayve";
 
@@ -766,25 +747,54 @@ function renderAllTools(container: HTMLElement, navigate: (id: string | null) =>
     el("h1", { class: "tile-title", text: "All tools" }),
     el("p", {
       class: "tile-desc",
-      text: "Every enklayve tool, grouped by topic. Each runs entirely on your device.",
+      text: "Every enklayve calculator, grouped by topic. Each runs entirely on your device.",
     }),
   );
 
+  // One section per topic hub (the unit the app actually navigates to); each
+  // heading opens the hub, and every calculator it hosts is listed beneath,
+  // deep-linking into the hub already switched to that tool — so the browse
+  // path reaches all the calculators by name, not just the 10 hubs.
   const sections = el("div", { class: "all-tools" });
-  for (const pillar of PILLARS) {
-    const tiles = tilesForPillar(pillar.id);
-    if (tiles.length === 0) continue;
+  for (const hub of TILES) {
+    const subs = SUB_TOOLS.filter((s) => s.hubId === hub.id).map((s) => s.tile);
     sections.append(
       el(
         "section",
         { class: "all-tools-group" },
-        el("h2", { class: "pillar-title", text: pillar.title }),
-        el("ul", { class: "tile-list" }, ...tiles.map((t) => tileLink(t, (id) => navigate(id)))),
+        el(
+          "h2",
+          { class: "all-tools-hub-heading" },
+          el(
+            "button",
+            { type: "button", class: "all-tools-hub", on: { click: () => navigate(hub.id) } },
+            hub.title,
+          ),
+        ),
+        el("ul", { class: "tile-list" }, ...subs.map((t) => subToolLink(t, hub.id, navigate))),
       ),
     );
   }
 
   container.append(el("article", { class: "tile" }, head, sections));
+}
+
+/** A calculator entry under a hub in the All Tools index (title + description). */
+function subToolLink(tile: TileDefinition, hubId: string, navigate: NavigateFn): HTMLElement {
+  return el(
+    "li",
+    {},
+    el(
+      "button",
+      {
+        type: "button",
+        class: "tile-link tile-link--stacked",
+        on: { click: () => navigate(hubId, new URLSearchParams({ tool: tile.id })) },
+      },
+      el("span", { class: "tile-link-title", text: tile.title }),
+      el("span", { class: "tile-link-desc", text: tile.description }),
+    ),
+  );
 }
 
 function renderTileView(

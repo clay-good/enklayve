@@ -7,8 +7,7 @@
  * inline — the CSP allows 'unsafe-inline' for styles — so the file depends on no
  * hashed asset names.
  */
-import { tilesForPillar } from "../src/tiles/registry";
-import { PILLARS } from "../src/tiles/types";
+import { TILES, SUB_TOOLS } from "../src/tiles/registry";
 import { SITE_ORIGIN } from "./sitemap";
 
 /** Escape text for safe interpolation into HTML. */
@@ -22,17 +21,24 @@ export function escapeHtml(s: string): string {
 
 /** Render the full static All Tools index document. */
 export function renderToolsIndex(): string {
-  const groups = PILLARS.map((pillar) => {
-    const items = tilesForPillar(pillar.id)
+  // One section per topic hub. The hub heading links into the live app; each
+  // calculator it hosts links to its own pre-rendered, crawlable landing page
+  // (which in turn deep-links into the hub), so every calculator is named here
+  // and every per-tool page is reachable in one hop from the index, not only
+  // via the sitemap.
+  const groups = TILES.map((hub) => {
+    const subs = SUB_TOOLS.filter((s) => s.hubId === hub.id).map((s) => s.tile);
+    const items = subs
       .map(
         (t) =>
-          `        <li><a href="/#/${encodeURIComponent(t.id)}">${escapeHtml(t.title)}</a>` +
+          `        <li><a href="/tools/${encodeURIComponent(t.id)}.html">${escapeHtml(t.title)}</a>` +
           `<span class="d">, ${escapeHtml(t.description)}</span></li>`,
       )
       .join("\n");
     return (
       `      <section>\n` +
-      `        <h2>${escapeHtml(pillar.title)}</h2>\n` +
+      `        <h2><a href="/#/${encodeURIComponent(hub.id)}">${escapeHtml(hub.title)}</a></h2>\n` +
+      `        <p class="hubdesc">${escapeHtml(hub.description)}</p>\n` +
       `        <ul>\n${items}\n        </ul>\n` +
       `      </section>`
     );
@@ -72,10 +78,12 @@ export function renderToolsIndex(): string {
         line-height: 1.5;
       }
       h1 { color: #6d28d9; margin-bottom: 0.25rem; }
-      h2 { color: #5b21b6; margin: 1.75rem 0 0.5rem; font-size: 1.15rem; }
+      h2 { color: #5b21b6; margin: 1.75rem 0 0.15rem; font-size: 1.15rem; }
+      h2 a { color: #5b21b6; }
       p.lede { color: #5b5570; margin-top: 0; }
+      p.hubdesc { color: #5b5570; margin: 0 0 0.5rem; font-size: 0.95rem; }
       ul { list-style: none; padding: 0; margin: 0; }
-      li { padding: 0.3rem 0; }
+      li { padding: 0.25rem 0; }
       a { color: #6d28d9; font-weight: 600; text-decoration: none; }
       a:hover { text-decoration: underline; }
       .d { color: #5b5570; font-weight: 400; }
@@ -86,7 +94,7 @@ export function renderToolsIndex(): string {
     <nav><a href="/">← enklayve home</a></nav>
     <h1>All tools</h1>
     <p class="lede">
-      Every enklayve tool, grouped by pillar. Each one runs entirely on your device, 
+      Every enklayve calculator, grouped by topic. Each one runs entirely on your device,
       nothing is ever sent anywhere.
     </p>
     <main>

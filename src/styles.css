@@ -523,11 +523,6 @@ body {
 
 /* The home tool grid was retired (tools are reached via search + the All Tools
    index); the All Tools index page below keeps its own `.all-tools*` styles. */
-.pillar-title {
-  margin: 0;
-  font-size: 1.1rem;
-  color: var(--enk-primary);
-}
 
 /* --- All Tools index page --- */
 .all-tools {
@@ -536,17 +531,41 @@ body {
   gap: 1.5rem;
 }
 
-.all-tools-group .pillar-title {
-  margin-bottom: 0.5rem;
+/* A hub heading inside the All Tools index: opens the hub, and the calculators
+   it hosts are listed beneath it. */
+.all-tools-hub-heading {
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+}
+
+.all-tools-hub {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  color: var(--enk-primary);
+}
+
+.all-tools-hub:hover {
+  background: var(--enk-primary-soft);
 }
 
 .tile-list {
   list-style: none;
-  margin: 0;
+  margin: 0 0 0 0.25rem;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  border-left: 2px solid var(--enk-primary-soft);
+  padding-left: 0.6rem;
 }
 
 .tile-link {
@@ -571,6 +590,21 @@ body {
 
 .tile-link--soon {
   color: var(--enk-text-muted);
+}
+
+/* A calculator entry: title over a muted one-line description. Defined after
+   `.tile-link` so its column layout wins over the base row's `align-items`. */
+.tile-link--stacked {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0.05rem;
+}
+
+.tile-link-desc {
+  font-size: 0.85rem;
+  color: var(--enk-text-muted);
+  overflow-wrap: anywhere;
 }
 
 .badge {

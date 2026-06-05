@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { renderToolsIndex, escapeHtml } from "../../scripts/tools-index";
-import { TILES } from "../../src/tiles/registry";
+import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
 
 /**
  * The pre-rendered All Tools index (BUILD-SPEC-2 §1.2, Phase 13) must stay in
@@ -10,16 +10,26 @@ import { TILES } from "../../src/tiles/registry";
 describe("static All Tools index", () => {
   const html = renderToolsIndex();
 
-  it("emits a real, linkable anchor for every registered tile", () => {
+  it("emits a real, linkable anchor into the live app for every hub", () => {
     for (const tile of TILES) {
       expect(html).toContain(`href="/#/${tile.id}"`);
       expect(html).toContain(`>${escapeHtml(tile.title)}</a>`);
     }
   });
 
-  it("links exactly as many tools as the registry holds", () => {
+  it("links every hub into the live app, exactly once", () => {
     const links = html.match(/href="\/#\//g) ?? [];
     expect(links.length).toBe(TILES.length);
+  });
+
+  it("names every calculator and links its crawlable landing page", () => {
+    for (const { tile } of SUB_TOOLS) {
+      expect(html).toContain(`href="/tools/${tile.id}.html"`);
+      expect(html).toContain(`>${escapeHtml(tile.title)}</a>`);
+    }
+    // One sub-tool landing-page link per hosted calculator.
+    const subLinks = html.match(/href="\/tools\/[^"]+\.html"/g) ?? [];
+    expect(subLinks.length).toBe(SUB_TOOLS.length);
   });
 
   it("is a complete, crawlable HTML document with a link home", () => {

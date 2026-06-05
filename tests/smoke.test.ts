@@ -194,15 +194,21 @@ describe("Why enklayve (about) view", () => {
 });
 
 describe("All Tools index view", () => {
-  it("lists every tile, grouped by pillar", () => {
+  it("lists every hub and every calculator it hosts", () => {
     const root = document.createElement("main");
     renderAllTools(root, () => {});
-    const titles = Array.from(root.querySelectorAll(".tile-link-title")).map((n) => n.textContent);
-    // Every registry tile (the topic hubs) appears exactly once.
-    expect(titles).toContain("Paycheck & Taxes");
-    expect(titles).toContain("Benefits & Aid");
-    expect(titles).not.toContain("My Plan");
-    expect(new Set(titles).size).toBe(titles.length);
+    // The topic hubs are the headings.
+    const hubs = Array.from(root.querySelectorAll(".all-tools-hub")).map((n) => n.textContent);
+    expect(hubs).toContain("Paycheck & Taxes");
+    expect(hubs).toContain("Benefits & Aid");
+    expect(hubs).not.toContain("My Plan");
+    // Individual calculators are now listed by name under their hub, so the
+    // browse path reaches every tool, not just the 10 hubs.
+    const tools = Array.from(root.querySelectorAll(".tile-link-title")).map((n) => n.textContent);
+    expect(tools).toContain("Take-Home Pay");
+    expect(tools).toContain("Earned Income Tax Credit");
+    expect(tools).toContain("Roth Conversion Ladder");
+    expect(new Set(tools).size).toBe(tools.length);
   });
 });
 
