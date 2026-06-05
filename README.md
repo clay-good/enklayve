@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **53** in **10 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **25** — 15 income-tax states + DC + 9 no-income-tax | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **42**, each with a sibling `.sha256` + manifest entry | [`data/manifest.json`](data/manifest.json) |
-| Tests | **636** unit/golden across 53 files, **+13** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | **646** unit/golden across 54 files, **+13** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale preference touches `localStorage` | `npm run audit` |
 | UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
@@ -302,6 +302,7 @@ flowchart LR
 
 - Seeded with **25 jurisdictions** and growing data-only through the staggered annual refresh (SPEC §14.3). **No-income-tax states are first-class records,** not omissions, so a resident sees their state by name with $0 state tax confirmed (and its citation), not a generic "no state tax modeled."
 - Handles ordered marginal brackets, filing statuses, standard vs itemized (the "big four": SALT capped, mortgage interest, charitable, medical above the floor), FICA with the wage base + 0.9% Additional Medicare, personal exemptions, special rules (e.g. the CA mental-health surtax), top-bracket surtaxes (e.g. the MA 4% millionaire surtax, modeled as a clean second bracket), and opt-in local add-ons.
+- **Filing-status fallback:** the seeded states define single / married-jointly / head-of-household; the other two resolve correctly — **qualifying surviving spouse → the married-jointly schedule** (federally and in essentially every state, so it's never silently taxed as single), and married-filing-separately → single (the documented state-level assumption). Federal defines all five explicitly.
 - **Fail-safe is per jurisdiction:** if the California source is stale, California shows a verify banner while every other jurisdiction keeps working.
 
 ### State coverage cheat sheet
@@ -407,7 +408,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 - **Release audit.** `npm run audit` mechanically verifies CSP `connect-src 'none'`, no cross-origin loads in the built output, full citation coverage, and no sensitive persistence.
 - **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 53 calculators** at a 360px phone, the **offline** service worker (loads with the network cut), the deep-link → compute path, and that **print media strips the app chrome** so the Report prints as a clean document. It runs as its own CI job so the unit suite stays fast.
 
-**636 unit/golden tests across 53 files** (plus 13 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**646 unit/golden tests across 54 files** (plus 13 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 

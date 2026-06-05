@@ -44,31 +44,51 @@ export function marginalBracketRate(taxable: Money, brackets: readonly Bracket[]
 }
 
 /**
- * Resolve the brackets for a filing status, falling back to "single" when a
- * jurisdiction does not define a separate schedule for that status (e.g. many
- * states use the single schedule for married-filing-separately). Throws only if
- * the jurisdiction defines no brackets at all.
+ * The order in which to look up a filing status when a jurisdiction does not
+ * define a separate schedule for it. The crucial case is **qualifying surviving
+ * spouse**, which uses the married-filing-jointly schedule federally and in
+ * essentially every state — so it must fall back to `married_jointly` *before*
+ * `single`; falling straight to single (narrower brackets, smaller deduction)
+ * overstates the tax. Married-filing-separately falls back to single, the
+ * documented state-level assumption (many states tax MFS on the single
+ * schedule). `single` is the universal last resort.
+ */
+function fallbackChain(status: FilingStatus): FilingStatus[] {
+  if (status === "qualifying_surviving_spouse") {
+    return [status, "married_jointly", "single"];
+  }
+  return status === "single" ? ["single"] : [status, "single"];
+}
+
+/**
+ * Resolve the brackets for a filing status via {@link fallbackChain}. Throws
+ * only if the jurisdiction defines no usable schedule at all.
  */
 export function bracketsFor(jurisdiction: Jurisdiction, status: FilingStatus): Bracket[] {
-  const direct = jurisdiction.bracketsByFilingStatus[status];
-  if (direct) return direct;
-  const single = jurisdiction.bracketsByFilingStatus.single;
-  if (single) return single;
-  throw new Error(`${jurisdiction.id} defines no brackets for ${status} and no single fallback`);
+  for (const candidate of fallbackChain(status)) {
+    const brackets = jurisdiction.bracketsByFilingStatus[candidate];
+    if (brackets) return brackets;
+  }
+  throw new Error(`${jurisdiction.id} defines no brackets for ${status} and no fallback`);
 }
 
-/** Standard deduction for a status, falling back to "single" then 0. */
+/** Standard deduction for a status (via {@link fallbackChain}), 0 if none. */
 export function standardDeductionFor(jurisdiction: Jurisdiction, status: FilingStatus): number {
-  return (
-    jurisdiction.standardDeductionByFilingStatus[status] ??
-    jurisdiction.standardDeductionByFilingStatus.single ??
-    0
-  );
+  const table = jurisdiction.standardDeductionByFilingStatus;
+  for (const candidate of fallbackChain(status)) {
+    const amount = table[candidate];
+    if (amount !== undefined) return amount;
+  }
+  return 0;
 }
 
-/** Personal exemption for a status (0 when the jurisdiction defines none). */
+/** Personal exemption for a status (via {@link fallbackChain}), 0 when none. */
 export function personalExemptionFor(jurisdiction: Jurisdiction, status: FilingStatus): number {
   const table = jurisdiction.personalExemptionByFilingStatus;
   if (!table) return 0;
-  return table[status] ?? table.single ?? 0;
+  for (const candidate of fallbackChain(status)) {
+    const amount = table[candidate];
+    if (amount !== undefined) return amount;
+  }
+  return 0;
 }
