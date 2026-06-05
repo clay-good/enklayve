@@ -1,0 +1,14 @@
+# Louisiana income tax — Louisiana Department of Revenue flat rate, annual (staggered). Flat-rate state, the PA workflow is the template (the inflation-indexed standard deduction rolls as the reviewer's data-only step). BUILD-SPEC.md §7.2, §8.
+name: Refresh Louisiana income tax
+
+on:
+  schedule:
+    - cron: "0 12 10 4 *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-la
+      source_name: Louisiana income tax

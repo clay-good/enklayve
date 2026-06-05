@@ -42,8 +42,13 @@
  * the figure that moves, so the PA/IL/MI flat parser is reused verbatim (like
  * ID). Utah has no standard deduction; its relief is the nonrefundable taxpayer
  * tax credit, whose inflation-indexed phase-out base amounts roll the same way a
- * bracket table does — the reviewer's data-only step on the resulting PR. With
- * it, *every* seeded jurisdiction with an income tax has a refresh adapter.
+ * bracket table does — the reviewer's data-only step on the resulting PR.
+ *
+ * The ninth set adds Louisiana — another clean flat tax (3%, Act 11 2024), so
+ * the same flat parser is reused once more. Its $12,500 / $25,000 standard
+ * deduction is inflation-indexed from 2026; that annual roll stays the reviewer's
+ * data-only step (the rate is the legislatively-fixed figure the parser anchors).
+ * With it, *every* seeded jurisdiction with an income tax has a refresh adapter.
  *
  * Honesty boundaries (kept narrow on purpose, per the family's "be right before
  * being everywhere"):
@@ -88,6 +93,7 @@ export type RefreshGroup =
   | "state-ky"
   | "state-id"
   | "state-ut"
+  | "state-la"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -737,6 +743,15 @@ export const ADAPTERS: RefreshAdapter[] = [
     group: "state-ut",
     source: "Utah State Tax Commission individual income tax (flat rate + taxpayer tax credit)",
     sourceUrl: "https://incometax.utah.gov/instructions/tax-calculation",
+    cadence: "Annual",
+    parse: parseFlatRateJurisdiction,
+  },
+  {
+    id: "state-la-income-tax-2024",
+    group: "state-la",
+    source:
+      "Louisiana Department of Revenue individual income tax (flat rate + standard deduction)",
+    sourceUrl: "https://revenue.louisiana.gov/individuals/general-resources/individual-income-tax/",
     cadence: "Annual",
     parse: parseFlatRateJurisdiction,
   },

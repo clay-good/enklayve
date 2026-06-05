@@ -34,9 +34,10 @@ interface ShardSource {
 //   3. "Fill in the rest": additional income-tax states as their 2024 schedules
 //      are transcribed and golden-tested. The flat-rate wave — AZ, CO, IN, KY,
 //      MA (5% + the 4% surtax over $1,053,750), MS (4.7% over $10,000) — is in,
-//      plus ID (5.3% flat, HB 40 2025, federal-conformity standard deduction)
-//      and UT (4.45% flat, SB 60 2026, with the taxpayer tax credit standing in
-//      for a standard deduction).
+//      plus ID (5.3% flat, HB 40 2025, federal-conformity standard deduction),
+//      UT (4.45% flat, SB 60 2026, with the taxpayer tax credit standing in for
+//      a standard deduction), and LA (3% flat, Act 11 2024, with a $12,500 /
+//      $25,000 standard deduction indexed from 2026).
 const STATE_CODES = [
   "ca",
   "ny",
@@ -64,6 +65,7 @@ const STATE_CODES = [
   "ms",
   "id",
   "ut",
+  "la",
 ];
 
 const ANNUAL = { effectiveYear: 2026, expectedRefreshMonths: 12, staleAfterYears: 2 } as const;

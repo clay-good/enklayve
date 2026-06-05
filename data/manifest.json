@@ -432,6 +432,19 @@
       "contentHash": "383a539d9a605c4ec59824607a21931bdcf36bafc3ed79e3cac7656e4b6700b4"
     },
     {
+      "id": "state-la-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-la-income-tax-2024.json",
+      "sourceUrl": "https://dam.ldr.la.gov/lawspolicies/RIB-25-012-Louisiana-Individual-Income-Tax-Reform-1.pdf",
+      "sourceDocument": "Louisiana Department of Revenue, RIB 25-012: a flat 3% individual income tax for tax years on or after 2025 (Act 11, 2024 Third Extraordinary Session), replacing the graduated 1.85%/3.5%/4.25% brackets and the federal-tax deduction. Standard deduction $12,500 single/MFS, $25,000 MFJ/qualifying surviving spouse/head of household (the $25,000 covers HoH, unlike the federal split). The standard deduction is inflation-indexed beginning 2026; the 2025-enacted base is used pending the published 2026 amount, so the figure errs slightly high — the conservative side. Per-dependent deductions are deferred (the engine's no-dependent assumption, shared by every modeled state).",
+      "dateRetrieved": "2026-06-05",
+      "contentHash": "60dfb007ee10930ae85b76071af7bbafdcd32c9c5685b14b21c0e28477a96b86"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",
