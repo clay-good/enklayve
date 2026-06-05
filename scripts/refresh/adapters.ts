@@ -27,6 +27,18 @@
  * rate period (a structural roll) stays the reviewer's data-only step, exactly
  * like the graduated bracket table and the new-effective-year roll.
  *
+ * The seventh set finishes the state coverage by giving the remaining seeded
+ * income-tax states their own refresh adapter — the flat-rate "fill in the rest"
+ * states (§14.3) that previously shipped data-only: Arizona, Colorado, Indiana,
+ * Kentucky, and Idaho (single-rate flat taxes, the PA/IL/MI flat parser reused
+ * verbatim, with IN's personal exemption overlaid like IL's), Mississippi (a two-
+ * tier "0% then a flat rate over a floor" schedule, the Ohio graduated parser
+ * reused), and Massachusetts (a 5% base rate plus the constitutional 4% surtax
+ * over an inflation-adjusted threshold — the one seeded state whose shape fits
+ * neither existing parser, so it gets a small dedicated parser that anchors the
+ * two figures that actually move: the base rate and the surtax threshold). With
+ * it, *every* seeded jurisdiction with an income tax has a refresh adapter.
+ *
  * Honesty boundaries (kept narrow on purpose, per the family's "be right before
  * being everywhere"):
  *   - A parser anchors to the values it can verify and returns `{ ok: false }`
@@ -64,6 +76,13 @@ export type RefreshGroup =
   | "state-il"
   | "state-mi"
   | "state-oh"
+  | "state-az"
+  | "state-co"
+  | "state-in"
+  | "state-ky"
+  | "state-id"
+  | "state-ms"
+  | "state-ma"
   | "treasurydirect"
   | "usda-snap"
   | "cms-medicaid";
@@ -94,6 +113,18 @@ export interface RefreshAdapter {
 /** Parse a US dollar/integer string like "176,100" or "$176,100" to a number. */
 function parseAmount(text: string): number {
   return Number(text.replace(/[$,]/g, ""));
+}
+
+/**
+ * Convert an anchored percentage to a decimal rate, rounding away IEEE-754 dust
+ * (e.g. `2.95 / 100 === 0.029500000000000002`). A tax rate never needs more than
+ * ten decimal places, so this loses no real precision; without it a clean source
+ * read (Indiana's 2.95%) would diff against the committed `0.0295` and open a
+ * spurious PR every run. Rates that already divide cleanly (PA 3.07 → 0.0307)
+ * round to themselves, so the existing flat/graduated parsers are unaffected.
+ */
+function pctToRate(percent: number): number {
+  return Math.round((percent / 100) * 1e10) / 1e10;
 }
 
 /** Shallow-clone the current shard so a parser can overlay fields immutably. */
@@ -257,7 +288,7 @@ function parseFlatRateJurisdiction(raw: string, current: Record<string, unknown>
   if (!Number.isFinite(percent) || percent <= 0 || percent > 15) {
     return { ok: false, reason: `anchored an implausible flat rate (${rateMatch[1]}%)` };
   }
-  const rate = percent / 100;
+  const rate = pctToRate(percent);
 
   const shard = clone(current);
   const brackets = shard.bracketsByFilingStatus as
@@ -324,7 +355,7 @@ function parseGraduatedBracketJurisdiction(
   const tiers: { lowerBound: number; rate: number }[] = [];
   let match: RegExpExecArray | null;
   while ((match = tierRe.exec(raw)) !== null) {
-    const rate = Number(match[1]) / 100;
+    const rate = pctToRate(Number(match[1]));
     const lowerBound = parseAmount(match[2] as string);
     if (!Number.isFinite(rate) || rate <= 0 || rate > 0.15) continue;
     if (!Number.isFinite(lowerBound) || lowerBound <= 0) continue;
@@ -371,6 +402,79 @@ function parseGraduatedBracketJurisdiction(
       reason:
         "no graduated schedule matched the committed bracket structure (count or shape changed)",
     };
+  }
+  return { ok: true, shard };
+}
+
+// --- Massachusetts 5% base rate + 4% surtax (anchored prose) -----------------
+
+/**
+ * Massachusetts is the one seeded income-tax state whose schedule fits neither
+ * the flat-rate parser (it has two brackets, not one) nor the graduated parser
+ * (its upper bracket's rate is the *combined* base-plus-surtax figure, not a
+ * standalone "rate in excess of" the source ever states). So it gets a small
+ * dedicated parser that anchors the two figures that actually move year to year:
+ * the 5% Part B base rate, and the surtax *threshold* — the "millionaire's tax"
+ * floor is inflation-adjusted every year ($1,053,750 in 2024 → $1,107,750 in
+ * 2026), which is precisely the kind of annual drift a refresh should catch.
+ *
+ * The 4% surtax rate is fixed in the state constitution, but we anchor it too
+ * and combine it onto the upper bracket (`base + surtax`, e.g. 5% + 4% = 9%),
+ * so a constitutional change would flow through rather than silently keep 9%.
+ * The committed shard stores the two-element schedule `[{0, base}, {threshold,
+ * base+surtax}]`; we overlay exactly those three figures and leave everything
+ * else (deductions, exemptions) for the reviewer, the same boundary as the
+ * other state parsers. A plausibility guard on both percentages and a positive
+ * threshold routes a garbled read to the fail-safe alert rather than a guess.
+ */
+function parseMassachusettsSurtax(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const baseMatch =
+    /income[- ]?tax rate(?:\s+(?:is|of))?\s*:?\s*([\d.]+)\s*(?:percent|%)/i.exec(raw) ??
+    /\b([\d.]+)\s*(?:percent|%)\s+(?:base|flat)\b/i.exec(raw);
+  const surtaxMatch =
+    /([\d.]+)\s*(?:percent|%)\s+surtax[^$%]*?(?:in excess of|over|above|exceeding)\s*\$?([\d,]{5,})/i.exec(
+      raw,
+    );
+  if (!baseMatch || !surtaxMatch) {
+    return {
+      ok: false,
+      reason: "could not anchor the MA base rate and the surtax rate + threshold",
+    };
+  }
+  const basePct = Number(baseMatch[1]);
+  const surtaxPct = Number(surtaxMatch[1]);
+  const threshold = parseAmount(surtaxMatch[2] as string);
+  if (!(basePct > 0 && basePct <= 15)) {
+    return { ok: false, reason: `anchored an implausible base rate (${baseMatch[1]}%)` };
+  }
+  if (!(surtaxPct > 0 && surtaxPct <= 15)) {
+    return { ok: false, reason: `anchored an implausible surtax rate (${surtaxMatch[1]}%)` };
+  }
+  if (!(threshold > 0)) {
+    return { ok: false, reason: "anchored a non-positive surtax threshold" };
+  }
+  const baseRate = pctToRate(basePct);
+  const topRate = pctToRate(basePct + surtaxPct);
+
+  const shard = clone(current);
+  const brackets = shard.bracketsByFilingStatus as
+    | Record<string, { lowerBound: number; rate: number }[]>
+    | undefined;
+  if (!brackets) {
+    return { ok: false, reason: "shard has no bracketsByFilingStatus to overlay" };
+  }
+  let overlaid = 0;
+  for (const status of Object.keys(brackets)) {
+    const arr = brackets[status];
+    if (Array.isArray(arr) && arr.length === 2 && arr[0] && arr[1]) {
+      arr[0].rate = baseRate;
+      arr[1].rate = topRate;
+      arr[1].lowerBound = threshold;
+      overlaid += 1;
+    }
+  }
+  if (overlaid === 0) {
+    return { ok: false, reason: "no two-bracket (base + surtax) schedule to overlay" };
   }
   return { ok: true, shard };
 }
@@ -580,6 +684,62 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl: "https://tax.ohio.gov/individual/resources/annual-tax-rates",
     cadence: "Annual",
     parse: parseGraduatedBracketJurisdiction,
+  },
+  {
+    id: "state-az-income-tax-2024",
+    group: "state-az",
+    source: "Arizona DOR individual income tax (flat rate)",
+    sourceUrl: "https://azdor.gov/forms/individual",
+    cadence: "Annual",
+    parse: parseFlatRateJurisdiction,
+  },
+  {
+    id: "state-co-income-tax-2024",
+    group: "state-co",
+    source: "Colorado DOR individual income tax (flat rate)",
+    sourceUrl: "https://tax.colorado.gov/individual-income-tax",
+    cadence: "Annual",
+    parse: parseFlatRateJurisdiction,
+  },
+  {
+    id: "state-in-income-tax-2024",
+    group: "state-in",
+    source: "Indiana DOR individual income tax (flat rate + personal exemption)",
+    sourceUrl: "https://www.in.gov/dor/individual-income-taxes/",
+    cadence: "Annual",
+    parse: parseFlatRateJurisdiction,
+  },
+  {
+    id: "state-ky-income-tax-2024",
+    group: "state-ky",
+    source: "Kentucky DOR individual income tax (flat rate)",
+    sourceUrl: "https://revenue.ky.gov/Individual/Individual-Income-Tax/Pages/default.aspx",
+    cadence: "Annual",
+    parse: parseFlatRateJurisdiction,
+  },
+  {
+    id: "state-id-income-tax-2024",
+    group: "state-id",
+    source: "Idaho State Tax Commission individual income tax (flat rate)",
+    sourceUrl: "https://tax.idaho.gov/taxes/income-tax/individual-income/",
+    cadence: "Annual",
+    parse: parseFlatRateJurisdiction,
+  },
+  {
+    id: "state-ms-income-tax-2024",
+    group: "state-ms",
+    source: "Mississippi DOR individual income tax (flat rate over a floor)",
+    sourceUrl: "https://www.dor.ms.gov/individual/tax-rates",
+    cadence: "Annual",
+    parse: parseGraduatedBracketJurisdiction,
+  },
+  {
+    id: "state-ma-income-tax-2024",
+    group: "state-ma",
+    source: "Massachusetts DOR individual income tax (5% base rate + 4% surtax)",
+    sourceUrl: "https://www.mass.gov/info-details/massachusetts-4-surtax-on-taxable-income",
+    cadence: "Annual",
+    parse: parseMassachusettsSurtax,
   },
   {
     id: "treasury-bonds-2024",

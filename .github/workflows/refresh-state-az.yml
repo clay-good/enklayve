@@ -1,0 +1,14 @@
+# Arizona income tax — AZ DOR flat personal income tax rate, annual (staggered). Flat-rate state, the PA workflow is the template. BUILD-SPEC.md §7.2, §8.
+name: Refresh Arizona income tax
+
+on:
+  schedule:
+    - cron: "0 12 8 2 *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-az
+      source_name: Arizona income tax

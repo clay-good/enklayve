@@ -50,7 +50,7 @@ npm run deploy:dry
 
 ## Data refresh workflows (Phase 9)
 
-- [ ] One workflow per source group (`.github/workflows/refresh-*.yml`) runs on its §7.2 cadence and on manual dispatch (IRS, BLS CPI, SSA, HHS, USDA SNAP, CMS Medicaid, the TreasuryDirect I-bond rates, the standard-deduction states CA / NY / GA / NC / DC, the flat-rate states PA / IL / MI, and the graduated state OH). The later flat-rate states (AZ / CO / IN / KY / MA / MS / ID) ship data-only; their adapters reuse the existing flat-rate parser and are a follow-up.
+- [ ] One workflow per source group (`.github/workflows/refresh-*.yml`) runs on its §7.2 cadence and on manual dispatch (IRS, BLS CPI, SSA, HHS, USDA SNAP, CMS Medicaid, the TreasuryDirect I-bond rates, the standard-deduction states CA / NY / GA / NC / DC, the flat-rate states PA / IL / MI / AZ / CO / IN / KY / ID, the graduated states OH / MS, and the special-case MA — its dedicated parser anchors the 5% base rate and the inflation-adjusted surtax threshold). **Every seeded income-tax jurisdiction now has a refresh adapter.**
 - [ ] A refresh opens a data PR only when values changed **and** the full golden suite passes; a fetch/parse failure opens a fail-safe alert PR instead; nothing is auto-committed to `main`.
 - [ ] Each change is recorded in [`source-diff-log.md`](source-diff-log.md) with old-to-new values. (Repo setting: "Allow GitHub Actions to create and approve pull requests" must be enabled.)
 

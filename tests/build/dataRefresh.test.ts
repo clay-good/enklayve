@@ -111,18 +111,25 @@ describe("contract: renderDiffLogEntry", () => {
 });
 
 describe("adapters: registry", () => {
-  it("covers all six sets across distinct groups", () => {
+  it("covers all seven sets across distinct groups", () => {
     expect(REFRESH_GROUPS.sort()).toEqual([
       "cms-medicaid",
       "cpi",
       "hhs-poverty",
       "irs",
       "ssa",
+      "state-az",
       "state-ca",
+      "state-co",
       "state-dc",
       "state-ga",
+      "state-id",
       "state-il",
+      "state-in",
+      "state-ky",
+      "state-ma",
       "state-mi",
+      "state-ms",
       "state-nc",
       "state-ny",
       "state-oh",
@@ -130,7 +137,7 @@ describe("adapters: registry", () => {
       "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(16);
+    expect(ADAPTERS).toHaveLength(23);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
@@ -361,6 +368,150 @@ describe("adapters: graduated bracket-table state income tax (OH)", () => {
       "2.00% in excess of $26,050; 2.75% in excess of $50,000; " +
       "3.50% in excess of $100,000; 4.00% in excess of $250,000.";
     expect(adapter.parse(raw, current).ok).toBe(false);
+  });
+});
+
+describe("adapters: seventh set — the remaining seeded states", () => {
+  it("overlays the AZ flat rate across every status (flat parser reused)", () => {
+    const adapter = adaptersForGroup("state-az")[0]!;
+    const current = readShard("state-az-income-tax-2024.json");
+    const raw = "For 2026 the Arizona individual income tax rate is 2.50%.";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const brackets = result.shard.bracketsByFilingStatus as Record<
+      string,
+      { lowerBound: number; rate: number }[]
+    >;
+    expect(brackets.single![0]!.rate).toBe(0.025);
+    expect(brackets.married_jointly![0]!.rate).toBe(0.025);
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("overlays the CO flat rate (flat parser reused)", () => {
+    const adapter = adaptersForGroup("state-co")[0]!;
+    const current = readShard("state-co-income-tax-2024.json");
+    const result = adapter.parse("The Colorado income tax rate is 4.40 percent.", current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const brackets = result.shard.bracketsByFilingStatus as Record<
+      string,
+      { lowerBound: number; rate: number }[]
+    >;
+    expect(brackets.single![0]!.rate).toBe(0.044);
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("overlays the IN flat rate and its personal exemption (like IL)", () => {
+    const adapter = adaptersForGroup("state-in")[0]!;
+    const current = readShard("state-in-income-tax-2024.json");
+    const raw = "The Indiana income tax rate is 2.95%. The personal exemption is $1,000.";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const brackets = result.shard.bracketsByFilingStatus as Record<
+      string,
+      { lowerBound: number; rate: number }[]
+    >;
+    expect(brackets.single![0]!.rate).toBe(0.0295);
+    const exemptions = result.shard.personalExemptionByFilingStatus as Record<string, number>;
+    expect(exemptions.single).toBe(1000);
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("overlays the KY and ID flat rates (flat parser reused)", () => {
+    const ky = adaptersForGroup("state-ky")[0]!;
+    const kyShard = ky.parse(
+      "Kentucky's income tax rate is 3.5%.",
+      readShard("state-ky-income-tax-2024.json"),
+    );
+    expect(kyShard.ok).toBe(true);
+    if (kyShard.ok) {
+      const b = kyShard.shard.bracketsByFilingStatus as Record<string, { rate: number }[]>;
+      expect(b.single![0]!.rate).toBe(0.035);
+      expect(JurisdictionSchema.safeParse(kyShard.shard).success).toBe(true);
+    }
+    const id = adaptersForGroup("state-id")[0]!;
+    const idShard = id.parse(
+      "The Idaho income tax rate is 5.3%.",
+      readShard("state-id-income-tax-2024.json"),
+    );
+    expect(idShard.ok).toBe(true);
+    if (idShard.ok) {
+      const b = idShard.shard.bracketsByFilingStatus as Record<string, { rate: number }[]>;
+      expect(b.single![0]!.rate).toBe(0.053);
+      expect(JurisdictionSchema.safeParse(idShard.shard).success).toBe(true);
+    }
+  });
+
+  it("overlays the MS two-tier '0% then a flat rate over a floor' (graduated parser reused)", () => {
+    const adapter = adaptersForGroup("state-ms")[0]!;
+    const current = readShard("state-ms-income-tax-2024.json");
+    const raw =
+      "For 2026, Mississippi taxes the first $10,000 of taxable income at 0%, " +
+      "and 4% on taxable income in excess of $10,000.";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const brackets = result.shard.bracketsByFilingStatus as Record<
+      string,
+      { lowerBound: number; rate: number }[]
+    >;
+    expect(brackets.single).toEqual([
+      { lowerBound: 0, rate: 0 },
+      { lowerBound: 10000, rate: 0.04 },
+    ]);
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  describe("MA — 5% base rate + 4% surtax (dedicated parser)", () => {
+    const adapter = adaptersForGroup("state-ma")[0]!;
+    const current = readShard("state-ma-income-tax-2024.json");
+
+    it("anchors the base rate, surtax rate, and inflation-adjusted threshold", () => {
+      const raw =
+        "The Massachusetts income tax rate is 5.0%. A 4% surtax applies to taxable " +
+        "income in excess of $1,107,750 for tax year 2026.";
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const brackets = result.shard.bracketsByFilingStatus as Record<
+        string,
+        { lowerBound: number; rate: number }[]
+      >;
+      // Base bracket carries the 5% rate; the surtax bracket carries the combined
+      // 9% at the inflation-adjusted threshold, applied to every filing status.
+      expect(brackets.single).toEqual([
+        { lowerBound: 0, rate: 0.05 },
+        { lowerBound: 1107750, rate: 0.09 },
+      ]);
+      expect(brackets.married_jointly![1]!.lowerBound).toBe(1107750);
+      expect(brackets.head_of_household![1]!.rate).toBeCloseTo(0.09, 6);
+      expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+    });
+
+    it("catches a moved (inflation-adjusted) surtax threshold", () => {
+      const raw = "The income tax rate is 5.0%. The 4% surtax applies to income over $1,150,000.";
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const brackets = result.shard.bracketsByFilingStatus as Record<
+        string,
+        { lowerBound: number }[]
+      >;
+      expect(brackets.single![1]!.lowerBound).toBe(1150000);
+    });
+
+    it("fails (-> alert) when the surtax threshold cannot be anchored", () => {
+      expect(adapter.parse("The income tax rate is 5.0%. A surtax also applies.", current).ok).toBe(
+        false,
+      );
+    });
+
+    it("fails (-> alert) on an implausible base rate", () => {
+      const raw = "The income tax rate is 55%. A 4% surtax applies to income over $1,107,750.";
+      expect(adapter.parse(raw, current).ok).toBe(false);
+    });
   });
 });
 

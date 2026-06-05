@@ -1,0 +1,14 @@
+# Massachusetts income tax — MA DOR 5% base rate + 4% surtax, annual (staggered). Dedicated MA parser (surtax threshold inflation-adjusts yearly). BUILD-SPEC.md §7.2, §8.
+name: Refresh Massachusetts income tax
+
+on:
+  schedule:
+    - cron: "0 12 8 5 *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-ma
+      source_name: Massachusetts income tax

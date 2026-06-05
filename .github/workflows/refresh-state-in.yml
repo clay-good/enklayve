@@ -1,0 +1,14 @@
+# Indiana income tax — IN DOR flat rate + personal exemption, annual (staggered). Flat-rate state, the IL workflow is the template. BUILD-SPEC.md §7.2, §8.
+name: Refresh Indiana income tax
+
+on:
+  schedule:
+    - cron: "0 12 8 3 *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-in
+      source_name: Indiana income tax

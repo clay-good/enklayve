@@ -24,7 +24,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **53** in **10 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **25** — 15 income-tax states + DC + 9 no-income-tax | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **42**, each with a sibling `.sha256` + manifest entry | [`data/manifest.json`](data/manifest.json) |
-| Tests | **626** unit/golden across 53 files, **+12** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | **635** unit/golden across 53 files, **+12** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale preference touches `localStorage` | `npm run audit` |
 | UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
@@ -35,7 +35,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 
 - [What you can do with it](#what-you-can-do-with-it)
 - [The privacy guarantee, it's literal](#the-privacy-guarantee-its-literal)
-- [The home: three calm zones](#the-home-three-calm-zones)
+- [The home: the budget is the plan](#the-home-the-budget-is-the-plan)
 - [Architecture at a glance](#architecture-at-a-glance)
 - [The tax engine (the moat)](#the-tax-engine-the-moat)
 - [The data layer and refresh workflows](#the-data-layer-and-refresh-workflows)
@@ -309,9 +309,9 @@ Every seeded state is modeled at one consistent launch fidelity — **brackets +
 | Shape | States | How it's modeled |
 |---|---|---|
 | Graduated brackets | CA, NY, DC, OH | Ordered marginal tiers; CA adds the 1% mental-health surtax, OH the opt-in Columbus municipal tax |
-| Flat rate | PA (3.07%), IL (4.95%), MI (4.25%), GA (5.39%), NC (3.99%), AZ (2.50%), CO (4.40%), IN (3.05%), KY (3.50%), ID (5.30%) | A single bracket; standard deduction and/or personal exemption where the state grants one. ID conforms to the federal standard deduction (the CO pattern) |
+| Flat rate | PA (3.07%), IL (4.95%), MI (4.25%), GA (4.99%), NC (3.99%), AZ (2.50%), CO (4.40%), IN (2.95%), KY (3.50%), ID (5.30%) | A single bracket; standard deduction and/or personal exemption where the state grants one. ID conforms to the federal standard deduction (the CO pattern) |
 | Flat + top surtax | MA (5.0% + 4% over $1,107,750) | Two brackets — the surtax is just the top marginal tier |
-| Flat over a floor | MS (4.7% over the first $10,000) | A `[{0, 0%}, {10000, 4.7%}]` schedule — the exempt floor is the zero-rate tier |
+| Flat over a floor | MS (4.0% over the first $10,000) | A `[{0, 0%}, {10000, 4.0%}]` schedule — the exempt floor is the zero-rate tier |
 | No income tax | TX, FL, AK, NV, NH, SD, TN, WA, WY | First-class records: empty brackets, $0 confirmed, citation noting any non-wage tax (e.g. WA's capital-gains excise) |
 
 **Idaho** joined this wave: its 2025 mid-year rate cut (HB 40) settled into a clean 5.3% flat tax, so it now models exactly like Colorado. **Utah is still held** — HB 106 (2025) gave it a clean 4.5% flat rate, but its deduction is delivered as a *6%-of-federal-deduction taxpayer tax credit that phases out with income*, which the bracket-plus-standard-deduction model cannot represent without overstating low-income tax. It waits on an exemption-credit engine feature rather than ship an approximation that could be wrong.
@@ -354,7 +354,7 @@ flowchart TD
 | Medicaid MAGI thresholds | CMS / state pubs | Annual | 2 |
 | FAFSA SAI + Pell schedule | Dept. of Education | Annual | 2 |
 
-State refresh adapters cover the income-tax states by shape: standard-deduction states (CA, NY, GA, NC, DC), flat-rate states (PA, IL, MI), and graduated bracket-table states (OH); the no-income-tax records have nothing to refresh. The newer flat-rate states (AZ, CO, IN, KY, MA, MS, ID) ship data-only for now — adding their adapters reuses the existing flat-rate parser and is a follow-up. See [docs/data-sources.md](docs/data-sources.md) and [docs/source-diff-log.md](docs/source-diff-log.md).
+**Every seeded income-tax jurisdiction now has a refresh adapter,** organized by the shape the parser anchors: standard-deduction states (CA, NY, GA, NC, DC), flat-rate states (PA, IL, MI, AZ, CO, IN, KY, ID — IN's personal exemption overlaid like IL's), graduated bracket-table states (OH, plus MS as a two-tier "0% then a flat rate over a $10,000 floor"), and the one special case, MA, whose 5% base rate plus 4% surtax over an inflation-adjusted threshold fits neither parser, so it gets a small dedicated parser that anchors the two figures that actually move (the base rate and the threshold). The no-income-tax records have nothing to refresh. See [docs/data-sources.md](docs/data-sources.md) and [docs/source-diff-log.md](docs/source-diff-log.md).
 
 ---
 
@@ -405,7 +405,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 - **Release audit.** `npm run audit` mechanically verifies CSP `connect-src 'none'`, no cross-origin loads in the built output, full citation coverage, and no sensitive persistence.
 - **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 53 calculators** at a 360px phone, the **offline** service worker (loads with the network cut), and the deep-link → compute path. It runs as its own CI job so the unit suite stays fast.
 
-**626 unit/golden tests across 53 files** (plus 12 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**635 unit/golden tests across 53 files** (plus 12 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -422,7 +422,7 @@ The jan.ai feeling (clean, airy, friendly, fast) with a royal identity.
 | Numbers | Big and legible; one gentle count-up on reveal that respects `prefers-reduced-motion` |
 | Tone | Plain English, encouraging, never scolding — "here's where you stand," not "you're behind" |
 
-Owned surfaces are named in the first person (My Situation, My Plan, My Readout Report, My Enough Number). Every tool carries a "How this works" explainer, "Learn more" links, and the on-device / US-only / not-advice promise. Modals are never traps (Close + Done + Escape + click-outside).
+Owned surfaces are named in the first person (My Situation, My Readout Report, My Enough Number; the standalone My Plan page was retired into the home anti-budget). Every tool carries a "How this works" explainer, "Learn more" links, and the on-device / US-only / not-advice promise. Modals are never traps (Close + Done + Escape + click-outside).
 
 ---
 
