@@ -49,7 +49,9 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
   const method = readMethod(p.get("meth"));
   const extra = parseNonNegative(p.get("x"), 0);
   if (p.has("k")) {
-    const count = Math.max(0, Math.round(parseNonNegative(p.get("k"), 0)));
+    // Cap the row count: a row editor never holds this many, and a crafted ?k=
+    // must not allocate a runaway number of rows.
+    const count = Math.min(100, Math.max(0, Math.round(parseNonNegative(p.get("k"), 0))));
     const debts: PlannedDebt[] = [];
     for (let i = 0; i < count; i++) {
       debts.push({

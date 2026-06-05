@@ -10,6 +10,27 @@ import type { RmdData } from "../data/schemas";
  * through decimal.js, so there is no floating-point drift on currency.
  */
 
+/**
+ * Horizon caps. Personal-finance projections never run beyond a long lifetime,
+ * so we clamp any user-supplied year / month / period count before it drives a
+ * loop or a `Decimal.pow` exponent. Without this, an absurd entry — or a crafted
+ * deep link — would spin a billion-iteration loop or raise a number to an
+ * astronomically large power and freeze the tab. These ceilings sit far beyond
+ * any real horizon, so a genuine calculation is never affected.
+ */
+export const MAX_YEARS = 100;
+export const MAX_HORIZON_MONTHS = 1200; // 100 years
+export const MAX_PERIODS = 60_000; // ~100 years of daily compounding, with headroom
+
+/** Clamp a user-supplied year count to a sane, non-negative horizon. */
+export function clampYears(years: number): number {
+  return Math.min(MAX_YEARS, Math.max(0, Math.round(years)));
+}
+/** Clamp a user-supplied month count to a sane, non-negative horizon. */
+export function clampMonths(months: number): number {
+  return Math.min(MAX_HORIZON_MONTHS, Math.max(0, Math.round(months)));
+}
+
 export interface CompoundGrowthInput {
   /** Starting balance. */
   principal: number;
@@ -42,7 +63,10 @@ export interface CompoundGrowthResult {
  * (ordinary annuity). A zero rate degenerates correctly to simple summation.
  */
 export function compoundGrowth(input: CompoundGrowthInput): CompoundGrowthResult {
-  const periods = Math.max(0, Math.round(input.years * input.periodsPerYear));
+  const periods = Math.min(
+    MAX_PERIODS,
+    Math.max(0, Math.round(input.years * input.periodsPerYear)),
+  );
   const periodRate = new Decimal(input.annualRate).div(input.periodsPerYear);
   const growthFactor = periodRate.plus(1).pow(periods); // (1 + r)^n
 
@@ -283,7 +307,7 @@ export function monthlyMortgagePayment(
   annualRatePct: number,
   termYears: number,
 ): Money {
-  const n = Math.round(termYears * 12);
+  const n = clampMonths(termYears * 12);
   if (n <= 0) return Money.zero();
   const r = new Decimal(annualRatePct).div(100).div(12);
   const p = new Decimal(principal);
@@ -302,7 +326,7 @@ export function loanPrincipalFromPayment(
   annualRatePct: number,
   termYears: number,
 ): Money {
-  const n = Math.round(termYears * 12);
+  const n = clampMonths(termYears * 12);
   if (n <= 0) return Money.zero();
   const r = new Decimal(annualRatePct).div(100).div(12);
   const m = new Decimal(Math.max(0, monthlyPayment));
@@ -515,7 +539,7 @@ export interface LifeInsuranceResult {
  */
 export function lifeInsuranceNeed(input: LifeInsuranceInput): LifeInsuranceResult {
   const nn = (n: number): number => Math.max(0, n);
-  const years = Math.max(0, Math.round(input.yearsToReplace));
+  const years = clampYears(input.yearsToReplace);
   const incomeReplacement = Money.from(nn(input.annualIncome)).multiply(years);
   const totalNeed = incomeReplacement
     .add(nn(input.debts))
@@ -562,7 +586,7 @@ export interface SinkingFundResult {
  * clearly labeled; we never predict markets (§2.1).
  */
 export function requiredMonthlyContribution(input: SinkingFundInput): SinkingFundResult {
-  const months = Math.max(0, Math.round(input.months));
+  const months = clampMonths(input.months);
   const i = new Decimal(input.annualReturnPct).div(100).div(12);
   const pv = new Decimal(Math.max(0, input.currentSaved));
   const fv = new Decimal(Math.max(0, input.target));
@@ -643,7 +667,7 @@ function remainingLoanBalance(
   termYears: number,
   monthsPaid: number,
 ): Decimal {
-  const n = Math.round(termYears * 12);
+  const n = clampMonths(termYears * 12);
   const k = Math.min(Math.max(0, Math.round(monthsPaid)), n);
   const P = new Decimal(Math.max(0, loan));
   if (k >= n || n <= 0) return new Decimal(0);
@@ -701,11 +725,11 @@ export interface RentVsBuyResult {
  * the monthly cash-flow difference is not separately invested.
  */
 export function rentVsBuy(input: RentVsBuyInput): RentVsBuyResult {
-  const years = Math.max(0, Math.round(input.years));
+  const years = clampYears(input.years);
   const months = years * 12;
   const loan = Math.max(0, input.homePrice - input.downPayment);
   const monthlyPayment = monthlyMortgagePayment(loan, input.mortgageRatePct, input.termYears);
-  const termMonths = Math.round(input.termYears * 12);
+  const termMonths = clampMonths(input.termYears * 12);
   const piPaid = monthlyPayment.multiply(Math.min(months, termMonths));
   const ownershipPaid = Money.from(Math.max(0, input.monthlyOwnershipCosts)).multiply(months);
 
@@ -771,7 +795,7 @@ export interface CoastFireResult {
  */
 export function coastFireProjection(input: CoastFireInput): CoastFireResult {
   const r = new Decimal(input.annualRealReturnPct).div(100);
-  const years = Math.max(0, input.years);
+  const years = clampYears(input.years);
   const factor = r.plus(1).pow(years); // (1 + r)^years
   const projected = Money.from(new Decimal(input.currentBalance).times(factor));
   const coastNumber = factor.isZero()
@@ -821,7 +845,7 @@ export function sabbaticalPlan(input: SabbaticalInput): SabbaticalResult {
   let netDraw = burn.subtract(income);
   if (netDraw.isNegative()) netDraw = Money.zero();
 
-  const months = Math.max(0, Math.round(input.breakMonths));
+  const months = clampMonths(input.breakMonths);
   const totalCost = netDraw.multiply(months).add(Math.max(0, input.oneTimeCost));
   const remaining = Money.from(Math.max(0, input.savings)).subtract(totalCost);
   const affordable = !remaining.isNegative();
@@ -886,8 +910,8 @@ export function refinanceBreakEven(input: RefinanceInput): RefinanceResult {
     breakEvenMonths = Math.ceil(closing.divide(monthlySavings.toNumber()).toNumber());
   }
 
-  const currentMonths = Math.round(input.currentRemainingYears * 12);
-  const newMonths = Math.round(input.newTermYears * 12);
+  const currentMonths = clampMonths(input.currentRemainingYears * 12);
+  const newMonths = clampMonths(input.newTermYears * 12);
   const balance = Money.from(input.balance);
   const currentRemainingInterest = currentPayment.multiply(currentMonths).subtract(balance);
   const newTotalInterest = newPayment.multiply(newMonths).subtract(balance);
@@ -1127,8 +1151,8 @@ export interface CollegeCostResult {
  * draw it down over the college years. All rates are the user's assumptions.
  */
 export function collegeCostPlan(input: CollegeCostInput): CollegeCostResult {
-  const yearsUntilStart = Math.max(0, Math.round(input.yearsUntilStart));
-  const yearsOfCollege = Math.max(0, Math.round(input.yearsOfCollege));
+  const yearsUntilStart = clampYears(input.yearsUntilStart);
+  const yearsOfCollege = clampYears(input.yearsOfCollege);
   const inflationFactor = new Decimal(input.costInflationPct).div(100).plus(1);
   const costToday = new Decimal(Math.max(0, input.annualCostToday));
 

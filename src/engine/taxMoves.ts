@@ -6,6 +6,7 @@
  * §408A(d)(3)), which the tiles cite.
  */
 import { Money } from "./money";
+import { clampYears } from "./finance";
 
 export interface TaxLossHarvestInput {
   /** Realized short-term capital gains this year. */
@@ -154,7 +155,7 @@ export interface RothLadderResult {
  * supply.
  */
 export function rothConversionLadder(input: RothLadderInput): RothLadderResult {
-  const years = Math.max(0, Math.round(input.ladderYears));
+  const years = clampYears(input.ladderYears);
   const seasoning = Math.max(0, Math.round(input.seasoningYears));
   const annual = Money.from(nn(input.annualConversion));
   const ord = input.ordinaryRatePct / 100;

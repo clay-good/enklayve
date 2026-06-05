@@ -40,7 +40,9 @@ const EXAMPLE: Fields = {
 };
 
 function readFields(p: URLSearchParams): Fields {
-  const count = Math.max(0, Math.round(parseNonNegative(p.get("k"), 0)));
+  // Cap the row count: a row editor never holds this many, and a crafted ?k=
+  // must not allocate a runaway number of rows.
+  const count = Math.min(100, Math.max(0, Math.round(parseNonNegative(p.get("k"), 0))));
   const lots: Lot[] = [];
   for (let i = 0; i < count; i++) {
     lots.push({
