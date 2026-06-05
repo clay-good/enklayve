@@ -325,7 +325,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
           class: "readout-note",
           text:
             applied > 0
-              ? `Added ${applied} value${applied === 1 ? "" : "s"} to My Situation (provenance: from a document) — they prefill the matching tools and feed the report below. Everything stays in this browser tab and is cleared when you leave; nothing is uploaded.`
+              ? `Added ${applied} value${applied === 1 ? "" : "s"} to My Situation (provenance: from a document) — they prefill the matching tools. Open the report to see where you stand and, if you like, save a private copy you can restore later. Everything stays in this browser tab and is cleared when you leave; nothing is uploaded.`
               : "These values are informational: review them above and carry them into the matching tile. Nothing was changed in My Situation.",
         }),
         el(

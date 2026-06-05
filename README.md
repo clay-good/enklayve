@@ -245,7 +245,7 @@ flowchart TD
         T1["one module per tool; a hub hosts several"]
     end
     subgraph PROFILE["src/profile — My Situation"]
-        PS["in-memory store (cleared on unload) + encrypted-export module"]
+        PS["in-memory store (cleared on unload) + encrypted export/import"]
     end
     subgraph READOUT["src/readout — document ingestion + report"]
         RX["anchored extractors → confirm → flow in"]
@@ -276,7 +276,7 @@ flowchart TD
 | `src/data` | zod schemas for every dataset kind, content-hash integrity, and the per-dataset fail-safe gate (stale or corrupt → a verify banner, never a wrong number) |
 | `src/tiles` | One module per calculator. Adding a tool never touches the shell |
 | `src/ui` | Render layer, the light theme, result card, fuzzy palette, fragment router, accessible charts |
-| `src/profile` | My Situation — the in-memory session profile and the portable encrypted-export module (retained; not currently surfaced) |
+| `src/profile` | My Situation — the in-memory session profile and the portable encrypted export (surfaced in the Readout Report) |
 | `src/readout` | Anchored document extraction, the confirm flow, and the downloadable Readout Report |
 | `worker` | A minimal Cloudflare Worker: asset routing + the security headers |
 
@@ -389,9 +389,9 @@ Every document family in the spec has an extractor: the **typed W-2 / 1040 / pay
 
 ## My Situation, the plan, and My Readout Report
 
-- **My Situation** — a single in-memory profile every tool reads from and writes to, so you enter income once. Per-field provenance (typed / extracted / assumed). Never persisted automatically; cleared on unload. It is invisible plumbing now — ~34 tiles share it so a value entered once prefills the rest, and the Readout flows confirmed document fields into it. (The portable, passphrase-encryptable export — PBKDF2 → AES-GCM, [`src/profile/portable.ts`](src/profile/portable.ts) — was surfaced through the standalone "My Situation" panel, which was retired when the home budget became the plan; the module is retained, ready to re-surface, but is not currently wired to a button.)
+- **My Situation** — a single in-memory profile every tool reads from and writes to, so you enter income once. Per-field provenance (typed / extracted / assumed). Never persisted automatically; cleared on unload. It is invisible plumbing — ~34 tiles share it so a value entered once prefills the rest, and the Readout flows confirmed document fields into it. **Continuity is opt-in and user-held:** the **Readout Report** carries a "Keep a private copy" control that exports the profile to a local file you keep — plain JSON, or **passphrase-encrypted on-device (PBKDF2 → AES-GCM)** — and restores one later, all via [`src/profile/portable.ts`](src/profile/portable.ts). The product never writes it to storage and never sends it anywhere.
 - **The plan** — the default ordered plan (starter cushion → full employer match → high-cost debt → full rainy-day fund → tax-advantaged retirement → sinking funds → war chest) is encoded as **data** in a pure engine (`src/engine/plan.ts`), so steps reorder and toggle. Its user-facing form is now the **home anti-budget** (the live budget *is* your situation; the order-of-operations *is* the next right step) rather than a separate "My Plan" page, which was retired. The engine lives on: it computes the single next right step that the Readout Report prints.
-- **My Readout Report** — a downloadable, self-contained, script-free HTML summary generated entirely on-device: the snapshot, the tax picture, what you may be owed, your next right step (from the plan engine above), and an assumptions-and-sources appendix. **Byte-identical** when regenerated from the same profile + dataset versions (a golden test asserts it). It can also be printed straight from the app: a `@media print` stylesheet strips the site chrome and interactive controls, lays the content out black-on-white, keeps tables and sections from breaking across pages, and prints each citation's URL so the appendix stays verifiable on paper.
+- **My Readout Report** — a downloadable, self-contained, script-free HTML summary generated entirely on-device: the snapshot, the tax picture, what you may be owed, your next right step (from the plan engine above), and an assumptions-and-sources appendix. **Byte-identical** when regenerated from the same profile + dataset versions (a golden test asserts it). It can also be printed straight from the app: a `@media print` stylesheet strips the site chrome and interactive controls, lays the content out black-on-white, keeps tables and sections from breaking across pages, and prints each citation's URL so the appendix stays verifiable on paper. Alongside it, a **"Keep a private copy"** control exports/restores your situation (plain or passphrase-encrypted) — the opt-in, user-held continuity across sessions.
 
 ---
 

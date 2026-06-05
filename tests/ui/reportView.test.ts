@@ -3,6 +3,14 @@ import axe from "axe-core";
 import { renderReport } from "../../src/ui/reportView";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
+import { serialize } from "../../src/profile/portable";
+
+/** Set a read-only file input's `files` for a change-event simulation. */
+function setFiles(input: HTMLInputElement, files: File[]): void {
+  Object.defineProperty(input, "files", { value: files, configurable: true });
+  input.dispatchEvent(new Event("change"));
+}
+const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 30));
 
 /**
  * The Readout Report view (BUILD-SPEC-2 §5): an in-app preview with a download
@@ -59,4 +67,52 @@ describe("Readout Report view", () => {
     const results = await axe.run(container, { rules: { "color-contrast": { enabled: false } } });
     expect(results.violations.map((v) => v.id).join(", ")).toBe("");
   }, 30000);
+
+  describe("portable export/import (BUILD-SPEC-2 §5.2)", () => {
+    it("offers a portable save and a restore control", () => {
+      const { container } = mount(fundedProfile());
+      const titles = Array.from(container.querySelectorAll(".report-section-title")).map(
+        (n) => n.textContent ?? "",
+      );
+      expect(titles).toContain("Keep a private copy");
+      const buttons = Array.from(container.querySelectorAll("button")).map((b) => b.textContent);
+      expect(buttons).toContain("Save my situation (.json)");
+      expect(container.querySelector(".portable-pass")).not.toBeNull();
+      expect(container.querySelector<HTMLInputElement>(".portable-file")?.accept).toContain(
+        ".json",
+      );
+    });
+
+    it("restores a saved (plain) situation from a chosen file and re-renders", async () => {
+      const empty = new SituationStore();
+      const { container } = mount(empty);
+      const saved = serialize(fundedProfile());
+      const input = container.querySelector<HTMLInputElement>(".portable-file");
+      setFiles(input!, [new File([saved], "my-situation.json", { type: "application/json" })]);
+      await tick();
+      expect(empty.get("annualIncome")).toBe(95000);
+      expect(empty.get("filingStatus")).toBe("single");
+    });
+
+    it("asks for a passphrase only when the chosen file is encrypted", async () => {
+      const { container } = mount(new SituationStore());
+      const unlock = Array.from(container.querySelectorAll("button")).find(
+        (b) => b.textContent === "Unlock & restore",
+      );
+      expect(unlock?.hidden).toBe(true);
+      const envelope = JSON.stringify({
+        format: "enklayve.situation.encrypted",
+        version: 1,
+        kdf: "PBKDF2-SHA256",
+        iterations: 210000,
+        salt: "x",
+        iv: "y",
+        ciphertext: "z",
+      });
+      const input = container.querySelector<HTMLInputElement>(".portable-file");
+      setFiles(input!, [new File([envelope], "my-situation.encrypted.json")]);
+      await tick();
+      expect(unlock?.hidden).toBe(false);
+    });
+  });
 });

@@ -1582,6 +1582,62 @@ body {
 .report-section {
   margin-bottom: 1.25rem;
 }
+
+/* "Keep a private copy" — the portable export/import controls. Wrap to a tidy
+   column on a phone; the passphrase field shrinks inside its track. */
+.report-portable {
+  border-top: 1px solid var(--enk-border);
+  padding-top: 1.1rem;
+}
+.portable-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.portable-pass {
+  font: inherit;
+  min-width: 0;
+  flex: 1 1 11rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--enk-border);
+  border-radius: 10px;
+  background: var(--enk-bg);
+  color: var(--enk-text);
+}
+.portable-pass:focus-within,
+.portable-pass:focus {
+  border-color: var(--enk-primary);
+  box-shadow: 0 0 0 2px var(--enk-primary-soft);
+  outline: none;
+}
+/* The restore control is a native file input behind a calm "ghost button" label. */
+.portable-restore {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--enk-border);
+  border-radius: 10px;
+  background: var(--enk-surface);
+  max-width: 100%;
+}
+.portable-restore:hover {
+  background: var(--enk-surface-2);
+}
+.portable-file {
+  font: inherit;
+  min-width: 0;
+  max-width: 11rem;
+  color: var(--enk-text-muted);
+}
+.portable-status:empty {
+  display: none;
+}
 .report-section-title {
   color: var(--enk-primary-strong);
   font-size: 1.1rem;
