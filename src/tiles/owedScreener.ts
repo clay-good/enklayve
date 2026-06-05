@@ -219,11 +219,15 @@ export function mountOwedScreener(ctx: TileContext): void {
         citation: fpl.citation,
       });
     }
-    if (pctOfLine >= 100) {
+    // Premium tax credits run from 100% to 400% of the poverty line. The
+    // ARPA/IRA enhancement that lifted the 400% cliff expired at the end of
+    // 2025, so for the 2026 plan year the cliff is back: above 400% FPL there is
+    // no credit (matches the engine's `aboveSubsidyCap` and the ACA tile).
+    if (pctOfLine >= 100 && pctOfLine <= 400) {
       findings.push({
         program: "ACA marketplace subsidies (likely)",
         estimate: "Premium tax credit",
-        note: `At ${pctOfLine.toFixed(0)}% of the poverty line you likely qualify for a marketplace premium tax credit (enhanced rules through 2025 remove the old 400% cliff). Use the ACA Premium Tax Credit tool for a dollar estimate.`,
+        note: `At ${pctOfLine.toFixed(0)}% of the poverty line (within the 100–400% range) you likely qualify for a marketplace premium tax credit. Use the ACA Premium Tax Credit tool for a dollar estimate.`,
         citation: fpl.citation,
       });
     }

@@ -213,10 +213,13 @@ export type FederalPovertyLevelData = z.infer<typeof FederalPovertyLevelSchema>;
  * share of household income a family is expected to contribute toward the
  * benchmark (second-lowest-cost silver) plan, sliding linearly within each FPL
  * band from `percentageLow` (at `fplLow`) to `percentageHigh` (at `fplHigh`).
- * The top band is open-ended (`fplHigh: null`) and flat. These are the
- * ARPA-enhanced percentages extended by the Inflation Reduction Act through
- * 2025 (no 400%-FPL cliff). The benchmark premium itself is per-county and is
- * supplied by the user (looked up on HealthCare.gov), not bundled.
+ * The top band may be open-ended (`fplHigh: null`) and flat — as it was under
+ * the ARPA/IRA enhancement through 2025, which lifted the 400%-FPL cliff. That
+ * enhancement expired after 2025, so the shipped plan-year-2026 table reverts to
+ * the higher percentages and its top band ends at 400% FPL: above it there is no
+ * premium tax credit (the cliff returned — see the dataset citation). The
+ * benchmark premium itself is per-county and is supplied by the user (looked up
+ * on HealthCare.gov), not bundled.
  */
 export const AcaSchema = z.object({
   year: z.number().int(),

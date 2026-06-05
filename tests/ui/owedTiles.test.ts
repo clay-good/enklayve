@@ -122,6 +122,27 @@ describe("What Am I Owed screener", () => {
     );
     expect(programs).toContain("SNAP (food assistance)");
   });
+
+  it("flags ACA subsidies within the 100–400% FPL band", () => {
+    // A single filer at ~190% of the poverty line is squarely in the band.
+    const root = mount(mountOwedScreener, new URLSearchParams({ hh: "1", inc: "30000" }));
+    const programs = Array.from(root.querySelectorAll(".screener-program")).map(
+      (n) => n.textContent ?? "",
+    );
+    expect(programs).toContain("ACA marketplace subsidies (likely)");
+  });
+
+  it("does NOT flag ACA subsidies above 400% FPL (the 2026 cliff is back)", () => {
+    // $90k for one person is unambiguously above 400% of the poverty line; with
+    // the enhanced subsidies expired, there is no premium tax credit there, so
+    // the screener must not promise one (regression: it used to fire for any
+    // income >= 100% FPL with stale "no cliff" copy).
+    const root = mount(mountOwedScreener, new URLSearchParams({ hh: "1", inc: "90000" }));
+    const programs = Array.from(root.querySelectorAll(".screener-program")).map(
+      (n) => n.textContent ?? "",
+    );
+    expect(programs).not.toContain("ACA marketplace subsidies (likely)");
+  });
 });
 
 describe("Saver's Credit tile", () => {
