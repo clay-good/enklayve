@@ -2,6 +2,8 @@
 
 > Your private financial enclave. Every number is computed on your device. Nothing is ever sent anywhere.
 
+![enklayve — personal finance. Know where you stand. Privately.](public/og-image.png)
+
 [![CI](https://github.com/clay-good/enklayve/actions/workflows/ci.yml/badge.svg)](https://github.com/clay-good/enklayve/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-6D28D9.svg)](LICENSE)
 [![Determinism](https://img.shields.io/badge/output-100%25%20deterministic-6D28D9.svg)](#determinism--verification)
@@ -439,7 +441,7 @@ All phases from both specs are complete or at a deliberately-deferred boundary. 
 | 8 | ✅ | Offline PWA — service worker precache + runtime cache, installable, manifest (offline load verified end-to-end) |
 | 9 | ✅ | Data-refresh workflows for every seeded source with an anchorable figure |
 | 10 | ✅ | CI, the release audit, the Cloudflare Git-integration deploy, and the Playwright e2e job (responsiveness + offline + smoke) |
-| 11 | ✅ | Crawlability (per-tile shells, sitemap, robots), on-page SEO/social, docs, mobile responsiveness |
+| 11 | ✅ | Crawlability (per-tile shells, sitemap, robots), on-page SEO/social (incl. a raster 1200×630 social card), docs, mobile responsiveness |
 | 12–13 | ✅ | My Situation (session profile + encrypted export); the home (redesigned to three calm zones, §0.7) |
 | 14 | ✅ | The Readout — every document family has an anchored, revision-pinned extractor; reads typed PDF (pdf.js), Word `.docx` (mammoth), and scanned images (on-device OCR, tesseract.js) on-device |
 | 15–16 | ✅ | The guidance engine (`plan.ts`, now surfaced as the home anti-budget); My Readout Report |
@@ -460,7 +462,7 @@ See the spec files for the full per-wave history.
 | `src/profile` | My Situation — the in-memory session profile and portable encrypted export |
 | `src/readout` | Anchored extractors, the confirm flow, and the Readout Report builder |
 | `data` | Sharded JSON datasets, sibling `.sha256` files, and the manifest |
-| `scripts` | Data-refresh adapters, the manifest builder, static-page generators, the release audit |
+| `scripts` | Data-refresh adapters, the manifest builder, static-page generators, the social-card (`og:image`) generator, the release audit |
 | `worker` | Cloudflare Worker asset router and security headers |
 | `tests` | Unit tests, the golden correctness corpus, and the axe accessibility sweep |
 | `docs` | The specs, data sources, adding-a-state, contributing, the source diff log, and the launch checklist |
@@ -481,6 +483,7 @@ npm run build          # production build to dist/
 npm run audit          # CSP / no cross-origin loads / provenance / no sensitive persistence
 npm run data:manifest  # regenerate data/manifest.json + .sha256 after editing a shard
 npm run golden:regen   # regenerate the tax-engine golden snapshot after an intended change
+npm run og:image       # regenerate the 1200x630 social-card PNG after a brand/copy change
 npm run deploy:dry     # wrangler dry-run deploy
 ```
 

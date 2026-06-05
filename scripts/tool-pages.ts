@@ -94,10 +94,11 @@ export function renderToolPage(
     <meta property="og:title" content="${escapeHtml(tile.title)} · enklayve" />
     <meta property="og:description" content="${escapeHtml(tile.description)}" />
     <meta property="og:url" content="${canonical}" />
-    <meta property="og:image" content="${SITE_ORIGIN}/icon.svg" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content="${SITE_ORIGIN}/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeHtml(tile.title)} · enklayve" />
     <meta name="twitter:description" content="${escapeHtml(tile.description)}" />
+    <meta name="twitter:image" content="${SITE_ORIGIN}/og-image.png" />
     <style>${PAGE_STYLE}
     </style>
   </head>

@@ -46,7 +46,7 @@ npm run deploy:dry
 - [ ] `dist/tools.html` lists exactly the registry's hubs **and names every hosted calculator, linking its `/tools/<id>.html` landing page** (drift test); the in-app `#/all-tools` mirrors it, listing every calculator under its hub.
 - [ ] One pre-rendered shell per tile under `dist/tools/<id>.html`, each with a canonical and a deep link into the live tool (drift test).
 - [ ] `dist/sitemap.xml` lists the home, the index, and every tool shell; `dist/robots.txt` advertises the sitemap.
-- [ ] The home `index.html` carries a canonical, a descriptive title + description, Open Graph + Twitter Card tags, and JSON-LD `WebApplication` structured data; the tool shells and the index carry the same OG/Twitter/robots with absolute canonicals (guarded by `tests/ui/seo.test.ts`). No cross-origin resource loads anywhere (the release audit allows only self-referential absolute URLs on the production origin).
+- [ ] The home `index.html` carries a canonical, a descriptive title + description, Open Graph + Twitter Card tags (with a **raster 1200×630 `og:image` PNG** — `summary_large_image` — since SVG cards don't render on Twitter/X, Facebook, LinkedIn, Slack, or iMessage; regenerate with `npm run og:image`), and JSON-LD `WebApplication` structured data; the tool shells and the index carry the same OG/Twitter/robots with absolute canonicals (guarded by `tests/ui/seo.test.ts`). No cross-origin resource loads anywhere (the release audit allows only self-referential absolute URLs on the production origin).
 - [ ] Docs present and current: [`data-sources.md`](data-sources.md), [`adding-a-state.md`](adding-a-state.md), [`contributing.md`](contributing.md), [`source-diff-log.md`](source-diff-log.md), and the specs.
 
 ## Data refresh workflows (Phase 9)

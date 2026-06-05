@@ -64,8 +64,9 @@ export function renderToolsIndex(): string {
       content="The full index of enklayve tools. Every figure is computed on your device; nothing is ever sent anywhere."
     />
     <meta property="og:url" content="${SITE_ORIGIN}/tools.html" />
-    <meta property="og:image" content="${SITE_ORIGIN}/icon.svg" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content="${SITE_ORIGIN}/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="${SITE_ORIGIN}/og-image.png" />
     <style>
       :root { color-scheme: light dark; }
       body {

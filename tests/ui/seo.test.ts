@@ -82,6 +82,11 @@ describe("home index.html SEO head", () => {
       expect(html).toContain(`property="${prop}"`);
     }
     expect(html).toContain('name="twitter:card"');
+    // The social card image must be a raster: SVG og:images don't render on
+    // Twitter/X, Facebook, LinkedIn, Slack, or iMessage, so a vector here means
+    // no preview anywhere the site is shared.
+    expect(html).toMatch(/property="og:image" content="[^"]+\.png"/);
+    expect(html).toContain('name="twitter:card" content="summary_large_image"');
   });
 
   it("carries WebApplication structured data (JSON-LD) and parses", () => {
