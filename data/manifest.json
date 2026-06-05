@@ -101,10 +101,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-ca-income-tax-2024.json",
-      "sourceUrl": "https://www.ftb.ca.gov/forms/2026/2026-540-es-instructions.pdf",
-      "sourceDocument": "California FTB 2026 (standard deduction $5,706/$11,412; 1% Behavioral Health Services Tax over $1M). Bracket thresholds retain the most recent published values pending FTB 2026 indexed schedules.",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "1683fc6f9b203b262b50809facd2fb5d1789794298e9c547859adcdeb0b380f2"
+      "sourceUrl": "https://www.ftb.ca.gov/forms/2025/2025-540-tax-rate-schedules.pdf",
+      "sourceDocument": "California FTB. Bracket thresholds are the FTB 2025 California Tax Rate Schedules (Schedule X single/MFS, Schedule Y MFJ/QSS, Schedule Z head of household) — the most recent rate schedule the FTB has published; the 2026-indexed brackets are not yet issued, so these latest-published values are used (a small under-index vs. an unknown ~3% CCPI bump). The 2026 standard deduction ($5,706 single/MFS, $11,412 MFJ/HoH/QSS) is confirmed from the FTB 2026 Form 540-ES estimated-tax worksheet. The 1% Behavioral Health Services Tax (Prop 63) applies to taxable income over $1,000,000.",
+      "dateRetrieved": "2026-06-05",
+      "contentHash": "0a97f9d0092d18dcbfd4b20dcc13d84b1703ae0663aa0a88280451f7a3980c37"
     },
     {
       "id": "state-ny-income-tax-2024",
@@ -232,9 +232,9 @@
       "staleAfterYears": 2,
       "shard": "state-dc-income-tax-2024.json",
       "sourceUrl": "https://otr.cfo.dc.gov/page/dc-individual-and-fiduciary-income-tax-rates",
-      "sourceDocument": "DC Office of Tax and Revenue, 2024 individual income tax rates",
+      "sourceDocument": "DC Office of Tax and Revenue individual income tax rates (effective 2026): DC's bracket schedule is statutory (set by the FY2023 Budget Support Act) and is not inflation-indexed, so it is unchanged through 2026; the standard deduction conforms to the federal standard deduction ($16,100/$32,200/$24,150 for 2026).",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "6392721b6507afd14f09d26967a6b25744e7ffcf2587fa431f9fc7447d7d4648"
+      "contentHash": "4a7365c9b004c9ffbf3eb3c52bd68969208683df43fabb46966edcd45fdf933e"
     },
     {
       "id": "state-ak-income-tax-2024",
