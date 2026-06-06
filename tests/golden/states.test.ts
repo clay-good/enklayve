@@ -414,6 +414,59 @@ describe("New Mexico (six-bracket; head of household shares the married-jointly 
   });
 });
 
+describe("Rhode Island (uniform brackets across statuses, with a standard-deduction + exemption stack)", () => {
+  // RI (ADV 2025-22, 2026) levies 3.75% / 4.75% / 5.99% with the SAME thresholds
+  // for every filing status ($82,050 / $186,450) — only the standard deduction
+  // ($11,200 / $22,400 / $16,800) and the $5,250-per-taxpayer personal exemption
+  // differ by status. Taxable = AGI − standard deduction − exemption (the VA/KS
+  // stack, now on a uniform schedule).
+  it("single $60k → $1,633.13 (taxable 60,000 − 11,200 − 5,250 = 43,550 at 3.75%)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ri"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("1633.13"); // 3.75%·43,550
+  });
+
+  it("married jointly $60k → $1,016.25 (taxable 27,100; doubled deduction + exemption)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ri"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("1016.25"); // 3.75%·(60,000 − 22,400 − 10,500)
+  });
+
+  it("head of household $60k → $1,423.13 (taxable 37,950 at 3.75%)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ri"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("1423.13"); // 3.75%·(60,000 − 16,800 − 5,250)
+  });
+
+  it("single $250k crosses all three uniform brackets → $10,857.17", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 250000 },
+      { federal: ds.federal, state: ds.state("ri"), fica: ds.fica },
+    );
+    // taxable 250,000 − 11,200 − 5,250 = 233,550 (below the $261k phase-out):
+    // 3.75%·82,050 + 4.75%·104,400 + 5.99%·(233,550 − 186,450).
+    expect(cents(r.state!.incomeTax)).toBe("10857.17");
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly schedule", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ri"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ri"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction

@@ -549,6 +549,19 @@
       "contentHash": "10d1d1a85642240347ebf91539b79b14a71ef2fb644f08e1e7c3c81564da7f49"
     },
     {
+      "id": "state-ri-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-ri-income-tax-2024.json",
+      "sourceUrl": "https://tax.ri.gov/sites/g/files/xkgbur541/files/2025-11/ADV_2025_22_Inflation_Adjustments.pdf",
+      "sourceDocument": "Rhode Island Division of Taxation Advisory ADV 2025-22 (2026 inflation-adjusted PIT brackets, standard deduction, exemption; R.I. Gen. Laws 44-30-2.6)",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "17f6fe368210024b96f324b068a1d37752a8b7b1ecc70e1c350ec0a4a0f1e0ae"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",

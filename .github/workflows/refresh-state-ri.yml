@@ -1,0 +1,19 @@
+# Rhode Island income tax — RI Division of Taxation, annual (staggered). The three
+# rates (3.75% / 4.75% / 5.99%) are uniform across filing statuses, but the bracket
+# thresholds, standard deduction, and personal exemption all index together each
+# year in one advisory (ADV 2025-22 for 2026). The adapter anchors the standard
+# deduction (the MN/VA pattern); the uniform bracket thresholds and the exemption
+# roll alongside as the reviewer's data-only step. BUILD-SPEC.md §7.2, §8.
+name: Refresh RI income tax
+
+on:
+  schedule:
+    - cron: "0 12 30 4 *" # April 30, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-ri
+      source_name: RI income tax

@@ -106,6 +106,7 @@ export type RefreshGroup =
   | "state-ks"
   | "state-de"
   | "state-nm"
+  | "state-ri"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -873,6 +874,21 @@ export const ADAPTERS: RefreshAdapter[] = [
     // (SB 1, 2024 special session); the lightly-indexed standard deduction is the
     // figure that moves, so anchor it (the VA pattern). The per-status brackets
     // stay the reviewer's data-only step.
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-ri-income-tax-2024",
+    group: "state-ri",
+    source:
+      "Rhode Island Division of Taxation annual inflation-adjustment advisory (standard deduction)",
+    sourceUrl:
+      "https://tax.ri.gov/sites/g/files/xkgbur541/files/2025-11/ADV_2025_22_Inflation_Adjustments.pdf",
+    cadence: "Annual",
+    // RI's three rates are uniform across filing statuses, but its brackets,
+    // standard deduction, and personal exemption all index together each year
+    // (one advisory, ADV 2025-22). Anchor the standard deduction (the MN/VA
+    // pattern); the uniform bracket thresholds and the exemption roll alongside
+    // it as the reviewer's data-only step.
     parse: parseStandardDeductions,
   },
   {
