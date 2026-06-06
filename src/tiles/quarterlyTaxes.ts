@@ -12,6 +12,7 @@
  */
 import { Money } from "../engine/money";
 import { evaluateTaxes, selfEmploymentTax, type TaxInput } from "../engine/tax";
+import { estimatedTaxDueDates, formatDueDate } from "../engine/dueDates";
 import type { CitationData, FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
@@ -28,9 +29,6 @@ const FILING_STATUSES: { value: FilingStatus; label: string }[] = [
   { value: "head_of_household", label: "Head of household" },
   { value: "qualifying_surviving_spouse", label: "Qualifying surviving spouse" },
 ];
-
-/** The four equal 1040-ES installments and their statutory due dates. */
-const QUARTERS = ["Apr 15", "Jun 15", "Sep 15", "Jan 15 (next year)"];
 
 const ESTIMATED_PAYMENT_CITATION: CitationData = {
   sourceUrl: "https://www.irs.gov/forms-pubs/about-form-1040-es",
@@ -167,9 +165,13 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
         value: pct(Math.max(0, setAside), 1),
       },
     );
-    for (const due of QUARTERS) {
+    // The four 1040-ES installments and their due dates, with the next-business-day
+    // rule applied so a deadline that falls on a weekend or holiday reads correctly.
+    const dueDates = estimatedTaxDueDates(fed!.taxYear);
+    for (const d of dueDates) {
+      const dateLabel = formatDueDate(d.due, ctx.locale);
       lines.push({
-        label: `Quarterly payment, ${due}`,
+        label: `Q${d.quarter} payment, due ${dateLabel}${d.adjusted ? " (moved to the next business day)" : ""}`,
         value: fmt(quarterly),
         citation: ESTIMATED_PAYMENT_CITATION,
       });

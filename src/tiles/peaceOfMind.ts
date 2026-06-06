@@ -29,6 +29,8 @@ interface Config {
   withdrawalRatePct: number;
   /** Assets beyond liquid savings (investments, home equity) for net worth. */
   otherAssets: number;
+  /** Monthly amount saved toward the Enough Number (a labeled assumption). */
+  monthlySavings: number;
 }
 
 function readConfig(p: URLSearchParams): Config {
@@ -36,6 +38,7 @@ function readConfig(p: URLSearchParams): Config {
     targetMonths: Math.max(1, parseNonNegative(p.get("m"), 3)),
     withdrawalRatePct: Math.max(0.1, parseNumber(p.get("wr"), 4)),
     otherAssets: parseNonNegative(p.get("assets"), 0),
+    monthlySavings: parseNonNegative(p.get("sav"), 0),
   };
 }
 
@@ -44,6 +47,7 @@ function writeConfig(c: Config): URLSearchParams {
   if (c.targetMonths !== 3) p.set("m", String(c.targetMonths));
   if (c.withdrawalRatePct !== 4) p.set("wr", String(c.withdrawalRatePct));
   if (c.otherAssets > 0) p.set("assets", String(c.otherAssets));
+  if (c.monthlySavings > 0) p.set("sav", String(c.monthlySavings));
   return p;
 }
 
@@ -60,6 +64,10 @@ interface Readings {
   annualEssentials: number;
   enough: number;
   enoughProgressPct: number;
+  /** Gap left to the Enough Number (0 once reached). */
+  enoughGap: number;
+  /** Months to close the gap at the savings rate; Infinity when no rate is set. */
+  monthsToEnough: number;
 }
 
 function compute(profile: SituationStore, config: Config): Readings {
@@ -70,6 +78,12 @@ function compute(profile: SituationStore, config: Config): Readings {
   const netWorth = savings + config.otherAssets - debts;
   const annualEssentials = essential * 12;
   const enough = annualEssentials / (config.withdrawalRatePct / 100);
+  // Linear arrival: how long the current monthly savings rate takes to close the
+  // gap to the Enough Number, not counting investment growth (a deliberately
+  // conservative, market-return-free projection — §5.3, SPEC-3 §4.8).
+  const enoughGap = Number.isFinite(enough) && enough > netWorth ? enough - netWorth : 0;
+  const monthsToEnough =
+    config.monthlySavings > 0 && enoughGap > 0 ? enoughGap / config.monthlySavings : 0;
   return {
     essential,
     total,
@@ -87,7 +101,19 @@ function compute(profile: SituationStore, config: Config): Readings {
     // it so the "% of the way" copy and the progress bar never render NaN.
     enoughProgressPct:
       enough > 0 && Number.isFinite(netWorth) ? Math.min(100, (netWorth / enough) * 100) : 0,
+    enoughGap,
+    monthsToEnough,
   };
+}
+
+/** A months count as calm prose: "about 8 years 4 months", year-only past a year. */
+function durationLabel(totalMonths: number): string {
+  if (!Number.isFinite(totalMonths) || totalMonths <= 0) return "—";
+  const years = Math.floor(totalMonths / 12);
+  const months = Math.round(totalMonths % 12);
+  if (years === 0) return `${months} month${months === 1 ? "" : "s"}`;
+  if (months === 0) return `${years} year${years === 1 ? "" : "s"}`;
+  return `${years} yr ${months} mo`;
 }
 
 // Both helpers guard non-finite the same way the shared formatters do
@@ -205,6 +231,32 @@ export function mountPeaceOfMind(ctx: TileContext): void {
         },
       }),
     );
+
+    // Arrival projection: when do you reach the Enough Number at your savings rate?
+    let arrivalTarget: number;
+    let arrivalFormat: (n: number) => string;
+    let arrivalSub: string;
+    if (r.enoughGap <= 0) {
+      arrivalTarget = 0;
+      arrivalFormat = () => "You're there";
+      arrivalSub = "Your net worth already covers your Enough Number. Nicely done.";
+    } else if (config.monthlySavings > 0) {
+      arrivalTarget = r.monthsToEnough;
+      arrivalFormat = durationLabel;
+      arrivalSub = `Saving ${usd(config.monthlySavings, ctx.locale)}/mo (your assumption) closes the ${usd(r.enoughGap, ctx.locale)} gap. This is linear — it doesn't count investment growth, so it's the cautious estimate.`;
+    } else {
+      arrivalTarget = 0;
+      arrivalFormat = () => "Add a monthly amount";
+      arrivalSub = "Enter what you save each month below to project when you arrive.";
+    }
+    dashboard.append(
+      reading({
+        label: "Time to your Enough Number",
+        headlineTarget: arrivalTarget,
+        format: arrivalFormat,
+        sub: arrivalSub,
+      }),
+    );
   }
 
   // --- Shared inputs (My Situation, entered once) ---
@@ -263,6 +315,17 @@ export function mountPeaceOfMind(ctx: TileContext): void {
     },
     1000,
   );
+  const savingsRateField = numberField(
+    "sav",
+    "Monthly savings toward your Enough Number",
+    config.monthlySavings || undefined,
+    (v) => {
+      config = { ...config, monthlySavings: v };
+      ctx.setParams(writeConfig(config));
+      renderDashboard();
+    },
+    100,
+  );
   const monthsInput = el("input", {
     type: "number",
     name: "m",
@@ -304,11 +367,12 @@ export function mountPeaceOfMind(ctx: TileContext): void {
     profile.set("essentialMonthlyExpenses", 3200);
     profile.set("totalMonthlyExpenses", 4500);
     profile.set("liquidSavings", 12000);
-    config = { targetMonths: 3, withdrawalRatePct: 4, otherAssets: 60000 };
+    config = { targetMonths: 3, withdrawalRatePct: 4, otherAssets: 60000, monthlySavings: 1500 };
     essentialField.querySelector("input")!.value = "3200";
     totalField.querySelector("input")!.value = "4500";
     savingsField.querySelector("input")!.value = "12000";
     assetsField.querySelector("input")!.value = "60000";
+    savingsRateField.querySelector("input")!.value = "1500";
     monthsInput.value = "3";
     wrInput.value = "4";
     ctx.setParams(writeConfig(config));
@@ -330,6 +394,7 @@ export function mountPeaceOfMind(ctx: TileContext): void {
       totalField,
       savingsField,
       assetsField,
+      savingsRateField,
       field("Rainy-day target (months)", monthsInput),
       field("Safe withdrawal rate (%)", wrInput),
     ),
@@ -361,7 +426,7 @@ export const peaceOfMindTile: TileDefinition = {
     "financial independence",
   ],
   status: "ready",
-  how: "From your essentials, total spending, savings, and debts we compute four calm readings: your cushion (savings ÷ essential monthly spending = months covered), your runway (savings ÷ total monthly spending, plus a downshift scenario at essentials only), your net worth (savings + other assets − debts), and My Enough Number (annual essentials ÷ your safe-withdrawal rate, e.g. 4% ≈ 25×).\n\nThe target months and the withdrawal rate are your assumptions, shown and adjustable. The tone is progress, never shame.",
+  how: "From your essentials, total spending, savings, and debts we compute calm readings: your cushion (savings ÷ essential monthly spending = months covered), your runway (savings ÷ total monthly spending, plus a downshift scenario at essentials only), your net worth (savings + other assets − debts), and My Enough Number (annual essentials ÷ your safe-withdrawal rate, e.g. 4% ≈ 25×).\n\nEnter a monthly savings amount and we also project the time to your Enough Number — a straight-line estimate at that rate that deliberately doesn't assume any investment growth, so it's the cautious version. The target months, the withdrawal rate, and the savings rate are your assumptions, shown and adjustable. The tone is progress, never shame.",
   resources: [
     {
       label: "CFPB, building an emergency fund",

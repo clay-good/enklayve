@@ -25,6 +25,9 @@ import {
   type SocialSecurityData,
   type AcaData,
   type FafsaData,
+  type IraDeductionData,
+  type GiftTaxData,
+  type AmtData,
 } from "./schemas";
 
 /** Federal Poverty Level region (BUILD-SPEC.md §4.1). */
@@ -74,6 +77,12 @@ export interface BundledData {
   socialSecurity(): SocialSecurityData | null;
   /** FAFSA Student Aid Index tables and Pell schedule (BUILD-SPEC.md §4.4). */
   fafsa(): FafsaData | null;
+  /** Traditional-IRA deduction phase-out ranges (SPEC-3 §4.3). */
+  iraDeduction(): IraDeductionData | null;
+  /** Annual gift-tax exclusion and lifetime gift/estate exemption (SPEC-3 §4.4). */
+  giftTax(): GiftTaxData | null;
+  /** AMT exemption, phase-out, and rate breakpoint (SPEC-3 §4.7). */
+  amt(): AmtData | null;
   /** A state jurisdiction by two-letter code (e.g. "ca"); null if unavailable. */
   state(code: string): Jurisdiction | null;
   /** Status for a dataset id, for the fail-safe verify banner. */
@@ -130,6 +139,9 @@ async function build(): Promise<BundledData> {
     aca: () => dataOf("aca-2024") as AcaData | null,
     socialSecurity: () => dataOf("social-security-2024") as SocialSecurityData | null,
     fafsa: () => dataOf("fafsa-2024-2025") as FafsaData | null,
+    iraDeduction: () => dataOf("ira-deduction-2024") as IraDeductionData | null,
+    giftTax: () => dataOf("gift-tax-2024") as GiftTaxData | null,
+    amt: () => dataOf("amt-2024") as AmtData | null,
     state: (code) => dataOf(`state-${code.toLowerCase()}-income-tax-2024`) as Jurisdiction | null,
     statusOf: (id) => loaded.byId.get(id)?.status ?? "missing",
     stateCodes: () =>

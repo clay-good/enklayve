@@ -83,6 +83,8 @@ Full detail lives in [SPEC-3-citations.md](SPEC-3-citations.md). The three oblig
 
 ## 4. Expansion roadmap: the next wave
 
+> **Status — 2026-06-05.** The first wave is shipped: **§4.2** (estimated-tax due-date calendar), **§4.3** (IRA deductibility screener), **§4.4** (gift-tax exclusion tracker), **§4.7** (AMT quick screener), and **§4.8** (Peace-of-Mind arrival date) are built, tested, and cited to the 2026 IRS figures (Rev. Proc. 2025-32 and Notice 2025-67). Three new shards landed — `ira-deduction-2024`, `gift-tax-2024`, `amt-2024` — each gated through the same integrity/schema/staleness pipeline as the rest, and the engine functions are pinned by worked examples plus the §2.9 boundary sweep in [`tests/engine/screeners.test.ts`](../../tests/engine/screeners.test.ts). Still open by choice: **§4.1** (cross-tool linking), **§4.5** (kiddie tax), **§4.6** (education-credit comparison), and **§4.9** (sensitivity bands) — none blocking, each a clean next increment.
+
 Same bar as always: US personal finance, deterministic, computable from bundled cited data, no market guessing, no advice. Each tool below was checked against that bar; the parked list at the end records what failed it and why. Ordered by value ÷ effort.
 
 ### 4.1 Cross-tool linking (enhancement, trivial, highest ROI)
@@ -96,17 +98,23 @@ The calculators already share an engine and a profile; they don't yet point at e
 
 No new math, no new data. Pure routing plus the existing profile sync. Deterministic by construction.
 
-### 4.2 Estimated-tax due-date calendar (enhancement to Quarterly Taxes, low effort)
+### 4.2 Estimated-tax due-date calendar (enhancement to Quarterly Taxes, low effort) — ✅ shipped
 
 Quarterly Taxes shows the four payment amounts but not *when* to send them. Add the IRS 1040-ES calendar (Apr 15, Jun 15, Sep 15, Jan 15 of the following year, with the next-business-day rule) as a cited breakdown. The dates are statutory and already adjacent to a cited shard. Surfaces the penalty risk that the amounts alone hide.
 
-### 4.3 IRA deductibility screener (new tool, Retirement hub, low effort)
+*Done:* [`dueDates.ts`](../../src/engine/dueDates.ts) computes the four installment dates for a tax year as a pure function, applying the weekend rule plus the two holidays that can land on the 15th (MLK Day, DC Emancipation Day). Quarterly Taxes now renders each payment with its real date and an "(moved to the next business day)" note when the rule fires.
+
+### 4.3 IRA deductibility screener (new tool, Retirement hub, low effort) — ✅ shipped
 
 "Can I deduct my traditional-IRA contribution, or is it nondeductible because I (or my spouse) have a workplace plan?" Inputs: contribution, filing status, MAGI, covered-by-a-plan flag. Output: deductible amount, phase-out status, nondeductible basis, and a pointer to the pro-rata rule it sets up. The phase-out ranges live in the IRS annual notice alongside the retirement limits already bundled — cite IRC §219 and the published ranges. Pairs naturally with the existing Backdoor Roth tile and closes a genuinely common confusion. Deterministic; one new figure to seed.
 
-### 4.4 Gift-tax exclusion tracker (new tool, Paycheck & Taxes hub, low effort)
+*Done:* [`iraDeduction.ts`](../../src/engine/iraDeduction.ts) + the `ira-deduction-2024` shard (IRC §219(g) ranges from Notice 2025-67). The tile gates on both the limits and ranges shards, pro-rates inside the band the Pub 590-A way, and surfaces the nondeductible basis that feeds the Backdoor Roth.
+
+### 4.4 Gift-tax exclusion tracker (new tool, Paycheck & Taxes hub, low effort) — ✅ shipped
 
 "Is my gift to family taxable, or does it sit under the annual exclusion / lifetime exemption?" Inputs: gift amount, recipient (spouse vs not), lifetime exemption already used (user-supplied). Output: annual-exclusion headroom, lifetime-exemption impact, whether a Form 709 is required. Two cited IRS figures (the annual exclusion and the lifetime exemption from the annual inflation-adjustment notice). Deterministic, descriptive (no "should you gift"), cleanly in scope. Needs a small new shard.
+
+*Done:* [`giftTax.ts`](../../src/engine/giftTax.ts) + the `gift-tax-2024` shard (Rev. Proc. 2025-32: $19,000 / $194,000 non-citizen-spouse / $15M lifetime). Handles the unlimited marital deduction, the non-citizen-spouse exclusion, the Form 709 trigger, and the 40% top rate past the exemption.
 
 ### 4.5 Kiddie-tax estimator (new tool, Investing hub, low–medium effort)
 
@@ -116,13 +124,17 @@ Quarterly Taxes shows the four payment amounts but not *when* to send them. Add 
 
 "Which education credit saves more this year?" Inputs: AGI, filing status, qualified expenses by type, years in program. Output: AOTC vs LLC side by side, phase-out status, the refundable portion of the AOTC. Needs a new shard for the two credits' parameters (annual IRS notice) — they are not yet bundled. High household value, deterministic, comparison-not-advice framing.
 
-### 4.7 AMT quick screener (new tool, Paycheck & Taxes hub, low effort, screener-only)
+### 4.7 AMT quick screener (new tool, Paycheck & Taxes hub, low effort, screener-only) — ✅ shipped
 
 "Might I owe the Alternative Minimum Tax?" A deliberately *coarse* screener: AMT exemption and phase-out (cited IRS figures) against the user's preference items (SALT, etc.), returning a yes/maybe/no with a pointer to Form 6251. It explicitly does not attempt the full AMT computation — that would over-promise. Honest, cited, and useful as a flag.
 
-### 4.8 Peace-of-Mind arrival date (enhancement, low–medium effort)
+*Done:* [`amt.ts`](../../src/engine/amt.ts) + the `amt-2024` shard (Rev. Proc. 2025-32 exemption/phase-out/breakpoint; IRC §55 rates). The screener estimates AMTI from taxable income plus add-backs, applies the exemption (with its high-income phase-out) and the 26%/28% schedule, and compares the tentative minimum tax to the regular tax computed from the federal brackets — the mechanism is exact; only the AMTI estimate is coarse.
+
+### 4.8 Peace-of-Mind arrival date (enhancement, low–medium effort) — ✅ shipped
 
 The dashboard shows progress toward the Enough Number but not *when* you arrive at the current savings rate. Add a deterministic projection: at a user-supplied monthly savings rate (a labeled assumption, no market return guessed unless the user supplies one), show the months/years to the target. Pure arithmetic over the existing readings; keeps the calm-progress tone.
+
+*Done:* Peace of Mind gained a "Time to your Enough Number" reading — a straight-line `gap ÷ monthly savings` projection that deliberately assumes no investment growth (the cautious version), deep-linked via `?sav=`.
 
 ### 4.9 Sensitivity bands (enhancement, opt-in, medium effort)
 
@@ -146,7 +158,7 @@ Recorded so they are not re-proposed without the bar in mind:
 1. ✅ The robustness invariants in §2 are encoded as tests (the property suite of §2.9 — see [`tests/engine/propertyInvariants.test.ts`](../../tests/engine/propertyInvariants.test.ts), which sweeps the engine's public functions over the boundary space and pins the SE-92.35%, capital-gains-stacking, EITC-plateau, and I-bond composite-rate identities), and the full golden + UI suite stays green.
 2. ✅ The confirmed fixes in [SPEC-3-hardening.md](SPEC-3-hardening.md) §A are applied (and §B4); the rejected §C findings are left untouched and their correctness is captured in a test or comment so they are not "fixed" later.
 3. ✅ The citation-consistency gaps in [SPEC-3-citations.md](SPEC-3-citations.md) are closed, every long `sourceDocument` string is split into a short name plus a `sourceNote`, the audit enforces the ≤160-char cap, and `npm run audit` still passes.
-4. ⏳ Any new tool from §4 ships with a worked example, an inline citation on every statutory line, a verify-before-relying banner on its data dependency, a deep-linkable URL state, and a "how/why" copy block — the same bar every existing tile meets. *(Forward-looking: applies when the §4 tools are built.)*
+4. ✅ Each shipped §4 tool meets the full tile bar — a worked example ("Try an example"), an inline citation on every statutory line, a verify-before-relying banner on its data dependency, deep-linkable URL state, and a "how/why" copy block. The first wave (§4.2, §4.3, §4.4, §4.7, §4.8) is in; the remaining items (§4.1, §4.5, §4.6, §4.9) inherit the same checklist when built.
 
 ---
 

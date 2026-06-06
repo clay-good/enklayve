@@ -61,7 +61,7 @@ describe("Quarterly Taxes & Set-Aside", () => {
       new URLSearchParams({ fs: "single", st: "", np: "90000" }),
     );
     const total = dollars(rowValue(root, "Total estimated tax"));
-    const quarter = dollars(rowValue(root, "Quarterly payment, Apr 15"));
+    const quarter = dollars(rowValue(root, "Q1 payment, due April 15"));
     expect(total).toBeGreaterThan(0);
     expect(quarter).toBeCloseTo(total / 4, 0);
     // Both taxes a 1099 worker owes are itemized, each with a source.

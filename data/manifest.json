@@ -586,6 +586,45 @@
       "sourceDocument": "Social Security Administration, Benefit Reduction for Early Retirement & Delayed Retirement Credits (statutory rules, unchanged for 2026)",
       "dateRetrieved": "2026-06-02",
       "contentHash": "4abed4ab54568df44b2a0a09a779d9fbe287b04b7f5b79d78c93135a5b089c2e"
+    },
+    {
+      "id": "ira-deduction-2024",
+      "kind": "ira-deduction",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "ira-deduction-2024.json",
+      "sourceUrl": "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
+      "sourceDocument": "IRS Notice 2025-67 (2026 IRA deduction phase-out ranges); IRC §219(g)",
+      "dateRetrieved": "2026-06-05",
+      "contentHash": "ff7a0b4fdca0f1b841f61da32d9b3b7efd4a123fa53e04bd5dfa0cc42c8b1d73"
+    },
+    {
+      "id": "gift-tax-2024",
+      "kind": "gift-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "gift-tax-2024.json",
+      "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+      "sourceDocument": "IRS Rev. Proc. 2025-32 (2026 gift/estate figures); IRC §2503(b), §2010, §2001(c)",
+      "dateRetrieved": "2026-06-05",
+      "contentHash": "4d74975b517d641df5903c19819703313b57b0b1ee96bc925797c4bc5c15a8e0"
+    },
+    {
+      "id": "amt-2024",
+      "kind": "amt",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "amt-2024.json",
+      "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+      "sourceDocument": "IRS Rev. Proc. 2025-32 (2026 AMT exemption & thresholds); IRC §55 (26%/28% rates)",
+      "dateRetrieved": "2026-06-05",
+      "contentHash": "c5584df6a18a45f6176834d0285d179f56e0bcf91ae93bced18082e47a573bc2"
     }
   ]
 }

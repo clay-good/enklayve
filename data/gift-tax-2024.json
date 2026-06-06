@@ -1,0 +1,13 @@
+{
+  "taxYear": 2026,
+  "annualExclusion": 19000,
+  "annualExclusionNonCitizenSpouse": 194000,
+  "lifetimeExemption": 15000000,
+  "topRate": 0.4,
+  "citation": {
+    "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+    "sourceDocument": "IRS Rev. Proc. 2025-32 (2026 gift/estate figures); IRC §2503(b), §2010, §2001(c)",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-05"
+  }
+}

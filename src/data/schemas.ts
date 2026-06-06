@@ -426,6 +426,70 @@ export const SocialSecuritySchema = z.object({
 });
 export type SocialSecurityData = z.infer<typeof SocialSecuritySchema>;
 
+/**
+ * Traditional-IRA deduction phase-out ranges (SPEC-3 §4.3, IRS annual notice;
+ * IRC §219(g)). When the taxpayer (or, for a joint filer, their spouse) is an
+ * active participant in a workplace plan, the deduction for a traditional-IRA
+ * contribution slides from the full contribution limit to zero as MAGI rises
+ * across the filing-status range. With no workplace-plan coverage there is no
+ * income limit at all, so no range applies. Each range is `{ low, high }`: full
+ * deduction at or below `low`, none at or above `high`, a pro-rated partial in
+ * between (Pub 590-A worksheet: round up to $10, floor at $200 inside the band).
+ */
+export const IraDeductionSchema = z.object({
+  taxYear: z.number().int(),
+  phaseOuts: z.object({
+    /** You are covered by a workplace plan (single or head of household). */
+    singleCovered: z.object({ low: z.number().gte(0), high: z.number().gte(0) }),
+    /** You are covered, filing jointly (or qualifying surviving spouse). */
+    marriedJointlyCovered: z.object({ low: z.number().gte(0), high: z.number().gte(0) }),
+    /** You are NOT covered but your spouse is, filing jointly. */
+    marriedJointlySpouseCovered: z.object({ low: z.number().gte(0), high: z.number().gte(0) }),
+    /** Married filing separately, either spouse covered (not inflation-indexed). */
+    marriedSeparatelyCovered: z.object({ low: z.number().gte(0), high: z.number().gte(0) }),
+  }),
+  citation: CitationSchema,
+});
+export type IraDeductionData = z.infer<typeof IraDeductionSchema>;
+
+/**
+ * Annual gift-tax exclusion and the lifetime gift/estate exemption (SPEC-3 §4.4,
+ * IRS annual revenue procedure; IRC §2503(b), §2010, §2001(c)). A present-interest
+ * gift up to `annualExclusion` per recipient per year is excluded outright; a gift
+ * to a non-citizen spouse has its own higher exclusion. Amounts over the exclusion
+ * draw down the `lifetimeExemption` (no tax until it is exhausted); beyond it the
+ * `topRate` (the 40% top gift-tax rate) applies.
+ */
+export const GiftTaxSchema = z.object({
+  taxYear: z.number().int(),
+  annualExclusion: z.number().gte(0),
+  annualExclusionNonCitizenSpouse: z.number().gte(0),
+  lifetimeExemption: z.number().gte(0),
+  topRate: z.number().gte(0).lte(1),
+  citation: CitationSchema,
+});
+export type GiftTaxData = z.infer<typeof GiftTaxSchema>;
+
+/**
+ * Alternative Minimum Tax exemption, phase-out, and rate breakpoint (SPEC-3 §4.7,
+ * IRS annual revenue procedure; IRC §55). The exemption shelters AMT income (AMTI)
+ * and itself phases out at `phaseoutRate` of AMTI above a filing-status threshold.
+ * The AMT base above the exemption is taxed at `rateLow` (26%) up to the
+ * filing-status 28% breakpoint and `rateHigh` (28%) beyond it. This shard powers a
+ * deliberately coarse screener, not a full Form 6251 computation.
+ */
+export const AmtSchema = z.object({
+  taxYear: z.number().int(),
+  exemptionByFilingStatus: amountByStatus,
+  phaseoutThresholdByFilingStatus: amountByStatus,
+  phaseoutRate: z.number().gte(0).lte(1),
+  rateLow: z.number().gte(0).lte(1),
+  rateHigh: z.number().gte(0).lte(1),
+  rate28ThresholdByFilingStatus: amountByStatus,
+  citation: CitationSchema,
+});
+export type AmtData = z.infer<typeof AmtSchema>;
+
 /** Every dataset kind referenced by the manifest (BUILD-SPEC.md §7.2). */
 export const DATASET_SCHEMAS = {
   "federal-income-tax": JurisdictionSchema,
@@ -444,6 +508,9 @@ export const DATASET_SCHEMAS = {
   medicaid: MedicaidSchema,
   fafsa: FafsaSchema,
   "social-security": SocialSecuritySchema,
+  "ira-deduction": IraDeductionSchema,
+  "gift-tax": GiftTaxSchema,
+  amt: AmtSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

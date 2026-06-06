@@ -23,10 +23,10 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 
 | Metric | Value | Where to check |
 |---|---|---|
-| Deterministic calculators | **53** in **10 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
+| Deterministic calculators | **56** in **10 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **28** — 18 income-tax states + DC + 9 no-income-tax | [`data/state-*-income-tax-*.json`](data) |
-| Cited dataset shards | **45**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | **704** unit/golden across 57 files, **+17** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Cited dataset shards | **48**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
+| Tests | **735** unit/golden across 59 files, **+17** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale preference touches `localStorage` | `npm run audit` |
 | UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
@@ -57,7 +57,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 
 ## What you can do with it
 
-**53 deterministic calculators**, each with a worked example, per-figure citations, a plain-English "How this works," "Learn more" links, and deep-linkable URL state. They're grouped into **10 plainly-named topic hubs** (a hub is one page with a segmented control switching between its calculators; the underlying engine is shared, so a number entered in one tool prefills every other). The **anti-budget** that gives every dollar a job lives directly on the home — it *is* the plan, in written form. Reach any calculator by ⌘K search or the crawlable [All Tools index](#cicd-and-deploy), which lists **every calculator by name under its hub** (and the static `tools.html` mirror links each one's pre-rendered landing page, so all 63 pages are reachable in one hop, not just via the sitemap).
+**56 deterministic calculators**, each with a worked example, per-figure citations, a plain-English "How this works," "Learn more" links, and deep-linkable URL state. They're grouped into **10 plainly-named topic hubs** (a hub is one page with a segmented control switching between its calculators; the underlying engine is shared, so a number entered in one tool prefills every other). The **anti-budget** that gives every dollar a job lives directly on the home — it *is* the plan, in written form. Reach any calculator by ⌘K search or the crawlable [All Tools index](#cicd-and-deploy), which lists **every calculator by name under its hub** (and the static `tools.html` mirror links each one's pre-rendered landing page, so all 66 pages are reachable in one hop, not just via the sitemap).
 
 ### Paycheck & Taxes
 
@@ -69,13 +69,15 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Federal Income Tax | Marginal + effective breakdown, standard vs itemized (the big four) |
 | Marginal Rate Explorer | What your next $1,000 of income actually costs |
 | Paycheck Optimizer | Tax saved per $1,000 into a 401(k) vs an HSA |
+| AMT Screener | A coarse yes/maybe/no on the Alternative Minimum Tax, with a Form 6251 pointer |
+| Gift Tax Checker | Whether a gift is taxable, or sits under the annual exclusion / lifetime exemption |
 
 ### Self-Employed & 1099
 
 | Tool | What it answers |
 |---|---|
 | Self-Employment Tax | The full 15.3%, the deductible half, the four 1040-ES installments |
-| Quarterly Taxes & Set-Aside | What to skim off each 1099 payment; the safe-harbor minimum |
+| Quarterly Taxes & Set-Aside | What to skim off each 1099 payment; the safe-harbor minimum; the four 1040-ES due dates (next-business-day rule applied) |
 | What Should I Charge? | Work backward from take-home to the billable hourly rate |
 | 1099 Contract vs W-2 Salary | The rough salary a contractor rate equals |
 | Self-Employed Retirement | SEP-IRA vs Solo 401(k), capped at the §415(c) limit |
@@ -98,6 +100,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Contribution Optimizer | 401(k)/IRA/HSA room left this year against IRS limits + catch-ups |
 | Roth Conversion Ladder | The 5-year seasoning schedule and the bridge stream it builds |
 | Backdoor / Mega-Backdoor Roth | The pro-rata rule; after-tax 401(k) room |
+| IRA Deduction Checker | Whether your traditional-IRA contribution is deductible at your income (IRC §219(g) phase-outs) |
 | Required Minimum Distribution | Balance ÷ the IRS Uniform Lifetime factor for your age |
 | Retirement Drawdown & RMD Timeline | How long savings last, in today's dollars |
 | Social Security Claiming Age | Benefit at 62 / FRA / 70 from the published SSA formula |
@@ -161,7 +164,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 
 | Tool | What it answers |
 |---|---|
-| Peace of Mind | Rainy-day cushion, runway, net worth, My Enough Number — one calm view |
+| Peace of Mind | Rainy-day cushion, runway, net worth, My Enough Number, and the time to reach it — one calm view |
 | Sabbatical / Big-Purchase Planner | What a break costs your runway |
 
 ---
@@ -225,7 +228,7 @@ The home is stripped to the essentials (redesigned through 2026-06-02; BUILD-SPE
 +---------------------------------------------------------------+
 ```
 
-A state whose income tax isn't modeled yet shows an **honest amber note** ("we don't model X's state income tax yet, so this shows federal + FICA only") rather than silently under-counting. Every view is **vertical-scroll only on every device width** — form controls shrink inside their grid track (`min-width: 0`), wide "show the math" tables and chart timelines get their own contained horizontal scroll, and an `overflow-x: clip` backstop on both the content column *and the document root* guarantees the viewport itself never scrolls sideways. `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch. A Playwright suite **measures** this — every view and all 53 calculators, from 320px to 1440px, plus landscape phones — so a regression fails CI rather than shipping.
+A state whose income tax isn't modeled yet shows an **honest amber note** ("we don't model X's state income tax yet, so this shows federal + FICA only") rather than silently under-counting. Every view is **vertical-scroll only on every device width** — form controls shrink inside their grid track (`min-width: 0`), wide "show the math" tables and chart timelines get their own contained horizontal scroll, and an `overflow-x: clip` backstop on both the content column *and the document root* guarantees the viewport itself never scrolls sideways. `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch. A Playwright suite **measures** this — every view and all 56 calculators, from 320px to 1440px, plus landscape phones — so a regression fails CI rather than shipping.
 
 ---
 
@@ -241,7 +244,7 @@ flowchart TD
         CP["⌘K command palette (fuzzy)"]
         CH["accessible charts (donut / flow / timeline)"]
     end
-    subgraph TILES["src/tiles — 53 calculators in 10 hubs"]
+    subgraph TILES["src/tiles — 56 calculators in 10 hubs"]
         T1["one module per tool; a hub hosts several"]
     end
     subgraph PROFILE["src/profile — My Situation"]
@@ -361,6 +364,7 @@ flowchart TD
 | SNAP allotments + deductions | USDA FNS | Annual, Oct | 2 |
 | Medicaid MAGI thresholds | CMS / state pubs | Annual | 2 |
 | FAFSA SAI + Pell schedule | Dept. of Education | Annual | 2 |
+| IRA deduction phase-outs · gift-tax exclusion/exemption · AMT exemption | IRS annual notice / rev. proc. (Notice 2025-67, Rev. Proc. 2025-32) | Annual | 1 |
 
 **Every seeded income-tax jurisdiction now has a refresh adapter,** organized by the shape the parser anchors: standard-deduction states (CA, NY, GA, NC, DC), flat-rate states (PA, IL, MI, AZ, CO, IN, KY, ID — IN's personal exemption overlaid like IL's), graduated bracket-table states (OH, plus MS as a two-tier "0% then a flat rate over a $10,000 floor"), and the one special case, MA, whose 5% base rate plus 4% surtax over an inflation-adjusted threshold fits neither parser, so it gets a small dedicated parser that anchors the two figures that actually move (the base rate and the threshold). The no-income-tax records have nothing to refresh. See [docs/data-sources.md](docs/data-sources.md) and [docs/source-diff-log.md](docs/source-diff-log.md).
 
@@ -413,9 +417,9 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 - **Provenance gate.** Every shipped figure must resolve to a non-empty citation — no orphan numbers ship. On screen, every statutory breakdown line carries an inline "source" link; a citation's name (`sourceDocument`) is capped at 160 characters so the hover tooltip stays readable, with the long "why this value / transcription" rationale split into a `sourceNote` that the Readout Report renders where it can wrap. The audit enforces the cap so the convention can't silently regress (SPEC-3 §3, [docs/specs/SPEC-3-citations.md](docs/specs/SPEC-3-citations.md)).
 - **Accessibility.** axe-core runs inside the test suite across the home, About, All Tools, the Readout, the Report, and every tile form, with **zero violations**. A **skip-to-content link** (WCAG 2.4.1) is the first focusable element on every page — it focuses the `<main>` directly (no hash navigation), and focus moves into the content region after each route change; visible focus rings throughout, and the command palette is fully keyboard-operable, never traps, and restores focus to the prior element when dismissed.
 - **Release audit.** `npm run audit` mechanically verifies CSP `connect-src 'none'`, no cross-origin loads in the built output, full citation coverage, the ≤160-char citation-name cap, and no sensitive persistence.
-- **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 53 calculators** at a 360px phone, **plus landscape phones** (short viewports, where the ⌘K palette must also stay within the screen) and **every Readout state that renders only after a file drop** — the confirm + summary (driven through the real anchored extractor with a sample W-2), and the unrecognized-document warning, the encrypted-restore unlock row, the wrong-passphrase error, and a successful restore feeding a populated Report — the **offline** service worker (loads with the network cut), the deep-link → compute path, that **print media strips the app chrome** so the Report prints as a clean document, and that **no tool hangs or renders NaN/Infinity** when every field is set to an absurd value. It runs as its own CI job so the unit suite stays fast.
+- **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 56 calculators** at a 360px phone, **plus landscape phones** (short viewports, where the ⌘K palette must also stay within the screen) and **every Readout state that renders only after a file drop** — the confirm + summary (driven through the real anchored extractor with a sample W-2), and the unrecognized-document warning, the encrypted-restore unlock row, the wrong-passphrase error, and a successful restore feeding a populated Report — the **offline** service worker (loads with the network cut), the deep-link → compute path, that **print media strips the app chrome** so the Report prints as a clean document, and that **no tool hangs or renders NaN/Infinity** when every field is set to an absurd value. It runs as its own CI job so the unit suite stays fast.
 
-**704 unit/golden tests across 57 files** (plus 17 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**735 unit/golden tests across 59 files** (plus 17 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -465,7 +469,7 @@ See the spec files for the full per-wave history.
 |---|---|
 | `src/engine` | Money math, citation/provenance, the tax evaluator, and per-domain math |
 | `src/data` | Dataset schemas, integrity check, manifest loader, fail-safe gate, browser loader |
-| `src/tiles` | One module per calculator (53 of them), the hub factory, and the registry |
+| `src/tiles` | One module per calculator (56 of them), the hub factory, and the registry |
 | `src/ui` | Render layer, the light theme, result card, command palette, router, charts, views |
 | `src/profile` | My Situation — the in-memory session profile and the portable encrypted-export module |
 | `src/readout` | Anchored extractors, the confirm flow, and the Readout Report builder |
@@ -527,7 +531,7 @@ The [launch checklist](docs/launch-checklist.md) walks every acceptance criterio
 - **The user supplies the one un-bundleable figure.** Rather than ship a genuinely huge dataset, a few tools ask for the single local number (ACA's county benchmark premium, Social Security's PIA, the W-4 paycheck withholding) and keep every other figure verifiable.
 - **Consolidation over duplication.** Rainy Day / Runway / War Chest / Enough Number share one computation, so they're one Peace of Mind dashboard, not four tools that re-collect the same inputs.
 - **Never predict markets.** Where a return or inflation rate is needed, the user supplies it or accepts a labeled default; CPI is used only for the honest "what a past dollar is worth" question.
-- **One eager shell, heavy libs lazy.** All ~53 calculators ship in a single bundle (~140 kB gzipped) that the service worker precaches whole, so the app is instant and works fully offline after the first visit. The only genuinely large dependencies — pdf.js, mammoth, and tesseract.js, used solely by the Readout — are dynamically imported into their own lazy chunks and runtime-cached on first use, so they never weigh down the shell. (Vite's 500 kB chunk warning is tuned up accordingly, with a documented regression tripwire.)
+- **One eager shell, heavy libs lazy.** All ~56 calculators ship in a single bundle (~140 kB gzipped) that the service worker precaches whole, so the app is instant and works fully offline after the first visit. The only genuinely large dependencies — pdf.js, mammoth, and tesseract.js, used solely by the Readout — are dynamically imported into their own lazy chunks and runtime-cached on first use, so they never weigh down the shell. (Vite's 500 kB chunk warning is tuned up accordingly, with a documented regression tripwire.)
 
 ---
 
@@ -541,6 +545,8 @@ Deferred *for accuracy or scope*, not faked:
 - **Per-filing-status graduated state schedules** — for any future state whose marginal tiers differ by filing status (none of the seeded income-tax states do).
 
 The Playwright live-offline + responsiveness e2e suite, previously deferred, now ships as its own CI job (see [Determinism & verification](#determinism--verification)).
+
+**SPEC-3 §4 next wave — first batch shipped.** The IRA Deduction Checker, Gift Tax Checker, AMT Screener, the Quarterly-Taxes due-date calendar, and the Peace-of-Mind arrival date are built, cited to the 2026 IRS figures, and tested. Still queued, each a clean increment against the same bar: cross-tool "related tools" linking (§4.1), a kiddie-tax estimator (§4.5), an AOTC-vs-Lifetime-Learning education-credit comparison (§4.6), and opt-in sensitivity bands for the assumption-heavy tools (§4.9). Anything needing a market-return forecast stays parked — sensitivity bands are the in-scope answer.
 
 ---
 

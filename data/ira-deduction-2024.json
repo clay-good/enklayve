@@ -1,0 +1,15 @@
+{
+  "taxYear": 2026,
+  "phaseOuts": {
+    "singleCovered": { "low": 81000, "high": 91000 },
+    "marriedJointlyCovered": { "low": 129000, "high": 149000 },
+    "marriedJointlySpouseCovered": { "low": 242000, "high": 252000 },
+    "marriedSeparatelyCovered": { "low": 0, "high": 10000 }
+  },
+  "citation": {
+    "sourceUrl": "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
+    "sourceDocument": "IRS Notice 2025-67 (2026 IRA deduction phase-out ranges); IRC §219(g)",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-05"
+  }
+}

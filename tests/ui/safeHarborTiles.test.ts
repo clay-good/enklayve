@@ -56,7 +56,7 @@ function fundedProfile(): SituationStore {
 afterEach(() => document.body.replaceChildren());
 
 describe("Peace of Mind dashboard", () => {
-  it("shows all four calm readings from shared inputs", () => {
+  it("shows all calm readings from shared inputs", () => {
     const { root } = mount(mountPeaceOfMind, new URLSearchParams(), fundedProfile());
     const labels = texts(root, ".ph-reading-label");
     expect(labels).toEqual([
@@ -64,6 +64,7 @@ describe("Peace of Mind dashboard", () => {
       "Runway",
       "Net worth (war chest)",
       "My Enough Number",
+      "Time to your Enough Number",
     ]);
     // Net worth = 12,000 savings + 0 other − 4,000 debts; the sub-line shows the parts.
     const netWorthSub = texts(root, ".ph-reading-sub").find((t) => t.includes("debts"));
@@ -97,7 +98,7 @@ describe("Peace of Mind dashboard", () => {
     const { root } = mount(mountPeaceOfMind, new URLSearchParams());
     clickExample(root);
     expect(root.querySelector<HTMLInputElement>('input[name="essential"]')?.value).toBe("3200");
-    expect(root.querySelectorAll(".ph-reading")).toHaveLength(4);
+    expect(root.querySelectorAll(".ph-reading")).toHaveLength(5);
   });
 
   it("has no axe violations with readings shown", async () => {

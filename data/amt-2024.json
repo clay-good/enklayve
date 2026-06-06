@@ -1,0 +1,33 @@
+{
+  "taxYear": 2026,
+  "exemptionByFilingStatus": {
+    "single": 90100,
+    "head_of_household": 90100,
+    "married_jointly": 140200,
+    "qualifying_surviving_spouse": 140200,
+    "married_separately": 70100
+  },
+  "phaseoutThresholdByFilingStatus": {
+    "single": 500000,
+    "head_of_household": 500000,
+    "married_jointly": 1000000,
+    "qualifying_surviving_spouse": 1000000,
+    "married_separately": 500000
+  },
+  "phaseoutRate": 0.25,
+  "rateLow": 0.26,
+  "rateHigh": 0.28,
+  "rate28ThresholdByFilingStatus": {
+    "single": 244500,
+    "head_of_household": 244500,
+    "married_jointly": 244500,
+    "qualifying_surviving_spouse": 244500,
+    "married_separately": 122250
+  },
+  "citation": {
+    "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+    "sourceDocument": "IRS Rev. Proc. 2025-32 (2026 AMT exemption & thresholds); IRC §55 (26%/28% rates)",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-05"
+  }
+}

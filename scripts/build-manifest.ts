@@ -151,6 +151,15 @@ const SHARDS: ShardSource[] = [
     shard: "social-security-2024.json",
     ...ANNUAL,
   },
+  // SPEC-3 §4 next-wave tools — deterministic screeners over cited IRS figures.
+  {
+    id: "ira-deduction-2024",
+    kind: "ira-deduction",
+    shard: "ira-deduction-2024.json",
+    ...ANNUAL,
+  },
+  { id: "gift-tax-2024", kind: "gift-tax", shard: "gift-tax-2024.json", ...ANNUAL },
+  { id: "amt-2024", kind: "amt", shard: "amt-2024.json", ...ANNUAL },
 ];
 
 function sha256Hex(buf: Buffer): string {

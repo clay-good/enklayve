@@ -32,7 +32,10 @@ import { taxLossHarvestingTile } from "./taxLossHarvesting";
 import { lotPickerTile } from "./lotPicker";
 import { rothLadderTile } from "./rothLadder";
 import { backdoorRothTile } from "./backdoorRoth";
+import { iraDeductionTile } from "./iraDeduction";
 import { balanceTransferTile } from "./balanceTransfer";
+import { giftTaxTile } from "./giftTax";
+import { amtScreenerTile } from "./amtScreener";
 import { paycheckOptimizerTile } from "./paycheckOptimizer";
 import { w4WithholdingTile } from "./w4Withholding";
 import { socialSecurityTile } from "./socialSecurity";
@@ -82,6 +85,8 @@ const HUB_CONFIGS: HubConfig[] = [
       federalIncomeTaxTile,
       marginalExplorerTile,
       paycheckOptimizerTile,
+      amtScreenerTile,
+      giftTaxTile,
     ],
   },
   {
@@ -122,6 +127,7 @@ const HUB_CONFIGS: HubConfig[] = [
       retirementOptimizerTile,
       rothLadderTile,
       backdoorRothTile,
+      iraDeductionTile,
       rmdTile,
       drawdownTile,
       socialSecurityTile,
