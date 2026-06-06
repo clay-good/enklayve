@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-06-05",
+  "generatedAt": "2026-06-06",
   "datasets": [
     {
       "id": "federal-income-tax-2024",
@@ -89,9 +89,9 @@
       "staleAfterYears": 2,
       "shard": "cpi-u-annual.json",
       "sourceUrl": "https://www.bls.gov/cpi/",
-      "sourceDocument": "U.S. Bureau of Labor Statistics, CPI for All Urban Consumers (CPI-U), U.S. city average, all items, annual averages (1982-84=100). The 2025 figure reflects the Jan-Sep average; the October 2025 release was delayed by the 2025 appropriations lapse.",
+      "sourceDocument": "U.S. Bureau of Labor Statistics, CPI for All Urban Consumers (CPI-U), U.S. city average, all items, annual averages (1982-84=100)",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "ccfd88d6e3c96279d1ea103538c56ddfadc71ba35c5cd04d3a93219064c779ff"
+      "contentHash": "75206df69e64d22d9708b6b51fa556753d888cbfefbf653f3312be0b715f311d"
     },
     {
       "id": "state-ca-income-tax-2024",
@@ -102,9 +102,9 @@
       "staleAfterYears": 2,
       "shard": "state-ca-income-tax-2024.json",
       "sourceUrl": "https://www.ftb.ca.gov/forms/2025/2025-540-tax-rate-schedules.pdf",
-      "sourceDocument": "California FTB. Bracket thresholds are the FTB 2025 California Tax Rate Schedules (Schedule X single/MFS, Schedule Y MFJ/QSS, Schedule Z head of household) — the most recent rate schedule the FTB has published; the 2026-indexed brackets are not yet issued, so these latest-published values are used (a small under-index vs. an unknown ~3% CCPI bump). The 2026 standard deduction ($5,706 single/MFS, $11,412 MFJ/HoH/QSS) is confirmed from the FTB 2026 Form 540-ES estimated-tax worksheet. The 1% Behavioral Health Services Tax (Prop 63) applies to taxable income over $1,000,000.",
+      "sourceDocument": "California FTB 2025 California Tax Rate Schedules; 2026 standard deduction (FTB Form 540-ES)",
       "dateRetrieved": "2026-06-05",
-      "contentHash": "0a97f9d0092d18dcbfd4b20dcc13d84b1703ae0663aa0a88280451f7a3980c37"
+      "contentHash": "748eae71da865b1a8d2d268717d456c9924c99f68236168312525efdd10767a3"
     },
     {
       "id": "state-ny-income-tax-2024",
@@ -232,9 +232,9 @@
       "staleAfterYears": 2,
       "shard": "state-dc-income-tax-2024.json",
       "sourceUrl": "https://otr.cfo.dc.gov/page/dc-individual-and-fiduciary-income-tax-rates",
-      "sourceDocument": "DC Office of Tax and Revenue individual income tax rates (effective 2026): DC's bracket schedule is statutory (set by the FY2023 Budget Support Act) and is not inflation-indexed, so it is unchanged through 2026; the standard deduction conforms to the federal standard deduction ($16,100/$32,200/$24,150 for 2026).",
+      "sourceDocument": "DC Office of Tax and Revenue, individual income tax rates (effective 2026)",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "4a7365c9b004c9ffbf3eb3c52bd68969208683df43fabb46966edcd45fdf933e"
+      "contentHash": "a737c1d4ad85602ac6209698967365c9b4ee78f948cb0cd36840c96f66958250"
     },
     {
       "id": "state-ak-income-tax-2024",
@@ -414,9 +414,9 @@
       "staleAfterYears": 2,
       "shard": "state-id-income-tax-2024.json",
       "sourceUrl": "https://tax.idaho.gov/taxes/income-tax/individual-income/individual-income-tax-rate-schedule/",
-      "sourceDocument": "Idaho State Tax Commission, 5.3% flat tax on Idaho taxable income (HB 40, 2025); Idaho conforms to the federal standard deduction. The rate schedule's small 0% floor on the first ~$4,811 (single) / ~$9,622 (MFJ) of taxable income is omitted, so the figure errs slightly high (the conservative side for setting money aside); the 2026 floor is not yet published.",
+      "sourceDocument": "Idaho State Tax Commission, 5.3% flat tax on Idaho taxable income (HB 40, 2025)",
       "dateRetrieved": "2026-06-03",
-      "contentHash": "adc7e962aa275ebbed6c1b6b364fece57f69581a21eacc307bc1104c5033a22c"
+      "contentHash": "e2218fe49c952d54f0667f134a17ba8ca261a907d13899ec29057ed3ab6d1692"
     },
     {
       "id": "state-ut-income-tax-2024",
@@ -427,9 +427,9 @@
       "staleAfterYears": 2,
       "shard": "state-ut-income-tax-2024.json",
       "sourceUrl": "https://incometax.utah.gov/credits/taxpayer-tax-credit",
-      "sourceDocument": "Utah State Tax Commission: 4.45% flat tax on Utah taxable income for tax year 2026 (SB 60, 2026 session, cutting the 2025 rate of 4.5%). Utah has no standard deduction — it taxes federal AGI directly and grants relief through the nonrefundable taxpayer tax credit (Utah Code §59-10-1018): 6% of the federal deduction, reduced by 1.3% of taxable income above a filing-status base ($18,213 single/MFS, $27,320 HoH, $36,426 MFJ/QSS), at the most recent published (2025) base amounts pending the 2026-indexed figures. The $2,111-per-dependent personal exemption that would enlarge the credit base is omitted (the engine models the no-dependent filer, like every other state), so the figure errs slightly high — the conservative side for setting money aside.",
+      "sourceDocument": "Utah State Tax Commission, 4.45% flat individual income tax for tax year 2026 (SB 60, 2026 session)",
       "dateRetrieved": "2026-06-05",
-      "contentHash": "383a539d9a605c4ec59824607a21931bdcf36bafc3ed79e3cac7656e4b6700b4"
+      "contentHash": "d12e1197fdd51843ba952086fb61727eb71f6b1d91841c3baa3d80ec7b5c4f76"
     },
     {
       "id": "state-la-income-tax-2024",
@@ -440,9 +440,9 @@
       "staleAfterYears": 2,
       "shard": "state-la-income-tax-2024.json",
       "sourceUrl": "https://dam.ldr.la.gov/lawspolicies/RIB-25-012-Louisiana-Individual-Income-Tax-Reform-1.pdf",
-      "sourceDocument": "Louisiana Department of Revenue, RIB 25-012: a flat 3% individual income tax for tax years on or after 2025 (Act 11, 2024 Third Extraordinary Session), replacing the graduated 1.85%/3.5%/4.25% brackets and the federal-tax deduction. Standard deduction $12,875 single/MFS, $25,750 MFJ/qualifying surviving spouse/head of household (the doubled amount covers HoH, unlike the federal split) — the 2026 CPI-U-indexed figures (the 2025 base of $12,500/$25,000 grown 3.0%), per Act 11's annual inflation adjustment first applied January 1, 2026, cross-checked against the Tax Foundation 2026 state table. Per-dependent deductions are deferred (the engine's no-dependent assumption, shared by every modeled state).",
+      "sourceDocument": "Louisiana Department of Revenue, RIB 25-012 — flat 3% individual income tax for 2025+ (Act 11, 2024 Third Extraordinary Session)",
       "dateRetrieved": "2026-06-05",
-      "contentHash": "2305b1e618b1cd49c6a5304101b0ad495562dd9aff08b786f1e980e69f949b6b"
+      "contentHash": "79bf4ef66a749bc0ce5f5c277fe65368a07d782052abd3cca0154976c8829f23"
     },
     {
       "id": "state-ia-income-tax-2024",
@@ -453,9 +453,9 @@
       "staleAfterYears": 2,
       "shard": "state-ia-income-tax-2024.json",
       "sourceUrl": "https://revenue.iowa.gov/press-release/2025-10-21/idr-announces-2026-individual-income-tax-and-interest-rates",
-      "sourceDocument": "Iowa Department of Revenue: a flat 3.8% individual income tax for tax years 2025 and after (Senate File 2442, 2024), replacing the prior graduated schedule. Iowa conforms to the federal standard deduction (the Idaho/Colorado pattern), $16,100/$32,200/$24,150 for 2026. Cross-checked against the Tax Foundation 2026 state table. Iowa's $40 single / $80 married personal-exemption credit (a small flat nonrefundable credit) and the opt-in local school-district surtaxes are omitted at launch fidelity, like every state's credits and county/municipal add-ons, so the figure errs slightly high (by at most $40/$80) — the conservative side for setting money aside.",
+      "sourceDocument": "Iowa Department of Revenue, flat 3.8% individual income tax for tax years 2025 and after (Senate File 2442, 2024)",
       "dateRetrieved": "2026-06-05",
-      "contentHash": "315f9b55978fea5900b53905048f57b1cd1bfd25c8c0b761c0210d08fad917af"
+      "contentHash": "f65f845154d6887b4948b713024d2955a62334ee7e2d3320528ae40bef8a77a2"
     },
     {
       "id": "federal-poverty-level-2024-contiguous",
@@ -557,9 +557,9 @@
       "staleAfterYears": 2,
       "shard": "aca-2024.json",
       "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-25.pdf",
-      "sourceDocument": "IRS Revenue Procedure 2025-25 (2026 §36B applicable percentages). The ARPA/IRA enhanced subsidies expired after 2025, so the 400% FPL eligibility cliff returns for plan year 2026 and there is no premium tax credit above 400% FPL.",
+      "sourceDocument": "IRS Revenue Procedure 2025-25 (2026 §36B applicable percentages)",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "57977c17ccac03f0da6769e02c8aac3adebff12f48d6b947ecf81cb53ba4e40e"
+      "contentHash": "8a7a12cab671255d4f3c9774e44f4b9b48160241066b5626c1d1c7714b32921d"
     },
     {
       "id": "fafsa-2024-2025",
@@ -570,9 +570,9 @@
       "staleAfterYears": 2,
       "shard": "fafsa-2024-2025.json",
       "sourceUrl": "https://fsapartners.ed.gov/knowledge-center/library/handbooks-manuals-or-guides/2025-06-13/2026-27-student-aid-index-sai-and-pell-grant-eligibility-guide-updated-aug-25-2025",
-      "sourceDocument": "U.S. Department of Education (Federal Student Aid), 2026-27 SAI and Pell Grant Eligibility Guide (dependent student). Parents' income protection allowance is the guide's exact Table A2 ($29,190 / $36,330 / $44,880 / $52,950 / $61,930 for family sizes 2-6, +$6,990 per additional member); the parents' AAI assessment is the exact Table A5 marginal schedule (22% to $21,800, then 25% / 29% / 34% / 40% / 47% at $21,800 / $27,300 / $32,800 / $38,400 / $43,900). Student IPA $11,770, employment-expense allowance 35% capped at $5,000, parent asset rate 12%, student income rate 50%, student asset rate 20%, SAI floor -$1,500. Max Pell $7,395 / min $740 (2026-27 ED Dear Colleague Letter). The Table A5 -$8,500/-$1,870 negative-AAI floor is approximated by the lowest rate applied to negative AAI; the SAI floor at -$1,500 dominates that region.",
+      "sourceDocument": "U.S. Department of Education (Federal Student Aid), 2026-27 SAI and Pell Grant Eligibility Guide (dependent student)",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "ab66b1bbe03d069fc384b6e529f78e4957ef1b0c6b3fd72e9136e4d57b7f579a"
+      "contentHash": "f8f358314536f23b35c56205aa02a74e288e5c8b86f704108f19670cc30c5129"
     },
     {
       "id": "social-security-2024",

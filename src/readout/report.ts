@@ -56,7 +56,13 @@ export interface ReportModel {
   appendix: {
     assumptions: ReportLine[];
     datasets: { id: string; effectiveYear: number; status: string }[];
-    citations: { sourceDocument: string; sourceUrl: string; effectiveYear: number }[];
+    citations: {
+      sourceDocument: string;
+      sourceUrl: string;
+      effectiveYear: number;
+      /** The long rationale/transcription prose, kept out of the hover tooltip. */
+      sourceNote?: string;
+    }[];
   };
 }
 
@@ -92,6 +98,7 @@ function dedupeCitations(citations: CitationData[]): ReportModel["appendix"]["ci
       sourceDocument: c.sourceDocument,
       sourceUrl: c.sourceUrl,
       effectiveYear: c.effectiveYear,
+      sourceNote: c.sourceNote,
     });
   }
   return out;
@@ -316,10 +323,10 @@ export function renderReportHtml(model: ReportModel): string {
     )
     .join("\n");
   const citations = model.appendix.citations
-    .map(
-      (c) =>
-        `        <li>${esc(c.sourceDocument)} (${c.effectiveYear}), <a href="${esc(c.sourceUrl)}">${esc(c.sourceUrl)}</a></li>`,
-    )
+    .map((c) => {
+      const note = c.sourceNote ? `<br /><span class="cite-note">${esc(c.sourceNote)}</span>` : "";
+      return `        <li>${esc(c.sourceDocument)} (${c.effectiveYear}), <a href="${esc(c.sourceUrl)}">${esc(c.sourceUrl)}</a>${note}</li>`;
+    })
     .join("\n");
 
   return `<!doctype html>
@@ -349,6 +356,8 @@ export function renderReportHtml(model: ReportModel): string {
       td { color: #1e1b2e; }
       .appendix { margin-top: 2rem; border-top: 2px solid #ede9fe; padding-top: 1rem; }
       .appendix ul { padding-left: 1.1rem; }
+      .appendix li { margin-bottom: 0.4rem; }
+      .cite-note { color: #5b5570; font-size: 0.85rem; line-height: 1.4; }
       a { color: #6d28d9; word-break: break-all; }
       footer { margin-top: 2rem; color: #5b5570; font-size: 0.85rem; }
     </style>

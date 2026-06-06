@@ -86,8 +86,12 @@ export function mountFreelanceRate(ctx: TileContext): void {
     const profitNeeded = taxRate < 1 ? fields.takeHome / (1 - taxRate) : 0;
     const revenueNeeded = profitNeeded + fields.expenses;
     const billableHours = fields.billableHoursPerWeek * fields.weeksPerYear;
-    const hourly = billableHours > 0 ? revenueNeeded / billableHours : 0;
+    const hasHours = billableHours > 0;
+    const hourly = hasHours ? revenueNeeded / billableHours : 0;
     const fmt = (m: Money): string => m.format(ctx.locale);
+    // With no billable hours there is no rate to bill — say so rather than show a
+    // bare $0.00 that doesn't tie back to the empty input (SPEC-3-hardening §B4).
+    const rate = (m: Money): string => (hasHours ? fmt(m) : "(enter billable hours)");
 
     const lines: BreakdownLine[] = [
       { label: "Take-home you want", value: fmt(Money.from(fields.takeHome)) },
@@ -102,8 +106,8 @@ export function mountFreelanceRate(ctx: TileContext): void {
         // toLocaleString renders Infinity as "∞"; guard it like the money fields.
         value: `${Number.isFinite(billableHours) ? billableHours.toLocaleString(ctx.locale) : "(out of range)"} (${fields.billableHoursPerWeek}/wk × ${fields.weeksPerYear} wks)`,
       },
-      { label: "Rate to bill per hour", value: fmt(Money.from(hourly)), emphasis: true },
-      { label: "Day rate (8 hours)", value: fmt(Money.from(hourly * HOURS_PER_DAY)) },
+      { label: "Rate to bill per hour", value: rate(Money.from(hourly)), emphasis: true },
+      { label: "Day rate (8 hours)", value: rate(Money.from(hourly * HOURS_PER_DAY)) },
       {
         label: "Remember",
         value:

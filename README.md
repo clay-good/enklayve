@@ -15,7 +15,7 @@ It's meant to feel like peace in a transactional web. Every figure is reproducib
 
 Scope is the **United States** today (federal and state taxes and benefits); Europe, then India, China, and Russia are on the roadmap as each jurisdiction's rules are learned properly. enklayve is educational information, not financial, tax, investment, or legal advice.
 
-See [docs/specs/SPEC.md](docs/specs/SPEC.md) (the vision + Phases 0–11) and [docs/specs/SPEC-2.md](docs/specs/SPEC-2.md) (experience, ingestion, guidance + Phases 12–17) for the full plan.
+See [docs/specs/SPEC.md](docs/specs/SPEC.md) (the vision + Phases 0–11), [docs/specs/SPEC-2.md](docs/specs/SPEC-2.md) (experience, ingestion, guidance + Phases 12–17), and [docs/specs/SPEC-3.md](docs/specs/SPEC-3.md) (the trust pass: robustness invariants, citation integrity, and the next-wave roadmap) for the full plan.
 
 ### By the numbers
 
@@ -25,8 +25,8 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 |---|---|---|
 | Deterministic calculators | **53** in **10 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **28** — 18 income-tax states + DC + 9 no-income-tax | [`data/state-*-income-tax-*.json`](data) |
-| Cited dataset shards | **45**, each with a sibling `.sha256` + manifest entry | [`data/manifest.json`](data/manifest.json) |
-| Tests | **685** unit/golden across 56 files, **+17** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Cited dataset shards | **45**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
+| Tests | **704** unit/golden across 57 files, **+17** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale preference touches `localStorage` | `npm run audit` |
 | UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
@@ -408,13 +408,14 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 - **Golden corpus.** Hundreds of `inputs + dataset → expected output` cases under [`tests/golden`](tests). CI fails if any case drifts; it's also the gate every data-refresh PR must pass. Regenerate an intended change with `npm run golden:regen`.
 - **Cross-validation.** Federal/state/FICA cases are checked against published worked examples for the seeded tax year.
 - **Bounds & fuzz.** More income never decreases tax owed within a bracket; take-home is never negative; marginal rate is never below zero (seeded fuzz, thousands of iterations).
+- **Robustness property suite.** A deterministic property suite ([`tests/engine/propertyInvariants.test.ts`](tests/engine/propertyInvariants.test.ts), SPEC-3 §2.9) sweeps every public engine function over the boundary space — zero, negative, fractional, near-`MAX_SAFE_INTEGER`, and absent-key — and asserts no function throws and no `Money` it returns is non-finite, so the screen can never paint `$NaN`. It also pins the load-bearing statutory identities: self-employment tax on the 92.35% base, long-term capital gains *stacking* on ordinary income, the EITC plateau paying exactly the max credit, and the TreasuryDirect I-bond composite-rate formula.
 - **No-hang, no-NaN robustness.** Every horizon (years / months / compounding periods) and dynamic-row count is clamped at the engine, so an absurd input — or a crafted deep link — can never spin a runaway loop or an astronomically large `Decimal.pow` and freeze the tab. And the display layer is the last line of defense: a value that overflows JS `Number` range or computes to NaN renders a neutral "(out of range)" sentinel rather than "$NaN"/"$∞" — guarded at the formatting chokepoints (`Money.format`, the percent helper, and the count-up animation). An all-tools e2e sweeps the whole catalog across five hostile input classes — a big-but-finite `999,999,999`, zero (divide-by-zero bait), a negative, and magnitudes near and over `Number.MAX_VALUE` (`1e308`) that overflow intermediate math to `Infinity` (where `Infinity / Infinity` becomes NaN and `Intl` prints the `∞` glyph, both of which the sweep matches) — and asserts zero hangs and zero NaN/Infinity/∞; `horizonCaps`, `money`, and `countup` unit tests hold the individual bounds. The fragment router is equally forgiving: a garbled link with a malformed percent-sequence (`#/%`) falls back to the home instead of throwing and blanking the page.
-- **Provenance gate.** Every shipped figure must resolve to a non-empty citation — no orphan numbers ship.
+- **Provenance gate.** Every shipped figure must resolve to a non-empty citation — no orphan numbers ship. On screen, every statutory breakdown line carries an inline "source" link; a citation's name (`sourceDocument`) is capped at 160 characters so the hover tooltip stays readable, with the long "why this value / transcription" rationale split into a `sourceNote` that the Readout Report renders where it can wrap. The audit enforces the cap so the convention can't silently regress (SPEC-3 §3, [docs/specs/SPEC-3-citations.md](docs/specs/SPEC-3-citations.md)).
 - **Accessibility.** axe-core runs inside the test suite across the home, About, All Tools, the Readout, the Report, and every tile form, with **zero violations**. A **skip-to-content link** (WCAG 2.4.1) is the first focusable element on every page — it focuses the `<main>` directly (no hash navigation), and focus moves into the content region after each route change; visible focus rings throughout, and the command palette is fully keyboard-operable, never traps, and restores focus to the prior element when dismissed.
-- **Release audit.** `npm run audit` mechanically verifies CSP `connect-src 'none'`, no cross-origin loads in the built output, full citation coverage, and no sensitive persistence.
+- **Release audit.** `npm run audit` mechanically verifies CSP `connect-src 'none'`, no cross-origin loads in the built output, full citation coverage, the ≤160-char citation-name cap, and no sensitive persistence.
 - **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 53 calculators** at a 360px phone, **plus landscape phones** (short viewports, where the ⌘K palette must also stay within the screen) and **every Readout state that renders only after a file drop** — the confirm + summary (driven through the real anchored extractor with a sample W-2), and the unrecognized-document warning, the encrypted-restore unlock row, the wrong-passphrase error, and a successful restore feeding a populated Report — the **offline** service worker (loads with the network cut), the deep-link → compute path, that **print media strips the app chrome** so the Report prints as a clean document, and that **no tool hangs or renders NaN/Infinity** when every field is set to an absurd value. It runs as its own CI job so the unit suite stays fast.
 
-**685 unit/golden tests across 56 files** (plus 17 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**704 unit/golden tests across 57 files** (plus 17 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -487,7 +488,7 @@ npm run typecheck      # tsc --noEmit
 npm run lint           # eslint
 npm run format         # prettier --write
 npm run build          # production build to dist/
-npm run audit          # CSP / no cross-origin loads / provenance / no sensitive persistence
+npm run audit          # CSP / no cross-origin loads / provenance / citation length / no sensitive persistence
 npm run data:manifest  # regenerate data/manifest.json + .sha256 after editing a shard
 npm run golden:regen   # regenerate the tax-engine golden snapshot after an intended change
 npm run og:image       # regenerate the 1200x630 social-card PNG after a brand/copy change

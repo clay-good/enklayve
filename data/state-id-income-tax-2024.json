@@ -35,7 +35,8 @@
   },
   "citation": {
     "sourceUrl": "https://tax.idaho.gov/taxes/income-tax/individual-income/individual-income-tax-rate-schedule/",
-    "sourceDocument": "Idaho State Tax Commission, 5.3% flat tax on Idaho taxable income (HB 40, 2025); Idaho conforms to the federal standard deduction. The rate schedule's small 0% floor on the first ~$4,811 (single) / ~$9,622 (MFJ) of taxable income is omitted, so the figure errs slightly high (the conservative side for setting money aside); the 2026 floor is not yet published.",
+    "sourceDocument": "Idaho State Tax Commission, 5.3% flat tax on Idaho taxable income (HB 40, 2025)",
+    "sourceNote": "Idaho conforms to the federal standard deduction. The rate schedule's small 0% floor on the first ~$4,811 (single) / ~$9,622 (MFJ) of taxable income is omitted, so the figure errs slightly high (the conservative side for setting money aside); the 2026 floor is not yet published.",
     "effectiveYear": 2026,
     "dateRetrieved": "2026-06-03"
   },

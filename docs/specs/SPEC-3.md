@@ -141,10 +141,12 @@ Recorded so they are not re-proposed without the bar in mind:
 
 ## 5. Acceptance criteria for this pass
 
-1. The robustness invariants in §2 are encoded as tests (the property suite of §2.9), and the full golden + UI suite stays green.
-2. The confirmed fixes in [SPEC-3-hardening.md](SPEC-3-hardening.md) are applied; the rejected findings are left untouched and their correctness is captured in a test or comment so they are not "fixed" later.
-3. The citation-consistency gaps in [SPEC-3-citations.md](SPEC-3-citations.md) are closed, the long `sourceDocument` strings are split into a short label plus a note, and `npm run audit` still passes.
-4. Any new tool from §4 ships with a worked example, an inline citation on every statutory line, a verify-before-relying banner on its data dependency, a deep-linkable URL state, and a "how/why" copy block — the same bar every existing tile meets.
+> **Status — 2026-06-05.** Criteria 1–3 are met and shipped; the suite is green (`npm run test`, `npm run audit`, and the Playwright e2e). Criterion 4 is forward-looking — it governs the §4 tools when they are built; none of those is in this pass.
+
+1. ✅ The robustness invariants in §2 are encoded as tests (the property suite of §2.9 — see [`tests/engine/propertyInvariants.test.ts`](../../tests/engine/propertyInvariants.test.ts), which sweeps the engine's public functions over the boundary space and pins the SE-92.35%, capital-gains-stacking, EITC-plateau, and I-bond composite-rate identities), and the full golden + UI suite stays green.
+2. ✅ The confirmed fixes in [SPEC-3-hardening.md](SPEC-3-hardening.md) §A are applied (and §B4); the rejected §C findings are left untouched and their correctness is captured in a test or comment so they are not "fixed" later.
+3. ✅ The citation-consistency gaps in [SPEC-3-citations.md](SPEC-3-citations.md) are closed, every long `sourceDocument` string is split into a short name plus a `sourceNote`, the audit enforces the ≤160-char cap, and `npm run audit` still passes.
+4. ⏳ Any new tool from §4 ships with a worked example, an inline citation on every statutory line, a verify-before-relying banner on its data dependency, a deep-linkable URL state, and a "how/why" copy block — the same bar every existing tile meets. *(Forward-looking: applies when the §4 tools are built.)*
 
 ---
 

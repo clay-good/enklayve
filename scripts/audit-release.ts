@@ -58,6 +58,24 @@ export function checkProvenance(shards: { name: string; json: unknown }[]): stri
   return violations;
 }
 
+/** Citation-style names stay short enough to read in a hover tooltip; the long
+ * "why this value / transcription" prose belongs in `sourceNote`, which the
+ * readout report renders where it can wrap (SPEC-3-citations §2). This gate
+ * keeps the convention from silently regressing as new jurisdictions land. */
+export const SOURCE_DOCUMENT_MAX = 160;
+export function checkCitationLength(shards: { name: string; json: unknown }[]): string[] {
+  const violations: string[] = [];
+  for (const { name, json } of shards) {
+    const doc = (json as { citation?: { sourceDocument?: string } }).citation?.sourceDocument;
+    if (typeof doc === "string" && doc.length > SOURCE_DOCUMENT_MAX) {
+      violations.push(
+        `dataset ${name} sourceDocument is ${doc.length} chars (max ${SOURCE_DOCUMENT_MAX}); move the rationale into sourceNote`,
+      );
+    }
+  }
+  return violations;
+}
+
 /** 4. localStorage may be used only by the theme/locale boundary. */
 export function checkLocalStorage(files: { path: string; content: string }[]): string[] {
   const allowed = /(^|\/)ui\/theme\.ts$/;
@@ -105,6 +123,7 @@ function runCli(): void {
     .filter((n) => n.endsWith(".json") && n !== "manifest.json")
     .map((n) => ({ name: n, json: JSON.parse(readFileSync(join(dataDir, n), "utf8")) as unknown }));
   violations.push(...checkProvenance(shards));
+  violations.push(...checkCitationLength(shards));
 
   // 4. localStorage boundary.
   const tsFiles = walk(join(root, "src"), (n) => n.endsWith(".ts")).map((p) => ({
@@ -119,7 +138,7 @@ function runCli(): void {
     process.exit(1);
   }
   console.log(
-    "✓ Release audit passed: CSP, no cross-origin loads, provenance, no sensitive persistence.",
+    "✓ Release audit passed: CSP, no cross-origin loads, provenance, citation length, no sensitive persistence.",
   );
 }
 

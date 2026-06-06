@@ -3,6 +3,8 @@ import {
   checkCsp,
   checkIndexHtml,
   checkProvenance,
+  checkCitationLength,
+  SOURCE_DOCUMENT_MAX,
   checkLocalStorage,
 } from "../../scripts/audit-release";
 
@@ -53,6 +55,20 @@ describe("audit: dataset provenance", () => {
       checkProvenance([{ name: "bad.json", json: { citation: { sourceUrl: "" } } }]).length,
     ).toBe(1);
     expect(checkProvenance([{ name: "none.json", json: {} }]).length).toBe(1);
+  });
+});
+
+describe("audit: citation sourceDocument length cap", () => {
+  it("passes for a short citation-style name", () => {
+    const json = { citation: { sourceDocument: "IRS Rev. Proc. 2024-40 (2026 adjustments)" } };
+    expect(checkCitationLength([{ name: "ok.json", json }])).toEqual([]);
+  });
+  it("flags a sourceDocument that smuggles prose past the cap", () => {
+    const json = { citation: { sourceDocument: "x".repeat(SOURCE_DOCUMENT_MAX + 1) } };
+    expect(checkCitationLength([{ name: "long.json", json }]).length).toBe(1);
+  });
+  it("ignores a shard with no citation (the provenance check owns that case)", () => {
+    expect(checkCitationLength([{ name: "none.json", json: {} }])).toEqual([]);
   });
 });
 

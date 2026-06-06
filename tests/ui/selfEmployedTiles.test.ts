@@ -95,6 +95,15 @@ describe("What Should I Charge?", () => {
     // It's a guideline, not a cited rule.
     expect(root.querySelector("a.cite-link")).toBeNull();
   });
+
+  it("shows an empty-state instead of a bare $0 when there are no billable hours", () => {
+    const { root } = mount(
+      mountFreelanceRate,
+      new URLSearchParams({ th: "60000", bh: "0", wk: "0", ex: "0", tx: "28" }),
+    );
+    expect(rowValue(root, "Rate to bill per hour")).toContain("enter billable hours");
+    expect(rowValue(root, "Day rate (8 hours)")).toContain("enter billable hours");
+  });
 });
 
 describe("Self-Employed Retirement", () => {

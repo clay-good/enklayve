@@ -1,5 +1,7 @@
 # SPEC-3 companion — Citation Integrity
 
+> **Status — implemented 2026-06-05.** All four acceptance criteria in §4 are met: the three on-screen coverage gaps (A1–A3) are closed, `CitationSchema` carries the optional `sourceNote`, every overlong `sourceDocument` is split into a ≤160-char name plus a note, the build audit enforces the cap (`checkCitationLength` in [`audit-release.ts`](../../scripts/audit-release.ts)), and the readout report renders `sourceNote` while the hover tooltip stays short. The audit found **nine** overlong shards, not the five first noted below (`state-id`, `state-dc`, `cpi-u-annual`, and `aca` had grown past 160 since the first draft); all nine were split.
+
 > The citation contract behind [SPEC-3.md](SPEC-3.md) §3. This is the spec for the load-bearing principle — "every rule cites its source" ([SPEC.md](SPEC.md) §2 principle 5) — restated precisely enough to test, plus the audit results as of 2026-06-05 and the formatting conventions a citation must follow.
 
 A citation is a promise that a number is not invented. The promise has three parts — it must **exist** (coverage), be **current** (freshness), and **read clearly** (formatting). The system already enforces the first hard, the second by documented convention, and the third loosely; this spec tightens the third and closes a few seams in the first.
@@ -51,17 +53,21 @@ The other deliberate, documented exceptions remain defensible as of today:
 
 **Audit result.** URLs are clean — all HTTPS, no `http://`, no obviously-dead links; the one homepage-only URL (`state-nh-income-tax-2024` → `revenue.nh.gov`) is correct because NH has no wage tax to deep-link. The rendering itself is accessible and does not overflow the table cell (the cell shows only "source").
 
-**The one formatting defect — overlong `sourceDocument` strings (medium).** Five strings have grown well past a tooltip's comfortable length, because they smuggle explanatory prose into the document *name*:
+**The one formatting defect — overlong `sourceDocument` strings (medium).** Nine strings had grown well past a tooltip's comfortable length, because they smuggled explanatory prose into the document *name* (the first five below were flagged at draft time; `state-id`, `state-dc`, `cpi-u-annual`, and `aca` crossed the line as later jurisdictions and notes landed):
 
-| shard | `sourceDocument` length |
+| shard | `sourceDocument` length (before) |
 |-------|------------------------:|
 | `fafsa-2024-2025` | 840 |
 | `state-ut-income-tax-2024` | 753 |
 | `state-la-income-tax-2024` | 707 |
 | `state-ia-income-tax-2024` | 659 |
 | `state-ca-income-tax-2024` | 578 |
+| `state-id-income-tax-2024` | 360 |
+| `state-dc-income-tax-2024` | 313 |
+| `cpi-u-annual` | 247 |
+| `aca-2024` | 229 |
 
-An 840-character `title` tooltip is a usability problem (it can span the viewport and is awkward for screen readers reading it as one string). The detail is valuable as an audit record, so the fix is to **split the field, not truncate it** — see §2.
+An 840-character `title` tooltip is a usability problem (it can span the viewport and is awkward for screen readers reading it as one string). The detail is valuable as an audit record, so the fix is to **split the field, not truncate it** — see §2. **All nine are now ≤160 chars**, with the prose moved verbatim into `sourceNote`.
 
 ---
 

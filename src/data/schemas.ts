@@ -26,7 +26,15 @@ export type FilingStatus = z.infer<typeof FilingStatus>;
  */
 export const CitationSchema = z.object({
   sourceUrl: z.string().url(),
-  sourceDocument: z.string().min(1),
+  /**
+   * The citation-style short name shown on hover (SPEC-3-citations §2). Capped
+   * so the tooltip stays readable; the long "why this value / transcription"
+   * prose lives in `sourceNote`, which the readout report renders where it can
+   * wrap. The build audit enforces the same cap so it cannot silently regress.
+   */
+  sourceDocument: z.string().min(1).max(160),
+  /** The long rationale/transcription note, shown in the report, not the tooltip. */
+  sourceNote: z.string().optional(),
   effectiveYear: z.number().int().gte(1900),
   dateRetrieved: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   contentHash: z.string().min(1).optional(),

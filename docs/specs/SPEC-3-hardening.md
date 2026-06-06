@@ -1,5 +1,7 @@
 # SPEC-3 companion — Hardening Ledger
 
+> **Status — 2026-06-05.** §A (A1–A4) is applied and shipped. From §B, **B4** (freelance empty-state) is applied; **B1** (URL-clamp disclosure) and **B3** (SNAP AK/HI note) remain open by choice — both are non-blocking judgment calls and B3's surface (the owed-screener region path) is deferred with the rest of the AK/HI allotment work. §C is left untouched on purpose (those are correct). Every §D corner is now pinned by [`tests/engine/propertyInvariants.test.ts`](../../tests/engine/propertyInvariants.test.ts), and the negative-AGI medical-floor corner was hardened (the floor can no longer go negative and inflate the deduction).
+
 > The stress-test results behind [SPEC-3.md](SPEC-3.md) §2. Every public-facing tool and engine function was read and reasoned about over its boundary space (zero, negative, very large, fractional, empty/singleton, hostile URL fragment, missing shard). **Every claim here was verified against the source before it was written down.**
 
 This ledger has three parts, and the third is as important as the first:
@@ -67,10 +69,11 @@ The overall verdict from the read: the engine and tiles are robust. Decimal-mone
 - **Where:** [`owedScreener.ts`](../../src/tiles/owedScreener.ts) and [`snap.ts`](../../src/tiles/snap.ts) — SNAP is seeded for the contiguous-US allotments only; Alaska/Hawaii are skipped.
 - **Judgment:** Correct to skip (we don't have the AK/HI allotment shards), but a user in those regions sees the absence rather than the reason. Light fix: emit a neutral "SNAP estimate isn't available for Alaska/Hawaii yet — check Benefits.gov" row instead of silently omitting it. Data-honest, no number invented.
 
-### B4 · Freelance-rate collapses to $0 with no explanation when billable hours are zero — **low**
+### B4 · Freelance-rate collapses to $0 with no explanation when billable hours are zero — **low** · ✅ applied
 
 - **Where:** [`freelanceRate.ts`](../../src/tiles/freelanceRate.ts) — when billable hours and weeks are both 0, the "hours" line correctly shows `(out of range)` but the rate line shows `$0.00` with no tie-back.
 - **Judgment:** Not wrong (the guard works; no `NaN` ships), just opaque. Light fix: set `min="1"` on the hours/weeks inputs, or show a one-line empty-state ("Enter billable hours to get a rate"). Invariant §2.1 is already satisfied.
+- **Done:** the "Rate to bill per hour" and "Day rate" lines now render `(enter billable hours)` when billable hours are zero, tying the empty result back to the empty input. Pinned by a case in [`tests/ui/selfEmployedTiles.test.ts`](../../tests/ui/selfEmployedTiles.test.ts).
 
 ---
 

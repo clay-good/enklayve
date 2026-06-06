@@ -55,7 +55,8 @@
   ],
   "citation": {
     "sourceUrl": "https://www.ftb.ca.gov/forms/2025/2025-540-tax-rate-schedules.pdf",
-    "sourceDocument": "California FTB. Bracket thresholds are the FTB 2025 California Tax Rate Schedules (Schedule X single/MFS, Schedule Y MFJ/QSS, Schedule Z head of household) — the most recent rate schedule the FTB has published; the 2026-indexed brackets are not yet issued, so these latest-published values are used (a small under-index vs. an unknown ~3% CCPI bump). The 2026 standard deduction ($5,706 single/MFS, $11,412 MFJ/HoH/QSS) is confirmed from the FTB 2026 Form 540-ES estimated-tax worksheet. The 1% Behavioral Health Services Tax (Prop 63) applies to taxable income over $1,000,000.",
+    "sourceDocument": "California FTB 2025 California Tax Rate Schedules; 2026 standard deduction (FTB Form 540-ES)",
+    "sourceNote": "Bracket thresholds are the FTB 2025 California Tax Rate Schedules (Schedule X single/MFS, Schedule Y MFJ/QSS, Schedule Z head of household) — the most recent rate schedule the FTB has published; the 2026-indexed brackets are not yet issued, so these latest-published values are used (a small under-index vs. an unknown ~3% CCPI bump). The 2026 standard deduction ($5,706 single/MFS, $11,412 MFJ/HoH/QSS) is confirmed from the FTB 2026 Form 540-ES estimated-tax worksheet. The 1% Behavioral Health Services Tax (Prop 63) applies to taxable income over $1,000,000.",
     "effectiveYear": 2026,
     "dateRetrieved": "2026-06-05"
   },

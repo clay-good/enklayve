@@ -107,7 +107,8 @@
   },
   "citation": {
     "sourceUrl": "https://otr.cfo.dc.gov/page/dc-individual-and-fiduciary-income-tax-rates",
-    "sourceDocument": "DC Office of Tax and Revenue individual income tax rates (effective 2026): DC's bracket schedule is statutory (set by the FY2023 Budget Support Act) and is not inflation-indexed, so it is unchanged through 2026; the standard deduction conforms to the federal standard deduction ($16,100/$32,200/$24,150 for 2026).",
+    "sourceDocument": "DC Office of Tax and Revenue, individual income tax rates (effective 2026)",
+    "sourceNote": "DC's bracket schedule is statutory (set by the FY2023 Budget Support Act) and is not inflation-indexed, so it is unchanged through 2026; the standard deduction conforms to the federal standard deduction ($16,100/$32,200/$24,150 for 2026).",
     "effectiveYear": 2026,
     "dateRetrieved": "2026-06-02"
   },

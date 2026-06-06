@@ -10,7 +10,8 @@
   ],
   "citation": {
     "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-25.pdf",
-    "sourceDocument": "IRS Revenue Procedure 2025-25 (2026 §36B applicable percentages). The ARPA/IRA enhanced subsidies expired after 2025, so the 400% FPL eligibility cliff returns for plan year 2026 and there is no premium tax credit above 400% FPL.",
+    "sourceDocument": "IRS Revenue Procedure 2025-25 (2026 §36B applicable percentages)",
+    "sourceNote": "The ARPA/IRA enhanced subsidies expired after 2025, so the 400% FPL eligibility cliff returns for plan year 2026 and there is no premium tax credit above 400% FPL.",
     "effectiveYear": 2026,
     "dateRetrieved": "2026-06-02"
   }

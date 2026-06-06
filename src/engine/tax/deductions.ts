@@ -17,7 +17,12 @@ export function itemizedTotal(itemized: ItemizedInput, agi: Money): Money {
   const mortgage = Money.from(itemized.mortgageInterest ?? 0);
   const charitable = Money.from(itemized.charitable ?? 0);
 
-  const medicalFloor = agi.multiply(MEDICAL_AGI_FLOOR_RATE);
+  // 7.5% of AGI, but never negative: a non-positive AGI yields a $0 floor, so
+  // the whole expense is deductible and the deduction never exceeds the actual
+  // expense. (Through evaluateTaxes the AGI is already clamped at zero; this
+  // keeps itemizedTotal correct if called directly with a negative AGI — the
+  // large-adjustments corner in SPEC-3-hardening §D.)
+  const medicalFloor = agi.isNegative() ? Money.zero() : agi.multiply(MEDICAL_AGI_FLOOR_RATE);
   const medicalRaw = Money.from(itemized.medicalExpenses ?? 0);
   const medical = medicalRaw.greaterThan(medicalFloor)
     ? medicalRaw.subtract(medicalFloor)
