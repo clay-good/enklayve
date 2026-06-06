@@ -24,9 +24,9 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Metric | Value | Where to check |
 |---|---|---|
 | Deterministic calculators | **58** in **10 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
-| Tax jurisdictions | **29** — 19 income-tax states + DC + 9 no-income-tax | [`data/state-*-income-tax-*.json`](data) |
-| Cited dataset shards | **51**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | **761** unit/golden across 61 files, **+18** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tax jurisdictions | **30** — 20 income-tax states + DC + 9 no-income-tax | [`data/state-*-income-tax-*.json`](data) |
+| Cited dataset shards | **52**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
+| Tests | **763** unit/golden across 61 files, **+18** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale preference touches `localStorage` | `npm run audit` |
 | UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
@@ -63,7 +63,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 
 | Tool | What it answers |
 |---|---|
-| Take-Home Pay | Your real net pay (federal + FICA + state + local) across every modeled state — 29 jurisdictions today, growing data-only |
+| Take-Home Pay | Your real net pay (federal + FICA + state + local) across every modeled state — 30 jurisdictions today, growing data-only |
 | W-4 Withholding & Refund Check | Is my withholding right? The per-paycheck tweak to land near $0 |
 | Hourly ↔ Salary | Convert either way, with overtime and a second-job stack |
 | Federal Income Tax | Marginal + effective breakdown, standard vs itemized (the big four) |
@@ -305,7 +305,7 @@ flowchart LR
     EV --> RES["TaxResult: federal · FICA · state · local<br/>· marginal % · effective % · take-home<br/>(every line carries its citation)"]
 ```
 
-- Seeded with **29 jurisdictions** and growing data-only through the staggered annual refresh (SPEC §14.3). **No-income-tax states are first-class records,** not omissions, so a resident sees their state by name with $0 state tax confirmed (and its citation), not a generic "no state tax modeled."
+- Seeded with **30 jurisdictions** and growing data-only through the staggered annual refresh (SPEC §14.3). **No-income-tax states are first-class records,** not omissions, so a resident sees their state by name with $0 state tax confirmed (and its citation), not a generic "no state tax modeled."
 - Handles ordered marginal brackets, filing statuses, standard vs itemized (the "big four": SALT capped, mortgage interest, charitable, medical above the floor), FICA with the wage base + 0.9% Additional Medicare, personal exemptions, special rules (e.g. the CA mental-health surtax), top-bracket surtaxes (e.g. the MA 4% millionaire surtax, modeled as a clean second bracket), a **taxpayer tax credit** that stands in for a standard deduction (Utah: a nonrefundable credit equal to a share of the federal deduction, phasing out with income), and opt-in local add-ons.
 - **Filing-status fallback:** the seeded states define single / married-jointly / head-of-household; the other two resolve correctly — **qualifying surviving spouse → the married-jointly schedule** (federally and in essentially every state, so it's never silently taxed as single), and married-filing-separately → single (the documented state-level assumption). Federal defines all five explicitly.
 - **Fail-safe is per jurisdiction:** if the California source is stale, California shows a verify banner while every other jurisdiction keeps working.
@@ -316,7 +316,7 @@ Every seeded state is modeled at one consistent launch fidelity — **brackets +
 
 | Shape | States | How it's modeled |
 |---|---|---|
-| Graduated brackets | CA, NY, DC, OH, VA | Ordered marginal tiers; CA adds the 1% mental-health surtax, OH the opt-in Columbus municipal tax, VA stacks a $930 personal exemption on its standard deduction |
+| Graduated brackets | CA, NY, DC, OH, VA, MO | Ordered marginal tiers; CA adds the 1% mental-health surtax, OH the opt-in Columbus municipal tax, VA stacks a $930 personal exemption on its standard deduction, MO runs eight compressed tiers (0%→4.7%) over a federal-conformity deduction |
 | Flat rate | PA (3.07%), IL (4.95%), MI (4.25%), GA (4.99%), NC (3.99%), AZ (2.50%), CO (4.40%), IN (2.95%), KY (3.50%), ID (5.30%), LA (3.00%), IA (3.80%) | A single bracket; standard deduction and/or personal exemption where the state grants one. ID and IA conform to the federal standard deduction (the CO pattern); LA grants a large $12,875 / $25,750 standard deduction ($25,750 for head of household too) |
 | Flat + top surtax | MA (5.0% + 4% over $1,107,750) | Two brackets — the surtax is just the top marginal tier |
 | Flat over a floor | MS (4.0% over the first $10,000) | A `[{0, 0%}, {10000, 4.0%}]` schedule — the exempt floor is the zero-rate tier |
@@ -329,7 +329,9 @@ Every seeded state is modeled at one consistent launch fidelity — **brackets +
 
 **Iowa** joined via Senate File 2442 (2024), which finished Iowa's move to a flat **3.8%** for 2025 and after, over the **federal-conformity standard deduction** ($16,100 / $32,200 / $24,150) — the same shape as Idaho and Colorado, so again no engine change. Iowa's small $40 single / $80 married personal-exemption *credit* and its opt-in local school-district surtaxes are omitted at launch fidelity (like every state's credits and county/municipal add-ons), so the figure errs slightly high by at most $40/$80 — the conservative side.
 
-**Virginia** is the newest addition (the **29th jurisdiction**) and the first *graduated* state that also grants a flat-dollar **personal exemption**, so the engine subtracts both the standard deduction and the exemption before the brackets: taxable income = AGI − standard deduction − $930 per exemption. Its 2% / 3% / 5% / 5.75% schedule (at $3,000 / $5,000 / $17,000) is fixed in statute (Code of Va. §58.1-320) and identical for every filing status — only the standard deduction and exemption vary — so it needed no engine change, just data. The **$8,750 single / $17,500 married** standard deduction is the 2026 figure under HB1600 (2025); it carries a documented **sunset back to $3,000 / $6,000 for tax year 2027** unless the General Assembly extends it (recorded in the shard's `sourceNote`). Virginia has no head-of-household status, so federal HoH filers use the single figures. Cross-checked against the §58.1-320 statute and Virginia Tax; golden-tested (single $60k → $2,635.90, married $60k → $2,079.30). A new `state-va` refresh adapter anchors the movable standard deduction (the CA/NY/GA/NC/DC pattern), with the statutory brackets left as the reviewer's data-only step.
+**Missouri** is the newest addition (the **30th jurisdiction**, ~6.2M residents). Its **eight-tier** schedule is identical for every filing status (RSMo 143.011): 0% on the first $1,313 of taxable income, then 2% / 2.5% / 3% / 3.5% / 4% / 4.5% in $1,313 steps, and a top rate of **4.7%** above $9,191 (reduced from 4.8% under the SB 3 (2022) revenue triggers, holding at 4.7% for 2026). The brackets are so compressed that essentially all of a normal wage is taxed at 4.7% on the margin. Its standard deduction equals the **federal** figure by statute ($16,100 / $32,200 / $24,150 for 2026, the IA/ID/CO conformity pattern), and it has **no personal exemption** (TCJA conformity zeroed it). It needed no engine change — the existing graduated parser fits — and is golden-tested (single $60k → $1,887.36, married $60k → $1,130.66). The values are the MO DOR's latest officially published schedule; the 2026 CPI-indexed thresholds shift each tier by ~$35 (immaterial, since the margin is 4.7% either way) and roll as the reviewer's data-only step. Missouri's percentage-of-federal-tax-paid deduction (phased down to 0% as AGI rises, ~$15–50 of state tax for a typical filer) and the Kansas City / St. Louis 1% earnings taxes are omitted at launch fidelity, so the figure errs slightly high — the conservative side.
+
+**Virginia** (the **29th jurisdiction**) was the first *graduated* state that also grants a flat-dollar **personal exemption**, so the engine subtracts both the standard deduction and the exemption before the brackets: taxable income = AGI − standard deduction − $930 per exemption. Its 2% / 3% / 5% / 5.75% schedule (at $3,000 / $5,000 / $17,000) is fixed in statute (Code of Va. §58.1-320) and identical for every filing status — only the standard deduction and exemption vary — so it needed no engine change, just data. The **$8,750 single / $17,500 married** standard deduction is the 2026 figure under HB1600 (2025); it carries a documented **sunset back to $3,000 / $6,000 for tax year 2027** unless the General Assembly extends it (recorded in the shard's `sourceNote`). Virginia has no head-of-household status, so federal HoH filers use the single figures. Cross-checked against the §58.1-320 statute and Virginia Tax; golden-tested (single $60k → $2,635.90, married $60k → $2,079.30). A new `state-va` refresh adapter anchors the movable standard deduction (the CA/NY/GA/NC/DC pattern), with the statutory brackets left as the reviewer's data-only step.
 
 ---
 
@@ -370,7 +372,7 @@ flowchart TD
 | FAFSA SAI + Pell schedule | Dept. of Education | Annual | 2 |
 | IRA deduction phase-outs · gift-tax exclusion/exemption · AMT exemption | IRS annual notice / rev. proc. (Notice 2025-67, Rev. Proc. 2025-32) | Annual | 1 |
 
-**Every seeded income-tax jurisdiction now has a refresh adapter,** organized by the shape the parser anchors: standard-deduction states (CA, NY, GA, NC, DC, and VA — whose statutory brackets never move, so the adapter watches the sunset-prone standard deduction), flat-rate states (PA, IL, MI, AZ, CO, IN, KY, ID, UT, LA, IA — IN's personal exemption overlaid like IL's), graduated bracket-table states (OH, plus MS as a two-tier "0% then a flat rate over a $10,000 floor"), and the one special case, MA, whose 5% base rate plus 4% surtax over an inflation-adjusted threshold fits neither parser, so it gets a small dedicated parser that anchors the two figures that actually move (the base rate and the threshold). The no-income-tax records have nothing to refresh. See [docs/data-sources.md](docs/data-sources.md) and [docs/source-diff-log.md](docs/source-diff-log.md).
+**Every seeded income-tax jurisdiction now has a refresh adapter,** organized by the shape the parser anchors: standard-deduction states (CA, NY, GA, NC, DC, and VA — whose statutory brackets never move, so the adapter watches the sunset-prone standard deduction), flat-rate states (PA, IL, MI, AZ, CO, IN, KY, ID, UT, LA, IA — IN's personal exemption overlaid like IL's), graduated bracket-table states (OH and MO — MO's eight uniform tiers anchored the same way — plus MS as a two-tier "0% then a flat rate over a $10,000 floor"), and the one special case, MA, whose 5% base rate plus 4% surtax over an inflation-adjusted threshold fits neither parser, so it gets a small dedicated parser that anchors the two figures that actually move (the base rate and the threshold). The no-income-tax records have nothing to refresh. See [docs/data-sources.md](docs/data-sources.md) and [docs/source-diff-log.md](docs/source-diff-log.md).
 
 ---
 
@@ -424,7 +426,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 - **Release audit.** `npm run audit` mechanically verifies CSP `connect-src 'none'`, no cross-origin loads in the built output, full citation coverage, the ≤160-char citation-name cap, and no sensitive persistence.
 - **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 58 calculators** at a 360px phone, **plus landscape phones** (short viewports, where the ⌘K palette must also stay within the screen) and **every Readout state that renders only after a file drop** — the confirm + summary (driven through the real anchored extractor with a sample W-2), and the unrecognized-document warning, the encrypted-restore unlock row, the wrong-passphrase error, and a successful restore feeding a populated Report — the **offline** service worker (loads with the network cut), the deep-link → compute path, that a **clamped deep link** still shows its disclosure note and fits a phone, that **print media strips the app chrome** so the Report prints as a clean document, and that **no tool hangs or renders NaN/Infinity** when every field is set to an absurd value. It runs as its own CI job so the unit suite stays fast.
 
-**761 unit/golden tests across 61 files** (plus 18 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**763 unit/golden tests across 61 files** (plus 18 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -545,7 +547,7 @@ The [launch checklist](docs/launch-checklist.md) walks every acceptance criterio
 Deferred *for accuracy or scope*, not faked:
 
 - **International** (Europe → India, China, Russia) as each jurisdiction's rules are learned properly. Be right before being everywhere.
-- **Income-tax states beyond the seeded 29** — added through the staggered annual refresh (19 income-tax states + DC and all nine no-income-tax states already ship). The clean flat-tax states landed fastest (Louisiana's 3% and Iowa's 3.8% reforms, both data-only); graduated-bracket states join as their schedules are transcribed and golden-tested (Virginia, the 29th, was the latest). See the [state coverage cheat sheet](#state-coverage-cheat-sheet).
+- **Income-tax states beyond the seeded 30** — added through the staggered annual refresh (20 income-tax states + DC and all nine no-income-tax states already ship). The clean flat-tax states landed fastest (Louisiana's 3% and Iowa's 3.8% reforms, both data-only); graduated-bracket states whose tiers are uniform across filing statuses join as their schedules are transcribed and golden-tested (Virginia was the 29th, Missouri the 30th). Still deferred: states whose graduated tiers differ by filing status (e.g. NJ, MD, MN) and states with mandatory county income taxes (MD), pending the per-status and local-add-on work. See the [state coverage cheat sheet](#state-coverage-cheat-sheet).
 - **i18n string extraction** — the locale preference persists; a full pre-rendered-variant extraction is held rather than ship a speculative abstraction.
 - **Per-filing-status graduated state schedules** — for any future state whose marginal tiers differ by filing status (none of the seeded income-tax states do).
 

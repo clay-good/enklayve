@@ -471,6 +471,19 @@
       "contentHash": "6d5f5f3038163c326945b8584e7857a527df94cd2a29aa77b3a4340c925db3a1"
     },
     {
+      "id": "state-mo-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-mo-income-tax-2024.json",
+      "sourceUrl": "https://dor.mo.gov/taxation/individual/tax-types/income/year-changes/",
+      "sourceDocument": "Missouri DOR individual income tax rate schedule (top 4.7%, SB 3 2022); federal-conformity standard deduction",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "b78651ecbb32946f9cdecf915007c0844dfb1777e8a1d7d165114dd5a9deee77"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",

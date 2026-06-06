@@ -1,0 +1,18 @@
+# Missouri income tax — Missouri DOR individual income tax rate schedule, annual
+# (staggered). The eight-tier schedule is the same for every filing status, so
+# the graduated parser (OH/MS pattern) anchors the indexed thresholds and any
+# SB 3 trigger-based rate cut; the federal-conformity standard deduction rolls
+# with the IRS refresh. BUILD-SPEC.md §7.2, §8.
+name: Refresh MO income tax
+
+on:
+  schedule:
+    - cron: "0 12 25 3 *" # March 25, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-mo
+      source_name: MO income tax

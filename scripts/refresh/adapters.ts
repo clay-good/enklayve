@@ -100,6 +100,7 @@ export type RefreshGroup =
   | "state-la"
   | "state-ia"
   | "state-va"
+  | "state-mo"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -783,6 +784,18 @@ export const ADAPTERS: RefreshAdapter[] = [
     // catching. Anchor the deduction by filing status (the CA/NY/GA/NC/DC
     // pattern); the brackets stay the reviewer's data-only step.
     parse: parseStandardDeductions,
+  },
+  {
+    id: "state-mo-income-tax-2024",
+    group: "state-mo",
+    source: "Missouri DOR individual income tax rate schedule (eight-tier, top 4.7%)",
+    sourceUrl: "https://dor.mo.gov/taxation/individual/tax-types/income/year-changes/",
+    cadence: "Annual",
+    // Missouri's eight tiers are the same for every filing status, so the
+    // graduated parser (OH/MS pattern) overlays one anchored schedule onto all
+    // — anchoring the indexed thresholds and any SB 3 trigger-based rate cut.
+    // The federal-conformity standard deduction rolls with the IRS refresh.
+    parse: parseGraduatedBracketJurisdiction,
   },
   {
     id: "state-ms-income-tax-2024",

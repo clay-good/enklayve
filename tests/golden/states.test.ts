@@ -98,6 +98,31 @@ describe("Virginia (graduated; the standard deduction and the $930 personal exem
   });
 });
 
+describe("Missouri (graduated; uniform brackets across statuses, federal-conformity deduction)", () => {
+  // Missouri's eight-tier schedule (0% on the first $1,313, then 2%–4.5% in
+  // $1,313 steps, top 4.7% above $9,191) is identical for every filing status,
+  // and its standard deduction tracks the federal figure. It has no personal
+  // exemption (TCJA conformity), so taxable income = AGI − standard deduction.
+  // The fixed graduated portion below $9,191 is $256.035; everything above is 4.7%.
+  it("single $60k → $1,887.36 (taxable 60,000 − 16,100 = 43,900)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("mo"), fica: ds.fica },
+    );
+    // 256.035 + 4.7%·(43,900 − 9,191) = 256.035 + 1,631.323.
+    expect(cents(r.state!.incomeTax)).toBe("1887.36");
+  });
+
+  it("married jointly $60k → $1,130.66 (taxable 60,000 − 32,200 = 27,800)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("mo"), fica: ds.fica },
+    );
+    // 256.035 + 4.7%·(27,800 − 9,191) = 256.035 + 874.623.
+    expect(cents(r.state!.incomeTax)).toBe("1130.66");
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction
