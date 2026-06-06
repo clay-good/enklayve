@@ -108,6 +108,7 @@ export type RefreshGroup =
   | "state-nm"
   | "state-ri"
   | "state-sc"
+  | "state-ok"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -875,6 +876,19 @@ export const ADAPTERS: RefreshAdapter[] = [
     // (SB 1, 2024 special session); the lightly-indexed standard deduction is the
     // figure that moves, so anchor it (the VA pattern). The per-status brackets
     // stay the reviewer's data-only step.
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-ok-income-tax-2024",
+    group: "state-ok",
+    source: "Oklahoma Tax Commission individual income tax (HB 2764 three-bracket schedule)",
+    sourceUrl: "https://oklahoma.gov/tax/individuals.html",
+    cadence: "Annual",
+    // OK's per-status three-bracket thresholds and its frozen standard deduction
+    // and $1,000 exemption are statutory (HB 2764 / §2358). The figure that moves
+    // is the rate, which a revenue trigger can cut 0.25% in future years. Anchor
+    // the standard deduction (the change-watch); a trigger-based rate cut stays
+    // the reviewer's data-only step.
     parse: parseStandardDeductions,
   },
   {

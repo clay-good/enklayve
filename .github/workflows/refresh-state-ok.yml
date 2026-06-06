@@ -1,0 +1,19 @@
+# Oklahoma income tax — OK Tax Commission, annual (staggered). HB 2764 (2026)
+# set a three-bracket per-status schedule over a 0% band; the thresholds and the
+# frozen standard deduction / $1,000 exemption are statutory. The figure that
+# moves is the rate, which a revenue trigger can cut 0.25% in future years, so the
+# adapter anchors the standard deduction (a change-watch) and a trigger-based rate
+# cut stays the reviewer's data-only step. BUILD-SPEC.md §7.2, §8.
+name: Refresh OK income tax
+
+on:
+  schedule:
+    - cron: "0 12 17 4 *" # April 17, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-ok
+      source_name: OK income tax

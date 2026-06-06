@@ -1,0 +1,45 @@
+{
+  "id": "US-OK",
+  "name": "Oklahoma",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0 },
+      { "lowerBound": 3750, "rate": 0.025 },
+      { "lowerBound": 4900, "rate": 0.035 },
+      { "lowerBound": 7200, "rate": 0.045 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0 },
+      { "lowerBound": 7500, "rate": 0.025 },
+      { "lowerBound": 9800, "rate": 0.035 },
+      { "lowerBound": 14400, "rate": 0.045 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0 },
+      { "lowerBound": 7500, "rate": 0.025 },
+      { "lowerBound": 9800, "rate": 0.035 },
+      { "lowerBound": 14400, "rate": 0.045 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 6350,
+    "married_jointly": 12700,
+    "head_of_household": 9350
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 1000,
+    "married_jointly": 2000,
+    "head_of_household": 1000
+  },
+  "citation": {
+    "sourceUrl": "https://oklahoma.gov/content/dam/ok/en/tax/documents/resources/publications/legislation/2025LegislativeUpdate.pdf",
+    "sourceDocument": "Oklahoma Tax Commission 2025 Legislative Update (HB 2764, 68 O.S. §2355) 2026 three-bracket schedule; §2358 standard deduction & $1,000 exemption",
+    "sourceNote": "HB 2764 (effective tax year 2026; 68 O.S. §2355) consolidated Oklahoma's old six-bracket schedule into THREE brackets over a 0% bottom band, and the schedule differs by filing status. Single and married-filing-separately filers: 0% on the first $3,750 of taxable income, then 2.5% over $3,750, 3.5% over $4,900, and 4.5% over $7,200. Married-filing-jointly, head-of-household, and surviving-spouse filers all use a DOUBLED schedule: 0% to $7,500, 2.5% over $7,500, 3.5% over $9,800, 4.5% over $14,400 — so head of household uses the joint rate schedule (with its own standard deduction). Verified to the penny against the Oklahoma Tax Commission 2025 Legislative Update bracket tables (the published base amounts $28.75 / $109.25 single and $57.50 / $218.50 joint match exactly). Oklahoma starts from federal AGI and subtracts its own standard deduction ($6,350 single/MFS, $12,700 married jointly/QSS, $9,350 head of household; frozen at the 2017 federal amounts under §2358) and a $1,000-per-exemption personal exemption ($1,000 single/HoH, $2,000 joint). HB 2764 also adds a revenue trigger that can cut every rate by 0.25% in future years (the 'path to zero'); that, and the low-income additional $1,000 exemption (AGI ≤ $15,000), the child-care/EIC and other OK credits, are out of scope at launch fidelity. Cross-checked against the Tax Foundation 2026 table; verified against the Oklahoma Tax Commission Legislative Update and the 2025 Form 511 packet on 2026-06-06.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-06"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}

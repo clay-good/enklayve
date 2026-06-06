@@ -575,6 +575,19 @@
       "contentHash": "2811bda00c8ae68d40bdabd26d8ecdfd85535b6fc8f9461bb21f150b1d686f2c"
     },
     {
+      "id": "state-ok-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-ok-income-tax-2024.json",
+      "sourceUrl": "https://oklahoma.gov/content/dam/ok/en/tax/documents/resources/publications/legislation/2025LegislativeUpdate.pdf",
+      "sourceDocument": "Oklahoma Tax Commission 2025 Legislative Update (HB 2764, 68 O.S. §2355) 2026 three-bracket schedule; §2358 standard deduction & $1,000 exemption",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "4737eb73bc6d82808165b9952229ad3c7d91ccbb7627cd51ac5f4ce876698548"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",

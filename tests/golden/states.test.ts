@@ -531,6 +531,64 @@ describe("South Carolina (H.4216: two uniform brackets over a SLIDING SCIAD dedu
   });
 });
 
+describe("Oklahoma (HB 2764 2026: 0% band, per-status doubled brackets, head of household on the joint schedule)", () => {
+  // OK (HB 2764, 2026) starts from federal AGI and consolidated to three brackets
+  // over a 0% band. Single/MFS: 0% to $3,750, then 2.5% / 3.5% / 4.5% over $3,750
+  // / $4,900 / $7,200. MFJ, HoH, and surviving spouse all use a doubled schedule:
+  // 0% to $7,500, then 2.5% / 3.5% / 4.5% over $7,500 / $9,800 / $14,400. Taxable
+  // = AGI − standard deduction ($6,350 / $12,700 / $9,350) − $1,000/exemption.
+  it("single $60k → $2,154.50 (taxable 60,000 − 6,350 − 1,000 = 52,650)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ok"), fica: ds.fica },
+    );
+    // $109.25 base at $7,200 + 4.5%·(52,650 − 7,200).
+    expect(cents(r.state!.incomeTax)).toBe("2154.5");
+  });
+
+  it("married jointly $60k → $1,609.00 (taxable 45,300 on the doubled schedule)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ok"), fica: ds.fica },
+    );
+    // $218.50 base at $14,400 + 4.5%·(45,300 − 14,400).
+    expect(cents(r.state!.incomeTax)).toBe("1609");
+  });
+
+  it("head of household uses the joint schedule, with the HoH deduction → $1,804.75", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ok"), fica: ds.fica },
+    );
+    // taxable 60,000 − 9,350 − 1,000 = 49,650 on the joint schedule: 218.50 + 4.5%·35,250.
+    expect(cents(r.state!.incomeTax)).toBe("1804.75");
+  });
+
+  it("single owes more than married jointly at equal income (single thresholds are half)", () => {
+    const single = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ok"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ok"), fica: ds.fica },
+    );
+    expect(single.state!.incomeTax.greaterThan(joint.state!.incomeTax)).toBe(true);
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly schedule", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ok"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ok"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction
