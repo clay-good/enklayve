@@ -510,6 +510,19 @@
       "contentHash": "d8f633fd589f7c8c6f998c05bb463c80c78c791e15bb8ef5bf8aa15ec625800b"
     },
     {
+      "id": "state-ks-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-ks-income-tax-2024.json",
+      "sourceUrl": "https://www.ksrevenue.gov/incomebook25.html",
+      "sourceDocument": "Kansas DOR 2025 income tax (SB 1, 2024 special session): two rates 5.20%/5.58%, standard deduction & exemption",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "9f75d90e5c319fd53be8b19e57118066451c4e152d418546b2a7e1e498ab7304"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",

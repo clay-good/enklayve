@@ -1,0 +1,39 @@
+{
+  "id": "US-KS",
+  "name": "Kansas",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.052 },
+      { "lowerBound": 23000, "rate": 0.0558 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.052 },
+      { "lowerBound": 46000, "rate": 0.0558 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.052 },
+      { "lowerBound": 23000, "rate": 0.0558 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 3605,
+    "married_jointly": 8240,
+    "head_of_household": 6180
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 9160,
+    "married_jointly": 18320,
+    "head_of_household": 9160
+  },
+  "citation": {
+    "sourceUrl": "https://www.ksrevenue.gov/incomebook25.html",
+    "sourceDocument": "Kansas DOR 2025 income tax (SB 1, 2024 special session): two rates 5.20%/5.58%, standard deduction & exemption",
+    "sourceNote": "Senate Bill 1 (2024 special session) collapsed Kansas's old three-bracket schedule (3.1% / 5.25% / 5.7%) into two rates effective 2024 and after: 5.20% on the first dollars of taxable income and 5.58% above a threshold that depends on filing status. Kansas publishes two rate schedules — 'married filing joint' (5.58% over $46,000) and 'all other filers' (5.58% over $23,000), which covers single, married-filing-separately, and head of household — so head-of-household uses the $23,000 threshold. Taxable income = federal AGI − the Kansas standard deduction ($3,605 single / $8,240 married jointly / $6,180 head of household) − the personal exemption ($9,160 per filer, $18,320 married jointly). The $2,320-per-dependent exemption is omitted for the no-dependent filer (conservative). The two rates, the thresholds, and the exemption are statutory (SB 1); the standard deduction is the latest KS DOR published amount (lightly indexed) and rolls as the reviewer's data-only step. Kansas has no local income tax and fully exempts Social Security (not relevant to wage take-home). Threshold cross-checked against the Tax Foundation 2025 table; verified against the KS DOR 2025 booklet on 2026-06-06.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-06"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}

@@ -237,6 +237,63 @@ describe("Minnesota (the second per-filing-status state — same rates, differen
   });
 });
 
+describe("Kansas (SB 1 two-bracket; per-status threshold, plus a standard deduction AND exemption)", () => {
+  // KS (Senate Bill 1, 2024 special session) runs two rates — 5.20% then 5.58%
+  // over $23,000 for "all other filers" (single/HoH/MFS) but over $46,000 for
+  // married filing jointly. Taxable income = AGI − standard deduction − the
+  // $9,160/$18,320 personal exemption, so both are stacked (the Virginia shape,
+  // now on a per-status schedule).
+  it("single $60k → $2,548.31 (taxable 60,000 − 3,605 − 9,160 = 47,235, crosses $23,000)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ks"), fica: ds.fica },
+    );
+    // 5.2%·23,000 + 5.58%·(47,235 − 23,000) = 1,196 + 1,352.313.
+    expect(cents(r.state!.incomeTax)).toBe("2548.31");
+  });
+
+  it("married jointly $60k → $1,738.88 (taxable 33,440, all under the $46,000 threshold)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ks"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("1738.88"); // 5.2%·(60,000 − 8,240 − 18,320)
+  });
+
+  it("head of household uses the $23,000 'all other filers' threshold → $2,404.63", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ks"), fica: ds.fica },
+    );
+    // taxable 60,000 − 6,180 − 9,160 = 44,660: 5.2%·23,000 + 5.58%·21,660.
+    expect(cents(r.state!.incomeTax)).toBe("2404.63");
+  });
+
+  it("single owes more than married jointly at the same income (single threshold is half)", () => {
+    const single = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ks"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ks"), fica: ds.fica },
+    );
+    expect(single.state!.incomeTax.greaterThan(joint.state!.incomeTax)).toBe(true);
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly schedule", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ks"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ks"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction

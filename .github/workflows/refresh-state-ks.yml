@@ -1,0 +1,19 @@
+# Kansas income tax — KS Department of Revenue, annual (staggered). SB 1 (2024
+# special session) set two statutory rates (5.20% / 5.58%), the per-status
+# thresholds, and the personal exemption; the figure that moves is the lightly
+# indexed standard deduction, so the adapter anchors it (the VA pattern) and the
+# per-status bracket tables roll alongside as the reviewer's data-only step.
+# BUILD-SPEC.md §7.2, §8.
+name: Refresh KS income tax
+
+on:
+  schedule:
+    - cron: "0 12 19 4 *" # April 19, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-ks
+      source_name: KS income tax

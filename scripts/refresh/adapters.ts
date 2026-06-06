@@ -103,6 +103,7 @@ export type RefreshGroup =
   | "state-mo"
   | "state-nj"
   | "state-mn"
+  | "state-ks"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -859,6 +860,18 @@ export const ADAPTERS: RefreshAdapter[] = [
     // — anchoring the indexed thresholds and any SB 3 trigger-based rate cut.
     // The federal-conformity standard deduction rolls with the IRS refresh.
     parse: parseGraduatedBracketJurisdiction,
+  },
+  {
+    id: "state-ks-income-tax-2024",
+    group: "state-ks",
+    source: "Kansas DOR individual income tax standard deduction (SB 1 brackets statutory)",
+    sourceUrl: "https://www.ksrevenue.gov/incomebook25.html",
+    cadence: "Annual",
+    // KS's two rates, thresholds, and the personal exemption are statutory
+    // (SB 1, 2024 special session); the lightly-indexed standard deduction is the
+    // figure that moves, so anchor it (the VA pattern). The per-status brackets
+    // stay the reviewer's data-only step.
+    parse: parseStandardDeductions,
   },
   {
     id: "state-mn-income-tax-2024",

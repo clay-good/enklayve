@@ -72,6 +72,7 @@ const STATE_CODES = [
   "mo",
   "nj",
   "mn",
+  "ks",
 ];
 
 const ANNUAL = { effectiveYear: 2026, expectedRefreshMonths: 12, staleAfterYears: 2 } as const;
