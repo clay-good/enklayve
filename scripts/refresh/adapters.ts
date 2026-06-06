@@ -104,6 +104,7 @@ export type RefreshGroup =
   | "state-nj"
   | "state-mn"
   | "state-ks"
+  | "state-de"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -871,6 +872,21 @@ export const ADAPTERS: RefreshAdapter[] = [
     // (SB 1, 2024 special session); the lightly-indexed standard deduction is the
     // figure that moves, so anchor it (the VA pattern). The per-status brackets
     // stay the reviewer's data-only step.
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-de-income-tax-2024",
+    group: "state-de",
+    source:
+      "Delaware Division of Revenue tax-rate schedule (standard deduction; statutory brackets)",
+    sourceUrl: "https://revenue.delaware.gov/software-developer/tax-rate-changes/",
+    cadence: "Annual",
+    // Delaware's seven-tier schedule (30 Del. C. §1102) and standard deduction
+    // (§1108) are both statutory and unindexed — the rates have held since 2014
+    // and the deduction since 2000 — so nothing moves on the usual cadence.
+    // Anchor the standard deduction (the VA pattern) as the watch on any future
+    // change; a bracket restructure (e.g. the pending HB 13) would land as the
+    // reviewer's data-only step.
     parse: parseStandardDeductions,
   },
   {

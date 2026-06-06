@@ -1,0 +1,20 @@
+# Delaware income tax — DE Division of Revenue, annual (staggered). Both the
+# seven-tier rate schedule (30 Del. C. §1102, unchanged for tax years 2014 and
+# later) and the standard deduction (§1108, unindexed since 2000) are statutory,
+# so nothing moves on the usual cadence; the adapter anchors the standard
+# deduction (the VA pattern) as the watch on any future change, and a bracket
+# restructure such as the pending HB 13 would land as the reviewer's data-only
+# step. BUILD-SPEC.md §7.2, §8.
+name: Refresh DE income tax
+
+on:
+  schedule:
+    - cron: "0 12 26 4 *" # April 26, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-de
+      source_name: DE income tax

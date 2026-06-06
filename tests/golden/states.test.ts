@@ -294,6 +294,68 @@ describe("Kansas (SB 1 two-bracket; per-status threshold, plus a standard deduct
   });
 });
 
+describe("Delaware (seven-tier graduated; uniform brackets across statuses — the marriage penalty)", () => {
+  // DE's rate schedule (30 Del. C. §1102, unchanged for tax years 2014 and
+  // later) is identical for every filing status: 0% to $2,000, then 2.2% / 3.9%
+  // / 4.8% / 5.2% / 5.55% / 6.6% over $2k / $5k / $10k / $20k / $25k / $60k.
+  // Delaware does NOT double the brackets for joint filers, so a couple's only
+  // relief is the larger standard deduction ($3,250 single / $6,500 joint,
+  // §1108) — a built-in marriage penalty. No personal exemption (replaced by a
+  // $110-per-exemption credit, omitted at launch fidelity).
+  it("single $60k → $2,763.13 (taxable 60,000 − 3,250 = 56,750)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("de"), fica: ds.fica },
+    );
+    // $1,001 base at $25,000 + 5.55%·(56,750 − 25,000) = 1,001 + 1,762.125.
+    expect(cents(r.state!.incomeTax)).toBe("2763.13");
+  });
+
+  it("married jointly $60k → $2,582.75 (taxable 53,500; only the deduction differs)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("de"), fica: ds.fica },
+    );
+    // $1,001 base + 5.55%·(53,500 − 25,000) = 1,001 + 1,581.75.
+    expect(cents(r.state!.incomeTax)).toBe("2582.75");
+  });
+
+  it("head of household uses the single standard deduction → $2,763.13", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 60000 },
+      { federal: ds.federal, state: ds.state("de"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("2763.13");
+  });
+
+  it("the marriage penalty: joint owes nearly as much as single (brackets are not doubled)", () => {
+    const single = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("de"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("de"), fica: ds.fica },
+    );
+    // Single owes more, but a doubled-bracket state would put joint far lower;
+    // here joint stays above 90% of single because only the deduction differs.
+    expect(single.state!.incomeTax.greaterThan(joint.state!.incomeTax)).toBe(true);
+    expect(joint.state!.incomeTax.greaterThan(single.state!.incomeTax.multiply(0.9))).toBe(true);
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly schedule", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 60000 },
+      { federal: ds.federal, state: ds.state("de"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("de"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction

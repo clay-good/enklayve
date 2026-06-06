@@ -523,6 +523,19 @@
       "contentHash": "9f75d90e5c319fd53be8b19e57118066451c4e152d418546b2a7e1e498ab7304"
     },
     {
+      "id": "state-de-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-de-income-tax-2024.json",
+      "sourceUrl": "https://revenue.delaware.gov/software-developer/tax-rate-changes/",
+      "sourceDocument": "Delaware Division of Revenue tax-rate schedule (30 Del. C. §1102, brackets for tax years 2014 and later); 30 Del. C. §1108 standard deduction",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "487909f9e8d681faf22dab63e8d2b8903090fcfcb508ec1ad759c7e2f537d412"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",
