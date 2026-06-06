@@ -111,6 +111,7 @@ export type RefreshGroup =
   | "state-ok"
   | "state-wv"
   | "state-wi"
+  | "state-hi"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -909,6 +910,22 @@ export const ADAPTERS: RefreshAdapter[] = [
     // maximum (the MN pattern); the per-status bracket thresholds and the
     // sliding-deduction parameters roll alongside it as the reviewer's data-only
     // step, as do any 2025 Act 15 successor's bracket-widening changes.
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-hi-income-tax-2024",
+    group: "state-hi",
+    source:
+      "Hawaii Department of Taxation individual income tax (12-bracket schedule, standard deduction)",
+    sourceUrl: "https://tax.hawaii.gov/tax-year-information/",
+    cadence: "Annual",
+    // HI's twelve rates (1.40%→11.00%) are uniform across statuses and the
+    // thresholds derive by a fixed statutory ratio (MFJ 2× single, HoH 1.5×), so
+    // the generic graduated parser can't overlay the per-status tables. Anchor the
+    // standard deduction (the MN pattern) — the figure Act 46 steps on its
+    // 2024/2026/2028/2030/2031 schedule; the 12 per-status bracket tables and the
+    // next Act 46 bracket-widening (2027) roll alongside as the reviewer's
+    // data-only step.
     parse: parseStandardDeductions,
   },
   {

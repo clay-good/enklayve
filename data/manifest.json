@@ -614,6 +614,19 @@
       "contentHash": "facce4711e6dc3873422c9315d4dc89e37ac433dc9d1ee6087aba7ea5bd37653"
     },
     {
+      "id": "state-hi-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-hi-income-tax-2024.json",
+      "sourceUrl": "https://tax.hawaii.gov/tax-year-information/",
+      "sourceDocument": "Hawaii DoT 2026 rate schedule (HRS §235-51, 12 brackets 1.4–11%); Act 46 SLH 2024 standard deduction $8,000/$16,000/$12,000; $1,144 exemption",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "07d29f30c9c2d6a1f20717e0a37303a3235fe06c065d1f171b2dc4d0be8e1920"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",

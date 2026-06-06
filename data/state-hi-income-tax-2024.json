@@ -1,0 +1,69 @@
+{
+  "id": "US-HI",
+  "name": "Hawaii",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.014 },
+      { "lowerBound": 9600, "rate": 0.032 },
+      { "lowerBound": 14400, "rate": 0.055 },
+      { "lowerBound": 19200, "rate": 0.064 },
+      { "lowerBound": 24000, "rate": 0.068 },
+      { "lowerBound": 36000, "rate": 0.072 },
+      { "lowerBound": 48000, "rate": 0.076 },
+      { "lowerBound": 125000, "rate": 0.079 },
+      { "lowerBound": 175000, "rate": 0.0825 },
+      { "lowerBound": 225000, "rate": 0.09 },
+      { "lowerBound": 275000, "rate": 0.1 },
+      { "lowerBound": 325000, "rate": 0.11 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.014 },
+      { "lowerBound": 19200, "rate": 0.032 },
+      { "lowerBound": 28800, "rate": 0.055 },
+      { "lowerBound": 38400, "rate": 0.064 },
+      { "lowerBound": 48000, "rate": 0.068 },
+      { "lowerBound": 72000, "rate": 0.072 },
+      { "lowerBound": 96000, "rate": 0.076 },
+      { "lowerBound": 250000, "rate": 0.079 },
+      { "lowerBound": 350000, "rate": 0.0825 },
+      { "lowerBound": 450000, "rate": 0.09 },
+      { "lowerBound": 550000, "rate": 0.1 },
+      { "lowerBound": 650000, "rate": 0.11 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.014 },
+      { "lowerBound": 14400, "rate": 0.032 },
+      { "lowerBound": 21600, "rate": 0.055 },
+      { "lowerBound": 28800, "rate": 0.064 },
+      { "lowerBound": 36000, "rate": 0.068 },
+      { "lowerBound": 54000, "rate": 0.072 },
+      { "lowerBound": 72000, "rate": 0.076 },
+      { "lowerBound": 187500, "rate": 0.079 },
+      { "lowerBound": 262500, "rate": 0.0825 },
+      { "lowerBound": 337500, "rate": 0.09 },
+      { "lowerBound": 412500, "rate": 0.1 },
+      { "lowerBound": 487500, "rate": 0.11 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 8000,
+    "married_jointly": 16000,
+    "head_of_household": 12000
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 1144,
+    "married_jointly": 2288,
+    "head_of_household": 1144
+  },
+  "citation": {
+    "sourceUrl": "https://tax.hawaii.gov/tax-year-information/",
+    "sourceDocument": "Hawaii DoT 2026 rate schedule (HRS §235-51, 12 brackets 1.4–11%); Act 46 SLH 2024 standard deduction $8,000/$16,000/$12,000; $1,144 exemption",
+    "sourceNote": "Hawaii has the most income-tax brackets of any state — TWELVE, from 1.40% to 11.00% (HRS §235-51), making it the deepest graduated schedule the engine models (beating Delaware's seven). The 12 rates — 1.40% / 3.20% / 5.50% / 6.40% / 6.80% / 7.20% / 7.60% / 7.90% / 8.25% / 9.00% / 10.00% / 11.00% — are uniform across filing statuses; only the thresholds differ, and they do so by a fixed statutory ratio: the married-filing-jointly schedule (Schedule II) is exactly 2× the single/MFS schedule (Schedule I) and the head-of-household schedule (Schedule III) is exactly 1.5× single (verified against both the 2024 published schedule and the Tax Foundation 2026 table — e.g. single's 3.20% tier begins at $9,600, joint's at $19,200, HoH's at $14,400). Act 46 (SLH 2024) — the largest income-tax cut in Hawaii history, phasing in through 2031 — widened the brackets for tax year 2025 (carried to 2026, the next widening is 2027) and raised the standard deduction again for 2026 to $8,000 (single / married filing separately), $16,000 (married jointly / surviving spouse), and $12,000 (head of household), up from the 2024-25 $4,400/$8,800/$6,424. On top of the deduction, Hawaii subtracts a $1,144-per-exemption personal exemption (single $1,144, joint $2,288, head of household $1,144), unchanged by Act 46. Married filing separately maps to single exactly (Schedule I, the $8,000 deduction, $1,144 exemption — not an approximation here). The engine needed no new capability — this is the existing brackets + standard deduction + personal exemption stack, just the deepest schedule. Worked example, single $60,000 AGI: taxable = 60,000 − 8,000 − 1,144 = $50,856; tax climbs the first seven bands to $2,756.26 (the marginal dollar sits in the 7.60% tier). The $1,144-per-dependent exemption, the age-65 doubled exemption, the refundable food/excise and earned-income credits, and the lower long-term capital-gains rate (7.25%, which the wage-based engine does not reach) are omitted at launch fidelity, so the figure errs slightly high — the conservative side. Hawaii levies no county/local income tax. The brackets and standard deduction step on Act 46's statutory schedule; the refresh adapter anchors the standard-deduction amounts and the per-status bracket tables roll alongside as the reviewer's data-only step. Verified against the Hawaii Department of Taxation tax-year information, HRS §235-51, Act 46 (SLH 2024), and the Tax Foundation 2026 state-rate table on 2026-06-06.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-06"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}

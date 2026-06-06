@@ -1,0 +1,21 @@
+# Hawaii income tax — HI Department of Taxation, annual (staggered). Hawaii's
+# twelve rates (1.40%→11.00%, HRS §235-51 — the most brackets of any state) are
+# uniform across filing statuses and the thresholds derive by a fixed statutory
+# ratio (married jointly 2× single, head of household 1.5× single). Act 46 (SLH
+# 2024) steps the standard deduction up on a 2024/2026/2028/2030/2031 schedule
+# and widened the brackets for 2025 (next widening 2027), so the adapter anchors
+# the standard deduction (the MN pattern) and the per-status bracket tables roll
+# alongside as the reviewer's data-only step. BUILD-SPEC.md §7.2, §8.
+name: Refresh HI income tax
+
+on:
+  schedule:
+    - cron: "0 12 13 4 *" # April 13, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-hi
+      source_name: HI income tax

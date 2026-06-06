@@ -713,6 +713,73 @@ describe("Wisconsin (graduated; the SLIDING standard deduction reduced by a flat
   });
 });
 
+describe("Hawaii (the deepest schedule yet — 12 brackets 1.4%–11%, per-status by a fixed ratio)", () => {
+  // HI (2026) has the most brackets of any state — twelve, 1.40%→11.00% (HRS
+  // §235-51). The rates are uniform across statuses; only the thresholds differ,
+  // and by a fixed statutory ratio: MFJ = 2× single, HoH = 1.5× single. Act 46
+  // (SLH 2024) widened the brackets for 2025 (carried to 2026) and raised the
+  // 2026 standard deduction to $8,000/$16,000/$12,000; a $1,144-per-exemption
+  // personal exemption stacks on top. Taxable = AGI − standard − exemption.
+  it("single $60k → $2,756.26 (taxable 60,000 − 8,000 − 1,144 = 50,856, into the 7.6% tier)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("hi"), fica: ds.fica },
+    );
+    // Seven bands: 1.4%·9,600 + 3.2%·4,800 + 5.5%·4,800 + 6.4%·4,800 + 6.8%·12,000
+    // + 7.2%·12,000 + 7.6%·2,856.
+    expect(cents(r.state!.incomeTax)).toBe("2756.26");
+  });
+
+  it("single $15k stays in the bottom 1.4% band → $81.98 (taxable 5,856)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 15000 },
+      { federal: ds.federal, state: ds.state("hi"), fica: ds.fica },
+    );
+    // taxable 15,000 − 8,000 − 1,144 = 5,856 (< 9,600): 1.4%·5,856.
+    expect(cents(r.state!.incomeTax)).toBe("81.98");
+  });
+
+  it("married jointly $120k → $5,512.51 (joint thresholds are exactly 2× single)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 120000 },
+      { federal: ds.federal, state: ds.state("hi"), fica: ds.fica },
+    );
+    // taxable 120,000 − 16,000 − 2,288 = 101,712, into the 7.6% tier (over $96,000).
+    expect(cents(r.state!.incomeTax)).toBe("5512.51");
+  });
+
+  it("head of household $60k → $2,027.01 (HoH thresholds are exactly 1.5× single)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 60000 },
+      { federal: ds.federal, state: ds.state("hi"), fica: ds.fica },
+    );
+    // taxable 60,000 − 12,000 − 1,144 = 46,856, into the 6.8% tier (the HoH 6.8%
+    // band runs $36,000–$54,000 = 1.5× single's $24,000–$36,000).
+    expect(cents(r.state!.incomeTax)).toBe("2027.01");
+  });
+
+  it("single $300k climbs into the 10% tier → $22,551.80 (the deep upper brackets)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 300000 },
+      { federal: ds.federal, state: ds.state("hi"), fica: ds.fica },
+    );
+    // taxable 290,856: all bands through 9%·50,000 (to $275,000) + 10%·15,856.
+    expect(cents(r.state!.incomeTax)).toBe("22551.8");
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly schedule", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 120000 },
+      { federal: ds.federal, state: ds.state("hi"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 120000 },
+      { federal: ds.federal, state: ds.state("hi"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction
