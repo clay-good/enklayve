@@ -490,6 +490,57 @@ export const AmtSchema = z.object({
 });
 export type AmtData = z.infer<typeof AmtSchema>;
 
+/**
+ * Kiddie-tax parameters (SPEC-3 §4.5, IRC §1(g), Form 8615). A dependent child's
+ * unearned income is sheltered up to `dependentStandardDeductionBase`, the next
+ * like amount is taxed at the child's own rate, and the remainder (unearned income
+ * over twice the base) is taxed at the parents' marginal rate. The dependent
+ * standard deduction is the greater of the base or earned income plus
+ * `earnedIncomeAddOn`, capped at the single standard deduction (read from the
+ * federal shard).
+ */
+export const KiddieTaxSchema = z.object({
+  taxYear: z.number().int(),
+  /** The dependent's minimum standard deduction / unearned-income shelter ($1,350). */
+  dependentStandardDeductionBase: z.number().gte(0),
+  /** Added to earned income when that yields a larger dependent deduction ($450). */
+  earnedIncomeAddOn: z.number().gte(0),
+  citation: CitationSchema,
+});
+export type KiddieTaxData = z.infer<typeof KiddieTaxSchema>;
+
+/**
+ * Education-credit parameters (SPEC-3 §4.6, IRC §25A, Form 8863). The American
+ * Opportunity Tax Credit is `tier1Rate` of the first `tier1Cap` of qualified
+ * expenses plus `tier2Rate` of the next `tier2Cap` (max `maxCredit` per student),
+ * `refundableRate` of it refundable. The Lifetime Learning Credit is `rate` of up
+ * to `expenseCap` of expenses (max `maxCredit` per return), nonrefundable. Both
+ * phase out across a MAGI range by filing group (the AOTC ranges are statutory and
+ * unindexed; the LLC ranges were aligned to them and made permanent).
+ */
+export const EducationCreditsSchema = z.object({
+  taxYear: z.number().int(),
+  aotc: z.object({
+    tier1Cap: z.number().gte(0),
+    tier1Rate: z.number().gte(0).lte(1),
+    tier2Cap: z.number().gte(0),
+    tier2Rate: z.number().gte(0).lte(1),
+    maxCredit: z.number().gte(0),
+    refundableRate: z.number().gte(0).lte(1),
+  }),
+  llc: z.object({
+    expenseCap: z.number().gte(0),
+    rate: z.number().gte(0).lte(1),
+    maxCredit: z.number().gte(0),
+  }),
+  phaseOut: z.object({
+    single: z.object({ low: z.number().gte(0), high: z.number().gte(0) }),
+    married: z.object({ low: z.number().gte(0), high: z.number().gte(0) }),
+  }),
+  citation: CitationSchema,
+});
+export type EducationCreditsData = z.infer<typeof EducationCreditsSchema>;
+
 /** Every dataset kind referenced by the manifest (BUILD-SPEC.md §7.2). */
 export const DATASET_SCHEMAS = {
   "federal-income-tax": JurisdictionSchema,
@@ -511,6 +562,8 @@ export const DATASET_SCHEMAS = {
   "ira-deduction": IraDeductionSchema,
   "gift-tax": GiftTaxSchema,
   amt: AmtSchema,
+  "kiddie-tax": KiddieTaxSchema,
+  "education-credits": EducationCreditsSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

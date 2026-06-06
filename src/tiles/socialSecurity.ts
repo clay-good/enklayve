@@ -199,5 +199,13 @@ export const socialSecurityTile: TileDefinition = {
       url: "https://www.ssa.gov/benefits/retirement/planner/delayret.html",
     },
   ],
+  related: [
+    {
+      hubId: "retirement",
+      tool: "retirement-drawdown",
+      label: "Retirement Drawdown",
+      note: "how long your savings last alongside this benefit",
+    },
+  ],
   mount: mountSocialSecurity,
 };

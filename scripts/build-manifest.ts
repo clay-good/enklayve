@@ -160,6 +160,13 @@ const SHARDS: ShardSource[] = [
   },
   { id: "gift-tax-2024", kind: "gift-tax", shard: "gift-tax-2024.json", ...ANNUAL },
   { id: "amt-2024", kind: "amt", shard: "amt-2024.json", ...ANNUAL },
+  { id: "kiddie-tax-2024", kind: "kiddie-tax", shard: "kiddie-tax-2024.json", ...ANNUAL },
+  {
+    id: "education-credits-2024",
+    kind: "education-credits",
+    shard: "education-credits-2024.json",
+    ...ANNUAL,
+  },
 ];
 
 function sha256Hex(buf: Buffer): string {

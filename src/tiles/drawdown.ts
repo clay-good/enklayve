@@ -11,18 +11,29 @@ import { retirementDrawdown } from "../engine/finance";
 import { el } from "../ui/dom";
 import { field, parseNonNegative, parseNumber, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { sensitivityTable, sensitivityToggle } from "../ui/sensitivity";
 import type { TileContext, TileDefinition } from "./types";
 
 const MAX_AGE = 100;
+/** How far the opt-in range flexes the real-return assumption, in percentage points. */
+const RETURN_DELTA = 2;
 
 interface Fields {
   balance: number;
   age: number;
   withdrawal: number;
   realReturnPct: number;
+  /** Show the opt-in low/base/high range on the real-return assumption. */
+  band: boolean;
 }
 
-const EXAMPLE: Fields = { balance: 800000, age: 65, withdrawal: 40000, realReturnPct: 4 };
+const EXAMPLE: Fields = {
+  balance: 800000,
+  age: 65,
+  withdrawal: 40000,
+  realReturnPct: 4,
+  band: false,
+};
 
 function readFields(p: URLSearchParams): Fields {
   return {
@@ -30,6 +41,7 @@ function readFields(p: URLSearchParams): Fields {
     age: Math.round(parseNonNegative(p.get("age"), 65)),
     withdrawal: parseNonNegative(p.get("w"), 0),
     realReturnPct: parseNumber(p.get("r"), 4),
+    band: p.get("band") === "1",
   };
 }
 
@@ -39,6 +51,7 @@ function writeFields(f: Fields): URLSearchParams {
   p.set("age", String(f.age));
   p.set("w", String(f.withdrawal));
   p.set("r", String(f.realReturnPct));
+  if (f.band) p.set("band", "1");
   return p;
 }
 
@@ -132,7 +145,52 @@ export function mountDrawdown(ctx: TileContext): void {
         permalink: () => ctx.permalink(writeFields(fields)),
       }),
     );
+
+    if (fields.band) {
+      const yearsLabelAt = (rPct: number): string => {
+        const s = retirementDrawdown(
+          {
+            currentBalance: fields.balance,
+            currentAge: fields.age,
+            annualWithdrawal: fields.withdrawal,
+            realReturnPct: rPct,
+            maxAge: MAX_AGE,
+          },
+          rmd,
+        );
+        return s.lastsToMaxAge
+          ? `${MAX_AGE - fields.age}+ years`
+          : `${Math.round(s.yearsLasting)} years`;
+      };
+      const low = fields.realReturnPct - RETURN_DELTA;
+      const high = fields.realReturnPct + RETURN_DELTA;
+      resultContainer.append(
+        sensitivityTable(
+          `If your real return runs ${RETURN_DELTA} points either side of your ${fields.realReturnPct}% assumption:`,
+          [
+            { label: "Lower return", assumption: `${low}%`, result: yearsLabelAt(low) },
+            {
+              label: "Your assumption",
+              assumption: `${fields.realReturnPct}%`,
+              result: yearsLabelAt(fields.realReturnPct),
+              base: true,
+            },
+            { label: "Higher return", assumption: `${high}%`, result: yearsLabelAt(high) },
+          ],
+        ),
+      );
+    }
   }
+
+  const bandToggle = sensitivityToggle(
+    "Show a range (±2 points on the return)",
+    fields.band,
+    (on) => {
+      fields = { ...fields, band: on };
+      ctx.setParams(writeFields(fields));
+      compute();
+    },
+  );
 
   function recompute(): void {
     fields = {
@@ -140,6 +198,7 @@ export function mountDrawdown(ctx: TileContext): void {
       age: Math.round(parseNonNegative(ageInput.value, 65)),
       withdrawal: parseNonNegative(wInput.value, 0),
       realReturnPct: parseNumber(rInput.value, 4),
+      band: bandToggle.querySelector("input")!.checked,
     };
     ctx.setParams(writeFields(fields));
     compute();
@@ -153,6 +212,7 @@ export function mountDrawdown(ctx: TileContext): void {
     ageInput.value = String(fields.age);
     wInput.value = String(fields.withdrawal);
     rInput.value = String(fields.realReturnPct);
+    bandToggle.querySelector("input")!.checked = fields.band;
     recompute();
   });
 
@@ -163,6 +223,7 @@ export function mountDrawdown(ctx: TileContext): void {
     field("Your age now", ageInput),
     field("Annual withdrawal (today's dollars)", wInput),
     field("Real return after inflation (%)", rInput),
+    bandToggle,
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 

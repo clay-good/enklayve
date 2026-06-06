@@ -28,6 +28,8 @@ import {
   type IraDeductionData,
   type GiftTaxData,
   type AmtData,
+  type KiddieTaxData,
+  type EducationCreditsData,
 } from "./schemas";
 
 /** Federal Poverty Level region (BUILD-SPEC.md §4.1). */
@@ -83,6 +85,10 @@ export interface BundledData {
   giftTax(): GiftTaxData | null;
   /** AMT exemption, phase-out, and rate breakpoint (SPEC-3 §4.7). */
   amt(): AmtData | null;
+  /** Kiddie-tax dependent shelter and earned-income add-on (SPEC-3 §4.5). */
+  kiddieTax(): KiddieTaxData | null;
+  /** AOTC / Lifetime Learning Credit parameters (SPEC-3 §4.6). */
+  educationCredits(): EducationCreditsData | null;
   /** A state jurisdiction by two-letter code (e.g. "ca"); null if unavailable. */
   state(code: string): Jurisdiction | null;
   /** Status for a dataset id, for the fail-safe verify banner. */
@@ -142,6 +148,8 @@ async function build(): Promise<BundledData> {
     iraDeduction: () => dataOf("ira-deduction-2024") as IraDeductionData | null,
     giftTax: () => dataOf("gift-tax-2024") as GiftTaxData | null,
     amt: () => dataOf("amt-2024") as AmtData | null,
+    kiddieTax: () => dataOf("kiddie-tax-2024") as KiddieTaxData | null,
+    educationCredits: () => dataOf("education-credits-2024") as EducationCreditsData | null,
     state: (code) => dataOf(`state-${code.toLowerCase()}-income-tax-2024`) as Jurisdiction | null,
     statusOf: (id) => loaded.byId.get(id)?.status ?? "missing",
     stateCodes: () =>

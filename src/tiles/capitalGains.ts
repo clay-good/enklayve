@@ -248,5 +248,13 @@ export const capitalGainsTile: TileDefinition = {
       url: "https://www.irs.gov/individuals/net-investment-income-tax",
     },
   ],
+  related: [
+    {
+      hubId: "paycheck-taxes",
+      tool: "marginal-explorer",
+      label: "Marginal Rate Explorer",
+      note: "what your next $1,000 of income costs",
+    },
+  ],
   mount: mountCapitalGains,
 };

@@ -1,0 +1,11 @@
+{
+  "taxYear": 2026,
+  "dependentStandardDeductionBase": 1350,
+  "earnedIncomeAddOn": 450,
+  "citation": {
+    "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+    "sourceDocument": "IRS Rev. Proc. 2025-32 (2026 dependent standard deduction); IRC §1(g), Form 8615",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-06"
+  }
+}

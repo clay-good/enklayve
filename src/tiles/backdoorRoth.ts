@@ -290,5 +290,13 @@ export const backdoorRothTile: TileDefinition = {
     { label: "IRS Publication 590-A", url: "https://www.irs.gov/publications/p590a" },
     { label: "IRS, Roth IRAs", url: "https://www.irs.gov/retirement-plans/roth-iras" },
   ],
+  related: [
+    {
+      hubId: "retirement",
+      tool: "ira-deduction",
+      label: "IRA Deduction Checker",
+      note: "check whether a traditional contribution is deductible first",
+    },
+  ],
   mount: mountBackdoorRoth,
 };

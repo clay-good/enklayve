@@ -625,6 +625,32 @@
       "sourceDocument": "IRS Rev. Proc. 2025-32 (2026 AMT exemption & thresholds); IRC §55 (26%/28% rates)",
       "dateRetrieved": "2026-06-05",
       "contentHash": "c5584df6a18a45f6176834d0285d179f56e0bcf91ae93bced18082e47a573bc2"
+    },
+    {
+      "id": "kiddie-tax-2024",
+      "kind": "kiddie-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "kiddie-tax-2024.json",
+      "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+      "sourceDocument": "IRS Rev. Proc. 2025-32 (2026 dependent standard deduction); IRC §1(g), Form 8615",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "d8521bc7bff08e6babe57838677efeafd508bae1b7a76b5e3d3fb8a640f3a04f"
+    },
+    {
+      "id": "education-credits-2024",
+      "kind": "education-credits",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "education-credits-2024.json",
+      "sourceUrl": "https://www.irs.gov/credits-deductions/individuals/education-credits-aotc-and-llc",
+      "sourceDocument": "IRS Education Credits (Form 8863); IRC §25A (AOTC & Lifetime Learning Credit)",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "307a2505ec87996f06e92032b54fb25ec7fab644e60e0f7731cdb659c630d33f"
     }
   ]
 }

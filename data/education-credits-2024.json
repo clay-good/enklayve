@@ -1,0 +1,26 @@
+{
+  "taxYear": 2026,
+  "aotc": {
+    "tier1Cap": 2000,
+    "tier1Rate": 1.0,
+    "tier2Cap": 2000,
+    "tier2Rate": 0.25,
+    "maxCredit": 2500,
+    "refundableRate": 0.4
+  },
+  "llc": {
+    "expenseCap": 10000,
+    "rate": 0.2,
+    "maxCredit": 2000
+  },
+  "phaseOut": {
+    "single": { "low": 80000, "high": 90000 },
+    "married": { "low": 160000, "high": 180000 }
+  },
+  "citation": {
+    "sourceUrl": "https://www.irs.gov/credits-deductions/individuals/education-credits-aotc-and-llc",
+    "sourceDocument": "IRS Education Credits (Form 8863); IRC §25A (AOTC & Lifetime Learning Credit)",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-06"
+  }
+}

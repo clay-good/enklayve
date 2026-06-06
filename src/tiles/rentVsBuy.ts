@@ -11,7 +11,11 @@ import { rentVsBuy } from "../engine/finance";
 import { el } from "../ui/dom";
 import { field, parseNonNegative, parseNumber, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { sensitivityTable, sensitivityToggle } from "../ui/sensitivity";
 import type { TileContext, TileDefinition } from "./types";
+
+/** How far the opt-in range flexes the appreciation assumption, in percentage points. */
+const APPR_DELTA = 2;
 
 interface Fields {
   homePrice: number;
@@ -26,6 +30,8 @@ interface Fields {
   rentGrowthPct: number;
   investReturnPct: number;
   years: number;
+  /** Show the opt-in low/base/high range on the appreciation assumption. */
+  band: boolean;
 }
 
 const EXAMPLE: Fields = {
@@ -41,6 +47,7 @@ const EXAMPLE: Fields = {
   rentGrowthPct: 3,
   investReturnPct: 6,
   years: 7,
+  band: false,
 };
 
 function readFields(p: URLSearchParams): Fields {
@@ -57,7 +64,28 @@ function readFields(p: URLSearchParams): Fields {
     rentGrowthPct: parseNumber(p.get("rg"), 3),
     investReturnPct: parseNumber(p.get("ir"), 6),
     years: Math.max(1, parseNonNegative(p.get("y"), 7)),
+    band: p.get("band") === "1",
   };
+}
+
+/** The signed outcome at a given appreciation rate — the same evaluation. */
+function outcomeAt(fields: Fields, apprPct: number, fmt: (m: Money) => string): string {
+  const r = rentVsBuy({
+    homePrice: fields.homePrice,
+    downPayment: fields.downPayment,
+    mortgageRatePct: fields.ratePct,
+    termYears: fields.termYears,
+    monthlyOwnershipCosts: fields.ownershipMonthly,
+    closingCostBuy: fields.closingCost,
+    sellingCostPct: fields.sellingCostPct,
+    homeAppreciationPct: apprPct,
+    monthlyRent: fields.monthlyRent,
+    rentGrowthPct: fields.rentGrowthPct,
+    investmentReturnPct: fields.investReturnPct,
+    years: fields.years,
+  });
+  if (r.cheaper === "tie") return "About even";
+  return `${r.cheaper === "buy" ? "Buy" : "Rent"} by ${fmt(r.difference)}`;
 }
 
 function writeFields(f: Fields): URLSearchParams {
@@ -74,6 +102,7 @@ function writeFields(f: Fields): URLSearchParams {
   if (f.rentGrowthPct !== 3) p.set("rg", String(f.rentGrowthPct));
   if (f.investReturnPct !== 6) p.set("ir", String(f.investReturnPct));
   if (f.years !== 7) p.set("y", String(f.years));
+  if (f.band) p.set("band", "1");
   return p;
 }
 
@@ -158,6 +187,34 @@ export function mountRentVsBuy(ctx: TileContext): void {
         permalink: () => ctx.permalink(writeFields(fields)),
       }),
     );
+
+    if (fields.band) {
+      const low = fields.appreciationPct - APPR_DELTA;
+      const high = fields.appreciationPct + APPR_DELTA;
+      resultContainer.append(
+        sensitivityTable(
+          `If home appreciation runs ${APPR_DELTA} points either side of your ${fields.appreciationPct}% assumption (it can flip the answer):`,
+          [
+            {
+              label: "Lower appreciation",
+              assumption: `${low}%`,
+              result: outcomeAt(fields, low, fmt),
+            },
+            {
+              label: "Your assumption",
+              assumption: `${fields.appreciationPct}%`,
+              result: outcomeAt(fields, fields.appreciationPct, fmt),
+              base: true,
+            },
+            {
+              label: "Higher appreciation",
+              assumption: `${high}%`,
+              result: outcomeAt(fields, high, fmt),
+            },
+          ],
+        ),
+      );
+    }
   }
 
   function recompute(): void {
@@ -174,10 +231,21 @@ export function mountRentVsBuy(ctx: TileContext): void {
       rentGrowthPct: parseNumber(rgInput.value, 3),
       investReturnPct: parseNumber(irInput.value, 6),
       years: Math.max(1, parseNonNegative(yearsInput.value, 7)),
+      band: bandToggle.querySelector("input")!.checked,
     };
     ctx.setParams(writeFields(fields));
     compute();
   }
+
+  const bandToggle = sensitivityToggle(
+    "Show a range (±2 points on appreciation)",
+    fields.band,
+    (on) => {
+      fields = { ...fields, band: on };
+      ctx.setParams(writeFields(fields));
+      compute();
+    },
+  );
 
   for (const i of [
     priceInput,
@@ -210,6 +278,7 @@ export function mountRentVsBuy(ctx: TileContext): void {
     rgInput.value = String(fields.rentGrowthPct);
     irInput.value = String(fields.investReturnPct);
     yearsInput.value = String(fields.years);
+    bandToggle.querySelector("input")!.checked = fields.band;
     recompute();
   });
 
@@ -231,6 +300,7 @@ export function mountRentVsBuy(ctx: TileContext): void {
     field("Investment return on freed cash (%/yr)", irInput),
     el("div", { class: "field-group-label", text: "Horizon" }),
     field("Years", yearsInput),
+    bandToggle,
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 

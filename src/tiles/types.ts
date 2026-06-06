@@ -105,6 +105,13 @@ export interface TileDefinition {
   how?: string;
   /** Trusted external resources to learn more (shown as "Learn more" links). */
   resources?: { label: string; url: string }[];
+  /**
+   * Sibling tools a user mid-decision usually wants next (SPEC-3 §4.1). Rendered
+   * as in-app "Related tools" links under the calculator; navigating carries the
+   * shared profile (filing status, income) over automatically. `hubId` is the
+   * target hub and `tool` its sub-tool id; `note` is a one-line "why".
+   */
+  related?: { hubId: string; tool?: string; label: string; note?: string }[];
 }
 
 /** The text the fuzzy palette searches for a tile. */

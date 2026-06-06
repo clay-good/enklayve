@@ -229,5 +229,13 @@ export const retirementOptimizerTile: TileDefinition = {
       url: "https://www.irs.gov/publications/p969",
     },
   ],
+  related: [
+    {
+      hubId: "retirement",
+      tool: "backdoor-roth",
+      label: "Backdoor Roth",
+      note: "if income blocks a direct Roth and there's room",
+    },
+  ],
   mount: mountRetirementOptimizer,
 };

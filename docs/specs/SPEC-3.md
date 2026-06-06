@@ -83,11 +83,11 @@ Full detail lives in [SPEC-3-citations.md](SPEC-3-citations.md). The three oblig
 
 ## 4. Expansion roadmap: the next wave
 
-> **Status — 2026-06-05.** The first wave is shipped: **§4.2** (estimated-tax due-date calendar), **§4.3** (IRA deductibility screener), **§4.4** (gift-tax exclusion tracker), **§4.7** (AMT quick screener), and **§4.8** (Peace-of-Mind arrival date) are built, tested, and cited to the 2026 IRS figures (Rev. Proc. 2025-32 and Notice 2025-67). Three new shards landed — `ira-deduction-2024`, `gift-tax-2024`, `amt-2024` — each gated through the same integrity/schema/staleness pipeline as the rest, and the engine functions are pinned by worked examples plus the §2.9 boundary sweep in [`tests/engine/screeners.test.ts`](../../tests/engine/screeners.test.ts). Still open by choice: **§4.1** (cross-tool linking), **§4.5** (kiddie tax), **§4.6** (education-credit comparison), and **§4.9** (sensitivity bands) — none blocking, each a clean next increment.
+> **Status — 2026-06-06.** The §4 roadmap is **complete**. The first wave shipped §4.2/§4.3/§4.4/§4.7/§4.8; this second wave finishes the rest: **§4.1** (cross-tool "related" links), **§4.5** (kiddie-tax estimator), **§4.6** (AOTC-vs-Lifetime-Learning comparison), and **§4.9** (opt-in sensitivity bands). Two more cited shards landed — `kiddie-tax-2024` (IRC §1(g)) and `education-credits-2024` (IRC §25A) — bringing the §4 total to five new shards, all gated through the same integrity/schema/staleness pipeline; the new engines are pinned by worked examples plus the §2.9 boundary sweep in [`tests/engine/screeners.test.ts`](../../tests/engine/screeners.test.ts) and [`tests/engine/educationKiddie.test.ts`](../../tests/engine/educationKiddie.test.ts). Everything below §4.10 is built, tested, cited, deep-linkable, and responsive. The only remaining items are the §4.10 **parked** list, held on purpose.
 
 Same bar as always: US personal finance, deterministic, computable from bundled cited data, no market guessing, no advice. Each tool below was checked against that bar; the parked list at the end records what failed it and why. Ordered by value ÷ effort.
 
-### 4.1 Cross-tool linking (enhancement, trivial, highest ROI)
+### 4.1 Cross-tool linking (enhancement, trivial, highest ROI) — ✅ shipped
 
 The calculators already share an engine and a profile; they don't yet point at each other. Add a small "related" affordance so a user mid-decision lands on the next relevant tool with context carried over:
 
@@ -97,6 +97,8 @@ The calculators already share an engine and a profile; they don't yet point at e
 - Every plan step in My Plan → its primary tile *and* its prerequisite (capture-the-match before extra debt paydown).
 
 No new math, no new data. Pure routing plus the existing profile sync. Deterministic by construction.
+
+*Done:* an optional `related: [{hubId, tool, label, note}]` on the tile contract, rendered by the shared explainer ([`explainer.ts`](../../src/ui/explainer.ts)) as in-app "Related tools" links; navigating carries the shared profile over automatically. Wired Capital Gains & Federal Income Tax → Marginal Rate Explorer, Social Security → Retirement Drawdown, Retirement Optimizer ↔ Backdoor Roth ↔ IRA Deduction Checker. (The "My Plan step" links are moot — My Plan was retired into the home anti-budget.)
 
 ### 4.2 Estimated-tax due-date calendar (enhancement to Quarterly Taxes, low effort) — ✅ shipped
 
@@ -116,13 +118,17 @@ Quarterly Taxes shows the four payment amounts but not *when* to send them. Add 
 
 *Done:* [`giftTax.ts`](../../src/engine/giftTax.ts) + the `gift-tax-2024` shard (Rev. Proc. 2025-32: $19,000 / $194,000 non-citizen-spouse / $15M lifetime). Handles the unlimited marital deduction, the non-citizen-spouse exclusion, the Form 709 trigger, and the 40% top rate past the exemption.
 
-### 4.5 Kiddie-tax estimator (new tool, Investing hub, low–medium effort)
+### 4.5 Kiddie-tax estimator (new tool, Investing hub, low–medium effort) — ✅ shipped
 
 "How is my child's investment income taxed?" Inputs: child's earned and unearned income, age/student status, parents' marginal rate. Output: the IRC §1(g) stack — the dependent standard-deduction shelter, the next band at the child's rate, the remainder at the parents' rate — and the effective rate on the unearned portion. All parameters are statutory and cited. Deterministic; frames the complexity honestly and points to a pro for the edge cases.
 
-### 4.6 Education-credit comparison: AOTC vs Lifetime Learning (new tool, Benefits & Aid hub, low–medium effort)
+*Done:* [`kiddieTax.ts`](../../src/engine/kiddieTax.ts) + the `kiddie-tax-2024` shard ($1,350 dependent base, $450 earned add-on; Rev. Proc. 2025-32). The engine reads the federal single brackets and standard deduction for the child's-rate band and applies the parents' supplied marginal rate to the net-unearned slice; framed as an estimate with a Form 8615 pointer.
+
+### 4.6 Education-credit comparison: AOTC vs Lifetime Learning (new tool, Benefits & Aid hub, low–medium effort) — ✅ shipped
 
 "Which education credit saves more this year?" Inputs: AGI, filing status, qualified expenses by type, years in program. Output: AOTC vs LLC side by side, phase-out status, the refundable portion of the AOTC. Needs a new shard for the two credits' parameters (annual IRS notice) — they are not yet bundled. High household value, deterministic, comparison-not-advice framing.
+
+*Done:* [`educationCredits.ts`](../../src/engine/educationCredits.ts) + the `education-credits-2024` shard (AOTC 100%/25% tiers, $2,500 max, 40% refundable; LLC 20% of $10,000, $2,000 max; the shared $80–90k / $160–180k phase-out; IRC §25A, Form 8863). Shows both side by side, the refundable AOTC portion, the phase-out fraction, and which is larger this year.
 
 ### 4.7 AMT quick screener (new tool, Paycheck & Taxes hub, low effort, screener-only) — ✅ shipped
 
@@ -136,9 +142,11 @@ The dashboard shows progress toward the Enough Number but not *when* you arrive 
 
 *Done:* Peace of Mind gained a "Time to your Enough Number" reading — a straight-line `gap ÷ monthly savings` projection that deliberately assumes no investment growth (the cautious version), deep-linked via `?sav=`.
 
-### 4.9 Sensitivity bands (enhancement, opt-in, medium effort)
+### 4.9 Sensitivity bands (enhancement, opt-in, medium effort) — ✅ shipped
 
 For the assumption-heavy tools (Rent vs Buy, College Cost, Compound Growth, Retirement Drawdown), add an opt-in "show me a range" toggle that recomputes the same deterministic function at the user's assumption ±a labeled delta and shows low/base/high. This is the principled answer to the "extreme inputs look like fact" seam (invariant §2.4): instead of guard-railing, show the fragility. Still 100% deterministic — three pure evaluations, not a simulation.
+
+*Done:* a shared [`sensitivity.ts`](../../src/ui/sensitivity.ts) (an opt-in `?band=1` toggle + a low/base/high table) wired into all four tiles, each flexing its primary assumption ±2 points: Compound Growth (return), College Cost (inflation), Rent vs Buy (appreciation — the table shows the verdict flip), Retirement Drawdown (real return). The math stays in the engine; the helper only presents the three already-computed scenarios.
 
 ### 4.10 Parked (out of scope or deferred, on purpose)
 
@@ -158,7 +166,7 @@ Recorded so they are not re-proposed without the bar in mind:
 1. ✅ The robustness invariants in §2 are encoded as tests (the property suite of §2.9 — see [`tests/engine/propertyInvariants.test.ts`](../../tests/engine/propertyInvariants.test.ts), which sweeps the engine's public functions over the boundary space and pins the SE-92.35%, capital-gains-stacking, EITC-plateau, and I-bond composite-rate identities), and the full golden + UI suite stays green.
 2. ✅ The confirmed fixes in [SPEC-3-hardening.md](SPEC-3-hardening.md) §A are applied (and §B4); the rejected §C findings are left untouched and their correctness is captured in a test or comment so they are not "fixed" later.
 3. ✅ The citation-consistency gaps in [SPEC-3-citations.md](SPEC-3-citations.md) are closed, every long `sourceDocument` string is split into a short name plus a `sourceNote`, the audit enforces the ≤160-char cap, and `npm run audit` still passes.
-4. ✅ Each shipped §4 tool meets the full tile bar — a worked example ("Try an example"), an inline citation on every statutory line, a verify-before-relying banner on its data dependency, deep-linkable URL state, and a "how/why" copy block. The first wave (§4.2, §4.3, §4.4, §4.7, §4.8) is in; the remaining items (§4.1, §4.5, §4.6, §4.9) inherit the same checklist when built.
+4. ✅ Every §4 tool meets the full tile bar — a worked example ("Try an example"), an inline citation on every statutory line, a verify-before-relying banner on its data dependency, deep-linkable URL state, and a "how/why" copy block. The entire roadmap (§4.1–§4.9) is shipped; only the §4.10 parked items remain, held on purpose.
 
 ---
 

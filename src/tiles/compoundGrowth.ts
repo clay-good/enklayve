@@ -10,7 +10,11 @@ import { compoundGrowth } from "../engine/finance";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, parseNumber, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { sensitivityTable, sensitivityToggle } from "../ui/sensitivity";
 import type { TileContext, TileDefinition } from "./types";
+
+/** How far the opt-in range flexes the rate assumption, in percentage points. */
+const RATE_DELTA = 2;
 
 const FREQUENCIES: { value: string; label: string; perYear: number }[] = [
   { value: "monthly", label: "Monthly", perYear: 12 },
@@ -24,6 +28,8 @@ interface Fields {
   ratePct: number;
   years: number;
   freq: string;
+  /** Show the opt-in low/base/high range on the return assumption. */
+  band: boolean;
 }
 
 const EXAMPLE: Fields = {
@@ -32,6 +38,7 @@ const EXAMPLE: Fields = {
   ratePct: 6,
   years: 30,
   freq: "monthly",
+  band: false,
 };
 
 function perYearOf(freq: string): number {
@@ -46,6 +53,7 @@ function readFields(p: URLSearchParams): Fields {
     ratePct: parseNumber(p.get("r"), 6),
     years: Math.max(0, parseNonNegative(p.get("y"), 0)),
     freq: freq && FREQUENCIES.some((f) => f.value === freq) ? freq : "monthly",
+    band: p.get("band") === "1",
   };
 }
 
@@ -56,7 +64,19 @@ function writeFields(f: Fields): URLSearchParams {
   p.set("r", String(f.ratePct));
   p.set("y", String(f.years));
   if (f.freq !== "monthly") p.set("freq", f.freq);
+  if (f.band) p.set("band", "1");
   return p;
+}
+
+/** Future value at a given annual rate (percent) — the same pure evaluation. */
+function futureValueAt(fields: Fields, ratePct: number): Money {
+  return compoundGrowth({
+    principal: fields.principal,
+    contribution: fields.contribution,
+    annualRate: ratePct / 100,
+    years: fields.years,
+    periodsPerYear: perYearOf(fields.freq),
+  }).futureValue;
 }
 
 export function mountCompoundGrowth(ctx: TileContext): void {
@@ -124,16 +144,55 @@ export function mountCompoundGrowth(ctx: TileContext): void {
       { label: "Future value", value: fmt(result.futureValue), emphasis: true },
     ];
 
-    resultContainer.replaceChildren(
-      resultCard({
-        label: `Projected balance in ${fields.years} year${fields.years === 1 ? "" : "s"}`,
-        value: result.futureValue,
-        locale: ctx.locale,
-        breakdown: lines,
-        permalink: () => ctx.permalink(writeFields(fields)),
-      }),
-    );
+    const card = resultCard({
+      label: `Projected balance in ${fields.years} year${fields.years === 1 ? "" : "s"}`,
+      value: result.futureValue,
+      locale: ctx.locale,
+      breakdown: lines,
+      permalink: () => ctx.permalink(writeFields(fields)),
+    });
+
+    if (fields.band) {
+      const low = fields.ratePct - RATE_DELTA;
+      const high = fields.ratePct + RATE_DELTA;
+      resultContainer.replaceChildren(
+        card,
+        sensitivityTable(
+          `If your ${pct(fields.ratePct / 100, 1)} return assumption is off by ${RATE_DELTA} points either way:`,
+          [
+            {
+              label: "Conservative",
+              assumption: pct(low / 100, 1),
+              result: fmt(futureValueAt(fields, low)),
+            },
+            {
+              label: "Your assumption",
+              assumption: pct(fields.ratePct / 100, 1),
+              result: fmt(result.futureValue),
+              base: true,
+            },
+            {
+              label: "Optimistic",
+              assumption: pct(high / 100, 1),
+              result: fmt(futureValueAt(fields, high)),
+            },
+          ],
+        ),
+      );
+    } else {
+      resultContainer.replaceChildren(card);
+    }
   }
+
+  const bandToggle = sensitivityToggle(
+    "Show a range (±2 points on the return)",
+    fields.band,
+    (on) => {
+      fields = { ...fields, band: on };
+      ctx.setParams(writeFields(fields));
+      compute();
+    },
+  );
 
   function collect(): void {
     fields = {
@@ -142,6 +201,7 @@ export function mountCompoundGrowth(ctx: TileContext): void {
       ratePct: parseNumber(rInput.value, 6),
       years: Math.max(0, parseNonNegative(yInput.value, 0)),
       freq: freqSelect.value,
+      band: bandToggle.querySelector("input")!.checked,
     };
   }
 
@@ -161,6 +221,7 @@ export function mountCompoundGrowth(ctx: TileContext): void {
     rInput.value = String(fields.ratePct);
     yInput.value = String(fields.years);
     freqSelect.value = fields.freq;
+    bandToggle.querySelector("input")!.checked = fields.band;
     recompute();
   });
 
@@ -172,6 +233,7 @@ export function mountCompoundGrowth(ctx: TileContext): void {
     field("Frequency", freqSelect),
     field("Assumed annual return (%)", rInput),
     field("Years", yInput),
+    bandToggle,
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 

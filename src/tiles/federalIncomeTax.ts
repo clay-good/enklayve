@@ -303,5 +303,13 @@ export const federalIncomeTaxTile: TileDefinition = {
     },
     { label: "IRS, standard vs. itemized deductions", url: "https://www.irs.gov/taxtopics/tc501" },
   ],
+  related: [
+    {
+      hubId: "paycheck-taxes",
+      tool: "marginal-explorer",
+      label: "Marginal Rate Explorer",
+      note: "what your next $1,000 of income costs",
+    },
+  ],
   mount: mountFederalIncomeTax,
 };

@@ -289,5 +289,13 @@ export const iraDeductionTile: TileDefinition = {
       url: "https://www.irs.gov/forms-pubs/about-publication-590-a",
     },
   ],
+  related: [
+    {
+      hubId: "retirement",
+      tool: "backdoor-roth",
+      label: "Backdoor Roth",
+      note: "put any nondeductible basis to work",
+    },
+  ],
   mount: mountIraDeduction,
 };

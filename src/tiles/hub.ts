@@ -111,10 +111,11 @@ function mountHub(ctx: TileContext, config: HubConfig, fallback: string): void {
 
   function renderTool(): void {
     const tool = activeTool();
+    const wc = wrappedCtx(tool);
     clear(subContainer);
-    tool.mount?.(wrappedCtx(tool));
+    tool.mount?.(wc);
     clear(explainerHost);
-    const howres = tileHowResources(tool);
+    const howres = tileHowResources(tool, wc.navigate);
     if (howres) explainerHost.append(howres);
     syncSegments();
   }

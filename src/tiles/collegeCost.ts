@@ -11,7 +11,11 @@ import { collegeCostPlan } from "../engine/finance";
 import { el } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { sensitivityTable, sensitivityToggle } from "../ui/sensitivity";
 import type { TileContext, TileDefinition } from "./types";
+
+/** How far the opt-in range flexes the inflation assumption, in percentage points. */
+const INFLATION_DELTA = 2;
 
 interface Fields {
   annualCostToday: number;
@@ -20,6 +24,8 @@ interface Fields {
   costInflationPct: number;
   currentSavings: number;
   expectedReturnPct: number;
+  /** Show the opt-in low/base/high range on the inflation assumption. */
+  band: boolean;
 }
 
 const EXAMPLE: Fields = {
@@ -29,6 +35,7 @@ const EXAMPLE: Fields = {
   costInflationPct: 5,
   currentSavings: 10000,
   expectedReturnPct: 5,
+  band: false,
 };
 
 function readFields(p: URLSearchParams): Fields {
@@ -39,6 +46,7 @@ function readFields(p: URLSearchParams): Fields {
     costInflationPct: parseNonNegative(p.get("ci"), 5),
     currentSavings: parseNonNegative(p.get("c"), 0),
     expectedReturnPct: parseNonNegative(p.get("r"), 5),
+    band: p.get("band") === "1",
   };
 }
 
@@ -50,7 +58,20 @@ function writeFields(f: Fields): URLSearchParams {
   if (f.costInflationPct !== 5) p.set("ci", String(f.costInflationPct));
   if (f.currentSavings > 0) p.set("c", String(f.currentSavings));
   if (f.expectedReturnPct !== 5) p.set("r", String(f.expectedReturnPct));
+  if (f.band) p.set("band", "1");
   return p;
+}
+
+/** The required monthly contribution at a given inflation rate — same evaluation. */
+function monthlyAt(fields: Fields, ciPct: number): Money {
+  return collegeCostPlan({
+    annualCostToday: fields.annualCostToday,
+    yearsUntilStart: fields.yearsUntilStart,
+    yearsOfCollege: fields.yearsOfCollege,
+    costInflationPct: ciPct,
+    currentSavings: fields.currentSavings,
+    expectedReturnPct: fields.expectedReturnPct,
+  }).monthlyContribution;
 }
 
 export function mountCollegeCost(ctx: TileContext): void {
@@ -122,7 +143,45 @@ export function mountCollegeCost(ctx: TileContext): void {
         permalink: () => ctx.permalink(writeFields(fields)),
       }),
     );
+
+    if (fields.band) {
+      const low = Math.max(0, fields.costInflationPct - INFLATION_DELTA);
+      const high = fields.costInflationPct + INFLATION_DELTA;
+      resultContainer.append(
+        sensitivityTable(
+          `If college inflation runs ${INFLATION_DELTA} points either side of your ${fields.costInflationPct}% assumption:`,
+          [
+            {
+              label: "Lower inflation",
+              assumption: `${low}%`,
+              result: fmt(monthlyAt(fields, low)),
+            },
+            {
+              label: "Your assumption",
+              assumption: `${fields.costInflationPct}%`,
+              result: fmt(r.monthlyContribution),
+              base: true,
+            },
+            {
+              label: "Higher inflation",
+              assumption: `${high}%`,
+              result: fmt(monthlyAt(fields, high)),
+            },
+          ],
+        ),
+      );
+    }
   }
+
+  const bandToggle = sensitivityToggle(
+    "Show a range (±2 points on inflation)",
+    fields.band,
+    (on) => {
+      fields = { ...fields, band: on };
+      ctx.setParams(writeFields(fields));
+      compute();
+    },
+  );
 
   function recompute(): void {
     fields = {
@@ -132,6 +191,7 @@ export function mountCollegeCost(ctx: TileContext): void {
       costInflationPct: parseNonNegative(ciInput.value, 5),
       currentSavings: parseNonNegative(cInput.value, 0),
       expectedReturnPct: parseNonNegative(rInput.value, 5),
+      band: bandToggle.querySelector("input")!.checked,
     };
     ctx.setParams(writeFields(fields));
     compute();
@@ -148,6 +208,7 @@ export function mountCollegeCost(ctx: TileContext): void {
     ciInput.value = String(fields.costInflationPct);
     cInput.value = String(fields.currentSavings);
     rInput.value = String(fields.expectedReturnPct);
+    bandToggle.querySelector("input")!.checked = fields.band;
     recompute();
   });
 
@@ -160,6 +221,7 @@ export function mountCollegeCost(ctx: TileContext): void {
     field("College cost inflation (%)", ciInput),
     field("Already saved", cInput),
     field("Expected return (%)", rInput),
+    bandToggle,
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
