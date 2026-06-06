@@ -1,6 +1,6 @@
 /**
  * FAFSA Student Aid Index estimator (BUILD-SPEC.md §4.4). Computes the
- * dependent-student SAI from the published 2024-25 federal methodology and the
+ * dependent-student SAI from the published 2026-27 federal methodology and the
  * bundled, cited Dept. of Education tables, showing every allowance and step.
  *
  * It is an estimate to verify: the formula is exact, but it points the user to
@@ -71,7 +71,11 @@ export function mountFafsaSai(ctx: TileContext): void {
   const { root, data, profile } = ctx;
   root.replaceChildren();
   const maybeData = data?.fafsa() ?? null;
-  if (!maybeData) {
+  const ficaData = data?.fica() ?? null;
+  // The SAI's payroll-tax allowance needs the Social Security wage base from the
+  // FICA shard. Gate on it too (SPEC-3 §2.5): never substitute a stale statutory
+  // constant for a missing cited figure — degrade to the verify banner instead.
+  if (!maybeData || !ficaData) {
     root.append(
       el("div", {
         class: "verify-banner",
@@ -82,7 +86,8 @@ export function mountFafsaSai(ctx: TileContext): void {
     return;
   }
   const fafsa = maybeData;
-  const ssWageBase = data?.fica()?.socialSecurityWageBase ?? 168600;
+  const fica = ficaData;
+  const ssWageBase = fica.socialSecurityWageBase;
   let fields = readFields(ctx.params, profile);
 
   const inputs = {
@@ -121,9 +126,19 @@ export function mountFafsaSai(ctx: TileContext): void {
     const pell = estimatePell(r.sai, fafsa);
     const fmt = (n: number): string => Money.from(n).format(ctx.locale);
     const lines: BreakdownLine[] = [
-      { label: "Income protection allowance", value: fmt(r.incomeProtectionAllowance) },
-      { label: "Payroll-tax allowance", value: fmt(r.payrollAllowance) },
-      { label: "Employment expense allowance", value: fmt(r.employmentExpenseAllowance) },
+      {
+        label: "Income protection allowance",
+        value: fmt(r.incomeProtectionAllowance),
+        citation: fafsa.citation,
+      },
+      { label: "Payroll-tax allowance", value: fmt(r.payrollAllowance), citation: fafsa.citation },
+      {
+        label: "Employment expense allowance",
+        value: fmt(r.employmentExpenseAllowance),
+        citation: fafsa.citation,
+      },
+      // Derived subtotals (arithmetic on the cited lines above) stay uncited per
+      // SPEC-3 §A3 / SPEC-3-citations §1.1 — be discerning, don't cite a sum.
       { label: "Available income (after allowances)", value: fmt(r.availableIncome) },
       { label: "Contribution from parents' assets", value: fmt(r.assetContribution) },
       { label: "Parents' contribution", value: fmt(r.parentContribution) },

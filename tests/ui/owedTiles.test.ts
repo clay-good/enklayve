@@ -236,6 +236,47 @@ describe("FAFSA Student Aid Index tile", () => {
     expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/ed\.gov/);
   });
 
+  it("degrades to the verify banner when the FICA shard is missing (no stale wage-base fallback)", () => {
+    // The SAI's payroll-tax allowance needs the SS wage base from the FICA shard.
+    // If it's missing, the tile must show the banner, never substitute a stale
+    // statutory constant and compute a wrong-but-plausible SAI (SPEC-3 §2.5).
+    const noFica = { ...data, fica: () => null } as BundledData;
+    const root = document.createElement("div");
+    mountFafsaSai({
+      root,
+      params: new URLSearchParams({ pinc: "45000", size: "4" }),
+      setParams: () => {},
+      permalink: (p) => `https://enklayve.com/#/x?${(p ?? new URLSearchParams()).toString()}`,
+      navigate: () => {},
+      locale: "en-US",
+      data: noFica,
+      profile: new SituationStore(),
+    });
+    expect(root.querySelector(".verify-banner")?.textContent).toContain("unavailable");
+    // No computed result card is rendered when a required shard is missing.
+    expect(root.querySelector(".bd-row")).toBeNull();
+  });
+
+  it("cites the table-sourced allowance lines but not the derived subtotals (SPEC-3 §A3)", () => {
+    const root = mount(
+      mountFafsaSai,
+      new URLSearchParams({ pinc: "90000", ptax: "7000", size: "4", earn2: "30000" }),
+    );
+    const cited = (labelStarts: string): boolean => {
+      const row = Array.from(root.querySelectorAll(".bd-row")).find((r) =>
+        (r.querySelector(".bd-label")?.textContent ?? "").startsWith(labelStarts),
+      );
+      return !!row?.querySelector("a.cite-link");
+    };
+    // Table-sourced allowances carry the source.
+    expect(cited("Income protection allowance")).toBe(true);
+    expect(cited("Payroll-tax allowance")).toBe(true);
+    expect(cited("Employment expense allowance")).toBe(true);
+    // Derived subtotals (arithmetic on the lines above) stay uncited, by design.
+    expect(cited("Available income")).toBe(false);
+    expect(cited("Parents' contribution")).toBe(false);
+  });
+
   it("writes income and household size back to Your Situation", () => {
     const profile = new SituationStore();
     const root = mount(mountFafsaSai, new URLSearchParams(), profile);

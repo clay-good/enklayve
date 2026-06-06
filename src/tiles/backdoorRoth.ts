@@ -166,7 +166,11 @@ export function mountBackdoorRoth(ctx: TileContext): void {
           value: fmt(r.taxablePortion),
           citation: PRO_RATA_CITATION,
         },
-        { label: "Tax-free portion (your basis)", value: fmt(r.nontaxablePortion) },
+        {
+          label: "Tax-free portion (your basis)",
+          value: fmt(r.nontaxablePortion),
+          citation: PRO_RATA_CITATION,
+        },
         { label: "Tax owed on the conversion", value: fmt(r.taxOwed) },
         {
           label: r.isClean ? "A clean backdoor" : "Heads up: the pro-rata rule",

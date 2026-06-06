@@ -114,7 +114,7 @@ export function mountSavingsBond(ctx: TileContext): void {
         value: String(result.periodsHeld),
       },
       { label: "Interest earned", value: fmt(result.interestEarned), citation: cite },
-      { label: "Value now", value: fmt(result.currentValue), emphasis: true },
+      { label: "Value now", value: fmt(result.currentValue), emphasis: true, citation: cite },
     ];
 
     resultContainer.replaceChildren(
