@@ -653,6 +653,19 @@
       "contentHash": "cbde205c445512125fa2ebc7f92b22216dbdfbf18cddba062c9c8745410318ca"
     },
     {
+      "id": "state-nd-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-nd-income-tax-2024.json",
+      "sourceUrl": "https://www.tax.nd.gov/individual-income-tax",
+      "sourceDocument": "North Dakota Tax Commissioner, 2026 ND-1/ND-EZ Tax Rate Schedules (SB 2034): 0% / 1.95% / 2.50% over federal taxable income",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "1532b6481bfe90a8ff7edd0fd028ca414d90a83acf9d0e7ec4267fadfebabc60"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",

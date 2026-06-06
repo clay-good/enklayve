@@ -114,6 +114,7 @@ export type RefreshGroup =
   | "state-hi"
   | "state-mt"
   | "state-me"
+  | "state-nd"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -959,6 +960,21 @@ export const ADAPTERS: RefreshAdapter[] = [
     // together each year (§5403). Anchor the indexed standard deduction (the
     // MN/RI pattern); the per-status bracket tables and the phase-out thresholds
     // roll alongside it as the reviewer's data-only step.
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-nd-income-tax-2024",
+    group: "state-nd",
+    source:
+      "North Dakota Office of State Tax Commissioner individual income tax (SB 2034 three-band schedule)",
+    sourceUrl: "https://www.tax.nd.gov/individual-income-tax",
+    cadence: "Annual",
+    // ND computes on federal taxable income (the conformity pattern), so its
+    // standard deduction IS the federal one — it rolls with the IRS refresh, not a
+    // North Dakota source. The three bands (0% / 1.95% / 2.50%) are statutory
+    // (SB 2034); the per-status thresholds index annually. Anchor the
+    // (federal-conformity) standard deduction as the change-watch (the MT pattern);
+    // the indexed thresholds stay the reviewer's data-only step.
     parse: parseStandardDeductions,
   },
   {

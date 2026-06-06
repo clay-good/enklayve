@@ -140,6 +140,7 @@ describe("adapters: registry", () => {
       "state-ms",
       "state-mt",
       "state-nc",
+      "state-nd",
       "state-nj",
       "state-nm",
       "state-ny",
@@ -155,7 +156,7 @@ describe("adapters: registry", () => {
       "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(41);
+    expect(ADAPTERS).toHaveLength(42);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {

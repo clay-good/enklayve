@@ -916,6 +916,85 @@ describe("Maine (three rates + a new 2026 millionaire surtax, over a phasing-out
   });
 });
 
+describe("North Dakota (SB 2034: a 0% band then 1.95%/2.50% over federal taxable income — conformity)", () => {
+  // ND (2023 SB 2034) computes on FEDERAL TAXABLE INCOME — the federal standard
+  // deduction is the starting point (the Idaho/Iowa/Montana conformity pattern),
+  // so the shard's deduction = the federal $16,100/$32,200/$24,150. Three bands
+  // for 2026 (official ND-1/ND-EZ Tax Rate Schedules, Form ND-1ES SFN 28709): a
+  // 0% bottom band, then 1.95% and 2.50%. The 1.95% band opens at $49,575 single,
+  // $82,800 joint, $66,400 head of household; the 2.50% band at $250,400 /
+  // $304,850 / $277,600.
+  it("single $60k owes $0 — taxable 60,000 − 16,100 = 43,900 sits in the 0% band", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("nd"), fica: ds.fica },
+    );
+    // 43,900 < 49,575: a deliberate, cited $0 (the lowest-burden state on wages).
+    expect(r.state!.incomeTax.isZero()).toBe(true);
+  });
+
+  it("single $80k crosses into the 1.95% band → $279.34", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 80000 },
+      { federal: ds.federal, state: ds.state("nd"), fica: ds.fica },
+    );
+    // taxable 63,900: 1.95%·(63,900 − 49,575) = 1.95%·14,325.
+    expect(cents(r.state!.incomeTax)).toBe("279.34");
+  });
+
+  it("single $300k reaches the 2.50% top band → $4,753.59", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 300000 },
+      { federal: ds.federal, state: ds.state("nd"), fica: ds.fica },
+    );
+    // taxable 283,900: 1.95%·(250,400 − 49,575) + 2.50%·(283,900 − 250,400)
+    //               = 3,916.0875 + 837.50 = 4,753.5875.
+    expect(cents(r.state!.incomeTax)).toBe("4753.59");
+  });
+
+  it("married jointly $120k uses the 2× threshold → $97.50 (barely into 1.95%)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 120000 },
+      { federal: ds.federal, state: ds.state("nd"), fica: ds.fica },
+    );
+    // taxable 120,000 − 32,200 = 87,800 (> 82,800): 1.95%·(87,800 − 82,800).
+    expect(cents(r.state!.incomeTax)).toBe("97.5");
+  });
+
+  it("head of household $100k uses the $66,400 threshold → $184.28", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 100000 },
+      { federal: ds.federal, state: ds.state("nd"), fica: ds.fica },
+    );
+    // taxable 100,000 − 24,150 = 75,850: 1.95%·(75,850 − 66,400).
+    expect(cents(r.state!.incomeTax)).toBe("184.28");
+  });
+
+  it("single owes more than married jointly at equal income (the 2× threshold benefit)", () => {
+    const single = evaluateTaxes(
+      { filingStatus: "single", wages: 120000 },
+      { federal: ds.federal, state: ds.state("nd"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 120000 },
+      { federal: ds.federal, state: ds.state("nd"), fica: ds.fica },
+    );
+    expect(single.state!.incomeTax.greaterThan(joint.state!.incomeTax)).toBe(true);
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly schedule", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 300000 },
+      { federal: ds.federal, state: ds.state("nd"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 300000 },
+      { federal: ds.federal, state: ds.state("nd"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction

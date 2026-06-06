@@ -1,0 +1,22 @@
+# North Dakota income tax — ND Office of State Tax Commissioner, annual
+# (staggered). North Dakota's 2023 SB 2034 reform computes on FEDERAL TAXABLE
+# INCOME (the conformity pattern), so its standard deduction is the federal one
+# (rolls with the IRS refresh). The three bands (0% / 1.95% / 2.50%) are
+# statutory; the per-status thresholds index independently for inflation each
+# year (the official 2026 ND-1/ND-EZ Tax Rate Schedules). The adapter anchors
+# the federal-conformity standard deduction (the MT pattern); the indexed
+# 1.95%/2.50% thresholds roll alongside as the reviewer's data-only step.
+# BUILD-SPEC.md §7.2, §8.
+name: Refresh ND income tax
+
+on:
+  schedule:
+    - cron: "0 12 21 1 *" # January 21, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-nd
+      source_name: ND income tax

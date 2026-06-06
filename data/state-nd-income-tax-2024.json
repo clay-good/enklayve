@@ -1,0 +1,37 @@
+{
+  "id": "US-ND",
+  "name": "North Dakota",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0 },
+      { "lowerBound": 49575, "rate": 0.0195 },
+      { "lowerBound": 250400, "rate": 0.025 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0 },
+      { "lowerBound": 82800, "rate": 0.0195 },
+      { "lowerBound": 304850, "rate": 0.025 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0 },
+      { "lowerBound": 66400, "rate": 0.0195 },
+      { "lowerBound": 277600, "rate": 0.025 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 16100,
+    "married_jointly": 32200,
+    "head_of_household": 24150
+  },
+  "citation": {
+    "sourceUrl": "https://www.tax.nd.gov/individual-income-tax",
+    "sourceDocument": "North Dakota Tax Commissioner, 2026 ND-1/ND-EZ Tax Rate Schedules (SB 2034): 0% / 1.95% / 2.50% over federal taxable income",
+    "sourceNote": "North Dakota's 2023 SB 2034 reform replaced its five-bracket schedule with the lowest top rate of any state that taxes wage income — a 0% bottom band, then just 1.95% and 2.50% — computed on FEDERAL TAXABLE INCOME (the Idaho/Iowa/Montana conformity pattern; the Tax Foundation 2026 footnote groups CO/ID/IA/MT/NM/ND/SC as states that 'include the federal standard deduction in their income starting point'). The engine models this as federal-conformity: North Dakota taxable income = federal AGI − the federal standard deduction ($16,100 single / $32,200 married jointly / $24,150 head of household for 2026), then the three-band per-status schedule. The bracket thresholds index for inflation annually; the 2026 figures are the official ones from the North Dakota Office of State Tax Commissioner's 2026 Forms ND-1 and ND-EZ Tax Rate Schedules (published in Form ND-1ES, SFN 28709 (12-2025)). Single: 0% to $49,575, 1.95% over $49,575, 2.50% over $250,400 (where the published base tax is $3,916.09 = 1.95% × ($250,400 − $49,575), matching to the cent). Married filing jointly and qualifying surviving spouse: 0% to $82,800, 1.95% over $82,800, 2.50% over $304,850 (base $4,329.98). Head of household: 0% to $66,400, 1.95% over $66,400, 2.50% over $277,600 (base $4,118.40). Married filing separately maps to single exactly (the published MFS schedule uses 0% to $41,400 / 1.95% / 2.50% over $152,425 with the same $16,100 federal-conformity deduction; the engine maps MFS to single at launch fidelity). Because the bottom band is 0% on the first $49,575 of taxable income, a single filer earning $60,000 (taxable $43,900 after the federal deduction) owes no North Dakota income tax at all — a deliberate, cited $0, not a missing number. North Dakota's preferential long-term net capital-gains exclusion (a lower effective rate the wage-based engine never reaches), the marriage-penalty credit, the child-care/EITC and other North Dakota credits, and any North Dakota-specific addbacks or subtractions to the federal starting point are omitted at launch fidelity, so the figure errs slightly high — the conservative side. North Dakota levies no local income tax. Worked example, single $80,000 AGI: taxable = 80,000 − 16,100 = $63,900 (over $49,575), tax = 1.95% × ($63,900 − $49,575) = 1.95% × $14,325 = $279.34. Verified to the penny against the North Dakota Office of State Tax Commissioner 2026 ND-1/ND-EZ Tax Rate Schedules (Form ND-1ES, SFN 28709) and cross-checked against the Tax Foundation 2026 state-rate table on 2026-06-06.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-06"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}

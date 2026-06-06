@@ -83,6 +83,7 @@ const STATE_CODES = [
   "hi",
   "mt",
   "me",
+  "nd",
 ];
 
 const ANNUAL = { effectiveYear: 2026, expectedRefreshMonths: 12, staleAfterYears: 2 } as const;
