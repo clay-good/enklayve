@@ -643,6 +643,76 @@ describe("West Virginia (uniform five-bracket schedule, no standard deduction, $
   });
 });
 
+describe("Wisconsin (graduated; the SLIDING standard deduction reduced by a flat % of income)", () => {
+  // WI (2026) levies 3.50% / 4.40% / 5.30% / 7.65% over per-status thresholds
+  // (single 4.40% at $15,110, 5.30% at $51,950; joint at $20,150 / $69,260). Its
+  // signature is the sliding standard deduction (Wis. Stat. §71.05(23)(a)): a max
+  // of $13,960 single / $25,840 joint reduced by a flat percentage of AGI above a
+  // threshold — 12% over $20,119 single, 19.778% over $29,039 joint — the
+  // `reductionRate` form of the engine's standardDeductionPhaseOut (distinct from
+  // South Carolina's `divisor` form). A $1,200-per-exemption personal exemption
+  // ($1,200 single/HoH, $2,400 joint; 2025 Act 15) stacks on top. HoH maps to single.
+  it("single $60k → $2,047.54 (deduction $13,960 − 12%·39,881 = $9,174.28)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
+    );
+    // taxable 60,000 − 9,174.28 − 1,200 = 49,625.72: 3.5%·15,110 + 4.4%·34,515.72.
+    expect(cents(r.state!.incomeTax)).toBe("2047.54");
+  });
+
+  it("single $18k below the $20,119 phase-out start keeps the full $13,960 deduction → $99.40", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 18000 },
+      { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
+    );
+    // taxable 18,000 − 13,960 − 1,200 = 2,840: 3.5%·2,840.
+    expect(cents(r.state!.incomeTax)).toBe("99.4");
+  });
+
+  it("married jointly $120k → $5,012.07 (deduction $25,840 − 19.778%·90,961 = $7,849.73)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 120000 },
+      { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
+    );
+    // taxable 120,000 − 7,849.73 − 2,400 = 109,750.27: 3.5%·20,150 + 4.4%·49,110 + 5.3%·40,490.27.
+    expect(cents(r.state!.incomeTax)).toBe("5012.07");
+  });
+
+  it("single $150k past $136,453 has the deduction fully phased out to $0 → $7,282.86", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 150000 },
+      { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
+    );
+    // taxable 150,000 − 0 − 1,200 = 148,800: 528.85 + 4.4%·36,840 + 5.3%·96,850.
+    expect(cents(r.state!.incomeTax)).toBe("7282.86");
+  });
+
+  it("head of household maps to the single schedule + deduction → equals single", () => {
+    const hoh = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 60000 },
+      { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
+    );
+    const single = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
+    );
+    expect(cents(hoh.state!.incomeTax)).toBe(cents(single.state!.incomeTax));
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly schedule + phase-out", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 120000 },
+      { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 120000 },
+      { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction

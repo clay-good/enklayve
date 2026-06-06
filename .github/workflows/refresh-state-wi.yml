@@ -1,0 +1,22 @@
+# Wisconsin income tax — WI Department of Revenue, annual (staggered). WI's four
+# rates (3.50% / 4.40% / 5.30% / 7.65%) are uniform across filing statuses, but
+# the thresholds differ by status and its signature standard deduction is a
+# SLIDING one (a maximum reduced by a flat percentage of AGI — 12% single,
+# 19.778% joint, Wis. Stat. §71.05(23)). The brackets and the standard-deduction
+# maximum index together each year, so the adapter anchors the indexed standard
+# deduction (the MN pattern) and the per-status bracket tables plus any 2025 Act
+# 15 successor's bracket-widening roll alongside as the reviewer's data-only step.
+# BUILD-SPEC.md §7.2, §8.
+name: Refresh WI income tax
+
+on:
+  schedule:
+    - cron: "0 12 16 4 *" # April 16, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-wi
+      source_name: WI income tax

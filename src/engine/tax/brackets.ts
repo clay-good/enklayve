@@ -115,12 +115,14 @@ export function taxpayerCreditBaseFor(jurisdiction: Jurisdiction, status: Filing
  * fallbackChain}), or undefined when the jurisdiction has none. Resolves
  * married-filing-separately → single and qualifying surviving spouse → married
  * jointly the same way the brackets do, so an unlisted status phases out on the
- * right schedule (South Carolina's SCIAD; S.C. Code §12-6-1140(15)).
+ * right schedule (South Carolina's SCIAD, S.C. Code §12-6-1140(15); Wisconsin's
+ * sliding deduction, Wis. Stat. §71.05(23)(a)). Exactly one of `divisor` or
+ * `reductionRate` is present on the returned entry (the schema enforces it).
  */
 export function standardDeductionPhaseOutFor(
   jurisdiction: Jurisdiction,
   status: FilingStatus,
-): { agiThreshold: number; divisor: number } | undefined {
+): { agiThreshold: number; divisor?: number; reductionRate?: number } | undefined {
   const table = jurisdiction.standardDeductionPhaseOut?.byFilingStatus;
   if (!table) return undefined;
   for (const candidate of fallbackChain(status)) {

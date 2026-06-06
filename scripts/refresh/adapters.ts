@@ -110,6 +110,7 @@ export type RefreshGroup =
   | "state-sc"
   | "state-ok"
   | "state-wv"
+  | "state-wi"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -893,6 +894,22 @@ export const ADAPTERS: RefreshAdapter[] = [
     // thresholds and the $2,000 exemption are statutory. A full-schedule cut stays
     // the reviewer's data-only step.
     parse: parseGraduatedBracketJurisdiction,
+  },
+  {
+    id: "state-wi-income-tax-2024",
+    group: "state-wi",
+    source:
+      "Wisconsin Department of Revenue individual income tax (rates, brackets, standard deduction)",
+    sourceUrl: "https://www.revenue.wi.gov/Pages/Individuals/income.aspx",
+    cadence: "Annual",
+    // WI's four rates (3.50% / 4.40% / 5.30% / 7.65%) are uniform across statuses
+    // but its thresholds differ by filing status, and its standard deduction is a
+    // sliding one (a max reduced by a flat % of AGI) that indexes annually — so
+    // the generic graduated parser can't overlay it. Anchor the standard-deduction
+    // maximum (the MN pattern); the per-status bracket thresholds and the
+    // sliding-deduction parameters roll alongside it as the reviewer's data-only
+    // step, as do any 2025 Act 15 successor's bracket-widening changes.
+    parse: parseStandardDeductions,
   },
   {
     id: "state-ok-income-tax-2024",

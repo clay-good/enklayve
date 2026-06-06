@@ -80,22 +80,26 @@ function computeState(
   }
 
   let standard = Money.from(standardDeductionFor(state, input.filingStatus));
-  // Sliding standard deduction (South Carolina's SCIAD, S.C. Code §12-6-1140(15)):
-  // the deduction phases down linearly with AGI, reduced by `standard ×
-  // (AGI − threshold) / divisor`, full at/below the threshold and zero once AGI
-  // exceeds it by `divisor`. The reduction rounds down to the nearest
-  // `roundReductionDownTo` dollars where the statute requires it (SC: $10).
+  // Sliding standard deduction: the deduction phases down linearly with AGI in
+  // one of two equivalent forms (see StandardDeductionPhaseOutSchema):
+  //  • divisor (South Carolina's SCIAD, S.C. Code §12-6-1140(15)): reduce by
+  //    `standard × (AGI − threshold) / divisor`, proportional to the deduction.
+  //  • reductionRate (Wisconsin, Wis. Stat. §71.05(23)(a)): reduce by
+  //    `rate × (AGI − threshold)`, a flat percentage of income above the
+  //    threshold (single 12%, joint 19.778%), independent of the deduction.
+  // Both are full at/below the threshold and floored at zero above. The reduction
+  // rounds down to the nearest `roundReductionDownTo` dollars where the statute
+  // requires it (SC: $10).
   const phaseOut = standardDeductionPhaseOutFor(state, input.filingStatus);
   if (phaseOut) {
     const over = agi.toNumber() - phaseOut.agiThreshold;
-    if (over >= phaseOut.divisor) {
-      standard = Money.zero();
-    } else if (over > 0) {
-      const rawReduction = standard.multiply(over).divide(phaseOut.divisor);
+    if (over > 0) {
+      const rawReduction =
+        phaseOut.divisor !== undefined
+          ? standard.multiply(over).divide(phaseOut.divisor).toNumber()
+          : over * phaseOut.reductionRate!;
       const step = state.standardDeductionPhaseOut?.roundReductionDownTo;
-      const reduction = step
-        ? Math.floor(rawReduction.toNumber() / step) * step
-        : rawReduction.toNumber();
+      const reduction = step ? Math.floor(rawReduction / step) * step : rawReduction;
       standard = clampZero(standard.subtract(reduction));
     }
   }

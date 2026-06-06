@@ -1,0 +1,52 @@
+{
+  "id": "US-WI",
+  "name": "Wisconsin",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.035 },
+      { "lowerBound": 15110, "rate": 0.044 },
+      { "lowerBound": 51950, "rate": 0.053 },
+      { "lowerBound": 332720, "rate": 0.0765 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.035 },
+      { "lowerBound": 20150, "rate": 0.044 },
+      { "lowerBound": 69260, "rate": 0.053 },
+      { "lowerBound": 443630, "rate": 0.0765 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.035 },
+      { "lowerBound": 15110, "rate": 0.044 },
+      { "lowerBound": 51950, "rate": 0.053 },
+      { "lowerBound": 332720, "rate": 0.0765 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 13960,
+    "married_jointly": 25840,
+    "head_of_household": 13960
+  },
+  "standardDeductionPhaseOut": {
+    "byFilingStatus": {
+      "single": { "agiThreshold": 20119, "reductionRate": 0.12 },
+      "married_jointly": { "agiThreshold": 29039, "reductionRate": 0.19778 },
+      "head_of_household": { "agiThreshold": 20119, "reductionRate": 0.12 }
+    }
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 1200,
+    "married_jointly": 2400,
+    "head_of_household": 1200
+  },
+  "citation": {
+    "sourceUrl": "https://www.revenue.wi.gov/Pages/Individuals/income.aspx",
+    "sourceDocument": "Wisconsin DOR 2026 rate schedule (Wis. Stat. §71.06) + §71.05(23) sliding standard deduction + $1,200 personal exemption (2025 Wisconsin Act 15)",
+    "sourceNote": "Wisconsin's four rates for tax year 2026 — 3.50% / 4.40% / 5.30% / 7.65% (Wis. Stat. §71.06) — apply over inflation-indexed thresholds that differ by filing status: single 4.40% at $15,110, 5.30% at $51,950, 7.65% at $332,720; married filing jointly 4.40% at $20,150, 5.30% at $69,260, 7.65% at $443,630. The elevated 5.30% threshold ($51,950 single, up from a purely-indexed ~$29,000) reflects the 2025-27 biennial budget (2025 Wisconsin Act 15, signed 2025-07-03), which widened the second (4.40%) bracket so more income is taxed at the lower rate. Wisconsin's signature feature is its SLIDING standard deduction (§71.05(23)(a)): a maximum of $13,960 (single) / $25,840 (married jointly) that is reduced by a flat percentage of Wisconsin AGI above a threshold — 12% over $20,119 for single (reaching $0 at $136,453), 19.778% over $29,039 for joint (reaching $0 at $159,690) — modeled via the engine's standardDeductionPhaseOut `reductionRate` form (the Wisconsin variant the roadmap had deferred alongside South Carolina's divisor form). On top of the deduction, Wisconsin allows a $1,200-per-exemption personal exemption — raised from $700 by 2025 Act 15, effective tax year 2025 — subtracted from income ($1,200 single / head of household, $2,400 married jointly). Head of household is mapped to the single schedule and deduction at launch fidelity: Wisconsin's true HoH standard deduction starts higher ($9,300 base) and phases out in two segments (22.515% until it converges with the single curve, then 12%), and HoH brackets sit just wider than single, so modeling HoH as single understates the deduction and the bracket widths — the figure errs slightly high, the conservative side. The $1,200-per-dependent exemption, the $250 age-65 exemptions, the married-couple credit, the school-property-tax and other Wisconsin credits, and the WAGI-rounded lookup tables (the engine uses the continuous statutory formula) are omitted at launch fidelity. Wisconsin levies no local income tax. Worked example, single $60,000 AGI: deduction = $13,960 − 12%·(60,000 − 20,119) = $13,960 − $4,785.72 = $9,174.28; taxable = 60,000 − 9,174.28 − 1,200 = $49,625.72; tax = 3.50%·15,110 + 4.40%·(49,625.72 − 15,110) = $528.85 + $1,518.69 = $2,047.54. The brackets and standard deduction index annually; the refresh adapter anchors the standard-deduction maximum and the per-status bracket tables roll alongside it as the reviewer's data-only step. Verified against the Tax Foundation 2026 state-rate table, the Wisconsin DOR individual income tax page, Wis. Stat. §§71.05(23)/71.06, and 2025 Wisconsin Act 15 on 2026-06-06.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-06"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}

@@ -96,17 +96,34 @@ export type TaxpayerCreditData = z.infer<typeof TaxpayerCreditSchema>;
 
 /**
  * An AGI-based phase-out of the standard deduction — a "sliding standard
- * deduction" (South Carolina H.4216 / SCIAD; cf. Wisconsin). The deduction is
- * reduced by `standardDeduction × (AGI − agiThreshold) / divisor`, clamped so it
- * is the full amount at or below the threshold and zero once AGI exceeds the
- * threshold by `divisor` (the fraction reaches one). `roundReductionDownTo`
- * rounds the *reduction* down to a multiple of that many dollars when present
- * (SC: "the next lowest ten dollars"). Statutory cite: S.C. Code §12-6-1140(15).
+ * deduction". Two equivalent linear forms are supported, exactly one per
+ * filing-status entry:
+ *
+ *  - **`divisor`** (South Carolina H.4216 / SCIAD): the deduction is reduced by
+ *    `standardDeduction × (AGI − agiThreshold) / divisor`, reaching zero once AGI
+ *    exceeds the threshold by `divisor` (the fraction reaches one). The reduction
+ *    is proportional to the deduction. Statutory cite: S.C. Code §12-6-1140(15).
+ *  - **`reductionRate`** (Wisconsin Wis. Stat. §71.05(23)(a)): the deduction is
+ *    reduced by `reductionRate × (AGI − agiThreshold)` — a flat percentage of
+ *    income above the threshold, *independent* of the deduction's size — reaching
+ *    zero once that reduction equals the deduction (single 12%, joint 19.778%).
+ *
+ * In both forms the deduction is the full amount at or below `agiThreshold` and
+ * floored at zero above. `roundReductionDownTo` rounds the *reduction* down to a
+ * multiple of that many dollars when present (SC: "the next lowest ten dollars").
  */
 export const StandardDeductionPhaseOutSchema = z.object({
   byFilingStatus: z.record(
     z.string(),
-    z.object({ agiThreshold: z.number().gte(0), divisor: z.number().gt(0) }),
+    z
+      .object({
+        agiThreshold: z.number().gte(0),
+        divisor: z.number().gt(0).optional(),
+        reductionRate: z.number().gt(0).lte(1).optional(),
+      })
+      .refine((e) => (e.divisor === undefined) !== (e.reductionRate === undefined), {
+        message: "supply exactly one of `divisor` (SC form) or `reductionRate` (WI form)",
+      }),
   ),
   roundReductionDownTo: z.number().gt(0).optional(),
 });

@@ -601,6 +601,19 @@
       "contentHash": "7809e637896b9189243341e1a9bbfbb90669b0cbba2b4408fda03926757f310e"
     },
     {
+      "id": "state-wi-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-wi-income-tax-2024.json",
+      "sourceUrl": "https://www.revenue.wi.gov/Pages/Individuals/income.aspx",
+      "sourceDocument": "Wisconsin DOR 2026 rate schedule (Wis. Stat. §71.06) + §71.05(23) sliding standard deduction + $1,200 personal exemption (2025 Wisconsin Act 15)",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "facce4711e6dc3873422c9315d4dc89e37ac433dc9d1ee6087aba7ea5bd37653"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",

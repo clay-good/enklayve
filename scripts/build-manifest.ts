@@ -79,6 +79,7 @@ const STATE_CODES = [
   "sc",
   "ok",
   "wv",
+  "wi",
 ];
 
 const ANNUAL = { effectiveYear: 2026, expectedRefreshMonths: 12, staleAfterYears: 2 } as const;
