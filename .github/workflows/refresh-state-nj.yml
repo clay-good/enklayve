@@ -1,0 +1,18 @@
+# New Jersey income tax — NJ Division of Taxation gross income tax rate
+# schedules, annual (staggered). NJ is the one seeded state whose tiers differ
+# by filing status, so a dedicated parser anchors the live top "millionaire's"
+# rate (10.75%) and its $1,000,000 threshold — the figures that move; the lower
+# statutory brackets stay the reviewer's data-only step. BUILD-SPEC.md §7.2, §8.
+name: Refresh NJ income tax
+
+on:
+  schedule:
+    - cron: "0 12 5 4 *" # April 5, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-nj
+      source_name: NJ income tax

@@ -134,6 +134,7 @@ describe("adapters: registry", () => {
       "state-mo",
       "state-ms",
       "state-nc",
+      "state-nj",
       "state-ny",
       "state-oh",
       "state-pa",
@@ -142,7 +143,7 @@ describe("adapters: registry", () => {
       "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(28);
+    expect(ADAPTERS).toHaveLength(29);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
@@ -563,6 +564,54 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     it("fails (-> alert) on an implausible base rate", () => {
       const raw = "The income tax rate is 55%. A 4% surtax applies to income over $1,107,750.";
       expect(adapter.parse(raw, current).ok).toBe(false);
+    });
+  });
+
+  describe("NJ — per-filing-status schedules; top millionaire's rate (dedicated parser)", () => {
+    const adapter = adaptersForGroup("state-nj")[0]!;
+    const current = readShard("state-nj-income-tax-2024.json");
+
+    it("anchors the top rate + $1M threshold onto every status's top bracket, ignoring $500k", () => {
+      const raw =
+        "New Jersey rate: 8.97% on income over $500,000; 10.75% on taxable income in excess of $1,000,000.";
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const brackets = result.shard.bracketsByFilingStatus as Record<
+        string,
+        { lowerBound: number; rate: number }[]
+      >;
+      // The millions-only threshold pattern anchors the 10.75% / $1M tier, never
+      // the 8.97% / $500,000 tier below it. Applied to both 7- and 8-bracket schedules.
+      const sTop = brackets.single![brackets.single!.length - 1]!;
+      const jTop = brackets.married_jointly![brackets.married_jointly!.length - 1]!;
+      expect(sTop).toEqual({ lowerBound: 1000000, rate: 0.1075 });
+      expect(jTop).toEqual({ lowerBound: 1000000, rate: 0.1075 });
+      expect(brackets.single!).toHaveLength(7);
+      expect(brackets.married_jointly!).toHaveLength(8);
+      expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+    });
+
+    it("catches a raised millionaire's rate", () => {
+      const raw = "The top rate is 11.75% on income over $1,000,000.";
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const brackets = result.shard.bracketsByFilingStatus as Record<
+        string,
+        { lowerBound: number; rate: number }[]
+      >;
+      expect(brackets.single![brackets.single!.length - 1]!.rate).toBeCloseTo(0.1175, 6);
+    });
+
+    it("fails (-> alert) when no millions-level threshold is present", () => {
+      expect(adapter.parse("Rates run from 1.4% up to 6.37% over $75,000.", current).ok).toBe(
+        false,
+      );
+    });
+
+    it("fails (-> alert) on an implausible top rate", () => {
+      expect(adapter.parse("A 95% rate applies over $1,000,000.", current).ok).toBe(false);
     });
   });
 });

@@ -484,6 +484,19 @@
       "contentHash": "b78651ecbb32946f9cdecf915007c0844dfb1777e8a1d7d165114dd5a9deee77"
     },
     {
+      "id": "state-nj-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-nj-income-tax-2024.json",
+      "sourceUrl": "https://www.nj.gov/treasury/taxation/taxtables.shtml",
+      "sourceDocument": "New Jersey Division of Taxation, 2020-and-after gross income tax rate schedules (N.J.S.A. 54A:2-1)",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "9fcb5a2ea871935d45390fd28210607608a60f21c1937c1c3273320839cad8f4"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",

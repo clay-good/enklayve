@@ -123,6 +123,64 @@ describe("Missouri (graduated; uniform brackets across statuses, federal-conform
   });
 });
 
+describe("New Jersey (the first state whose graduated tiers differ by filing status)", () => {
+  // NJ proves the engine's per-filing-status bracket support (previously deferred
+  // because no seeded state used it). Single/MFS use Schedule A (7 brackets);
+  // MFJ/HoH/QSS use Schedule B (8 brackets, with an extra 2.45% tier and wider
+  // thresholds). No standard deduction; a $1,000 personal exemption ($2,000 joint).
+  it("single $60k → $1,767.25 (Schedule A; taxable 60,000 − 1,000 = 59,000)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("nj"), fica: ds.fica },
+    );
+    // 1.4%·20,000 + 1.75%·15,000 + 3.5%·5,000 + 5.525%·19,000 = 280 + 262.50 + 175 + 1,049.75.
+    expect(cents(r.state!.incomeTax)).toBe("1767.25");
+  });
+
+  it("married jointly $60k → $1,001.00 (Schedule B; taxable 58,000 — far less than single)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("nj"), fica: ds.fica },
+    );
+    // 1.4%·20,000 + 1.75%·30,000 + 2.45%·8,000 = 280 + 525 + 196.
+    expect(cents(r.state!.incomeTax)).toBe("1001");
+  });
+
+  it("head of household uses Schedule B brackets with the single $1,000 exemption", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 60000 },
+      { federal: ds.federal, state: ds.state("nj"), fica: ds.fica },
+    );
+    // taxable 59,000 on Schedule B: 280 + 525 + 2.45%·9,000 = 280 + 525 + 220.50.
+    expect(cents(r.state!.incomeTax)).toBe("1025.5");
+  });
+
+  it("the single and joint schedules genuinely differ at the same income", () => {
+    const single = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("nj"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("nj"), fica: ds.fica },
+    );
+    expect(single.state!.incomeTax.greaterThan(joint.state!.incomeTax)).toBe(true);
+  });
+
+  it("a qualifying surviving spouse falls back to the joint (Schedule B) schedule, not single", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 60000 },
+      { federal: ds.federal, state: ds.state("nj"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("nj"), fica: ds.fica },
+    );
+    // QSS → married_jointly brackets; the exemption falls back to joint's $2,000 too.
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction

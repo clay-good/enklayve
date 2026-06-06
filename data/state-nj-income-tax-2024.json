@@ -1,0 +1,56 @@
+{
+  "id": "US-NJ",
+  "name": "New Jersey",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.014 },
+      { "lowerBound": 20000, "rate": 0.0175 },
+      { "lowerBound": 35000, "rate": 0.035 },
+      { "lowerBound": 40000, "rate": 0.05525 },
+      { "lowerBound": 75000, "rate": 0.0637 },
+      { "lowerBound": 500000, "rate": 0.0897 },
+      { "lowerBound": 1000000, "rate": 0.1075 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.014 },
+      { "lowerBound": 20000, "rate": 0.0175 },
+      { "lowerBound": 50000, "rate": 0.0245 },
+      { "lowerBound": 70000, "rate": 0.035 },
+      { "lowerBound": 80000, "rate": 0.05525 },
+      { "lowerBound": 150000, "rate": 0.0637 },
+      { "lowerBound": 500000, "rate": 0.0897 },
+      { "lowerBound": 1000000, "rate": 0.1075 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.014 },
+      { "lowerBound": 20000, "rate": 0.0175 },
+      { "lowerBound": 50000, "rate": 0.0245 },
+      { "lowerBound": 70000, "rate": 0.035 },
+      { "lowerBound": 80000, "rate": 0.05525 },
+      { "lowerBound": 150000, "rate": 0.0637 },
+      { "lowerBound": 500000, "rate": 0.0897 },
+      { "lowerBound": 1000000, "rate": 0.1075 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 0,
+    "married_jointly": 0,
+    "head_of_household": 0
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 1000,
+    "married_jointly": 2000,
+    "head_of_household": 1000
+  },
+  "citation": {
+    "sourceUrl": "https://www.nj.gov/treasury/taxation/taxtables.shtml",
+    "sourceDocument": "New Jersey Division of Taxation, 2020-and-after gross income tax rate schedules (N.J.S.A. 54A:2-1)",
+    "sourceNote": "New Jersey is the first seeded state whose graduated tiers differ by filing status. The Single / married-filing-separately schedule (Schedule A) has seven brackets — 1.4% / 1.75% over $20,000 / 3.5% over $35,000 / 5.525% over $40,000 / 6.37% over $75,000 / 8.97% over $500,000 / 10.75% over $1,000,000. The married-filing-jointly / head-of-household / qualifying-surviving-spouse schedule (Schedule B) has eight — it adds a 2.45% tier over $50,000 and a 3.5% tier over $70,000, with 5.525% over $80,000 and 6.37% over $150,000 — so a joint return is taxed more gently in the middle than two single returns. These rates are fixed in statute (N.J.S.A. 54A:2-1) and unchanged since the 2020 addition of the 10.75% 'millionaire's' bracket over $1,000,000. New Jersey has no standard deduction; the personal exemption is $1,000 per filer ($2,000 on a joint return, $1,000 for a head of household), modeled here for the no-dependent filer. The $1,500-per-dependent exemption, the property-tax deduction (up to $15,000) and credit, the medical-expense and other deductions, and the Kansas-City-style local wage taxes (New Jersey has none) are omitted at launch fidelity, so the figure errs slightly high — the conservative side. Verified against the NJ Division of Taxation rate schedules on 2026-06-06.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-06"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}

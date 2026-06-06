@@ -81,11 +81,12 @@ describe("home budget — the one and only budget (consolidated 2026-06-02)", ()
     const note = root.querySelector<HTMLElement>(".home-budget__note")!;
     expect(note.hidden).toBe(true); // no state selected yet
     const state = root.querySelector<HTMLSelectElement>('[aria-label="State"]')!;
-    // New Jersey has an income tax but isn't modeled → the note appears.
-    state.value = "nj";
+    // Maryland has an income tax but isn't modeled yet (deferred for its
+    // mandatory county income taxes) → the honest note appears.
+    state.value = "md";
     state.dispatchEvent(new Event("change"));
     expect(note.hidden).toBe(false);
-    expect(note.textContent).toContain("New Jersey");
+    expect(note.textContent).toContain("Maryland");
     // California IS modeled → no note.
     state.value = "ca";
     state.dispatchEvent(new Event("change"));

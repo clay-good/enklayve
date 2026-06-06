@@ -101,6 +101,7 @@ export type RefreshGroup =
   | "state-ia"
   | "state-va"
   | "state-mo"
+  | "state-nj"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -499,6 +500,67 @@ function parseMassachusettsSurtax(raw: string, current: Record<string, unknown>)
   return { ok: true, shard };
 }
 
+// --- New Jersey graduated rates (per filing status; anchored prose) ----------
+
+/**
+ * New Jersey is the first seeded state whose graduated tiers differ by filing
+ * status — the Single / married-filing-separately schedule has seven brackets,
+ * the married-filing-jointly / head-of-household schedule eight — so the generic
+ * graduated parser (one schedule overlaid onto all statuses with a matching
+ * bracket count) cannot serve it. The lower brackets (1.4% through 6.37%) have
+ * been fixed in statute (N.J.S.A. 54A:2-1) for years; the figures that actually
+ * move are the top marginal rate and the income it begins at — the 10.75%
+ * "millionaire's" bracket over $1,000,000 added in 2020, a politically live
+ * number. So this dedicated parser (the Massachusetts-surtax precedent) anchors
+ * exactly those two and overlays them onto the top bracket of every status's
+ * schedule (both top out at the same rate and threshold). The threshold pattern
+ * demands a millions figure, so it can never mis-anchor the $500,000 tier below
+ * it; a plausibility guard routes a garbled read to the fail-safe alert. The
+ * rest of each schedule stays the reviewer's data-only step, the same boundary
+ * as every other state parser.
+ */
+function parseNewJerseyTopRate(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const m =
+    /([\d.]+)\s*(?:percent|%)[^$%]*?(?:in excess of|over|above|exceeding)\s*\$?(\d{1,3}(?:,\d{3}){2,}|\d{7,})/i.exec(
+      raw,
+    );
+  if (!m) {
+    return {
+      ok: false,
+      reason: "could not anchor the NJ top rate and its (>= $1,000,000) threshold",
+    };
+  }
+  const pct = Number(m[1]);
+  const threshold = parseAmount(m[2] as string);
+  if (!(pct > 0 && pct <= 15)) {
+    return { ok: false, reason: `anchored an implausible NJ top rate (${m[1]}%)` };
+  }
+  if (!(threshold >= 1000000)) {
+    return { ok: false, reason: "anchored a NJ top-bracket threshold below $1,000,000" };
+  }
+  const topRate = pctToRate(pct);
+  const shard = clone(current);
+  const brackets = shard.bracketsByFilingStatus as
+    | Record<string, { lowerBound: number; rate: number }[]>
+    | undefined;
+  if (!brackets) {
+    return { ok: false, reason: "shard has no bracketsByFilingStatus to overlay" };
+  }
+  let overlaid = 0;
+  for (const status of Object.keys(brackets)) {
+    const arr = brackets[status];
+    if (!Array.isArray(arr) || arr.length < 2) continue;
+    const top = arr[arr.length - 1]!;
+    top.rate = topRate;
+    top.lowerBound = threshold;
+    overlaid += 1;
+  }
+  if (overlaid === 0) {
+    return { ok: false, reason: "no multi-bracket schedule to overlay the NJ top rate onto" };
+  }
+  return { ok: true, shard };
+}
+
 // --- USDA FNS SNAP cost-of-living adjustment (anchored prose) ----------------
 
 /**
@@ -796,6 +858,18 @@ export const ADAPTERS: RefreshAdapter[] = [
     // — anchoring the indexed thresholds and any SB 3 trigger-based rate cut.
     // The federal-conformity standard deduction rolls with the IRS refresh.
     parse: parseGraduatedBracketJurisdiction,
+  },
+  {
+    id: "state-nj-income-tax-2024",
+    group: "state-nj",
+    source: "New Jersey Division of Taxation gross income tax rate schedules",
+    sourceUrl: "https://www.nj.gov/treasury/taxation/taxtables.shtml",
+    cadence: "Annual",
+    // NJ's tiers differ by filing status (the only such seeded state), so the
+    // generic graduated parser can't serve it. The lower brackets are statutory
+    // and stable; the dedicated parser anchors the live top "millionaire's" rate
+    // and its $1,000,000 threshold (the 2020 addition), the figures that move.
+    parse: parseNewJerseyTopRate,
   },
   {
     id: "state-ms-income-tax-2024",
