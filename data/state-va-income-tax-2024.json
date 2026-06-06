@@ -1,0 +1,45 @@
+{
+  "id": "US-VA",
+  "name": "Virginia",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.02 },
+      { "lowerBound": 3000, "rate": 0.03 },
+      { "lowerBound": 5000, "rate": 0.05 },
+      { "lowerBound": 17000, "rate": 0.0575 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.02 },
+      { "lowerBound": 3000, "rate": 0.03 },
+      { "lowerBound": 5000, "rate": 0.05 },
+      { "lowerBound": 17000, "rate": 0.0575 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.02 },
+      { "lowerBound": 3000, "rate": 0.03 },
+      { "lowerBound": 5000, "rate": 0.05 },
+      { "lowerBound": 17000, "rate": 0.0575 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 8750,
+    "married_jointly": 17500,
+    "head_of_household": 8750
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 930,
+    "married_jointly": 1860,
+    "head_of_household": 930
+  },
+  "citation": {
+    "sourceUrl": "https://law.lis.virginia.gov/vacode/title58.1/chapter3/section58.1-320/",
+    "sourceDocument": "Code of Virginia §58.1-320 income-tax rates; §58.1-322.03 standard deduction & exemption (HB1600, 2025)",
+    "sourceNote": "Brackets — 2% to $3,000, 3% to $5,000, 5% to $17,000, 5.75% above — are the same for every filing status and unchanged since 1990 (§58.1-320). The $8,750 single / $17,500 married standard deduction applies to taxable years 2025 and 2026 under HB1600 (2025, §58.1-322.03), then reverts to $3,000 / $6,000 for 2027 and after unless the General Assembly extends it. Personal exemption is $930 per exemption — one for single filers (and federal head-of-household filers, who use Virginia's single status since Virginia has no head-of-household status), two for married filing jointly. Dependent, age-65-or-older, and blind exemptions and the optional itemized deduction are omitted, the engine's no-dependent / standard-deduction convention. Verified against tax.virginia.gov/deductions on 2026-06-06.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-06"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}

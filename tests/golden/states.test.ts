@@ -74,6 +74,30 @@ describe("graduated states", () => {
   });
 });
 
+describe("Virginia (graduated; the standard deduction and the $930 personal exemption stack)", () => {
+  // Virginia's brackets (2% / 3% / 5% / 5.75% at $3k / $5k / $17k) are the same
+  // for every filing status; only the standard deduction and exemption differ.
+  // It is the first seeded *graduated* state that also grants a personal
+  // exemption, so taxable income = AGI − standard deduction − exemption.
+  it("single $60k → $2,635.90 (taxable 60,000 − 8,750 − 930 = 50,320)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("va"), fica: ds.fica },
+    );
+    // 720 at $17,000 (2%·3,000 + 3%·2,000 + 5%·12,000) + 5.75%·(50,320 − 17,000).
+    expect(cents(r.state!.incomeTax)).toBe("2635.9");
+  });
+
+  it("married jointly $60k → $2,079.30 (doubled deduction and exemption: 60,000 − 17,500 − 1,860)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("va"), fica: ds.fica },
+    );
+    // Taxable 40,640: 720 + 5.75%·(40,640 − 17,000) = 720 + 1,359.30.
+    expect(cents(r.state!.incomeTax)).toBe("2079.3");
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction

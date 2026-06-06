@@ -1,0 +1,18 @@
+# Virginia income tax — Virginia Tax individual income tax, annual (staggered).
+# Anchors the standard deduction (the figure that moves, with a 2027 sunset);
+# the 2%/3%/5%/5.75% brackets are fixed in statute (§58.1-320) and stay the
+# reviewer's data-only step. One-adapter-per-state, the CA workflow is the
+# template. BUILD-SPEC.md §7.2, §8.
+name: Refresh VA income tax
+
+on:
+  schedule:
+    - cron: "0 12 18 3 *" # March 18, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-va
+      source_name: VA income tax

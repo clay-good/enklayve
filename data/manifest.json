@@ -458,6 +458,19 @@
       "contentHash": "f65f845154d6887b4948b713024d2955a62334ee7e2d3320528ae40bef8a77a2"
     },
     {
+      "id": "state-va-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-va-income-tax-2024.json",
+      "sourceUrl": "https://law.lis.virginia.gov/vacode/title58.1/chapter3/section58.1-320/",
+      "sourceDocument": "Code of Virginia §58.1-320 income-tax rates; §58.1-322.03 standard deduction & exemption (HB1600, 2025)",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "6d5f5f3038163c326945b8584e7857a527df94cd2a29aa77b3a4340c925db3a1"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",

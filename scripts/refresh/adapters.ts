@@ -99,6 +99,7 @@ export type RefreshGroup =
   | "state-ut"
   | "state-la"
   | "state-ia"
+  | "state-va"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -769,6 +770,19 @@ export const ADAPTERS: RefreshAdapter[] = [
       "https://revenue.iowa.gov/taxes/tax-guidance/individual-income-tax/individual-income-tax-provisions",
     cadence: "Annual",
     parse: parseFlatRateJurisdiction,
+  },
+  {
+    id: "state-va-income-tax-2024",
+    group: "state-va",
+    source: "Virginia Tax individual income tax (standard deduction; statutory brackets)",
+    sourceUrl: "https://www.tax.virginia.gov/deductions",
+    cadence: "Annual",
+    // Virginia's 2%/3%/5%/5.75% brackets are fixed in statute (§58.1-320,
+    // unchanged since 1990), so the figure that actually moves is the standard
+    // deduction — and it carries a 2027 sunset back to $3,000/$6,000 worth
+    // catching. Anchor the deduction by filing status (the CA/NY/GA/NC/DC
+    // pattern); the brackets stay the reviewer's data-only step.
+    parse: parseStandardDeductions,
   },
   {
     id: "state-ms-income-tax-2024",
