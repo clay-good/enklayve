@@ -1,0 +1,34 @@
+{
+  "id": "US-MT",
+  "name": "Montana",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.047 },
+      { "lowerBound": 47500, "rate": 0.0565 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.047 },
+      { "lowerBound": 95000, "rate": 0.0565 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.047 },
+      { "lowerBound": 71250, "rate": 0.0565 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 16100,
+    "married_jointly": 32200,
+    "head_of_household": 24150
+  },
+  "citation": {
+    "sourceUrl": "https://mtrevenue.gov/2025/05/12/hb-337/",
+    "sourceDocument": "Montana DOR 2026 rate schedule (HB 337, 2025; MCA §15-30-2103): 4.70% / 5.65% over federal taxable income; conforms to the federal standard deduction",
+    "sourceNote": "Montana's 2021 SB 399 reform (effective tax year 2024) replaced six progressive brackets with a clean TWO-rate schedule computed on FEDERAL TAXABLE INCOME — the federal standard deduction is embedded in the starting point (the Idaho/Iowa/North Dakota conformity pattern; Tax Foundation 2026 footnote groups CO/ID/IA/MT/NM/ND/SC as 'include the federal standard deduction in their income starting point'). HB 337 (2025) — billed by the governor as the largest income-tax cut in state history — then cut the top rate from 5.90% to 5.65% for tax year 2026 (and to 5.40% for 2027) and widened the lower 4.70% bracket. For 2026 the 4.70% rate applies to the first $47,500 of Montana taxable income for single and married-filing-separately filers, $95,000 for married filing jointly and surviving spouse (exactly 2× single), and $71,250 for head of household (exactly 1.5× single); 5.65% applies above. The engine models this as federal-conformity: Montana taxable income = federal AGI − the federal standard deduction ($16,100 single / $32,200 joint / $24,150 head of household for 2026), then the two-rate per-status schedule. Married filing separately maps to single exactly (the $47,500 threshold and the $16,100 deduction both apply to MFS). Montana's preferential net long-term capital-gains rate (a lower rate the wage-based engine never reaches), its capital-gains and other credits, and any Montana-specific addbacks/subtractions to the federal starting point are omitted at launch fidelity, so the figure errs slightly high — the conservative side. Montana levies no local income tax. Worked example, single $60,000 AGI: taxable = 60,000 − 16,100 = $43,900 (under $47,500), all at 4.70% = $2,063.30. The rate steps down again to 5.40% in 2027 (the reviewer's data-only step), and the bracket thresholds index annually. Verified against the Montana DOR HB 337 guidance, MCA §15-30-2103, and the Tax Foundation 2026 state-rate table on 2026-06-06.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-06"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}

@@ -1,0 +1,22 @@
+# Montana income tax — MT Department of Revenue, annual (staggered). Montana's
+# 2021 SB 399 reform computes on FEDERAL TAXABLE INCOME (the conformity pattern),
+# so its standard deduction is the federal one (rolls with the IRS refresh). HB
+# 337 (2025) cut the top rate to 5.65% for 2026 (scheduled to 5.40% in 2027) and
+# widened the 4.70% bracket; the two rates and per-status thresholds ($47,500
+# single / $95,000 joint / $71,250 head of household) are statutory (MCA
+# §15-30-2103). The adapter anchors the federal-conformity standard deduction
+# (the NM pattern); the 2027 rate cut and the indexed thresholds roll alongside
+# as the reviewer's data-only step. BUILD-SPEC.md §7.2, §8.
+name: Refresh MT income tax
+
+on:
+  schedule:
+    - cron: "0 12 14 4 *" # April 14, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-mt
+      source_name: MT income tax

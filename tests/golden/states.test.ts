@@ -780,6 +780,73 @@ describe("Hawaii (the deepest schedule yet — 12 brackets 1.4%–11%, per-statu
   });
 });
 
+describe("Montana (HB 337: a two-rate schedule over federal taxable income — conformity)", () => {
+  // MT (2021 SB 399, 2025 HB 337) computes on FEDERAL TAXABLE INCOME — the
+  // federal standard deduction is the starting point (the Idaho/Iowa/ND
+  // conformity pattern), so the shard's deduction = the federal $16,100/$32,200/
+  // $24,150. Two rates for 2026: 4.70% then 5.65%, the 4.70% bracket running to
+  // $47,500 single, $95,000 joint (2× single), $71,250 head of household (1.5×).
+  it("single $60k → $2,063.30 (taxable 60,000 − 16,100 = 43,900, all in the 4.70% band)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("mt"), fica: ds.fica },
+    );
+    // 43,900 < 47,500: 4.70%·43,900.
+    expect(cents(r.state!.incomeTax)).toBe("2063.3");
+  });
+
+  it("single $120k crosses into the 5.65% band → $5,419.10", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 120000 },
+      { federal: ds.federal, state: ds.state("mt"), fica: ds.fica },
+    );
+    // taxable 103,900: 4.70%·47,500 + 5.65%·(103,900 − 47,500).
+    expect(cents(r.state!.incomeTax)).toBe("5419.1");
+  });
+
+  it("married jointly $120k stays in the 4.70% band (threshold 2× single) → $4,126.60", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 120000 },
+      { federal: ds.federal, state: ds.state("mt"), fica: ds.fica },
+    );
+    // taxable 120,000 − 32,200 = 87,800 (< 95,000): 4.70%·87,800.
+    expect(cents(r.state!.incomeTax)).toBe("4126.6");
+  });
+
+  it("head of household $100k crosses the $71,250 threshold (1.5× single) → $3,608.65", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 100000 },
+      { federal: ds.federal, state: ds.state("mt"), fica: ds.fica },
+    );
+    // taxable 100,000 − 24,150 = 75,850: 4.70%·71,250 + 5.65%·(75,850 − 71,250).
+    expect(cents(r.state!.incomeTax)).toBe("3608.65");
+  });
+
+  it("single owes more than married jointly at equal income (the 2× threshold benefit)", () => {
+    const single = evaluateTaxes(
+      { filingStatus: "single", wages: 120000 },
+      { federal: ds.federal, state: ds.state("mt"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 120000 },
+      { federal: ds.federal, state: ds.state("mt"), fica: ds.fica },
+    );
+    expect(single.state!.incomeTax.greaterThan(joint.state!.incomeTax)).toBe(true);
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly schedule", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 120000 },
+      { federal: ds.federal, state: ds.state("mt"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 120000 },
+      { federal: ds.federal, state: ds.state("mt"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction

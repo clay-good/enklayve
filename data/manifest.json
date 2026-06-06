@@ -627,6 +627,19 @@
       "contentHash": "07d29f30c9c2d6a1f20717e0a37303a3235fe06c065d1f171b2dc4d0be8e1920"
     },
     {
+      "id": "state-mt-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-mt-income-tax-2024.json",
+      "sourceUrl": "https://mtrevenue.gov/2025/05/12/hb-337/",
+      "sourceDocument": "Montana DOR 2026 rate schedule (HB 337, 2025; MCA §15-30-2103): 4.70% / 5.65% over federal taxable income; conforms to the federal standard deduction",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "ff4f42daacaff72b12f2a08a5747d498518a450f7bc6c6d2f6b2107b61329f84"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",

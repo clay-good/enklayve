@@ -112,6 +112,7 @@ export type RefreshGroup =
   | "state-wv"
   | "state-wi"
   | "state-hi"
+  | "state-mt"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -925,6 +926,21 @@ export const ADAPTERS: RefreshAdapter[] = [
     // standard deduction (the MN pattern) — the figure Act 46 steps on its
     // 2024/2026/2028/2030/2031 schedule; the 12 per-status bracket tables and the
     // next Act 46 bracket-widening (2027) roll alongside as the reviewer's
+    // data-only step.
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-mt-income-tax-2024",
+    group: "state-mt",
+    source: "Montana Department of Revenue individual income tax (HB 337 two-rate schedule)",
+    sourceUrl: "https://mtrevenue.gov/2025/05/12/hb-337/",
+    cadence: "Annual",
+    // MT computes on federal taxable income (the conformity pattern), so its
+    // standard deduction IS the federal one — it rolls with the IRS refresh, not a
+    // Montana source. The two rates (4.70% / 5.65%) and per-status thresholds are
+    // statutory (HB 337); the rate steps down again to 5.40% in 2027. Anchor the
+    // (federal-conformity) standard deduction as the change-watch (the NM pattern);
+    // the scheduled 2027 rate cut and the indexed thresholds stay the reviewer's
     // data-only step.
     parse: parseStandardDeductions,
   },
