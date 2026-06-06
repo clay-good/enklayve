@@ -1,0 +1,20 @@
+# New Mexico income tax — NM Taxation & Revenue, annual (staggered). The six-rate
+# schedule is statutory and fixed (HB 252 / Laws 2024 ch. 67, amending 7-2-7
+# NMSA; thresholds not indexed) and differs by filing status — heads of household
+# share the joint schedule — so the adapter anchors the standard deduction (the
+# MN pattern). NM's deduction is federal-conformity, so it rolls with the IRS
+# refresh; the per-status bracket tables stay the reviewer's data-only step on any
+# HB 252 successor. BUILD-SPEC.md §7.2, §8.
+name: Refresh NM income tax
+
+on:
+  schedule:
+    - cron: "0 12 28 4 *" # April 28, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-nm
+      source_name: NM income tax

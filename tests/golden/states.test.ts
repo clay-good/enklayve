@@ -356,6 +356,64 @@ describe("Delaware (seven-tier graduated; uniform brackets across statuses — t
   });
 });
 
+describe("New Mexico (six-bracket; head of household shares the married-jointly schedule)", () => {
+  // NM (HB 252, 2024; statutory fixed thresholds) computes from federal AGI over
+  // the federal standard deduction ($16,100 / $32,200 / $24,150 for 2026) with no
+  // personal exemption. Single uses Schedule C; married jointly, head of
+  // household, and surviving spouses all use Schedule B — NM has no separate HoH
+  // schedule. Rates 1.5% / 3.2% / 4.3% / 4.7% / 4.9% / 5.9%.
+  it("single $60k → $1,654.30 (taxable 43,900 on Schedule C)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("nm"), fica: ds.fica },
+    );
+    // 1.5%·5,500 + 3.2%·11,000 + 4.3%·17,000 + 4.7%·(43,900 − 33,500) = 1,654.30.
+    expect(cents(r.state!.incomeTax)).toBe("1654.3");
+  });
+
+  it("married jointly $60k → $784.40 (taxable 27,800 on Schedule B)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("nm"), fica: ds.fica },
+    );
+    // 1.5%·8,000 + 3.2%·17,000 + 4.3%·(27,800 − 25,000) = 784.40.
+    expect(cents(r.state!.incomeTax)).toBe("784.4");
+  });
+
+  it("head of household uses the married-jointly Schedule B, with the HoH deduction → $1,130.55", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 60000 },
+      { federal: ds.federal, state: ds.state("nm"), fica: ds.fica },
+    );
+    // taxable 60,000 − 24,150 = 35,850 on Schedule B: 120 + 544 + 4.3%·10,850.
+    expect(cents(r.state!.incomeTax)).toBe("1130.55");
+  });
+
+  it("single owes more than married jointly at equal income", () => {
+    const single = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("nm"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("nm"), fica: ds.fica },
+    );
+    expect(single.state!.incomeTax.greaterThan(joint.state!.incomeTax)).toBe(true);
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly (Schedule B) result", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 60000 },
+      { federal: ds.federal, state: ds.state("nm"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("nm"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction

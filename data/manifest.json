@@ -536,6 +536,19 @@
       "contentHash": "487909f9e8d681faf22dab63e8d2b8903090fcfcb508ec1ad759c7e2f537d412"
     },
     {
+      "id": "state-nm-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-nm-income-tax-2024.json",
+      "sourceUrl": "https://www.tax.newmexico.gov/all-nm-taxes/current-historic-tax-rates-overview/personal-income-tax-rates/",
+      "sourceDocument": "New Mexico Taxation & Revenue PIT rate schedules (7-2-7 NMSA, HB 252 / Laws 2024 ch. 67); federal-conformity standard deduction",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "10d1d1a85642240347ebf91539b79b14a71ef2fb644f08e1e7c3c81564da7f49"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",

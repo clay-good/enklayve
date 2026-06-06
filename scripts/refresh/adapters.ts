@@ -105,6 +105,7 @@ export type RefreshGroup =
   | "state-mn"
   | "state-ks"
   | "state-de"
+  | "state-nm"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -872,6 +873,21 @@ export const ADAPTERS: RefreshAdapter[] = [
     // (SB 1, 2024 special session); the lightly-indexed standard deduction is the
     // figure that moves, so anchor it (the VA pattern). The per-status brackets
     // stay the reviewer's data-only step.
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-nm-income-tax-2024",
+    group: "state-nm",
+    source: "New Mexico Taxation & Revenue personal income tax rate schedules (standard deduction)",
+    sourceUrl:
+      "https://www.tax.newmexico.gov/all-nm-taxes/current-historic-tax-rates-overview/personal-income-tax-rates/",
+    cadence: "Annual",
+    // NM's six-rate schedule is statutory and fixed (HB 252, 2024; thresholds not
+    // indexed) and differs by filing status — heads of household share the joint
+    // schedule — so the generic graduated parser can't overlay it. Anchor the
+    // standard deduction (the MN pattern); since NM's deduction is federal-
+    // conformity it rolls with the IRS refresh, and the per-status bracket tables
+    // stay the reviewer's data-only step on any HB 252 successor.
     parse: parseStandardDeductions,
   },
   {

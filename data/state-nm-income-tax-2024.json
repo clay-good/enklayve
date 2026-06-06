@@ -1,0 +1,46 @@
+{
+  "id": "US-NM",
+  "name": "New Mexico",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.015 },
+      { "lowerBound": 5500, "rate": 0.032 },
+      { "lowerBound": 16500, "rate": 0.043 },
+      { "lowerBound": 33500, "rate": 0.047 },
+      { "lowerBound": 66500, "rate": 0.049 },
+      { "lowerBound": 210000, "rate": 0.059 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.015 },
+      { "lowerBound": 8000, "rate": 0.032 },
+      { "lowerBound": 25000, "rate": 0.043 },
+      { "lowerBound": 50000, "rate": 0.047 },
+      { "lowerBound": 100000, "rate": 0.049 },
+      { "lowerBound": 315000, "rate": 0.059 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.015 },
+      { "lowerBound": 8000, "rate": 0.032 },
+      { "lowerBound": 25000, "rate": 0.043 },
+      { "lowerBound": 50000, "rate": 0.047 },
+      { "lowerBound": 100000, "rate": 0.049 },
+      { "lowerBound": 315000, "rate": 0.059 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 16100,
+    "married_jointly": 32200,
+    "head_of_household": 24150
+  },
+  "citation": {
+    "sourceUrl": "https://www.tax.newmexico.gov/all-nm-taxes/current-historic-tax-rates-overview/personal-income-tax-rates/",
+    "sourceDocument": "New Mexico Taxation & Revenue PIT rate schedules (7-2-7 NMSA, HB 252 / Laws 2024 ch. 67); federal-conformity standard deduction",
+    "sourceNote": "New Mexico's six-rate schedule — 1.5% / 3.2% / 4.3% / 4.7% / 4.9% / 5.9% — was restructured by HB 252 (Laws 2024, ch. 67, §5, amending 7-2-7 NMSA 1978) effective tax year 2025, and the thresholds are fixed in statute (not indexed), so they carry to 2026. The thresholds differ by filing status, and — distinctively — New Mexico has NO separate head-of-household schedule: heads of household and surviving spouses use the SAME schedule as married filing jointly (Schedule B: 3.2% over $8,000, 4.3% over $25,000, 4.7% over $50,000, 4.9% over $100,000, 5.9% over $315,000). Single filers use Schedule C (3.2% over $5,500, 4.3% over $16,500, 4.7% over $33,500, 4.9% over $66,500, 5.9% over $210,000). Verified to the penny against the bill text: Schedule C's cumulative tax at $210,000 is exactly $9,748 and Schedule B's at $315,000 is exactly $14,624, matching HB 252's stated base amounts. New Mexico computes from federal adjusted gross income and allows the federal standard deduction (shown at the confirmed 2026 federal amounts $16,100 / $32,200 / $24,150 — a head of household files federally as HoH and takes the $24,150 federal HoH deduction while using the joint rate schedule); it has no separate personal exemption (TCJA conformity). The federal-conformity standard deduction rolls with the IRS refresh. Married filing separately uses a fourth statutory schedule (Schedule A, thresholds half of joint); the engine maps married-filing-separately to single (its documented convention), which uses Schedule C's higher thresholds, so an MFS filer's New Mexico tax errs slightly low — the one non-conservative direction, accepted at launch fidelity for a rare status. The low-income comprehensive tax rebate, the capital-gains deduction, and other NM credits/deductions are omitted at launch fidelity. Cross-checked against the Tax Foundation 2026 table; verified against tax.newmexico.gov and the HB 252 bill text on 2026-06-06.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-06"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}
