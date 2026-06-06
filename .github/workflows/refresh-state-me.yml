@@ -1,0 +1,20 @@
+# Maine income tax — Maine Revenue Services, annual (staggered). Maine's three
+# rates (5.8% / 6.75% / 7.15%) and the new 2026 2% millionaire surtax are
+# statutory (36 M.R.S. §5111), but the bracket thresholds, the standard deduction,
+# its phase-out thresholds (§5124-C), and the $5,300 personal exemption (§5126-A)
+# all index together each year (§5403). The adapter anchors the indexed standard
+# deduction (the MN/RI pattern); the per-status bracket tables and the phase-out
+# thresholds roll alongside as the reviewer's data-only step. BUILD-SPEC.md §7.2, §8.
+name: Refresh ME income tax
+
+on:
+  schedule:
+    - cron: "0 12 11 2 *" # February 11, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-me
+      source_name: ME income tax

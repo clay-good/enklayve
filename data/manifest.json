@@ -640,6 +640,19 @@
       "contentHash": "ff4f42daacaff72b12f2a08a5747d498518a450f7bc6c6d2f6b2107b61329f84"
     },
     {
+      "id": "state-me-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-me-income-tax-2024.json",
+      "sourceUrl": "https://www.maine.gov/revenue/sites/maine.gov.revenue/files/inline-files/ind_tax_rate_sched_2026.pdf",
+      "sourceDocument": "Maine Revenue Services 2026 rate schedule (36 M.R.S. §5111 brackets; §5124-C standard deduction + phase-out; §5126-A $5,300 exemption)",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "cbde205c445512125fa2ebc7f92b22216dbdfbf18cddba062c9c8745410318ca"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",

@@ -1,0 +1,52 @@
+{
+  "id": "US-ME",
+  "name": "Maine",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.058 },
+      { "lowerBound": 27400, "rate": 0.0675 },
+      { "lowerBound": 64850, "rate": 0.0715 },
+      { "lowerBound": 1000000, "rate": 0.0915 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.058 },
+      { "lowerBound": 54850, "rate": 0.0675 },
+      { "lowerBound": 129750, "rate": 0.0715 },
+      { "lowerBound": 1500000, "rate": 0.0915 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.058 },
+      { "lowerBound": 41100, "rate": 0.0675 },
+      { "lowerBound": 97300, "rate": 0.0715 },
+      { "lowerBound": 1500000, "rate": 0.0915 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 15700,
+    "married_jointly": 31400,
+    "head_of_household": 23550
+  },
+  "standardDeductionPhaseOut": {
+    "byFilingStatus": {
+      "single": { "agiThreshold": 102250, "divisor": 75000 },
+      "married_jointly": { "agiThreshold": 204550, "divisor": 150000 },
+      "head_of_household": { "agiThreshold": 153400, "divisor": 112500 }
+    }
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 5300,
+    "married_jointly": 10600,
+    "head_of_household": 5300
+  },
+  "citation": {
+    "sourceUrl": "https://www.maine.gov/revenue/sites/maine.gov.revenue/files/inline-files/ind_tax_rate_sched_2026.pdf",
+    "sourceDocument": "Maine Revenue Services 2026 rate schedule (36 M.R.S. §5111 brackets; §5124-C standard deduction + phase-out; §5126-A $5,300 exemption)",
+    "sourceNote": "Maine's 2026 individual income tax (Maine Revenue Services rate schedule, revised 2026-05-05) has three statutory rates — 5.8% / 6.75% / 7.15% — over per-filing-status thresholds that derive by a fixed ratio (married jointly and surviving spouse 2× single, head of household 1.5× single, 36 M.R.S. §5111): single 6.75% at $27,400, 7.15% at $64,850; head of household at $41,100 / $97,300; married jointly at $54,850 / $129,750. Effective tax year 2026, Maine adds a NEW 2% surcharge on Maine taxable income above $1,000,000 (single), $1,500,000 (married jointly / head of household), and $750,000 (married filing separately) — modeled as a fourth bracket at 9.15% (7.15% + 2%). Maine subtracts BOTH a standard deduction ($15,700 single / $31,400 joint / $23,550 head of household) and a $5,300-per-exemption personal exemption ($5,300 single / head of household, $10,600 joint). The standard deduction PHASES OUT for higher earners exactly per §5124-C(2): reduced by deduction × (Maine AGI − threshold) ÷ divisor, with thresholds $102,250 single / $153,400 head of household / $204,550 joint and divisors $75,000 / $112,500 / $150,000 (so the deduction reaches zero at $177,250 / $265,900 / $354,550) — modeled via the engine's standardDeductionPhaseOut divisor form. The SEPARATE personal-exemption phase-out (§5126-A(2)) does not begin until much higher income (single applicable amount $266,700 base, ≈ $341,000 indexed for 2026) and is omitted at launch fidelity, so an ultra-high earner above ~$341,000 keeps the $5,300 exemption — the one non-conservative residual, capped at ~9.15%·$5,300 ≈ $485, at incomes where the standard deduction is already fully phased out (the Minnesota/Rhode Island high-income-phase-out precedent). Married filing separately maps to single (its $750,000 surtax threshold becomes $1,000,000 — a rare ultra-high-income edge). The additional standard deduction for age/blindness, the $300 dependent exemption tax credit, Maine's property-tax-fairness and other credits, and the no-tax-status low-income provision are omitted at launch fidelity, so the figure errs slightly high — the conservative side. Maine levies no local income tax. Worked example, single $60,000 AGI: taxable = 60,000 − 15,700 − 5,300 = $39,000; tax = 5.8%·27,400 + 6.75%·(39,000 − 27,400) = $1,589.20 + $783.00 = $2,372.20. Verified against the Maine Revenue Services 2026 rate schedule, 36 M.R.S. §§5111/5124-C/5126-A, and the §5403 inflation adjustment on 2026-06-06.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-06"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}

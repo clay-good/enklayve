@@ -847,6 +847,75 @@ describe("Montana (HB 337: a two-rate schedule over federal taxable income — c
   });
 });
 
+describe("Maine (three rates + a new 2026 millionaire surtax, over a phasing-out standard deduction)", () => {
+  // ME (2026, MRS rate schedule) has three rates 5.8%/6.75%/7.15% over per-status
+  // thresholds (MFJ 2× single, HoH 1.5× single), plus a NEW 2026 2% surcharge
+  // above $1M single / $1.5M joint (modeled as a 9.15% top bracket). Taxable =
+  // AGI − standard deduction ($15,700/$31,400/$23,550) − $5,300/exemption. The
+  // standard deduction phases out (§5124-C) by deduction·(AGI − threshold)/divisor:
+  // single $102,250/$75,000, joint $204,550/$150,000, HoH $153,400/$112,500.
+  it("single $60k → $2,372.20 (taxable 60,000 − 15,700 − 5,300 = 39,000, in the 6.75% band)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("me"), fica: ds.fica },
+    );
+    // 5.8%·27,400 + 6.75%·(39,000 − 27,400).
+    expect(cents(r.state!.incomeTax)).toBe("2372.2");
+  });
+
+  it("single $120k exercises the standard-deduction phase-out → $6,824.47", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 120000 },
+      { federal: ds.federal, state: ds.state("me"), fica: ds.fica },
+    );
+    // SD reduced 15,700·(120,000 − 102,250)/75,000 = 3,715.67 → SD 11,984.33;
+    // taxable 102,715.67: 5.8%·27,400 + 6.75%·37,450 + 7.15%·(102,715.67 − 64,850).
+    expect(cents(r.state!.incomeTax)).toBe("6824.47");
+  });
+
+  it("married jointly $120k stays full-deduction (under the $204,550 phase-out) → $4,743.93", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 120000 },
+      { federal: ds.federal, state: ds.state("me"), fica: ds.fica },
+    );
+    // taxable 120,000 − 31,400 − 10,600 = 78,000: 5.8%·54,850 + 6.75%·(78,000 − 54,850).
+    expect(cents(r.state!.incomeTax)).toBe("4743.93");
+  });
+
+  it("head of household $90k uses the 1.5× thresholds → $3,737.18", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 90000 },
+      { federal: ds.federal, state: ds.state("me"), fica: ds.fica },
+    );
+    // taxable 90,000 − 23,550 − 5,300 = 61,150: 5.8%·41,100 + 6.75%·(61,150 − 41,100).
+    expect(cents(r.state!.incomeTax)).toBe("3737.18");
+  });
+
+  it("single owes more than married jointly at equal income (the 2× thresholds + deduction)", () => {
+    const single = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("me"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("me"), fica: ds.fica },
+    );
+    expect(single.state!.incomeTax.greaterThan(joint.state!.incomeTax)).toBe(true);
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly schedule", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 120000 },
+      { federal: ds.federal, state: ds.state("me"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 120000 },
+      { federal: ds.federal, state: ds.state("me"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction

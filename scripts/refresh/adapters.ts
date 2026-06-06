@@ -113,6 +113,7 @@ export type RefreshGroup =
   | "state-wi"
   | "state-hi"
   | "state-mt"
+  | "state-me"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -942,6 +943,22 @@ export const ADAPTERS: RefreshAdapter[] = [
     // (federal-conformity) standard deduction as the change-watch (the NM pattern);
     // the scheduled 2027 rate cut and the indexed thresholds stay the reviewer's
     // data-only step.
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-me-income-tax-2024",
+    group: "state-me",
+    source:
+      "Maine Revenue Services individual income tax rate schedule (annual inflation adjustment)",
+    sourceUrl:
+      "https://www.maine.gov/revenue/sites/maine.gov.revenue/files/inline-files/ind_tax_rate_sched_2026.pdf",
+    cadence: "Annual",
+    // ME's three rates (5.8% / 6.75% / 7.15%) and the 2% surtax are statutory
+    // (36 M.R.S. §5111), but the bracket thresholds, the standard deduction, the
+    // standard-deduction phase-out thresholds, and the $5,300 exemption all index
+    // together each year (§5403). Anchor the indexed standard deduction (the
+    // MN/RI pattern); the per-status bracket tables and the phase-out thresholds
+    // roll alongside it as the reviewer's data-only step.
     parse: parseStandardDeductions,
   },
   {
