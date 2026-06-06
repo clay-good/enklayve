@@ -1,12 +1,12 @@
 /**
- * Kiddie-tax estimator (SPEC-3 §4.5). "How is my child's investment income taxed?"
+ * Child-tax estimator (SPEC-3 §4.5). "How is my child's investment income taxed?"
  * Shows the IRC §1(g) three-band stack — the dependent standard-deduction shelter,
  * the next band at the child's own rate, and the remainder at the parents' marginal
  * rate — plus the effective rate on the unearned portion. Gates on the federal and
- * kiddie-tax shards; frames the result as an estimate and points to a pro.
+ * child-tax shards; frames the result as an estimate and points to a pro.
  */
 import { Money } from "../engine/money";
-import { kiddieTax } from "../engine/kiddieTax";
+import { childTax } from "../engine/childTax";
 import { bracketsFor, standardDeductionFor } from "../engine/tax";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
@@ -37,17 +37,17 @@ function writeFields(f: Fields): URLSearchParams {
   return p;
 }
 
-export function mountKiddieTax(ctx: TileContext): void {
+export function mountChildTax(ctx: TileContext): void {
   const { root, data } = ctx;
   root.replaceChildren();
   const fed = data?.federal();
-  const kid = data?.kiddieTax();
+  const kid = data?.childTax();
   if (!fed || !kid) {
     root.append(
       el("div", {
         class: "verify-banner",
         attrs: { role: "alert" },
-        text: "Federal or kiddie-tax data is unavailable, verify before relying on any figure.",
+        text: "Federal or child-tax data is unavailable, verify before relying on any figure.",
       }),
     );
     return;
@@ -77,7 +77,7 @@ export function mountKiddieTax(ctx: TileContext): void {
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
   function compute(): void {
-    const r = kiddieTax(
+    const r = childTax(
       {
         unearnedIncome: fields.unearned,
         earnedIncome: fields.earned,
@@ -113,8 +113,8 @@ export function mountKiddieTax(ctx: TileContext): void {
         value: r.effectiveRateOnUnearned > 0 ? pct(r.effectiveRateOnUnearned, 1) : "0%",
       },
       {
-        label: r.subjectToKiddieTax ? "Kiddie tax applies" : "Below the kiddie-tax threshold",
-        value: r.subjectToKiddieTax
+        label: r.subjectToChildTax ? "Child tax applies" : "Below the child-tax threshold",
+        value: r.subjectToChildTax
           ? "Unearned income clears twice the dependent deduction, so the top slice is taxed at the parents' rate (Form 8615). An estimate — see a pro for the parents'-return interaction and any state tax."
           : "Unearned income is under twice the dependent deduction, so none is pushed to the parents' rate.",
       },
@@ -165,13 +165,13 @@ export function mountKiddieTax(ctx: TileContext): void {
   compute();
 }
 
-export const kiddieTaxTile: TileDefinition = {
-  id: "kiddie-tax",
-  title: "Kiddie Tax Estimator",
+export const childTaxTile: TileDefinition = {
+  id: "child-tax",
+  title: "Child Tax Estimator",
   pillar: "investing",
   description: "How a child's investment income is taxed across the three IRC §1(g) bands.",
   keywords: [
-    "kiddie tax",
+    "child tax",
     "child",
     "unearned income",
     "investment income",
@@ -184,10 +184,13 @@ export const kiddieTaxTile: TileDefinition = {
     "utma",
   ],
   status: "ready",
-  how: "When a child has investment income, the \"kiddie tax\" stops families from sheltering it in the child's low bracket. It stacks in three bands: the dependent standard deduction shelters the first slice tax-free; the next slice (up to twice the base) is taxed at the child's own low rate; and everything above that is taxed at the parents' marginal rate, as if it sat on top of the parents' income.\n\nEnter the child's unearned income (interest, dividends, capital gains), any earned income (wages, always taxed at the child's rate), and the parents' top marginal rate. We use the 2026 dependent standard-deduction base ($1,350) and the federal single brackets for the child's-rate band. This is an estimate — the exact Form 8615 interaction with the parents' return has edge cases, and states tax this differently — so check the result against the form or a preparer.",
+  how: "When a child has investment income, a special rule (IRS Form 8615) stops families from sheltering it in the child's low bracket. It stacks in three bands: the dependent standard deduction shelters the first slice tax-free; the next slice (up to twice the base) is taxed at the child's own low rate; and everything above that is taxed at the parents' marginal rate, as if it sat on top of the parents' income.\n\nEnter the child's unearned income (interest, dividends, capital gains), any earned income (wages, always taxed at the child's rate), and the parents' top marginal rate. We use the 2026 dependent standard-deduction base ($1,350) and the federal single brackets for the child's-rate band. This is an estimate — the exact Form 8615 interaction with the parents' return has edge cases, and states tax this differently — so check the result against the form or a preparer.",
   resources: [
-    { label: "IRS Topic 553, the kiddie tax", url: "https://www.irs.gov/taxtopics/tc553" },
+    {
+      label: "IRS Topic 553, tax on a child's investment income",
+      url: "https://www.irs.gov/taxtopics/tc553",
+    },
     { label: "IRS Form 8615", url: "https://www.irs.gov/forms-pubs/about-form-8615" },
   ],
-  mount: mountKiddieTax,
+  mount: mountChildTax,
 };

@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { kiddieTax } from "../../src/engine/kiddieTax";
+import { childTax } from "../../src/engine/childTax";
 import { educationCredits } from "../../src/engine/educationCredits";
 import { bracketsFor, standardDeductionFor } from "../../src/engine/tax";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 
 /**
- * SPEC-3 §4.5/§4.6 engines: the kiddie-tax stack and the AOTC-vs-LLC comparison.
+ * SPEC-3 §4.5/§4.6 engines: the child-tax stack and the AOTC-vs-LLC comparison.
  * Worked examples pin the cited 2026 figures; the boundary sweep enforces the §2.9
  * invariants (finite results, no throws over the adversarial input space).
  */
@@ -20,11 +20,11 @@ beforeAll(async () => {
   };
 });
 
-describe("kiddieTax (IRC §1(g), 2026)", () => {
+describe("childTax (IRC §1(g), 2026)", () => {
   it("stacks unearned income across the three bands", () => {
-    const r = kiddieTax(
+    const r = childTax(
       { unearnedIncome: 8000, earnedIncome: 0, parentMarginalRate: 0.24 },
-      data.kiddieTax()!,
+      data.childTax()!,
       fed,
     );
     // std 1,350; taxable 6,650; net-unearned 5,300 at 24%; middle band 1,350 at 10%.
@@ -34,25 +34,25 @@ describe("kiddieTax (IRC §1(g), 2026)", () => {
     expect(r.taxAtParentRate.toNumber()).toBeCloseTo(1272, 2);
     expect(r.taxAtChildRate.toNumber()).toBeCloseTo(135, 2);
     expect(r.totalTax.toNumber()).toBeCloseTo(1407, 2);
-    expect(r.subjectToKiddieTax).toBe(true);
+    expect(r.subjectToChildTax).toBe(true);
     expect(r.effectiveRateOnUnearned).toBeCloseTo(0.1759, 3);
   });
 
   it("leaves income under twice the base out of the parents' band", () => {
-    const r = kiddieTax(
+    const r = childTax(
       { unearnedIncome: 2000, earnedIncome: 0, parentMarginalRate: 0.24 },
-      data.kiddieTax()!,
+      data.childTax()!,
       fed,
     );
-    expect(r.subjectToKiddieTax).toBe(false);
+    expect(r.subjectToChildTax).toBe(false);
     expect(r.amountAtParentRate.toNumber()).toBe(0);
     expect(r.taxAtChildRate.toNumber()).toBeCloseTo(65, 2); // (2000−1350) × 10%
   });
 
   it("grows the dependent deduction with earned income", () => {
-    const r = kiddieTax(
+    const r = childTax(
       { unearnedIncome: 3000, earnedIncome: 5000, parentMarginalRate: 0.22 },
-      data.kiddieTax()!,
+      data.childTax()!,
       fed,
     );
     expect(r.dependentStandardDeduction.toNumber()).toBe(5450); // 5000 + 450
@@ -115,13 +115,13 @@ describe("educationCredits (IRC §25A, 2026)", () => {
 
 describe("§2.9 boundary invariants — neither engine throws or returns a non-finite figure", () => {
   const probes = [0, -1, 1, 1e9, 0.5, Number.MAX_SAFE_INTEGER];
-  it("kiddieTax stays finite over the boundary space", () => {
+  it("childTax stays finite over the boundary space", () => {
     for (const u of probes)
       for (const e of probes)
         for (const pr of [0, 0.1, 0.37, 1]) {
-          const r = kiddieTax(
+          const r = childTax(
             { unearnedIncome: u, earnedIncome: e, parentMarginalRate: pr },
-            data.kiddieTax()!,
+            data.childTax()!,
             fed,
           );
           expect(Number.isFinite(r.totalTax.toNumber())).toBe(true);

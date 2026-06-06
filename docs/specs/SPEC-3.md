@@ -83,7 +83,7 @@ Full detail lives in [SPEC-3-citations.md](SPEC-3-citations.md). The three oblig
 
 ## 4. Expansion roadmap: the next wave
 
-> **Status — 2026-06-06.** The §4 roadmap is **complete**. The first wave shipped §4.2/§4.3/§4.4/§4.7/§4.8; this second wave finishes the rest: **§4.1** (cross-tool "related" links), **§4.5** (kiddie-tax estimator), **§4.6** (AOTC-vs-Lifetime-Learning comparison), and **§4.9** (opt-in sensitivity bands). Two more cited shards landed — `kiddie-tax-2024` (IRC §1(g)) and `education-credits-2024` (IRC §25A) — bringing the §4 total to five new shards, all gated through the same integrity/schema/staleness pipeline; the new engines are pinned by worked examples plus the §2.9 boundary sweep in [`tests/engine/screeners.test.ts`](../../tests/engine/screeners.test.ts) and [`tests/engine/educationKiddie.test.ts`](../../tests/engine/educationKiddie.test.ts). Everything below §4.10 is built, tested, cited, deep-linkable, and responsive. The only remaining items are the §4.10 **parked** list, held on purpose.
+> **Status — 2026-06-06.** The §4 roadmap is **complete**. The first wave shipped §4.2/§4.3/§4.4/§4.7/§4.8; this second wave finishes the rest: **§4.1** (cross-tool "related" links), **§4.5** (child-tax estimator), **§4.6** (AOTC-vs-Lifetime-Learning comparison), and **§4.9** (opt-in sensitivity bands). Two more cited shards landed — `child-tax-2024` (IRC §1(g)) and `education-credits-2024` (IRC §25A) — bringing the §4 total to five new shards, all gated through the same integrity/schema/staleness pipeline; the new engines are pinned by worked examples plus the §2.9 boundary sweep in [`tests/engine/screeners.test.ts`](../../tests/engine/screeners.test.ts) and [`tests/engine/educationChild.test.ts`](../../tests/engine/educationChild.test.ts). Everything below §4.10 is built, tested, cited, deep-linkable, and responsive. The only remaining items are the §4.10 **parked** list, held on purpose.
 
 Same bar as always: US personal finance, deterministic, computable from bundled cited data, no market guessing, no advice. Each tool below was checked against that bar; the parked list at the end records what failed it and why. Ordered by value ÷ effort.
 
@@ -118,11 +118,11 @@ Quarterly Taxes shows the four payment amounts but not *when* to send them. Add 
 
 *Done:* [`giftTax.ts`](../../src/engine/giftTax.ts) + the `gift-tax-2024` shard (Rev. Proc. 2025-32: $19,000 / $194,000 non-citizen-spouse / $15M lifetime). Handles the unlimited marital deduction, the non-citizen-spouse exclusion, the Form 709 trigger, and the 40% top rate past the exemption.
 
-### 4.5 Kiddie-tax estimator (new tool, Investing hub, low–medium effort) — ✅ shipped
+### 4.5 Child-tax estimator (new tool, Investing hub, low–medium effort) — ✅ shipped
 
 "How is my child's investment income taxed?" Inputs: child's earned and unearned income, age/student status, parents' marginal rate. Output: the IRC §1(g) stack — the dependent standard-deduction shelter, the next band at the child's rate, the remainder at the parents' rate — and the effective rate on the unearned portion. All parameters are statutory and cited. Deterministic; frames the complexity honestly and points to a pro for the edge cases.
 
-*Done:* [`kiddieTax.ts`](../../src/engine/kiddieTax.ts) + the `kiddie-tax-2024` shard ($1,350 dependent base, $450 earned add-on; Rev. Proc. 2025-32). The engine reads the federal single brackets and standard deduction for the child's-rate band and applies the parents' supplied marginal rate to the net-unearned slice; framed as an estimate with a Form 8615 pointer.
+*Done:* [`childTax.ts`](../../src/engine/childTax.ts) + the `child-tax-2024` shard ($1,350 dependent base, $450 earned add-on; Rev. Proc. 2025-32). The engine reads the federal single brackets and standard deduction for the child's-rate band and applies the parents' supplied marginal rate to the net-unearned slice; framed as an estimate with a Form 8615 pointer.
 
 ### 4.6 Education-credit comparison: AOTC vs Lifetime Learning (new tool, Benefits & Aid hub, low–medium effort) — ✅ shipped
 

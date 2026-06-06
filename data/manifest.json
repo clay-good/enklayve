@@ -770,13 +770,13 @@
       "contentHash": "c5584df6a18a45f6176834d0285d179f56e0bcf91ae93bced18082e47a573bc2"
     },
     {
-      "id": "kiddie-tax-2024",
-      "kind": "kiddie-tax",
+      "id": "child-tax-2024",
+      "kind": "child-tax",
       "version": "2026.0",
       "effectiveYear": 2026,
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
-      "shard": "kiddie-tax-2024.json",
+      "shard": "child-tax-2024.json",
       "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
       "sourceDocument": "IRS Rev. Proc. 2025-32 (2026 dependent standard deduction); IRC §1(g), Form 8615",
       "dateRetrieved": "2026-06-06",

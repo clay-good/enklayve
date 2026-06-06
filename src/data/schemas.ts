@@ -511,7 +511,7 @@ export const AmtSchema = z.object({
 export type AmtData = z.infer<typeof AmtSchema>;
 
 /**
- * Kiddie-tax parameters (SPEC-3 §4.5, IRC §1(g), Form 8615). A dependent child's
+ * Child-tax parameters (SPEC-3 §4.5, IRC §1(g), Form 8615). A dependent child's
  * unearned income is sheltered up to `dependentStandardDeductionBase`, the next
  * like amount is taxed at the child's own rate, and the remainder (unearned income
  * over twice the base) is taxed at the parents' marginal rate. The dependent
@@ -519,7 +519,7 @@ export type AmtData = z.infer<typeof AmtSchema>;
  * `earnedIncomeAddOn`, capped at the single standard deduction (read from the
  * federal shard).
  */
-export const KiddieTaxSchema = z.object({
+export const ChildTaxSchema = z.object({
   taxYear: z.number().int(),
   /** The dependent's minimum standard deduction / unearned-income shelter ($1,350). */
   dependentStandardDeductionBase: z.number().gte(0),
@@ -527,7 +527,7 @@ export const KiddieTaxSchema = z.object({
   earnedIncomeAddOn: z.number().gte(0),
   citation: CitationSchema,
 });
-export type KiddieTaxData = z.infer<typeof KiddieTaxSchema>;
+export type ChildTaxData = z.infer<typeof ChildTaxSchema>;
 
 /**
  * Education-credit parameters (SPEC-3 §4.6, IRC §25A, Form 8863). The American
@@ -582,7 +582,7 @@ export const DATASET_SCHEMAS = {
   "ira-deduction": IraDeductionSchema,
   "gift-tax": GiftTaxSchema,
   amt: AmtSchema,
-  "kiddie-tax": KiddieTaxSchema,
+  "child-tax": ChildTaxSchema,
   "education-credits": EducationCreditsSchema,
 } as const;
 

@@ -30,7 +30,7 @@ import { inflationTile } from "./inflation";
 import { rmdTile } from "./rmd";
 import { taxLossHarvestingTile } from "./taxLossHarvesting";
 import { lotPickerTile } from "./lotPicker";
-import { kiddieTaxTile } from "./kiddieTax";
+import { childTaxTile } from "./childTax";
 import { educationCreditsTile } from "./educationCredits";
 import { rothLadderTile } from "./rothLadder";
 import { backdoorRothTile } from "./backdoorRoth";
@@ -115,7 +115,7 @@ const HUB_CONFIGS: HubConfig[] = [
       capitalGainsTile,
       lotPickerTile,
       taxLossHarvestingTile,
-      kiddieTaxTile,
+      childTaxTile,
       compoundGrowthTile,
       savingsBondTile,
       inflationTile,

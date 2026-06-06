@@ -89,7 +89,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Capital Gains | Short-term stacked + long-term 0/15/20% bands + the 3.8% NIIT |
 | Cost-Basis Lot Picker | FIFO / specific-ID realized gain, split short vs long |
 | Tax-Loss Harvesting | Schedule D netting, the $3,000 offset, the carryforward |
-| Kiddie Tax Estimator | A child's investment income across the three IRC §1(g) bands |
+| Child Tax Estimator | A child's investment income across the three IRC §1(g) bands |
 | Compound Growth | Growth at a rate you supply (never a market prediction); opt-in ± range |
 | Treasury I Bond | What a Series I savings bond earns and is worth (TreasuryDirect) |
 | CPI Inflation Adjuster | What a past dollar is worth in another year (BLS CPI-U) |
@@ -574,7 +574,7 @@ Deferred *for accuracy or scope*, not faked:
 
 The Playwright live-offline + responsiveness e2e suite, previously deferred, now ships as its own CI job (see [Determinism & verification](#determinism--verification)).
 
-**SPEC-3 §4 next wave — complete.** The whole roadmap shipped, all cited to the 2026 IRS figures and tested: the IRA Deduction Checker, Gift Tax Checker, AMT Screener, Kiddie Tax Estimator, and Education Credit Comparison (five new tools, five new shards); the Quarterly-Taxes 1040-ES due-date calendar and the Peace-of-Mind arrival date (two enhancements); cross-tool "Related tools" links (§4.1); and opt-in sensitivity bands (§4.9) on Compound Growth, College Cost, Rent vs Buy, and Retirement Drawdown. Only the §4.10 parked items remain by design — anything needing a market-return forecast stays out, with sensitivity bands as the in-scope answer.
+**SPEC-3 §4 next wave — complete.** The whole roadmap shipped, all cited to the 2026 IRS figures and tested: the IRA Deduction Checker, Gift Tax Checker, AMT Screener, Child Tax Estimator, and Education Credit Comparison (five new tools, five new shards); the Quarterly-Taxes 1040-ES due-date calendar and the Peace-of-Mind arrival date (two enhancements); cross-tool "Related tools" links (§4.1); and opt-in sensitivity bands (§4.9) on Compound Growth, College Cost, Rent vs Buy, and Retirement Drawdown. Only the §4.10 parked items remain by design — anything needing a market-return forecast stays out, with sensitivity bands as the in-scope answer.
 
 ---
 

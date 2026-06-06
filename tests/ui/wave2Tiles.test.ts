@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterEach, vi } from "vitest";
 import axe from "axe-core";
-import { mountKiddieTax } from "../../src/tiles/kiddieTax";
+import { mountChildTax } from "../../src/tiles/childTax";
 import { mountEducationCredits } from "../../src/tiles/educationCredits";
 import { mountCompoundGrowth } from "../../src/tiles/compoundGrowth";
 import { capitalGainsTile } from "../../src/tiles/capitalGains";
@@ -10,7 +10,7 @@ import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
 
 /**
- * SPEC-3 §4 second wave: the kiddie-tax and education-credit tiles, the opt-in
+ * SPEC-3 §4 second wave: the child-tax and education-credit tiles, the opt-in
  * sensitivity bands (§4.9), and the cross-tool "related" links (§4.1). Each tile
  * mounts over adversarial params with no NaN/Infinity text (§2.9), shows the
  * verify banner when data is absent, and is axe-clean.
@@ -55,18 +55,18 @@ function assertNoBadNumbers(root: HTMLElement): void {
 
 afterEach(() => document.body.replaceChildren());
 
-describe("Kiddie Tax Estimator", () => {
+describe("Child Tax Estimator", () => {
   it("shows the three-band stack for a worked example", () => {
-    const { root } = mount(mountKiddieTax, new URLSearchParams({ u: "8000", pr: "0.24" }));
+    const { root } = mount(mountChildTax, new URLSearchParams({ u: "8000", pr: "0.24" }));
     expect(rowValue(root, "Dependent standard deduction")).toBe("$1,350.00");
     expect(rowValue(root, "Estimated total tax")).toBe("$1,407.00");
   });
 
   it("shows the verify banner when data is missing and stays finite on junk input", () => {
     expect(
-      mount(mountKiddieTax, new URLSearchParams(), null).root.querySelector(".verify-banner"),
+      mount(mountChildTax, new URLSearchParams(), null).root.querySelector(".verify-banner"),
     ).not.toBeNull();
-    const { root } = mount(mountKiddieTax, new URLSearchParams({ u: "-5", e: "x", pr: "9" }));
+    const { root } = mount(mountChildTax, new URLSearchParams({ u: "-5", e: "x", pr: "9" }));
     assertNoBadNumbers(root);
   });
 });
@@ -146,7 +146,7 @@ describe("Cross-tool linking (§4.1)", () => {
 describe("the new tiles are axe-clean", () => {
   it("has no structural accessibility violations", async () => {
     for (const [fn, params] of [
-      [mountKiddieTax, new URLSearchParams({ u: "8000", pr: "0.24" })],
+      [mountChildTax, new URLSearchParams({ u: "8000", pr: "0.24" })],
       [mountEducationCredits, new URLSearchParams({ magi: "70000", exp: "4000" })],
       [mountCompoundGrowth, new URLSearchParams({ p: "10000", r: "6", y: "30", band: "1" })],
     ] as const) {

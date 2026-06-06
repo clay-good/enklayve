@@ -1,12 +1,12 @@
 /**
- * Kiddie-tax estimator (SPEC-3 §4.5, IRC §1(g), Form 8615). A dependent child's
+ * Child-tax estimator (SPEC-3 §4.5, IRC §1(g), Form 8615). A dependent child's
  * investment (unearned) income is taxed in three bands: the dependent standard
  * deduction shelters the first slice, the next like-sized slice is taxed at the
  * child's own (low) rate, and everything above twice the base is taxed at the
  * parents' marginal rate — the anti-arbitrage rule that stops income-shifting to a
  * child's bracket.
  *
- * Pure function of the inputs, the cited kiddie-tax shard (the $1,350 base and the
+ * Pure function of the inputs, the cited child-tax shard (the $1,350 base and the
  * $450 earned-income add-on), and the federal single schedule (brackets + standard
  * deduction) the caller supplies. The child's-rate band is computed on the single
  * brackets from $0; the parents'-rate band applies their supplied marginal rate.
@@ -16,7 +16,7 @@
 import { Money } from "./money";
 import { bracketTax, type Bracket } from "./tax";
 
-export interface KiddieTaxInput {
+export interface ChildTaxInput {
   /** The child's investment / unearned income (interest, dividends, gains). */
   unearnedIncome: number;
   /** The child's earned income (wages) — always taxed at the child's own rate. */
@@ -25,7 +25,7 @@ export interface KiddieTaxInput {
   parentMarginalRate: number;
 }
 
-export interface KiddieTaxResult {
+export interface ChildTaxResult {
   /** The dependent standard deduction: max(base, earned + add-on), capped. */
   dependentStandardDeduction: Money;
   /** Taxable income after the deduction. */
@@ -39,15 +39,15 @@ export interface KiddieTaxResult {
   totalTax: Money;
   /** Effective rate on the unearned income (0 when there is none). */
   effectiveRateOnUnearned: number;
-  /** True once unearned income clears twice the base (the kiddie-tax trigger). */
-  subjectToKiddieTax: boolean;
+  /** True once unearned income clears twice the base (the child-tax trigger). */
+  subjectToChildTax: boolean;
 }
 
-export function kiddieTax(
-  input: KiddieTaxInput,
+export function childTax(
+  input: ChildTaxInput,
   data: { dependentStandardDeductionBase: number; earnedIncomeAddOn: number },
   federal: { singleBrackets: Bracket[]; singleStandardDeduction: number },
-): KiddieTaxResult {
+): ChildTaxResult {
   const unearned = Math.max(0, input.unearnedIncome);
   const earned = Math.max(0, input.earnedIncome);
   const base = data.dependentStandardDeductionBase;
@@ -80,6 +80,6 @@ export function kiddieTax(
     taxAtChildRate,
     totalTax,
     effectiveRateOnUnearned: unearned > 0 ? totalTax.toNumber() / unearned : 0,
-    subjectToKiddieTax: netUnearned > 0,
+    subjectToChildTax: netUnearned > 0,
   };
 }
