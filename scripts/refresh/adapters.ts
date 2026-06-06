@@ -102,6 +102,7 @@ export type RefreshGroup =
   | "state-va"
   | "state-mo"
   | "state-nj"
+  | "state-mn"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -858,6 +859,19 @@ export const ADAPTERS: RefreshAdapter[] = [
     // — anchoring the indexed thresholds and any SB 3 trigger-based rate cut.
     // The federal-conformity standard deduction rolls with the IRS refresh.
     parse: parseGraduatedBracketJurisdiction,
+  },
+  {
+    id: "state-mn-income-tax-2024",
+    group: "state-mn",
+    source: "Minnesota Department of Revenue standard deduction (indexed)",
+    sourceUrl: "https://www.revenue.state.mn.us/minnesota-standard-deduction",
+    cadence: "Annual",
+    // MN's brackets and standard deduction index together each year, but its
+    // tiers differ by filing status (three distinct schedules), so the generic
+    // graduated parser can't overlay them. Anchor the cleanly-stated indexed
+    // standard deduction; the per-status bracket tables roll alongside it as the
+    // reviewer's data-only step (the standard-deduction PR is the annual prompt).
+    parse: parseStandardDeductions,
   },
   {
     id: "state-nj-income-tax-2024",

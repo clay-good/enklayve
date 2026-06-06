@@ -181,6 +181,62 @@ describe("New Jersey (the first state whose graduated tiers differ by filing sta
   });
 });
 
+describe("Minnesota (the second per-filing-status state — same rates, different thresholds)", () => {
+  // MN proves the per-status capability generalizes beyond NJ. The four rates
+  // (5.35% / 6.8% / 7.85% / 9.85%) are identical across statuses, but the
+  // thresholds differ (single crosses to 6.8% at $33,310, MFJ at $48,700, HoH at
+  // $41,010), so the brackets-by-status arrays genuinely diverge. Standard
+  // deduction $15,300 / $30,600 / $23,000; no personal exemption.
+  it("married jointly $60k → $1,572.90 (taxable 29,400, all in the 5.35% band)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("mn"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("1572.9"); // 5.35%·(60,000 − 30,600)
+  });
+
+  it("head of household $60k → $1,979.50 (taxable 37,000, still in the 5.35% band)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 60000 },
+      { federal: ds.federal, state: ds.state("mn"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("1979.5"); // 5.35%·(60,000 − 23,000)
+  });
+
+  it("single $60k → $2,556.61 (taxable 44,700 crosses into the 6.8% band)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("mn"), fica: ds.fica },
+    );
+    // 5.35%·33,310 + 6.8%·(44,700 − 33,310) = 1,782.085 + 774.52.
+    expect(cents(r.state!.incomeTax)).toBe("2556.61");
+  });
+
+  it("single owes more than married jointly at the same income (narrower single bands)", () => {
+    const single = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("mn"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("mn"), fica: ds.fica },
+    );
+    expect(single.state!.incomeTax.greaterThan(joint.state!.incomeTax)).toBe(true);
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly schedule", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 60000 },
+      { federal: ds.federal, state: ds.state("mn"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("mn"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction

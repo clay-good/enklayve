@@ -497,6 +497,19 @@
       "contentHash": "9fcb5a2ea871935d45390fd28210607608a60f21c1937c1c3273320839cad8f4"
     },
     {
+      "id": "state-mn-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-mn-income-tax-2024.json",
+      "sourceUrl": "https://www.revenue.state.mn.us/minnesota-income-tax-rates-and-brackets",
+      "sourceDocument": "Minnesota DOR 2026 income tax rate schedules (indexed) and standard deduction",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "d8f633fd589f7c8c6f998c05bb463c80c78c791e15bb8ef5bf8aa15ec625800b"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",

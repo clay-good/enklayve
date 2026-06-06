@@ -1,0 +1,40 @@
+{
+  "id": "US-MN",
+  "name": "Minnesota",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.0535 },
+      { "lowerBound": 33310, "rate": 0.068 },
+      { "lowerBound": 109430, "rate": 0.0785 },
+      { "lowerBound": 203150, "rate": 0.0985 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.0535 },
+      { "lowerBound": 48700, "rate": 0.068 },
+      { "lowerBound": 193480, "rate": 0.0785 },
+      { "lowerBound": 337930, "rate": 0.0985 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.0535 },
+      { "lowerBound": 41010, "rate": 0.068 },
+      { "lowerBound": 164800, "rate": 0.0785 },
+      { "lowerBound": 270060, "rate": 0.0985 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 15300,
+    "married_jointly": 30600,
+    "head_of_household": 23000
+  },
+  "citation": {
+    "sourceUrl": "https://www.revenue.state.mn.us/minnesota-income-tax-rates-and-brackets",
+    "sourceDocument": "Minnesota DOR 2026 income tax rate schedules (indexed) and standard deduction",
+    "sourceNote": "Minnesota's four rates (5.35% / 6.8% / 7.85% / 9.85%) are the same for every filing status, but the thresholds differ: single crosses to 6.8% at $33,310, married-filing-jointly at $48,700, head-of-household at $41,010 (7.85% at $109,430 / $193,480 / $164,800; 9.85% at $203,150 / $337,930 / $270,060). These are the official 2026 figures from the Minnesota Department of Revenue's December 2025 announcement; the brackets and standard deduction are indexed for inflation each year. The 2026 standard deduction is $15,300 single / $30,600 married / $23,000 head of household. Minnesota has no personal exemption (TCJA conformity); its $5,300-per-dependent exemption is omitted for the no-dependent filer, and the standard-deduction phase-out for high earners (above roughly $239,000 of income) is omitted too — both make the figure err slightly high, the conservative side. Minnesota levies no local income tax. The brackets and standard deduction index together annually; the refresh adapter anchors the standard deduction and the per-status bracket tables roll alongside it as the reviewer's data-only step. Verified against the MN DOR on 2026-06-06.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-06"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}

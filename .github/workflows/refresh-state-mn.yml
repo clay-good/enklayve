@@ -1,0 +1,19 @@
+# Minnesota income tax — MN Department of Revenue, annual (staggered). MN's
+# brackets and standard deduction index together each year, but its tiers differ
+# by filing status (three schedules), so the generic graduated parser can't
+# serve it: the adapter anchors the cleanly-stated indexed standard deduction
+# and the per-status bracket tables roll alongside it as the reviewer's data-only
+# step. BUILD-SPEC.md §7.2, §8.
+name: Refresh MN income tax
+
+on:
+  schedule:
+    - cron: "0 12 12 4 *" # April 12, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-mn
+      source_name: MN income tax
