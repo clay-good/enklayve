@@ -8,7 +8,15 @@
 import { Money } from "../engine/money";
 import { requiredMonthlyContribution } from "../engine/finance";
 import { el } from "../ui/dom";
-import { field, parseNonNegative, parseNumber, pct, tryExampleButton } from "../ui/form";
+import {
+  clampNote,
+  didClamp,
+  field,
+  parseNonNegative,
+  parseNumber,
+  pct,
+  tryExampleButton,
+} from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import type { TileContext, TileDefinition } from "./types";
 
@@ -178,7 +186,13 @@ export function mountSinkingFund(ctx: TileContext): void {
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
-  root.append(form, resultContainer);
+  // Disclose the months-to-goal floor clamp on a pasted link (SPEC-3 §2.3 / B1).
+  const rawMonths = Math.round(parseNonNegative(ctx.params.get("m"), 12));
+  const note = didClamp(ctx.params, "m", rawMonths, fields.months)
+    ? clampNote(root, [`the months-to-goal was raised to the ${fields.months}-month minimum`])
+    : null;
+
+  root.append(form, ...(note ? [note] : []), resultContainer);
   compute();
 }
 

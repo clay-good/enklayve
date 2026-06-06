@@ -10,7 +10,7 @@
 import { Money } from "../engine/money";
 import { estimateSai, estimatePell } from "../engine/fafsa";
 import { el } from "../ui/dom";
-import { field, parseNonNegative, tryExampleButton } from "../ui/form";
+import { clampNote, didClamp, field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
@@ -219,7 +219,17 @@ export function mountFafsaSai(ctx: TileContext): void {
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
-  root.append(form, resultContainer);
+  // Disclose the household-size floor clamp on a pasted link (SPEC-3 §2.3 / B1).
+  const note = didClamp(
+    ctx.params,
+    "size",
+    parseNonNegative(ctx.params.get("size"), 4),
+    fields.familySize,
+  )
+    ? clampNote(root, [`household size was raised to the ${fields.familySize}-person minimum`])
+    : null;
+
+  root.append(form, ...(note ? [note] : []), resultContainer);
   compute();
 }
 

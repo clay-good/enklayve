@@ -18,7 +18,15 @@
  */
 import { el } from "../ui/dom";
 import { countUp } from "../ui/countup";
-import { field, parseNonNegative, parseNumber, pct, tryExampleButton } from "../ui/form";
+import {
+  clampNote,
+  didClamp,
+  field,
+  parseNonNegative,
+  parseNumber,
+  pct,
+  tryExampleButton,
+} from "../ui/form";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
 
@@ -178,6 +186,19 @@ export function mountPeaceOfMind(ctx: TileContext): void {
     class: "ph-intro",
     text: "Where you stand, calmly. Enter your situation once and see every safe-harbor reading together, all computed on your device.",
   });
+
+  // Disclose any deep-link clamp (SPEC-3 §2.3 / B1): the withdrawal-rate floor
+  // (0.1%) and the rainy-day minimum (1 month) silently rewrite an out-of-range
+  // fragment, so a pasted link wouldn't reproduce exactly without this note.
+  const clampMessages: string[] = [];
+  if (didClamp(ctx.params, "m", parseNonNegative(ctx.params.get("m"), 3), config.targetMonths)) {
+    clampMessages.push(
+      `the rainy-day target was raised to the ${config.targetMonths}-month minimum`,
+    );
+  }
+  if (didClamp(ctx.params, "wr", parseNumber(ctx.params.get("wr"), 4), config.withdrawalRatePct)) {
+    clampMessages.push(`the withdrawal rate was raised to its ${config.withdrawalRatePct}% floor`);
+  }
 
   const dashboard = el("div", { class: "ph-dashboard", attrs: { "aria-live": "polite" } });
 
@@ -401,7 +422,8 @@ export function mountPeaceOfMind(ctx: TileContext): void {
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
-  root.append(intro, dashboard, inputs);
+  const note = clampNote(root, clampMessages);
+  root.append(intro, ...(note ? [note] : []), dashboard, inputs);
   renderDashboard();
 }
 

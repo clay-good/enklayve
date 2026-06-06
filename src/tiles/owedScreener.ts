@@ -186,6 +186,16 @@ export function mountOwedScreener(ctx: TileContext): void {
           citation: snap.citation,
         });
       }
+    } else if (snap && fields.region !== "contiguous") {
+      // Data-honest: Alaska/Hawaii run on different allotment tables we haven't
+      // bundled yet, so we say so rather than silently dropping SNAP (SPEC-3 §B3).
+      const place = fields.region === "alaska" ? "Alaska" : "Hawaii";
+      findings.push({
+        program: "SNAP (food assistance)",
+        estimate: "Not estimated here",
+        note: `${place} uses different SNAP allotments than the lower 48, and we haven't bundled them yet. Check your eligibility on Benefits.gov.`,
+        citation: null,
+      });
     }
 
     // Saver's Credit — needs a contribution amount, which the screener doesn't

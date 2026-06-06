@@ -1,6 +1,6 @@
 # SPEC-3 companion — Hardening Ledger
 
-> **Status — 2026-06-05.** §A (A1–A4) is applied and shipped. From §B, **B4** (freelance empty-state) is applied; **B1** (URL-clamp disclosure) and **B3** (SNAP AK/HI note) remain open by choice — both are non-blocking judgment calls and B3's surface (the owed-screener region path) is deferred with the rest of the AK/HI allotment work. §C is left untouched on purpose (those are correct). Every §D corner is now pinned by [`tests/engine/propertyInvariants.test.ts`](../../tests/engine/propertyInvariants.test.ts), and the negative-AGI medical-floor corner was hardened (the floor can no longer go negative and inflate the deduction).
+> **Status — 2026-06-06.** §A (A1–A4) and all of §B (B1–B4) are now applied and shipped. **B1** (URL-clamp disclosure) landed as a shared `clampNote`/`didClamp` pair in [`form.ts`](../../src/ui/form.ts), wired into the three confirmed surfaces (Sinking Fund, Peace of Mind, FAFSA SAI); **B3** (SNAP AK/HI note) now surfaces a data-honest "not estimated here" row in the owed screener instead of silently dropping SNAP for Alaska/Hawaii. **B4** (freelance empty-state) was applied earlier. §C is left untouched on purpose (those are correct). Every §D corner is now pinned by [`tests/engine/propertyInvariants.test.ts`](../../tests/engine/propertyInvariants.test.ts), and the negative-AGI medical-floor corner was hardened (the floor can no longer go negative and inflate the deduction).
 
 > The stress-test results behind [SPEC-3.md](SPEC-3.md) §2. Every public-facing tool and engine function was read and reasoned about over its boundary space (zero, negative, very large, fractional, empty/singleton, hostile URL fragment, missing shard). **Every claim here was verified against the source before it was written down.**
 
@@ -54,20 +54,22 @@ The overall verdict from the read: the engine and tiles are robust. Decimal-mone
 
 ## §B — Triage / hardening opportunities (design judgment, none blocking)
 
-### B1 · Silent URL-clamp breaks the deep-link reproducibility promise — **low** (invariant §2.3, ledger T2)
+### B1 · Silent URL-clamp breaks the deep-link reproducibility promise — **low** (invariant §2.3, ledger T2) · ✅ applied
 
 - **Where:** Read-time clamps that rewrite an out-of-range fragment param without telling the user. Confirmed examples: [`sinkingFund.ts`](../../src/tiles/sinkingFund.ts) (`?m=0` → 1), [`peaceOfMind.ts:34-39`](../../src/tiles/peaceOfMind.ts#L34) (`?wr=0` → 0.1, `?m=0` → 1), [`fafsaSai.ts:47`](../../src/tiles/fafsaSai.ts#L47) (`?size=0` → 1).
 - **Judgment:** The clamps themselves are **correct and must stay** — they prevent divide-by-zero (this is why §C2 is not a bug). The only gap is that a pasted link silently produces a different value than it encoded, which nicks the "pasting a link reproduces the exact result" promise. Optional, light fix: when an incoming param was actually out of range, show a one-line note ("Rainy-day target was raised to the 1-month minimum"). Do not change the clamp.
+- **Done:** [`didClamp`](../../src/ui/form.ts) detects a present-but-rewritten fragment param (comparing the value the link supplied against the value after the clamp), and [`clampNote`](../../src/ui/form.ts) renders one calm `.clamp-note` line that dismisses itself the moment the user edits any input (at which point they are driving and the note is stale). Wired into all three confirmed surfaces; the clamps are unchanged. Pinned by cases in [`safeHarborTiles.test.ts`](../../tests/ui/safeHarborTiles.test.ts), [`expansionTiles.test.ts`](../../tests/ui/expansionTiles.test.ts), and [`owedTiles.test.ts`](../../tests/ui/owedTiles.test.ts) (including the in-range no-note case).
 
 ### B2 · Extreme labeled assumptions render as fact with no signal — **low** (invariant §2.4, ledger T1)
 
 - **Where:** Unbounded user-assumption rates: [`rentVsBuy.ts:55-58`](../../src/tiles/rentVsBuy.ts#L55) (`appr`/`rg`/`ir` via `parseNumber`, may be negative or huge), `balanceTransfer` transfer-fee %, `compoundGrowth` return %, `collegeCost` 0% inflation ([`collegeCost.ts:39`](../../src/tiles/collegeCost.ts#L39)).
 - **Judgment:** This is **by design** — §2.1 of [SPEC.md](SPEC.md) says the user supplies the assumption and we show the math; a hard clamp would betray that. Not a defect. The principled enhancement is the opt-in sensitivity band ([SPEC-3.md](SPEC-3.md) §4.9) plus an optional calm hint when a value leaves any defensible band ("that's an unusually high rate"). Never a blocking clamp; the hint stays a pure function of the input so determinism holds.
 
-### B3 · Region-limited benefit estimates are skipped without explanation — **low**
+### B3 · Region-limited benefit estimates are skipped without explanation — **low** · ✅ applied
 
 - **Where:** [`owedScreener.ts`](../../src/tiles/owedScreener.ts) and [`snap.ts`](../../src/tiles/snap.ts) — SNAP is seeded for the contiguous-US allotments only; Alaska/Hawaii are skipped.
 - **Judgment:** Correct to skip (we don't have the AK/HI allotment shards), but a user in those regions sees the absence rather than the reason. Light fix: emit a neutral "SNAP estimate isn't available for Alaska/Hawaii yet — check Benefits.gov" row instead of silently omitting it. Data-honest, no number invented.
+- **Done:** the owed screener's region path (the only surface that lets the user pick Alaska or Hawaii) now pushes a data-honest finding — program "SNAP (food assistance)", estimate "Not estimated here", a note naming the region and pointing to Benefits.gov, and no invented number (citation `null`) — instead of silently dropping SNAP. Pinned by a Hawaii case in [`owedTiles.test.ts`](../../tests/ui/owedTiles.test.ts). The standalone SNAP tile takes no region input (contiguous-only by construction), so its existing "Alaska, Hawaii, and the territories use different amounts" copy is sufficient there.
 
 ### B4 · Freelance-rate collapses to $0 with no explanation when billable hours are zero — **low** · ✅ applied
 

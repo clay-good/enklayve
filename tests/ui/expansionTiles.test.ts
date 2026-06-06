@@ -148,6 +148,16 @@ describe("Sinking Fund Planner", () => {
     expect(root.querySelector<HTMLInputElement>('input[name="t"]')?.value).toBe("25000");
     expect(lastParams()?.get("t")).toBe("25000");
   });
+
+  it("discloses the months floor clamp on a pasted link (SPEC-3 §2.3 / B1)", () => {
+    // ?m=0 is below the 1-month minimum; the clamp keeps the math safe but the
+    // link no longer reproduces exactly, so the tile says so.
+    const { root } = mount(mountSinkingFund, new URLSearchParams({ t: "12000", m: "0" }));
+    expect(root.querySelector(".clamp-note")?.textContent).toContain("months-to-goal");
+    // An in-range link shows no note.
+    const { root: ok } = mount(mountSinkingFund, new URLSearchParams({ t: "12000", m: "12" }));
+    expect(ok.querySelector(".clamp-note")).toBeNull();
+  });
 });
 
 describe("Rent vs Buy", () => {

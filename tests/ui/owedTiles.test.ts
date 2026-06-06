@@ -123,6 +123,23 @@ describe("What Am I Owed screener", () => {
     expect(programs).toContain("SNAP (food assistance)");
   });
 
+  it("names SNAP as not-yet-estimated for Alaska/Hawaii instead of dropping it (SPEC-3 §B3)", () => {
+    // A low-income Hawaii household that would qualify in the lower 48: rather
+    // than silently omitting SNAP (no AK/HI allotments bundled), the screener
+    // surfaces a data-honest row pointing to Benefits.gov.
+    const root = mount(
+      mountOwedScreener,
+      new URLSearchParams({ hh: "4", inc: "38000", kids: "2", mfj: "1", region: "hawaii" }),
+    );
+    const snap = Array.from(root.querySelectorAll(".screener-item")).find((li) =>
+      (li.querySelector(".screener-program")?.textContent ?? "").startsWith("SNAP"),
+    );
+    expect(snap).toBeDefined();
+    expect(snap?.querySelector(".screener-estimate")?.textContent).toBe("Not estimated here");
+    expect(snap?.textContent).toContain("Hawaii");
+    expect(snap?.textContent).toContain("Benefits.gov");
+  });
+
   it("flags ACA subsidies within the 100–400% FPL band", () => {
     // A single filer at ~190% of the poverty line is squarely in the band.
     const root = mount(mountOwedScreener, new URLSearchParams({ hh: "1", inc: "30000" }));
@@ -275,6 +292,13 @@ describe("FAFSA Student Aid Index tile", () => {
     // Derived subtotals (arithmetic on the lines above) stay uncited, by design.
     expect(cited("Available income")).toBe(false);
     expect(cited("Parents' contribution")).toBe(false);
+  });
+
+  it("discloses the household-size floor clamp on a pasted link (SPEC-3 §2.3 / B1)", () => {
+    const root = mount(mountFafsaSai, new URLSearchParams({ pinc: "45000", size: "0" }));
+    expect(root.querySelector(".clamp-note")?.textContent).toContain("household size");
+    const inRange = mount(mountFafsaSai, new URLSearchParams({ pinc: "45000", size: "4" }));
+    expect(inRange.querySelector(".clamp-note")).toBeNull();
   });
 
   it("writes income and household size back to Your Situation", () => {

@@ -40,6 +40,39 @@ export function pct(rate: number, digits = 2): string {
   return `${(rate * 100).toFixed(digits)}%`;
 }
 
+/**
+ * Whether a fragment param was present but silently rewritten by a clamp — the
+ * deep-link-reproducibility seam (SPEC-3 §2.3 / hardening B1). The clamps
+ * themselves are correct and must stay (they prevent divide-by-zero); this only
+ * detects the case so the tile can *disclose* it. `parsed` is the value the
+ * fragment supplied before clamping, `applied` the value after.
+ */
+export function didClamp(
+  params: URLSearchParams,
+  key: string,
+  parsed: number,
+  applied: number,
+): boolean {
+  return params.has(key) && Number.isFinite(parsed) && parsed !== applied;
+}
+
+/**
+ * A calm one-line note that a pasted link was adjusted to stay valid (B1). It
+ * dismisses itself the instant the user edits any input under `host` — at that
+ * point they are driving and the note is stale. Returns null when nothing was
+ * clamped, so the caller can append it unconditionally.
+ */
+export function clampNote(host: HTMLElement, messages: string[]): HTMLElement | null {
+  if (messages.length === 0) return null;
+  const note = el("p", {
+    class: "clamp-note",
+    attrs: { role: "note" },
+    text: `Heads up — this shared link was adjusted to stay valid: ${messages.join("; ")}.`,
+  });
+  host.addEventListener("input", () => note.remove(), { once: true });
+  return note;
+}
+
 /** The gold "Try an example" button that prefills a realistic worked case. */
 export function tryExampleButton(onClick: () => void): HTMLButtonElement {
   return el("button", {

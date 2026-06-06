@@ -107,6 +107,19 @@ test.describe("no horizontal scrolling, every view", () => {
     expect(overflow, `take-home with math open overflowed by ${overflow}px`).toBeLessThanOrEqual(1);
   });
 
+  // The deep-link-clamp disclosure (SPEC-3 §2.3 / B1) renders an extra note when
+  // a pasted link arrived out of range; it must show and still fit a phone.
+  test("a clamped deep-link note shows and still fits at 360px", async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    // ?wr=0&m=0 are below the withdrawal-rate and rainy-day floors, so the note
+    // appears; the profile inputs are empty, but the note renders regardless.
+    await page.goto("/#/where-you-stand?tool=peace-of-mind&wr=0&m=0");
+    await waitForApp(page);
+    await expect(page.locator(".clamp-note")).toBeVisible();
+    const overflow = await horizontalOverflow(page);
+    expect(overflow, `clamped peace-of-mind overflowed by ${overflow}px`).toBeLessThanOrEqual(1);
+  });
+
   // The W-4 refund check puts whole sentences in the breakdown's value column;
   // with the math auto-open, those must wrap, not force an inner sideways scroll.
   test("the W-4 breakdown wraps instead of scrolling sideways", async ({ page }) => {

@@ -101,6 +101,28 @@ describe("Peace of Mind dashboard", () => {
     expect(root.querySelectorAll(".ph-reading")).toHaveLength(5);
   });
 
+  it("discloses a deep-link clamp and dismisses it once the user edits (SPEC-3 §2.3 / B1)", () => {
+    // ?wr=0 and ?m=0 are out of range; the floors rewrite them, so a pasted link
+    // would not reproduce exactly. The note says so, then clears on first edit.
+    const { root } = mount(
+      mountPeaceOfMind,
+      new URLSearchParams({ wr: "0", m: "0" }),
+      fundedProfile(),
+    );
+    const note = root.querySelector(".clamp-note");
+    expect(note).not.toBeNull();
+    expect(note?.textContent).toContain("withdrawal rate");
+    expect(note?.textContent).toContain("rainy-day target");
+    const essential = root.querySelector<HTMLInputElement>('input[name="essential"]')!;
+    essential.dispatchEvent(new Event("input", { bubbles: true }));
+    expect(root.querySelector(".clamp-note")).toBeNull();
+  });
+
+  it("shows no clamp note when the link is in range", () => {
+    const { root } = mount(mountPeaceOfMind, new URLSearchParams({ m: "6" }), fundedProfile());
+    expect(root.querySelector(".clamp-note")).toBeNull();
+  });
+
   it("has no axe violations with readings shown", async () => {
     const { root } = mount(mountPeaceOfMind, new URLSearchParams(), fundedProfile());
     document.body.append(root);
