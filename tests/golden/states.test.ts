@@ -995,6 +995,93 @@ describe("North Dakota (SB 2034: a 0% band then 1.95%/2.50% over federal taxable
   });
 });
 
+describe("Vermont (four-rate graduated schedule over a standard-deduction + exemption stack)", () => {
+  // VT (32 V.S.A. §5822; 2025 Rate Schedules + IN-111-2025 instructions, carried
+  // to 2026 by the Tax Foundation table) levies 3.35% / 6.60% / 7.60% / 8.75% on
+  // Vermont taxable income = AGI − standard deduction − personal exemption (the
+  // RI/VA stack). Per-status thresholds: single 6.60%/7.60%/8.75% over
+  // $49,400/$119,700/$249,700; MFJ over $82,500/$199,450/$304,000; HoH over
+  // $66,200/$171,000/$276,850. Standard deduction $7,650/$15,300/$11,450; the
+  // exemption is $5,300/person (one single/HoH, two joint).
+  it("single $60k → $1,576.18 (taxable 60,000 − 7,650 − 5,300 = 47,050, all in 3.35%)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("1576.18"); // 3.35%·47,050 = 1,576.175
+  });
+
+  it("single $120k crosses into the 6.60% band → $5,459.80", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 120000 },
+      { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
+    );
+    // taxable 107,050: 3.35%·49,400 + 6.60%·(107,050 − 49,400) = 1,654.90 + 3,804.90.
+    expect(cents(r.state!.incomeTax)).toBe("5459.8");
+  });
+
+  it("single $200k reaches the 7.60% band → $11,413.30", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 200000 },
+      { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
+    );
+    // taxable 187,050: 1,654.90 + 6.60%·70,300 + 7.60%·(187,050 − 119,700)
+    //               = 1,654.90 + 4,639.80 + 5,118.60.
+    expect(cents(r.state!.incomeTax)).toBe("11413.3");
+  });
+
+  it("married jointly $60k → $1,142.35 (doubled deduction + exemption, all in 3.35%)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("1142.35"); // 3.35%·(60,000 − 15,300 − 10,600)
+  });
+
+  it("married jointly $400k reaches the 8.75% top band → $24,562.00", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 400000 },
+      { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
+    );
+    // taxable 374,100: 2,763.75 + 6.60%·116,950 + 7.60%·104,550 + 8.75%·(374,100 − 304,000)
+    //               = 2,763.75 + 7,718.70 + 7,945.80 + 6,133.75.
+    expect(cents(r.state!.incomeTax)).toBe("24562");
+  });
+
+  it("head of household $100k uses the $66,200 threshold → $3,343.00", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 100000 },
+      { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
+    );
+    // taxable 83,250: 3.35%·66,200 + 6.60%·(83,250 − 66,200) = 2,217.70 + 1,125.30.
+    expect(cents(r.state!.incomeTax)).toBe("3343");
+  });
+
+  it("single owes more than married jointly at equal income (the wider joint brackets)", () => {
+    const single = evaluateTaxes(
+      { filingStatus: "single", wages: 120000 },
+      { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 120000 },
+      { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
+    );
+    expect(single.state!.incomeTax.greaterThan(joint.state!.incomeTax)).toBe(true);
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly schedule", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 120000 },
+      { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 120000 },
+      { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction

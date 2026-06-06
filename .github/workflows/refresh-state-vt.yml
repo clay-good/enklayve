@@ -1,0 +1,22 @@
+# Vermont income tax — Vermont Department of Taxes, annual (staggered). Vermont
+# levies a four-rate graduated schedule (3.35% / 6.60% / 7.60% / 8.75%; 32 V.S.A.
+# §5822) on Vermont taxable income (AGI minus the Vermont standard deduction and
+# personal exemptions — the RI/VA deduction-plus-exemption stack). The rates are
+# statutory; the per-status bracket thresholds, the standard deduction, and the
+# $5,300 exemption all index for inflation each year on the annual IN-111 rate
+# schedule. The adapter anchors the indexed standard deduction (the MN/RI
+# pattern); the per-status bracket tables and the exemption roll alongside it as
+# the reviewer's data-only step. BUILD-SPEC.md §7.2, §8.
+name: Refresh VT income tax
+
+on:
+  schedule:
+    - cron: "0 12 18 2 *" # February 18, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-vt
+      source_name: VT income tax

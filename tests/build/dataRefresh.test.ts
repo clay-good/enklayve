@@ -151,12 +151,13 @@ describe("adapters: registry", () => {
       "state-sc",
       "state-ut",
       "state-va",
+      "state-vt",
       "state-wi",
       "state-wv",
       "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(42);
+    expect(ADAPTERS).toHaveLength(43);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {

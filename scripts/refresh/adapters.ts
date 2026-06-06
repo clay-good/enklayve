@@ -117,6 +117,7 @@ export type RefreshGroup =
   | "state-nd"
   | "state-ms"
   | "state-ma"
+  | "state-vt"
   | "treasurydirect"
   | "usda-snap"
   | "cms-medicaid";
@@ -975,6 +976,21 @@ export const ADAPTERS: RefreshAdapter[] = [
     // (SB 2034); the per-status thresholds index annually. Anchor the
     // (federal-conformity) standard deduction as the change-watch (the MT pattern);
     // the indexed thresholds stay the reviewer's data-only step.
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-vt-income-tax-2024",
+    group: "state-vt",
+    source:
+      "Vermont Department of Taxes individual income tax rate schedules (IN-111; annual indexing)",
+    sourceUrl: "https://tax.vermont.gov/individuals/personal-income-tax/rates",
+    cadence: "Annual",
+    // VT's four rates (3.35% / 6.60% / 7.60% / 8.75%) are statutory (32 V.S.A.
+    // §5822), but the per-status bracket thresholds, the standard deduction, and
+    // the $5,300 exemption all index together each year. Anchor the indexed
+    // standard deduction (the MN/RI pattern); the per-status bracket tables and
+    // the exemption roll alongside it as the reviewer's data-only step on each
+    // new annual rate schedule.
     parse: parseStandardDeductions,
   },
   {

@@ -1,0 +1,45 @@
+{
+  "id": "US-VT",
+  "name": "Vermont",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.0335 },
+      { "lowerBound": 49400, "rate": 0.066 },
+      { "lowerBound": 119700, "rate": 0.076 },
+      { "lowerBound": 249700, "rate": 0.0875 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.0335 },
+      { "lowerBound": 82500, "rate": 0.066 },
+      { "lowerBound": 199450, "rate": 0.076 },
+      { "lowerBound": 304000, "rate": 0.0875 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.0335 },
+      { "lowerBound": 66200, "rate": 0.066 },
+      { "lowerBound": 171000, "rate": 0.076 },
+      { "lowerBound": 276850, "rate": 0.0875 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 7650,
+    "married_jointly": 15300,
+    "head_of_household": 11450
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 5300,
+    "married_jointly": 10600,
+    "head_of_household": 5300
+  },
+  "citation": {
+    "sourceUrl": "https://tax.vermont.gov/sites/tax/files/documents/TaxRateSched-2025.pdf",
+    "sourceDocument": "Vermont Dept. of Taxes 2025 Rate Schedules (IN-111) + IN-111-2025 instructions; Tax Foundation 2026 table confirms 2026 figures",
+    "sourceNote": "Vermont levies a four-rate graduated tax — 3.35% / 6.60% / 7.60% / 8.75% — on Vermont taxable income, which the wage engine models as Vermont AGI minus the Vermont standard deduction minus personal exemptions (the Rhode Island / Virginia deduction-plus-exemption stack on a per-filing-status schedule). The per-status bracket thresholds are read verbatim from the official 2025 Vermont Tax Rate Schedules (IN-111): single (Schedule X) 6.60% over $49,400, 7.60% over $119,700, 8.75% over $249,700; married filing jointly and qualifying surviving spouse (Schedule Y-1) 6.60% over $82,500, 7.60% over $199,450, 8.75% over $304,000; head of household (Schedule Z) 6.60% over $66,200, 7.60% over $171,000, 8.75% over $276,850. The published schedule's whole-dollar base-tax figures reconcile to the cent against these marginal thresholds (single 8.75% base $16,175 = 1,654.90 + 6.60%*70,300 + 7.60%*130,000; MFJ base $18,428; HoH base $17,179). The standard deduction ($7,650 single/MFS, $15,300 married jointly/QSS, $11,450 head of household) and the $5,300-per-exemption personal exemption (one exemption single/HoH, two married jointly) are read from the official IN-111-2025 instructions (standard-deduction chart and Line 5e). Vermont indexes its brackets, standard deduction, and exemption for inflation annually, but the department had not yet posted indexed 2026 ANNUAL rate schedules at retrieval (only the 2026 wage-bracket withholding charts, effective Jan 1 2026); the Tax Foundation 2026 state-rate table carries these same 2025 figures forward as the 2026 values, so the latest-published 2025 schedule is used (the California precedent), a small under-index versus an unknown ~3% inflation bump that errs slightly HIGH — the conservative side. Married filing separately maps to single at launch fidelity (Vermont's true Schedule Y-2 is slightly narrower — 6.60% over $41,250, 7.60% over $99,725, 8.75% over $152,000 — so a rare MFS filer errs slightly low). Vermont's high-income minimum (for AGI over $150,000, the tax is the greater of the schedule or 3% of AGI less U.S.-obligation interest) never binds for wage-only income — the schedule tax exceeds 3% of AGI at every income the engine models — so it is omitted with no effect on the modeled figure. The additional $1,250 age-65/blind standard deduction, the dependent exemptions beyond the filer, the Vermont capital-gains and Social Security exclusions, and Vermont's credits are omitted at launch fidelity, so the figure errs slightly high. Vermont levies no local income tax. Worked example, single $200,000 wages: Vermont taxable = 200,000 - 7,650 - 5,300 = $187,050; tax = 3.35%*49,400 + 6.60%*(119,700-49,400) + 7.60%*(187,050-119,700) = 1,654.90 + 4,639.80 + 5,118.60 = $11,413.30. Verified against the Vermont Department of Taxes 2025 Rate Schedules and IN-111-2025 instructions and cross-checked against the Tax Foundation 2026 state-rate table on 2026-06-06.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-06"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}
