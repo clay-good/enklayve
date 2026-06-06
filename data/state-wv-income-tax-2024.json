@@ -1,0 +1,48 @@
+{
+  "id": "US-WV",
+  "name": "West Virginia",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.0211 },
+      { "lowerBound": 10000, "rate": 0.0281 },
+      { "lowerBound": 25000, "rate": 0.0316 },
+      { "lowerBound": 40000, "rate": 0.0422 },
+      { "lowerBound": 60000, "rate": 0.0458 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.0211 },
+      { "lowerBound": 10000, "rate": 0.0281 },
+      { "lowerBound": 25000, "rate": 0.0316 },
+      { "lowerBound": 40000, "rate": 0.0422 },
+      { "lowerBound": 60000, "rate": 0.0458 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.0211 },
+      { "lowerBound": 10000, "rate": 0.0281 },
+      { "lowerBound": 25000, "rate": 0.0316 },
+      { "lowerBound": 40000, "rate": 0.0422 },
+      { "lowerBound": 60000, "rate": 0.0458 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 0,
+    "married_jointly": 0,
+    "head_of_household": 0
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 2000,
+    "married_jointly": 4000,
+    "head_of_household": 2000
+  },
+  "citation": {
+    "sourceUrl": "https://tax.wv.gov/Individuals/Pages/PersonalIncomeTaxReductionBill.aspx",
+    "sourceDocument": "West Virginia Tax Division 2026 rate schedule (HB 2526 / SB 2033 + 2026 5% cut, W. Va. Code §11-21-4g); §11-21-16 $2,000 exemption, no standard deduction",
+    "sourceNote": "West Virginia's five rates for 2026 — 2.11% / 2.81% / 3.16% / 4.22% / 4.58% at $0 / $10,000 / $25,000 / $40,000 / $60,000 — reflect the 5% across-the-board cut effective January 1, 2026 (signed 2026-03-31), the latest step in the HB 2526 (2023, a 21.25% cut) and SB 2033 (2024 special session) rate-reduction program with revenue triggers for further cuts from 2027. The schedule is IDENTICAL for single, married filing jointly, and head of household (W. Va. Code §11-21-4g) — West Virginia does not widen the brackets for joint filers, a built-in marriage penalty mitigated only by the doubled personal exemption; married filing separately uses a half-threshold schedule (the engine maps it to single, the documented convention). West Virginia has NO standard deduction (§11-21-16 allows no standard or itemized deduction beyond gambling losses); the only subtraction modeled is the $2,000-per-exemption personal exemption ($2,000 single and head of household, $4,000 married filing jointly). The base tax amounts were verified to the penny against the WV Tax Division schedule ($211 at $10k, $632.50 at $25k, $1,106.50 at $40k, $1,950.50 at $60k). The $2,000-per-dependent exemption is omitted at launch fidelity (the no-dependent filer), so the figure errs slightly high. A future trigger-based rate cut (the next review is August 2025 for a 2027 cut) is the reviewer's data-only step. Cross-checked against the Tax Foundation 2026 table; verified against tax.wv.gov and W. Va. Code §§11-21-4g/16 on 2026-06-06.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-06"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}

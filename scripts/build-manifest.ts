@@ -78,6 +78,7 @@ const STATE_CODES = [
   "ri",
   "sc",
   "ok",
+  "wv",
 ];
 
 const ANNUAL = { effectiveYear: 2026, expectedRefreshMonths: 12, staleAfterYears: 2 } as const;

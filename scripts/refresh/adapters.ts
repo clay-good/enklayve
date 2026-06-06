@@ -109,6 +109,7 @@ export type RefreshGroup =
   | "state-ri"
   | "state-sc"
   | "state-ok"
+  | "state-wv"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -877,6 +878,21 @@ export const ADAPTERS: RefreshAdapter[] = [
     // figure that moves, so anchor it (the VA pattern). The per-status brackets
     // stay the reviewer's data-only step.
     parse: parseStandardDeductions,
+  },
+  {
+    id: "state-wv-income-tax-2024",
+    group: "state-wv",
+    source:
+      "West Virginia Tax Division individual income tax rate schedule (HB 2526 / SB 2033 cuts)",
+    sourceUrl: "https://tax.wv.gov/Individuals/Pages/PersonalIncomeTaxReductionBill.aspx",
+    cadence: "Annual",
+    // WV's one schedule applies to single/MFJ/HoH alike (a uniform graduated
+    // table, the OH/MO/MS shape), so the generic graduated parser overlays the
+    // anchored rate/threshold tiers onto every status. WV's figures that move are
+    // the rates (a trigger can cut them again from 2027); the $10k/$25k/$40k/$60k
+    // thresholds and the $2,000 exemption are statutory. A full-schedule cut stays
+    // the reviewer's data-only step.
+    parse: parseGraduatedBracketJurisdiction,
   },
   {
     id: "state-ok-income-tax-2024",

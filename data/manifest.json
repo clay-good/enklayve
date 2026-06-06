@@ -588,6 +588,19 @@
       "contentHash": "4737eb73bc6d82808165b9952229ad3c7d91ccbb7627cd51ac5f4ce876698548"
     },
     {
+      "id": "state-wv-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-wv-income-tax-2024.json",
+      "sourceUrl": "https://tax.wv.gov/Individuals/Pages/PersonalIncomeTaxReductionBill.aspx",
+      "sourceDocument": "West Virginia Tax Division 2026 rate schedule (HB 2526 / SB 2033 + 2026 5% cut, W. Va. Code §11-21-4g); §11-21-16 $2,000 exemption, no standard deduction",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "7809e637896b9189243341e1a9bbfbb90669b0cbba2b4408fda03926757f310e"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",

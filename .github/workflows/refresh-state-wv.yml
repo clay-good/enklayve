@@ -1,0 +1,19 @@
+# West Virginia income tax — WV Tax Division, annual (staggered). One uniform
+# graduated schedule applies to single / MFJ / head of household (the OH/MO/MS
+# shape), so the generic graduated parser anchors the rate/threshold tiers. WV's
+# rates fell again 5% for 2026 and a trigger can cut them further from 2027; the
+# $10k/$25k/$40k/$60k thresholds and the $2,000 exemption are statutory, and a
+# full-schedule cut is the reviewer's data-only step. BUILD-SPEC.md §7.2, §8.
+name: Refresh WV income tax
+
+on:
+  schedule:
+    - cron: "0 12 24 4 *" # April 24, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-wv
+      source_name: WV income tax

@@ -589,6 +589,60 @@ describe("Oklahoma (HB 2764 2026: 0% band, per-status doubled brackets, head of 
   });
 });
 
+describe("West Virginia (uniform five-bracket schedule, no standard deduction, $2,000 exemption)", () => {
+  // WV (2026, the 5% cut effective 2026-01-01) levies 2.11% / 2.81% / 3.16% /
+  // 4.22% / 4.58% at $0 / $10k / $25k / $40k / $60k — the SAME schedule for
+  // single, married jointly, and head of household (a marriage penalty mitigated
+  // by the doubled exemption). No standard deduction; the only subtraction is the
+  // $2,000-per-exemption personal exemption ($2,000 single/HoH, $4,000 joint).
+  it("single $60k → $1,866.10 (taxable 60,000 − 2,000 = 58,000)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("wv"), fica: ds.fica },
+    );
+    // $1,106.50 base at $40,000 + 4.22%·(58,000 − 40,000).
+    expect(cents(r.state!.incomeTax)).toBe("1866.1");
+  });
+
+  it("married jointly $60k → $1,781.70 (taxable 56,000; only the $4,000 exemption differs)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("wv"), fica: ds.fica },
+    );
+    // $1,106.50 base + 4.22%·(56,000 − 40,000).
+    expect(cents(r.state!.incomeTax)).toBe("1781.7");
+  });
+
+  it("head of household equals single (same schedule, same $2,000 exemption) → $1,866.10", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 60000 },
+      { federal: ds.federal, state: ds.state("wv"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("1866.1");
+  });
+
+  it("single $100k crosses all five brackets → $3,690.90", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 100000 },
+      { federal: ds.federal, state: ds.state("wv"), fica: ds.fica },
+    );
+    // taxable 98,000: $1,950.50 base at $60,000 + 4.58%·(98,000 − 60,000).
+    expect(cents(r.state!.incomeTax)).toBe("3690.9");
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly result", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 60000 },
+      { federal: ds.federal, state: ds.state("wv"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("wv"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction
