@@ -467,6 +467,70 @@ describe("Rhode Island (uniform brackets across statuses, with a standard-deduct
   });
 });
 
+describe("South Carolina (H.4216: two uniform brackets over a SLIDING SCIAD deduction)", () => {
+  // SC (H.4216, 2026) starts from federal AGI and applies 1.99% / 5.21% over
+  // $30,000, uniform across statuses. The standard deduction is the SCIAD —
+  // $15,000 / $30,000 / $22,500 — that phases down with AGI: reduced by
+  // SCIAD·(AGI − threshold)/divisor (single $40k/$55k, MFJ $80k/$110k, HoH
+  // $60k/$82,500), the reduction rounded DOWN to the next-lowest $10
+  // (§12-6-1140(15)). This exercises the engine's standardDeductionPhaseOut.
+  it("single $60k → $1,662.45 (SCIAD phased: reduction $5,454.54 → $5,450, so $9,550)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("sc"), fica: ds.fica },
+    );
+    // taxable 60,000 − 9,550 = 50,450: 1.99%·30,000 + 5.21%·20,450.
+    expect(cents(r.state!.incomeTax)).toBe("1662.45");
+  });
+
+  it("married jointly $60k → $597.00 (AGI below the $80k phase-out start: full $30,000 SCIAD)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("sc"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("597"); // 1.99%·30,000, taxable exactly 30,000
+  });
+
+  it("head of household $60k → $987.75 (AGI exactly at the $60k start: full $22,500 SCIAD)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 60000 },
+      { federal: ds.federal, state: ds.state("sc"), fica: ds.fica },
+    );
+    // taxable 60,000 − 22,500 = 37,500: 597 + 5.21%·7,500.
+    expect(cents(r.state!.incomeTax)).toBe("987.75");
+  });
+
+  it("single $80k mid-phase-out → $2,988.39 (reduction $10,909 → $10,900, SCIAD $4,100)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 80000 },
+      { federal: ds.federal, state: ds.state("sc"), fica: ds.fica },
+    );
+    // taxable 80,000 − 4,100 = 75,900: 597 + 5.21%·45,900.
+    expect(cents(r.state!.incomeTax)).toBe("2988.39");
+  });
+
+  it("single $100k → $4,244.00 (AGI past $95k: SCIAD fully phased out to $0)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 100000 },
+      { federal: ds.federal, state: ds.state("sc"), fica: ds.fica },
+    );
+    // taxable 100,000 − 0 = 100,000: 597 + 5.21%·70,000.
+    expect(cents(r.state!.incomeTax)).toBe("4244");
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly SCIAD + schedule", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 60000 },
+      { federal: ds.federal, state: ds.state("sc"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("sc"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction

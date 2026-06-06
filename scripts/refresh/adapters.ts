@@ -107,6 +107,7 @@ export type RefreshGroup =
   | "state-de"
   | "state-nm"
   | "state-ri"
+  | "state-sc"
   | "state-ms"
   | "state-ma"
   | "treasurydirect"
@@ -874,6 +875,19 @@ export const ADAPTERS: RefreshAdapter[] = [
     // (SB 1, 2024 special session); the lightly-indexed standard deduction is the
     // figure that moves, so anchor it (the VA pattern). The per-status brackets
     // stay the reviewer's data-only step.
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-sc-income-tax-2024",
+    group: "state-sc",
+    source: "South Carolina Department of Revenue individual income tax (H.4216; SCIAD)",
+    sourceUrl: "https://dor.sc.gov/news/information-about-h-4216",
+    cadence: "Annual",
+    // SC's two rates (1.99% / 5.21%), the $30,000 breakpoint, and the SCIAD
+    // amounts and phase-out are all statutory (H.4216, 2026). Anchor the SCIAD
+    // base amounts as the standard deduction (the change-watch); a future
+    // trigger-based top-rate cut and any SCIAD/phase-out change stay the
+    // reviewer's data-only step.
     parse: parseStandardDeductions,
   },
   {

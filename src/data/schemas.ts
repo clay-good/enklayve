@@ -95,6 +95,24 @@ export const TaxpayerCreditSchema = z.object({
 export type TaxpayerCreditData = z.infer<typeof TaxpayerCreditSchema>;
 
 /**
+ * An AGI-based phase-out of the standard deduction — a "sliding standard
+ * deduction" (South Carolina H.4216 / SCIAD; cf. Wisconsin). The deduction is
+ * reduced by `standardDeduction × (AGI − agiThreshold) / divisor`, clamped so it
+ * is the full amount at or below the threshold and zero once AGI exceeds the
+ * threshold by `divisor` (the fraction reaches one). `roundReductionDownTo`
+ * rounds the *reduction* down to a multiple of that many dollars when present
+ * (SC: "the next lowest ten dollars"). Statutory cite: S.C. Code §12-6-1140(15).
+ */
+export const StandardDeductionPhaseOutSchema = z.object({
+  byFilingStatus: z.record(
+    z.string(),
+    z.object({ agiThreshold: z.number().gte(0), divisor: z.number().gt(0) }),
+  ),
+  roundReductionDownTo: z.number().gt(0).optional(),
+});
+export type StandardDeductionPhaseOutData = z.infer<typeof StandardDeductionPhaseOutSchema>;
+
+/**
  * A tax jurisdiction (federal, a state, or a no-income-tax state as a
  * first-class record). One generic evaluator consumes any number of these —
  * adding a state means adding a data file, not code (BUILD-SPEC.md §8).
@@ -110,6 +128,8 @@ export const JurisdictionSchema = z.object({
   bracketsByFilingStatus: bracketsByStatus,
   standardDeductionByFilingStatus: amountByStatus,
   personalExemptionByFilingStatus: amountByStatus.optional(),
+  /** AGI-based phase-out of the standard deduction (South Carolina SCIAD). */
+  standardDeductionPhaseOut: StandardDeductionPhaseOutSchema.optional(),
   localAddOns: z.array(LocalAddOnSchema).optional(),
   specialRules: z.array(SpecialRuleSchema).optional(),
   /** A taxpayer tax credit that substitutes for a standard deduction (Utah). */

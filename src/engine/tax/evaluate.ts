@@ -5,6 +5,7 @@ import {
   bracketsFor,
   personalExemptionFor,
   standardDeductionFor,
+  standardDeductionPhaseOutFor,
   taxpayerCreditBaseFor,
 } from "./brackets";
 import { chooseFederalDeduction } from "./deductions";
@@ -78,7 +79,26 @@ function computeState(
     };
   }
 
-  const standard = Money.from(standardDeductionFor(state, input.filingStatus));
+  let standard = Money.from(standardDeductionFor(state, input.filingStatus));
+  // Sliding standard deduction (South Carolina's SCIAD, S.C. Code §12-6-1140(15)):
+  // the deduction phases down linearly with AGI, reduced by `standard ×
+  // (AGI − threshold) / divisor`, full at/below the threshold and zero once AGI
+  // exceeds it by `divisor`. The reduction rounds down to the nearest
+  // `roundReductionDownTo` dollars where the statute requires it (SC: $10).
+  const phaseOut = standardDeductionPhaseOutFor(state, input.filingStatus);
+  if (phaseOut) {
+    const over = agi.toNumber() - phaseOut.agiThreshold;
+    if (over >= phaseOut.divisor) {
+      standard = Money.zero();
+    } else if (over > 0) {
+      const rawReduction = standard.multiply(over).divide(phaseOut.divisor);
+      const step = state.standardDeductionPhaseOut?.roundReductionDownTo;
+      const reduction = step
+        ? Math.floor(rawReduction.toNumber() / step) * step
+        : rawReduction.toNumber();
+      standard = clampZero(standard.subtract(reduction));
+    }
+  }
   const exemption = Money.from(personalExemptionFor(state, input.filingStatus));
   const taxableIncome = clampZero(agi.subtract(standard).subtract(exemption));
 

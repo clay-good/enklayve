@@ -1,0 +1,19 @@
+# South Carolina income tax — SC Department of Revenue, annual (staggered). The
+# two rates (1.99% / 5.21%), the $30,000 breakpoint, and the SCIAD amounts and
+# AGI phase-out are statutory (H.4216, 2026). The adapter anchors the SCIAD base
+# amounts as the standard deduction (a change-watch); a future trigger-based
+# top-rate reduction, and any SCIAD/phase-out change, stay the reviewer's
+# data-only step. BUILD-SPEC.md §7.2, §8.
+name: Refresh SC income tax
+
+on:
+  schedule:
+    - cron: "0 12 23 4 *" # April 23, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-sc
+      source_name: SC income tax

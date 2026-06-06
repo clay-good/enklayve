@@ -109,3 +109,23 @@ export function taxpayerCreditBaseFor(jurisdiction: Jurisdiction, status: Filing
   }
   return 0;
 }
+
+/**
+ * The standard-deduction phase-out parameters for a status (via {@link
+ * fallbackChain}), or undefined when the jurisdiction has none. Resolves
+ * married-filing-separately → single and qualifying surviving spouse → married
+ * jointly the same way the brackets do, so an unlisted status phases out on the
+ * right schedule (South Carolina's SCIAD; S.C. Code §12-6-1140(15)).
+ */
+export function standardDeductionPhaseOutFor(
+  jurisdiction: Jurisdiction,
+  status: FilingStatus,
+): { agiThreshold: number; divisor: number } | undefined {
+  const table = jurisdiction.standardDeductionPhaseOut?.byFilingStatus;
+  if (!table) return undefined;
+  for (const candidate of fallbackChain(status)) {
+    const params = table[candidate];
+    if (params !== undefined) return params;
+  }
+  return undefined;
+}

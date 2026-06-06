@@ -562,6 +562,19 @@
       "contentHash": "17f6fe368210024b96f324b068a1d37752a8b7b1ecc70e1c350ec0a4a0f1e0ae"
     },
     {
+      "id": "state-sc-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-sc-income-tax-2024.json",
+      "sourceUrl": "https://dor.sc.gov/news/information-about-h-4216",
+      "sourceDocument": "South Carolina H.4216 (2026), S.C. Code 12-6-510 rates & 12-6-1140(15) SCIAD; SCDOR 'Information about H. 4216'",
+      "dateRetrieved": "2026-06-06",
+      "contentHash": "2811bda00c8ae68d40bdabd26d8ecdfd85535b6fc8f9461bb21f150b1d686f2c"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",
