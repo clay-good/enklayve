@@ -131,3 +131,63 @@ export function standardDeductionPhaseOutFor(
   }
   return undefined;
 }
+
+/** Resolve a per-status value through {@link fallbackChain}; `undefined` if none. */
+function resolveByStatus<T>(
+  table: Partial<Record<string, T>> | undefined,
+  status: FilingStatus,
+): T | undefined {
+  if (!table) return undefined;
+  for (const candidate of fallbackChain(status)) {
+    const value = table[candidate];
+    if (value !== undefined) return value;
+  }
+  return undefined;
+}
+
+/**
+ * The deductible federal income tax for a status — the Alabama / Oregon
+ * "federal tax paid" subtraction taken against state taxable income
+ * (FederalTaxDeductionSchema). Returns `min(federalIncomeTax, cap)`, where the
+ * cap is:
+ *
+ *  - **+∞ (uncapped)** when the jurisdiction sets no `capByFilingStatus` — the
+ *    full federal liability is deductible (Alabama, Ala. Code §40-18-15(a)(1)),
+ *    so the result is just `federalIncomeTax`;
+ *  - otherwise the filing-status cap (via {@link fallbackChain}, so an unlisted
+ *    status is never charged a $0 cap), **linearly phased out by federal AGI**
+ *    when a `phaseOut` is present (Oregon, ORS §316.695): the full cap at or
+ *    below `agiThreshold`, zero at or above `agiZero`, pro-rated between.
+ *
+ * Zero when the jurisdiction has no federal-tax deduction at all. The federal
+ * income tax is the engine's own computed figure (already floored at zero by
+ * {@link bracketTax}), so the deduction can never be negative.
+ */
+export function federalTaxDeductionFor(
+  jurisdiction: Jurisdiction,
+  status: FilingStatus,
+  federalIncomeTax: Money,
+  agi: Money,
+): Money {
+  const ftd = jurisdiction.federalTaxDeduction;
+  if (!ftd) return Money.zero();
+
+  // Uncapped (Alabama): the whole federal liability is deductible.
+  if (!ftd.capByFilingStatus) return federalIncomeTax;
+
+  let cap = resolveByStatus(ftd.capByFilingStatus, status) ?? 0;
+
+  // AGI phase-out of the cap (Oregon): linear from full (≤ threshold) to 0 (≥ zero).
+  const po = resolveByStatus(ftd.phaseOut?.byFilingStatus, status);
+  if (po) {
+    const a = agi.toNumber();
+    if (a >= po.agiZero) {
+      cap = 0;
+    } else if (a > po.agiThreshold) {
+      cap = (cap * (po.agiZero - a)) / (po.agiZero - po.agiThreshold);
+    }
+  }
+
+  const capMoney = Money.from(Math.max(0, cap));
+  return federalIncomeTax.lessThan(capMoney) ? federalIncomeTax : capMoney;
+}

@@ -130,6 +130,53 @@ export const StandardDeductionPhaseOutSchema = z.object({
 export type StandardDeductionPhaseOutData = z.infer<typeof StandardDeductionPhaseOutSchema>;
 
 /**
+ * A deduction (or "subtraction") for federal income tax paid, taken against
+ * *state* taxable income before the state brackets apply. Two real shapes:
+ *
+ *  - **Alabama** (Ala. Code §40-18-15(a)(1)): the filer's full federal
+ *    income-tax liability is deductible, **uncapped** — set neither
+ *    `capByFilingStatus` nor `phaseOut`.
+ *  - **Oregon** (ORS §316.680 / §316.695): the subtraction is **capped**
+ *    (≈ $8,250 in 2024, indexed annually) and the cap itself **phases out
+ *    linearly with federal AGI** — the full cap at or below `agiThreshold`,
+ *    nothing at or above `agiZero`, pro-rated between.
+ *
+ * The evaluator subtracts `min(federal income tax, cap-after-phase-out)` from
+ * state taxable income, where the federal income tax is the engine's own
+ * computed figure for the same filer (so the marginal-rate probe captures the
+ * interaction automatically). The federal tax used is pre-credit, matching the
+ * launch-fidelity convention elsewhere in the engine.
+ */
+export const FederalTaxDeductionSchema = z
+  .object({
+    /** Cap on the deductible federal tax, by filing status. Omit → uncapped (Alabama). */
+    capByFilingStatus: amountByStatus.optional(),
+    /**
+     * AGI-based linear phase-out of the cap (Oregon): full cap at or below
+     * `agiThreshold`, zero at or above `agiZero`. Only meaningful with a cap.
+     */
+    phaseOut: z
+      .object({
+        byFilingStatus: z.record(
+          z.string(),
+          z
+            .object({
+              agiThreshold: z.number().gte(0),
+              agiZero: z.number().gt(0),
+            })
+            .refine((e) => e.agiZero > e.agiThreshold, {
+              message: "agiZero must exceed agiThreshold",
+            }),
+        ),
+      })
+      .optional(),
+  })
+  .refine((d) => !d.phaseOut || d.capByFilingStatus !== undefined, {
+    message: "phaseOut requires capByFilingStatus — an uncapped subtraction cannot phase out",
+  });
+export type FederalTaxDeductionData = z.infer<typeof FederalTaxDeductionSchema>;
+
+/**
  * A tax jurisdiction (federal, a state, or a no-income-tax state as a
  * first-class record). One generic evaluator consumes any number of these —
  * adding a state means adding a data file, not code (BUILD-SPEC.md §8).
@@ -151,6 +198,8 @@ export const JurisdictionSchema = z.object({
   specialRules: z.array(SpecialRuleSchema).optional(),
   /** A taxpayer tax credit that substitutes for a standard deduction (Utah). */
   taxpayerCredit: TaxpayerCreditSchema.optional(),
+  /** A deduction for federal income tax paid (Alabama uncapped; Oregon capped + AGI-phased). */
+  federalTaxDeduction: FederalTaxDeductionSchema.optional(),
   citation: CitationSchema,
   effectiveDateRange: z.object({
     start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

@@ -59,4 +59,11 @@ A **sliding standard deduction** (a deduction that phases down as income rises) 
 
 The shape is `{ byFilingStatus: { single: { agiThreshold, divisor | reductionRate }, … }, roundReductionDownTo? }`; the schema enforces that exactly one of `divisor`/`reductionRate` is present per entry. Wisconsin's true head-of-household deduction has a two-segment phase-out (22.515% until it converges with the single curve, then 12%) — that variant is mapped to the single schedule at launch fidelity (conservative), not yet modeled.
 
+A **federal-income-tax deduction** (the "federal tax paid" subtraction) **is** supported via the optional `federalTaxDeduction` block. The evaluator subtracts `min(federal income tax, cap)` from state taxable income before the brackets — using the engine's own computed federal income tax for the same filer, so the marginal-rate probe picks up the interaction automatically. Two shapes:
+
+- **Uncapped** (the Alabama pattern, Ala. Code §40-18-15(a)(1)): the filer's full federal liability is deductible — set `federalTaxDeduction: {}` (omit both `capByFilingStatus` and `phaseOut`).
+- **Capped + AGI-phased** (the Oregon pattern, ORS §316.680/§316.695): set `capByFilingStatus` (the per-status dollar cap, ≈ $8,250 in 2024) and an optional `phaseOut: { byFilingStatus: { single: { agiThreshold, agiZero } } }` that slides the cap linearly from full (at or below `agiThreshold`) to zero (at or above `agiZero`). The schema rejects a `phaseOut` with no cap (an uncapped subtraction cannot phase out) and an `agiZero` that does not exceed `agiThreshold`.
+
+The cap and phase-out resolve through the same filing-status fallback the brackets do (MFS → single, QSS → married-jointly). The capability ships ahead of data: **Alabama and Oregon are now engine-ready and wait only on verified 2026 figures** (Alabama's sliding standard deduction, Oregon's indexed cap and exemption credit, both modeled conservatively when they land). See [`tests/engine/federalTaxDeduction.test.ts`](../tests/engine/federalTaxDeduction.test.ts) for the synthetic worked examples.
+
 When a state's data is stale past its refresh window, only that state shows the "verify before relying" banner; the other jurisdictions keep working (fail-safe is per jurisdiction).

@@ -3,6 +3,7 @@ import type { FicaData, Jurisdiction } from "../../data/schemas";
 import {
   bracketTax,
   bracketsFor,
+  federalTaxDeductionFor,
   personalExemptionFor,
   standardDeductionFor,
   standardDeductionPhaseOutFor,
@@ -67,6 +68,7 @@ function computeState(
   agi: Money,
   state: Jurisdiction,
   federalDeduction: Money,
+  federalIncomeTax: Money,
 ): { computation: JurisdictionComputation; localLines: LocalTaxLine[] } {
   if (!state.hasIncomeTax) {
     return {
@@ -104,7 +106,14 @@ function computeState(
     }
   }
   const exemption = Money.from(personalExemptionFor(state, input.filingStatus));
-  const taxableIncome = clampZero(agi.subtract(standard).subtract(exemption));
+  // Federal income tax paid is deductible against state taxable income in a few
+  // states — uncapped (Alabama, Ala. Code §40-18-15(a)(1)) or capped and
+  // AGI-phased (Oregon, ORS §316.680/§316.695). Zero where the state has no such
+  // deduction. Subtracted before the brackets, like the standard deduction.
+  const fedTaxDeduction = federalTaxDeductionFor(state, input.filingStatus, federalIncomeTax, agi);
+  const taxableIncome = clampZero(
+    agi.subtract(standard).subtract(exemption).subtract(fedTaxDeduction),
+  );
 
   let incomeTax = bracketTax(taxableIncome, bracketsFor(state, input.filingStatus));
 
@@ -152,7 +161,7 @@ function computeState(
   return {
     computation: {
       taxableIncome,
-      deduction: { kind: "standard", amount: standard.add(exemption) },
+      deduction: { kind: "standard", amount: standard.add(exemption).add(fedTaxDeduction) },
       incomeTax,
     },
     localLines,
@@ -182,7 +191,7 @@ function computeBreakdown(input: TaxInput, ctx: TaxContext): Breakdown {
   let state: JurisdictionComputation | null = null;
   let localLines: LocalTaxLine[] = [];
   if (ctx.state) {
-    const s = computeState(input, agi, ctx.state, federal.deduction.amount);
+    const s = computeState(input, agi, ctx.state, federal.deduction.amount, federal.incomeTax);
     state = s.computation;
     localLines = s.localLines;
   }
