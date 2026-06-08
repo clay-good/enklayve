@@ -1,0 +1,55 @@
+{
+  "id": "US-OR",
+  "name": "Oregon",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.0475 },
+      { "lowerBound": 4400, "rate": 0.0675 },
+      { "lowerBound": 11100, "rate": 0.0875 },
+      { "lowerBound": 125000, "rate": 0.099 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.0475 },
+      { "lowerBound": 8800, "rate": 0.0675 },
+      { "lowerBound": 22200, "rate": 0.0875 },
+      { "lowerBound": 250000, "rate": 0.099 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.0475 },
+      { "lowerBound": 8800, "rate": 0.0675 },
+      { "lowerBound": 22200, "rate": 0.0875 },
+      { "lowerBound": 250000, "rate": 0.099 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 2835,
+    "married_jointly": 5670,
+    "head_of_household": 4560
+  },
+  "federalTaxDeduction": {
+    "capByFilingStatus": {
+      "single": 8500,
+      "married_jointly": 8500,
+      "head_of_household": 8500,
+      "married_separately": 4250
+    },
+    "phaseOut": {
+      "byFilingStatus": {
+        "single": { "agiThreshold": 125000, "agiZero": 145000 },
+        "married_jointly": { "agiThreshold": 250000, "agiZero": 290000 },
+        "head_of_household": { "agiThreshold": 250000, "agiZero": 290000 }
+      }
+    }
+  },
+  "citation": {
+    "sourceUrl": "https://www.oregon.gov/dor/forms/FormsPubs/form-or-40-inst_101-040-1_2025.pdf",
+    "sourceDocument": "Oregon DOR Form OR-40 (2025): 4.75%–9.9% rate charts, federal-tax subtraction (cap $8,500, AGI-phased), standard deduction (ORS §316.037/.680/.695)",
+    "sourceNote": "Oregon levies a four-rate graduated tax (ORS §316.037) on Oregon taxable income, which the wage engine models as Oregon AGI (≈ federal AGI for wage income) minus the standard deduction minus the deductible federal income tax. The per-status bracket thresholds are read from the official 2025 Form OR-40 Tax Rate Charts: Chart S (single / married-filing-separately) 4.75% to $4,400, 6.75% to $11,100, 8.75% to $125,000, 9.9% above; Chart J (married jointly / head of household / surviving spouse) doubles the lower two — 4.75% to $8,800, 6.75% to $22,200, 8.75% to $250,000, 9.9% above. These reconcile exactly to the charts' whole-dollar base figures (single 8.75% band base $4,065.00 = 4.75%·4,400 + 6.75%·6,700 + 8.75%·38,900). DISTINCTIVE FEATURE: Oregon is one of only two seeded states (with Alabama) that subtracts federal income tax paid — here CAPPED and AGI-PHASED (ORS §316.680/§316.695), modeled via the engine's federalTaxDeduction capability, which subtracts min(the engine's own computed federal income tax, the cap). The 2025 cap is $8,500 ($4,250 married filing separately); it phases out linearly with federal AGI per the OR-40 Table 4 schedule — full below $125,000 single / MFS and $250,000 joint/HoH/QSS, zero at $145,000 and $290,000 respectively. The engine applies a continuous linear phase-out where Table 4 steps in five $5,000-wide bands; the two differ by at most ~$170 of tax and only within the narrow phase-out band (AGI $125k–$145k single, $250k–$290k joint), a documented launch-fidelity residual. The standard deduction is $2,835 single / married-filing-separately, $5,670 married jointly / surviving spouse, $4,560 head of household (2025, ORS §316.695). Oregon's personal-exemption relief is a $256-per-person nonrefundable CREDIT (ORS §316.085, indexed, itself AGI-phased above $100,000 single / $200,000 joint), not a deduction; the engine has no flat-credit mechanism, so it is omitted at launch fidelity — a flat overstatement of up to $256 of tax below the credit phase-out, the conservative direction, consistent with how every other state's credits are deferred. Oregon indexes its brackets, standard deduction, and federal-tax-subtraction cap annually but had not posted indexed 2026 annual figures at retrieval (only the 2026 withholding formulas), so the latest-published 2025 schedule is used (the California / Vermont precedent) and the Tax Foundation 2026 table confirms the rates; the $125,000/$250,000 bracket top and the federal-subtraction phase-out band are statutory-fixed (ORS §316.037/§316.695), unchanged. The under-index versus an unknown ~2-3% inflation bump errs slightly high — the conservative side. Married filing separately uses Chart S and the $2,835 deduction with the $4,250 federal-subtraction cap; a qualifying surviving spouse falls back to the married-jointly schedule, deduction, and $8,500 cap. The federal-tax subtraction's interaction with itemized returns, the Oregon surplus 'kicker' credit, the working-family and Oregon Kids credits, and the metro/Multnomah local income taxes are omitted at launch fidelity. Oregon levies no statewide sales tax but no general local wage income tax outside the Portland metro. Worked example, single $60,000 wages: federal income tax = $5,020; AGI $60,000 < $125,000, so the full $8,500 cap applies and the subtraction is min($5,020, $8,500) = $5,020; Oregon taxable = 60,000 − 2,835 − 5,020 = $52,145; tax = 4.75%·4,400 + 6.75%·6,700 + 8.75%·(52,145 − 11,100) = 209 + 452.25 + 3,591.4375 = $4,252.69 (before the omitted $256 exemption credit). Verified against the 2025 Form OR-40 instructions (rate charts and Table 4) and ORS §§316.037, 316.680, 316.695, and cross-checked against the Tax Foundation 2026 state-rate table on 2026-06-08.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-08"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}

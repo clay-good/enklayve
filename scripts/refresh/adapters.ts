@@ -51,8 +51,16 @@
  *
  * The tenth set adds Iowa — a flat 3.8% tax (SF 2442 2024) over the federal
  * standard deduction (the Idaho pattern), so the flat parser is reused again; the
- * federal-conformity deduction rolls with the IRS refresh, not Iowa's. With it,
- * *every* seeded jurisdiction with an income tax has a refresh adapter.
+ * federal-conformity deduction rolls with the IRS refresh, not Iowa's.
+ *
+ * The eleventh set lands the two "federal tax deduction" states the engine was
+ * extended for — Alabama (uncapped, Ala. Code §40-18-15(a)(1), a sliding
+ * standard deduction that floors at $2,500/$5,000) and Oregon (capped + AGI-
+ * phased, ORS §316.680/§316.695). Both publish a standard deduction the refresh
+ * can anchor (the MN/RI pattern); Alabama's is the figure last raised by statute
+ * and Oregon's indexes annually, while the brackets, the federal-tax cap, and
+ * Oregon's Table 4 phase-out roll alongside as the reviewer's data-only step.
+ * With them, *every* seeded jurisdiction with an income tax has a refresh adapter.
  *
  * Honesty boundaries (kept narrow on purpose, per the family's "be right before
  * being everywhere"):
@@ -118,6 +126,8 @@ export type RefreshGroup =
   | "state-ms"
   | "state-ma"
   | "state-vt"
+  | "state-al"
+  | "state-or"
   | "treasurydirect"
   | "usda-snap"
   | "cms-medicaid";
@@ -1104,6 +1114,33 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl: "https://www.mass.gov/info-details/massachusetts-4-surtax-on-taxable-income",
     cadence: "Annual",
     parse: parseMassachusettsSurtax,
+  },
+  {
+    id: "state-al-income-tax-2024",
+    group: "state-al",
+    source: "Alabama Department of Revenue Form 40 standard-deduction chart",
+    sourceUrl: "https://www.revenue.alabama.gov/faqs/how-much-is-the-alabama-standard-deduction/",
+    cadence: "Annual",
+    // Alabama's 2%/4%/5% brackets and its $1,500/$3,000 exemption are statutory
+    // and unindexed (Ala. Code §40-18-5/-19), and the federal-tax deduction is
+    // uncapped — so the figure most likely to move is the sliding standard-
+    // deduction maximum (last raised by Act 2022-292). Anchor the deduction
+    // maximums by filing status (the change-watch); the chart's per-$500
+    // reduction steps and floors stay the reviewer's data-only step.
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-or-income-tax-2024",
+    group: "state-or",
+    source: "Oregon Department of Revenue Form OR-40 instructions (rate charts, Table 4)",
+    sourceUrl: "https://www.oregon.gov/dor/programs/individuals/pages/pit.aspx",
+    cadence: "Annual",
+    // Oregon indexes its brackets, standard deduction, and the federal-tax
+    // subtraction cap annually. The cleanly-stated indexed figure is the standard
+    // deduction (the MN/RI pattern); the per-status bracket tables, the $8,500
+    // federal-subtraction cap, and the Table 4 phase-out roll alongside it as the
+    // reviewer's data-only step on each new annual OR-40 rate chart.
+    parse: parseStandardDeductions,
   },
   {
     id: "treasury-bonds-2024",

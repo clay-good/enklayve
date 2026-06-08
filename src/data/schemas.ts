@@ -109,8 +109,16 @@ export type TaxpayerCreditData = z.infer<typeof TaxpayerCreditSchema>;
  *    zero once that reduction equals the deduction (single 12%, joint 19.778%).
  *
  * In both forms the deduction is the full amount at or below `agiThreshold` and
- * floored at zero above. `roundReductionDownTo` rounds the *reduction* down to a
- * multiple of that many dollars when present (SC: "the next lowest ten dollars").
+ * floored at `floor` above (zero unless the status sets a non-zero `floor`).
+ * `roundReductionDownTo` rounds the *reduction* down to a multiple of that many
+ * dollars when present (SC: "the next lowest ten dollars").
+ *
+ * `floor` carries the **Alabama** case (Ala. Code §40-18-15(b), the Form 40
+ * standard-deduction chart): the deduction slides down but never below a
+ * filing-status minimum — $5,000 married-jointly, $2,500 single/MFS/head-of-family
+ * — rather than to zero. Every status phases over the same $25,500→$35,500 AGI
+ * band, each at its own `reductionRate` (single 5%, MFS 17.5%, head-of-family
+ * 27%, joint 35% of AGI over $25,500), reaching its floor at exactly $35,500.
  */
 export const StandardDeductionPhaseOutSchema = z.object({
   byFilingStatus: z.record(
@@ -120,6 +128,8 @@ export const StandardDeductionPhaseOutSchema = z.object({
         agiThreshold: z.number().gte(0),
         divisor: z.number().gt(0).optional(),
         reductionRate: z.number().gt(0).lte(1).optional(),
+        /** The minimum the deduction slides to (Alabama); 0 when omitted (SC/WI/ME). */
+        floor: z.number().gte(0).optional(),
       })
       .refine((e) => (e.divisor === undefined) !== (e.reductionRate === undefined), {
         message: "supply exactly one of `divisor` (SC form) or `reductionRate` (WI form)",

@@ -1,0 +1,22 @@
+# Oregon income tax — Oregon Department of Revenue, annual (staggered). Oregon
+# levies a four-rate graduated schedule (4.75% / 6.75% / 8.75% / 9.9%; ORS
+# §316.037) on Oregon taxable income (AGI minus the standard deduction minus the
+# capped, AGI-phased federal income tax subtraction — ORS §316.680/§316.695).
+# Oregon indexes its brackets, standard deduction, and the $8,500 federal-tax
+# subtraction cap annually. The adapter anchors the indexed standard deduction
+# (the MN/RI pattern); the per-status bracket tables, the federal-subtraction
+# cap, and the Table 4 phase-out roll alongside it as the reviewer's data-only
+# step on each new annual OR-40 rate chart. BUILD-SPEC.md §7.2, §8.
+name: Refresh OR income tax
+
+on:
+  schedule:
+    - cron: "0 12 20 2 *" # February 20, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-or
+      source_name: OR income tax

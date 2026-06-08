@@ -85,6 +85,8 @@ const STATE_CODES = [
   "me",
   "nd",
   "vt",
+  "al",
+  "or",
 ];
 
 const ANNUAL = { effectiveYear: 2026, expectedRefreshMonths: 12, staleAfterYears: 2 } as const;

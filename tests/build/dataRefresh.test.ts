@@ -118,6 +118,7 @@ describe("adapters: registry", () => {
       "hhs-poverty",
       "irs",
       "ssa",
+      "state-al",
       "state-az",
       "state-ca",
       "state-co",
@@ -146,6 +147,7 @@ describe("adapters: registry", () => {
       "state-ny",
       "state-oh",
       "state-ok",
+      "state-or",
       "state-pa",
       "state-ri",
       "state-sc",
@@ -157,7 +159,7 @@ describe("adapters: registry", () => {
       "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(43);
+    expect(ADAPTERS).toHaveLength(45);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {

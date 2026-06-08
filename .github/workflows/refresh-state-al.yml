@@ -1,0 +1,22 @@
+# Alabama income tax — Alabama Department of Revenue, annual (staggered). Alabama
+# levies a three-rate graduated schedule (2% / 4% / 5%; Ala. Code §40-18-5) on
+# Alabama taxable income (AGI minus the standard deduction, the personal
+# exemption, and the deductible federal income tax — uncapped, §40-18-15(a)(1)).
+# The rates and the $1,500/$3,000 exemption are statutory and unindexed; the
+# figure most likely to move is the sliding standard-deduction maximum (last
+# raised by Act 2022-292). The adapter anchors the deduction maximums by filing
+# status (the change-watch); the per-$500 reduction steps and the $2,500/$5,000
+# floors stay the reviewer's data-only step. BUILD-SPEC.md §7.2, §8.
+name: Refresh AL income tax
+
+on:
+  schedule:
+    - cron: "0 12 19 2 *" # February 19, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-al
+      source_name: AL income tax

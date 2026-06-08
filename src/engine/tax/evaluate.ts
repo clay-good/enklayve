@@ -89,9 +89,10 @@ function computeState(
   //  • reductionRate (Wisconsin, Wis. Stat. §71.05(23)(a)): reduce by
   //    `rate × (AGI − threshold)`, a flat percentage of income above the
   //    threshold (single 12%, joint 19.778%), independent of the deduction.
-  // Both are full at/below the threshold and floored at zero above. The reduction
-  // rounds down to the nearest `roundReductionDownTo` dollars where the statute
-  // requires it (SC: $10).
+  // Both are full at/below the threshold; above it the deduction slides toward
+  // the status `floor` (zero unless set — Alabama floors at $5,000 joint /
+  // $2,500 otherwise, Ala. Code §40-18-15(b)). The reduction rounds down to the
+  // nearest `roundReductionDownTo` dollars where the statute requires it (SC: $10).
   const phaseOut = standardDeductionPhaseOutFor(state, input.filingStatus);
   if (phaseOut) {
     const over = agi.toNumber() - phaseOut.agiThreshold;
@@ -103,6 +104,9 @@ function computeState(
       const step = state.standardDeductionPhaseOut?.roundReductionDownTo;
       const reduction = step ? Math.floor(rawReduction / step) * step : rawReduction;
       standard = clampZero(standard.subtract(reduction));
+      if (phaseOut.floor !== undefined && standard.lessThan(phaseOut.floor)) {
+        standard = Money.from(phaseOut.floor);
+      }
     }
   }
   const exemption = Money.from(personalExemptionFor(state, input.filingStatus));

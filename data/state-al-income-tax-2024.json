@@ -1,0 +1,50 @@
+{
+  "id": "US-AL",
+  "name": "Alabama",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.02 },
+      { "lowerBound": 500, "rate": 0.04 },
+      { "lowerBound": 3000, "rate": 0.05 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.02 },
+      { "lowerBound": 1000, "rate": 0.04 },
+      { "lowerBound": 6000, "rate": 0.05 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.02 },
+      { "lowerBound": 500, "rate": 0.04 },
+      { "lowerBound": 3000, "rate": 0.05 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 3000,
+    "married_jointly": 8500,
+    "head_of_household": 5200
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 1500,
+    "married_jointly": 3000,
+    "head_of_household": 3000
+  },
+  "standardDeductionPhaseOut": {
+    "byFilingStatus": {
+      "single": { "agiThreshold": 25500, "reductionRate": 0.05, "floor": 2500 },
+      "married_jointly": { "agiThreshold": 25500, "reductionRate": 0.35, "floor": 5000 },
+      "head_of_household": { "agiThreshold": 25500, "reductionRate": 0.27, "floor": 2500 }
+    }
+  },
+  "federalTaxDeduction": {},
+  "citation": {
+    "sourceUrl": "https://www.revenue.alabama.gov/faqs/how-much-is-the-alabama-standard-deduction/",
+    "sourceDocument": "Alabama DOR Form 40 (2025): 2%/4%/5% brackets, sliding standard deduction, $1,500/$3,000 exemption, federal-tax deduction (Ala. Code §40-18-5/-15/-19)",
+    "sourceNote": "Alabama levies a three-rate graduated tax (Ala. Code §40-18-5) on Alabama taxable income, which the wage engine models as Alabama AGI (≈ federal AGI for wage income) minus the standard deduction minus the personal exemption minus the deductible federal income tax. The rates are statutory and unindexed: for single, married-filing-separately, and head-of-family filers, 2% on the first $500, 4% on the next $2,500 (to $3,000), and 5% above $3,000; for married filing jointly the bands double — 2% on the first $1,000, 4% to $6,000, 5% above (so head of family uses the single rate schedule, not the doubled one). DISTINCTIVE FEATURE: Alabama is one of only two seeded states (with Oregon) that lets a filer deduct the federal income tax actually paid — here UNCAPPED (Ala. Code §40-18-15(a)(1)) — modeled via the engine's federalTaxDeduction capability, which subtracts the engine's own computed federal income tax for the same filer, so the marginal-rate probe captures the interaction automatically. The standard deduction is the sliding Form 40 chart (Ala. Code §40-18-15(b)): a maximum of $3,000 single / $8,500 married jointly / $5,200 head of family / $4,250 married-filing-separately that is reduced by a fixed amount for each $500 of AGI over $25,500 — $25 single, $175 joint, $135 head of family, $87.50 MFS per $500 — until it reaches a floor of $2,500 (single/HoH/MFS) or $5,000 (joint) at AGI $35,500. This sliding-to-a-NON-ZERO-floor shape is the engine's new standardDeductionPhaseOut `floor`: every status phases over the same $25,500→$35,500 band at its own reductionRate (single 5%, head of family 27%, joint 35% of AGI over $25,500), reaching its floor at exactly $35,500. The engine applies the reduction continuously rather than in the chart's $500 steps, which understates the deduction by at most one step (≤ ~$9 of tax) within the phase-out band, always the conservative direction (erring slightly high). The personal exemption is $1,500 (single / married-filing-separately) or $3,000 (married jointly / head of family), per Ala. Code §40-18-19; the per-dependent exemption ($1,000 to $300, sliding by AGI), the federal-tax deduction's interaction with itemized returns, and Alabama's credits are omitted at launch fidelity, so the figure errs slightly high. Married filing separately maps to single (its true $4,250 standard-deduction maximum is modeled as single's $3,000, erring slightly high — the conservative side); a qualifying surviving spouse falls back to the married-jointly schedule, deduction, and exemption, matching Alabama's two-year surviving-spouse rule. Alabama levies a local occupational tax in some municipalities (e.g. Birmingham, Macon County) that is omitted at launch fidelity. Worked example, single $60,000 wages: federal income tax = $5,020 (taxable 60,000 − 16,100 = 43,900; 10%·12,400 + 12%·31,500); AGI $60,000 > $35,500, so the standard deduction is the $2,500 floor; Alabama taxable = 60,000 − 2,500 − 1,500 − 5,020 = $50,980; tax = 2%·500 + 4%·2,500 + 5%·(50,980 − 3,000) = 10 + 100 + 2,399 = $2,509.00. Verified against the Alabama Department of Revenue Form 40 standard-deduction chart and Ala. Code §§40-18-5, 40-18-15, 40-18-19, and cross-checked against the Tax Foundation 2026 state-rate table on 2026-06-08.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-08"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}

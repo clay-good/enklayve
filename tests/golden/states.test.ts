@@ -1082,6 +1082,173 @@ describe("Vermont (four-rate graduated schedule over a standard-deduction + exem
   });
 });
 
+describe("Alabama (graduated; UNCAPPED federal-tax deduction over a sliding-to-a-floor deduction)", () => {
+  // AL (Ala. Code §40-18-5/-15/-19) levies 2% / 4% / 5% on Alabama taxable
+  // income = AGI − standard deduction − personal exemption − the full federal
+  // income tax (uncapped, §40-18-15(a)(1)). Single/MFS/head-of-family use the
+  // $500/$3,000 breakpoints; married jointly doubles them to $1,000/$6,000. The
+  // standard deduction slides from a max ($3,000 single / $8,500 joint / $5,200
+  // HoH) down to a FLOOR ($2,500 / $5,000 / $2,500) across AGI $25,500→$35,500 —
+  // the engine's new standardDeductionPhaseOut `floor`. Exemption $1,500 single,
+  // $3,000 joint/HoH. The federal tax used is the engine's own computed figure.
+  it("single $60k → $2,509.00 (floored $2,500 deduction; deducts the full $5,020 federal tax)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("al"), fica: ds.fica },
+    );
+    // AGI 60,000 > 35,500 ⇒ deduction at $2,500 floor. Federal tax = $5,020.
+    // taxable 60,000 − 2,500 − 1,500 − 5,020 = 50,980: 2%·500 + 4%·2,500 + 5%·47,980.
+    expect(cents(r.state!.incomeTax)).toBe("2509");
+    // The reported deduction bundles the standard deduction, exemption, and the
+    // federal income tax: 2,500 + 1,500 + 5,020 = 9,020.
+    expect(cents(r.federal.incomeTax)).toBe("5020");
+    expect(cents(r.state!.deduction.amount)).toBe("9020");
+  });
+
+  it("married jointly $60k → $2,378.00 (doubled brackets/exemption; $5,000 deduction floor; $2,840 federal tax)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("al"), fica: ds.fica },
+    );
+    // taxable 60,000 − 5,000 − 3,000 − 2,840 = 49,160: 2%·1,000 + 4%·5,000 + 5%·43,160.
+    expect(cents(r.state!.incomeTax)).toBe("2378");
+  });
+
+  it("head of family uses the single rate schedule but the $3,000 exemption → $2,487.60", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 60000 },
+      { federal: ds.federal, state: ds.state("al"), fica: ds.fica },
+    );
+    // Federal tax (HoH) = $3,948; deduction floor $2,500; exemption $3,000.
+    // taxable 60,000 − 2,500 − 3,000 − 3,948 = 50,552: 10 + 100 + 5%·(50,552 − 3,000).
+    expect(cents(r.state!.incomeTax)).toBe("2487.6");
+  });
+
+  it("single $30k mid-phase-out keeps a partial deduction → $1,175.25", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 30000 },
+      { federal: ds.federal, state: ds.state("al"), fica: ds.fica },
+    );
+    // AGI 30,000: deduction 3,000 − 5%·(30,000 − 25,500) = 3,000 − 225 = 2,775.
+    // Federal tax = $1,420. taxable 30,000 − 2,775 − 1,500 − 1,420 = 24,305:
+    // 10 + 100 + 5%·(24,305 − 3,000).
+    expect(cents(r.state!.incomeTax)).toBe("1175.25");
+  });
+
+  it("single $25k below the phase-out keeps the full $3,000 deduction → $940.50", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 25000 },
+      { federal: ds.federal, state: ds.state("al"), fica: ds.fica },
+    );
+    // AGI 25,000 < 25,500 ⇒ full $3,000 deduction. Federal tax = $890.
+    // taxable 25,000 − 3,000 − 1,500 − 890 = 19,610: 10 + 100 + 5%·(19,610 − 3,000).
+    expect(cents(r.state!.incomeTax)).toBe("940.5");
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly schedule, deduction, and exemption", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 60000 },
+      { federal: ds.federal, state: ds.state("al"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("al"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
+describe("Oregon (graduated; CAPPED + AGI-phased federal-tax subtraction)", () => {
+  // OR (ORS §316.037/.680/.695) levies 4.75% / 6.75% / 8.75% / 9.9% on Oregon
+  // taxable income = AGI − standard deduction − the federal income tax subtraction
+  // (capped at $8,500 / $4,250 MFS, phased out by AGI per the OR-40 Table 4).
+  // Chart S (single/MFS) thresholds $4,400/$11,100/$125,000; Chart J (joint/HoH/
+  // QSS) doubles the lower two to $8,800/$22,200, top $250,000. Standard deduction
+  // $2,835 single, $5,670 joint, $4,560 HoH. The exemption credit is omitted.
+  it("single $60k → $4,252.69 (full $8,500 cap; subtracts the $5,020 federal tax)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
+    );
+    // AGI 60,000 < 125,000 ⇒ full cap; subtract min(5,020, 8,500) = 5,020.
+    // taxable 60,000 − 2,835 − 5,020 = 52,145: 4.75%·4,400 + 6.75%·6,700 + 8.75%·41,045.
+    expect(cents(r.state!.incomeTax)).toBe("4252.69");
+  });
+
+  it("married jointly $60k uses Chart J and the $5,670 deduction → $3,885.38", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
+    );
+    // Federal tax = $2,840. taxable 60,000 − 5,670 − 2,840 = 51,490:
+    // 4.75%·8,800 + 6.75%·13,400 + 8.75%·(51,490 − 22,200).
+    expect(cents(r.state!.incomeTax)).toBe("3885.38");
+  });
+
+  it("head of household uses Chart J with the $4,560 deduction → $3,885.55", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 60000 },
+      { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
+    );
+    // Federal tax (HoH) = $3,948. taxable 60,000 − 4,560 − 3,948 = 51,492:
+    // 4.75%·8,800 + 6.75%·13,400 + 8.75%·(51,492 − 22,200).
+    expect(cents(r.state!.incomeTax)).toBe("3885.55");
+  });
+
+  it("low income: the subtraction is the federal tax itself, not the cap → single $30k = $1,942.69", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 30000 },
+      { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
+    );
+    // Federal tax $1,420 < $8,500 cap ⇒ subtract $1,420.
+    // taxable 30,000 − 2,835 − 1,420 = 25,745: 209 + 452.25 + 8.75%·(25,745 − 11,100).
+    expect(cents(r.state!.incomeTax)).toBe("1942.69");
+  });
+
+  it("the cap phases out: single $135k (mid-band) gets a halved $4,250 cap → $10,916.09", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 135000 },
+      { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
+    );
+    // AGI 135,000 halfway through 125k→145k ⇒ cap 8,500·0.5 = 4,250; fed tax exceeds it.
+    // taxable 135,000 − 2,835 − 4,250 = 127,915 (crosses 9.9% over 125,000):
+    // 209 + 452.25 + 8.75%·113,900 + 9.9%·(127,915 − 125,000).
+    expect(cents(r.state!.incomeTax)).toBe("10916.09");
+  });
+
+  it("above $145k the subtraction is fully phased out → single $160k = $13,811.84", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 160000 },
+      { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
+    );
+    // AGI 160,000 > 145,000 ⇒ no federal-tax subtraction at all.
+    // taxable 160,000 − 2,835 = 157,165: 209 + 452.25 + 8.75%·113,900 + 9.9%·(157,165 − 125,000).
+    expect(cents(r.state!.incomeTax)).toBe("13811.84");
+  });
+
+  it("married filing separately is capped at $4,250, binding below the federal tax → $60k = $4,320.06", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_separately", wages: 60000 },
+      { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
+    );
+    // MFS cap $4,250 < federal tax $5,020 ⇒ subtract only $4,250 (Chart S, $2,835 std).
+    // taxable 60,000 − 2,835 − 4,250 = 52,915: 209 + 452.25 + 8.75%·(52,915 − 11,100).
+    expect(cents(r.state!.incomeTax)).toBe("4320.06");
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly schedule and $8,500 cap", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 60000 },
+      { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction
