@@ -305,6 +305,24 @@ flowchart LR
     EV --> RES["TaxResult: federal · FICA · state · local<br/>· marginal % · effective % · take-home<br/>(every line carries its citation)"]
 ```
 
+**Anatomy of one evaluation.** [`evaluateTaxes`](src/engine/tax/evaluate.ts) is a pure function that composes the three tax bases in a fixed order, then measures the *combined* marginal rate the only honest way — by re-running the entire pipeline against a $100 wage probe, so bracket edges, the Social Security wage base, and the Additional Medicare threshold all register at once (no hand-derived marginal formula to drift).
+
+```mermaid
+flowchart TD
+    IN["inputs: wages · other income · adjustments<br/>filing status · deduction mode · state · local ids"]
+    IN --> AGI["AGI = max(0, gross income − adjustments)"]
+    AGI --> FD["Federal deduction<br/>= max(standard, itemized 'big four')"]
+    FD --> FTAX["Federal income tax<br/>= bracket tax on (AGI − deduction)"]
+    IN --> FICA["FICA on wages<br/>Social Security to the wage base<br/>+ Medicare + 0.9% Add'l over threshold"]
+    AGI --> SD["State taxable = AGI<br/>− standard deduction (− sliding phase-out)<br/>− personal exemption"]
+    SD --> STAX["State income tax = bracket tax<br/>+ special-rule surtax · − taxpayer credit (≥0)<br/>+ opt-in local add-ons"]
+    FTAX --> SUM["Total tax = federal + FICA + state + local"]
+    FICA --> SUM
+    STAX --> SUM
+    SUM --> OUT["take-home = gross − total tax<br/>effective % = total ÷ gross<br/>every line carries its citation"]
+    SUM -. "re-run the whole pipeline at wages + $100" .-> MARG["marginal % = Δ total tax ÷ 100"]
+```
+
 - Seeded with **45 jurisdictions** and growing data-only through the staggered annual refresh (SPEC §14.3). **No-income-tax states are first-class records,** not omissions, so a resident sees their state by name with $0 state tax confirmed (and its citation), not a generic "no state tax modeled."
 - **Per-filing-status schedules are supported** (the schema keys brackets by status and `bracketsFor` resolves each, with the QSS→MFJ→single fallback). New Jersey (different rates *and* thresholds), Minnesota (same rates, different thresholds), Kansas (a two-bracket schedule, single threshold vs. doubled-for-joint), and New Mexico (where head-of-household filers share the married-jointly schedule) all use it, so a state whose tiers differ by status is now data, not code.
 - Handles ordered marginal brackets, filing statuses, standard vs itemized (the "big four": SALT capped, mortgage interest, charitable, medical above the floor), FICA with the wage base + 0.9% Additional Medicare, personal exemptions, special rules (e.g. the CA mental-health surtax), top-bracket surtaxes (e.g. the MA 4% millionaire surtax, modeled as a clean second bracket), a **taxpayer tax credit** that stands in for a standard deduction (Utah: a nonrefundable credit equal to a share of the federal deduction, phasing out with income), a **sliding standard deduction** that phases down as AGI rises (South Carolina's SCIAD), and opt-in local add-ons.
