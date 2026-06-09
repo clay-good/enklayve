@@ -8,13 +8,24 @@
 import { Money } from "../engine/money";
 import { compoundGrowth } from "../engine/finance";
 import { el, option } from "../ui/dom";
-import { field, parseNonNegative, parseNumber, pct, tryExampleButton } from "../ui/form";
+import {
+  assumptionHint,
+  field,
+  parseNonNegative,
+  parseNumber,
+  pct,
+  tryExampleButton,
+} from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { sensitivityTable, sensitivityToggle } from "../ui/sensitivity";
 import type { TileContext, TileDefinition } from "./types";
 
 /** How far the opt-in range flexes the rate assumption, in percentage points. */
 const RATE_DELTA = 2;
+
+/** Defensible band for the annual-return assumption; outside it, a calm hint
+ *  signposts a stress scenario (SPEC-3 §2.4). Never a clamp. */
+const RETURN_BAND = { low: -50, high: 50, label: "Assumed annual return" };
 
 const FREQUENCIES: { value: string; label: string; perYear: number }[] = [
   { value: "monthly", label: "Monthly", perYear: 12 },
@@ -152,11 +163,13 @@ export function mountCompoundGrowth(ctx: TileContext): void {
       permalink: () => ctx.permalink(writeFields(fields)),
     });
 
+    const nodes: Node[] = [card];
+    const hint = assumptionHint(fields.ratePct, RETURN_BAND);
+    if (hint) nodes.push(hint);
     if (fields.band) {
       const low = fields.ratePct - RATE_DELTA;
       const high = fields.ratePct + RATE_DELTA;
-      resultContainer.replaceChildren(
-        card,
+      nodes.push(
         sensitivityTable(
           `If your ${pct(fields.ratePct / 100, 1)} return assumption is off by ${RATE_DELTA} points either way:`,
           [
@@ -179,9 +192,8 @@ export function mountCompoundGrowth(ctx: TileContext): void {
           ],
         ),
       );
-    } else {
-      resultContainer.replaceChildren(card);
     }
+    resultContainer.replaceChildren(...nodes);
   }
 
   const bandToggle = sensitivityToggle(

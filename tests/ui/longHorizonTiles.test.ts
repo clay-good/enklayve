@@ -108,6 +108,14 @@ describe("College Cost Planner", () => {
     const { root } = mount(mountCollegeCost, new URLSearchParams({ cost: "0" }));
     expect(root.querySelector(".ph-empty")).not.toBeNull();
   });
+
+  it("signposts an extreme inflation assumption without clamping it (SPEC-3 §2.4)", () => {
+    const calm = mount(mountCollegeCost, new URLSearchParams({ cost: "25000", ci: "5" }));
+    expect(calm.root.querySelector(".assumption-hint")).toBeNull();
+    const wild = mount(mountCollegeCost, new URLSearchParams({ cost: "25000", ci: "40" }));
+    expect(wild.root.querySelector(".assumption-hint")?.textContent).toContain("unusually high");
+    expect(wild.root.querySelector(".result-card")).not.toBeNull();
+  });
 });
 
 describe("Estate & Beneficiary Checklist", () => {

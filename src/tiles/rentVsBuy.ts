@@ -9,13 +9,17 @@
 import { Money } from "../engine/money";
 import { rentVsBuy } from "../engine/finance";
 import { el } from "../ui/dom";
-import { field, parseNonNegative, parseNumber, tryExampleButton } from "../ui/form";
+import { assumptionHint, field, parseNonNegative, parseNumber, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { sensitivityTable, sensitivityToggle } from "../ui/sensitivity";
 import type { TileContext, TileDefinition } from "./types";
 
 /** How far the opt-in range flexes the appreciation assumption, in percentage points. */
 const APPR_DELTA = 2;
+
+/** Defensible band for the home-appreciation assumption; outside it, a calm
+ *  hint signposts a stress scenario (SPEC-3 §2.4). Never a clamp. */
+const APPR_BAND = { low: -20, high: 20, label: "Home appreciation" };
 
 interface Fields {
   homePrice: number;
@@ -187,6 +191,9 @@ export function mountRentVsBuy(ctx: TileContext): void {
         permalink: () => ctx.permalink(writeFields(fields)),
       }),
     );
+
+    const hint = assumptionHint(fields.appreciationPct, APPR_BAND);
+    if (hint) resultContainer.append(hint);
 
     if (fields.band) {
       const low = fields.appreciationPct - APPR_DELTA;

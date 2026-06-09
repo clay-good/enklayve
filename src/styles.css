@@ -838,7 +838,8 @@ body {
 /* The deep-link-clamp disclosure (SPEC-3 §2.3): a quiet, non-blocking note that
    a pasted link was raised to a valid minimum. Calmer than the verify banner —
    this is information, not a warning. */
-.clamp-note {
+.clamp-note,
+.assumption-hint {
   color: var(--enk-text-muted);
   background: var(--enk-surface-2);
   border-left: 3px solid var(--enk-accent);

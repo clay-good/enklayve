@@ -8,9 +8,13 @@
 import { Money } from "../engine/money";
 import { balanceTransferBreakEven } from "../engine/finance";
 import { el } from "../ui/dom";
-import { field, parseNonNegative, tryExampleButton } from "../ui/form";
+import { assumptionHint, field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import type { TileContext, TileDefinition } from "./types";
+
+/** Defensible band for the transfer-fee assumption; over it, a calm hint
+ *  signposts a stress scenario (SPEC-3 §2.4). Never a clamp. */
+const FEE_BAND = { low: 0, high: 20, label: "Transfer fee" };
 
 interface Fields {
   balance: number;
@@ -148,6 +152,9 @@ export function mountBalanceTransfer(ctx: TileContext): void {
         permalink: () => ctx.permalink(writeFields(fields)),
       }),
     );
+
+    const hint = assumptionHint(fields.transferFeePct, FEE_BAND);
+    if (hint) resultContainer.append(hint);
   }
 
   function recompute(): void {

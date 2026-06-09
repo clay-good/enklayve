@@ -131,6 +131,15 @@ describe("Balance Transfer Break-Even", () => {
     const { root } = mount(mountBalanceTransfer, new URLSearchParams({ bal: "0", pay: "0" }));
     expect(root.querySelector(".ph-empty")).not.toBeNull();
   });
+
+  it("signposts an extreme transfer fee without clamping it (SPEC-3 §2.4)", () => {
+    const base = { bal: "6000", apr: "24", pay: "1000" };
+    const calm = mount(mountBalanceTransfer, new URLSearchParams({ ...base, fee: "3" }));
+    expect(calm.root.querySelector(".assumption-hint")).toBeNull();
+    const wild = mount(mountBalanceTransfer, new URLSearchParams({ ...base, fee: "30" }));
+    expect(wild.root.querySelector(".assumption-hint")?.textContent).toContain("unusually high");
+    expect(wild.root.querySelector(".result-card")).not.toBeNull();
+  });
 });
 
 describe("Paycheck Optimizer", () => {

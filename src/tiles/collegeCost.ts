@@ -9,13 +9,17 @@
 import { Money } from "../engine/money";
 import { collegeCostPlan } from "../engine/finance";
 import { el } from "../ui/dom";
-import { field, parseNonNegative, tryExampleButton } from "../ui/form";
+import { assumptionHint, field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { sensitivityTable, sensitivityToggle } from "../ui/sensitivity";
 import type { TileContext, TileDefinition } from "./types";
 
 /** How far the opt-in range flexes the inflation assumption, in percentage points. */
 const INFLATION_DELTA = 2;
+
+/** Defensible band for the college-inflation assumption; outside it, a calm
+ *  hint signposts a stress scenario (SPEC-3 §2.4). Never a clamp. */
+const INFLATION_BAND = { low: 0, high: 20, label: "College cost inflation" };
 
 interface Fields {
   annualCostToday: number;
@@ -143,6 +147,9 @@ export function mountCollegeCost(ctx: TileContext): void {
         permalink: () => ctx.permalink(writeFields(fields)),
       }),
     );
+
+    const hint = assumptionHint(fields.costInflationPct, INFLATION_BAND);
+    if (hint) resultContainer.append(hint);
 
     if (fields.band) {
       const low = Math.max(0, fields.costInflationPct - INFLATION_DELTA);

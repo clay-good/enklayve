@@ -148,6 +148,19 @@ describe("Compound Growth tile", () => {
     expect(lastParams()?.get("p")).toBe("10000");
     expect(lastParams()?.get("y")).toBe("30");
   });
+
+  it("signposts an extreme return assumption without clamping it (SPEC-3 §2.4)", () => {
+    // A defensible rate carries no hint, and the math still runs.
+    const calm = mount(mountCompoundGrowth, new URLSearchParams({ p: "10000", r: "6", y: "30" }));
+    expect(calm.root.querySelector(".assumption-hint")).toBeNull();
+    // An 80% return is far outside any defensible band: a calm hint appears, the
+    // input is unchanged, and the projection is still computed.
+    const wild = mount(mountCompoundGrowth, new URLSearchParams({ p: "10000", r: "80", y: "30" }));
+    const hint = wild.root.querySelector(".assumption-hint");
+    expect(hint?.textContent).toContain("unusually high");
+    expect(wild.root.querySelector<HTMLInputElement>('input[name="r"]')?.value).toBe("80");
+    expect(wild.root.querySelector(".result-card")).not.toBeNull();
+  });
 });
 
 describe("Self-Employment Tax tile", () => {

@@ -73,6 +73,29 @@ export function clampNote(host: HTMLElement, messages: string[]): HTMLElement | 
   return note;
 }
 
+/**
+ * A calm, non-blocking hint shown when a labeled user assumption (a rate of
+ * return, an inflation rate, a fee %) leaves any defensible band (SPEC-3 §2.4 /
+ * hardening B2). It never clamps — the user is free to model an extreme
+ * scenario, which is the point — it only signposts that the output is a stress
+ * case, not a recommendation. It is a pure function of the value, so
+ * determinism holds (the same input always yields the same hint). Returns null
+ * when the value sits inside `[low, high]` (inclusive), so the caller can append
+ * it unconditionally. `valuePct` and the band are in percentage points (6 = 6%).
+ */
+export function assumptionHint(
+  valuePct: number,
+  band: { low: number; high: number; label: string },
+): HTMLElement | null {
+  if (!Number.isFinite(valuePct) || (valuePct >= band.low && valuePct <= band.high)) return null;
+  const direction = valuePct < band.low ? "low" : "high";
+  return el("p", {
+    class: "assumption-hint",
+    attrs: { role: "note" },
+    text: `${band.label} of ${pct(valuePct / 100, 1)} is unusually ${direction} — treat the result as a stress scenario, not a recommendation.`,
+  });
+}
+
 /** The gold "Try an example" button that prefills a realistic worked case. */
 export function tryExampleButton(onClick: () => void): HTMLButtonElement {
   return el("button", {
