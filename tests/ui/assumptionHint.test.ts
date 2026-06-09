@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { assumptionHint } from "../../src/ui/form";
+import { assumptionHint, assumptionHints } from "../../src/ui/form";
 
 /**
  * The calm assumption-band hint (SPEC-3 §2.4 / hardening B2). It is a pure,
@@ -37,5 +37,53 @@ describe("assumptionHint", () => {
 
   it("is deterministic — the same input yields the same message", () => {
     expect(assumptionHint(35, BAND)!.textContent).toBe(assumptionHint(35, BAND)!.textContent);
+  });
+});
+
+describe("assumptionHints (combined, multi-assumption)", () => {
+  const APPR = { low: -20, high: 20, label: "Home appreciation" };
+  const RENT = { low: -20, high: 20, label: "Rent growth" };
+  const RET = { low: -50, high: 50, label: "Investment return" };
+
+  it("returns null when every assumption sits inside its band", () => {
+    expect(
+      assumptionHints([
+        { valuePct: 3, band: APPR },
+        { valuePct: 3, band: RENT },
+        { valuePct: 6, band: RET },
+      ]),
+    ).toBeNull();
+  });
+
+  it("reuses the singular wording verbatim for exactly one out-of-band rate", () => {
+    const hint = assumptionHints([
+      { valuePct: 40, band: APPR },
+      { valuePct: 3, band: RENT },
+      { valuePct: 6, band: RET },
+    ]);
+    expect(hint!.textContent).toBe(assumptionHint(40, APPR)!.textContent);
+    expect(hint!.textContent).toContain("Home appreciation of 40.0% is unusually high");
+  });
+
+  it("folds two or more out-of-band rates into one calm line", () => {
+    const hint = assumptionHints([
+      { valuePct: 40, band: APPR },
+      { valuePct: 35, band: RENT },
+      { valuePct: 6, band: RET },
+    ]);
+    expect(hint!.className).toBe("assumption-hint");
+    expect(hint!.textContent).toContain("Home appreciation (40.0%) and rent growth (35.0%)");
+    expect(hint!.textContent).toContain("are outside the usual range");
+    // One line, not a note per rate.
+    expect(hint!.tagName).toBe("P");
+  });
+
+  it("ignores non-finite assumptions", () => {
+    expect(
+      assumptionHints([
+        { valuePct: Number.NaN, band: APPR },
+        { valuePct: 3, band: RENT },
+      ]),
+    ).toBeNull();
   });
 });

@@ -9,7 +9,13 @@
 import { Money } from "../engine/money";
 import { rentVsBuy } from "../engine/finance";
 import { el } from "../ui/dom";
-import { assumptionHint, field, parseNonNegative, parseNumber, tryExampleButton } from "../ui/form";
+import {
+  assumptionHints,
+  field,
+  parseNonNegative,
+  parseNumber,
+  tryExampleButton,
+} from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { sensitivityTable, sensitivityToggle } from "../ui/sensitivity";
 import type { TileContext, TileDefinition } from "./types";
@@ -17,9 +23,12 @@ import type { TileContext, TileDefinition } from "./types";
 /** How far the opt-in range flexes the appreciation assumption, in percentage points. */
 const APPR_DELTA = 2;
 
-/** Defensible band for the home-appreciation assumption; outside it, a calm
- *  hint signposts a stress scenario (SPEC-3 §2.4). Never a clamp. */
+/** Defensible bands for the three unbounded rate assumptions (B2 named all
+ *  three). Outside any of them, one calm combined hint signposts a stress
+ *  scenario (SPEC-3 §2.4). Never a clamp. */
 const APPR_BAND = { low: -20, high: 20, label: "Home appreciation" };
+const RENT_GROWTH_BAND = { low: -20, high: 20, label: "Rent growth" };
+const INVEST_RETURN_BAND = { low: -50, high: 50, label: "Investment return" };
 
 interface Fields {
   homePrice: number;
@@ -192,7 +201,11 @@ export function mountRentVsBuy(ctx: TileContext): void {
       }),
     );
 
-    const hint = assumptionHint(fields.appreciationPct, APPR_BAND);
+    const hint = assumptionHints([
+      { valuePct: fields.appreciationPct, band: APPR_BAND },
+      { valuePct: fields.rentGrowthPct, band: RENT_GROWTH_BAND },
+      { valuePct: fields.investReturnPct, band: INVEST_RETURN_BAND },
+    ]);
     if (hint) resultContainer.append(hint);
 
     if (fields.band) {

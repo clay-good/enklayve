@@ -188,13 +188,23 @@ describe("Rent vs Buy", () => {
     expect(root.querySelector(".ph-empty")).not.toBeNull();
   });
 
-  it("signposts an extreme appreciation assumption without clamping it (SPEC-3 §2.4)", () => {
+  it("signposts extreme rate assumptions without clamping them (SPEC-3 §2.4)", () => {
     const base = { price: "300000", rent: "2000" };
-    const calm = mount(mountRentVsBuy, new URLSearchParams({ ...base, appr: "3" }));
+    // Defensible rates → no hint.
+    const calm = mount(
+      mountRentVsBuy,
+      new URLSearchParams({ ...base, appr: "3", rg: "3", ir: "6" }),
+    );
     expect(calm.root.querySelector(".assumption-hint")).toBeNull();
-    const wild = mount(mountRentVsBuy, new URLSearchParams({ ...base, appr: "40" }));
-    expect(wild.root.querySelector(".assumption-hint")?.textContent).toContain("unusually high");
-    expect(wild.root.querySelector(".result-card")).not.toBeNull();
+    // One extreme rate → the singular wording.
+    const one = mount(mountRentVsBuy, new URLSearchParams({ ...base, appr: "40" }));
+    expect(one.root.querySelector(".assumption-hint")?.textContent).toContain("unusually high");
+    // Two extreme rates (B2 named appr/rg/ir) → one combined line, not two notes.
+    const many = mount(mountRentVsBuy, new URLSearchParams({ ...base, appr: "40", rg: "35" }));
+    const hints = many.root.querySelectorAll(".assumption-hint");
+    expect(hints.length).toBe(1);
+    expect(hints[0]?.textContent).toContain("Home appreciation (40.0%) and rent growth (35.0%)");
+    expect(many.root.querySelector(".result-card")).not.toBeNull();
   });
 });
 

@@ -96,6 +96,37 @@ export function assumptionHint(
   });
 }
 
+interface AssumptionSpec {
+  valuePct: number;
+  band: { low: number; high: number; label: string };
+}
+
+/**
+ * The multi-assumption form of {@link assumptionHint}, for a tile whose result
+ * rests on several unbounded rates at once (e.g. Rent vs Buy: appreciation,
+ * rent growth, investment return — the trio B2 named). Rather than stack a
+ * separate note per rate, it folds every out-of-band assumption into one calm
+ * line. A single out-of-band rate reuses the singular wording verbatim, so a
+ * tile reads identically to the one-assumption tiles in the common case; only
+ * when two or more are extreme does it name them together. Pure and
+ * deterministic; returns null when every assumption sits inside its band.
+ */
+export function assumptionHints(specs: AssumptionSpec[]): HTMLElement | null {
+  const out = specs.filter(
+    (s) => Number.isFinite(s.valuePct) && (s.valuePct < s.band.low || s.valuePct > s.band.high),
+  );
+  const [first, second] = out;
+  if (!first) return null;
+  if (!second) return assumptionHint(first.valuePct, first.band);
+  const parts = out.map((s) => `${s.band.label.toLowerCase()} (${pct(s.valuePct / 100, 1)})`);
+  const list = `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+  return el("p", {
+    class: "assumption-hint",
+    attrs: { role: "note" },
+    text: `${list.charAt(0).toUpperCase()}${list.slice(1)} are outside the usual range — treat the result as a stress scenario, not a recommendation.`,
+  });
+}
+
 /** The gold "Try an example" button that prefills a realistic worked case. */
 export function tryExampleButton(onClick: () => void): HTMLButtonElement {
   return el("button", {
