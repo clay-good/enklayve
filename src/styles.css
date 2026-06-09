@@ -2049,6 +2049,34 @@ body {
   .tile-link {
     padding-block: 0.5rem;
   }
+  /* The other primary controls a thumb hits: the switch-calculator tabs, the
+     All Tools hub headers, every native <select> (filing status, state, pay
+     frequency), and the checkbox label row — all brought up to 44px, vertically
+     centered. (Buttons need an explicit flex box to center; selects center
+     their own text.) */
+  .segmented__btn {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .all-tools-hub {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  .field select,
+  .home-budget__select,
+  .checkbox {
+    min-height: 44px;
+  }
+  /* Disclosure toggles ("The math", "How this works", the saved-copy config):
+     keep their native marker (no flex), so grow the tap height with padding. */
+  .breakdown summary,
+  .explainer-how > summary,
+  .ph-config > summary {
+    padding-block: 0.7rem;
+  }
 }
 
 /* Tablets and below: trim the widest gutters so content gets the full width. */
