@@ -181,6 +181,12 @@ const SHARDS: ShardSource[] = [
     shard: "ira-deduction-2024.json",
     ...ANNUAL,
   },
+  {
+    id: "social-security-taxation-2024",
+    kind: "social-security-taxation",
+    shard: "social-security-taxation-2024.json",
+    ...ANNUAL,
+  },
   { id: "gift-tax-2024", kind: "gift-tax", shard: "gift-tax-2024.json", ...ANNUAL },
   { id: "amt-2024", kind: "amt", shard: "amt-2024.json", ...ANNUAL },
   { id: "child-tax-2024", kind: "child-tax", shard: "child-tax-2024.json", ...ANNUAL },

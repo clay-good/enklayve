@@ -41,6 +41,7 @@ import { amtScreenerTile } from "./amtScreener";
 import { paycheckOptimizerTile } from "./paycheckOptimizer";
 import { w4WithholdingTile } from "./w4Withholding";
 import { socialSecurityTile } from "./socialSecurity";
+import { socialSecurityTaxTile } from "./socialSecurityTax";
 import { drawdownTile } from "./drawdown";
 import { collegeCostTile } from "./collegeCost";
 import { disabilityTile } from "./disability";
@@ -134,6 +135,7 @@ const HUB_CONFIGS: HubConfig[] = [
       rmdTile,
       drawdownTile,
       socialSecurityTile,
+      socialSecurityTaxTile,
       downshiftTile,
     ],
   },

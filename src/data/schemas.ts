@@ -616,6 +616,30 @@ export const SocialSecuritySchema = z.object({
 export type SocialSecurityData = z.infer<typeof SocialSecuritySchema>;
 
 /**
+ * Taxation of Social Security benefits (IRC §86, IRS Pub. 915). The share of
+ * benefits pulled into taxable income depends on "provisional income" = other
+ * income (the AGI without Social Security) + tax-exempt interest + half the
+ * benefits, compared to two filing-status base amounts. Below `base1` none is
+ * taxable; between `base1` and `base2` up to `tier1InclusionRate` (50%) of the
+ * benefits is taxable; above `base2`, up to `tier2InclusionRate` (85%). The base
+ * amounts are STATUTORY and never inflation-adjusted (unchanged since 1984/1993),
+ * so the same figures apply every year — the citation says so explicitly.
+ */
+export const SocialSecurityTaxationSchema = z.object({
+  taxYear: z.number().int(),
+  /** Provisional income below which no benefits are taxable, by filing status. */
+  base1ByFilingStatus: amountByStatus,
+  /** Provisional income above which the 85% tier applies, by filing status. */
+  base2ByFilingStatus: amountByStatus,
+  /** Max share of benefits taxable in the middle tier (0.50). */
+  tier1InclusionRate: z.number().gte(0).lte(1),
+  /** Max share of benefits ever taxable (0.85). */
+  tier2InclusionRate: z.number().gte(0).lte(1),
+  citation: CitationSchema,
+});
+export type SocialSecurityTaxationData = z.infer<typeof SocialSecurityTaxationSchema>;
+
+/**
  * Traditional-IRA deduction phase-out ranges (SPEC-3 §4.3, IRS annual notice;
  * IRC §219(g)). When the taxpayer (or, for a joint filer, their spouse) is an
  * active participant in a workplace plan, the deduction for a traditional-IRA
@@ -748,6 +772,7 @@ export const DATASET_SCHEMAS = {
   medicaid: MedicaidSchema,
   fafsa: FafsaSchema,
   "social-security": SocialSecuritySchema,
+  "social-security-taxation": SocialSecurityTaxationSchema,
   "ira-deduction": IraDeductionSchema,
   "gift-tax": GiftTaxSchema,
   amt: AmtSchema,

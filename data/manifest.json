@@ -900,6 +900,19 @@
       "contentHash": "ff7a0b4fdca0f1b841f61da32d9b3b7efd4a123fa53e04bd5dfa0cc42c8b1d73"
     },
     {
+      "id": "social-security-taxation-2024",
+      "kind": "social-security-taxation",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "social-security-taxation-2024.json",
+      "sourceUrl": "https://www.irs.gov/pub/irs-pdf/p915.pdf",
+      "sourceDocument": "IRS Publication 915, Worksheet 1; IRC §86 — Social Security benefit taxation base amounts (statutory, NEVER inflation-adjusted)",
+      "dateRetrieved": "2026-06-08",
+      "contentHash": "9b65ac57eedfa59438d8e5d5b9ad4bfffd8583aada2c984f0f29022ea2d7e45e"
+    },
+    {
       "id": "gift-tax-2024",
       "kind": "gift-tax",
       "version": "2026.0",

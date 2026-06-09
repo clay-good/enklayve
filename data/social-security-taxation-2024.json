@@ -1,0 +1,22 @@
+{
+  "taxYear": 2026,
+  "base1ByFilingStatus": {
+    "single": 25000,
+    "married_jointly": 32000,
+    "head_of_household": 25000
+  },
+  "base2ByFilingStatus": {
+    "single": 34000,
+    "married_jointly": 44000,
+    "head_of_household": 34000
+  },
+  "tier1InclusionRate": 0.5,
+  "tier2InclusionRate": 0.85,
+  "citation": {
+    "sourceUrl": "https://www.irs.gov/pub/irs-pdf/p915.pdf",
+    "sourceDocument": "IRS Publication 915, Worksheet 1; IRC §86 — Social Security benefit taxation base amounts (statutory, NEVER inflation-adjusted)",
+    "sourceNote": "The base amounts that decide how much of a Social Security benefit is taxable are fixed in statute (IRC §86(c)) and have NOT been indexed for inflation since they were enacted — the $25,000/$32,000 first thresholds since the 1983 amendments (effective 1984) and the $34,000/$44,000 second thresholds since 1993 — so the same figures apply for 2026 and every year. Provisional income = the rest of your income (AGI without Social Security) + any tax-exempt interest + half of your Social Security benefits. Below the first base amount none of the benefit is taxable; between the two base amounts up to 50% is taxable (the lesser of 50% of the benefit or 50% of the provisional income over the first base); above the second base up to 85% is taxable. Single / head of household / qualifying surviving spouse use $25,000 / $34,000; married filing jointly uses $32,000 / $44,000; married filing separately while living with a spouse uses $0 / $0 (so up to 85% is taxable from the first dollar) — that rare case is not offered here. Cited to IRS Pub. 915 Worksheet 1 and IRC §86; the no-orphan-numbers rule is satisfied because these are published, unchanging statutory figures.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-08"
+  }
+}

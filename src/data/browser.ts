@@ -23,6 +23,7 @@ import {
   type SnapData,
   type MedicaidData,
   type SocialSecurityData,
+  type SocialSecurityTaxationData,
   type AcaData,
   type FafsaData,
   type IraDeductionData,
@@ -77,6 +78,8 @@ export interface BundledData {
   aca(): AcaData | null;
   /** Social Security claiming-age benefit adjustment rules (BUILD-SPEC-2 §6.7). */
   socialSecurity(): SocialSecurityData | null;
+  /** Social Security benefit taxation base amounts (IRC §86, Pub. 915). */
+  socialSecurityTaxation(): SocialSecurityTaxationData | null;
   /** FAFSA Student Aid Index tables and Pell schedule (BUILD-SPEC.md §4.4). */
   fafsa(): FafsaData | null;
   /** Traditional-IRA deduction phase-out ranges (SPEC-3 §4.3). */
@@ -144,6 +147,8 @@ async function build(): Promise<BundledData> {
     medicaid: () => dataOf("medicaid-2024") as MedicaidData | null,
     aca: () => dataOf("aca-2024") as AcaData | null,
     socialSecurity: () => dataOf("social-security-2024") as SocialSecurityData | null,
+    socialSecurityTaxation: () =>
+      dataOf("social-security-taxation-2024") as SocialSecurityTaxationData | null,
     fafsa: () => dataOf("fafsa-2024-2025") as FafsaData | null,
     iraDeduction: () => dataOf("ira-deduction-2024") as IraDeductionData | null,
     giftTax: () => dataOf("gift-tax-2024") as GiftTaxData | null,
