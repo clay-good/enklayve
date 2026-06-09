@@ -70,6 +70,23 @@ describe("Social Security benefit taxation (IRC §86)", () => {
     expect(r.percentTaxable).toBeCloseTo(0.85, 6);
   });
 
+  it("a small benefit in the top tier is carried by half the benefit, not half the base span", () => {
+    // The top-tier "carried from the middle" term is min(50% of the benefit,
+    // 50% of the base1→base2 span = $4,500). Every other top-tier case here has
+    // a benefit ≥ $20k, so the $4,500 span always binds; this small benefit
+    // makes 50% of the benefit the smaller term instead — the untested branch.
+    // provisional = 32,000 + 0.5·8,000 = 36,000 (> 34,000);
+    // carried = min(0.5·8,000 = 4,000, 4,500) = 4,000; taxable = min(0.85·8,000
+    // = 6,800, 0.85·(36,000 − 34,000) + 4,000 = 1,700 + 4,000 = 5,700) = 5,700.
+    const r = socialSecurityBenefitTaxation(
+      { socialSecurityBenefits: 8000, otherIncome: 32000, taxExemptInterest: 0 },
+      SINGLE,
+    );
+    expect(cents(r.taxableBenefits)).toBe("5700");
+    expect(r.tier).toBe("up-to-85");
+    expect(r.percentTaxable).toBeCloseTo(0.7125, 6);
+  });
+
   it("tax-exempt interest counts toward provisional income (it can pull benefits in)", () => {
     // provisional = 22,000 + 8,000 + 0.5·20,000 = 40,000 → same as the $30k example.
     const r = socialSecurityBenefitTaxation(

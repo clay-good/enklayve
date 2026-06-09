@@ -960,7 +960,7 @@ body {
   margin: 0;
 }
 
-/* --- Charts (src/ui/charts.ts): donut, flow bar, balance timeline --------- */
+/* --- Charts (src/ui/charts.ts): donut, balance timeline ------------------- */
 .chart {
   margin: 0 0 1.25rem;
 }
@@ -1035,43 +1035,6 @@ body {
   width: 2.8rem;
   text-align: right;
   color: var(--enk-text-muted);
-}
-.chart--flow .flow-bar {
-  display: flex;
-  width: 100%;
-  height: 1.9rem;
-  border-radius: 999px;
-  overflow: hidden;
-  background: var(--enk-surface-2);
-  border: 1px solid var(--enk-border);
-  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--enk-text) 8%, transparent);
-}
-.flow-seg {
-  height: 100%;
-  /* A hairline between segments so adjacent jobs stay legible, plus a gentle
-     grow as amounts change. */
-  box-shadow: inset -1px 0 0 color-mix(in srgb, var(--enk-surface) 55%, transparent);
-}
-@media (prefers-reduced-motion: no-preference) {
-  .flow-seg {
-    transition: width 0.3s ease;
-  }
-}
-.flow-seg--rest {
-  background: var(--enk-accent);
-}
-.chart--flow .chart-legend {
-  margin-top: 0.75rem;
-  flex-basis: auto;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1rem;
-}
-.chart--flow .legend-item {
-  width: auto;
-}
-.chart--flow .legend-label {
-  flex: 0 1 auto;
 }
 .balance-timeline {
   display: flex;
