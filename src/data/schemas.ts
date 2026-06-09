@@ -63,6 +63,25 @@ export const LocalAddOnSchema = z.object({
   brackets: z.array(TaxBracketSchema).optional(),
 });
 
+/**
+ * A residence-based local income tax (the Maryland county pattern). Unlike the
+ * opt-in `localAddOns` (NYC, Yonkers, Ohio municipalities — where a resident
+ * *checks* the one that applies), Maryland's county / Baltimore-City tax is
+ * MANDATORY and set by the county of residence: every resident pays exactly one,
+ * determined by where they live. When a jurisdiction carries this block, its
+ * `localAddOns` are a REQUIRED single-select group labeled `label`, defaulting to
+ * `defaultId`; the UI renders a dropdown (not checkboxes) and the evaluator
+ * applies the single selected rate — a flat percentage, or (Anne Arundel and
+ * Frederick) its own income-tiered `brackets` — to the state's taxable income.
+ */
+export const ResidenceLocalTaxSchema = z.object({
+  /** The dropdown label shown in the take-home tile (Maryland: "County of residence"). */
+  label: z.string().min(1),
+  /** The `localAddOns` id selected by default when none is in the deep link. */
+  defaultId: z.string().min(1),
+});
+export type ResidenceLocalTaxData = z.infer<typeof ResidenceLocalTaxSchema>;
+
 /** A named special rule (e.g. the California 1% mental-health-services surtax). */
 export const SpecialRuleSchema = z.object({
   id: z.string().min(1),
@@ -205,6 +224,8 @@ export const JurisdictionSchema = z.object({
   /** AGI-based phase-out of the standard deduction (South Carolina SCIAD). */
   standardDeductionPhaseOut: StandardDeductionPhaseOutSchema.optional(),
   localAddOns: z.array(LocalAddOnSchema).optional(),
+  /** A mandatory residence-based local tax — its add-ons are a required single-select (Maryland counties). */
+  residenceLocalTax: ResidenceLocalTaxSchema.optional(),
   specialRules: z.array(SpecialRuleSchema).optional(),
   /** A taxpayer tax credit that substitutes for a standard deduction (Utah). */
   taxpayerCredit: TaxpayerCreditSchema.optional(),

@@ -1082,6 +1082,95 @@ describe("Vermont (four-rate graduated schedule over a standard-deduction + exem
   });
 });
 
+describe("Maryland (per-status state schedule + a MANDATORY residence-based county local tax)", () => {
+  // MD (Comptroller 2026 memo; Md. Code Tax-Gen §10) levies a ten-rate state tax
+  // (2%→6.5%, the FY2026 bill adding 6.25%/6.5% tops) on Maryland taxable income
+  // = AGI − standard deduction ($3,350/$6,700) − personal exemption ($3,200/
+  // $6,400), PLUS a county local tax (2.25%–3.30%) on the SAME taxable income,
+  // set by county of residence. Two counties (Anne Arundel, Frederick) are
+  // income-tiered, modeled with the engine's per-bracket local add-on.
+  it("single $60k in Montgomery County → state $2,486.38, local $1,710.40 (3.20%)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000, localJurisdictionIds: ["md-montgomery"] },
+      { federal: ds.federal, state: ds.state("md"), fica: ds.fica },
+    );
+    // taxable 60,000 − 3,350 − 3,200 = 53,450: 2%·1,000 + 3%·1,000 + 4%·1,000 + 4.75%·50,450.
+    expect(cents(r.state!.incomeTax)).toBe("2486.38");
+    expect(cents(r.local.total)).toBe("1710.4"); // 3.20%·53,450
+    expect(r.local.lines[0]!.name).toBe("Montgomery County");
+  });
+
+  it("the county changes only the local line: Worcester (2.25%) → local $1,202.63", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000, localJurisdictionIds: ["md-worcester"] },
+      { federal: ds.federal, state: ds.state("md"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("2486.38"); // state unchanged
+    expect(cents(r.local.total)).toBe("1202.63"); // 2.25%·53,450
+  });
+
+  it("Anne Arundel's income-tiered local rate → $1,451.43 (2.70% to $50k, then 2.94%)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000, localJurisdictionIds: ["md-anne-arundel"] },
+      { federal: ds.federal, state: ds.state("md"), fica: ds.fica },
+    );
+    // taxable 53,450: 2.70%·50,000 + 2.94%·(53,450 − 50,000).
+    expect(cents(r.local.total)).toBe("1451.43");
+  });
+
+  it("Frederick's four-tier local rate → $1,352.12 (2.25% / 2.75% / 2.96%)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000, localJurisdictionIds: ["md-frederick"] },
+      { federal: ds.federal, state: ds.state("md"), fica: ds.fica },
+    );
+    // taxable 53,450: 2.25%·25,000 + 2.75%·25,000 + 2.96%·(53,450 − 50,000).
+    expect(cents(r.local.total)).toBe("1352.12");
+  });
+
+  it("married jointly $60k uses the wider joint schedule + doubled deduction/exemption → state $2,175.25", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000, localJurisdictionIds: ["md-montgomery"] },
+      { federal: ds.federal, state: ds.state("md"), fica: ds.fica },
+    );
+    // taxable 60,000 − 6,700 − 6,400 = 46,900: 90 + 4.75%·(46,900 − 3,000).
+    expect(cents(r.state!.incomeTax)).toBe("2175.25");
+    expect(cents(r.local.total)).toBe("1500.8"); // 3.20%·46,900
+  });
+
+  it("single $200k climbs into the 5.5% state bracket → state $9,649.75", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 200000, localJurisdictionIds: ["md-montgomery"] },
+      { federal: ds.federal, state: ds.state("md"), fica: ds.fica },
+    );
+    // taxable 193,450: 90 + 4.75%·97,000 + 5%·25,000 + 5.25%·25,000 + 5.5%·(193,450 − 150,000).
+    expect(cents(r.state!.incomeTax)).toBe("9649.75");
+  });
+
+  it("married filing separately maps to single's state schedule, deduction, and exemption", () => {
+    const mfs = evaluateTaxes(
+      { filingStatus: "married_separately", wages: 60000 },
+      { federal: ds.federal, state: ds.state("md"), fica: ds.fica },
+    );
+    const single = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("md"), fica: ds.fica },
+    );
+    expect(cents(mfs.state!.incomeTax)).toBe(cents(single.state!.incomeTax));
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly schedule", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 60000 },
+      { federal: ds.federal, state: ds.state("md"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("md"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("Nebraska (LB 754 three-bracket schedule; per-status thresholds, federal-conformity-style deduction)", () => {
   // NE (Neb. Rev. Stat. §77-2715.03) levies 2.46% / 3.51% / 4.55% on Nebraska
   // taxable income = AGI − standard deduction. LB 754 cut the 2025 schedule's top

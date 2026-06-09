@@ -65,8 +65,17 @@
  * (2.46% / 3.51% / 4.55% for 2026) over an indexed standard deduction, the figure
  * the refresh anchors (the MN/RI pattern); the statutory LB 754 rate path (the
  * 2027 cut to 3.99%), the indexed bracket thresholds, and the ~$171 exemption
- * credit stay the reviewer's data-only step. With it, *every* seeded jurisdiction
- * with an income tax has a refresh adapter.
+ * credit stay the reviewer's data-only step.
+ *
+ * The thirteenth set adds Maryland — a per-status ten-rate state schedule PLUS a
+ * mandatory residence-based county/Baltimore-City local tax (24 jurisdictions,
+ * two of them — Anne Arundel and Frederick — income-tiered). The state brackets
+ * are statutory and the county rates are set annually per county, so the refresh
+ * anchors the standard deduction (the 2025 session moved it to a fixed
+ * $3,350/$6,700; the MN/RI pattern); the per-status bracket tables, the county
+ * local-rate chart, and the $3,200 exemption roll alongside it as the reviewer's
+ * data-only step. With it, *every* seeded jurisdiction with an income tax has a
+ * refresh adapter.
  *
  * Honesty boundaries (kept narrow on purpose, per the family's "be right before
  * being everywhere"):
@@ -135,6 +144,7 @@ export type RefreshGroup =
   | "state-al"
   | "state-or"
   | "state-ne"
+  | "state-md"
   | "treasurydirect"
   | "usda-snap"
   | "cms-medicaid";
@@ -1161,6 +1171,22 @@ export const ADAPTERS: RefreshAdapter[] = [
     // tables, the scheduled 2027 rate cut, and the ~$171 exemption credit roll
     // alongside it as the reviewer's data-only step on each new Tax Calculation
     // Schedule.
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-md-income-tax-2024",
+    group: "state-md",
+    source:
+      "Comptroller of Maryland State & Local Income Tax Withholding memo (Central Payroll Bureau)",
+    sourceUrl: "https://www.marylandtaxes.gov/individual/income/tax-info/index.php",
+    cadence: "Annual",
+    // Maryland's per-status state brackets are statutory (the FY2026 budget bill
+    // added the 6.25%/6.5% top brackets) and the 24 county local rates are set
+    // annually by each county; the cleanly-stated figure the refresh anchors is
+    // the standard deduction (the MN/RI pattern; the 2025 session moved it to a
+    // fixed $3,350/$6,700). The per-status bracket tables, the county local-rate
+    // chart (including the Anne Arundel / Frederick income-tiered schedules), and
+    // the $3,200 exemption are the reviewer's data-only step on each new memo.
     parse: parseStandardDeductions,
   },
   {

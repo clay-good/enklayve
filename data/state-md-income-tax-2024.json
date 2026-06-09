@@ -1,0 +1,107 @@
+{
+  "id": "US-MD",
+  "name": "Maryland",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0.02 },
+      { "lowerBound": 1000, "rate": 0.03 },
+      { "lowerBound": 2000, "rate": 0.04 },
+      { "lowerBound": 3000, "rate": 0.0475 },
+      { "lowerBound": 100000, "rate": 0.05 },
+      { "lowerBound": 125000, "rate": 0.0525 },
+      { "lowerBound": 150000, "rate": 0.055 },
+      { "lowerBound": 250000, "rate": 0.0575 },
+      { "lowerBound": 500000, "rate": 0.0625 },
+      { "lowerBound": 1000000, "rate": 0.065 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0.02 },
+      { "lowerBound": 1000, "rate": 0.03 },
+      { "lowerBound": 2000, "rate": 0.04 },
+      { "lowerBound": 3000, "rate": 0.0475 },
+      { "lowerBound": 150000, "rate": 0.05 },
+      { "lowerBound": 175000, "rate": 0.0525 },
+      { "lowerBound": 225000, "rate": 0.055 },
+      { "lowerBound": 300000, "rate": 0.0575 },
+      { "lowerBound": 600000, "rate": 0.0625 },
+      { "lowerBound": 1200000, "rate": 0.065 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0.02 },
+      { "lowerBound": 1000, "rate": 0.03 },
+      { "lowerBound": 2000, "rate": 0.04 },
+      { "lowerBound": 3000, "rate": 0.0475 },
+      { "lowerBound": 150000, "rate": 0.05 },
+      { "lowerBound": 175000, "rate": 0.0525 },
+      { "lowerBound": 225000, "rate": 0.055 },
+      { "lowerBound": 300000, "rate": 0.0575 },
+      { "lowerBound": 600000, "rate": 0.0625 },
+      { "lowerBound": 1200000, "rate": 0.065 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 3350,
+    "married_jointly": 6700,
+    "head_of_household": 6700
+  },
+  "personalExemptionByFilingStatus": {
+    "single": 3200,
+    "married_jointly": 6400,
+    "head_of_household": 3200
+  },
+  "residenceLocalTax": { "label": "County of residence", "defaultId": "md-montgomery" },
+  "localAddOns": [
+    { "id": "md-allegany", "name": "Allegany County", "flatRate": 0.032 },
+    {
+      "id": "md-anne-arundel",
+      "name": "Anne Arundel County",
+      "brackets": [
+        { "lowerBound": 0, "rate": 0.027 },
+        { "lowerBound": 50000, "rate": 0.0294 },
+        { "lowerBound": 400000, "rate": 0.032 }
+      ]
+    },
+    { "id": "md-baltimore-county", "name": "Baltimore County", "flatRate": 0.032 },
+    { "id": "md-baltimore-city", "name": "Baltimore City", "flatRate": 0.032 },
+    { "id": "md-calvert", "name": "Calvert County", "flatRate": 0.032 },
+    { "id": "md-caroline", "name": "Caroline County", "flatRate": 0.032 },
+    { "id": "md-carroll", "name": "Carroll County", "flatRate": 0.0303 },
+    { "id": "md-cecil", "name": "Cecil County", "flatRate": 0.0274 },
+    { "id": "md-charles", "name": "Charles County", "flatRate": 0.0303 },
+    { "id": "md-dorchester", "name": "Dorchester County", "flatRate": 0.033 },
+    {
+      "id": "md-frederick",
+      "name": "Frederick County",
+      "brackets": [
+        { "lowerBound": 0, "rate": 0.0225 },
+        { "lowerBound": 25000, "rate": 0.0275 },
+        { "lowerBound": 50000, "rate": 0.0296 },
+        { "lowerBound": 150000, "rate": 0.032 }
+      ]
+    },
+    { "id": "md-garrett", "name": "Garrett County", "flatRate": 0.0265 },
+    { "id": "md-harford", "name": "Harford County", "flatRate": 0.0306 },
+    { "id": "md-howard", "name": "Howard County", "flatRate": 0.032 },
+    { "id": "md-kent", "name": "Kent County", "flatRate": 0.033 },
+    { "id": "md-montgomery", "name": "Montgomery County", "flatRate": 0.032 },
+    { "id": "md-prince-georges", "name": "Prince George's County", "flatRate": 0.032 },
+    { "id": "md-queen-annes", "name": "Queen Anne's County", "flatRate": 0.032 },
+    { "id": "md-st-marys", "name": "St. Mary's County", "flatRate": 0.032 },
+    { "id": "md-somerset", "name": "Somerset County", "flatRate": 0.032 },
+    { "id": "md-talbot", "name": "Talbot County", "flatRate": 0.024 },
+    { "id": "md-washington", "name": "Washington County", "flatRate": 0.0295 },
+    { "id": "md-wicomico", "name": "Wicomico County", "flatRate": 0.032 },
+    { "id": "md-worcester", "name": "Worcester County", "flatRate": 0.0225 }
+  ],
+  "citation": {
+    "sourceUrl": "https://www.marylandtaxes.gov/individual/income/tax-info/index.php",
+    "sourceDocument": "Comptroller of Maryland 2026 State & Local Income Tax Withholding memo (Feb 4 2026) + FY2026 budget bill (HB 352, 2025); Md. Code Tax-Gen §10",
+    "sourceNote": "Maryland levies a ten-rate graduated STATE tax plus a MANDATORY county (or Baltimore City) LOCAL tax, both on Maryland taxable income = Maryland AGI (≈ federal AGI for wage income) minus the standard deduction minus the personal exemption. The state rates run 2% / 3% / 4% / 4.75% / 5% / 5.25% / 5.5% / 5.75% / 6.25% / 6.5%, with the FY2026 budget bill (HB 352, 2025) adding the top two brackets — 6.25% and 6.5% — effective for tax years after 2024. The thresholds differ by filing status: single / married-filing-separately / dependent reach 4.75% over $3,000 then 5% over $100,000, 5.25% over $125,000, 5.5% over $150,000, 5.75% over $250,000, 6.25% over $500,000, 6.5% over $1,000,000; married-jointly / head-of-household / surviving-spouse share a wider schedule (5% over $150,000, 5.25% over $175,000, 5.5% over $225,000, 5.75% over $300,000, 6.25% over $600,000, 6.5% over $1,200,000). Every figure is read from the official Comptroller of Maryland '2026 Maryland State and Local Income Tax Withholding Information' memo (Central Payroll Bureau, Feb 4 2026), cross-checked against the Tax Foundation 2026 table. DISTINCTIVE FEATURE — the county local tax: every Maryland resident pays a local income tax set by their COUNTY OF RESIDENCE (not workplace), a flat percentage of the same Maryland taxable income, ranging 2.25% (Worcester, Out-of-state nonresident) to 3.30% (Dorchester, Kent) for 2026 (the FY2026 bill raised the cap from 3.20% to 3.30%). This is modeled via the engine's new `residenceLocalTax` capability: the take-home tile renders a required single-select COUNTY dropdown (defaulting to Montgomery, the most populous county, at 3.20%), and the evaluator applies the chosen county's rate to Maryland taxable income. Anne Arundel and Frederick counties adopted INCOME-TIERED local rates (Anne Arundel 2.70%/2.94%/3.20%; Frederick 2.25%/2.75%/2.96%/3.20%), modeled with the engine's existing per-bracket local add-on using their single-filer thresholds — exact for single/MFS/dependent filers, slightly high (the conservative side) for a married-jointly filer above the lower single threshold, a bounded launch-fidelity residual disclosed here. The standard deduction is the fixed $3,350 (single/MFS) / $6,700 (joint/HoH) cap set by the 2025 session (Maryland's deduction is the lesser of 15% of Maryland AGI or this cap; the cap binds for essentially every wage filer above ~$22,000 AGI, so the cap is exact there and only the very-lowest earners see a small conservative over-deduction). The personal exemption is $3,200 per filer ($6,400 married jointly = two exemptions); it phases down for high earners (single: full to $100,000 federal AGI, then $1,600 / $800 / $0 by $150,000; joint: full to $150,000, then to $0 by $200,000), and that phase-out is omitted at launch fidelity — the full $3,200/$6,400 is exact below the phase-out (the vast majority of filers) and the omission is a bounded ≤~$280 non-conservative residual only above $100,000 (single) / $150,000 (joint), the Rhode Island / Vermont / Maine precedent. Married filing separately maps to single (schedule, $3,350 deduction, $3,200 exemption); a qualifying surviving spouse falls back to married-jointly. The per-dependent exemption, the new 2% net-capital-gains surtax (federal AGI over $350,000, never reached by the wage engine), the itemized-deduction phase-out, the local EITC, and Maryland's other credits are omitted at launch fidelity; the marginal-rate and optimizer tiles (which omit all local taxes, like NYC for New York) show Maryland state + federal only, while the take-home tile includes the county tax. Worked example, single $60,000 wages in Montgomery County: Maryland taxable = 60,000 − 3,350 − 3,200 = $53,450; STATE tax = 2%·1,000 + 3%·1,000 + 4%·1,000 + 4.75%·(53,450 − 3,000) = 20 + 30 + 40 + 2,396.375 = $2,486.38; LOCAL tax = 3.20%·53,450 = $1,710.40. Verified against the Comptroller of Maryland 2026 withholding memo and Md. Code Ann., Tax-Gen. §§10-105/10-106/10-211, and cross-checked against the Tax Foundation 2026 state-rate table on 2026-06-08.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-08"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}

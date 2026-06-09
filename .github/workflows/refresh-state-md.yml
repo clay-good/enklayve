@@ -1,0 +1,23 @@
+# Maryland income tax — Comptroller of Maryland, annual (staggered). Maryland
+# levies a per-status ten-rate STATE schedule (2% to 6.5%; Md. Code Tax-Gen §10)
+# PLUS a mandatory residence-based county/Baltimore-City LOCAL tax (24
+# jurisdictions, 2.25%–3.30%, two of them — Anne Arundel and Frederick —
+# income-tiered). The state brackets are statutory (the FY2026 budget bill added
+# the 6.25%/6.5% top brackets) and the county rates are set annually per county,
+# so the adapter anchors the standard deduction (the 2025 session moved it to a
+# fixed $3,350/$6,700; the MN/RI pattern); the per-status bracket tables, the
+# county local-rate chart, and the $3,200 exemption are the reviewer's data-only
+# step on each new Comptroller withholding memo. BUILD-SPEC.md §7.2, §8.
+name: Refresh MD income tax
+
+on:
+  schedule:
+    - cron: "0 12 22 2 *" # February 22, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-md
+      source_name: MD income tax

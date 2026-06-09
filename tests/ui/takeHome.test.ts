@@ -102,4 +102,26 @@ describe("take-home tile", () => {
     cb!.dispatchEvent(new Event("change"));
     expect(lastParams()?.get("loc")).toBeTruthy();
   });
+
+  it("renders Maryland's county tax as a required single-select, defaulting to Montgomery", () => {
+    const { root, lastParams } = mount(new URLSearchParams({ fs: "single", st: "md", w: "60000" }));
+    // A dropdown (not opt-in checkboxes) — the county tax is mandatory by residence.
+    const sel = root.querySelector<HTMLSelectElement>(".local-addons select[name='loc-select']");
+    expect(sel).not.toBeNull();
+    expect(root.querySelector('.local-addons input[type="checkbox"]')).toBeNull();
+    expect(sel!.value).toBe("md-montgomery");
+    // The default county's local tax appears in the breakdown with no opt-in step.
+    const hasMontgomery = Array.from(root.querySelectorAll(".bd-label")).some(
+      (n) => n.textContent === "Montgomery County local tax",
+    );
+    expect(hasMontgomery).toBe(true);
+    // Switching counties updates the breakdown and the deep link.
+    sel!.value = "md-worcester";
+    sel!.dispatchEvent(new Event("change"));
+    expect(lastParams()?.get("loc")).toBe("md-worcester");
+    const hasWorcester = Array.from(root.querySelectorAll(".bd-label")).some(
+      (n) => n.textContent === "Worcester County local tax",
+    );
+    expect(hasWorcester).toBe(true);
+  });
 });

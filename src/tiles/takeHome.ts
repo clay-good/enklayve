@@ -180,6 +180,10 @@ export function mountTakeHome(ctx: TileContext): void {
       return option(code, j ? j.name : code.toUpperCase(), code === fields.st);
     }),
   );
+  // Make the element's value authoritative for the intended state, so a later
+  // collect() reads the deep-linked state (not a default) regardless of
+  // option-attribute timing.
+  stSelect.value = fields.st;
 
   const wagesInput = el("input", {
     type: "number",
@@ -214,11 +218,40 @@ export function mountTakeHome(ctx: TileContext): void {
   const localContainer = el("div", { class: "local-addons" });
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
+  // A residence-based local tax (Maryland's county tax) is mandatory and set by
+  // where you live, so it is a REQUIRED single-select — exactly one applies. Make
+  // sure a valid county is selected, defaulting to the shard's default, so the
+  // displayed Maryland tax always includes the county portion (never a stale or
+  // missing one). Opt-in locals (NYC, Columbus) keep their multi-checkbox set.
+  function resolveLocal(): void {
+    const state = fields.st ? bundled.state(fields.st) : null;
+    const residence = state?.residenceLocalTax;
+    if (!residence) return;
+    const valid = new Set((state?.localAddOns ?? []).map((a) => a.id));
+    const current = fields.local.find((id) => valid.has(id));
+    fields.local = [current ?? residence.defaultId];
+  }
+
   function renderLocalAddOns(): void {
     localContainer.replaceChildren();
     const state = fields.st ? bundled.state(fields.st) : null;
     const addOns = state?.localAddOns ?? [];
     if (addOns.length === 0) return;
+    const residence = state?.residenceLocalTax;
+    if (residence) {
+      const selected = fields.local[0] ?? residence.defaultId;
+      const countySelect = el(
+        "select",
+        { name: "loc-select", attrs: { "aria-label": residence.label } },
+        ...addOns.map((a) => option(a.id, a.name, a.id === selected)),
+      );
+      // Set the value explicitly so the right county is selected regardless of
+      // option-attribute timing (a pre-set `selected` on a detached option).
+      countySelect.value = selected;
+      countySelect.addEventListener("change", recompute);
+      localContainer.append(field(residence.label, countySelect));
+      return;
+    }
     localContainer.append(el("p", { class: "field-group-label", text: "Local taxes" }));
     for (const addOn of addOns) {
       const cb = el("input", {
@@ -236,6 +269,16 @@ export function mountTakeHome(ctx: TileContext): void {
   }
 
   function collect(): void {
+    const countySelect = localContainer.querySelector<HTMLSelectElement>(
+      "select[name='loc-select']",
+    );
+    const local = countySelect
+      ? countySelect.value
+        ? [countySelect.value]
+        : []
+      : Array.from(localContainer.querySelectorAll<HTMLInputElement>("input:checked")).map((cb) =>
+          cb.name.replace(/^loc-/, ""),
+        );
     fields = {
       fs: isFilingStatus(fsSelect.value) ? fsSelect.value : "single",
       st: stSelect.value,
@@ -243,10 +286,9 @@ export function mountTakeHome(ctx: TileContext): void {
       other: parseNonNegative(otherInput.value, 0),
       adjustments: parseNonNegative(adjInput.value, 0),
       dm: isDeductionMode(dmSelect.value) ? dmSelect.value : "auto",
-      local: Array.from(localContainer.querySelectorAll<HTMLInputElement>("input:checked")).map(
-        (cb) => cb.name.replace(/^loc-/, ""),
-      ),
+      local,
     };
+    resolveLocal();
   }
 
   function compute(): void {
@@ -319,6 +361,7 @@ export function mountTakeHome(ctx: TileContext): void {
   );
 
   root.append(form, resultContainer);
+  resolveLocal();
   renderLocalAddOns();
   compute();
 }

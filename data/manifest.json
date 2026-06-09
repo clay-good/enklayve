@@ -718,6 +718,19 @@
       "contentHash": "ff563e1692318a6ae579fa79c58a774783ec8330121f80484a96e6796495334e"
     },
     {
+      "id": "state-md-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-md-income-tax-2024.json",
+      "sourceUrl": "https://www.marylandtaxes.gov/individual/income/tax-info/index.php",
+      "sourceDocument": "Comptroller of Maryland 2026 State & Local Income Tax Withholding memo (Feb 4 2026) + FY2026 budget bill (HB 352, 2025); Md. Code Tax-Gen §10",
+      "dateRetrieved": "2026-06-08",
+      "contentHash": "7a247e9eca21e85a3dabadb1a89bccc6ff31535062b9843fd4108b53c669b8a0"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",
