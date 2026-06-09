@@ -353,3 +353,64 @@ test.describe("no horizontal scrolling, every view", () => {
     }
   });
 });
+
+/**
+ * Touch targets (WCAG 2.5.8, AA): on a coarse pointer every primary control must
+ * be at least 44px tall — the project's stated standard, set by the
+ * `@media (pointer: coarse)` block in styles.css. `hasTouch` makes Chromium
+ * report a coarse pointer so those rules apply, and we measure the *rendered*
+ * height of the real controls. This guards the fix from a future CSS change
+ * silently shrinking a thumb target (it would have failed before the segmented
+ * tabs / selects / hub headers were brought up to 44px).
+ */
+test.describe("touch targets meet the 44px minimum on a coarse pointer", () => {
+  test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
+
+  // Smallest visible rendered height among a selector's matches (null if none).
+  async function minHeight(page: Page, selector: string): Promise<number | null> {
+    return page.evaluate((sel) => {
+      let min = Infinity;
+      for (const el of Array.from(document.querySelectorAll<HTMLElement>(sel))) {
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        if (getComputedStyle(el).visibility === "hidden") continue;
+        min = Math.min(min, r.height);
+      }
+      return Number.isFinite(min) ? min : null;
+    }, selector);
+  }
+
+  // Each route paired with the primary controls it renders. A listed control
+  // that's missing fails loudly, so a renamed class can't make the check pass
+  // vacuously. 43.5px allows sub-pixel rounding of the 44px rule.
+  const CASES: Array<{ name: string; hash: string; selectors: string[] }> = [
+    {
+      name: "a hub",
+      hash: "/#/paycheck-taxes?tool=take-home",
+      selectors: [".segmented__btn", ".field select", ".btn"],
+    },
+    { name: "All Tools", hash: "/#/all-tools", selectors: [".all-tools-hub"] },
+    { name: "the home anti-budget", hash: "/#/", selectors: [".home-budget__select"] },
+    {
+      name: "a benefits screener",
+      hash: "/#/benefits?tool=owed-screener",
+      selectors: [".checkbox"],
+    },
+  ];
+
+  for (const c of CASES) {
+    test(`${c.name} sizes its controls to a 44px target`, async ({ page }) => {
+      await page.goto(c.hash);
+      await page.waitForSelector(".content");
+      await page.waitForLoadState("networkidle").catch(() => undefined);
+      for (const sel of c.selectors) {
+        const h = await minHeight(page, sel);
+        expect(h, `no visible "${sel}" found on ${c.name}`).not.toBeNull();
+        expect(
+          h!,
+          `"${sel}" renders ${h}px tall on ${c.name}, below the 44px tap target`,
+        ).toBeGreaterThanOrEqual(43.5);
+      }
+    });
+  }
+});
