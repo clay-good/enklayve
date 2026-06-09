@@ -83,6 +83,15 @@ describe("Retirement Drawdown & RMD Timeline", () => {
     expect(root.querySelector<HTMLInputElement>('input[name="bal"]')?.value).toBe("800000");
     expect(lastParams()?.get("bal")).toBe("800000");
   });
+
+  it("signposts an extreme real-return assumption without clamping it (SPEC-3 §2.4)", () => {
+    const base = { bal: "500000", age: "65", w: "20000" };
+    const calm = mount(mountDrawdown, new URLSearchParams({ ...base, r: "4" }));
+    expect(calm.root.querySelector(".assumption-hint")).toBeNull();
+    const wild = mount(mountDrawdown, new URLSearchParams({ ...base, r: "25" }));
+    expect(wild.root.querySelector(".assumption-hint")?.textContent).toContain("unusually high");
+    expect(wild.root.querySelector(".result-card")).not.toBeNull();
+  });
 });
 
 describe("College Cost Planner", () => {

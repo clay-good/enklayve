@@ -9,7 +9,7 @@
 import { Money } from "../engine/money";
 import { retirementDrawdown } from "../engine/finance";
 import { el } from "../ui/dom";
-import { field, parseNonNegative, parseNumber, tryExampleButton } from "../ui/form";
+import { assumptionHint, field, parseNonNegative, parseNumber, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { sensitivityTable, sensitivityToggle } from "../ui/sensitivity";
 import type { TileContext, TileDefinition } from "./types";
@@ -17,6 +17,10 @@ import type { TileContext, TileDefinition } from "./types";
 const MAX_AGE = 100;
 /** How far the opt-in range flexes the real-return assumption, in percentage points. */
 const RETURN_DELTA = 2;
+
+/** Defensible band for the real (after-inflation) return assumption; outside it,
+ *  a calm hint signposts a stress scenario (SPEC-3 §2.4). Never a clamp. */
+const RETURN_BAND = { low: -15, high: 15, label: "Real return after inflation" };
 
 interface Fields {
   balance: number;
@@ -145,6 +149,9 @@ export function mountDrawdown(ctx: TileContext): void {
         permalink: () => ctx.permalink(writeFields(fields)),
       }),
     );
+
+    const hint = assumptionHint(fields.realReturnPct, RETURN_BAND);
+    if (hint) resultContainer.append(hint);
 
     if (fields.band) {
       const yearsLabelAt = (rPct: number): string => {
