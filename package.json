@@ -25,7 +25,8 @@
     "audit": "node scripts/audit-release.ts",
     "data:manifest": "node scripts/build-manifest.ts",
     "golden:regen": "REGEN_GOLDEN=1 vitest run tests/golden/snapshot.test.ts",
-    "og:image": "node scripts/og-image.ts"
+    "og:image": "node scripts/og-image.ts",
+    "screenshots": "npm run build && node scripts/screenshots.ts"
   },
   "dependencies": {
     "decimal.js": "^10.4.3",

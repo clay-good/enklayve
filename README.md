@@ -59,6 +59,10 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 
 **59 deterministic calculators**, each with a worked example, per-figure citations, a plain-English "How this works," "Learn more" links, and deep-linkable URL state. They're grouped into **10 plainly-named topic hubs** (a hub is one page with a segmented control switching between its calculators; the underlying engine is shared, so a number entered in one tool prefills every other). The **anti-budget** that gives every dollar a job lives directly on the home — it *is* the plan, in written form. Reach any calculator by ⌘K search or the crawlable [All Tools index](#cicd-and-deploy), which lists **every calculator by name under its hub** (and the static `tools.html` mirror links each one's pre-rendered landing page, so all 69 pages are reachable in one hop, not just via the sitemap).
 
+![The All Tools index: every calculator listed by name under its topic hub — Paycheck & Taxes (Take-Home Pay, W-4 Withholding & Refund Check, Hourly ↔ Salary, Federal Income Tax, Marginal Rate Explorer, …), Self-Employed & 1099, and the rest.](docs/screenshots/all-tools.png)
+
+*The crawlable All Tools index — the full catalog, grouped by hub, each line a deep link. The same list is mirrored as static `tools.html` for search engines.*
+
 ### Paycheck & Taxes
 
 | Tool | What it answers |
@@ -203,6 +207,10 @@ Two same-origin **workers** are the only carve-outs from `connect-src 'none'`, a
 
 ## The home: the budget is the plan
 
+![The enklayve home: a "Your money, made simple." hero, a "Drop a pay stub, W-2, or tax form" dropzone, and the anti-budget — an income input, filing status, and state feeding a donut chart that splits every dollar across taxes, housing, transport, and the rest.](docs/screenshots/home.png)
+
+*The home: a hero, the on-device Readout dropzone, and the anti-budget — income in, taxes auto-computed through the same `evaluateTaxes` engine, every remaining dollar given a job while "left to assign" falls to zero.*
+
 The home is stripped to the essentials (redesigned through 2026-06-02; BUILD-SPEC-2 §0.7 and the later consolidation notes). The header is just the wordmark **enklayve** with the lowercase tagline *personal finance* — no theme toggle, no buttons. The body is three stacked zones: a one-line hero, the **Readout dropzone** (drop a pay stub / W-2 / tax form for an instant private readout, never uploaded), and then the centerpiece — the **anti-budget**. The budget takes an income at any pay frequency, a filing status, and a state, auto-computes taxes through the **same `evaluateTaxes` engine** the Take-Home tile uses, and lets you split the rest across living-expense and investing lines while a donut fills and "left to assign" falls toward zero. It closes with the plain-English **anti-budget order-of-operations** (automate everything, then fund things in order: full match → kill high-interest debt → six months of cash → 401(k)/IRA/HSA → brokerage → whatever future you believe in). There is no separate "My Plan" page anymore: **the live budget plus that order-of-operations *is* the plan.** Every other calculator is reached by the **⌘K command palette** or the crawlable **All Tools index** (linked in the footer).
 
 ```
@@ -291,6 +299,10 @@ flowchart TD
 ## The tax engine (the moat)
 
 A **declarative rule corpus, not a pile of conditionals.** Each jurisdiction is a typed JSON data file; **one generic evaluator** consumes any number of them. Adding a state means adding *data*, not code — which is how the engine stays maintainable across annual updates and how outside contributors can help safely.
+
+![A Federal Income Tax result: a $11,212.00 headline with a "The math" breakdown table whose Line / Amount / Source columns carry a "source" link on every statutory figure.](docs/screenshots/cited-result.png)
+
+*The engine's visible output. Every result opens "The math" by default — a breakdown whose third column links each statutory figure to its source (here, the IRS bracket schedule and the standard-deduction notice). Derived lines (effective rate, taxable income) carry no link by design; only sourced numbers do. Captured from the live app via `npm run screenshots`.*
 
 ```mermaid
 flowchart LR
@@ -496,6 +508,10 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 - **Release audit.** `npm run audit` mechanically verifies CSP `connect-src 'none'`, no cross-origin loads in the built output, full citation coverage, the ≤160-char citation-name cap, and no sensitive persistence.
 - **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 59 calculators** at a 360px phone, **plus landscape phones** (short viewports, where the ⌘K palette must also stay within the screen) and **every Readout state that renders only after a file drop** — the confirm + summary (driven through the real anchored extractor with a sample W-2), and the unrecognized-document warning, the encrypted-restore unlock row, the wrong-passphrase error, and a successful restore feeding a populated Report — the **offline** service worker (loads with the network cut), the deep-link → compute path, that a **clamped deep link** still shows its disclosure note and fits a phone, that **print media strips the app chrome** so the Report prints as a clean document, and that **no tool hangs or renders NaN/Infinity** when every field is set to an absurd value. It runs as its own CI job so the unit suite stays fast.
 
+<img src="docs/screenshots/mobile.png" alt="The same Federal Income Tax result on a 390px phone: stacked inputs, the gold 'Try an example' button, and the $11,212.00 result card whose breakdown wraps long amounts rather than scrolling sideways." width="320" />
+
+*The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
+
 **936 unit/golden tests across 64 files** (plus 18 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
@@ -551,7 +567,7 @@ See the spec files for the full per-wave history.
 | `src/profile` | My Situation — the in-memory session profile and the portable encrypted-export module |
 | `src/readout` | Anchored extractors, the confirm flow, and the Readout Report builder |
 | `data` | Sharded JSON datasets, sibling `.sha256` files, and the manifest |
-| `scripts` | Data-refresh adapters, the manifest builder, static-page generators, the social-card (`og:image`) generator, the release audit |
+| `scripts` | Data-refresh adapters, the manifest builder, static-page generators, the social-card (`og:image`) and README-screenshot (`screenshots`) generators, the release audit |
 | `worker` | Cloudflare Worker asset router and security headers |
 | `tests` | Unit tests, the golden correctness corpus, and the axe accessibility sweep |
 | `docs` | The specs, data sources, adding-a-state, contributing, the source diff log, and the launch checklist |
@@ -573,6 +589,7 @@ npm run audit          # CSP / no cross-origin loads / provenance / citation len
 npm run data:manifest  # regenerate data/manifest.json + .sha256 after editing a shard
 npm run golden:regen   # regenerate the tax-engine golden snapshot after an intended change
 npm run og:image       # regenerate the 1200x630 social-card PNG after a brand/copy change
+npm run screenshots    # regenerate the README screenshots (docs/screenshots/) from the live build
 npm run deploy:dry     # wrangler dry-run deploy
 ```
 
