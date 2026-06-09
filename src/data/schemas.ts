@@ -206,6 +206,32 @@ export const FederalTaxDeductionSchema = z
 export type FederalTaxDeductionData = z.infer<typeof FederalTaxDeductionSchema>;
 
 /**
+ * A high-income "benefit recapture" — a flat dollar amount that phases in
+ * linearly across an income band and stays constant above it, ADDED to the
+ * bracket tax. This is **Arkansas's bracket adjustment** (Ark. Code §26-51-201,
+ * the AR1000F tax tables): for net taxable income above a threshold the state
+ * recaptures the benefit of its lower 0%/2%/3%/3.4% brackets, so a high earner's
+ * tax converges to a near-flat top-rate schedule. The recapture is `0` at or
+ * below `thresholdLow`, ramps linearly to `amount` at `thresholdHigh`, and is
+ * `amount` (constant) above — making the model exact below the band and above it
+ * (where the recapture is the published constant), with only a small linear-vs-
+ * step residual inside the narrow band itself.
+ */
+export const IncomeRecaptureSchema = z
+  .object({
+    /** Net taxable income at/below which there is no recapture. */
+    thresholdLow: z.number().gte(0),
+    /** Net taxable income at/above which the recapture equals `amount`. */
+    thresholdHigh: z.number().gt(0),
+    /** The maximum (and above-band constant) recapture amount. */
+    amount: z.number().gte(0),
+  })
+  .refine((d) => d.thresholdHigh > d.thresholdLow, {
+    message: "thresholdHigh must exceed thresholdLow",
+  });
+export type IncomeRecaptureData = z.infer<typeof IncomeRecaptureSchema>;
+
+/**
  * A tax jurisdiction (federal, a state, or a no-income-tax state as a
  * first-class record). One generic evaluator consumes any number of these —
  * adding a state means adding a data file, not code (BUILD-SPEC.md §8).
@@ -231,6 +257,8 @@ export const JurisdictionSchema = z.object({
   taxpayerCredit: TaxpayerCreditSchema.optional(),
   /** A deduction for federal income tax paid (Alabama uncapped; Oregon capped + AGI-phased). */
   federalTaxDeduction: FederalTaxDeductionSchema.optional(),
+  /** A high-income benefit recapture added to the bracket tax (Arkansas's bracket adjustment). */
+  incomeRecapture: IncomeRecaptureSchema.optional(),
   citation: CitationSchema,
   effectiveDateRange: z.object({
     start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

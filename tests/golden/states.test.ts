@@ -1082,6 +1082,102 @@ describe("Vermont (four-rate graduated schedule over a standard-deduction + exem
   });
 });
 
+describe("Arkansas (uniform graduated schedule + a high-income BRACKET-ADJUSTMENT recapture)", () => {
+  // AR (Ark. Code §26-51-201; 2025 AR1000F Regular Income Tax Table) levies
+  // 0/2/3/3.4/3.9% on net taxable income = AGI − standard deduction ($2,470 /
+  // $4,940 MFJ), the SAME schedule for every filing status. Above ~$94,700 the
+  // "bracket adjustment" recaptures the lower-bracket benefit — modeled via the
+  // engine's incomeRecapture: $0 at $94,700, ramping to a constant $329 at
+  // $97,900. Exact below the band and above it; ≤~$15 residual inside the band.
+  it("single $60k → $1,823.67 (net taxable 57,530, below the recapture band)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ar"), fica: ds.fica },
+    );
+    // 2%·5,600 + 3%·4,800 + 3.4%·10,400 + 3.9%·(57,530 − 26,400) = 112 + 144 + 353.6 + 1,214.07.
+    expect(cents(r.state!.incomeTax)).toBe("1823.67");
+  });
+
+  it("single $15k stays in the low brackets → $151.90 (net taxable 12,530)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 15000 },
+      { federal: ds.federal, state: ds.state("ar"), fica: ds.fica },
+    );
+    // net taxable 15,000 − 2,470 = 12,530: 2%·5,600 + 3%·(12,530 − 11,200).
+    expect(cents(r.state!.incomeTax)).toBe("151.9");
+  });
+
+  it("single $90k is below the recapture (no bracket adjustment yet) → $2,993.67", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 90000 },
+      { federal: ds.federal, state: ds.state("ar"), fica: ds.fica },
+    );
+    // net taxable 87,530 < 94,700: 609.6 + 3.9%·(87,530 − 26,400), recapture 0.
+    expect(cents(r.state!.incomeTax)).toBe("2993.67");
+  });
+
+  it("net taxable exactly at the $94,700 floor adds no recapture → single $97,170 = $3,273.30", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 97170 },
+      { federal: ds.federal, state: ds.state("ar"), fica: ds.fica },
+    );
+    // net taxable 97,170 − 2,470 = 94,700 (= thresholdLow): graduated only.
+    expect(cents(r.state!.incomeTax)).toBe("3273.3");
+  });
+
+  it("single $99k is mid-band: the recapture ramps to a partial $188.15 → $3,532.82", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 99000 },
+      { federal: ds.federal, state: ds.state("ar"), fica: ds.fica },
+    );
+    // net taxable 96,530: graduated 3,344.67 + 329·(96,530 − 94,700)/3,200 = 3,344.67 + 188.15.
+    expect(cents(r.state!.incomeTax)).toBe("3532.82");
+  });
+
+  it("single $130k has the full $329 recapture — exact vs the table note → $4,882.67", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 130000 },
+      { federal: ds.federal, state: ds.state("ar"), fica: ds.fica },
+    );
+    // net taxable 127,530 ≥ 97,900: graduated 4,553.67 + 329 = 4,882.67.
+    // Matches the AR1000F note "$3,809 + 3.9% over $100,000" = 3,809 + 3.9%·27,530.
+    expect(cents(r.state!.incomeTax)).toBe("4882.67");
+  });
+
+  it("married jointly $60k uses the same schedule with the $4,940 deduction → $1,727.34", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ar"), fica: ds.fica },
+    );
+    // net taxable 60,000 − 4,940 = 55,060: 609.6 + 3.9%·(55,060 − 26,400).
+    expect(cents(r.state!.incomeTax)).toBe("1727.34");
+  });
+
+  it("married filing separately maps to single's schedule and $2,470 deduction", () => {
+    const mfs = evaluateTaxes(
+      { filingStatus: "married_separately", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ar"), fica: ds.fica },
+    );
+    const single = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ar"), fica: ds.fica },
+    );
+    expect(cents(mfs.state!.incomeTax)).toBe(cents(single.state!.incomeTax));
+  });
+
+  it("a qualifying surviving spouse falls back to the married-jointly deduction", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ar"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ar"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("Maryland (per-status state schedule + a MANDATORY residence-based county local tax)", () => {
   // MD (Comptroller 2026 memo; Md. Code Tax-Gen §10) levies a ten-rate state tax
   // (2%→6.5%, the FY2026 bill adding 6.25%/6.5% tops) on Maryland taxable income

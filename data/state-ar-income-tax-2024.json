@@ -1,0 +1,44 @@
+{
+  "id": "US-AR",
+  "name": "Arkansas",
+  "taxYear": 2026,
+  "hasIncomeTax": true,
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "bracketsByFilingStatus": {
+    "single": [
+      { "lowerBound": 0, "rate": 0 },
+      { "lowerBound": 5600, "rate": 0.02 },
+      { "lowerBound": 11200, "rate": 0.03 },
+      { "lowerBound": 16000, "rate": 0.034 },
+      { "lowerBound": 26400, "rate": 0.039 }
+    ],
+    "married_jointly": [
+      { "lowerBound": 0, "rate": 0 },
+      { "lowerBound": 5600, "rate": 0.02 },
+      { "lowerBound": 11200, "rate": 0.03 },
+      { "lowerBound": 16000, "rate": 0.034 },
+      { "lowerBound": 26400, "rate": 0.039 }
+    ],
+    "head_of_household": [
+      { "lowerBound": 0, "rate": 0 },
+      { "lowerBound": 5600, "rate": 0.02 },
+      { "lowerBound": 11200, "rate": 0.03 },
+      { "lowerBound": 16000, "rate": 0.034 },
+      { "lowerBound": 26400, "rate": 0.039 }
+    ]
+  },
+  "standardDeductionByFilingStatus": {
+    "single": 2470,
+    "married_jointly": 4940,
+    "head_of_household": 2470
+  },
+  "incomeRecapture": { "thresholdLow": 94700, "thresholdHigh": 97900, "amount": 329 },
+  "citation": {
+    "sourceUrl": "https://www.dfa.arkansas.gov/income-tax/individual-income-tax/",
+    "sourceDocument": "Arkansas DFA 2025 AR1000F Regular Income Tax Table + bracket-adjustment recapture; standard deduction; Ark. Code §26-51-201",
+    "sourceNote": "Arkansas levies a graduated tax (Ark. Code §26-51-201) on net taxable income = Arkansas AGI (≈ federal AGI for wage income) minus the standard deduction, with the SAME rate schedule for every filing status — Arkansas does not double the brackets for married couples (a married couple filing jointly, status 2, uses one schedule on combined income; the income-splitting status 4/5 that can keep more income in lower brackets is not modeled). The rates and thresholds are read verbatim from the official 2025 AR1000F Regular Income Tax Table: 0% on the first $5,599 of net taxable income, 2% to $11,199, 3% to $15,999, 3.4% to $26,399, and 3.9% above $26,400. The brackets reconcile to the dollar against the published table (net taxable $61,000 → $1,961 = 2%·5,600 + 3%·4,800 + 3.4%·10,400 + 3.9%·34,600). DISTINCTIVE FEATURE — the BRACKET ADJUSTMENT (a high-income benefit recapture): for net taxable income above ~$94,700 Arkansas recaptures the benefit of its lower 0%/2%/3%/3.4% brackets, so a high earner's tax converges to a near-flat 3.9% schedule. This is modeled via the engine's new `incomeRecapture` capability: a flat amount that ramps linearly from $0 (at $94,700) to $329 (at $97,900) and stays $329 above. The model is EXACT below the band (the graduated table) AND above it — at net taxable $100,000 the table's published formula is $3,809, exactly the graduated $3,480.00 plus the $329 recapture, and every higher income matches the table's '$3,809 + 3.9% of the excess over $100,000' note to the cent; only inside the narrow $94,700–$97,900 phase-in band does the engine's continuous ramp differ from the table's $100-step worksheet, by ≤ ~$15. The standard deduction is $2,470 (single / head of household / married-filing-separately / surviving spouse) or $4,940 (married jointly); married filing separately maps to single, and a qualifying surviving spouse to married jointly. OMITTED at launch fidelity, all the conservative (errs-high) direction except where noted: the Low Income Tax Tables (which zero out tax for AGI ≤ $14,643 single and reduce it up to ~$17,500 — so the engine over-taxes the lowest earners by ≤ ~$141, conservative), the $29-per-person personal tax credit (Form AR1000TC), the child-care and other AR credits, and Arkansas's indexing of the brackets/deduction for 2026 (the latest-published official 2025 schedule is used for the 2026 shard, the California/Vermont/Nebraska precedent — Arkansas held its 3.9% top rate, and the thresholds index ~2-3%/year so using the 2025 figures errs slightly high). Worked example, single $60,000 wages: net taxable = 60,000 − 2,470 = $57,530 (below the recapture band); tax = 2%·5,600 + 3%·4,800 + 3.4%·10,400 + 3.9%·(57,530 − 26,400) = 112 + 144 + 353.6 + 1,214.07 = $1,823.67. Verified against the official Arkansas DFA 2025 AR1000F Regular Income Tax Table and Ark. Code §26-51-201, and cross-checked against the Tax Foundation 2026 state-rate table on 2026-06-08.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-08"
+  },
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+}

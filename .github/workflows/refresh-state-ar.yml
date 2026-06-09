@@ -1,0 +1,22 @@
+# Arkansas income tax — Arkansas DFA, annual (staggered). Arkansas levies a
+# uniform graduated schedule (0% / 2% / 3% / 3.4% / 3.9%; Ark. Code §26-51-201)
+# on net taxable income, with a high-income "bracket adjustment" that recaptures
+# the lower-bracket benefit above ~$94,700 (modeled via the engine's
+# `incomeRecapture` capability). The rates are statutory and the brackets index
+# annually, so the adapter anchors the standard deduction ($2,470/$4,940; the
+# MN/RI pattern); the bracket thresholds, the recapture band/amount, and the $29
+# personal credit are the reviewer's data-only step on each new AR1000F.
+# BUILD-SPEC.md §7.2, §8.
+name: Refresh AR income tax
+
+on:
+  schedule:
+    - cron: "0 12 23 2 *" # February 23, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-ar
+      source_name: AR income tax

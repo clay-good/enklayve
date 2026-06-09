@@ -731,6 +731,19 @@
       "contentHash": "7a247e9eca21e85a3dabadb1a89bccc6ff31535062b9843fd4108b53c669b8a0"
     },
     {
+      "id": "state-ar-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-ar-income-tax-2024.json",
+      "sourceUrl": "https://www.dfa.arkansas.gov/income-tax/individual-income-tax/",
+      "sourceDocument": "Arkansas DFA 2025 AR1000F Regular Income Tax Table + bracket-adjustment recapture; standard deduction; Ark. Code §26-51-201",
+      "dateRetrieved": "2026-06-08",
+      "contentHash": "0932e110f47f5c29dba8e073e1424801d6260aa309a15f621e5523cebdb28544"
+    },
+    {
       "id": "federal-poverty-level-2024-contiguous",
       "kind": "federal-poverty-level",
       "version": "2026.0",

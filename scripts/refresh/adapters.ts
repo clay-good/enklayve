@@ -74,8 +74,15 @@
  * anchors the standard deduction (the 2025 session moved it to a fixed
  * $3,350/$6,700; the MN/RI pattern); the per-status bracket tables, the county
  * local-rate chart, and the $3,200 exemption roll alongside it as the reviewer's
- * data-only step. With it, *every* seeded jurisdiction with an income tax has a
- * refresh adapter.
+ * data-only step.
+ *
+ * The fourteenth set adds Arkansas — a uniform graduated schedule (0/2/3/3.4/3.9%)
+ * with a high-income "bracket adjustment" that recaptures the lower-bracket
+ * benefit (modeled via the engine's `incomeRecapture` capability). The rates are
+ * statutory and the brackets index annually, so the refresh anchors the standard
+ * deduction (the MN/RI pattern); the bracket thresholds, the recapture band, and
+ * the $29 personal credit are the reviewer's data-only step. With it, *every*
+ * seeded jurisdiction with an income tax has a refresh adapter.
  *
  * Honesty boundaries (kept narrow on purpose, per the family's "be right before
  * being everywhere"):
@@ -145,6 +152,7 @@ export type RefreshGroup =
   | "state-or"
   | "state-ne"
   | "state-md"
+  | "state-ar"
   | "treasurydirect"
   | "usda-snap"
   | "cms-medicaid";
@@ -1187,6 +1195,19 @@ export const ADAPTERS: RefreshAdapter[] = [
     // fixed $3,350/$6,700). The per-status bracket tables, the county local-rate
     // chart (including the Anne Arundel / Frederick income-tiered schedules), and
     // the $3,200 exemption are the reviewer's data-only step on each new memo.
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-ar-income-tax-2024",
+    group: "state-ar",
+    source: "Arkansas DFA AR1000F instructions (Regular Income Tax Table + standard deduction)",
+    sourceUrl: "https://www.dfa.arkansas.gov/income-tax/individual-income-tax/",
+    cadence: "Annual",
+    // Arkansas's rates (0/2/3/3.4/3.9%) are statutory and its brackets index
+    // annually; the cleanly-stated indexed figure the refresh anchors is the
+    // standard deduction (the MN/RI pattern). The graduated bracket thresholds,
+    // the bracket-adjustment recapture band/amount, and the $29 personal credit
+    // roll alongside it as the reviewer's data-only step on each new AR1000F.
     parse: parseStandardDeductions,
   },
   {

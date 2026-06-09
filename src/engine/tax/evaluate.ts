@@ -132,6 +132,24 @@ function computeState(
     }
   }
 
+  // High-income benefit recapture (Arkansas's bracket adjustment): a flat amount
+  // that ramps linearly from zero (at `thresholdLow`) to `amount` (at
+  // `thresholdHigh`) and stays constant above, added to the bracket tax — so a
+  // high earner forfeits the benefit of the lower brackets. Exact below the band
+  // and above it; a small linear-vs-step residual only inside the narrow band.
+  const recapture = state.incomeRecapture;
+  if (recapture) {
+    const ti = taxableIncome.toNumber();
+    let add = 0;
+    if (ti >= recapture.thresholdHigh) add = recapture.amount;
+    else if (ti > recapture.thresholdLow) {
+      add =
+        (recapture.amount * (ti - recapture.thresholdLow)) /
+        (recapture.thresholdHigh - recapture.thresholdLow);
+    }
+    if (add > 0) incomeTax = incomeTax.add(add);
+  }
+
   // Taxpayer tax credit (the Utah pattern): a nonrefundable credit standing in
   // for a standard deduction. The state taxes AGI directly (its standard
   // deduction is 0 above), then credits back `creditRate` of the *federal*
