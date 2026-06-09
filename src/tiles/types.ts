@@ -26,43 +26,6 @@ export type Pillar =
   | "owed"
   | "stand";
 
-export interface PillarMeta {
-  id: Pillar;
-  title: string;
-  blurb: string;
-}
-
-export const PILLARS: PillarMeta[] = [
-  { id: "paycheck", title: "Paycheck & Taxes", blurb: "Your real take-home and what you owe." },
-  {
-    id: "investing",
-    title: "Investing",
-    blurb: "Capital gains, growth, and the dollar over time.",
-  },
-  {
-    id: "retirement",
-    title: "Retirement",
-    blurb: "Contributions, Roth moves, Social Security, and drawdown.",
-  },
-  { id: "debt", title: "Borrowing & Debt", blurb: "Loans, mortgages, and a clear payoff date." },
-  {
-    id: "budget",
-    title: "Budgeting & Cash Flow",
-    blurb: "Give every dollar a job and spot tight days.",
-  },
-  {
-    id: "protect",
-    title: "Home, Family & Protection",
-    blurb: "Big purchases, insurance, and your estate basics.",
-  },
-  { id: "owed", title: "Benefits & Aid", blurb: "Benefits and aid you may qualify for." },
-  {
-    id: "stand",
-    title: "Your big picture",
-    blurb: "Your calm overview and your next right step.",
-  },
-];
-
 export interface TileContext {
   /** Mount point for the tile body. */
   root: HTMLElement;
@@ -112,9 +75,4 @@ export interface TileDefinition {
    * target hub and `tool` its sub-tool id; `note` is a one-line "why".
    */
   related?: { hubId: string; tool?: string; label: string; note?: string }[];
-}
-
-/** The text the fuzzy palette searches for a tile. */
-export function searchText(tile: TileDefinition): string {
-  return `${tile.title} ${tile.description} ${tile.keywords.join(" ")}`;
 }

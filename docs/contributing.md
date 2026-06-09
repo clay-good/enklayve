@@ -40,7 +40,7 @@ Register it in [`src/tiles/registry.ts`](../src/tiles/registry.ts). The static `
 
 ## Adding or refreshing data
 
-See [`adding-a-state.md`](adding-a-state.md) for a jurisdiction and [`data-sources.md`](data-sources.md) for the source list and the fail-safe refresh contract. The rule of thumb: **never ship a number you cannot cite to a public source.** When accurate source data isn't available yet, defer the tool (or have the user supply the one local figure) rather than guess — that is why the FAFSA SAI tables and per-county ACA benchmark are not bundled.
+See [`adding-a-state.md`](adding-a-state.md) for a jurisdiction and [`data-sources.md`](data-sources.md) for the source list and the fail-safe refresh contract. The rule of thumb: **never ship a number you cannot cite to a public source.** When a figure is too large or too local to bundle, have the user supply that one local number rather than guess — that is why the per-county ACA benchmark (second-lowest-cost silver) premium and the Social Security PIA are user-supplied, not bundled. (The FAFSA SAI + Pell tables *are* now bundled and cited from the ED SAI Formula Guide; only the independent-student variant and per-state aid stay out of scope.)
 
 ## Voice
 

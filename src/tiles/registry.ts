@@ -9,7 +9,7 @@
  */
 import type { HubConfig } from "./hub";
 import { defineHub } from "./hub";
-import type { Pillar, TileDefinition } from "./types";
+import type { TileDefinition } from "./types";
 import { takeHomeTile } from "./takeHome";
 import { hourlySalaryTile } from "./hourlySalary";
 import { federalIncomeTaxTile } from "./federalIncomeTax";
@@ -70,11 +70,11 @@ import { debtFreedomTile } from "./debtFreedom";
 import { downshiftTile } from "./downshift";
 import { sabbaticalTile } from "./sabbatical";
 
-// The ~10 topic hubs, ordered by pillar so `tilesForPillar` and the home grid
-// preserve the on-screen order. Each hub's first tool is its default (the one a
-// bare hub link opens); the plan engine deep-links rely on those defaults
-// (retirement → retirement-optimizer, debt → debt-freedom, where-you-stand →
-// peace-of-mind) and on `?tool=` for the rest.
+// The 10 topic hubs, ordered by pillar so the home grid preserves the
+// on-screen order. Each hub's first tool is its default (the one a bare hub
+// link opens); the plan engine deep-links rely on those defaults (retirement →
+// retirement-optimizer, debt → debt-freedom, where-you-stand → peace-of-mind)
+// and on `?tool=` for the rest.
 const HUB_CONFIGS: HubConfig[] = [
   {
     id: "paycheck-taxes",
@@ -218,10 +218,6 @@ const BY_ID = new Map(TILES.map((t) => [t.id, t]));
 
 export function getTile(id: string): TileDefinition | undefined {
   return BY_ID.get(id);
-}
-
-export function tilesForPillar(pillar: Pillar): TileDefinition[] {
-  return TILES.filter((t) => t.pillar === pillar);
 }
 
 /**

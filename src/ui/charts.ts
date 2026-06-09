@@ -2,10 +2,9 @@
  * Tiny, framework-free, accessible chart primitives (BUILD-SPEC.md §10). The
  * budgeting tools show a breakdown table for the exact numbers; these add a
  * plain-language *picture* on top so a first-time user grasps the shape at a
- * glance. Three shapes cover every budget/cash-flow tile:
+ * glance. Two shapes cover every budget/cash-flow tile:
  *
  *   - donutChart    — share of a whole (budget categories, 50/30/20 split)
- *   - flowBar       — a single bar split into segments (income → spent → left)
  *   - balanceTimeline — running balance across the month (cash-flow squeeze)
  *
  * Accessibility: the colored geometry is decorative (`aria-hidden`) and every
@@ -108,69 +107,6 @@ export function donutChart(opts: DonutOptions): HTMLElement {
     { class: "chart chart--donut", attrs: { role: "img", "aria-label": opts.ariaLabel } },
     el("div", { class: "donut-wrap" }, ring, center),
     legend(colored, total, locale),
-  );
-}
-
-export interface FlowOptions {
-  segments: Slice[];
-  locale: string;
-  ariaLabel: string;
-  /**
-   * The width the segments are scaled against (e.g. monthly income). Segments
-   * summing past it overflow visually; a remainder below it shows as open space.
-   */
-  total: number;
-  /** Optional trailing segment for what's left (rendered after the segments). */
-  remainder?: Slice;
-  /** Show the text legend below the bar (default true; off when a sibling donut already lists the slices). */
-  showLegend?: boolean;
-}
-
-/**
- * A single horizontal bar split into proportional segments — the budget's
- * "income → each category → what's left" cash-flow picture. When segments
- * exceed `total` (over-assigned), the bar fills and the remainder is shown red.
- */
-export function flowBar(opts: FlowOptions): HTMLElement {
-  const { locale } = opts;
-  const colored = opts.segments.map((s, i) => ({ ...s, color: s.color ?? paletteVar(i) }));
-  const assigned = colored.reduce((sum, s) => sum + Math.max(0, s.value), 0);
-  // Scale to whichever is larger so an over-assigned bar still fits 0–100%.
-  const scale = Math.max(opts.total, assigned, 1);
-
-  const segs: HTMLElement[] = colored
-    .filter((s) => s.value > 0)
-    .map((s) => {
-      const seg = el("div", {
-        class: "flow-seg",
-        attrs: { "aria-hidden": "true", title: `${s.label}: ${currency(locale, s.value)}` },
-      });
-      seg.style.width = `${pctOf(s.value, scale)}%`;
-      seg.style.background = s.color!;
-      return seg;
-    });
-
-  const remainder = opts.remainder;
-  if (remainder && remainder.value > 0) {
-    const seg = el("div", {
-      class: "flow-seg flow-seg--rest",
-      attrs: {
-        "aria-hidden": "true",
-        title: `${remainder.label}: ${currency(locale, remainder.value)}`,
-      },
-    });
-    seg.style.width = `${pctOf(remainder.value, scale)}%`;
-    if (remainder.color) seg.style.background = remainder.color;
-    segs.push(seg);
-  }
-
-  const legendSlices = remainder ? [...colored, remainder] : colored;
-
-  return el(
-    "figure",
-    { class: "chart chart--flow", attrs: { role: "img", "aria-label": opts.ariaLabel } },
-    el("div", { class: "flow-bar" }, ...segs),
-    opts.showLegend === false ? null : legend(legendSlices, scale, locale),
   );
 }
 
