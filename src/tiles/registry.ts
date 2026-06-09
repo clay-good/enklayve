@@ -1,7 +1,7 @@
 /**
  * The tile catalog (BUILD-SPEC.md §3–5, BUILD-SPEC-2 §4/§6). Consolidated
- * 2026-06-02: the ~53 individual calculators are now grouped into ~10 topic
- * "hubs" (see hub.ts) plus the standalone My Plan, so the home grid and All
+ * 2026-06-02: the 59 individual calculators are now grouped into 10 topic
+ * "hubs" (see hub.ts), so the home grid and All
  * Tools index show a handful of calm areas. Each hub reuses the existing
  * calculators' `mount` functions unchanged behind a segmented control. The
  * command palette and home search query SEARCH_ENTRIES (hubs + every sub-tool),
@@ -208,7 +208,7 @@ export const TILES: TileDefinition[] = HUB_CONFIGS.map(defineHub);
 /**
  * Every calculator hosted inside a hub, paired with its hub id. Used to emit a
  * crawlable SEO landing page per sub-tool (deep-linking into `?tool=`), so the
- * consolidation doesn't drop the ~50 individual tool pages search engines index.
+ * consolidation doesn't drop the 59 individual tool pages search engines index.
  */
 export const SUB_TOOLS: { tile: TileDefinition; hubId: string }[] = HUB_CONFIGS.flatMap((h) =>
   h.tools.map((tile) => ({ tile, hubId: h.id })),

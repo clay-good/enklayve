@@ -272,8 +272,10 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
   const perPeriodLabel = (f: string): string =>
     ({ weekly: "a week", biweekly: "every 2 weeks", monthly: "a month", annually: "a year" })[f] ??
     "a month";
-  // True only for the 25 states whose income tax is modeled (the rest fall back
-  // to federal + FICA with an honest note).
+  // Every one of the 50 states + DC is modeled, so this is now the load-time
+  // fail-safe: it stays true unless a jurisdiction's shard fails to load, in
+  // which case that resident falls back to federal + FICA rather than a wrong
+  // number (the per-jurisdiction stale/corrupt gate, surfaced as a banner).
   const isModeled = (code: string): boolean => !!(code && data && data.state(code));
 
   /** Annual total tax (federal income + FICA + state) via the shared engine. */

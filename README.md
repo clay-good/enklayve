@@ -546,7 +546,7 @@ See the spec files for the full per-wave history.
 |---|---|
 | `src/engine` | Money math, citation/provenance, the tax evaluator, and per-domain math |
 | `src/data` | Dataset schemas, integrity check, manifest loader, fail-safe gate, browser loader |
-| `src/tiles` | One module per calculator (58 of them), the hub factory, and the registry |
+| `src/tiles` | One module per calculator (59 of them), the hub factory, and the registry |
 | `src/ui` | Render layer, the light theme, result card, command palette, router, charts, views |
 | `src/profile` | My Situation — the in-memory session profile and the portable encrypted-export module |
 | `src/readout` | Anchored extractors, the confirm flow, and the Readout Report builder |
