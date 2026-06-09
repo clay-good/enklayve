@@ -81,8 +81,17 @@
  * benefit (modeled via the engine's `incomeRecapture` capability). The rates are
  * statutory and the brackets index annually, so the refresh anchors the standard
  * deduction (the MN/RI pattern); the bracket thresholds, the recapture band, and
- * the $29 personal credit are the reviewer's data-only step. With it, *every*
- * seeded jurisdiction with an income tax has a refresh adapter.
+ * the $29 personal credit are the reviewer's data-only step.
+ *
+ * The fifteenth set adds Connecticut — the last U.S. income-tax state — the
+ * deepest single computation the engine models: a seven-rate schedule, a
+ * dollar-for-dollar exemption phase-out, two stacked high-income recaptures (the
+ * 2% phase-out add-back and the tax recapture, via the per-status `incomeRecapture`
+ * stages), and a percent-of-tax personal credit (the per-status `personalCreditRate`
+ * step table). All are statutory; the adapter anchors the personal exemption (the
+ * MN/RI pattern) as the change-watch, the rest the reviewer's data-only step. With
+ * it, *every* seeded jurisdiction with an income tax has a refresh adapter, and
+ * every one of the 50 states + DC is modeled.
  *
  * Honesty boundaries (kept narrow on purpose, per the family's "be right before
  * being everywhere"):
@@ -153,6 +162,7 @@ export type RefreshGroup =
   | "state-ne"
   | "state-md"
   | "state-ar"
+  | "state-ct"
   | "treasurydirect"
   | "usda-snap"
   | "cms-medicaid";
@@ -1208,6 +1218,20 @@ export const ADAPTERS: RefreshAdapter[] = [
     // standard deduction (the MN/RI pattern). The graduated bracket thresholds,
     // the bracket-adjustment recapture band/amount, and the $29 personal credit
     // roll alongside it as the reviewer's data-only step on each new AR1000F.
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-ct-income-tax-2024",
+    group: "state-ct",
+    source: "Connecticut DRS Form CT-1040 Tax Calculation Schedule (Tables A–E)",
+    sourceUrl: "https://portal.ct.gov/drs/individuals/resident-income-tax/tax-information",
+    cadence: "Annual",
+    // Connecticut's seven-rate schedule, its 2% phase-out add-back, its tax
+    // recapture, and its personal-credit table are all statutory and rarely
+    // change; the figure most likely to move is the personal exemption, which the
+    // adapter anchors as the standard deduction (the MN/RI pattern). The brackets,
+    // the per-status recapture stages, and the Table E credit steps are the
+    // reviewer's data-only step on each new CT-1040 Tax Calculation Schedule.
     parse: parseStandardDeductions,
   },
   {

@@ -395,20 +395,6 @@ body {
   color: var(--enk-text-muted);
   text-align: right;
 }
-/* An honest heads-up when a chosen state's income tax isn't modeled yet. */
-.home-budget__note[hidden] {
-  display: none;
-}
-.home-budget__note {
-  margin: 0.1rem 0 0.2rem;
-  font-size: 0.78rem;
-  line-height: 1.4;
-  color: var(--enk-accent-ink);
-  background: color-mix(in srgb, var(--enk-accent) 12%, var(--enk-surface));
-  border: 1px solid color-mix(in srgb, var(--enk-accent) 32%, transparent);
-  border-radius: 8px;
-  padding: 0.4rem 0.55rem;
-}
 /* A small all-caps divider between the income, expense, and investing groups. */
 .home-budget__group {
   margin: 0.7rem 0 0.1rem;

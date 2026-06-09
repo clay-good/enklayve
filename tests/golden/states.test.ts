@@ -1082,6 +1082,120 @@ describe("Vermont (four-rate graduated schedule over a standard-deduction + exem
   });
 });
 
+describe("Connecticut (the full CT-1040 schedule: exemption phase-out + recapture + percent-of-tax credit)", () => {
+  // CT (Conn. Gen. Stat. §12-700; 2025 CT-1040 Tax Calculation Schedule, Tables
+  // A–E) computes tax = (Table B + Table C 2% add-back + Table D recapture) ×
+  // (1 − Table E personal-credit decimal), on taxable income = AGI − the Table A
+  // personal exemption ($15,000/$24,000/$19,000) that phases out dollar-for-dollar.
+  // Seven rates 2%→6.99%. The recapture (per-status stages) and the credit (a
+  // per-status AGI step table) are both modeled exactly by the engine.
+  it("single $25k: full $15k exemption + a 35% personal credit → $130.00", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 25000 },
+      { federal: ds.federal, state: ds.state("ct"), fica: ds.fica },
+    );
+    // exemption $15,000 (AGI < $30k); taxable $10,000; Table B 2%·10,000 = $200;
+    // Table E (AGI $25,000) = 0.35; 200 × (1 − 0.35).
+    expect(cents(r.state!.incomeTax)).toBe("130");
+  });
+
+  it("single $40k: exemption phased to $5,000, a 10% credit → $1,192.50", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 40000 },
+      { federal: ds.federal, state: ds.state("ct"), fica: ds.fica },
+    );
+    // exemption 15,000 − (40,000 − 30,000) = $5,000; taxable $35,000;
+    // Table B = 200 + 4.5%·25,000 = 1,325; credit 0.10; 1,325 × 0.90.
+    expect(cents(r.state!.incomeTax)).toBe("1192.5");
+  });
+
+  it("single $60k: exemption gone, the 2% add-back begins, a 10% credit → $2,312.50", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ct"), fica: ds.fica },
+    );
+    // taxable $60,000; Table B = 200 + 1,800 + 5.5%·10,000 = 2,550; Table C ramp
+    // 250·(60,000−56,500)/45,000 = 19.44; credit 0.10; (2,550 + 19.44) × 0.90.
+    expect(cents(r.state!.incomeTax)).toBe("2312.5");
+  });
+
+  it("single $100k: past the credit cutoff, the 2% add-back near max → $4,991.67", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 100000 },
+      { federal: ds.federal, state: ds.state("ct"), fica: ds.fica },
+    );
+    // Table B = 4,750; Table C = 250·(100,000−56,500)/45,000 = 241.67; no credit (AGI > $64,500).
+    expect(cents(r.state!.incomeTax)).toBe("4991.67");
+  });
+
+  it("single $300k: the Table D tax recapture stage applies → $19,812.07", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 300000 },
+      { federal: ds.federal, state: ds.state("ct"), fica: ds.fica },
+    );
+    // Table B = 17,450; recapture = 250 (C) + 250 (D1) + 2,700·(300k−200k)/145k (D2) = 2,362.07.
+    expect(cents(r.state!.incomeTax)).toBe("19812.07");
+  });
+
+  it("married jointly $40k: full $24k exemption + a 35% credit → $208.00", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 40000 },
+      { federal: ds.federal, state: ds.state("ct"), fica: ds.fica },
+    );
+    // exemption $24,000; taxable $16,000; Table B 2%·16,000 = 320; credit 0.35; 320 × 0.65.
+    expect(cents(r.state!.incomeTax)).toBe("208");
+  });
+
+  it("married jointly $80k uses the wider joint schedule + a 10% credit → $2,790.00", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 80000 },
+      { federal: ds.federal, state: ds.state("ct"), fica: ds.fica },
+    );
+    // exemption $0 (AGI > $71k); taxable $80,000; Table B = 400 + 4.5%·60,000 = 3,100;
+    // credit 0.10 (AGI ≤ $96,000); 3,100 × 0.90.
+    expect(cents(r.state!.incomeTax)).toBe("2790");
+  });
+
+  it("married jointly $500k: both recapture stages stack → $30,862.07", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 500000 },
+      { federal: ds.federal, state: ds.state("ct"), fica: ds.fica },
+    );
+    // Table B = 28,000; recapture = 500 (C) + 500 (D1) + 5,400·(500k−400k)/290k (D2) = 2,862.07.
+    expect(cents(r.state!.incomeTax)).toBe("30862.07");
+  });
+
+  it("head of household $60k uses the HoH schedule + a 10% credit → $2,070.00", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ct"), fica: ds.fica },
+    );
+    // exemption $0 (AGI > $56k); taxable $60,000; Table B = 320 + 4.5%·44,000 = 2,300;
+    // credit 0.10 (AGI ≤ $74,000); 2,300 × 0.90.
+    expect(cents(r.state!.incomeTax)).toBe("2070");
+  });
+
+  it("married filing separately maps to single's whole schedule → $60k = $2,312.50", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_separately", wages: 60000 },
+      { federal: ds.federal, state: ds.state("ct"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("2312.5");
+  });
+
+  it("a qualifying surviving spouse maps to the married-jointly schedule → $80k = $2,790.00", () => {
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 80000 },
+      { federal: ds.federal, state: ds.state("ct"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 80000 },
+      { federal: ds.federal, state: ds.state("ct"), fica: ds.fica },
+    );
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+});
+
 describe("Arkansas (uniform graduated schedule + a high-income BRACKET-ADJUSTMENT recapture)", () => {
   // AR (Ark. Code §26-51-201; 2025 AR1000F Regular Income Tax Table) levies
   // 0/2/3/3.4/3.9% on net taxable income = AGI − standard deduction ($2,470 /

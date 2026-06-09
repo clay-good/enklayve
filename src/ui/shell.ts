@@ -288,21 +288,14 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
   const viz = el("div", { class: "home-budget__viz", attrs: { "aria-live": "polite" } });
   const taxesValue = el("span", { class: "home-budget__derived-value" });
   const incomeHint = el("p", { class: "home-budget__hint" });
-  const taxNote = el("p", { class: "home-budget__note", attrs: { role: "note" } });
 
   const refreshChrome = (): void => {
     // The annualized-income caption: the same money, restated, for context.
     const annual = income * periodsFor(freq);
     incomeHint.textContent = income > 0 ? `That's about ${fmt0(annual)} a year` : "";
-    // Honesty: if a state's income tax isn't modeled yet, say so plainly.
-    if (stateCode && !isModeled(stateCode)) {
-      const name = US_STATES.find((s) => s.code === stateCode)?.name ?? stateCode.toUpperCase();
-      taxNote.textContent = `We don't model ${name}'s state income tax yet, so this shows federal + FICA only.`;
-      taxNote.hidden = false;
-    } else {
-      taxNote.hidden = true;
-      taxNote.textContent = "";
-    }
+    // Every U.S. income-tax state and DC is now modeled, so there is no longer a
+    // "state not modeled yet" case to disclose; `isModeled` still gates the tax
+    // computation below as the fail-safe for a state whose shard fails to load.
   };
 
   const render = (): void => {
@@ -527,7 +520,6 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
       stateCode = v;
     }),
     taxesRow,
-    taxNote,
     groupLabel("Living expenses"),
     ...BUDGET_SPEND_ROWS.map((r) =>
       numRow(r.label, spend[r.key]!, color[r.key]!, 50, (n) => {

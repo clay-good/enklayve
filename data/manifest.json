@@ -741,7 +741,20 @@
       "sourceUrl": "https://www.dfa.arkansas.gov/income-tax/individual-income-tax/",
       "sourceDocument": "Arkansas DFA 2025 AR1000F Regular Income Tax Table + bracket-adjustment recapture; standard deduction; Ark. Code §26-51-201",
       "dateRetrieved": "2026-06-08",
-      "contentHash": "0932e110f47f5c29dba8e073e1424801d6260aa309a15f621e5523cebdb28544"
+      "contentHash": "a6a897d589fd04acb35d31a56b098ee82ba0aac68c99da4fa21e7a410bb0665b"
+    },
+    {
+      "id": "state-ct-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-ct-income-tax-2024.json",
+      "sourceUrl": "https://portal.ct.gov/drs/individuals/resident-income-tax/tax-information",
+      "sourceDocument": "Connecticut DRS Form CT-1040 Tax Calculation Schedule (2025), Tables A–E: brackets, exemption phase-out, recapture, personal credit (Conn. Gen. Stat. §12-700)",
+      "dateRetrieved": "2026-06-08",
+      "contentHash": "bd0a7f97156801d5bb66508e5751d2579fb695689f2594a4382b32d616fa103c"
     },
     {
       "id": "federal-poverty-level-2024-contiguous",

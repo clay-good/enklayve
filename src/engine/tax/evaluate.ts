@@ -4,6 +4,8 @@ import {
   bracketTax,
   bracketsFor,
   federalTaxDeductionFor,
+  incomeRecaptureFor,
+  personalCreditRateFor,
   personalExemptionFor,
   standardDeductionFor,
   standardDeductionPhaseOutFor,
@@ -132,23 +134,20 @@ function computeState(
     }
   }
 
-  // High-income benefit recapture (Arkansas's bracket adjustment): a flat amount
-  // that ramps linearly from zero (at `thresholdLow`) to `amount` (at
-  // `thresholdHigh`) and stays constant above, added to the bracket tax — so a
-  // high earner forfeits the benefit of the lower brackets. Exact below the band
-  // and above it; a small linear-vs-step residual only inside the narrow band.
-  const recapture = state.incomeRecapture;
-  if (recapture) {
-    const ti = taxableIncome.toNumber();
-    let add = 0;
-    if (ti >= recapture.thresholdHigh) add = recapture.amount;
-    else if (ti > recapture.thresholdLow) {
-      add =
-        (recapture.amount * (ti - recapture.thresholdLow)) /
-        (recapture.thresholdHigh - recapture.thresholdLow);
-    }
-    if (add > 0) incomeTax = incomeTax.add(add);
-  }
+  // High-income benefit recapture (Arkansas's bracket adjustment; Connecticut's
+  // 2% phase-out add-back + tax recapture): one or more ramps, each adding a flat
+  // amount that phases in over an income band and holds above, so a high earner
+  // forfeits the benefit of the lower brackets. Exact below/above each ramp; a
+  // small linear-vs-step residual only inside a ramp's band.
+  const recapture = incomeRecaptureFor(state, input.filingStatus, taxableIncome.toNumber());
+  if (recapture > 0) incomeTax = incomeTax.add(recapture);
+
+  // Personal tax credit as a fraction of the tax that slides down with AGI
+  // (Connecticut's Table E): the Connecticut income tax is `tax × (1 − rate)`,
+  // applied AFTER the recapture (the worksheet credits the recapture-inclusive
+  // total). The rate is 0 — no change — for jurisdictions without this credit.
+  const creditRate = personalCreditRateFor(state, input.filingStatus, agi.toNumber());
+  if (creditRate > 0) incomeTax = incomeTax.multiply(1 - creditRate);
 
   // Taxpayer tax credit (the Utah pattern): a nonrefundable credit standing in
   // for a standard deduction. The state taxes AGI directly (its standard

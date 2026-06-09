@@ -77,7 +77,9 @@ const RECAPTURIA: Jurisdiction = {
   name: "Recapturia",
   bracketsByFilingStatus: { single: [{ lowerBound: 0, rate: 0.1 }] },
   standardDeductionByFilingStatus: { single: 0 },
-  incomeRecapture: { thresholdLow: 100000, thresholdHigh: 110000, amount: 1000 },
+  incomeRecapture: {
+    stages: [{ thresholdLow: 100000, thresholdHigh: 110000, amount: 1000 }],
+  },
 };
 
 describe("high-income benefit recapture (Arkansas bracket-adjustment capability)", () => {
@@ -102,13 +104,52 @@ describe("high-income benefit recapture (Arkansas bracket-adjustment capability)
     expect(taxAt(200000)).toBe("21000"); // 20,000 + 1,000
   });
 
-  it("rejects a recapture whose high threshold does not exceed the low one", () => {
+  it("rejects a recapture stage whose high threshold does not exceed the low one", () => {
     expect(
       JurisdictionSchema.safeParse({
         ...RECAPTURIA,
-        incomeRecapture: { thresholdLow: 100000, thresholdHigh: 100000, amount: 1000 },
+        incomeRecapture: {
+          stages: [{ thresholdLow: 100000, thresholdHigh: 100000, amount: 1000 }],
+        },
       }).success,
     ).toBe(false);
     expect(JurisdictionSchema.safeParse(RECAPTURIA).success).toBe(true);
+  });
+});
+
+/** A synthetic state exercising the percent-of-tax personal credit (Connecticut's
+ * Table E) in isolation: flat 10%, no deduction, a 50%/25% credit by AGI band. */
+const CREDITLANDIA: Jurisdiction = {
+  ...TESTLANDIA,
+  id: "US-ZC",
+  name: "Creditlandia",
+  bracketsByFilingStatus: { single: [{ lowerBound: 0, rate: 0.1 }] },
+  standardDeductionByFilingStatus: { single: 0 },
+  personalCreditRate: {
+    byFilingStatus: {
+      single: [
+        { agiUpTo: 30000, rate: 0.5 },
+        { agiUpTo: 40000, rate: 0.25 },
+      ],
+    },
+  },
+};
+
+describe("percent-of-tax personal credit (Connecticut Table E capability)", () => {
+  const taxAt = (wages: number): string =>
+    cents(
+      evaluateTaxes(
+        { filingStatus: "single", wages },
+        { federal: ds.federal, state: CREDITLANDIA, fica: ds.fica },
+      ).state!.incomeTax,
+    );
+
+  it("applies the credit fraction for the filer's AGI band", () => {
+    expect(taxAt(25000)).toBe("1250"); // 10%·25,000 × (1 − 0.50)
+    expect(taxAt(35000)).toBe("2625"); // 10%·35,000 × (1 − 0.25)
+  });
+
+  it("is zero above the top band — full tax, no credit", () => {
+    expect(taxAt(50000)).toBe("5000"); // 10%·50,000, no row matches
   });
 });

@@ -191,3 +191,49 @@ export function federalTaxDeductionFor(
   const capMoney = Money.from(Math.max(0, cap));
   return federalIncomeTax.lessThan(capMoney) ? federalIncomeTax : capMoney;
 }
+
+/**
+ * The high-income benefit recapture to ADD to the bracket tax (Arkansas's
+ * bracket adjustment; Connecticut's Table C + Table D). The per-status stage
+ * list (via {@link fallbackChain}) falls back to the all-status `stages`; each
+ * stage ramps linearly from 0 (at its `thresholdLow`) to `amount` (at
+ * `thresholdHigh`) and stays `amount` above, and the contributions are summed —
+ * so several stacked stages reproduce a multi-step schedule with flat holds.
+ */
+export function incomeRecaptureFor(
+  jurisdiction: Jurisdiction,
+  status: FilingStatus,
+  taxable: number,
+): number {
+  const rec = jurisdiction.incomeRecapture;
+  if (!rec) return 0;
+  const stages = resolveByStatus(rec.byFilingStatus, status) ?? rec.stages ?? [];
+  let add = 0;
+  for (const s of stages) {
+    if (taxable >= s.thresholdHigh) add += s.amount;
+    else if (taxable > s.thresholdLow) {
+      add += (s.amount * (taxable - s.thresholdLow)) / (s.thresholdHigh - s.thresholdLow);
+    }
+  }
+  return add;
+}
+
+/**
+ * The personal-tax-credit rate (a fraction of the tax) for a filer's AGI —
+ * Connecticut's Table E. The per-status ascending step table (via {@link
+ * fallbackChain}) returns the rate of the first row whose `agiUpTo` is at or
+ * above the AGI, or 0 when AGI exceeds every row (or the jurisdiction has no
+ * such credit). The caller applies `tax × (1 − rate)`.
+ */
+export function personalCreditRateFor(
+  jurisdiction: Jurisdiction,
+  status: FilingStatus,
+  agi: number,
+): number {
+  const table = resolveByStatus(jurisdiction.personalCreditRate?.byFilingStatus, status);
+  if (!table) return 0;
+  for (const row of table) {
+    if (agi <= row.agiUpTo) return row.rate;
+  }
+  return 0;
+}

@@ -75,22 +75,22 @@ describe("home budget — the one and only budget (consolidated 2026-06-02)", ()
     expect(labels).toContain("District of Columbia");
   });
 
-  it("shows an honest note when a state's income tax isn't modeled yet", () => {
+  it("models every U.S. state's income tax — each selection computes a real state tax", () => {
     const root = document.createElement("main");
     renderHome(root, () => {}, data);
-    const note = root.querySelector<HTMLElement>(".home-budget__note")!;
-    expect(note.hidden).toBe(true); // no state selected yet
     const state = root.querySelector<HTMLSelectElement>('[aria-label="State"]')!;
-    // Connecticut has an income tax but isn't modeled yet (deferred for its 3%
-    // benefit recapture + income-phased exemption/credit) → the honest note appears.
-    state.value = "ct";
-    state.dispatchEvent(new Event("change"));
-    expect(note.hidden).toBe(false);
-    expect(note.textContent).toContain("Connecticut");
-    // California IS modeled → no note.
-    state.value = "ca";
-    state.dispatchEvent(new Event("change"));
-    expect(note.hidden).toBe(true);
+    const taxes = (): string =>
+      root.querySelector(".home-budget__derived-value")?.textContent ?? "";
+    // Every income-tax state and DC is now modeled — including the once-deferred
+    // Connecticut, Maryland, and Arkansas — so each shows a real combined tax,
+    // and the obsolete "not modeled yet" note is gone.
+    expect(root.querySelector(".home-budget__note")).toBeNull();
+    for (const code of ["ct", "md", "ar", "ca", "ny", "ne", "or"]) {
+      state.value = code;
+      state.dispatchEvent(new Event("change"));
+      // A non-empty currency figure (federal + FICA + that state's income tax).
+      expect(taxes()).toMatch(/\$[\d,]/);
+    }
   });
 
   it("auto-computes taxes through the tax engine (not a manual field)", () => {

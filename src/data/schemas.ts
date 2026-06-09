@@ -206,30 +206,72 @@ export const FederalTaxDeductionSchema = z
 export type FederalTaxDeductionData = z.infer<typeof FederalTaxDeductionSchema>;
 
 /**
- * A high-income "benefit recapture" — a flat dollar amount that phases in
- * linearly across an income band and stays constant above it, ADDED to the
- * bracket tax. This is **Arkansas's bracket adjustment** (Ark. Code §26-51-201,
- * the AR1000F tax tables): for net taxable income above a threshold the state
- * recaptures the benefit of its lower 0%/2%/3%/3.4% brackets, so a high earner's
- * tax converges to a near-flat top-rate schedule. The recapture is `0` at or
- * below `thresholdLow`, ramps linearly to `amount` at `thresholdHigh`, and is
- * `amount` (constant) above — making the model exact below the band and above it
- * (where the recapture is the published constant), with only a small linear-vs-
- * step residual inside the narrow band itself.
+ * One stage of a high-income "benefit recapture": a flat dollar amount that
+ * ramps linearly from `0` (at `thresholdLow`) to `amount` (at `thresholdHigh`)
+ * and stays `amount` (constant) above — ADDED to the bracket tax. Stacking
+ * several stages reproduces a multi-step recapture schedule with flat holds
+ * between the ramps.
  */
-export const IncomeRecaptureSchema = z
+export const RecaptureStageSchema = z
   .object({
-    /** Net taxable income at/below which there is no recapture. */
+    /** Taxable income at/below which this stage contributes nothing. */
     thresholdLow: z.number().gte(0),
-    /** Net taxable income at/above which the recapture equals `amount`. */
+    /** Taxable income at/above which this stage contributes the full `amount`. */
     thresholdHigh: z.number().gt(0),
-    /** The maximum (and above-band constant) recapture amount. */
+    /** The maximum (and above-band constant) contribution of this stage. */
     amount: z.number().gte(0),
   })
   .refine((d) => d.thresholdHigh > d.thresholdLow, {
     message: "thresholdHigh must exceed thresholdLow",
   });
+export type RecaptureStageData = z.infer<typeof RecaptureStageSchema>;
+
+/**
+ * A high-income "benefit recapture" added to the bracket tax. Two shapes — at
+ * least one must be present:
+ *
+ *  - **`stages`** applies to every filing status — **Arkansas's bracket
+ *    adjustment** (Ark. Code §26-51-201): one ramp ($0 → $329 over $94,700 →
+ *    $97,900 of net taxable income) that recaptures the benefit of the lower
+ *    0/2/3/3.4% brackets, converging to a near-flat 3.9%.
+ *  - **`byFilingStatus`** gives per-status stage lists — **Connecticut's 2% Tax
+ *    Rate Phase-Out Add-Back (Table C) and Tax Recapture (Table D)** combined
+ *    (CT-1040 TCS): several stacked ramps, by status, that claw back the benefit
+ *    of the lower brackets so the highest earners pay a near-flat 6.99%. Resolved
+ *    via the filing-status fallback (MFS → single, QSS → married-jointly).
+ *
+ * The recapture is computed on taxable income; for Connecticut the personal
+ * exemption is fully phased out before any recapture stage begins, so taxable
+ * income equals Connecticut AGI there and the model matches Tables C/D exactly
+ * (apart from the linear-vs-step residual within each ramp).
+ */
+export const IncomeRecaptureSchema = z
+  .object({
+    stages: z.array(RecaptureStageSchema).optional(),
+    byFilingStatus: z.record(z.string(), z.array(RecaptureStageSchema)).optional(),
+  })
+  .refine((d) => d.stages !== undefined || d.byFilingStatus !== undefined, {
+    message: "incomeRecapture requires `stages` (all statuses) or `byFilingStatus`",
+  });
 export type IncomeRecaptureData = z.infer<typeof IncomeRecaptureSchema>;
+
+/**
+ * A nonrefundable "personal tax credit" expressed as a fraction of the computed
+ * tax (including any recapture), where the fraction depends on the filer's AGI —
+ * **Connecticut's Table E** (CT-1040 TCS): the credit decimal slides from 0.75
+ * (lowest incomes) down to 0 in published AGI steps, so a low-to-middle earner's
+ * Connecticut income tax is `tax × (1 − rate)`. Each filing status carries an
+ * ascending-by-`agiUpTo` step table; the rate is the first row whose `agiUpTo`
+ * is at or above the filer's AGI, or 0 when AGI exceeds every row. Resolved via
+ * the filing-status fallback (MFS → single, QSS → married-jointly).
+ */
+export const PersonalCreditRateSchema = z.object({
+  byFilingStatus: z.record(
+    z.string(),
+    z.array(z.object({ agiUpTo: z.number().gt(0), rate: z.number().gte(0).lte(1) })).min(1),
+  ),
+});
+export type PersonalCreditRateData = z.infer<typeof PersonalCreditRateSchema>;
 
 /**
  * A tax jurisdiction (federal, a state, or a no-income-tax state as a
@@ -257,8 +299,10 @@ export const JurisdictionSchema = z.object({
   taxpayerCredit: TaxpayerCreditSchema.optional(),
   /** A deduction for federal income tax paid (Alabama uncapped; Oregon capped + AGI-phased). */
   federalTaxDeduction: FederalTaxDeductionSchema.optional(),
-  /** A high-income benefit recapture added to the bracket tax (Arkansas's bracket adjustment). */
+  /** A high-income benefit recapture added to the bracket tax (Arkansas / Connecticut). */
   incomeRecapture: IncomeRecaptureSchema.optional(),
+  /** A percent-of-tax personal credit that slides down with AGI (Connecticut's Table E). */
+  personalCreditRate: PersonalCreditRateSchema.optional(),
   citation: CitationSchema,
   effectiveDateRange: z.object({
     start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

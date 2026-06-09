@@ -1,0 +1,23 @@
+# Connecticut income tax — Connecticut DRS, annual (staggered). Connecticut runs
+# the deepest computation the engine models (Conn. Gen. Stat. §12-700; the
+# CT-1040 Tax Calculation Schedule, Tables A–E): a seven-rate schedule (2%→6.99%),
+# a dollar-for-dollar personal-exemption phase-out, two stacked high-income
+# recaptures (the 2% phase-out add-back and the tax recapture), and a percent-of-
+# tax personal credit. All of it is statutory; the figure most likely to move is
+# the personal exemption, which the adapter anchors as the standard deduction
+# (the MN/RI pattern). The brackets, the per-status recapture stages, and the
+# Table E credit steps are the reviewer's data-only step on each new CT-1040 Tax
+# Calculation Schedule. BUILD-SPEC.md §7.2, §8.
+name: Refresh CT income tax
+
+on:
+  schedule:
+    - cron: "0 12 24 2 *" # February 24, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-ct
+      source_name: CT income tax
