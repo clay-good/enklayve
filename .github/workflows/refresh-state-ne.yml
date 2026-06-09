@@ -1,0 +1,22 @@
+# Nebraska income tax — Nebraska Department of Revenue, annual (staggered).
+# Nebraska levies a per-status graduated schedule (2.46% / 3.51% / 4.55% for
+# 2026; Neb. Rev. Stat. §77-2715.03) on Nebraska taxable income (AGI minus the
+# standard deduction). The 2023 LB 754 reform cuts the top rate on a statutory
+# path (4.55% in 2026, 3.99% in 2027); the rates and the indexed bracket
+# thresholds are statutory/indexed, so the figure the adapter anchors is the
+# indexed standard deduction (the MN/RI pattern). The per-status bracket tables,
+# the scheduled 2027 cut, and the ~$171 exemption credit roll alongside it as the
+# reviewer's data-only step on each new Tax Calculation Schedule. BUILD-SPEC.md §7.2, §8.
+name: Refresh NE income tax
+
+on:
+  schedule:
+    - cron: "0 12 21 2 *" # February 21, 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    uses: ./.github/workflows/_data-refresh.yml
+    with:
+      group: state-ne
+      source_name: NE income tax

@@ -60,7 +60,13 @@
  * can anchor (the MN/RI pattern); Alabama's is the figure last raised by statute
  * and Oregon's indexes annually, while the brackets, the federal-tax cap, and
  * Oregon's Table 4 phase-out roll alongside as the reviewer's data-only step.
- * With them, *every* seeded jurisdiction with an income tax has a refresh adapter.
+ *
+ * The twelfth set adds Nebraska — a clean per-status three-bracket schedule
+ * (2.46% / 3.51% / 4.55% for 2026) over an indexed standard deduction, the figure
+ * the refresh anchors (the MN/RI pattern); the statutory LB 754 rate path (the
+ * 2027 cut to 3.99%), the indexed bracket thresholds, and the ~$171 exemption
+ * credit stay the reviewer's data-only step. With it, *every* seeded jurisdiction
+ * with an income tax has a refresh adapter.
  *
  * Honesty boundaries (kept narrow on purpose, per the family's "be right before
  * being everywhere"):
@@ -128,6 +134,7 @@ export type RefreshGroup =
   | "state-vt"
   | "state-al"
   | "state-or"
+  | "state-ne"
   | "treasurydirect"
   | "usda-snap"
   | "cms-medicaid";
@@ -1140,6 +1147,20 @@ export const ADAPTERS: RefreshAdapter[] = [
     // deduction (the MN/RI pattern); the per-status bracket tables, the $8,500
     // federal-subtraction cap, and the Table 4 phase-out roll alongside it as the
     // reviewer's data-only step on each new annual OR-40 rate chart.
+    parse: parseStandardDeductions,
+  },
+  {
+    id: "state-ne-income-tax-2024",
+    group: "state-ne",
+    source: "Nebraska DOR Tax Calculation Schedule + Form 1040N standard deduction",
+    sourceUrl: "https://revenue.nebraska.gov/about/forms/individual-income-tax-forms",
+    cadence: "Annual",
+    // Nebraska's rates follow the statutory LB 754 path (top rate 4.55% in 2026,
+    // 3.99% in 2027) and its brackets index annually; the cleanly-stated indexed
+    // figure is the standard deduction (the MN/RI pattern). The per-status bracket
+    // tables, the scheduled 2027 rate cut, and the ~$171 exemption credit roll
+    // alongside it as the reviewer's data-only step on each new Tax Calculation
+    // Schedule.
     parse: parseStandardDeductions,
   },
   {

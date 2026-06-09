@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-06-08",
+  "generatedAt": "2026-06-09",
   "datasets": [
     {
       "id": "federal-income-tax-2024",
@@ -703,6 +703,19 @@
       "sourceDocument": "Oregon DOR Form OR-40 (2025): 4.75%–9.9% rate charts, federal-tax subtraction (cap $8,500, AGI-phased), standard deduction (ORS §316.037/.680/.695)",
       "dateRetrieved": "2026-06-08",
       "contentHash": "80e4ef8a64db11eb4efde0ce3e223c952bb1a3da53ac19ab31d7aa0ac945cca2"
+    },
+    {
+      "id": "state-ne-income-tax-2024",
+      "kind": "state-income-tax",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "state-ne-income-tax-2024.json",
+      "sourceUrl": "https://revenue.nebraska.gov/sites/default/files/doc/tax-forms/2025/2025_Tax_Calculation_Schedule.pdf",
+      "sourceDocument": "Nebraska DOR 2025 Tax Calculation Schedule + 1040N standard deduction; LB 754 cuts the 2026 top rate to 4.55% (Neb. Rev. Stat. §77-2715.03)",
+      "dateRetrieved": "2026-06-08",
+      "contentHash": "ff563e1692318a6ae579fa79c58a774783ec8330121f80484a96e6796495334e"
     },
     {
       "id": "federal-poverty-level-2024-contiguous",
