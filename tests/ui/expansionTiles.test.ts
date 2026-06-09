@@ -158,6 +158,15 @@ describe("Sinking Fund Planner", () => {
     const { root: ok } = mount(mountSinkingFund, new URLSearchParams({ t: "12000", m: "12" }));
     expect(ok.querySelector(".clamp-note")).toBeNull();
   });
+
+  it("signposts an extreme return assumption without clamping it (SPEC-3 §2.4)", () => {
+    const base = { t: "12000", m: "12" };
+    const calm = mount(mountSinkingFund, new URLSearchParams({ ...base, r: "4" }));
+    expect(calm.root.querySelector(".assumption-hint")).toBeNull();
+    const wild = mount(mountSinkingFund, new URLSearchParams({ ...base, r: "80" }));
+    expect(wild.root.querySelector(".assumption-hint")?.textContent).toContain("unusually high");
+    expect(wild.root.querySelector(".result-card")).not.toBeNull();
+  });
 });
 
 describe("Rent vs Buy", () => {

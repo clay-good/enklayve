@@ -9,7 +9,7 @@
 import { Money } from "../engine/money";
 import { collegeCostPlan } from "../engine/finance";
 import { el } from "../ui/dom";
-import { assumptionHint, field, parseNonNegative, tryExampleButton } from "../ui/form";
+import { assumptionHints, field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { sensitivityTable, sensitivityToggle } from "../ui/sensitivity";
 import type { TileContext, TileDefinition } from "./types";
@@ -17,9 +17,10 @@ import type { TileContext, TileDefinition } from "./types";
 /** How far the opt-in range flexes the inflation assumption, in percentage points. */
 const INFLATION_DELTA = 2;
 
-/** Defensible band for the college-inflation assumption; outside it, a calm
- *  hint signposts a stress scenario (SPEC-3 §2.4). Never a clamp. */
+/** Defensible bands for the two forecast assumptions; outside either, one calm
+ *  combined hint signposts a stress scenario (SPEC-3 §2.4). Never a clamp. */
 const INFLATION_BAND = { low: 0, high: 20, label: "College cost inflation" };
+const RETURN_BAND = { low: -50, high: 50, label: "Expected return" };
 
 interface Fields {
   annualCostToday: number;
@@ -148,7 +149,10 @@ export function mountCollegeCost(ctx: TileContext): void {
       }),
     );
 
-    const hint = assumptionHint(fields.costInflationPct, INFLATION_BAND);
+    const hint = assumptionHints([
+      { valuePct: fields.costInflationPct, band: INFLATION_BAND },
+      { valuePct: fields.expectedReturnPct, band: RETURN_BAND },
+    ]);
     if (hint) resultContainer.append(hint);
 
     if (fields.band) {

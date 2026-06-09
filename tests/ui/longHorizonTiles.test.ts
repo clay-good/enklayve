@@ -118,12 +118,22 @@ describe("College Cost Planner", () => {
     expect(root.querySelector(".ph-empty")).not.toBeNull();
   });
 
-  it("signposts an extreme inflation assumption without clamping it (SPEC-3 §2.4)", () => {
-    const calm = mount(mountCollegeCost, new URLSearchParams({ cost: "25000", ci: "5" }));
+  it("signposts extreme inflation or return assumptions without clamping them (SPEC-3 §2.4)", () => {
+    const calm = mount(mountCollegeCost, new URLSearchParams({ cost: "25000", ci: "5", r: "5" }));
     expect(calm.root.querySelector(".assumption-hint")).toBeNull();
-    const wild = mount(mountCollegeCost, new URLSearchParams({ cost: "25000", ci: "40" }));
-    expect(wild.root.querySelector(".assumption-hint")?.textContent).toContain("unusually high");
-    expect(wild.root.querySelector(".result-card")).not.toBeNull();
+    // Extreme inflation alone → the singular wording.
+    const infl = mount(mountCollegeCost, new URLSearchParams({ cost: "25000", ci: "40", r: "5" }));
+    expect(infl.root.querySelector(".assumption-hint")?.textContent).toContain("unusually high");
+    // Extreme expected return alone is now caught too (the second assumption).
+    const ret = mount(mountCollegeCost, new URLSearchParams({ cost: "25000", ci: "5", r: "90" }));
+    expect(ret.root.querySelector(".assumption-hint")?.textContent).toContain("Expected return");
+    // Both extreme → one combined line, not two notes.
+    const both = mount(mountCollegeCost, new URLSearchParams({ cost: "25000", ci: "40", r: "90" }));
+    expect(both.root.querySelectorAll(".assumption-hint").length).toBe(1);
+    expect(both.root.querySelector(".assumption-hint")?.textContent).toContain(
+      "are outside the usual range",
+    );
+    expect(both.root.querySelector(".result-card")).not.toBeNull();
   });
 });
 

@@ -10,10 +10,21 @@
 import { Money } from "../engine/money";
 import { coastFireProjection } from "../engine/finance";
 import { el } from "../ui/dom";
-import { field, parseNonNegative, parseNumber, pct, tryExampleButton } from "../ui/form";
+import {
+  assumptionHint,
+  field,
+  parseNonNegative,
+  parseNumber,
+  pct,
+  tryExampleButton,
+} from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
+
+/** Defensible band for the assumed real (after-inflation) return; outside it,
+ *  a calm hint signposts a stress scenario (SPEC-3 §2.4). Never a clamp. */
+const RETURN_BAND = { low: -15, high: 15, label: "Assumed real return" };
 
 interface Fields {
   currentAge: number;
@@ -144,6 +155,8 @@ export function mountDownshift(ctx: TileContext): void {
         permalink: () => ctx.permalink(writeFields(fields)),
       }),
     );
+    const hint = assumptionHint(fields.realReturnPct, RETURN_BAND);
+    if (hint) resultContainer.append(hint);
   }
 
   function recompute(): void {

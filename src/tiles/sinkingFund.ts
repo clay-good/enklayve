@@ -9,6 +9,7 @@ import { Money } from "../engine/money";
 import { requiredMonthlyContribution } from "../engine/finance";
 import { el } from "../ui/dom";
 import {
+  assumptionHint,
   clampNote,
   didClamp,
   field,
@@ -19,6 +20,10 @@ import {
 } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import type { TileContext, TileDefinition } from "./types";
+
+/** Defensible band for the assumed annual return; outside it, a calm hint
+ *  signposts a stress scenario (SPEC-3 §2.4). Never a clamp. */
+const RETURN_BAND = { low: -50, high: 50, label: "Assumed annual return" };
 
 interface Fields {
   goal: string;
@@ -122,6 +127,8 @@ export function mountSinkingFund(ctx: TileContext): void {
           permalink: () => ctx.permalink(writeFields(fields)),
         }),
       );
+      const onTrackHint = assumptionHint(fields.returnPct, RETURN_BAND);
+      if (onTrackHint) resultContainer.append(onTrackHint);
       return;
     }
 
@@ -146,6 +153,8 @@ export function mountSinkingFund(ctx: TileContext): void {
         permalink: () => ctx.permalink(writeFields(fields)),
       }),
     );
+    const hint = assumptionHint(fields.returnPct, RETURN_BAND);
+    if (hint) resultContainer.append(hint);
   }
 
   function recompute(): void {

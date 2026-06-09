@@ -205,6 +205,15 @@ describe("Downshift Point tile", () => {
     expect(root.querySelector(".ph-empty")).not.toBeNull();
   });
 
+  it("signposts an extreme real-return assumption without clamping it (SPEC-3 §2.4)", () => {
+    const base = { age: "40", ret: "65", bal: "150000", t: "1000000" };
+    const calm = mount(mountDownshift, new URLSearchParams({ ...base, r: "5" }));
+    expect(calm.root.querySelector(".assumption-hint")).toBeNull();
+    const wild = mount(mountDownshift, new URLSearchParams({ ...base, r: "30" }));
+    expect(wild.root.querySelector(".assumption-hint")?.textContent).toContain("unusually high");
+    expect(wild.root.querySelector(".result-card")).not.toBeNull();
+  });
+
   it("has no axe violations", async () => {
     const { root } = mount(
       mountDownshift,
