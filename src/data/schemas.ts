@@ -54,6 +54,25 @@ export const TaxBracketSchema = z.object({
 const bracketsByStatus = z.record(FilingStatus, z.array(TaxBracketSchema).min(1));
 const amountByStatus = z.record(FilingStatus, z.number().gte(0));
 
+/**
+ * A per-filing-status amount that MUST define **every** status. `z.record` over
+ * an enum key validates a *partial* object at runtime (a shard with only
+ * `single` still parses), which is the right shape for state schedules that
+ * legitimately omit statuses and lean on the engine's `bracketsFor` fallback.
+ * But a federal figure published for all five statuses — the Additional Medicare
+ * Tax threshold — must be complete: a shard missing one is a data error that
+ * should fail load-time validation and trip the fail-safe banner, never let the
+ * engine silently substitute a statutory literal for the absent status
+ * (the SPEC-3-hardening §A6 magic-number rule, applied here to FICA).
+ */
+const amountForEveryStatus = z.object({
+  single: z.number().gte(0),
+  married_jointly: z.number().gte(0),
+  married_separately: z.number().gte(0),
+  head_of_household: z.number().gte(0),
+  qualifying_surviving_spouse: z.number().gte(0),
+});
+
 /** A local income-tax add-on (e.g. New York City, Yonkers, Ohio municipalities). */
 export const LocalAddOnSchema = z.object({
   id: z.string().min(1),
@@ -345,7 +364,7 @@ export const FicaSchema = z.object({
   socialSecurityRate: z.number().gte(0).lte(1),
   medicareRate: z.number().gte(0).lte(1),
   additionalMedicareRate: z.number().gte(0).lte(1),
-  additionalMedicareThresholdByFilingStatus: amountByStatus,
+  additionalMedicareThresholdByFilingStatus: amountForEveryStatus,
   citation: CitationSchema,
 });
 export type FicaData = z.infer<typeof FicaSchema>;

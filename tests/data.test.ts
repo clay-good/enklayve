@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadDataset, loadManifest, needsVerifyBanner } from "../src/data/loader";
 import {
+  FicaSchema,
   ManifestSchema,
   RetirementLimitsSchema,
   type Jurisdiction,
@@ -90,6 +91,29 @@ describe("schema fail-safe", () => {
       const missing = JSON.parse(readShard("retirement-limits-2024.json"));
       delete missing.limits[key];
       expect(RetirementLimitsSchema.safeParse(missing).success).toBe(false);
+    }
+  });
+
+  it("requires every filing-status Additional Medicare threshold (SPEC-3 §A6, no stale literal)", () => {
+    // The real FICA shard defines the threshold for all five statuses, so it
+    // validates. (Note the surtax-specific value: qualifying surviving spouse is
+    // $200,000, not the $250,000 it would get under the income-tax MFJ mapping.)
+    const real = JSON.parse(readShard("fica-2024.json"));
+    expect(FicaSchema.safeParse(real).success).toBe(true);
+    // Dropping any status fails validation, so the loader marks FICA invalid and
+    // the take-home / SE-tax tiles show the verify-before-relying banner rather
+    // than the engine substituting the $200,000 single threshold for an MFJ
+    // filer (whose real threshold is $250,000) — the §A6 magic-number rule.
+    for (const status of [
+      "single",
+      "married_jointly",
+      "married_separately",
+      "head_of_household",
+      "qualifying_surviving_spouse",
+    ]) {
+      const missing = JSON.parse(readShard("fica-2024.json"));
+      delete missing.additionalMedicareThresholdByFilingStatus[status];
+      expect(FicaSchema.safeParse(missing).success).toBe(false);
     }
   });
 });
