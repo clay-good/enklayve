@@ -64,12 +64,12 @@ function writeFields(f: Fields): URLSearchParams {
 /** The applicable limits for this person, given age and HSA coverage. */
 function limitsFor(f: Fields, d: RetirementLimitsData): { k: number; ira: number; hsa: number } {
   const l = d.limits;
-  const k = (l.elective_deferral_401k ?? 0) + (f.age >= 50 ? (l.catch_up_401k_50plus ?? 0) : 0);
-  const ira = (l.ira_contribution ?? 0) + (f.age >= 50 ? (l.ira_catch_up_50plus ?? 0) : 0);
+  const k = l.elective_deferral_401k + (f.age >= 50 ? l.catch_up_401k_50plus : 0);
+  const ira = l.ira_contribution + (f.age >= 50 ? l.ira_catch_up_50plus : 0);
   let hsa = 0;
-  if (f.hsaCoverage === "self") hsa = l.hsa_self_only ?? 0;
-  else if (f.hsaCoverage === "family") hsa = l.hsa_family ?? 0;
-  if (f.hsaCoverage !== "none" && f.age >= 55) hsa += l.hsa_catch_up_55plus ?? 0;
+  if (f.hsaCoverage === "self") hsa = l.hsa_self_only;
+  else if (f.hsaCoverage === "family") hsa = l.hsa_family;
+  if (f.hsaCoverage !== "none" && f.age >= 55) hsa += l.hsa_catch_up_55plus;
   return { k, ira, hsa };
 }
 

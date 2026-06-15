@@ -73,6 +73,9 @@ export function selfEmploymentTax(
 
   const medicare = taxableBase.multiply(fica.medicareRate * 2);
 
+  // The 0.9% surtax applies to the 92.35% base, not the full profit: Form 8959
+  // line 8 ("self-employment income") is the Schedule SE figure, already × 0.9235.
+  // Using the un-reduced profit here would overstate the tax (see SPEC-3-hardening §C1).
   const threshold = fica.additionalMedicareThresholdByFilingStatus[status] ?? 200000;
   const over = taxableBase.greaterThan(threshold) ? taxableBase.subtract(threshold) : Money.zero();
   const additionalMedicare = over.multiply(fica.additionalMedicareRate);

@@ -162,7 +162,7 @@ export function mountIraDeduction(ctx: TileContext): void {
         spouseCoveredByPlan: fields.spouseCovered,
         age50Plus: fields.age50Plus,
       },
-      limits!.limits as { ira_contribution: number; ira_catch_up_50plus: number },
+      limits!.limits,
       iraData!,
     );
     const fmt = (m: Money): string => m.format(ctx.locale);

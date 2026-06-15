@@ -2,7 +2,12 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadDataset, loadManifest, needsVerifyBanner } from "../src/data/loader";
-import { ManifestSchema, type Jurisdiction, type ManifestEntry } from "../src/data/schemas";
+import {
+  ManifestSchema,
+  RetirementLimitsSchema,
+  type Jurisdiction,
+  type ManifestEntry,
+} from "../src/data/schemas";
 
 const DATA_DIR = resolve(__dirname, "..", "data");
 
@@ -67,6 +72,25 @@ describe("schema fail-safe", () => {
     const result = await loadDataset(entry, malformed, 2024);
     expect(result.status).toBe("invalid");
     expect(result.problems.join(" ")).toMatch(/schema validation failed/);
+  });
+
+  it("requires every named retirement limit the tiles read (SPEC-3 §A4, no stale literal)", () => {
+    // The real shard, with all named limits present, validates.
+    const real = JSON.parse(readShard("retirement-limits-2024.json"));
+    expect(RetirementLimitsSchema.safeParse(real).success).toBe(true);
+    // Dropping a consumed key fails validation, so the tile falls back to the
+    // verify-before-relying banner rather than substituting a magic number.
+    for (const key of [
+      "elective_deferral_401k",
+      "catch_up_401k_50plus",
+      "defined_contribution_415c",
+      "ira_contribution",
+      "hsa_self_only",
+    ]) {
+      const missing = JSON.parse(readShard("retirement-limits-2024.json"));
+      delete missing.limits[key];
+      expect(RetirementLimitsSchema.safeParse(missing).success).toBe(false);
+    }
   });
 });
 

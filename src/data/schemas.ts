@@ -317,7 +317,23 @@ export type Jurisdiction = z.infer<typeof JurisdictionSchema>;
 /** Retirement / HSA / FSA limits and catch-up amounts (IRS annual notice). */
 export const RetirementLimitsSchema = z.object({
   taxYear: z.number().int(),
-  limits: z.record(z.string(), z.number().gte(0)),
+  // The named limits the tiles read are required, so a shard missing one fails
+  // validation and the dependent tiles fall back to the verify-before-relying
+  // banner instead of silently substituting a stale literal (SPEC-3.md §2.5,
+  // the §A4 magic-number rule). `.catchall` keeps the IRS notice's other limits
+  // (FSA, the 60–63 catch-up) without requiring them.
+  limits: z
+    .object({
+      elective_deferral_401k: z.number().gte(0),
+      catch_up_401k_50plus: z.number().gte(0),
+      defined_contribution_415c: z.number().gte(0),
+      ira_contribution: z.number().gte(0),
+      ira_catch_up_50plus: z.number().gte(0),
+      hsa_self_only: z.number().gte(0),
+      hsa_family: z.number().gte(0),
+      hsa_catch_up_55plus: z.number().gte(0),
+    })
+    .catchall(z.number().gte(0)),
   citation: CitationSchema,
 });
 export type RetirementLimitsData = z.infer<typeof RetirementLimitsSchema>;

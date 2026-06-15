@@ -190,7 +190,7 @@ export function mountBackdoorRoth(ctx: TileContext): void {
         }),
       );
     } else {
-      const dcLimit = limits!.limits.defined_contribution_415c ?? 0;
+      const dcLimit = limits!.limits.defined_contribution_415c;
       const r = megaBackdoorRoth({
         definedContributionLimit: dcLimit,
         electiveDeferral: fields.electiveDeferral,

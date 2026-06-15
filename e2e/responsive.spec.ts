@@ -67,25 +67,32 @@ test.describe("no horizontal scrolling, every view", () => {
   // /tools/<id>.html entries are generated from the tile registry (the static
   // crawl surface), so a new tile is covered automatically. The All Tools index
   // renders tools as buttons (not anchors), so the sitemap is the reliable list.
-  test("every tool fits on a 360px phone", async ({ page, request }) => {
+  test("every tool fits on a phone, down to the 320px iPhone SE", async ({ page, request }) => {
     const sitemap = await (await request.get("/sitemap.xml")).text();
     const ids = [...sitemap.matchAll(/\/tools\/([^.<]+)\.html/g)].map((m) => m[1]);
     const unique = [...new Set(ids)];
     expect(unique.length, "expected the sitemap to list many tools").toBeGreaterThan(40);
 
-    await page.setViewportSize({ width: 360, height: 740 });
+    // The two narrowest common phone widths — 320px (iPhone SE / older Androids)
+    // and 360px (the modern baseline). The ≤600px CSS breakpoint governs both,
+    // so a leak at one is a leak at the other; measuring both pins it.
+    const phoneWidths = [320, 360];
     const leaks: string[] = [];
     for (const id of unique) {
       // A tool may be hosted inside a hub behind `?tool=`, so use the real
       // in-app link printed on its static page rather than assuming `/#/<id>`.
       const pageHtml = await (await request.get(`/tools/${id}.html`)).text();
       const m = pageHtml.match(/href="(\/#\/[^"]+)"/);
-      await page.goto(m ? m[1]! : `/#/${id}`);
-      await waitForApp(page);
-      const overflow = await horizontalOverflow(page);
-      if (overflow > 1) leaks.push(`${id} (+${overflow}px)`);
+      const href = m ? m[1]! : `/#/${id}`;
+      for (const width of phoneWidths) {
+        await page.setViewportSize({ width, height: 740 });
+        await page.goto(href);
+        await waitForApp(page);
+        const overflow = await horizontalOverflow(page);
+        if (overflow > 1) leaks.push(`${id} @ ${width}px (+${overflow}px)`);
+      }
     }
-    expect(leaks, `tools that scroll sideways at 360px: ${leaks.join(", ")}`).toEqual([]);
+    expect(leaks, `tools that scroll sideways on a phone: ${leaks.join(", ")}`).toEqual([]);
   });
 
   // A tool with a result card open (the breakdown table is the classic leak

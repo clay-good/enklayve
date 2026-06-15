@@ -126,6 +126,7 @@ export function mountSocialSecurity(ctx: TileContext): void {
         label: `Your choice: age ${fields.claimAge}`,
         value: `${fmt(chosen.monthlyBenefit)}/mo · ${fmt(chosen.monthlyBenefit.multiply(12))}/yr`,
         emphasis: true,
+        citation: cite,
       },
     ];
 
