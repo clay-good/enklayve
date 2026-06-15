@@ -141,12 +141,12 @@ Each of these was flagged during the stress test, traced to the source, and foun
 
 ## §D — Coverage gaps worth a test (not bugs, just untested corners)
 
-These are correct today but lightly tested; adding cases hardens them against future edits. They feed the property suite in [SPEC-3.md](SPEC-3.md) §2.9.
+These are correct today but lightly tested; adding cases hardens them against future edits. They feed the property suite in [SPEC-3.md](SPEC-3.md) §2.9. **Status — 2026-06-15: all five are now pinned.**
 
-- **Capital-gains long-term bracket fallback** — [`capitalGains.ts`](../../src/engine/capitalGains.ts) falls back to the `single` schedule (then a 15% default) when a filing status lacks a long-term bracket table. Add a golden case for `qualifying_surviving_spouse` to pin the fallback.
-- **RMD age beyond the table** — [`rmd.ts`](../../src/engine/rmd.ts) clamps an age past the Uniform Lifetime Table's max to the terminal factor. Add an age-130 case.
-- **I-bond / inflation lookups for an absent period/year** — both return `null` for an unknown key ([`savingsBond.ts`](../../src/engine/savingsBond.ts), [`inflation.ts`](../../src/engine/inflation.ts)); add a `null`-return case for each.
-- **Debt payoff where payment exactly equals interest** — the boundary of the `payment <= interest → null` guard in [`finance.ts`](../../src/engine/finance.ts); the strict-less-than case is covered, the equality case is not.
-- **Negative-AGI medical floor** — [`deductions.ts`](../../src/engine/tax/deductions.ts) computes the 7.5%-of-AGI medical floor; a negative-AGI input (large adjustments) is an untested corner.
+- **Capital-gains long-term bracket fallback** — [`capitalGains.ts`](../../src/engine/capitalGains.ts) falls back to the `single` schedule (then a 15% default) when a filing status lacks a long-term bracket table. ✅ Pinned in [`tests/golden/capitalGains.test.ts`](../../tests/golden/capitalGains.test.ts): a hand-verified `qualifying_surviving_spouse` case (its 0% band tops at $98,900, distinguishing the QSS table from the single fallback), plus two synthetic-shard cases that exercise the missing-status → `single` and missing-`single` → flat-15% fallbacks.
+- **RMD age beyond the table** — [`rmd.ts`](../../src/engine/rmd.ts) clamps an age past the Uniform Lifetime Table's max to the terminal factor. ✅ Pinned by the age-130 → terminal-factor case in [`tests/golden/rmd.test.ts`](../../tests/golden/rmd.test.ts).
+- **I-bond / inflation lookups for an absent period/year** — both return `null` for an unknown key ([`savingsBond.ts`](../../src/engine/savingsBond.ts), [`inflation.ts`](../../src/engine/inflation.ts)). ✅ Pinned by the unknown-purchase-period case in [`tests/golden/savingsBond.test.ts`](../../tests/golden/savingsBond.test.ts) and the year-not-in-dataset case in [`tests/golden/inflation.test.ts`](../../tests/golden/inflation.test.ts).
+- **Debt payoff where payment exactly equals interest** — the boundary of the `payment <= interest → null` guard in [`finance.ts`](../../src/engine/finance.ts). ✅ Pinned by the payment-exactly-equals-interest case in [`tests/engine/propertyInvariants.test.ts`](../../tests/engine/propertyInvariants.test.ts).
+- **Negative-AGI medical floor** — [`deductions.ts`](../../src/engine/tax/deductions.ts) computes the 7.5%-of-AGI medical floor; a negative-AGI input (large adjustments) is an untested corner. ✅ Pinned by the negative-AGI medical-deduction case in [`tests/engine/propertyInvariants.test.ts`](../../tests/engine/propertyInvariants.test.ts) (the floor can no longer go negative and inflate the deduction).
 
 None of these is a defect; each is a cheap insurance policy on a correct behavior.

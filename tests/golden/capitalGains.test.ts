@@ -97,6 +97,82 @@ describe("Net Investment Income Tax (§1411)", () => {
   });
 });
 
+describe("qualifying_surviving_spouse uses its own long-term schedule (§D1)", () => {
+  it("QSS 0% band tops at $98,900, not the single $49,450", () => {
+    // Ordinary 80,000; LT gain 30,000 spans [80,000, 110,000]. The QSS 0% band
+    // runs to 98,900 (the married-jointly figure), so 18,900 sits at 0% and the
+    // remaining 11,100 at 15% → 1,665. A single filer (0% top 49,450) would tax
+    // the whole 30,000 at 15% (4,500), so this case pins the QSS-specific table
+    // rather than the single fallback. MAGI is below the 250,000 QSS NIIT line.
+    const r = estimateCapitalGains(
+      {
+        filingStatus: "qualifying_surviving_spouse",
+        ordinaryTaxableIncome: 80000,
+        shortTermGain: 0,
+        longTermGain: 30000,
+        modifiedAgi: 110000,
+      },
+      ds.federal,
+      ds.capitalGains,
+    );
+    expect(r.longTermBands).toHaveLength(2);
+    expect(num(r.longTermBands[0]!.amount)).toBe(18900);
+    expect(r.longTermBands[0]!.rate).toBe(0);
+    expect(num(r.longTermBands[1]!.amount)).toBe(11100);
+    expect(num(r.longTermTax)).toBe(1665);
+    expect(num(r.netInvestmentIncomeTax)).toBe(0);
+  });
+});
+
+describe("long-term bracket fallback when a filing status lacks a table (§D1)", () => {
+  // Pins the two-step fallback in estimateCapitalGains: a missing filing-status
+  // table falls back to `single`, and a missing `single` falls back to a flat
+  // 15%. These paths exist for a malformed shard; the shipped dataset has every
+  // status, so they are otherwise unexercised. SPEC-3-hardening.md §D.
+  it("a missing status falls back to the single schedule", () => {
+    const noQss = structuredClone(ds.capitalGains);
+    delete (noQss.longTermBracketsByFilingStatus as Record<string, unknown>)
+      .qualifying_surviving_spouse;
+    // With QSS gone, the single 0% top of 49,450 applies: ordinary 80,000 is
+    // already above it, so all 30,000 is taxed at 15% → 4,500 (not the 1,665 the
+    // QSS table produced for the identical input above).
+    const r = estimateCapitalGains(
+      {
+        filingStatus: "qualifying_surviving_spouse",
+        ordinaryTaxableIncome: 80000,
+        shortTermGain: 0,
+        longTermGain: 30000,
+        modifiedAgi: 110000,
+      },
+      ds.federal,
+      noQss,
+    );
+    expect(num(r.longTermTax)).toBe(4500);
+  });
+
+  it("a missing single schedule falls back to a flat 15%", () => {
+    const noTables = structuredClone(ds.capitalGains);
+    noTables.longTermBracketsByFilingStatus = {} as typeof noTables.longTermBracketsByFilingStatus;
+    // No table for the status and none for `single` → the flat 15% default. A
+    // gain of 30,000 entirely inside what would be the 0% band still taxes at
+    // 15% → 4,500, proving the terminal default rather than a 0% bracket.
+    const r = estimateCapitalGains(
+      {
+        filingStatus: "qualifying_surviving_spouse",
+        ordinaryTaxableIncome: 0,
+        shortTermGain: 0,
+        longTermGain: 30000,
+        modifiedAgi: 30000,
+      },
+      ds.federal,
+      noTables,
+    );
+    expect(r.longTermBands).toHaveLength(1);
+    expect(r.longTermBands[0]!.rate).toBe(0.15);
+    expect(num(r.longTermTax)).toBe(4500);
+  });
+});
+
 describe("short-term capital gains (ordinary rates)", () => {
   it("single, $10k ST gain stacked on $50k ordinary income → $2,160", () => {
     // The gain spans [50,000, 60,000], straddling the single 22% boundary at
