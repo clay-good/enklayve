@@ -1,6 +1,6 @@
 # Launch checklist
 
-A single pass that confirms every acceptance criterion across Phases 0–13 still holds, plus the launch-specific gates (offline, audit, crawlability, clean deploy). Run it before announcing. Each box is either a command to run or a thing to verify; the commands are the same gate CI runs.
+A single pass that confirms every acceptance criterion across Phases 0–17 still holds, plus the launch-specific gates (offline, audit, crawlability, clean deploy). Run it before announcing. Each box is either a command to run or a thing to verify; the commands are the same gate CI runs.
 
 ## The automated gate (must all be green)
 

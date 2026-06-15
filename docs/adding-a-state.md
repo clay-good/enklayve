@@ -22,21 +22,21 @@ The fifty-state tax engine is the moat, and it is built so **adding a state is a
 {
   "id": "US-GA",                 // "US-XX"
   "name": "Georgia",
-  "taxYear": 2024,
+  "taxYear": 2026,
   "hasIncomeTax": true,          // false → a first-class no-income-tax record (TX, FL)
   "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
   "bracketsByFilingStatus": {    // ordered, ascending lowerBound; a flat tax is one bracket
-    "single": [{ "lowerBound": 0, "rate": 0.0539 }]
+    "single": [{ "lowerBound": 0, "rate": 0.0499 }]
     // ... one entry per supported filing status
   },
   "standardDeductionByFilingStatus": { "single": 12000, "married_jointly": 24000, "head_of_household": 12000 },
   "citation": {                  // required — the no-orphan-numbers rule (SPEC §9)
     "sourceUrl": "https://dor.georgia.gov/taxes/individual-taxes",
-    "sourceDocument": "Georgia DOR, 5.39% flat tax (2024); standard deduction $12,000/$24,000",
-    "effectiveYear": 2024,
-    "dateRetrieved": "2024-02-01"
+    "sourceDocument": "Georgia DOR / HB 463, 4.99% flat individual income tax effective Jan 1, 2026; standard deduction $12,000/$24,000 (rises in 2027)",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-06-02"
   },
-  "effectiveDateRange": { "start": "2024-01-01", "end": "2024-12-31" }
+  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
 }
 ```
 
