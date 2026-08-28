@@ -1,6 +1,6 @@
 # enklayve.com — Build Spec 4: The Public Utility Pass
 
-> Adopted 2026-08-28. This spec adds a fourth pillar and one new capability to each of the three existing ones. It does not change the thesis, the privacy model, or the determinism contract.
+> Adopted 2026-08-28. Hardened 2026-08-28 (§7 interfaces, §8 build plan, §9 readiness gate). This spec adds a fourth pillar and one new capability to each of the three existing ones. It does not change the thesis, the privacy model, or the determinism contract.
 
 Specs 1–3 built a very good calculator suite: 59 deterministic tools across 10 hubs, every statutory number cited, a document Readout that extracts, a session profile, and an ordered plan. The catalog is complete against its own roadmap. This spec argues that the catalog is complete against the wrong map.
 
@@ -33,9 +33,9 @@ None of these are hard math. Most are **published, deterministic rules that no c
 
 ### 2.1 Pillar 4 — Rough Water
 
-A fourth pillar alongside Take Home & Taxes, What You're Owed, and Safe Harbor. Safe Harbor is calm wealth; Rough Water is the other half of the same nautical frame — the tools for when conditions are bad. The pillar name is a vision-level name; the user-facing hubs stay plainly titled the way the existing 10 hubs are ("Medical Bills", "Debt & Collections", "Benefit Cliffs", "Life Changes").
+A fourth pillar alongside Take Home & Taxes, What You're Owed, and Safe Harbor. Safe Harbor is calm wealth; Rough Water is the other half of the same nautical frame — the tools for when conditions are bad. The pillar name is a vision-level name; the user-facing hubs stay plainly titled the way the existing 10 hubs are ("Benefit Cliffs", "When Money Is Tight", "Life Changes").
 
-The pillar's marquee item, and the single highest value-÷-effort item in this entire spec, is the **Benefit Cliff Explorer** (§4.1 of [SPEC-4-safety-net.md](SPEC-4-safety-net.md)): what actually happens to a household's *total resources* — wages, minus taxes, plus EITC/CTC/ACA PTC/SNAP, against Medicaid eligibility — as earnings rise. Every dataset it needs is already bundled and cited. Every incumbent shows the tax marginal rate and stops. Nobody shows a working parent that the shift from $34,000 to $38,000 can be net-negative, or by how much, or exactly where the edge sits.
+The pillar's marquee item, and the single highest value-÷-effort item in this entire spec, is the **Benefit Cliff Explorer** (§A1 of [SPEC-4-safety-net.md](SPEC-4-safety-net.md)): what actually happens to a household's *total resources* — wages, minus taxes, plus EITC/CTC/ACA PTC/SNAP, against Medicaid eligibility — as earnings rise. Every dataset it needs is already bundled and cited. Every incumbent shows the tax marginal rate and stops. Nobody shows a working parent that the shift from $34,000 to $38,000 can be net-negative, or by how much, or exactly where the edge sits.
 
 ### 2.2 Readout v2 — documents that answer, not just extract
 
@@ -56,7 +56,7 @@ The one honest form of "engagement" for a utility: **the site remembers your sit
 
 This is the deterministic, private, no-account version of the notification loop every finance app monetizes. No server, no sync, no push. Detail in [SPEC-4-ledger.md](SPEC-4-ledger.md).
 
-**On gamification:** the recompute diff *is* the progression mechanic, and it is the only one this product should have. Points, streaks, levels, and avatars would make the site less trustworthy on the day someone opens it in a panic. The return-visit reason is "it knows my situation and the law changed," not "I have a 14-day streak." This is recorded as a decision, not an omission — see §7.
+**On gamification:** the recompute diff *is* the progression mechanic, and it is the only one this product should have. Points, streaks, levels, and avatars would make the site less trustworthy on the day someone opens it in a panic. The return-visit reason is "it knows my situation and the law changed," not "I have a 14-day streak." This is recorded as a decision, not an omission — see §9.
 
 ---
 
@@ -65,7 +65,7 @@ This is the deterministic, private, no-account version of the notification loop 
 Pillar 4 tools carry risks the first three pillars mostly do not: they touch legally consequential decisions, they vary enormously by state, and being wrong can hurt someone materially. The existing bar (SPEC §2, SPEC-3 §2) is necessary but not sufficient. A Pillar 4 tool ships only if it clears **all nine** of the existing invariants plus these four:
 
 1. **Federal floor, state variance named.** The computation is anchored to a federal rule that holds everywhere (a CCPA garnishment cap, a No Surprises Act protection, an FPL percentage). Where a state can be more generous or more restrictive, the tool says so explicitly and does not pretend the federal number is the answer. A tool that cannot be anchored to a federal floor is either built as a 50-state adapter set (the tax-engine pattern, SPEC §8) or parked.
-2. **Harm-if-wrong tiering.** Every Pillar 4 tool is tagged with what happens if its output is wrong. Tier 1 (informational: a cliff estimate) ships on the normal bar. Tier 2 (decision-shaping: a bill-triage order) ships with the consequences stated on-screen, not just the ranking. Tier 3 (rights-adjacent: garnishment exemptions, balance-billing protections) ships **screener-only** — it tells you what the rule is and that your situation appears to fall inside or outside it, then names the specific free channel to act through (state legal aid, the CFPB complaint process, the No Surprises Help Desk, a state insurance commissioner). It never drafts a dispute and never says "you don't owe this."
+2. **Harm-if-wrong tiering.** Every Pillar 4 tool is tagged with what happens if its output is wrong. **Tier 1** (informational: a cliff estimate) ships on the normal bar. **Tier 2** (decision-shaping: a bill-triage order) ships with the consequences stated on-screen, not just the ranking. **Tier 3** (rights-adjacent: garnishment exemptions, balance-billing protections) ships **screener-only** — it tells you what the rule is and that your situation appears to fall inside or outside it, then names the specific free channel to act through (state legal aid, the CFPB complaint process, the No Surprises Help Desk, a state insurance commissioner). It never drafts a dispute and never says "you don't owe this." The tier is a machine-checked field, not a convention — see §7.2.
 3. **The advice line, stated on the tile.** Pillar 4 is information about published rules applied to numbers you typed. It is not legal, tax, medical-billing, or benefits-eligibility determination. Only the administering agency determines eligibility; only a licensed professional gives advice. Every Pillar 4 tile carries this in its "how/why" block in the house voice — plainly, once, without a wall of disclaimer.
 4. **Dignity in the copy.** SPEC §5.3's tone rules apply doubled. No tool in this pillar may imply the user caused their situation, and none may frame the output as a failure state. "Here is what the rule says and what you can do next" — never "you should have."
 
@@ -77,8 +77,8 @@ Everything in SPEC §2 still holds without exception: deterministic, zero runtim
 
 Two additions specific to this pass:
 
-10. **Nothing new persists without an explicit, per-session, user-initiated act.** The Standing Ledger is opt-in, device-local, and revocable in one click. The default remains: enter, compute, close, nothing left behind. A user who never opts in must experience the site exactly as it is today.
-11. **A deadline shown is a deadline cited.** Any date the site puts in front of a user — a COBRA election window, an enrollment period, an appeal deadline — carries the citation to the rule that sets it and the same verify-before-relying staleness banner as a bracket. Deadlines are the highest-harm numbers on the site.
+10. **Nothing new persists without an explicit, per-session, user-initiated act.** The Standing Ledger is opt-in, user-held, and revocable in one click. The default remains: enter, compute, close, nothing left behind. A user who never opts in must experience the site exactly as it is today.
+11. **A deadline shown is a deadline cited.** Any date the site puts in front of a user — a COBRA election window, an enrollment period, an appeal deadline — carries the citation to the rule that sets it and the same verify-before-relying staleness banner as a bracket. Deadlines are the highest-harm numbers on the site, and this is enforced by the type system (§7.3), not by review.
 
 ---
 
@@ -95,6 +95,7 @@ The full item-by-item catalog with data requirements is in [SPEC-4-safety-net.md
 | A3 | Bill Triage Sequencer | A consequence-severity rules table plus a sort. Highest value for a household in deficit. |
 | A4 | Life-Event Sequences (job loss, death, divorce, new baby, disability, moving states) | The estate-checklist tile shape generalized. Needs a cited deadline table (see §6). |
 | A5 | Free-Filing & Free-Help Eligibility | Pure income/age/complexity tests against published thresholds. Saves real households real money for near-zero effort. |
+| A6 | Charity-care pointer (folded into A5) | An FPL computation the site already does, plus a cited pointer. About a day of work. |
 
 **Wave B — one new cited dataset each.**
 
@@ -112,43 +113,199 @@ The full item-by-item catalog with data requirements is in [SPEC-4-safety-net.md
 
 ## 6. Data layer additions
 
-New shards follow the existing gated pipeline without exception — schema, integrity hash, manifest entry, staleness window, refresh workflow, and an entry in [data-sources.md](../data-sources.md). Anticipated:
+New shards follow the existing gated pipeline without exception — a `DATASET_SCHEMAS` entry, an integrity hash, a `ManifestEntry` (with `expectedRefreshMonths` and `staleAfterYears`), a refresh workflow under `scripts/refresh/`, and a row in [data-sources.md](../data-sources.md). Anticipated:
 
-| Shard | Source | Cadence | Pillar |
-| --- | --- | --- | --- |
-| `garnishment-limits-<yr>` | 15 U.S.C. §1673 (CCPA); Dept. of Labor Wage & Hour fact sheets; federal-benefit account protection rules | Annual (tracks the federal minimum wage) | 4 |
-| `no-surprises-<yr>` | No Surprises Act (Pub. L. 116-260, Div. BB) and CMS implementing guidance | As revised | 4 |
-| `enrollment-windows-<yr>` | CMS Marketplace SEP rules; COBRA election periods (ERISA/IRC); Medicare enrollment periods | Annual | 2 & 4 |
-| `appeal-windows-<yr>` | Per-program federal regulations (Medicaid fair hearing, SNAP, ACA, UI) | As revised | 4 |
-| `free-filing-<yr>` | IRS Free File / Direct File eligibility; VITA/TCE income limits | Annual, Jan | 1 & 2 |
-| `state-ui-<st>-<yr>` | Per-state UI agency benefit tables — one adapter per state, tax-engine pattern | Annual, staggered | 4 |
+| Shard id | Source | `expectedRefreshMonths` | `staleAfterYears` | Pillar |
+| --- | --- | --- | --- | --- |
+| `garnishment-limits-<yr>` | 15 U.S.C. §1673 (CCPA); DOL Wage & Hour fact sheets; federal-benefit account protection rules | 12 | 0 | 4 |
+| `no-surprises-<yr>` | No Surprises Act (Pub. L. 116-260, Div. BB) and CMS implementing guidance | 12 | 0 | 4 |
+| `enrollment-windows-<yr>` | CMS Marketplace SEP rules; COBRA election periods (ERISA/IRC); Medicare enrollment periods | 12 | 0 | 2 & 4 |
+| `appeal-windows-<yr>` | Per-program federal regulations (Medicaid fair hearing, SNAP, ACA, UI) | 12 | 0 | 4 |
+| `free-filing-<yr>` | IRS Free File / Direct File eligibility; VITA/TCE income limits | 12 | 0 | 1 & 2 |
+| `bill-triage-consequences` | Hand-authored, cited consequence-rules table (see §A3) | 12 | 1 | 4 |
+| `state-ui-<st>-<yr>` | Per-state UI agency benefit tables — one adapter per state, tax-engine pattern | 12 | 0 | 4 |
 
-Every one of these has a real staleness risk with real consequence, so each gets a **tighter** staleness window than the tax shards, and the fail-safe contract (SPEC §7.3) degrades to a banner rather than a number, as always.
+Every one of these carries real staleness risk with real consequence, so each is pinned at **`staleAfterYears: 0`** — no grace year, unlike the tax shards. A Pillar 4 shard past its effective year degrades to the verify-before-relying banner immediately, and the fail-safe contract (SPEC §7.3) shows a banner rather than a number, as always.
+
+Every statutory anchor named in this spec and its companions is a **lead, not a fact**. Each is verified against the live published source during the refresh-workflow step of its phase and pinned with a content hash like every other number on the site. No number enters a shard on the authority of this document.
 
 ---
 
-## 7. Decisions recorded
+## 7. Interfaces this pass adds
 
-- **No simulation, no game.** A life-simulation game teaching that investing plus nutrition plus fitness compounds is a genuinely good idea and it is a **different product**. It cannot share this codebase's determinism contract (a life sim is a stochastic model of an uncertain future; §2.1 forbids exactly that), its trust posture, or its tone. Building it inside enklayve would compromise the one thing that makes enklayve worth using on a bad day: that it is boring, exact, and cites everything. Park it as a sibling product in the family, the way vaulytica handles documents.
+The contracts below are what make §3 and §4 enforceable rather than aspirational. All are small, additive, and land in Phase 18 before any Pillar 4 tool is built.
+
+### 7.1 The pillar and its hubs
+
+`Pillar` (in `src/tiles/types.ts`) gains one value: **`"rough"`**. Three new hubs register under it, each following the existing `HubConfig` shape, with the fourth item folded into an existing hub rather than creating a one-tool hub:
+
+| Hub id | Title | Default tool | Tools |
+| --- | --- | --- | --- |
+| `benefit-cliffs` | Benefit Cliffs | `cliff-explorer` | `cliff-explorer` (A1), `marginal-reality` (A2) |
+| `when-money-is-tight` | When Money Is Tight | `bill-triage` | `bill-triage` (A3), `garnishment` (B2), `free-filing` (A5) |
+| `life-changes` | Life Changes | `life-events` | `life-events` (A4), `enrollment-windows` (B4), `ui-estimator` (B5, gated) |
+
+The **EOB & Medical Bill Checker** (`eob-checker`, B1) joins the existing `protection` hub next to the Health Plan Chooser, because it reuses `healthPlanAnnualCost` and belongs beside the tool that sets up the plan parameters it checks.
+
+This takes the site from 10 hubs to 13. That is the ceiling: any further Pillar 4 tool joins an existing hub or displaces one, per the SPEC-2 §1.5 rule that no card becomes a dumping ground and no hub is a card with one thing on it.
+
+### 7.2 `harmTier` — machine-checked, not conventional
+
+`TileDefinition` gains:
+
+```ts
+/** Harm-if-wrong tier (SPEC-4 §3.2). Required for every pillar: "rough" tile.
+ *  1 = informational, 2 = decision-shaping (consequences must render on-screen),
+ *  3 = rights-adjacent (screener-only; must name a free channel to act through). */
+harmTier?: 1 | 2 | 3;
+/** For harmTier 3: the free channels this tool routes to. Required at tier 3. */
+channels?: { label: string; url: string; note?: string }[];
+```
+
+A new audit check, `checkHarmTier(tiles)` in `scripts/audit-release.ts`, fails the release when any tile with `pillar === "rough"` omits `harmTier`, when a tier-3 tile has an empty `channels`, or when a tier-2 or tier-3 tile's `how` block is missing the advice line. This joins `checkProvenance` and `checkCitationLength` in the same run, so the §3 bar cannot silently regress the way an unenforced convention would.
+
+### 7.3 `Deadline` — a date cannot exist without its citation
+
+A new engine type makes §4's addition 11 impossible to violate by omission:
+
+```ts
+export interface Deadline {
+  label: string;
+  /** ISO date, or a window expressed as days-from-trigger. */
+  due: { on: string } | { daysFromTrigger: number; trigger: string };
+  citation: CitationData;          // non-optional, on purpose
+  channel?: { label: string; url: string };
+}
+```
+
+Every deadline rendered anywhere on the site is produced by a single `renderDeadline(deadline, asOf)` helper, so the citation link and the staleness banner are structural rather than remembered. `asOf` is an explicit parameter — the system clock is an *input*, displayed on screen and encoded in the deep link, so a deadline view stays reproducible (the determinism contract, honestly kept). A UI test asserts that every rendered deadline node carries a source link.
+
+### 7.4 The cliff engine
+
+One new module, `src/engine/cliffs.ts`, which A1, A2, and the Readout's "what you may be owed" section all call:
+
+```ts
+export interface ResourcePoint {
+  grossIncome: number;
+  netAfterTax: number;            // gross − federal − FICA − state
+  credits: number;                // EITC + refundable CTC/ACTC
+  acaPremiumCredit: number;
+  snapAllotment: number;
+  totalResources: number;         // the sum that matters
+  medicaidEligible: boolean | null;  // null = not determinable for this state
+  notes: string[];                // e.g. "SNAP not estimated for AK/HI"
+}
+export function sweepResources(input: CliffInput, opts?: SweepOptions): ResourcePoint[];
+export function findCliffs(points: ResourcePoint[]): Cliff[];
+```
+
+Hardened behavior, all testable:
+
+- **Bounded sweep.** Default range is `$0` to `max(4 × FPL for the household, 2 × entered income)`, capped at `$250,000`. Step defaults to `$250`, clamps to `[$50, $5,000]`, and the point count is hard-capped at **400** — the proven upper bound SPEC-3 §2.7 requires. A range/step combination exceeding the cap widens the step rather than truncating the range, and says so.
+- **Cliff definition.** A cliff is a maximal contiguous run of points where `totalResources` is non-increasing while `grossIncome` rises. Each reports its start income, end income, **width** (income delta) and **depth** (peak `totalResources` minus trough). A run whose depth is below `$1` is discarded as float noise, not reported.
+- **Medicaid is never monetized.** Losing Medicaid is rendered as a status change annotated at the crossing income, never converted to a dollar figure. We cannot price a household's coverage and must not pretend to. This is the honesty constraint that keeps A1 from becoming a fake number.
+- **Robustness.** `sweepResources` joins the §2.9 property suite: no non-finite value in any field, at any point, for any of the 51 jurisdictions × 5 filing statuses × the household-size and income grid.
+
+---
+
+## 8. Build plan: Phases 18–24
+
+Ordered prompts in the SPEC/SPEC-2 convention. Each phase is independently shippable and leaves the suite green. Phases 19–24 assume Phase 18 has landed.
+
+### Phase 18: Pillar 4 foundations
+
+**Goal.** Make the §3 admission bar and the §4 deadline rule enforceable before a single Pillar 4 tool exists.
+
+**Context.** Every following phase depends on this. Nothing user-visible ships here except three empty hubs.
+
+**Deliverables.** The `"rough"` pillar value; the three hubs of §7.1 registered, each hub's tools present as `status: "coming-soon"` placeholder tiles (a `HubConfig` requires a non-empty `tools` array, so the placeholders are what make the hub mountable before its calculators exist); `harmTier` and `channels` on `TileDefinition`; `checkHarmTier` wired into `npm run audit`; the `Deadline` type and `renderDeadline` helper with its UI test; the shared advice-line copy block in the house voice; `src/engine/cliffs.ts` scaffolded with its types and the property-suite registration.
+
+**Acceptance.** `npm run audit` fails a deliberately-misconfigured fixture tile (pillar `"rough"`, no `harmTier`) and passes the real catalog. `renderDeadline` cannot be called without a citation — verified by a type test. The existing 59 tiles are untouched and the full suite is green.
+
+### Phase 19: The Benefit Cliff Explorer and the Marginal Reality Rate
+
+**Goal.** Ship the marquee item and its point-evaluated sibling.
+
+**Context.** Zero new data. The whole phase is `src/engine/cliffs.ts` plus two tiles in the `benefit-cliffs` hub.
+
+**Deliverables.** `sweepResources` / `findCliffs` per §7.4; the `cliff-explorer` tile with a chart on the existing framework-free chart layer and a table fallback; the `marginal-reality` tile; "Related tools" links to and from the existing Marginal Rate Explorer; the unmodeled-program list rendered prominently on both.
+
+**Acceptance.** Three hand-computed golden cliff cases pass — one ACA subsidy edge, one Medicaid MAGI edge, one SNAP gross-income-test edge. The property sweep finds no non-finite value across all jurisdictions. Both tiles are Tier 1, deep-linkable, worked-example-first, axe-clean, and name every program they do not model.
+
+### Phase 20: The sequencers
+
+**Goal.** Bill triage and life-event sequences — the ordering tools.
+
+**Deliverables.** The cited `bill-triage-consequences` shard and its refresh workflow; the `bill-triage` tile (Tier 2, consequences rendered per line, state-variable items rendered as "your state sets this"); the `enrollment-windows-<yr>` and `appeal-windows-<yr>` shards; the `life-events` tile covering all six sequences, every dated step going through `renderDeadline`.
+
+**Acceptance.** Every deadline carries a citation and participates in the staleness banner. The triage output never says "skip a bill" — a copy test asserts the forbidden phrasings are absent. Both tiles carry the advice line and pass `checkHarmTier`.
+
+### Phase 21: Free filing and free help
+
+**Goal.** The cheapest real money the site can hand someone.
+
+**Deliverables.** The `free-filing-<yr>` shard (income, age, and complexity thresholds; Direct File state availability as data); the `free-filing` tile reading income and filing status from My Situation; explicit disqualifying-complexity output.
+
+**Acceptance.** Tier 1, cited, tight staleness window, and it links to the official program page rather than embedding a list that will rot.
+
+### Phase 22: Readout v2
+
+**Goal.** Documents that answer.
+
+**Deliverables.** The four-part `ReadoutAnswer` shape and the check registry of [SPEC-4-readout-v2.md](SPEC-4-readout-v2.md) §4; the `eobHealth`, `medicalBill`, and `benefitsNotice` document kinds; the `no-surprises-<yr>` shard; the EOB checker in the `protection` hub (Tier 3); the EOB × medical-bill cross-check.
+
+**Acceptance.** Every check declares its type, its citation where it has one, and its false-positive case — a registry test fails any check missing the last one. OCR-sourced text suppresses rule checks entirely. No extracted value reaches My Situation without confirmation. Nothing persists.
+
+### Phase 23: The rights-adjacent screeners
+
+**Goal.** Garnishment and enrollment windows — the two Tier 3 / Tier 2 items with the most careful copy on the site.
+
+**Deliverables.** The `garnishment-limits-<yr>` shard; the `garnishment` tile stating the state-variance caveat **before** the number, with `channels` routing to state legal aid and the CFPB complaint process; the `enrollment-windows` tile.
+
+**Acceptance.** The garnishment tile renders the federal-ceiling caveat above the figure — asserted by a DOM-order test, not by review. `checkHarmTier` passes on tier-3 channel coverage. A copy review confirms the §3.4 dignity rule.
+
+### Phase 24: The Standing Ledger (Path 1)
+
+**Goal.** The recompute diff, on the carried-file path only.
+
+**Context.** Path 2 (device-local storage) is **not** in this phase — see §9.
+
+**Deliverables.** The ledger snapshot schema; export/import reusing the existing `enklayve.situation.encrypted` envelope (PBKDF2-SHA256 → AES-GCM) under a new `enklayve.ledger` format id; the recompute-diff engine with its three-tier output; the deadline view.
+
+**Acceptance.** A snapshot round-trips bit-for-bit. The diff is golden-tested against a synthetic dataset-version bump. A schema test proves no snapshot can hold a document, an unconfirmed extracted value, or an identifier. A user who never exports sees no behavioral change — asserted by an e2e test that no new persisted state appears in a full session.
+
+### Gated, not scheduled
+
+**B5, the Unemployment Insurance estimator**, has no phase number. It ships as a `state-ui-<st>-<yr>` adapter set with per-state coverage stated, or it does not ship. A "typical state" approximation is worse than nothing for someone deciding whether they can make rent, and is explicitly forbidden.
+
+---
+
+## 9. Decisions recorded
+
+- **No simulation, no game.** enklayve models published rules applied to numbers you type. A life simulation is a stochastic model of an uncertain future, which §2.1 forbids outright, and building one would compromise the property that makes this site worth opening on a bad day: that it is boring, exact, and cites everything. Dropped — not built here, and not spun off.
 - **No points, streaks, badges, or avatars.** See §2.4. The recompute diff is the return-visit mechanic.
-- **No accounts, ever.** The Standing Ledger is device-local and user-held. If continuity across devices is ever wanted, it is a file the user carries (the existing portable export), not a row in our database, because we will never have a database.
+- **No accounts, ever.** The Standing Ledger is user-held. If continuity across devices is ever wanted, it is a file the user carries, not a row in our database, because we will never have a database.
+- **Device-local ledger storage is deferred, not adopted.** `checkLocalStorage` in the release audit permits persistence in exactly one module today, which is the mechanical expression of SPEC §2 principle 8. Path 2 of [SPEC-4-ledger.md](SPEC-4-ledger.md) would require widening that allowlist, and widening a privacy gate is a decision that deserves its own evidence — that real users lose snapshots on the carried-file path. Phase 24 ships Path 1 only; Path 2 is revisited afterward with that evidence or not at all.
 - **Scope stays US.** Pillar 4 is more US-specific than anything before it. The country-scope roadmap (SPEC-2 §0.2) is unchanged: get the US right first.
 - **Student-loan IDR stays parked**, per SPEC-3 §4.10, with an explicit un-park gate: it ships when the plan set has been stable for one full academic year and each plan's formula can be pinned to a citable published table. It is high value and it will be wrong in a harmful way if we build it against a moving target.
+- **13 hubs is the ceiling.** §7.1.
 
 ---
 
-## 8. Acceptance criteria for this pass
+## 10. Acceptance criteria for this pass
 
-1. Pillar 4 exists as a named pillar in the vision with at least Wave A shipped, every tool clearing the §3 four-part admission bar in addition to all existing invariants.
-2. The Benefit Cliff Explorer correctly reproduces at least three hand-computed worked cliff cases (one ACA subsidy edge, one Medicaid MAGI edge, one SNAP gross-income-test edge) as golden tests, and its output is honest about which programs are modeled and which are not.
-3. Every Pillar 4 tile carries its harm tier, its federal-floor/state-variance statement, and the advice line in its "how/why" block — enforced by the audit the way citation coverage already is.
-4. Every deadline rendered anywhere on the site carries a citation and participates in the staleness banner (§4, addition 11).
-5. Readout v2 answers in the four-part shape for at least the EOB and the benefits-determination document kinds, and no extracted value reaches My Situation without user confirmation, exactly as today.
-6. The Standing Ledger is opt-in, device-local, one-click revocable, and a user who never opts in sees no behavioral change whatsoever; the recompute diff is golden-tested against a synthetic dataset-version bump.
-7. `npm run test`, `npm run audit`, and the Playwright e2e stay green throughout.
+1. Pillar 4 exists as a named pillar with at least Wave A shipped, every tool clearing the §3 four-part admission bar in addition to all existing invariants.
+2. `checkHarmTier` runs in `npm run audit` and fails a fixture tile that omits a tier, a tier-3 tile with no channel, or a tier-2/3 tile missing the advice line.
+3. The Benefit Cliff Explorer reproduces three hand-computed cliff cases as golden tests (ACA edge, Medicaid MAGI edge, SNAP gross-income-test edge), never monetizes Medicaid, and names every program it does not model.
+4. `sweepResources` is bounded at 400 points, joins the §2.9 property suite, and returns no non-finite value across all 51 jurisdictions × 5 filing statuses.
+5. Every deadline on the site is produced by `renderDeadline`, carries a citation, and participates in the staleness banner; a UI test asserts it.
+6. Readout v2 answers in the four-part shape for the EOB, medical-bill, and benefits-notice kinds; every check declares its false-positive case; OCR suppresses rule checks; nothing persists and nothing reaches My Situation unconfirmed.
+7. Every new shard is pinned at `staleAfterYears: 0` with a refresh workflow and a [data-sources.md](../data-sources.md) row.
+8. The Standing Ledger (Path 1) round-trips exactly, its diff is golden-tested against a synthetic version bump, and a user who never exports sees no behavioral change.
+9. `npm run test`, `npm run typecheck`, `npm run lint`, `npm run audit`, and the Playwright e2e stay green at the end of every phase.
 
 ---
 
-## 9. One line positioning
+## 11. One line positioning
 
 A calm, fast, private place to answer real money questions — including the ones you only ask on your worst day — where every number is computed on your device, cites its source, and tells you what to do next.
