@@ -162,7 +162,7 @@ harmTier?: 1 | 2 | 3;
 channels?: { label: string; url: string; note?: string }[];
 ```
 
-A new audit check, `checkHarmTier(tiles)` in `scripts/audit-release.ts`, fails the release when any tile with `pillar === "rough"` omits `harmTier`, when a tier-3 tile has an empty `channels`, or when a tier-2 or tier-3 tile's `how` block is missing the advice line. This joins `checkProvenance` and `checkCitationLength` in the same run, so the §3 bar cannot silently regress the way an unenforced convention would.
+A new check, `checkHarmTier(tiles)` in `scripts/audit-release.ts`, fails the build when any tile with `pillar === "rough"` omits `harmTier`, when a tier-3 tile has an empty `channels`, or when a tier-2 or tier-3 tile's `how` block is missing the advice line. It lives beside `checkProvenance` and `checkCitationLength` so every release invariant is readable in one place, but it **runs from the test suite, not the audit CLI** — the CLI executes under plain `node`, which cannot resolve the extensionless TypeScript module graph the tile registry is built from. `tests/build/auditRelease.test.ts` applies it to the real catalog and CI runs `npm run test`, so the gate is no weaker for living there.
 
 ### 7.3 `Deadline` — a date cannot exist without its citation
 
@@ -216,17 +216,19 @@ Ordered prompts in the SPEC/SPEC-2 convention. Each phase is independently shipp
 
 **Goal.** Make the §3 admission bar and the §4 deadline rule enforceable before a single Pillar 4 tool exists.
 
-**Context.** Every following phase depends on this. Nothing user-visible ships here except three empty hubs.
+**Context.** Every following phase depends on this. **Nothing user-visible ships here at all** — see the note below.
 
-**Deliverables.** The `"rough"` pillar value; the three hubs of §7.1 registered, each hub's tools present as `status: "coming-soon"` placeholder tiles (a `HubConfig` requires a non-empty `tools` array, so the placeholders are what make the hub mountable before its calculators exist); `harmTier` and `channels` on `TileDefinition`; `checkHarmTier` wired into `npm run audit`; the `Deadline` type and `renderDeadline` helper with its UI test; the shared advice-line copy block in the house voice; `src/engine/cliffs.ts` scaffolded with its types and the property-suite registration.
+**Deliverables.** The `"rough"` pillar value; `harmTier` and `channels` on `TileDefinition`; `checkHarmTier` with its fixture tests and a test applying it to the real catalog; the `Deadline` type (`src/engine/deadline.ts`) and the single `renderDeadline` path (`src/ui/deadline.ts`) with their tests and styles.
 
-**Acceptance.** `npm run audit` fails a deliberately-misconfigured fixture tile (pillar `"rough"`, no `harmTier`) and passes the real catalog. `renderDeadline` cannot be called without a citation — verified by a type test. The existing 59 tiles are untouched and the full suite is green.
+**Acceptance.** ✅ `checkHarmTier` flags a fixture tile that is `pillar: "rough"` with no tier, a tier-3 tile with no channel, and a tier-2 tile missing the advice line — and passes the real catalog. `renderDeadline` cannot be called without a citation (the type makes it a compile error) and always paints the source link and the `asOf` date. The existing 59 tiles are untouched and the suite is green.
+
+**Two deviations from the spec as first written, both deliberate.** *(1) No empty hubs.* The plan called for registering the three §7.1 hubs with `coming-soon` placeholder tiles. Building it showed that to be worse on three counts: `defineHub` hard-codes `status: "ready"` and `mountHub` renders nothing for a tool with no `mount`, so placeholders need new rendering code that exists only to be deleted; `SUB_TOOLS` feeds the SEO page generator and `SEARCH_ENTRIES` feeds the command palette, so placeholders would advertise tools that do not exist; and a public utility showing "coming soon" cards is a small broken promise on every visit. Each hub now lands in the phase that ships its first real calculator, which also makes Phase 18 a zero-risk deploy. *(2) No `cliffs.ts` scaffold.* An engine module with types but no implementation is dead code until Phase 19 builds it; it lands there instead.
 
 ### Phase 19: The Benefit Cliff Explorer and the Marginal Reality Rate
 
 **Goal.** Ship the marquee item and its point-evaluated sibling.
 
-**Context.** Zero new data. The whole phase is `src/engine/cliffs.ts` plus two tiles in the `benefit-cliffs` hub.
+**Context.** Zero new data. The whole phase is `src/engine/cliffs.ts` plus two tiles and the `benefit-cliffs` hub itself, which is registered here rather than in Phase 18.
 
 **Deliverables.** `sweepResources` / `findCliffs` per §7.4; the `cliff-explorer` tile with a chart on the existing framework-free chart layer and a table fallback; the `marginal-reality` tile; "Related tools" links to and from the existing Marginal Rate Explorer; the unmodeled-program list rendered prominently on both.
 
@@ -295,7 +297,7 @@ Ordered prompts in the SPEC/SPEC-2 convention. Each phase is independently shipp
 ## 10. Acceptance criteria for this pass
 
 1. Pillar 4 exists as a named pillar with at least Wave A shipped, every tool clearing the §3 four-part admission bar in addition to all existing invariants.
-2. `checkHarmTier` runs in `npm run audit` and fails a fixture tile that omits a tier, a tier-3 tile with no channel, or a tier-2/3 tile missing the advice line.
+2. `checkHarmTier` runs in the test suite over the real catalog and fails a fixture tile that omits a tier, a tier-3 tile with no channel, or a tier-2/3 tile missing the advice line.
 3. The Benefit Cliff Explorer reproduces three hand-computed cliff cases as golden tests (ACA edge, Medicaid MAGI edge, SNAP gross-income-test edge), never monetizes Medicaid, and names every program it does not model.
 4. `sweepResources` is bounded at 400 points, joins the §2.9 property suite, and returns no non-finite value across all 51 jurisdictions × 5 filing statuses.
 5. Every deadline on the site is produced by `renderDeadline`, carries a citation, and participates in the staleness banner; a UI test asserts it.

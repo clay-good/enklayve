@@ -24,7 +24,15 @@ export type Pillar =
   | "budget"
   | "protect"
   | "owed"
-  | "stand";
+  | "stand"
+  /**
+   * Pillar 4, "Rough Water" (SPEC-4 §2.1): the safety-net and crisis tools —
+   * benefit cliffs, bill triage, life-event sequences, and the rights-adjacent
+   * screeners. Tiles in this pillar carry extra obligations the other pillars
+   * do not: see {@link TileDefinition.harmTier}, enforced by `checkHarmTier` in
+   * the release audit.
+   */
+  | "rough";
 
 export interface TileContext {
   /** Mount point for the tile body. */
@@ -75,4 +83,25 @@ export interface TileDefinition {
    * target hub and `tool` its sub-tool id; `note` is a one-line "why".
    */
   related?: { hubId: string; tool?: string; label: string; note?: string }[];
+  /**
+   * Harm-if-wrong tier (SPEC-4 §3.2). **Required for every `pillar: "rough"`
+   * tile** — `checkHarmTier` in the release audit fails the build when it is
+   * missing, so the Pillar 4 admission bar is a gate rather than a convention.
+   *
+   * - `1` informational: a cliff estimate. Ships on the normal tile bar.
+   * - `2` decision-shaping: a bill-triage order. The consequences of the
+   *   decision must render on-screen alongside the ranking, and the `how` block
+   *   must carry the advice line.
+   * - `3` rights-adjacent: garnishment exemptions, balance-billing protections.
+   *   Screener-only — it states the rule and whether the situation appears to
+   *   fall inside it, never a verdict, and must name free {@link channels} to
+   *   act through.
+   */
+  harmTier?: 1 | 2 | 3;
+  /**
+   * Free channels a user can act through, shown on the tile. **Required when
+   * `harmTier` is 3** (SPEC-4 §3.2): a screener that names no way to act is
+   * just a dead end, so the audit rejects a tier-3 tile with an empty list.
+   */
+  channels?: { label: string; url: string; note?: string }[];
 }

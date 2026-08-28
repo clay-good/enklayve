@@ -6,7 +6,10 @@ import {
   checkCitationLength,
   SOURCE_DOCUMENT_MAX,
   checkLocalStorage,
+  checkHarmTier,
+  type AuditTile,
 } from "../../scripts/audit-release";
+import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
 
 /**
  * The release audit gate (BUILD-SPEC.md §10). The checks are pure functions of
@@ -84,5 +87,64 @@ describe("audit: localStorage boundary", () => {
         { path: "src/tiles/takeHome.ts", content: "localStorage.setItem('income', x)" },
       ]).length,
     ).toBe(1);
+  });
+});
+
+/**
+ * The Pillar 4 admission bar (SPEC-4 §3.2, §7.2). This runs from the test suite
+ * rather than the audit CLI — the CLI executes under plain `node`, which cannot
+ * resolve the extensionless TypeScript module graph the registry is built from.
+ * CI runs `npm run test`, so the gate is no weaker for living here.
+ */
+const ADVICE = "This is information about published rules, not legal advice.";
+
+describe("audit: Pillar 4 harm tiers", () => {
+  it("ignores tiles outside the rough pillar", () => {
+    expect(checkHarmTier([{ id: "take-home", pillar: "paycheck" }])).toEqual([]);
+  });
+
+  it("flags a rough tile that declares no harm tier", () => {
+    const violations = checkHarmTier([{ id: "cliff-explorer", pillar: "rough" }]);
+    expect(violations.length).toBe(1);
+    expect(violations[0]).toContain("declares no harmTier");
+  });
+
+  it("passes a tier-1 informational tile with no channels or advice line", () => {
+    expect(checkHarmTier([{ id: "cliff-explorer", pillar: "rough", harmTier: 1 }])).toEqual([]);
+  });
+
+  it("flags a tier-3 screener that names no channel to act through", () => {
+    const violations = checkHarmTier([
+      { id: "garnishment", pillar: "rough", harmTier: 3, channels: [], how: ADVICE },
+    ]);
+    expect(violations.length).toBe(1);
+    expect(violations[0]).toContain("names no channels");
+  });
+
+  it("flags a tier-2 tile whose how block omits the advice line", () => {
+    const violations = checkHarmTier([
+      { id: "bill-triage", pillar: "rough", harmTier: 2, how: "Sorts your bills by consequence." },
+    ]);
+    expect(violations.length).toBe(1);
+    expect(violations[0]).toContain("omits the advice line");
+  });
+
+  it("passes a fully-configured tier-3 tile", () => {
+    expect(
+      checkHarmTier([
+        {
+          id: "garnishment",
+          pillar: "rough",
+          harmTier: 3,
+          channels: [{ label: "Legal aid", url: "https://www.lsc.gov/" }],
+          how: ADVICE,
+        },
+      ]),
+    ).toEqual([]);
+  });
+
+  it("holds over the real catalog, hubs and sub-tools alike", () => {
+    const tiles: AuditTile[] = [...TILES, ...SUB_TOOLS.map((s) => s.tile)];
+    expect(checkHarmTier(tiles)).toEqual([]);
   });
 });

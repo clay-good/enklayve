@@ -835,6 +835,49 @@ body {
   padding: 1rem 1.2rem;
 }
 
+/* Deadlines (SPEC-4 §7.3). Rendered only by ui/deadline.ts, so the source link
+   and the "counted from" date are always present. "Soon" and "past" get a
+   warmer edge; nothing here shouts, per the Pillar 4 dignity rule. */
+.deadline {
+  background: var(--enk-surface-2);
+  border-left: 3px solid var(--enk-border);
+  border-radius: var(--enk-radius);
+  padding: 0.85rem 1rem;
+}
+
+.deadline + .deadline {
+  margin-top: 0.6rem;
+}
+
+.deadline--soon,
+.deadline--today {
+  border-left-color: var(--enk-warn);
+}
+
+.deadline--past {
+  border-left-color: var(--enk-text-muted);
+}
+
+.deadline__label {
+  font-weight: 700;
+  margin: 0;
+}
+
+.deadline__timing {
+  margin: 0.25rem 0 0;
+}
+
+.deadline__floor,
+.deadline__asof {
+  color: var(--enk-text-muted);
+  font-size: 0.85rem;
+  margin: 0.3rem 0 0;
+}
+
+.deadline__channel {
+  margin: 0.3rem 0 0;
+}
+
 /* The deep-link-clamp disclosure (SPEC-3 §2.3): a quiet, non-blocking note that
    a pasted link was raised to a valid minimum. Calmer than the verify banner —
    this is information, not a warning. */

@@ -37,7 +37,12 @@ export interface ResultCardOptions {
   copyText?: string;
 }
 
-function citationLink(citation: CitationData): HTMLElement {
+/**
+ * The inline "source" link every cited line carries. Exported so the single
+ * deadline render path (`ui/deadline.ts`) uses the same affordance rather than
+ * growing a second, drifting one.
+ */
+export function citationLink(citation: CitationData): HTMLElement {
   const label = `${citation.sourceDocument} (${citation.effectiveYear})`;
   return el(
     "a",

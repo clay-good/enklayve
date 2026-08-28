@@ -76,7 +76,64 @@ export function checkCitationLength(shards: { name: string; json: unknown }[]): 
   return violations;
 }
 
-/** 4. localStorage may be used only by the theme/locale boundary. */
+/**
+ * The advice line every Pillar 4 tile must carry (SPEC-4 §3.3). Matched loosely
+ * — we check the tile says it is not advice and points somewhere official, not
+ * that it uses one exact sentence, so the house voice stays free to vary.
+ */
+const ADVICE_MARKERS = [/not\s+(legal|financial|tax)\b/i, /\bnot advice\b/i];
+
+/** The minimal shape this check needs; avoids importing the DOM-bound tile type. */
+export interface AuditTile {
+  id: string;
+  pillar: string;
+  harmTier?: 1 | 2 | 3;
+  channels?: { label: string; url: string }[];
+  how?: string;
+}
+
+/**
+ * 5. The Pillar 4 admission bar (SPEC-4 §3.2, §7.2).
+ *
+ * Unlike the checks above, this one runs from the **test suite**, not the CLI:
+ * the CLI executes under plain `node`, which cannot resolve the extensionless
+ * TypeScript module graph the tile registry is built from. The gate is no
+ * weaker for it — `tests/build/auditRelease.test.ts` applies it to the real
+ * catalog and CI runs `npm run test` — and keeping the function here holds all
+ * the release invariants in one readable place.
+ *
+ * Being wrong in "rough"
+ * costs a household its housing, its wages, or a benefit it was owed, so the
+ * tier is a machine-checked field rather than a convention that quietly rots:
+ *
+ *  - every `pillar: "rough"` tile declares a harm tier;
+ *  - a tier-3 (rights-adjacent) tile names at least one free channel to act
+ *    through, because a screener with no route out is a dead end; and
+ *  - a tier-2 or tier-3 tile carries the advice line in its "how" block.
+ */
+export function checkHarmTier(tiles: AuditTile[]): string[] {
+  const violations: string[] = [];
+  for (const tile of tiles) {
+    if (tile.pillar !== "rough") continue;
+    if (tile.harmTier === undefined) {
+      violations.push(`tile ${tile.id} is pillar "rough" but declares no harmTier (SPEC-4 §3.2)`);
+      continue;
+    }
+    if (tile.harmTier === 3 && !tile.channels?.length) {
+      violations.push(
+        `tile ${tile.id} is harmTier 3 (screener-only) but names no channels to act through`,
+      );
+    }
+    if (tile.harmTier >= 2 && !ADVICE_MARKERS.some((re) => re.test(tile.how ?? ""))) {
+      violations.push(
+        `tile ${tile.id} is harmTier ${tile.harmTier} but its "how" block omits the advice line`,
+      );
+    }
+  }
+  return violations;
+}
+
+/** 6. localStorage may be used only by the theme/locale boundary. */
 export function checkLocalStorage(files: { path: string; content: string }[]): string[] {
   const allowed = /(^|\/)ui\/theme\.ts$/;
   const violations: string[] = [];
