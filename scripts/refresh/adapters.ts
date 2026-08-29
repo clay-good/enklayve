@@ -245,13 +245,21 @@ function clone(current: Record<string, unknown>): Record<string, unknown> {
  * that should be a reviewer step instead.
  */
 export function visibleText(raw: string): string {
-  return raw
-    .replace(/<(script|style|noscript)\b[\s\S]*?<\/\1>/gi, " ")
-    .replace(/<!--[\s\S]*?-->/g, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;|&#160;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/\s+/g, " ");
+  return (
+    raw
+      .replace(/<(script|style|noscript)\b[\s\S]*?<\/\1>/gi, " ")
+      .replace(/<!--[\s\S]*?-->/g, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      // Numeric character references, decoded rather than left alone. New York
+      // numbers its table rows with circled digits — `&#9312;` — and a reference
+      // left as literal text is four digits sitting where an amount goes, which a
+      // status label will happily bridge to. That read `9312` as a deduction.
+      .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+      .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number(dec)))
+      .replace(/&amp;/gi, "&")
+      .replace(/\s+/g, " ")
+  );
 }
 
 // --- BLS CPI-U (machine-readable JSON API) -----------------------------------
@@ -430,13 +438,43 @@ function parseFica(raw: string, current: Record<string, unknown>): ParseOutcome 
 
 // --- Jurisdiction standard deductions (IRS + CA, anchored prose) -------------
 
+/**
+ * How far a filing-status label may be from its amount.
+ *
+ * These bridges were unbounded, which meant a label could reach across a whole
+ * page to the next dollar sign. North Carolina's page states "Married Filing
+ * Jointly/Qualifying Widow(er)/Surviving Spouse $25,500" — 39 characters — and
+ * then, several paragraphs later, an unrelated cap: "the total home mortgage
+ * interest and real estate taxes claimed by both spouses combined may not exceed
+ * $20,000". The unbounded bridge found both and the ambiguity guard refused, so
+ * the page that states all three of North Carolina's deductions was unreadable
+ * because of a sentence about mortgages.
+ *
+ * 80 characters is a table row with a long label in it and nothing else. It is
+ * the same reasoning as the flat parser's 48: a bridge wide enough for real
+ * agency phrasing and too narrow to reach the next sentence.
+ */
+const LABEL_TO_AMOUNT = 80;
+
 const FILING_LABELS: { key: string; pattern: RegExp }[] = [
-  { key: "married_jointly", pattern: /married(?:[^.]*?)(?:filing )?jointly[^$]*\$?([\d,]{4,})/i },
+  {
+    key: "married_jointly",
+    pattern: new RegExp(
+      `married(?:[^.]{0,40}?)(?:filing )?jointly[^$]{0,${LABEL_TO_AMOUNT}}\\$?([\\d,]{4,})`,
+      "i",
+    ),
+  },
   {
     key: "head_of_household",
-    pattern: /heads?\s+of\s+household[^$]*\$?([\d,]{4,})/i,
+    pattern: new RegExp(`heads?\\s+of\\s+household[^$]{0,${LABEL_TO_AMOUNT}}\\$?([\\d,]{4,})`, "i"),
   },
-  { key: "single", pattern: /\bsingle(?:[^$]*?taxpayers?)?[^$]*\$?([\d,]{4,})/i },
+  {
+    key: "single",
+    pattern: new RegExp(
+      `\\bsingle(?:[^$]{0,40}?taxpayers?)?[^$]{0,${LABEL_TO_AMOUNT}}\\$?([\\d,]{4,})`,
+      "i",
+    ),
+  },
 ];
 
 /**
@@ -499,8 +537,38 @@ function withoutDependentRows(raw: string): string {
   return raw.replace(/\(\s*(?:and\s+)?can be claimed as a dependent[^)]*\)\s*\$?[\d,]{3,}/gi, " ");
 }
 
+/**
+ * Narrow a page to the standard-deduction table, when it announces one.
+ *
+ * Bounding the label-to-amount bridge stops a status label reaching across a
+ * page, and it is not enough on a page that discusses deductions at length.
+ * North Carolina's states its table plainly —
+ *
+ *   If your filing status is: Your standard deduction is:
+ *   Single $12,750  Married Filing Jointly/... $25,500  Head of Household $19,125
+ *
+ * — and then spends several paragraphs on ITEMIZED deductions, where "a single
+ * return, or a return as head of household may not deduct more than $10,000 of
+ * real estate taxes" puts a status label 43 characters from a dollar amount that
+ * is not a standard deduction at all. No bridge width separates those.
+ *
+ * A page that says "your standard deduction is" is telling the parser where to
+ * look, so it looks there and nowhere else. A page that says no such thing is
+ * read whole, exactly as before — this narrows, it never widens.
+ */
+const DEDUCTION_TABLE_LEADIN =
+  /(?:your standard deduction is|standard deduction (?:amounts?|table)|filing status\s+standard deduction)\s*:?/i;
+
+export function deductionTableRegion(text: string): string {
+  const at = DEDUCTION_TABLE_LEADIN.exec(text);
+  if (!at) return text;
+  // Long enough for the four or five rows a table has, short enough that it
+  // cannot reach the prose underneath it.
+  return text.slice(at.index, at.index + 400);
+}
+
 function parseStandardDeductions(raw: string, current: Record<string, unknown>): ParseOutcome {
-  raw = withoutDependentRows(visibleText(raw));
+  raw = deductionTableRegion(withoutDependentRows(visibleText(raw)));
   const shard = clone(current);
   const deductions = {
     ...((shard.standardDeductionByFilingStatus as Record<string, number>) ?? {}),
@@ -1561,7 +1629,10 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-nc-income-tax-2024",
     group: "state-nc",
     source: "North Carolina Department of Revenue individual income tax rates",
-    sourceUrl: "https://www.ncdor.gov/taxes-forms/individual-income-tax/tax-rate-schedules",
+    // The deduction page the shard cites, not the rate schedules: the schedules
+    // state brackets, which are the reviewer's step.
+    sourceUrl:
+      "https://www.ncdor.gov/taxes-forms/individual-income-tax/filing-topics/north-carolina-standard-deduction-or-north-carolina-itemized-deductions",
     cadence: "Annual",
     parse: parseStandardDeductions,
   },

@@ -7,6 +7,7 @@ import {
   adaptersForGroup,
   REFRESH_GROUPS,
   anchorFlatRate,
+  deductionTableRegion,
   implausibleDrift,
 } from "../../scripts/refresh/adapters";
 import { planRefresh, serializeShard, insertLogEntry } from "../../scripts/refresh/run";
@@ -424,6 +425,43 @@ describe("adapters: Utah (a source behind its own state's law)", () => {
   });
 });
 
+describe("adapters: North Carolina (a table, then pages about itemizing)", () => {
+  const adapter = adaptersForGroup("state-nc")[0]!;
+  const current = readShard("state-nc-income-tax-2024.json");
+  const raw =
+    "If your filing status is: Your standard deduction is: Single $12,750" +
+    " Married Filing Jointly/Qualifying Widow(er)/Surviving Spouse $25,500" +
+    " Married Filing Separately Spouse does not claim itemized deductions $12,750" +
+    " Head of Household $19,125 If you are not eligible for the federal standard deduction" +
+    " ... the total home mortgage interest and real estate taxes claimed by both spouses" +
+    " combined may not exceed $20,000 ... a single return, or a return as head of household" +
+    " may not deduct more than $10,000 of real estate taxes paid or accrued.";
+
+  it("reads the deduction table and not the itemizing prose beneath it", () => {
+    // Bounding how far a label may reach was not enough here: "head of
+    // household may not deduct more than $10,000 of real estate taxes" puts a
+    // status label 43 characters from an amount that is not a standard
+    // deduction. The page announces its own table, so the parser reads there.
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const sd = result.shard.standardDeductionByFilingStatus as Record<string, number>;
+    expect(sd).toEqual({ single: 12750, married_jointly: 25500, head_of_household: 19125 });
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("narrows to a table only when the page announces one", () => {
+    // A page that says nothing about where its table is gets read whole, as
+    // before. This narrows; it never widens.
+    expect(deductionTableRegion("Single $12,750 and nothing else")).toBe(
+      "Single $12,750 and nothing else",
+    );
+    expect(deductionTableRegion("prose prose Your standard deduction is: Single $12,750")).toBe(
+      "Your standard deduction is: Single $12,750",
+    );
+  });
+});
+
 describe("adapters: Michigan (Form 446's masthead)", () => {
   const adapter = adaptersForGroup("state-mi")[0]!;
   const current = readShard("state-mi-income-tax-2024.json");
@@ -495,6 +533,22 @@ describe("adapters: state income tax (NY, the per-state template)", () => {
     expect(sd.single).toBe(8000);
     expect(sd.married_jointly).toBe(16050);
     expect(sd.head_of_household).toBe(11200);
+  });
+
+  it("decodes numeric HTML entities instead of reading them as amounts", () => {
+    // New York numbers its rows with circled digits. Left as literal text,
+    // `&#9312;` is four digits sitting exactly where an amount goes, and a
+    // status label bridges straight to it — the parser read 9,312 as a
+    // deduction, which is a plausible-looking number for a state to have.
+    const raw =
+      "Standard deduction amount &#9312; Single $8,000 &#9313; Married filing joint return" +
+      " $16,050 &#9315; Head of household (with qualifying person) $11,200";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect((result.shard.standardDeductionByFilingStatus as Record<string, number>).single).toBe(
+      8000,
+    );
   });
 
   it("watches the standard-deduction page, not the bracket tables", () => {
