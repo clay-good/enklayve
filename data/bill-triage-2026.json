@@ -1,0 +1,148 @@
+{
+  "year": 2026,
+  "categories": [
+    {
+      "id": "housing",
+      "label": "Rent or mortgage",
+      "group": "housing",
+      "rank": 1,
+      "consequence": "Late fees, and eventually the loss of your home. Missing rent risks eviction; missing a mortgage starts the road to foreclosure.",
+      "timing": "state",
+      "timingNote": "Notice periods and how long the process takes are set by your state, and in some places by your city.",
+      "relief": [
+        "Ask the landlord or servicer for a written payment plan before you miss the payment, not after",
+        "A HUD-approved housing counselor is free: 1-800-569-4287",
+        "Local emergency rental assistance, through your city or county"
+      ]
+    },
+    {
+      "id": "utilities",
+      "label": "Gas, electric, water, sewer",
+      "group": "housing",
+      "rank": 2,
+      "consequence": "Service is cut off, and utilities may charge a reconnection fee on top of the balance. A home without heat or water can also put your housing and your family's health at risk.",
+      "timing": "state",
+      "timingNote": "Your state utility commission sets the notice period, and many states restrict shutoffs during extreme cold or heat.",
+      "relief": [
+        "LIHEAP energy assistance, through your state",
+        "Ask the utility for budget billing or a hardship plan, most have one",
+        "Ask whether a medical certification applies to anyone in the household"
+      ]
+    },
+    {
+      "id": "job-transport",
+      "label": "Car payment, fuel, or transit fare",
+      "group": "job",
+      "rank": 3,
+      "consequence": "A late fee, then repossession, a negative entry on your credit record, and lower credit scores. If the car is repossessed you may have trouble getting to work and risk losing your job.",
+      "timing": "state",
+      "timingNote": "Most states allow a lender to repossess without going to court once you default, so the warning you get may be short.",
+      "relief": [
+        "Ask the lender about deferring a payment or extending the loan",
+        "Ask about reinstatement, which is catching up rather than paying the whole balance"
+      ]
+    },
+    {
+      "id": "job-other",
+      "label": "Childcare, equipment, or uniform for work",
+      "group": "job",
+      "rank": 4,
+      "consequence": "Losing what you need to do the job puts the income itself at risk, which is the one thing that makes every other bill payable.",
+      "timing": "none",
+      "relief": ["Childcare subsidies through your state's CCDF program"]
+    },
+    {
+      "id": "insurance",
+      "label": "Car, health, or home insurance",
+      "group": "insurance",
+      "rank": 5,
+      "consequence": "Going without insurance may mean you can't legally drive, and it puts your assets, your health, and your family's health at risk. A gap can also raise what you pay later.",
+      "timing": "none",
+      "relief": [
+        "Ask the insurer about a payment plan or a later due date",
+        "For health coverage, check whether you now qualify for Medicaid or a Marketplace plan"
+      ]
+    },
+    {
+      "id": "court-ordered",
+      "label": "Child support, court fines and fees",
+      "group": "court",
+      "rank": 6,
+      "consequence": "Court-ordered obligations carry legal consequences that other debts do not, including enforcement actions a court can take against you directly.",
+      "timing": "none",
+      "relief": [
+        "If your income dropped, ask the court about modifying the order rather than simply missing it",
+        "Free legal aid may be available: findlegalhelp or your state's legal aid office"
+      ]
+    },
+    {
+      "id": "tax-debt",
+      "label": "Taxes owed",
+      "group": "court",
+      "rank": 7,
+      "consequence": "Interest and penalties accrue, and tax authorities have collection powers most creditors do not.",
+      "timing": "none",
+      "relief": [
+        "The IRS offers payment plans, and you can apply online",
+        "Free help through VITA, TCE, or the Taxpayer Advocate Service"
+      ]
+    },
+    {
+      "id": "student-loans",
+      "label": "Student loans",
+      "group": "unsecured",
+      "rank": 8,
+      "consequence": "A late fee and damage to your credit record. Federal loans have collection powers private debts do not, but they also have repayment options that lower the bill.",
+      "timing": "none",
+      "relief": [
+        "Federal loans: ask about an income-driven repayment plan, deferment, or forbearance",
+        "Never pay a company that offers to get you loan forgiveness, the federal options are free"
+      ]
+    },
+    {
+      "id": "credit-cards",
+      "label": "Credit cards and personal loans",
+      "group": "unsecured",
+      "rank": 9,
+      "consequence": "A late fee, a negative entry on your credit record, lower credit scores, and a higher interest rate. Painful, but it does not take your home, your car, or your job.",
+      "timing": "none",
+      "relief": [
+        "Ask the card issuer about a hardship plan, many will lower the rate",
+        "A nonprofit credit counselor can set up a debt management plan"
+      ]
+    },
+    {
+      "id": "medical",
+      "label": "Medical bills",
+      "group": "unsecured",
+      "rank": 10,
+      "consequence": "These generate the most anxiety and, unpaid for a month, usually the least immediate consequence. Before paying one, check that it is correct and that you are not eligible for financial assistance.",
+      "timing": "none",
+      "relief": [
+        "Ask the hospital for its financial assistance or charity care policy, nonprofit hospitals must have one",
+        "Ask for an itemized bill and check it against your Explanation of Benefits",
+        "Ask for an interest-free payment plan"
+      ]
+    },
+    {
+      "id": "payday",
+      "label": "Payday and title loans",
+      "group": "unsecured",
+      "rank": 11,
+      "consequence": "The fees compound fast, and a title loan is secured by your car. Paying one of these ahead of housing or utilities is how a short month becomes a long year.",
+      "timing": "state",
+      "timingNote": "What a lender may charge and do is set by your state, and the rules vary enormously.",
+      "relief": [
+        "A nonprofit credit counselor, or a small-dollar loan from a credit union",
+        "If a title loan puts the car at risk, treat it as transportation, not as unsecured debt"
+      ]
+    }
+  ],
+  "citation": {
+    "sourceUrl": "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_prioritizing-bills_tool.pdf",
+    "sourceDocument": "CFPB, Your Money Your Goals: Prioritizing bills",
+    "sourceNote": "The ordering and the consequence language follow the CFPB tool's own framing: identify what you need to pay to protect your housing and income, keep your insurance, and meet court-ordered obligations, then weigh the risk of not paying each one. The CFPB publishes no numeric ranking, so the default order here is our reading of that framing and is adjustable by the user. Consequences for transportation, housing, utilities, credit cards, and court-ordered obligations are taken from the tool's own CONSIDER column. Timing for eviction, utility shutoff, and repossession is set by state law and is deliberately carried as a pointer rather than a number.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-08-28"
+  }
+}

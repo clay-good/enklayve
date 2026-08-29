@@ -97,6 +97,15 @@ const ANNUAL = { effectiveYear: 2026, expectedRefreshMonths: 12, staleAfterYears
 // Treasury I-bond rates reset every six months (BUILD-SPEC.md §7.2: May and
 // November). The semiannual cadence is the only difference from ANNUAL.
 const SEMIANNUAL = { effectiveYear: 2026, expectedRefreshMonths: 6, staleAfterYears: 2 } as const;
+// Pillar 4 (SPEC-4 §6) gets NO grace year. Being a year stale on a bracket costs
+// a household some accuracy; being a year stale on a consequence rule or a
+// deadline can cost them the housing, the wages, or the benefit itself, so these
+// degrade to the verify-before-relying banner the moment their year passes.
+const PILLAR4_ANNUAL = {
+  effectiveYear: 2026,
+  expectedRefreshMonths: 12,
+  staleAfterYears: 0,
+} as const;
 
 // The bundled shards. Source citation metadata is read from each shard's own
 // `citation` block below, so it is never duplicated here.
@@ -195,6 +204,13 @@ const SHARDS: ShardSource[] = [
     kind: "education-credits",
     shard: "education-credits-2024.json",
     ...ANNUAL,
+  },
+  // Pillar 4 — Rough Water (SPEC-4).
+  {
+    id: "bill-triage-2026",
+    kind: "bill-triage",
+    shard: "bill-triage-2026.json",
+    ...PILLAR4_ANNUAL,
   },
 ];
 

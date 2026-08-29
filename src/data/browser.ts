@@ -22,6 +22,7 @@ import {
   type SaversCreditData,
   type SnapData,
   type MedicaidData,
+  type BillTriageData,
   type SocialSecurityData,
   type SocialSecurityTaxationData,
   type AcaData,
@@ -74,6 +75,8 @@ export interface BundledData {
   snap(): SnapData | null;
   /** Medicaid expansion status and thresholds by state (BUILD-SPEC.md §4.3). */
   medicaid(): MedicaidData | null;
+  /** Bill-triage consequence rules (SPEC-4 §A3). */
+  billTriage(): BillTriageData | null;
   /** ACA premium-tax-credit applicable-percentage table (BUILD-SPEC.md §4.2). */
   aca(): AcaData | null;
   /** Social Security claiming-age benefit adjustment rules (BUILD-SPEC-2 §6.7). */
@@ -145,6 +148,7 @@ async function build(): Promise<BundledData> {
     saversCredit: () => dataOf("savers-credit-2024") as SaversCreditData | null,
     snap: () => dataOf("snap-fy2024-contiguous") as SnapData | null,
     medicaid: () => dataOf("medicaid-2024") as MedicaidData | null,
+    billTriage: () => dataOf("bill-triage-2026") as BillTriageData | null,
     aca: () => dataOf("aca-2024") as AcaData | null,
     socialSecurity: () => dataOf("social-security-2024") as SocialSecurityData | null,
     socialSecurityTaxation: () =>

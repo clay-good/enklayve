@@ -248,6 +248,10 @@ Ordered prompts in the SPEC/SPEC-2 convention. Each phase is independently shipp
 
 **Acceptance.** Every deadline carries a citation and participates in the staleness banner. The triage output never says "skip a bill" — a copy test asserts the forbidden phrasings are absent. Both tiles carry the advice line and pass `checkHarmTier`.
 
+**Split into 20a and 20b.** ✅ **20a — Bill Triage — is shipped**, as the `bill-triage-2026` shard (the ordering framing and consequence language come from the CFPB's own *Prioritizing bills* tool) plus `engine/triage.ts` and the `when-money-is-tight` hub. It needed none of the deadline machinery, so it could be sourced and shipped on its own. **20b — Life-Event Sequences — is deferred to its own phase**, because it turns on `enrollment-windows` and `appeal-windows`: statutory clocks (COBRA election, ACA special enrollment, Medicare enrollment, per-program appeal windows) that are the highest-harm numbers on the site under §4 addition 11. They deserve a dedicated sourcing pass against live published regulations rather than being carried along beside a tool that needed none of them.
+
+Two notes from building 20a. The shard carries *state-set* timing as a pointer with no figure in it, and a schema test asserts no `timingNote` contains a "within N days"-style number — so the 50-jurisdiction problem cannot leak back in later as a plausible-looking default. And the tile's first visit falls back to the worked example **whole**: defaulting the bill rows but not the available money opened the page on "$0 covers $0 of $2,455" with every line reading "nothing left for this", an alarming and meaningless first impression for a tool people reach on a bad day.
+
 ### Phase 21: Free filing and free help
 
 **Goal.** The cheapest real money the site can hand someone.

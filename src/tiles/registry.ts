@@ -70,6 +70,7 @@ import { debtFreedomTile } from "./debtFreedom";
 import { downshiftTile } from "./downshift";
 import { sabbaticalTile } from "./sabbatical";
 import { cliffExplorerTile, marginalRealityTile } from "./benefitCliffs";
+import { billTriageTile } from "./billTriage";
 
 // The 10 topic hubs, ordered by pillar so the home grid preserves the
 // on-screen order. Each hub's first tool is its default (the one a bare hub
@@ -204,6 +205,15 @@ const HUB_CONFIGS: HubConfig[] = [
     pillar: "rough",
     description: "Whether earning more actually leaves you better off, and where the edges are.",
     tools: [cliffExplorerTile, marginalRealityTile],
+  },
+  {
+    // Pillar 4 (SPEC-4 §7.1). Separate from "Borrowing & Debt" on purpose: that
+    // hub is for planning a payoff, this one is for a month that doesn't close.
+    id: "when-money-is-tight",
+    title: "When Money Is Tight",
+    pillar: "rough",
+    description: "What to pay first when you can't pay everything, and what happens to the rest.",
+    tools: [billTriageTile],
   },
   {
     id: "where-you-stand",

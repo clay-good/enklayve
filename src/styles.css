@@ -708,7 +708,8 @@ body {
    compact (key to the budget fitting one calm page). */
 .tile-form > .field-group-label,
 .tile-form > .plan-debts,
-.tile-form > .cat-chips {
+.tile-form > .cat-chips,
+.tile-form > .triage-editor {
   grid-column: 1 / -1;
 }
 
@@ -1080,6 +1081,83 @@ body {
   text-align: right;
   color: var(--enk-text-muted);
 }
+/* Bill triage (SPEC-4 §A3). Every ranked line carries its consequence inline —
+   the tier-2 obligation — so the list reads as an argument, not an order. */
+.triage-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+/* `1fr` is `minmax(auto, 1fr)`, so a <select> with a long option ("Child
+   support, court fines and fees") forces its track past the viewport. Pinning
+   the tracks to minmax(0, …) and letting the controls shrink keeps a 320px
+   phone scrolling vertically only. */
+.triage-row > * {
+  min-width: 0;
+}
+@media (max-width: 640px) {
+  .triage-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .triage-row .row-remove {
+    grid-column: 2;
+    justify-self: end;
+  }
+}
+.triage-actions {
+  margin-top: 0.4rem;
+}
+.triage-lead {
+  font-weight: 600;
+}
+.triage-list {
+  margin: 0.8rem 0 0;
+  padding-left: 1.4rem;
+}
+.triage-item {
+  margin-bottom: 1rem;
+  padding-left: 0.6rem;
+  border-left: 3px solid var(--enk-primary);
+}
+.triage-item--partial {
+  border-left-color: var(--enk-accent);
+}
+.triage-item--none {
+  border-left-color: var(--enk-warn);
+}
+.triage-item__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+.triage-item__consequence {
+  margin: 0.25rem 0 0;
+}
+.triage-item__timing {
+  margin: 0.25rem 0 0;
+  color: var(--enk-text-muted);
+  font-size: 0.9rem;
+}
+.triage-item__relief {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--enk-text-muted);
+  font-size: 0.9rem;
+}
+.triage-note {
+  background: var(--enk-surface-2);
+  border-radius: var(--enk-radius);
+  padding: 0.85rem 1rem;
+}
+.triage-source {
+  color: var(--enk-text-muted);
+  font-size: 0.85rem;
+}
+
 /* The benefit-cliff curve (SPEC-4 §A1). Many thin columns read as a curve;
    zero-based on purpose, so a fall is a real fall and not an axis trick. */
 .curve-plot {

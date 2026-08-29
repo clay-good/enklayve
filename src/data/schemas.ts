@@ -790,6 +790,37 @@ export const EducationCreditsSchema = z.object({
 export type EducationCreditsData = z.infer<typeof EducationCreditsSchema>;
 
 /** Every dataset kind referenced by the manifest (BUILD-SPEC.md §7.2). */
+/**
+ * Bill-triage consequence rules (SPEC-4 §A3). Not a table of numbers: a table of
+ * *consequences*, which is what actually determines the order a household should
+ * pay in when it cannot pay everything. Anything genuinely set by state law
+ * (eviction timelines, utility shutoff notice periods, repossession rules) is
+ * carried as `timing: "state"` plus a pointer, never as a specific number we
+ * would be inventing for 50 different jurisdictions.
+ */
+export const BillTriageCategorySchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  /** Coarse grouping used for headings: housing, job, insurance, court, unsecured. */
+  group: z.enum(["housing", "job", "insurance", "court", "unsecured"]),
+  /** Default priority; 1 is paid first. Ranks are unique and contiguous. */
+  rank: z.number().int().positive(),
+  /** What actually happens if this goes unpaid. The part that changes behavior. */
+  consequence: z.string().min(1),
+  /** Whether a clock exists, and who sets it. */
+  timing: z.enum(["state", "federal", "none"]),
+  timingNote: z.string().optional(),
+  /** Categories of relief that exist, so a user knows a channel is there. */
+  relief: z.array(z.string().min(1)),
+});
+export const BillTriageSchema = z.object({
+  year: z.number().int(),
+  categories: z.array(BillTriageCategorySchema).min(1),
+  citation: CitationSchema,
+});
+export type BillTriageData = z.infer<typeof BillTriageSchema>;
+export type BillTriageCategory = z.infer<typeof BillTriageCategorySchema>;
+
 export const DATASET_SCHEMAS = {
   "federal-income-tax": JurisdictionSchema,
   "state-income-tax": JurisdictionSchema,
@@ -813,6 +844,7 @@ export const DATASET_SCHEMAS = {
   amt: AmtSchema,
   "child-tax": ChildTaxSchema,
   "education-credits": EducationCreditsSchema,
+  "bill-triage": BillTriageSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;
