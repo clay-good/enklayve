@@ -19,7 +19,7 @@
     "right, and on 2026-08-29 nine adapters anchored the wrong number.",
     "",
     "Illinois, Arizona, Kentucky and Iowa joined on 2026-08-29, each dry-run to a",
-    "Illinois, Arizona, Kentucky, Iowa, the federal standard deduction, all three poverty-guideline regions and SNAP joined on 2026-08-29, each dry-run to a no-op against its committed figures."
+    "Illinois, Arizona, Kentucky, Iowa, the federal standard deduction, all three poverty-guideline regions, SNAP and the I-bond rates joined on 2026-08-29, each dry-run to a no-op against its committed figures."
   ],
   "recordedOn": "2026-08-29",
   "knownAnchoring": [
@@ -36,6 +36,7 @@
     "state-ky-income-tax-2024",
     "state-la-income-tax-2024",
     "state-pa-income-tax-2024",
-    "state-va-income-tax-2024"
+    "state-va-income-tax-2024",
+    "treasury-bonds-2024"
   ]
 }

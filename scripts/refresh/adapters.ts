@@ -1194,57 +1194,97 @@ function parseMedicaidThreshold(raw: string, current: Record<string, unknown>): 
   return { ok: true, shard };
 }
 
-// --- TreasuryDirect Series I savings bond (anchored prose) -------------------
-
 /**
- * TreasuryDirect publishes the I-bond fixed rate and the semiannual inflation
- * rate as plain percentages ("The fixed rate ... is 1.30%", "the semiannual
- * inflation rate ... is 1.48%"). We anchor both, convert to decimals, and
- * overlay them onto the latest committed rate period — refreshing its figures
- * in place. A plausibility guard rejects an out-of-range read (fixed rates have
- * run 0%-3.6% historically; a semiannual inflation rate outside -5%..10% is not
- * a real I-bond figure), routing to the fail-safe alert rather than a wrong
- * number. Appending a brand-new May/November period is the reviewer's data-only
- * step on the PR, like rolling a shard to a new effective year.
+ * The Series I savings-bond rate, read the way TreasuryDirect states it.
+ *
+ * The page leads with the number savers care about and the shard does not
+ * store: "Current Interest Rate Series I Savings Bonds **4.26%** This includes a
+ * fixed rate of **0.90%** For I bonds issued **May 1, 2026 to October 31,
+ * 2026**." The shard stores the two components, fixed and semiannual inflation,
+ * because that is what determines a bond's return for the rest of its life.
+ *
+ * So exactly one of the shard's two numbers is stated on the page. The parser
+ * this replaces looked for both and found the same 4.26% twice — `fixed rate`
+ * and `semiannual inflation rate` each bridging to the composite figure the page
+ * opens with — and was left refusing on a collision guard. The guard was right
+ * and the premise was wrong: the inflation rate is not on the page.
+ *
+ * What the page does give is enough to CHECK it. Treasury's composite formula,
+ * which the page states and works an example of, is
+ *
+ *   composite = fixed + 2 × semiannual + fixed × semiannual
+ *
+ * so the committed inflation rate either reproduces the published composite or
+ * it does not. It is used that way and no other: the fixed rate is written
+ * because the page says it, and the inflation rate is only ever verified. If the
+ * two disagree by more than the page's own rounding, both figures are named in a
+ * refusal, because which of them moved is a reviewer's call and the arithmetic
+ * cannot say.
+ *
+ * The period is anchored too, and this is the part that was quietly dangerous.
+ * The old parser wrote into `rates[rates.length - 1]` whatever period the page
+ * happened to describe — so on the morning Treasury announces a new six months,
+ * the new rates would be written OVER the last period rather than after it,
+ * silently rewriting history in a series whose whole purpose is to be a history.
+ * Appending a period stays the reviewer's step, as it always was; the parser now
+ * refuses by name instead of overwriting.
  */
 function parseTreasuryBonds(raw: string, current: Record<string, unknown>): ParseOutcome {
-  const fixedMatch = /fixed rate[^%]*?([\d.]+)\s*%/i.exec(raw);
-  const inflMatch = /semiannual inflation rate[^%]*?(-?[\d.]+)\s*%/i.exec(raw);
-  if (!fixedMatch || !inflMatch) {
-    return {
-      ok: false,
-      reason: "could not anchor the I-bond fixed rate and semiannual inflation rate",
-    };
-  }
-  const fixedRate = Number(fixedMatch[1]) / 100;
-  const inflationRate = Number(inflMatch[1]) / 100;
-  if (!(fixedRate >= 0 && fixedRate <= 0.05)) {
-    return { ok: false, reason: `implausible I-bond fixed rate ${fixedMatch[1]}%` };
-  }
-  if (!(inflationRate >= -0.05 && inflationRate <= 0.1)) {
-    return { ok: false, reason: `implausible semiannual inflation rate ${inflMatch[1]}%` };
-  }
-  // The two components are set independently by different mechanisms — the fixed
-  // rate by Treasury policy, the inflation rate by CPI-U — so their landing on
-  // the same figure to the basis point is not a coincidence, it is both patterns
-  // matching the same number on the page. A dry run on 2026-08-29 had both
-  // anchoring 4.26%, which is the COMPOSITE rate TreasuryDirect leads with.
-  if (fixedRate === inflationRate) {
+  const text = visibleText(raw);
+
+  const compositeMatch = /Series I Savings Bonds\s+([\d.]+)\s*%/i.exec(text);
+  const fixedMatch = /includes a fixed rate of\s+([\d.]+)\s*%/i.exec(text);
+  const periodMatch = /For I bonds issued\s+(May|November)\s+1,\s*(\d{4})/i.exec(text);
+  if (!compositeMatch || !fixedMatch || !periodMatch) {
     return {
       ok: false,
       reason:
-        `both the fixed and semiannual inflation rate anchored ${fixedMatch[1]}% — ` +
-        "the patterns have collided, probably on the composite rate",
+        "could not anchor the current I-bond rate block (composite, fixed rate, and issue period)",
     };
   }
+  // pctToRate, not `/ 100`: 0.90 / 100 is 0.009000000000000001, which diffs
+  // against the committed 0.009 and opens a pull request every single run.
+  const composite = pctToRate(Number(compositeMatch[1]));
+  const fixedRate = pctToRate(Number(fixedMatch[1]));
+  if (!(fixedRate >= 0 && fixedRate <= 0.05)) {
+    return { ok: false, reason: `implausible I-bond fixed rate ${fixedMatch[1]}%` };
+  }
+  if (!(composite >= 0 && composite <= 0.2)) {
+    return { ok: false, reason: `implausible I-bond composite rate ${compositeMatch[1]}%` };
+  }
+  const period = `${periodMatch[2]}-${/^may$/i.test(periodMatch[1] as string) ? "05" : "11"}`;
+
   const shard = clone(current);
-  const rates = shard.rates as { fixedRate: number; inflationRate: number }[] | undefined;
+  const rates = shard.rates as
+    | { period: string; fixedRate: number; inflationRate: number }[]
+    | undefined;
   if (!Array.isArray(rates) || rates.length === 0) {
     return { ok: false, reason: "committed shard has no rate periods to refresh" };
   }
-  const latest = rates[rates.length - 1]!;
-  latest.fixedRate = fixedRate;
-  latest.inflationRate = inflationRate;
+  const entry = rates.find((r) => r.period === period);
+  if (!entry) {
+    return {
+      ok: false,
+      reason: `the page publishes the ${period} period and this shard's history ends at ${rates[rates.length - 1]!.period} — a new six months to append, which is the reviewer's step, not an overwrite of the last one`,
+    };
+  }
+
+  // Treasury's own composite formula, used only to check the one figure the page
+  // does not state. The composite is published to two decimal places, so a
+  // half-basis-point of slack is the page's rounding, not a real disagreement.
+  const impliedComposite = fixedRate + 2 * entry.inflationRate + fixedRate * entry.inflationRate;
+  if (Math.abs(impliedComposite - composite) > 0.0001) {
+    return {
+      ok: false,
+      reason:
+        `the committed ${period} semiannual inflation rate (${(entry.inflationRate * 100).toFixed(2)}%) ` +
+        `with the published fixed rate (${fixedMatch[1]}%) implies a composite of ` +
+        `${(impliedComposite * 100).toFixed(2)}%, and the page publishes ${compositeMatch[1]}% — ` +
+        "one of them moved, and which is a reviewer's call",
+    };
+  }
+
+  entry.fixedRate = fixedRate;
   return { ok: true, shard };
 }
 

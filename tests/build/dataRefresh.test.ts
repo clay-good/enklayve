@@ -939,36 +939,62 @@ describe("adapters: USDA SNAP (one table, a column per region)", () => {
   });
 });
 
-describe("adapters: TreasuryDirect I-bond rates (anchored prose)", () => {
+describe("adapters: TreasuryDirect I-bond rates (one figure stated, one checked)", () => {
   const adapter = adaptersForGroup("treasurydirect")[0]!;
   const current = readShard("treasury-bonds-2024.json");
+  // The page's current-rate block, as TreasuryDirect writes it.
+  const page = (composite: string, fixed: string, month = "May", year = "2026") =>
+    `Current Interest Rate Series I Savings Bonds ${composite}% This includes a fixed rate of ` +
+    `${fixed}% For I bonds issued ${month} 1, ${year} to October 31, ${year}.`;
 
-  it("anchors the fixed and semiannual inflation rates onto the latest period", () => {
-    const raw =
-      "The composite rate for I bonds issued from November 2024 through April 2025 is 3.11%. " +
-      "This rate applies for the first six months you own the bond. The fixed rate will be 1.20%. " +
-      "The semiannual inflation rate is 0.95%.";
-    const result = adapter.parse(raw, current);
+  it("writes the fixed rate the page states, into the period the page names", () => {
+    const result = adapter.parse(page("4.26", "0.90"), current);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    const rates = result.shard.rates as { fixedRate: number; inflationRate: number }[];
-    const latest = rates[rates.length - 1]!;
-    expect(latest.fixedRate).toBeCloseTo(0.012, 6);
-    expect(latest.inflationRate).toBeCloseTo(0.0095, 6);
-    // Earlier periods are preserved (appending a new period is the reviewer's step).
+    const rates = result.shard.rates as {
+      period: string;
+      fixedRate: number;
+      inflationRate: number;
+    }[];
+    const entry = rates.find((r) => r.period === "2026-05")!;
+    expect(entry.fixedRate).toBe(0.009);
+    // The inflation rate is not on the page, so it is never written — only
+    // checked against the published composite.
+    expect(entry.inflationRate).toBe(0.0167);
     expect(rates[0]!.inflationRate).toBe(0.0356);
     expect(TreasuryBondsSchema.safeParse(result.shard).success).toBe(true);
   });
 
-  it("fails (-> alert) when the rate anchors are missing", () => {
+  it("names both figures when the committed rate does not reproduce the composite", () => {
+    // composite = fixed + 2 × semiannual + fixed × semiannual. The shard's
+    // 1.67% with a 0.90% fixed rate implies 4.26%, so 4.90% means one of them
+    // moved — and the arithmetic cannot say which.
+    const result = adapter.parse(page("4.90", "0.90"), current);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("implies a composite of 4.26%");
+    expect(result.reason).toContain("page publishes 4.90%");
+  });
+
+  it("refuses a new six-month period rather than overwriting the last one", () => {
+    // The parser this replaces wrote into rates[length - 1] whatever period the
+    // page described, so the morning Treasury announces a new period it would
+    // have rewritten the previous one — in a series that exists to be a history.
+    const result = adapter.parse(page("4.26", "0.90", "November", "2026"), current);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("2026-11");
+    expect(result.reason).toContain("reviewer's step");
+  });
+
+  it("fails (-> alert) when the current-rate block is missing", () => {
     expect(adapter.parse("I bond rates are announced each May and November.", current).ok).toBe(
       false,
     );
   });
 
-  it("fails (-> alert) on an implausible rate read", () => {
-    const raw = "The fixed rate will be 1.30%. The semiannual inflation rate is 47.0%.";
-    expect(adapter.parse(raw, current).ok).toBe(false);
+  it("fails (-> alert) on an implausible fixed rate", () => {
+    expect(adapter.parse(page("4.26", "47.0"), current).ok).toBe(false);
   });
 });
 
