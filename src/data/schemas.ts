@@ -821,6 +821,47 @@ export const BillTriageSchema = z.object({
 export type BillTriageData = z.infer<typeof BillTriageSchema>;
 export type BillTriageCategory = z.infer<typeof BillTriageCategorySchema>;
 
+/**
+ * Free tax-filing channels (SPEC-4 §A5). Eligibility is a small set of published
+ * tests — an AGI ceiling, a minimum age, military status — so "do I have to pay
+ * to file?" is answerable exactly. `omitted` records channels that were checked
+ * and found unavailable, so an absence reads as a verified fact rather than an
+ * oversight (IRS Direct File, ended for filing season 2026).
+ */
+export const FreeFilingChannelSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  /** AGI ceiling, or null when the channel has no income limit. */
+  agiLimit: z.number().positive().nullable(),
+  /** Minimum age, or null when age is irrelevant. */
+  minAge: z.number().int().positive().nullable(),
+  requiresMilitary: z.boolean(),
+  /** Conditions that qualify a household regardless of the income ceiling. */
+  alsoQualifies: z.array(z.enum(["disability", "limited-english"])),
+  note: z.string().min(1),
+  url: z.string().url(),
+});
+export const FreeFilingSchema = z.object({
+  /** The filing season these thresholds govern (e.g. 2026). */
+  filingSeason: z.number().int(),
+  /** The tax year being filed in that season (e.g. 2025). */
+  taxYear: z.number().int(),
+  channels: z.array(FreeFilingChannelSchema).min(1),
+  omitted: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        label: z.string().min(1),
+        reason: z.string().min(1),
+        url: z.string().url(),
+      }),
+    )
+    .default([]),
+  citation: CitationSchema,
+});
+export type FreeFilingData = z.infer<typeof FreeFilingSchema>;
+export type FreeFilingChannel = z.infer<typeof FreeFilingChannelSchema>;
+
 export const DATASET_SCHEMAS = {
   "federal-income-tax": JurisdictionSchema,
   "state-income-tax": JurisdictionSchema,
@@ -845,6 +886,7 @@ export const DATASET_SCHEMAS = {
   "child-tax": ChildTaxSchema,
   "education-credits": EducationCreditsSchema,
   "bill-triage": BillTriageSchema,
+  "free-filing": FreeFilingSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

@@ -27,6 +27,7 @@ The authoritative, machine-readable record is [`data/manifest.json`](../data/man
 | Child-tax dependent standard deduction & earned-income add-on (IRC §1(g)) | IRS annual revenue procedure (Rev. Proc. 2025-32) | Annual | 1 |
 | Education-credit (AOTC / Lifetime Learning) tiers and phase-outs (IRC §25A) | IRS Form 8863 / annual revenue procedure | Annual | 2 |
 | Bill-triage consequence rules (what unpaid costs you, and in what order) | CFPB, *Your Money Your Goals: Prioritizing bills* | Annual, `staleAfterYears: 0` | 4 |
+| Free tax-filing channels and their eligibility tests (Free File, Fillable Forms, VITA, TCE, MilTax) | IRS filing-season release and *Free tax return preparation for qualifying taxpayers* | Annual, Jan, `staleAfterYears: 0` | 1 & 2 |
 
 > The ACA **county benchmark (second-lowest-cost silver) premium** and a Social Security **PIA** are deliberately *not* bundled — the per-county SLCSP table is enormous and changes annually. Those tools have the user supply that one local figure (pointed to HealthCare.gov / their SSA statement) so every *shipped* number stays verifiable. The **FAFSA Student Aid Index + Pell Grant** tables (ED SAI Formula Guide) are seeded from the **2026-27 dependent-student methodology** — the exact Table A2 income-protection allowances and Table A5 AAI-assessment schedule, extracted from the official guide and cited; the tools frame the result as an estimate to verify against the guide and the user's FAFSA Submission Summary (the independent-student variant and per-state aid stay out of scope).
 

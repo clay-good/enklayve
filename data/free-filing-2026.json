@@ -1,0 +1,71 @@
+{
+  "filingSeason": 2026,
+  "taxYear": 2025,
+  "channels": [
+    {
+      "id": "free-file-guided",
+      "label": "IRS Free File (guided tax software)",
+      "agiLimit": 89000,
+      "minAge": null,
+      "requiresMilitary": false,
+      "alsoQualifies": [],
+      "note": "Eight private-sector partners provide guided software free through the IRS. Each partner sets its own extra criteria, which may include age, income, state residency, and military status, so check a few. A partner may charge for a state return.",
+      "url": "https://www.irs.gov/filing/irs-free-file-do-your-taxes-for-free"
+    },
+    {
+      "id": "free-file-fillable",
+      "label": "Free File Fillable Forms",
+      "agiLimit": null,
+      "minAge": null,
+      "requiresMilitary": false,
+      "alsoQualifies": [],
+      "note": "Open to every income level. These are the electronic forms themselves with no guidance, so they suit someone comfortable preparing their own return. There is always a free federal option, whatever you earn.",
+      "url": "https://www.irs.gov/e-file-providers/free-file-fillable-forms"
+    },
+    {
+      "id": "vita",
+      "label": "VITA, free in-person preparation",
+      "agiLimit": 69000,
+      "minAge": null,
+      "requiresMilitary": false,
+      "alsoQualifies": ["disability", "limited-english"],
+      "note": "IRS-certified volunteers prepare your return for you, free. Open to people who generally make $69,000 or less, and also to people with disabilities and to taxpayers with limited English proficiency regardless of that figure.",
+      "url": "https://www.irs.gov/individuals/free-tax-return-preparation-for-qualifying-taxpayers"
+    },
+    {
+      "id": "tce",
+      "label": "TCE, free preparation for people 60 and older",
+      "agiLimit": null,
+      "minAge": 60,
+      "requiresMilitary": false,
+      "alsoQualifies": [],
+      "note": "No income limit at all. Volunteers specialize in pensions and retirement questions. Most sites are run by the AARP Foundation's Tax-Aide program.",
+      "url": "https://www.irs.gov/individuals/free-tax-return-preparation-for-qualifying-taxpayers"
+    },
+    {
+      "id": "miltax",
+      "label": "MilTax, for the military community",
+      "agiLimit": null,
+      "minAge": null,
+      "requiresMilitary": true,
+      "alsoQualifies": [],
+      "note": "Run by the Department of Defense. Free electronic filing of a federal return plus up to three state returns, with no income limit.",
+      "url": "https://www.militaryonesource.mil/financial-legal/tax-resource-center/"
+    }
+  ],
+  "omitted": [
+    {
+      "id": "direct-file",
+      "label": "IRS Direct File",
+      "reason": "The IRS confirmed Direct File is not available for the 2026 filing season, and has set no future launch date. It is listed here so its absence reads as a checked fact rather than an oversight.",
+      "url": "https://www.irs.gov/newsroom/2026-tax-filing-season-opens-with-several-free-filing-options-available"
+    }
+  ],
+  "citation": {
+    "sourceUrl": "https://www.irs.gov/newsroom/2026-tax-filing-season-opens-with-several-free-filing-options-available",
+    "sourceDocument": "IRS, 2026 tax filing season opens with several free filing options available",
+    "sourceNote": "Free File guided-software AGI limit of $89,000 for tax year 2025 and the Free File Fillable Forms no-income-limit option are taken from the IRS 2026 filing-season release. The VITA figure (generally $69,000 or less, plus people with disabilities and taxpayers with limited English proficiency) and the TCE age-60-and-older criterion with no income limit come from the IRS Free tax return preparation for qualifying taxpayers page. Direct File is recorded under omitted: the IRS notified states it will not be available in filing season 2026 and set no launch date, and it appears in neither IRS page above. Every figure here is a filing-season threshold that moves annually, so this shard carries no grace year.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-08-28"
+  }
+}

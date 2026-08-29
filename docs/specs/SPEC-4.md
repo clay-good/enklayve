@@ -258,7 +258,11 @@ Two notes from building 20a. The shard carries *state-set* timing as a pointer w
 
 **Deliverables.** The `free-filing-<yr>` shard (income, age, and complexity thresholds; Direct File state availability as data); the `free-filing` tile reading income and filing status from My Situation; explicit disqualifying-complexity output.
 
-**Acceptance.** Tier 1, cited, tight staleness window, and it links to the official program page rather than embedding a list that will rot.
+**Acceptance.** ✅ Tier 1, cited, `staleAfterYears: 0`, and it links to the official program page rather than embedding a list that will rot.
+
+**What sourcing turned up, and one deviation.** IRS Direct File **is not available for filing season 2026** — the IRS notified states it would not run and set no launch date, and it appears on neither the 2026 filing-season release nor the free-preparation page. So the shard carries an `omitted` block: channels that were checked and found unavailable, with the reason and a link. An absence should read as a verified fact, not as a list nobody updated. The shipped thresholds are the Free File guided-software AGI ceiling ($89,000 for tax year 2025), Free File Fillable Forms (no ceiling — which is why "you have to pay to file" is never the honest answer, and a test pins that at every income up to $5,000,000), VITA (generally $69,000 or less, **plus** people with disabilities and taxpayers with limited English proficiency regardless of that figure — the two routes a reader of the raw rules most easily misses), TCE (age 60 and older, no income limit), and MilTax.
+
+**A6 is not folded into A5 after all.** §A6 proposed carrying the charity-care pointer inside this tile. Built out, "which free tax-filing channel am I eligible for" and "am I likely to qualify for hospital financial assistance" are two different questions that happen to share an income input, and joining them makes both harder to find. A6 lands as its own small tile instead.
 
 ### Phase 22: Readout v2
 

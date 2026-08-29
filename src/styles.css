@@ -1081,6 +1081,51 @@ body {
   text-align: right;
   color: var(--enk-text-muted);
 }
+/* Free filing (SPEC-4 §A5). Options you don't qualify for are shown with the
+   reason, so the list never looks like it quietly skipped something. */
+.ff-conditions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.ff-lead {
+  font-weight: 600;
+}
+.ff-heading {
+  font-size: 1rem;
+  margin: 1rem 0 0.4rem;
+}
+.ff-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ff-channel {
+  padding-left: 0.6rem;
+  border-left: 3px solid var(--enk-primary);
+  margin-bottom: 0.7rem;
+}
+.ff-channel--no {
+  border-left-color: var(--enk-border);
+}
+.ff-channel--gone {
+  border-left-color: var(--enk-text-muted);
+}
+.ff-channel__head {
+  margin: 0;
+  font-weight: 700;
+}
+.ff-channel__reason {
+  margin: 0.2rem 0 0;
+}
+.ff-channel__note,
+.ff-source {
+  margin: 0.2rem 0 0;
+  color: var(--enk-text-muted);
+  font-size: 0.9rem;
+}
+
 /* Bill triage (SPEC-4 §A3). Every ranked line carries its consequence inline —
    the tier-2 obligation — so the list reads as an argument, not an order. */
 .triage-row {

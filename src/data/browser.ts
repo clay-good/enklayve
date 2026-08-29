@@ -23,6 +23,7 @@ import {
   type SnapData,
   type MedicaidData,
   type BillTriageData,
+  type FreeFilingData,
   type SocialSecurityData,
   type SocialSecurityTaxationData,
   type AcaData,
@@ -77,6 +78,8 @@ export interface BundledData {
   medicaid(): MedicaidData | null;
   /** Bill-triage consequence rules (SPEC-4 §A3). */
   billTriage(): BillTriageData | null;
+  /** Free tax-filing channels and their eligibility tests (SPEC-4 §A5). */
+  freeFiling(): FreeFilingData | null;
   /** ACA premium-tax-credit applicable-percentage table (BUILD-SPEC.md §4.2). */
   aca(): AcaData | null;
   /** Social Security claiming-age benefit adjustment rules (BUILD-SPEC-2 §6.7). */
@@ -149,6 +152,7 @@ async function build(): Promise<BundledData> {
     snap: () => dataOf("snap-fy2024-contiguous") as SnapData | null,
     medicaid: () => dataOf("medicaid-2024") as MedicaidData | null,
     billTriage: () => dataOf("bill-triage-2026") as BillTriageData | null,
+    freeFiling: () => dataOf("free-filing-2026") as FreeFilingData | null,
     aca: () => dataOf("aca-2024") as AcaData | null,
     socialSecurity: () => dataOf("social-security-2024") as SocialSecurityData | null,
     socialSecurityTaxation: () =>

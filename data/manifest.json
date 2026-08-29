@@ -976,6 +976,19 @@
       "sourceDocument": "CFPB, Your Money Your Goals: Prioritizing bills",
       "dateRetrieved": "2026-08-28",
       "contentHash": "e81c6294d606ad1123b0a4952cca2f9a22fa0c1ba9e2d7e4890a20bbb3fcdcb1"
+    },
+    {
+      "id": "free-filing-2026",
+      "kind": "free-filing",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "free-filing-2026.json",
+      "sourceUrl": "https://www.irs.gov/newsroom/2026-tax-filing-season-opens-with-several-free-filing-options-available",
+      "sourceDocument": "IRS, 2026 tax filing season opens with several free filing options available",
+      "dateRetrieved": "2026-08-28",
+      "contentHash": "2cd7964b13205430275df8e3db8f8304f0e7879bfa9227599be7bc4c2d5825dc"
     }
   ]
 }
