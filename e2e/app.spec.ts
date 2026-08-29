@@ -46,6 +46,22 @@ test("printing the Readout Report strips the app chrome", async ({ page }) => {
   await expect(page.locator(".report-body")).toBeVisible();
 });
 
+test("a collapsed source note still prints", async ({ page }) => {
+  // The source notes say what a figure does NOT include — a city income tax
+  // outside this engine, a credit that could zero the number out. They are
+  // collapsed on screen because they are long. A printout is read away from the
+  // screen, where nobody can expand anything, so print must show them. Chrome
+  // and Firefox hide a closed <details> by different mechanisms, so this is
+  // verified in a real browser rather than asserted from the stylesheet.
+  await page.goto("/#/paycheck-taxes?tool=take-home&fs=single&st=mi&w=60000");
+  const notes = page.locator(".source-notes");
+  await expect(notes).toBeVisible();
+  const body = notes.locator(".source-note").first();
+  await expect(body).toBeHidden(); // collapsed on screen
+  await page.emulateMedia({ media: "print" });
+  await expect(body).toBeVisible();
+});
+
 test("works offline after the first visit", async ({ page, context }) => {
   // First visit: let the service worker install and precache the core shell.
   await page.goto("/");

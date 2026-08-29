@@ -767,6 +767,38 @@ body {
   padding: 0.35rem 0;
 }
 
+/* The source notes: what the shipped figures leave out. Collapsed by default —
+   long prose that most readers do not want, and that some readers need. */
+.source-notes {
+  margin-top: 0.9rem;
+  border-top: 1px solid var(--enk-border);
+  padding-top: 0.6rem;
+}
+
+.source-notes > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--enk-primary);
+  padding: 0.35rem 0;
+  font-size: 0.9rem;
+}
+
+.source-note-head {
+  margin: 0.7rem 0 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--enk-text-muted);
+}
+
+.source-note {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--enk-text-muted);
+  /* Long statutory prose: let it wrap rather than push the card sideways. */
+  overflow-wrap: anywhere;
+}
+
 .breakdown-table {
   width: 100%;
   border-collapse: collapse;
@@ -2789,6 +2821,7 @@ body {
      keep their native marker (no flex), so grow the tap height with padding. */
   .breakdown summary,
   .explainer-how > summary,
+  .source-notes > summary,
   .ph-config > summary {
     padding-block: 0.7rem;
   }
@@ -3013,11 +3046,25 @@ html {
   .tile,
   .result-card,
   .breakdown,
+  .source-notes,
   .report-section,
   .tile-stats {
     background: #fff !important;
     color: #000 !important;
     box-shadow: none !important;
+  }
+
+  /* A printout is read away from the screen, where nobody can expand anything.
+     The source notes say what a figure leaves out, so print them open. A closed
+     <details> hides its content through `::details-content`, which is the only
+     handle a stylesheet has on it; where a browser does not support that, the
+     note simply prints collapsed rather than wrong. Verified in the e2e. */
+  .source-notes::details-content {
+    content-visibility: visible;
+    block-size: auto;
+  }
+  .source-notes > summary {
+    font-weight: 700;
   }
 
   /* Site chrome and anything you can't act on with a printout. */

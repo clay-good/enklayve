@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **68** in **12 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **80**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | **2,028** unit/golden across 89 files, **+25** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | **2,030** unit/golden across 89 files, **+26** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Source audits | **all 51 jurisdictions + the federal and benefits shards** read against the agency's own document; 8 wrong figures found and fixed | [`docs/data-sources.md`](docs/data-sources.md#source-audits) |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale/theme preference touches `localStorage`, asserted end-to-end across a full session | `npm run audit` / `npm run test:e2e` |
@@ -494,6 +494,12 @@ Every audit, including the ones that changed nothing, is recorded in [`docs/data
 
 ---
 
+### What a figure leaves out, under the figure
+
+Every dataset shard can carry a `sourceNote`: prose about where its figures came from and, more usefully, what they do **not** include. Until August 2026 that prose reached only the exported Readout Report's citation appendix, which is the wrong place for it — a Michigan filer could read a take-home number with nothing on screen to say that Michigan's 24 city income taxes are outside this engine, so a Detroit resident really owes more than shown. Pennsylvania has the same shape (the local Earned Income Tax that most municipalities levy), and Indiana's 92 county taxes, and Kentucky's occupational license taxes.
+
+So every result card now ends with a **"What these figures leave out"** disclosure, closed by default — long prose most readers do not want, present for the readers who need it. Notes dedupe by source document, because a breakdown cites the same jurisdiction on several lines. And they print **expanded**: a printout is read away from the screen where nobody can expand anything, which is verified in a real browser rather than asserted from the stylesheet, because a closed `<details>` is hidden by a different mechanism in each engine.
+
 ## The Readout: deterministic document ingestion
 
 Drop a document and the browser parses it locally, extracts known fields by **anchoring to form labels and box numbers — never by inference** — and uses them (after you confirm) to populate every tool. The vaulytica pattern, applied to personal finance, with nothing uploaded. (Drop a previously-saved `.json` situation here instead and it's restored, not parsed — the welcome-back path.)
@@ -572,7 +578,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**2,028 unit/golden tests across 89 files** (plus 25 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**2,030 unit/golden tests across 89 files** (plus 26 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 

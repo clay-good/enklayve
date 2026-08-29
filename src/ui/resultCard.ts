@@ -55,6 +55,37 @@ export function citationLink(citation: CitationData): HTMLElement {
   );
 }
 
+/**
+ * The source notes for a card's breakdown, deduplicated and in first-seen order.
+ *
+ * A `sourceNote` is the prose a shard carries about where its figures came from
+ * and — the part that matters on screen — what they do NOT include. Until now it
+ * reached only the exported Readout Report's citation appendix, which means a
+ * Detroit resident could read a Michigan take-home figure with no hint that
+ * Michigan's 24 city income taxes are outside this engine, or a Pennsylvanian
+ * one with no hint about the local Earned Income Tax that most municipalities
+ * levy. Those are material to the number being looked at, so they belong under
+ * it.
+ *
+ * Deduplicated by source document, because a breakdown cites the same
+ * jurisdiction on several lines and the same paragraph three times is noise.
+ */
+export function sourceNotesFor(
+  breakdown: readonly BreakdownLine[],
+): { label: string; note: string }[] {
+  const seen = new Set<string>();
+  const out: { label: string; note: string }[] = [];
+  for (const line of breakdown) {
+    const c = line.citation;
+    if (!c?.sourceNote) continue;
+    const key = `${c.sourceDocument}|${c.effectiveYear}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ label: `${c.sourceDocument} (${c.effectiveYear})`, note: c.sourceNote });
+  }
+  return out;
+}
+
 function breakdownRow(line: BreakdownLine): HTMLTableRowElement {
   const cells: HTMLElement[] = [
     el("th", { class: "bd-label", attrs: { scope: "row" }, text: line.label }),
@@ -136,6 +167,24 @@ export function resultCard(options: ResultCardOptions): HTMLElement {
     table,
   );
 
+  // The source notes, collapsed. Closed by default because they are long and
+  // most readers want the number; present because for some of them the caveat
+  // changes the answer — a city income tax this engine does not model, a credit
+  // that could zero the figure out, a year the state has not published yet.
+  const notes = sourceNotesFor(options.breakdown);
+  const notesBlock =
+    notes.length === 0
+      ? null
+      : el(
+          "details",
+          { class: "source-notes" },
+          el("summary", { text: "What these figures leave out" }),
+          ...notes.flatMap((n) => [
+            el("h4", { class: "source-note-head", text: n.label }),
+            el("p", { class: "source-note", text: n.note }),
+          ]),
+        );
+
   return el(
     "section",
     { class: "result-card", attrs: { "aria-label": options.label } },
@@ -143,5 +192,6 @@ export function resultCard(options: ResultCardOptions): HTMLElement {
     valueNode,
     el("div", { class: "result-actions" }, copyBtn, linkBtn),
     details,
+    notesBlock,
   );
 }

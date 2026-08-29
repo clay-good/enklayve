@@ -65,6 +65,31 @@ describe("take-home tile", () => {
     expect(fedLabel).toBe(true);
   });
 
+  it("surfaces what a state's figures leave out, under the number", () => {
+    // A `sourceNote` records what a shard does NOT model. Until it was rendered
+    // here it reached only the exported report's citation appendix, so a
+    // Michigan filer could read a take-home figure with nothing to say that
+    // Michigan's 24 city income taxes are outside this engine — a Detroit
+    // resident really owes more than the number shown.
+    const { root } = mount(new URLSearchParams({ fs: "single", st: "mi", w: "60000" }));
+    const notes = root.querySelector(".source-notes");
+    expect(notes).not.toBeNull();
+    expect(notes?.querySelector("summary")?.textContent).toBe("What these figures leave out");
+    const text = notes?.textContent ?? "";
+    expect(text).toMatch(/CITY INCOME TAXES/i);
+    // Collapsed by default: long prose most readers do not want, present for the
+    // readers who need it.
+    expect((notes as HTMLDetailsElement).open).toBe(false);
+  });
+
+  it("never repeats the same source note twice in one card", () => {
+    // A breakdown cites the same jurisdiction on several lines. The same
+    // paragraph three times is noise, so notes dedupe by source document.
+    const { root } = mount(new URLSearchParams({ fs: "single", st: "mi", w: "60000" }));
+    const heads = Array.from(root.querySelectorAll(".source-note-head")).map((n) => n.textContent);
+    expect(new Set(heads).size).toBe(heads.length);
+  });
+
   it("shows a citation source link on rule-based lines (no orphan numbers)", () => {
     const { root } = mount(new URLSearchParams({ fs: "single", st: "ca", w: "85000" }));
     const links = root.querySelectorAll("a.cite-link");
