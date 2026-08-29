@@ -157,16 +157,15 @@ export default defineConfig({
     emptyOutDir: true,
     target: "es2022",
     sourcemap: true,
-    // The shell deliberately bundles all 59 calculators into one eager chunk:
-    // it is a single-page app precached whole by the service worker for instant
-    // offline use, and the eager JS is ~180 kB gzipped (it inlines every dataset
-    // shard, so it grows with the catalog and the seeded jurisdictions). The
-    // genuinely heavy, optional libraries (pdf.js, mammoth, tesseract.js) are
-    // already dynamically imported into their own lazy chunks. So Vite's default
-    // 500 kB nudge is a standing false alarm here; raise it past the shell's size
-    // (with headroom for routine data refreshes) while still tripping on a real
-    // regression (a chunk ballooning well beyond today's).
-    chunkSizeWarningLimit: 800,
+    // Vite's 500 kB nudge is a standing false alarm for a deliberately single-
+    // bundle app. This sits just above today's largest chunk so it still trips on
+    // a real regression — but it is only a nudge in build output, and a warning
+    // that scrolls past a green build is not a gate. The 800 kB limit had in fact
+    // been tripping on every build for some time, unnoticed, which is exactly the
+    // failure mode. The real gate is `checkBundleBudget` in the release audit,
+    // which fails on the *gzipped precached shell* — the bytes a first visit
+    // actually costs — rather than on one chunk's minified size.
+    chunkSizeWarningLimit: 900,
   },
   resolve: {
     alias: {

@@ -27,7 +27,7 @@ node scripts/refresh/watch-sources.ts      # the hand-authored Pillar 4 sources,
 - [ ] The same catalog sweep is green on its other invariants: no tile throws or paints a non-finite value for a hostile *deep link* (a separate path from the form inputs the e2e drives), every enum param falls back to a value the reader can see, and every tile clears the bar — worked example, "how this works", "Learn more", deep-linkable state.
 - [ ] `check:links` reports **0 broken and 0 redirected**. A redirect is not a pass: agencies reuse article ids, so an old link can land on a page that is authoritative and about something else.
 - [ ] `build` produces `dist/`; `deploy:dry` succeeds.
-- [ ] `audit` passes: `connect-src 'none'` on pages, no cross-origin loads in `index.html`, every dataset shard cited, `localStorage` touched only by the theme/locale boundary.
+- [ ] `audit` passes: `connect-src 'none'` on pages, no cross-origin loads in `index.html`, every dataset shard cited, `localStorage` touched only by the theme/locale boundary, and the **precached shell inside its gzipped budget** — the bytes a first visit costs and offline requires. A failure names the chunk that grew, so the fix is not simply raising the number.
 
 ## Privacy & determinism (SPEC §2)
 

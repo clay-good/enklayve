@@ -16,6 +16,7 @@
  *      theme/locale boundary (theme.ts), never by a financial tile.
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
+import { gzipSync } from "node:zlib";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -140,6 +141,51 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
 }
 
 /** 6. localStorage may be used only by the theme/locale boundary. */
+/**
+ * The precached shell's gzipped budget, in kilobytes.
+ *
+ * This is the bytes a first-time visitor downloads before anything works, and
+ * the bytes the service worker must hold for the site to run offline — the one
+ * size figure that describes what a reader actually pays. It was drifting
+ * unwatched: the README claimed "~180 kB gzipped" against a real 241, and Vite's
+ * own 800 kB chunk warning had been tripping on *every build* for long enough
+ * that it had become part of the scenery. A warning that always fires is not a
+ * warning.
+ *
+ * So it is a gate instead. Raising this number is a deliberate act with a reason
+ * attached, not something that happens by accident over six phases.
+ */
+export const SHELL_GZIP_BUDGET_KB = 260;
+
+/** A precached asset and its gzipped size. */
+export interface ShellAsset {
+  path: string;
+  gzipBytes: number;
+}
+
+/**
+ * 7. The eager shell stays inside its budget. Reported with the breakdown, so a
+ * failure names the chunk that grew rather than only the total.
+ */
+export function checkBundleBudget(
+  assets: ShellAsset[],
+  budgetKb: number = SHELL_GZIP_BUDGET_KB,
+): string[] {
+  if (assets.length === 0)
+    return ["no precached assets found, run `npm run build` before the audit"];
+  const totalKb = assets.reduce((sum, a) => sum + a.gzipBytes, 0) / 1024;
+  if (totalKb <= budgetKb) return [];
+  const biggest = [...assets]
+    .sort((a, b) => b.gzipBytes - a.gzipBytes)
+    .slice(0, 3)
+    .map((a) => `${a.path} ${Math.round(a.gzipBytes / 1024)} kB`)
+    .join(", ");
+  return [
+    `the precached shell is ${totalKb.toFixed(1)} kB gzipped, over its ${budgetKb} kB budget ` +
+      `(largest: ${biggest}). Trim it, or raise SHELL_GZIP_BUDGET_KB deliberately and say why.`,
+  ];
+}
+
 export function checkLocalStorage(files: { path: string; content: string }[]): string[] {
   const allowed = /(^|\/)ui\/theme\.ts$/;
   const violations: string[] = [];
@@ -163,6 +209,28 @@ function walk(dir: string, test: (name: string) => boolean): string[] {
     else if (test(name)) out.push(p);
   }
   return out;
+}
+
+/** Every asset the built service worker precaches, with its gzipped size. */
+function precachedAssets(root: string): ShellAsset[] {
+  let sw: string;
+  try {
+    sw = readFileSync(join(root, "dist", "sw.js"), "utf8");
+  } catch {
+    return [];
+  }
+  const match = /const PRECACHE = (\[[\s\S]*?\]);/.exec(sw);
+  if (!match?.[1]) return [];
+  const paths = JSON.parse(match[1]) as string[];
+  const assets: ShellAsset[] = [];
+  for (const p of paths) {
+    try {
+      assets.push({ path: p, gzipBytes: gzipSync(readFileSync(join(root, "dist", p))).length });
+    } catch {
+      // "/" is an alias for index.html and has no file of its own.
+    }
+  }
+  return assets;
 }
 
 function runCli(): void {
@@ -195,13 +263,16 @@ function runCli(): void {
   }));
   violations.push(...checkLocalStorage(tsFiles));
 
+  // 5. The eager shell's byte budget — what a first visit actually costs.
+  violations.push(...checkBundleBudget(precachedAssets(root)));
+
   if (violations.length > 0) {
     console.error("✗ Release audit failed:");
     for (const v of violations) console.error(`  - ${v}`);
     process.exit(1);
   }
   console.log(
-    "✓ Release audit passed: CSP, no cross-origin loads, provenance, citation length, no sensitive persistence.",
+    "✓ Release audit passed: CSP, no cross-origin loads, provenance, citation length, no sensitive persistence, shell size budget.",
   );
 }
 

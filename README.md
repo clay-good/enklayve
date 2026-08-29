@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **68** in **12 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **80**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | **1,997** unit/golden across 88 files, **+25** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | **2,001** unit/golden across 88 files, **+25** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale/theme preference touches `localStorage`, asserted end-to-end across a full session | `npm run audit` / `npm run test:e2e` |
 | UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
@@ -558,7 +558,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**1,997 unit/golden tests across 88 files** (plus 25 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**2,001 unit/golden tests across 88 files** (plus 25 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -671,7 +671,7 @@ The [launch checklist](docs/launch-checklist.md) walks every acceptance criterio
 - **The user supplies the one un-bundleable figure.** Rather than ship a genuinely huge dataset, a few tools ask for the single local number (ACA's county benchmark premium, Social Security's PIA, the W-4 paycheck withholding) and keep every other figure verifiable.
 - **Consolidation over duplication.** Rainy Day / Runway / War Chest / Enough Number share one computation, so they're one Peace of Mind dashboard, not four tools that re-collect the same inputs.
 - **Never predict markets.** Where a return or inflation rate is needed, the user supplies it or accepts a labeled default; CPI is used only for the honest "what a past dollar is worth" question. When an assumption matters, the answer is **sensitivity** not a forecast: an opt-in low/base/high range re-runs the same deterministic function at the assumption ±a labeled delta (three pure evaluations, never a simulation). And when a rate leaves any defensible band, a calm one-line hint ("…of 80.0% is unusually high — treat the result as a stress scenario, not a recommendation") signposts the extreme **without ever clamping it** — the input stands and the math still runs, so an honest stress test never reads as a quiet correction.
-- **One eager shell, heavy libs lazy.** All 68 calculators (plus `decimal.js` and the zod schemas, with every dataset shard inlined at build time) ship in a single bundle (~180 kB gzipped) that the service worker precaches whole, so the app is instant and works fully offline after the first visit. The only genuinely large dependencies — pdf.js, mammoth (with its pako/jszip docx stack), and tesseract.js, used solely by the Readout — are dynamically imported into their own lazy chunks and runtime-cached on first use, so they never weigh down the shell. (Vite's 500 kB chunk warning is tuned up to 800 kB accordingly, with a documented regression tripwire.)
+- **One eager shell, heavy libs lazy.** All 68 calculators (plus `decimal.js` and the zod schemas, with every dataset shard inlined at build time) ship in a single bundle that the service worker precaches whole — **241 kB gzipped** across the whole precached shell, which is what a first visit actually costs and what running offline requires, so the app is instant and works fully offline after the first visit. The only genuinely large dependencies — pdf.js, mammoth (with its pako/jszip docx stack), and tesseract.js, used solely by the Readout — are dynamically imported into their own lazy chunks and runtime-cached on first use, so they never weigh down the shell. That number is a **gate, not a note**: `npm run audit` fails if the precached shell passes its pinned gzipped budget, and a failure names the chunk that grew so the fix is not simply raising the number. Vite's own chunk warning is a nudge above it — it had been tripping on every build for long enough to become scenery, which is precisely why the real check measures the gzipped shell instead of one chunk's minified size.
 
 ---
 

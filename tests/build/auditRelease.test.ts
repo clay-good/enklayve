@@ -8,6 +8,8 @@ import {
   checkLocalStorage,
   checkHarmTier,
   type AuditTile,
+  checkBundleBudget,
+  SHELL_GZIP_BUDGET_KB,
 } from "../../scripts/audit-release";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
 
@@ -161,5 +163,54 @@ describe("registry: every ready tile is actually mountable", () => {
       .filter((t) => t.status === "ready" && typeof t.mount !== "function")
       .map((t) => t.id);
     expect(unmountable).toEqual([]);
+  });
+});
+
+/**
+ * The shell's byte budget (audit check 7).
+ *
+ * This is the one size figure that describes what a reader pays: the bytes
+ * downloaded before anything works, and the bytes the service worker must hold
+ * to run offline. It had been drifting unwatched — the README claimed "~180 kB
+ * gzipped" against a real 241 — while Vite's own chunk warning tripped on every
+ * build until it became scenery. A warning that always fires is not a warning,
+ * so this is a gate.
+ */
+describe("checkBundleBudget", () => {
+  const kb = (n: number): number => n * 1024;
+
+  it("passes a shell inside its budget", () => {
+    expect(
+      checkBundleBudget([
+        { path: "/assets/index.js", gzipBytes: kb(220) },
+        { path: "/assets/index.css", gzipBytes: kb(8) },
+      ]),
+    ).toEqual([]);
+  });
+
+  it("fails a shell over budget and names the chunks that grew", () => {
+    const [violation] = checkBundleBudget([
+      { path: "/assets/index.js", gzipBytes: kb(300) },
+      { path: "/assets/index.css", gzipBytes: kb(9) },
+      { path: "/index.html", gzipBytes: kb(1) },
+    ]);
+    expect(violation).toContain("310.0 kB gzipped");
+    expect(violation).toContain(`over its ${SHELL_GZIP_BUDGET_KB} kB budget`);
+    // A failure has to say *what* grew, or the next person just raises the number.
+    expect(violation).toContain("/assets/index.js 300 kB");
+    expect(violation).toContain("raise SHELL_GZIP_BUDGET_KB deliberately and say why");
+  });
+
+  it("treats an empty asset list as a failure, not a pass", () => {
+    // Reading no assets means the build did not run. Silently passing there
+    // would make the gate vanish exactly when it is least likely to be noticed.
+    expect(checkBundleBudget([])[0]).toContain("run `npm run build`");
+  });
+
+  it("keeps the budget close enough to today's shell to be meaningful", () => {
+    // A budget with unlimited headroom is not a budget. This pins the intent:
+    // enough room for routine growth, not enough to absorb a new dependency.
+    expect(SHELL_GZIP_BUDGET_KB).toBeGreaterThan(200);
+    expect(SHELL_GZIP_BUDGET_KB).toBeLessThan(320);
   });
 });
