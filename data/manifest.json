@@ -766,8 +766,8 @@
       "shard": "federal-poverty-level-2024-contiguous.json",
       "sourceUrl": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
       "sourceDocument": "HHS 2026 Poverty Guidelines (48 contiguous states and DC), Federal Register 2026-00755",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "962c5f7a69730ca7eb500082ab1f0c140e69a5092eac0b7b8c0d0678767a0031"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "ca1741ae6059eb558648f9e1fe207935e2540268e7c44350d7e08d9427a64e09"
     },
     {
       "id": "federal-poverty-level-2024-alaska",
@@ -779,8 +779,8 @@
       "shard": "federal-poverty-level-2024-alaska.json",
       "sourceUrl": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
       "sourceDocument": "HHS 2026 Poverty Guidelines (Alaska), Federal Register 2026-00755",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "7b46a202a8c761916f31fe2d1e0d070f8306ec5d57288233e7b9c78521579ff5"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "9a05f741f21590c945de1ecc181d4a10c264eaaddf0f90feeeeafb9d66291bd2"
     },
     {
       "id": "federal-poverty-level-2024-hawaii",
@@ -792,8 +792,8 @@
       "shard": "federal-poverty-level-2024-hawaii.json",
       "sourceUrl": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
       "sourceDocument": "HHS 2026 Poverty Guidelines (Hawaii), Federal Register 2026-00755",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "86b052faab68728f42b6af894d18b84d3f4d1794c9c89286cce82084a5684cd3"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "4b718169a7d9ff8e96509675018d561b52b173e8ac463a0700c23bc090e9f958"
     },
     {
       "id": "eitc-ctc-2024",
@@ -831,8 +831,8 @@
       "shard": "snap-fy2024-contiguous.json",
       "sourceUrl": "https://www.fna.usda.gov/snap/allotment/cola/fy26",
       "sourceDocument": "USDA FNS SNAP Fiscal Year 2026 Cost-of-Living Adjustments (48 contiguous states and DC), effective Oct 1, 2025",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "7da80a39777aab46c5940885991f8897967398b98532e17278e32890591aa22d"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "5af65719facbf128624bda357443adda3c56375ff860d1462b98942bd246412e"
     },
     {
       "id": "medicaid-2024",
@@ -883,8 +883,8 @@
       "shard": "social-security-2024.json",
       "sourceUrl": "https://www.ssa.gov/benefits/retirement/planner/agereduction.html",
       "sourceDocument": "Social Security Administration, Benefit Reduction for Early Retirement & Delayed Retirement Credits (statutory rules, unchanged for 2026)",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "4abed4ab54568df44b2a0a09a779d9fbe287b04b7f5b79d78c93135a5b089c2e"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "45f94e2f7df8f1d684d063bebcebfdb5f52764e5694a6857cf3b4444b3814d34"
     },
     {
       "id": "ira-deduction-2024",

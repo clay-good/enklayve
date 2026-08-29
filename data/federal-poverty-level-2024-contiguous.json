@@ -7,6 +7,7 @@
     "sourceUrl": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
     "sourceDocument": "HHS 2026 Poverty Guidelines (48 contiguous states and DC), Federal Register 2026-00755",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "The HHS poverty guidelines are the single most load-bearing figure on this site: the ACA premium tax credit, Medicaid eligibility, SNAP's gross and net income limits, and every benefit-cliff calculation are all expressed as a percentage of them. They are a SIMPLIFIED version of the Census Bureau's poverty thresholds, issued each January by the Department of Health and Human Services for administrative use, and they are a straight line: a base amount for a household of one plus a fixed increment per additional person, which is why this shard stores two numbers rather than a table. Three separate guidelines exist — one for the 48 contiguous states and DC, and higher ones for Alaska and Hawaii — and a program that uses the wrong one for the household's state gets every downstream answer wrong, so they are seeded as three shards rather than one with a multiplier. The guidelines take no account of anything but household size: not local cost of living within the contiguous states, not assets, not medical expenses, not childcare. A program's own rules do that, and each program's shard carries them. This is the 48 CONTIGUOUS STATES AND DC guideline for 2026: $15,960 for a household of one, plus $5,680 for each additional person — so $21,640 for two, $27,320 for three, $33,000 for four, up to $55,720 for eight. Verified against the HHS ASPE poverty-guidelines page on 2026-08-29."
   }
 }

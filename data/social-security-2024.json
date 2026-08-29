@@ -3,13 +3,34 @@
   "earliestClaimAge": 62,
   "delayedCreditMaxAge": 70,
   "fullRetirementAge": [
-    { "bornThrough": 1954, "months": 792 },
-    { "bornThrough": 1955, "months": 794 },
-    { "bornThrough": 1956, "months": 796 },
-    { "bornThrough": 1957, "months": 798 },
-    { "bornThrough": 1958, "months": 800 },
-    { "bornThrough": 1959, "months": 802 },
-    { "bornThrough": null, "months": 804 }
+    {
+      "bornThrough": 1954,
+      "months": 792
+    },
+    {
+      "bornThrough": 1955,
+      "months": 794
+    },
+    {
+      "bornThrough": 1956,
+      "months": 796
+    },
+    {
+      "bornThrough": 1957,
+      "months": 798
+    },
+    {
+      "bornThrough": 1958,
+      "months": 800
+    },
+    {
+      "bornThrough": 1959,
+      "months": 802
+    },
+    {
+      "bornThrough": null,
+      "months": 804
+    }
   ],
   "earlyReduction": {
     "firstMonths": 36,
@@ -24,6 +45,7 @@
     "sourceUrl": "https://www.ssa.gov/benefits/retirement/planner/agereduction.html",
     "sourceDocument": "Social Security Administration, Benefit Reduction for Early Retirement & Delayed Retirement Credits (statutory rules, unchanged for 2026)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "This shard carries the CLAIMING-AGE arithmetic, not a benefit amount — the site never guesses a primary insurance amount, and the tile asks the user for theirs off their Social Security statement. Full retirement age rises with year of birth (42 U.S.C. §416(l)): 66 years exactly for those born through 1954, then two months per birth year to 67 for anyone born 1960 or later, stored here in months. Claiming early reduces the benefit permanently by 5/9 of one percent per month for the first 36 months before full retirement age and 5/12 of one percent for each month beyond that (§402(q)) — so claiming at 62 with a full retirement age of 67 costs 30%, not the 25% a naive five-year extrapolation of the first rate gives. Delaying past full retirement age earns 2/3 of one percent per month, 8% a year, up to age 70, after which nothing more accrues. Omitted: the earnings test for claiming before full retirement age (and the recomputation that restores the withheld amount afterward), spousal and survivor benefits, the windfall elimination and government pension offset provisions, cost-of-living adjustments after claiming, and the taxation of benefits, which has its own shard. These rules are statutory and have not changed; ssa.gov refuses automated access, so this pass confirmed them against the statute rather than by re-reading the SSA page. Checked 2026-08-29."
   }
 }
