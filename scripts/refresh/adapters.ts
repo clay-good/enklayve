@@ -483,6 +483,100 @@ function parseStandardDeductions(raw: string, current: Record<string, unknown>):
   return { ok: true, shard };
 }
 
+// --- IRS revenue procedure (statutory-cite anchored) --------------------------
+
+/**
+ * The federal standard deduction, read out of the IRS annual revenue procedure.
+ *
+ * This one needs its own parser rather than the generic prose one, for a reason
+ * the generic one cannot fix: **a revenue procedure states more than one year.**
+ * Rev. Proc. 2025-32 carries the 2026 table and, a few pages earlier, the 2025
+ * table it is replacing (the OBBBA amounts, $15,750 / $23,625 / $31,500). Both
+ * are real federal standard deductions, they are labelled identically, and the
+ * generic parser reaches whichever comes first — so pointed at the right
+ * document it would have proposed rolling the federal shard back a year.
+ *
+ * Two anchors, both taken from the document rather than guessed at:
+ *
+ * **The year.** The section opens "For taxable years beginning in 2026, the
+ * standard deduction amounts under § 63(c)(2) are as follows", and the shard
+ * says which year it is. So the shard's own `taxYear` selects the table, and
+ * nothing else on the page is even read. A document that does not state the
+ * shard's year is refused by name — which is what next October looks like, when
+ * the shard rolls to 2027 and this URL is last year's revenue procedure. That
+ * refusal is the point. The adapter had been watching Rev. Proc. **2023-34** for
+ * a 2026 shard: a document frozen in 2023, which will report agreement forever
+ * and can never report a change, the most silent form of not watching.
+ *
+ * **The row.** Each row names its statutory subsection — "(§ 1(j)(2)(A))" for
+ * joint and surviving spouses, (B) heads of households, (C) unmarried, (D)
+ * married filing separately. A statutory cite is a better anchor than a prose
+ * label: it is what the table is organised by, it does not vary with the
+ * drafter, and it distinguishes the two $16,100 rows that prose cannot.
+ */
+function parseIrsStandardDeductions(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const text = raw.replace(/\s+/g, " ");
+  const year = Number(current.taxYear);
+  if (!Number.isInteger(year)) {
+    return { ok: false, reason: "shard has no taxYear to select the revenue procedure's table" };
+  }
+  const opener = new RegExp(
+    `taxable years? beginning in ${year}, the standard deduction amounts? under`,
+    "i",
+  );
+  const at = opener.exec(text);
+  if (!at) {
+    return {
+      ok: false,
+      reason:
+        `this revenue procedure states no standard-deduction table for ${year} — it is ` +
+        "probably the previous year's, and the adapter should be pointed at the current one",
+    };
+  }
+  // Long enough for the four rows, short enough that it cannot reach the next
+  // section's figures (the dependent and aged-or-blind amounts follow it).
+  const table = text.slice(at.index, at.index + 600);
+
+  const rows: { key: string; subsection: string }[] = [
+    { key: "married_jointly", subsection: "A" },
+    { key: "qualifying_surviving_spouse", subsection: "A" },
+    { key: "head_of_household", subsection: "B" },
+    { key: "single", subsection: "C" },
+    { key: "married_separately", subsection: "D" },
+  ];
+  const deductions = {
+    ...((current.standardDeductionByFilingStatus as Record<string, number>) ?? {}),
+  };
+  let anchored = 0;
+  for (const { key, subsection } of rows) {
+    if (!(key in deductions)) continue;
+    const row = new RegExp(
+      `§ ?1\\(j\\)\\(2\\)\\(${subsection}\\)\\)?\\s*\\$([\\d,]{4,})`,
+      "i",
+    ).exec(table);
+    if (!row) continue;
+    const amount = parseAmount(row[1] as string);
+    const drift = implausibleDrift(deductions[key] as number, amount);
+    if (drift) {
+      return {
+        ok: false,
+        reason: `the ${key} standard deduction ${drift}; refusing — either the table moved or this is not the figure`,
+      };
+    }
+    deductions[key] = amount;
+    anchored += 1;
+  }
+  if (anchored === 0) {
+    return {
+      ok: false,
+      reason: `found the ${year} table but no row anchored to its § 1(j)(2) subsection cite`,
+    };
+  }
+  const shard = clone(current);
+  shard.standardDeductionByFilingStatus = deductions;
+  return { ok: true, shard };
+}
+
 // --- Flat-rate state income tax (anchored prose) -----------------------------
 
 /**
@@ -1028,9 +1122,12 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "federal-income-tax-2024",
     group: "irs",
     source: "IRS annual revenue procedure (inflation adjustments)",
-    sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-23-34.pdf",
+    // Rev. Proc. 2025-32, which states the 2026 table this shard carries. It had
+    // been Rev. Proc. 2023-34 — the 2024 one, frozen since 2023, which could
+    // report agreement forever and a change never.
+    sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     cadence: "Annual, October-November",
-    parse: parseStandardDeductions,
+    parse: parseIrsStandardDeductions,
   },
   {
     id: "state-ca-income-tax-2024",

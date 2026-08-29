@@ -281,26 +281,57 @@ describe("adapters: SSA FICA (anchored prose)", () => {
   });
 });
 
-describe("adapters: jurisdiction standard deductions (IRS + CA)", () => {
+describe("adapters: the federal standard deduction (IRS revenue procedure)", () => {
   const adapter = adaptersForGroup("irs")[0]!;
   const current = readShard("federal-income-tax-2024.json");
+  // Rev. Proc. 2025-32 as the fetched PDF reads it: the 2025 table it replaces,
+  // then the 2026 table this shard carries. Both are real federal standard
+  // deductions, labelled identically, and the prose parser reaches the first.
   const raw =
-    "For tax year 2025 the standard deduction for married couples filing jointly rises to $30,000. For single taxpayers the standard deduction is $15,000. For heads of household it rises to $22,500.";
+    "the standard deduction amounts under § 63(c)(2) for any taxable year beginning in 2025 as" +
+    " follows: Filing Status Standard Deduction Married Individuals Filing Joint Returns and" +
+    " Surviving Spouses (§ 1(j)(2)(A)) $31,500 Heads of Households (§ 1(j)(2)(B)) $23,625" +
+    " Unmarried Individuals (other than Surviving Spouses and Heads of Households)" +
+    " (§ 1(j)(2)(C)) $15,750 Married Individuals Filing Separate Returns (§ 1(j)(2)(D)) $15,750" +
+    " ... For taxable years beginning in 2026, the standard deduction amounts under § 63(c)(2)" +
+    " are as follows: Filing Status Standard Deduction Married Individuals Filing Joint Returns" +
+    " and Surviving Spouses (§ 1(j)(2)(A)) $32,200 Heads of Households (§ 1(j)(2)(B)) $24,150" +
+    " Unmarried Individuals (other than Surviving Spouses and Heads of Households)" +
+    " (§ 1(j)(2)(C)) $16,100 Married Individuals Filing Separate Returns (§ 1(j)(2)(D)) $16,100" +
+    " (2) Dependent. For taxable years beginning in 2026, the standard deduction amount under" +
+    " § 63(c)(5) ... cannot exceed the greater of (1) $1,350, or (2) the sum of $450 and the" +
+    " individual's earned income.";
 
-  it("overlays the deductions it can anchor and validates as a jurisdiction", () => {
+  it("reads the table for the shard's own tax year, not the first one on the page", () => {
     const result = adapter.parse(raw, current);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const sd = result.shard.standardDeductionByFilingStatus as Record<string, number>;
-    expect(sd.married_jointly).toBe(30000);
-    expect(sd.single).toBe(15000);
-    expect(sd.head_of_household).toBe(22500);
-    // Unstated statuses are preserved from the committed shard for review.
+    expect(sd.married_jointly).toBe(32200);
+    expect(sd.qualifying_surviving_spouse).toBe(32200);
+    expect(sd.head_of_household).toBe(24150);
+    expect(sd.single).toBe(16100);
+    // The two $16,100 rows are only told apart by their statutory cite.
     expect(sd.married_separately).toBe(16100);
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
   });
 
-  it("fails (-> alert) when no deduction can be anchored", () => {
+  it("refuses a revenue procedure that does not state the shard's year", () => {
+    // What next October looks like: the shard rolls to 2027 and this URL is
+    // last year's document. The adapter it replaced watched Rev. Proc. 2023-34
+    // for a 2026 shard — frozen in 2023, reporting agreement forever.
+    const rolled = { ...current, taxYear: 2027 };
+    const result = adapter.parse(raw, rolled);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("no standard-deduction table for 2027");
+  });
+
+  it("watches the revenue procedure that states the shard's figures", () => {
+    expect(adapter.sourceUrl).toContain("rp-25-32");
+  });
+
+  it("fails (-> alert) when the table cannot be found at all", () => {
     expect(adapter.parse("no dollar figures in this layout", current).ok).toBe(false);
   });
 });

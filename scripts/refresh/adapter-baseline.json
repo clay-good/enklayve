@@ -19,10 +19,11 @@
     "right, and on 2026-08-29 nine adapters anchored the wrong number.",
     "",
     "Illinois, Arizona, Kentucky and Iowa joined on 2026-08-29, each dry-run to a",
-    "no-op against its committed rate."
+    "Illinois, Arizona, Kentucky, Iowa and the federal standard deduction joined on 2026-08-29, each dry-run to a no-op against its committed figures."
   ],
   "recordedOn": "2026-08-29",
   "knownAnchoring": [
+    "federal-income-tax-2024",
     "fica-2024",
     "state-az-income-tax-2024",
     "state-ia-income-tax-2024",
