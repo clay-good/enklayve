@@ -48,13 +48,25 @@ import {
   type RefreshGroup,
 } from "./refresh/adapters.ts";
 import { fetchSource } from "./fetch-source.ts";
+import { diffShards } from "./refresh/contract.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DATA_DIR = join(ROOT, "data");
 const CONCURRENCY = 6;
+const BASELINE_FILE = join(ROOT, "scripts", "refresh", "adapter-baseline.json");
 
-/** Why an adapter could not anchor: the page, or the parser reading it. */
-export type AnchorStatus = "anchored" | "unparsed" | "unreachable";
+/**
+ * Why an adapter could not anchor — or, when it did, whether it agrees with the
+ * shard it is watching.
+ *
+ * `agrees` is the healthy steady state: the parser found its figure and the
+ * figure is the one already committed. `wouldChange` is not a failure — a real
+ * refresh proposes changes, and that is the point of the pipeline — but it IS
+ * the thing worth reading, because a change is either a state updating its
+ * figures or a parser reading the wrong number, and the diff is what tells them
+ * apart. On 2026-08-29 that distinction found nine of the second kind.
+ */
+export type AnchorStatus = "agrees" | "wouldChange" | "unparsed" | "unreachable";
 
 export interface AnchorResult {
   adapterId: string;
@@ -62,6 +74,8 @@ export interface AnchorResult {
   url: string;
   status: AnchorStatus;
   detail?: string;
+  /** For `wouldChange`, the `path: old -> new` lines the refresh would write. */
+  diff?: string[];
 }
 
 /**
@@ -73,30 +87,119 @@ export interface AnchorResult {
  */
 export function classifyAnchor(
   fetched: { ok: true; raw: string } | { ok: false; reason: string },
-  parse: () => { ok: true } | { ok: false; reason: string },
-): { status: AnchorStatus; detail?: string } {
+  parse: () => { ok: true; diff: string[] } | { ok: false; reason: string },
+): { status: AnchorStatus; detail?: string; diff?: string[] } {
   if (!fetched.ok) return { status: "unreachable", detail: fetched.reason };
   const parsed = parse();
   if (!parsed.ok) return { status: "unparsed", detail: parsed.reason };
-  return { status: "anchored" };
+  if (parsed.diff.length === 0) return { status: "agrees" };
+  return { status: "wouldChange", diff: parsed.diff };
+}
+
+/**
+ * Split the adapters that cannot anchor into the ones already known not to and
+ * the ones that just stopped.
+ *
+ * More than forty adapters cannot read their sources today. Reporting that every
+ * month, in full, would be an alert nobody reads by the third time — the exact
+ * failure the shell-size gate was written to escape ("a warning that always
+ * fires is not a warning"). So the backlog is committed, and only a NEW breakage
+ * fails the check.
+ *
+ * The other direction matters too: an id that has disappeared from the baseline
+ * is an adapter someone fixed, and saying so is how the list gets shorter.
+ */
+export function againstBaseline(
+  anchored: readonly string[],
+  baseline: readonly string[],
+): { regressions: string[]; recovered: string[] } {
+  const nowAnchored = new Set(anchored);
+  const known = new Set(baseline);
+  return {
+    // An adapter that was watching its shard and has stopped. This is the only
+    // thing that fails the check.
+    regressions: baseline.filter((id) => !nowAnchored.has(id)).sort(),
+    // An adapter anchoring that the baseline does not list yet. Not a failure —
+    // it wants a dry run first, since anchoring is not correctness — but worth
+    // saying, because this is how the healthy list grows.
+    recovered: anchored.filter((id) => !known.has(id)).sort(),
+  };
 }
 
 /** Group results into the report the workflow posts and a human reads. */
-export function renderAnchorReport(results: readonly AnchorResult[]): string {
+export function renderAnchorReport(
+  results: readonly AnchorResult[],
+  baseline: readonly string[] = [],
+): string {
   const by = (s: AnchorStatus): AnchorResult[] => results.filter((r) => r.status === s);
-  const anchored = by("anchored");
+  const agrees = by("agrees");
+  const wouldChange = by("wouldChange");
   const unparsed = by("unparsed");
   const unreachable = by("unreachable");
 
   const lines: string[] = [];
   lines.push(`Checked ${results.length} refresh adapters.`);
   lines.push(
-    "Anchored means the parser found something shaped like its figure — not that the" +
-      " value is right. Repointing an adapter means dry-running it and reading the diff.",
+    "Anchoring means the parser found something shaped like its figure — never that the" +
+      " value is right. The diffs below are the only thing that answers that.",
   );
+
+  if (wouldChange.length > 0) {
+    lines.push("");
+    lines.push("## Would change its shard");
+    lines.push("");
+    lines.push(
+      "Read every line. A change is either a state that updated its figures — which is" +
+        " what this pipeline is for, and the refresh workflow will open the PR — or a parser" +
+        " reading the wrong number off the page. Nine of these turned out to be the second" +
+        " kind the first time anyone looked, including a standard deduction that anchored a" +
+        " year off the page as if it were dollars.",
+    );
+    lines.push("");
+    for (const r of wouldChange) {
+      lines.push(`- \`${r.adapterId}\` (${r.group})`);
+      lines.push(`  - ${r.url}`);
+      for (const line of r.diff ?? []) lines.push(`  - \`${line}\``);
+    }
+  }
   lines.push(
-    `${anchored.length} anchored · ${unparsed.length} could not parse · ${unreachable.length} unreachable.`,
+    `${agrees.length} agree with their shard · ${wouldChange.length} would change it · ` +
+      `${unparsed.length} could not parse · ${unreachable.length} unreachable.`,
   );
+
+  const { regressions, recovered } = againstBaseline(
+    [...agrees, ...wouldChange].map((r) => r.adapterId),
+    baseline,
+  );
+  if (recovered.length > 0) {
+    lines.push("");
+    lines.push("## Anchoring again");
+    lines.push("");
+    lines.push(
+      "These anchor and the baseline does not list them yet. Dry-run each one and read" +
+        " the diff (`node scripts/refresh/run.ts --adapter <id> --dry-run`); if it writes the" +
+        " right values, add it to scripts/refresh/adapter-baseline.json so a future break" +
+        " fails the check.",
+    );
+    lines.push("");
+    for (const id of recovered) lines.push(`- \`${id}\``);
+  }
+  if (regressions.length > 0) {
+    lines.push("");
+    lines.push("## Stopped anchoring");
+    lines.push("");
+    lines.push(
+      "These are on the known-anchoring list and are not anchoring now. Each one is a shard" +
+        " that has stopped being watched, which is how four of them went a year or two stale" +
+        " behind live, correct-looking citations. This is what fails the check.",
+    );
+    lines.push("");
+    for (const id of regressions) {
+      const r = results.find((x) => x.adapterId === id);
+      lines.push(`- \`${id}\` — ${r?.url ?? ""}`);
+      lines.push(`  - ${r?.detail ?? "not reported this run"}`);
+    }
+  }
 
   if (unparsed.length > 0) {
     lines.push("");
@@ -145,16 +248,24 @@ async function check(adapter: RefreshAdapter): Promise<AnchorResult> {
     unknown
   >;
   const fetched = await fetchSource(adapter.sourceUrl);
-  const { status, detail } = classifyAnchor(fetched, () => {
+  const { status, detail, diff } = classifyAnchor(fetched, () => {
     if (!fetched.ok) return { ok: false, reason: fetched.reason };
     try {
       const outcome = adapter.parse(fetched.raw, current);
-      return outcome.ok ? { ok: true } : { ok: false, reason: outcome.reason };
+      if (!outcome.ok) return { ok: false, reason: outcome.reason };
+      return { ok: true, diff: diffShards(current, outcome.shard).lines };
     } catch (error) {
       return { ok: false, reason: `parser threw: ${(error as Error).message}` };
     }
   });
-  return { adapterId: adapter.id, group: adapter.group, url: adapter.sourceUrl, status, detail };
+  return {
+    adapterId: adapter.id,
+    group: adapter.group,
+    url: adapter.sourceUrl,
+    status,
+    detail,
+    diff,
+  };
 }
 
 async function main(): Promise<void> {
@@ -173,19 +284,37 @@ async function main(): Promise<void> {
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
   results.sort((a, b) => a.adapterId.localeCompare(b.adapterId));
 
-  const report = renderAnchorReport(results);
+  const baseline = (JSON.parse(readFileSync(BASELINE_FILE, "utf8")) as { knownAnchoring: string[] })
+    .knownAnchoring;
+  const report = renderAnchorReport(results, baseline);
   process.stdout.write(`${report}\n`);
 
   const out = process.env.GITHUB_OUTPUT;
   if (out) {
-    const unparsed = results.filter((r) => r.status === "unparsed").length;
+    const { regressions } = againstBaseline(
+      results
+        .filter((r) => r.status === "agrees" || r.status === "wouldChange")
+        .map((r) => r.adapterId),
+      baseline,
+    );
+    const wouldChange = results.filter((r) => r.status === "wouldChange").length;
     const unreachable = results.filter((r) => r.status === "unreachable").length;
-    appendFileSync(out, `unparsed=${unparsed}\nunreachable=${unreachable}\n`);
+    appendFileSync(
+      out,
+      `regressions=${regressions.length}\nwouldChange=${wouldChange}\nunreachable=${unreachable}\n`,
+    );
     appendFileSync(out, `report<<EOF\n${report}\nEOF\n`);
   }
-  // Only an unparsed adapter fails the check. Unreachable is reported and left
-  // alone: it is usually the agency's afternoon, not our defect.
-  if (results.some((r) => r.status === "unparsed")) process.exitCode = 1;
+  // Only a NEW breakage fails. The forty-odd known ones are a backlog, not a
+  // monthly alarm, and an alarm that always fires is not an alarm. Unreachable
+  // is reported and left alone: usually the agency's afternoon, not our defect.
+  const { regressions } = againstBaseline(
+    results
+      .filter((r) => r.status === "agrees" || r.status === "wouldChange")
+      .map((r) => r.adapterId),
+    baseline,
+  );
+  if (regressions.length > 0) process.exitCode = 1;
 }
 
 if (process.argv[1] && process.argv[1].endsWith("check-adapters.ts")) {

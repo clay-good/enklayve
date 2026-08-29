@@ -40,21 +40,26 @@ jobs:
         continue-on-error: true
         run: node scripts/check-adapters.ts
 
-      # Gated on "could not parse" only. Unreachable is usually the agency
-      # having an afternoon; alerting on it monthly is the noise that teaches
-      # people to close these issues unread. It still appears in the body.
-      - name: Open an issue when an adapter stopped anchoring
-        if: steps.adapters.outputs.unparsed != '0'
+      # Gated on REGRESSIONS against the committed known-anchoring baseline, not
+      # on the raw count. Forty-odd adapters cannot anchor today; an issue
+      # listing all of them every month is the alert people learn to close
+      # unread. "Would change" also opens one, because a proposed change is
+      # either a state updating its figures or a parser reading the wrong
+      # number, and only a person reading the diff can tell. Unreachable is
+      # usually the agency having an afternoon and appears in the body only.
+      - name: Open an issue when an adapter stopped anchoring or would change a shard
+        if: steps.adapters.outputs.regressions != '0' || steps.adapters.outputs.wouldChange != '0'
         uses: actions/github-script@v7
         with:
           script: |
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `Adapter check: ${process.env.UNPARSED} can no longer anchor their source`,
+              title: `Adapter check: ${process.env.REGRESSIONS} stopped anchoring, ${process.env.WOULD_CHANGE} would change a shard`,
               body: process.env.REPORT,
               labels: ["data-review"],
             });
         env:
           REPORT: ${{ steps.adapters.outputs.report }}
-          UNPARSED: ${{ steps.adapters.outputs.unparsed }}
+          REGRESSIONS: ${{ steps.adapters.outputs.regressions }}
+          WOULD_CHANGE: ${{ steps.adapters.outputs.wouldChange }}

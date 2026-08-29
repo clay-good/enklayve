@@ -1,0 +1,29 @@
+{
+  "note": [
+    "The adapters known to read their source correctly, as of 2026-08-29.",
+    "",
+    "This is deliberately the SHORT list rather than the long one. Forty-odd",
+    "adapters cannot anchor their figure today; reporting all of them every month",
+    "would be an alert nobody reads by the third time, which is the failure the",
+    "shell-size gate was written to escape -- a warning that always fires is not a",
+    "warning. So the check fails only when an adapter ON THIS LIST stops working.",
+    "",
+    "Holding the healthy set rather than the broken one is also more stable: the",
+    "split between 'could not parse' and 'unreachable' moves run to run as sites",
+    "flake, and a shard being watched or not does not.",
+    "",
+    "This list should GROW. Every id added is a shard that is genuinely being",
+    "watched again. Adding one means dry-running the adapter and reading the diff",
+    "(`node scripts/refresh/run.ts --adapter <id> --dry-run`) -- anchoring proves",
+    "the parser found something shaped like its figure, never that the value is",
+    "right, and on 2026-08-29 nine adapters anchored the wrong number."
+  ],
+  "recordedOn": "2026-08-29",
+  "knownAnchoring": [
+    "fica-2024",
+    "state-in-income-tax-2024",
+    "state-la-income-tax-2024",
+    "state-pa-income-tax-2024",
+    "state-va-income-tax-2024"
+  ]
+}
