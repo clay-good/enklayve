@@ -108,6 +108,12 @@ describe("every calculator in the catalog", () => {
             select.value,
           );
           expect(nonsense.has(select.value), `${tile.id}: <select> kept a bad param`).toBe(false);
+          // Note for anyone tempted to assert a *specific* selected value here:
+          // happy-dom mis-reports `<select>.value` and `selectedIndex` when the
+          // options are built with `selected` set before insertion, which is how
+          // every tile builds them. It will tell you a tile ignores the profile
+          // when Chromium shows it does not. The real assertions on which value
+          // is showing live in the Playwright suite, on purpose.
         }
       });
 

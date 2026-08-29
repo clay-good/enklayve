@@ -10,6 +10,7 @@ import { el, option } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { rememberShared } from "./profileSync";
+import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
 
 type Mode = "hourly" | "salary";
@@ -43,7 +44,16 @@ function isMode(v: string): v is Mode {
   return MODES.some((m) => m.value === v);
 }
 
-function readFields(p: URLSearchParams): Fields {
+/**
+ * Resolve the starting values with the profileSync precedence: URL fragment >
+ * session profile > built-in default.
+ *
+ * This tile writes `annualIncome` back to the profile and, until now, never read
+ * it — so a household that entered $85,000 in Take-Home opened the converter on
+ * a blank salary field, and the "a value entered in one tile pre-fills the next"
+ * promise held in one direction only.
+ */
+function readFields(p: URLSearchParams, profile: SituationStore): Fields {
   const mode = p.get("m");
   return {
     mode: mode && isMode(mode) ? mode : "hourly",
@@ -51,7 +61,7 @@ function readFields(p: URLSearchParams): Fields {
     hoursPerWeek: parseNonNegative(p.get("h"), 40),
     overtimeHours: parseNonNegative(p.get("ot"), 0),
     weeksPerYear: Math.max(1, parseNonNegative(p.get("wk"), 52)),
-    salary: parseNonNegative(p.get("sal"), 0),
+    salary: p.has("sal") ? parseNonNegative(p.get("sal"), 0) : (profile.get("annualIncome") ?? 0),
     secondJob: parseNonNegative(p.get("j2"), 0),
   };
 }
@@ -75,7 +85,7 @@ function writeFields(f: Fields): URLSearchParams {
 export function mountHourlySalary(ctx: TileContext): void {
   const { root } = ctx;
   root.replaceChildren();
-  let fields = readFields(ctx.params);
+  let fields = readFields(ctx.params, ctx.profile);
 
   const modeSelect = el(
     "select",

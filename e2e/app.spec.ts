@@ -128,3 +128,39 @@ test("a session that never exports persists nothing financial", async ({ page })
   expect(stored.cookies).toBe("");
   expect(stored.databases.filter((n) => n.length > 0)).toEqual([]);
 });
+
+/**
+ * The shared-profile promise, in a real browser (BUILD-SPEC-2 §3).
+ *
+ * "A number entered in one tool prefills every other" is the reason My Situation
+ * exists, and nothing checked it end to end. It has to be a browser test: this
+ * was first probed in happy-dom, which mis-reports `<select>.value` when the
+ * options are built with `selected` set before insertion — it claimed the Benefit
+ * Cliff Explorer ignored the profile entirely, and Chromium showed it does not.
+ * A unit assertion here would have "found" a bug that does not exist.
+ */
+test("a value entered in one tool prefills the next", async ({ page }) => {
+  await page.goto("/#/paycheck-taxes?tool=take-home");
+  await page.waitForSelector(".tile-form");
+  await page.locator('select[name="fs"]').first().selectOption("head_of_household");
+  await page.locator('select[name="st"]').first().selectOption("ny");
+
+  // A different hub, a different calculator: it must open on those values.
+  await page.goto("/#/benefit-cliffs?tool=cliff-explorer");
+  await page.waitForSelector(".tile-form");
+  await expect(page.locator('select[name="fs"]').first()).toHaveValue("head_of_household");
+  await expect(page.locator('select[name="st"]').first()).toHaveValue("ny");
+});
+
+test("a deep link beats the profile, and the control shows it", async ({ page }) => {
+  await page.goto("/#/paycheck-taxes?tool=take-home");
+  await page.waitForSelector(".tile-form");
+  await page.locator('select[name="fs"]').first().selectOption("head_of_household");
+
+  // URL fragment > session profile > default (the profileSync precedence). The
+  // substitution must be *visible*, not just applied to the maths (SPEC-3 §2.6).
+  await page.goto("/#/benefit-cliffs?tool=cliff-explorer&fs=single&st=tx");
+  await page.waitForSelector(".tile-form");
+  await expect(page.locator('select[name="fs"]').first()).toHaveValue("single");
+  await expect(page.locator('select[name="st"]').first()).toHaveValue("tx");
+});
