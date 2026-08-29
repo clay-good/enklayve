@@ -23,6 +23,7 @@ import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { fetchSource } from "../fetch-source.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 /**
@@ -33,6 +34,8 @@ const HERE = dirname(fileURLToPath(import.meta.url));
  * rule caught exactly this when it briefly lived there.
  */
 const WATCH_FILE = join(HERE, "source-watch.json");
+/** Below this many characters of visible text, a page is an interstitial, not a source. */
+const MIN_SOURCE_TEXT = 2_000;
 
 export interface WatchEntry {
   /** The manifest shard id this source backs. */
@@ -82,6 +85,48 @@ export function fingerprint(html: string): string {
  * than treated as unchanged, because "we could not check" and "nothing moved"
  * are different facts.
  */
+/**
+ * Is this page an interstitial rather than the source?
+ *
+ * A fingerprint is only worth anything if it is a fingerprint of the *rule*. A
+ * WAF block page, a cookie wall, or a JavaScript-required stub also has stable
+ * text, so it fingerprints cleanly and reports "unchanged" forever — a watch
+ * that is green precisely because it is watching nothing.
+ *
+ * That is not hypothetical. Until 2026-08-29 this watch sent a bot user agent,
+ * and eCFR answered it with "Due to aggressive automated scraping of
+ * FederalRegister.gov and eCFR.gov, programmatic access to these sites is
+ * limited" — 1,180 characters where the real 45 CFR 155.420 is 36,762. The
+ * committed fingerprint was a fingerprint of that refusal, so the ACA
+ * special-enrollment window, one of the highest-harm figures on the site, had
+ * never actually been watched.
+ *
+ * Two signals, both deliberately blunt. A statutory or agency source is never
+ * this short, and the phrases below only appear on pages whose entire purpose is
+ * to refuse. Either one means report `unreachable` — a watch must say it cannot
+ * see a source, never quietly fingerprint the thing standing in front of it.
+ */
+export function looksLikeInterstitial(text: string): string | null {
+  const trimmed = text.trim();
+  if (trimmed.length < MIN_SOURCE_TEXT) {
+    return `page has only ${trimmed.length} characters of visible text; too short to be the source`;
+  }
+  const refusals = [
+    /programmatic access to these sites/i,
+    /request access/i,
+    /access denied/i,
+    /are you a (?:human|robot)/i,
+    /enable javascript to (?:view|continue)/i,
+    /checking your browser before/i,
+  ];
+  for (const pattern of refusals) {
+    if (pattern.test(trimmed.slice(0, 2000))) {
+      return `page looks like an access interstitial, not the source (matched ${String(pattern)})`;
+    }
+  }
+  return null;
+}
+
 export function planWatch(file: WatchFile, fetched: Map<string, string | Error>): WatchResult[] {
   return file.entries.map((entry) => {
     const got = fetched.get(entry.url);
@@ -91,6 +136,17 @@ export function planWatch(file: WatchFile, fetched: Map<string, string | Error>)
         url: entry.url,
         status: "unreachable" as const,
         reason: got instanceof Error ? got.message : "not fetched",
+      };
+    }
+    // Never fingerprint an interstitial: it is stable, so it would report
+    // "unchanged" forever while the rule underneath it moved freely.
+    const interstitial = looksLikeInterstitial(got);
+    if (interstitial !== null) {
+      return {
+        shard: entry.shard,
+        url: entry.url,
+        status: "unreachable" as const,
+        reason: interstitial,
       };
     }
     const now = fingerprint(got);
@@ -155,11 +211,12 @@ async function main(): Promise<void> {
   const fetched = new Map<string, string | Error>();
   for (const entry of file.entries) {
     try {
-      const res = await fetch(entry.url, {
-        headers: { "user-agent": "enklayve-source-watch/1 (+https://enklayve.com)" },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      fetched.set(entry.url, await res.text());
+      // The shared fetcher: a browser user agent (government WAFs refuse
+      // anything else) and PDF text extraction, so a watch can point at the
+      // bulletin or form where an agency actually publishes the figure.
+      const res = await fetchSource(entry.url);
+      if (!res.ok) throw new Error(res.reason);
+      fetched.set(entry.url, res.raw);
     } catch (err) {
       fetched.set(entry.url, err as Error);
     }

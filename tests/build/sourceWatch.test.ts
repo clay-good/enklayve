@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+  looksLikeInterstitial,
   acceptChanges,
   fingerprint,
   normalizeSourceText,
@@ -31,20 +32,32 @@ function fetched(...pairs: [string, string | Error][]): Map<string, string | Err
 const ROOT = resolve(__dirname, "..", "..");
 const watch = readWatchFile(resolve(ROOT, "scripts", "refresh", "source-watch.json"));
 
+/**
+ * A fixture page, padded to a realistic length.
+ *
+ * The watch refuses to fingerprint anything too short to be a statutory source,
+ * because a WAF block page fingerprints just as cleanly as a regulation and then
+ * reports "unchanged" forever. A one-sentence fixture would trip that guard, so
+ * fixtures look like what they stand for: a real page of rule text.
+ */
+function page(body: string): string {
+  return `<p>${body}</p>` + "<p>Further provisions of this section apply.</p>".repeat(60);
+}
+
 const FIXTURE: WatchFile = {
   entries: [
     {
       shard: "no-surprises-2026",
       url: "https://example.gov/a",
       why: "prose, not a table",
-      fingerprint: fingerprint("<p>Emergency room visits are protected.</p>"),
+      fingerprint: fingerprint(page("Emergency room visits are protected.")),
       checkedOn: "2026-08-29",
     },
     {
       shard: "garnishment-limits-2026",
       url: "https://example.gov/b",
       why: "statutory text",
-      fingerprint: fingerprint("<p>25 per centum of disposable earnings.</p>"),
+      fingerprint: fingerprint(page("25 per centum of disposable earnings.")),
       checkedOn: "2026-08-29",
     },
   ],
@@ -78,8 +91,8 @@ describe("planning a watch run", () => {
     const results = planWatch(
       FIXTURE,
       fetched(
-        ["https://example.gov/a", "<p>Emergency room visits are protected.</p>"],
-        ["https://example.gov/b", "<p>25 per centum of disposable earnings.</p>"],
+        ["https://example.gov/a", page("Emergency room visits are protected.")],
+        ["https://example.gov/b", page("25 per centum of disposable earnings.")],
       ),
     );
     expect(results.every((r) => r.status === "unchanged")).toBe(true);
@@ -89,8 +102,8 @@ describe("planning a watch run", () => {
     const results = planWatch(
       FIXTURE,
       fetched(
-        ["https://example.gov/a", "<p>Emergency room visits are protected, mostly.</p>"],
-        ["https://example.gov/b", "<p>25 per centum of disposable earnings.</p>"],
+        ["https://example.gov/a", page("Emergency room visits are protected, mostly.")],
+        ["https://example.gov/b", page("25 per centum of disposable earnings.")],
       ),
     );
     const changed = results.filter((r) => r.status === "changed");
@@ -103,7 +116,7 @@ describe("planning a watch run", () => {
       FIXTURE,
       fetched(
         ["https://example.gov/a", new Error("HTTP 503")],
-        ["https://example.gov/b", "<p>25 per centum of disposable earnings.</p>"],
+        ["https://example.gov/b", page("25 per centum of disposable earnings.")],
       ),
     );
     const bad = results.find((r) => r.shard === "no-surprises-2026");
@@ -123,8 +136,8 @@ describe("the report a person reads", () => {
       planWatch(
         FIXTURE,
         fetched(
-          ["https://example.gov/a", "<p>Emergency room visits are protected.</p>"],
-          ["https://example.gov/b", "<p>25 per centum of disposable earnings.</p>"],
+          ["https://example.gov/a", page("Emergency room visits are protected.")],
+          ["https://example.gov/b", page("25 per centum of disposable earnings.")],
         ),
       ),
       "2026-10-08",
@@ -137,7 +150,7 @@ describe("the report a person reads", () => {
       planWatch(
         FIXTURE,
         fetched(
-          ["https://example.gov/a", "<p>Something else entirely.</p>"],
+          ["https://example.gov/a", page("Something else entirely.")],
           ["https://example.gov/b", new Error("HTTP 500")],
         ),
       ),
@@ -156,8 +169,8 @@ describe("accepting a reviewed change", () => {
     const results = planWatch(
       FIXTURE,
       fetched(
-        ["https://example.gov/a", "<p>Something else entirely.</p>"],
-        ["https://example.gov/b", "<p>25 per centum of disposable earnings.</p>"],
+        ["https://example.gov/a", page("Something else entirely.")],
+        ["https://example.gov/b", page("25 per centum of disposable earnings.")],
       ),
     );
     const next = acceptChanges(FIXTURE, results, "2026-10-08");
@@ -205,5 +218,46 @@ describe("the committed watch list", () => {
       // arguable rather than becoming folklore.
       expect(entry.why.length).toBeGreaterThan(40);
     }
+  });
+});
+
+describe("refusing to fingerprint an interstitial", () => {
+  const long = (body: string): string => body + " lorem ipsum".repeat(400);
+
+  it("rejects a page too short to be a statutory source", () => {
+    // The real 45 CFR 155.420 normalizes to ~36,000 characters. eCFR's refusal
+    // page is 1,180 — and it fingerprints just as cleanly, which is the danger.
+    expect(looksLikeInterstitial("Short.")).toMatch(/too short to be the source/);
+    expect(looksLikeInterstitial(long("A real regulation"))).toBeNull();
+  });
+
+  it("rejects the refusal eCFR actually served for years", () => {
+    // Verbatim from what a bot user agent got until 2026-08-29. The committed
+    // fingerprint was a fingerprint of THIS, so the ACA special-enrollment
+    // window had never once been watched.
+    const blocked = long(
+      "Federal Register :: Request Access Request Access Due to aggressive automated " +
+        "scraping of FederalRegister.gov and eCFR.gov, programmatic access to these sites is limited.",
+    );
+    expect(looksLikeInterstitial(blocked)).toMatch(/access interstitial/);
+  });
+
+  it("rejects the other shapes of standing-in-front-of-the-source", () => {
+    expect(looksLikeInterstitial(long("Access Denied. You do not have permission."))).toMatch(
+      /access interstitial/,
+    );
+    expect(looksLikeInterstitial(long("Checking your browser before accessing the site."))).toMatch(
+      /access interstitial/,
+    );
+    expect(looksLikeInterstitial(long("Please enable JavaScript to view this page."))).toMatch(
+      /access interstitial/,
+    );
+  });
+
+  it("does not trip on a real page that merely mentions access far down", () => {
+    // The phrases are only checked near the top, where an interstitial puts
+    // them. A regulation that says "access" in its body is not a refusal.
+    const real = long("Special enrollment periods.") + " request access to the exchange records.";
+    expect(looksLikeInterstitial(real)).toBeNull();
   });
 });
