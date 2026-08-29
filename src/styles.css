@@ -1080,6 +1080,59 @@ body {
   text-align: right;
   color: var(--enk-text-muted);
 }
+/* The benefit-cliff curve (SPEC-4 §A1). Many thin columns read as a curve;
+   zero-based on purpose, so a fall is a real fall and not an axis trick. */
+.curve-plot {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 11rem;
+  padding: 1rem 0 0.35rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.curve-col {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 2px;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+.curve-col--here {
+  background: color-mix(in srgb, var(--enk-primary) 14%, transparent);
+}
+.curve-bar {
+  width: 100%;
+  min-height: 2px;
+  background: var(--enk-primary);
+}
+.curve-bar--cliff {
+  background: var(--enk-warn);
+}
+/* The status-change flag sits on a rail above the plot. Without the rule it
+   floats free and the reader can't tell which income it belongs to — and this
+   marker is the most consequential annotation on the chart. */
+.curve-marker {
+  position: absolute;
+  top: -0.15rem;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--enk-warn);
+  border-left: 1px dashed var(--enk-warn);
+  padding-left: 1px;
+}
+.curve-axis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--enk-text-muted);
+  font-size: 0.8rem;
+}
+
 .balance-timeline {
   display: flex;
   align-items: stretch;

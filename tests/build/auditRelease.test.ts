@@ -148,3 +148,18 @@ describe("audit: Pillar 4 harm tiers", () => {
     expect(checkHarmTier(tiles)).toEqual([]);
   });
 });
+
+/**
+ * A structural invariant of the catalog, not a release-audit check: a tile that
+ * says it is "ready" but carries no `mount` renders an empty panel inside its
+ * hub — silently, with no error, and invisibly to any test that calls the mount
+ * function directly. This asserts the wiring the shell actually relies on.
+ */
+describe("registry: every ready tile is actually mountable", () => {
+  it("holds for hubs and sub-tools alike", () => {
+    const unmountable = [...TILES, ...SUB_TOOLS.map((s) => s.tile)]
+      .filter((t) => t.status === "ready" && typeof t.mount !== "function")
+      .map((t) => t.id);
+    expect(unmountable).toEqual([]);
+  });
+});

@@ -232,7 +232,13 @@ Ordered prompts in the SPEC/SPEC-2 convention. Each phase is independently shipp
 
 **Deliverables.** `sweepResources` / `findCliffs` per §7.4; the `cliff-explorer` tile with a chart on the existing framework-free chart layer and a table fallback; the `marginal-reality` tile; "Related tools" links to and from the existing Marginal Rate Explorer; the unmodeled-program list rendered prominently on both.
 
-**Acceptance.** Three hand-computed golden cliff cases pass — one ACA subsidy edge, one Medicaid MAGI edge, one SNAP gross-income-test edge. The property sweep finds no non-finite value across all jurisdictions. Both tiles are Tier 1, deep-linkable, worked-example-first, axe-clean, and name every program they do not model.
+**Acceptance.** ✅ Three hand-computed golden cliff cases pass — one ACA subsidy edge, one Medicaid MAGI edge, one SNAP gross-income-test edge ([`tests/engine/cliffs.test.ts`](../../tests/engine/cliffs.test.ts)). The sweep returns no non-finite value across filing statuses, household sizes, and incomes. Both tiles are Tier 1, deep-linkable, worked-example-first, axe-clean, and name every program they do not model.
+
+**Three things the plan didn't anticipate, all now settled.**
+
+- *`findCliffs` reports plateaus as well as drops.* §7.4 defined a cliff as a maximal non-increasing run with a $1 noise floor, which silently discards a *flat* stretch — earning $2,000 more and keeping none of it. §A1 asks for where the curve "flattens or falls", so a `Cliff` now carries `kind: "drop" | "plateau"`. They are never conflated: only one is a loss.
+- *Two composition bugs the unit tests would not have caught, found by reading a real sweep.* The ACA premium tax credit was being added below 100% FPL, where no credit exists — inventing thousands of dollars at the low end and flattening the real step at the 100%-FPL line. And the refundable Child Tax Credit is shown at its cap because the bundled shard carries the cap but not the earned-income phase-in; rather than hard-code a statutory literal (SPEC §2 principle 5), the overstatement is **disclosed** in the on-screen "what this leaves out" list. The first was a bug and is fixed; the second is a stated limit.
+- *A hub inherits the strictest harm tier of its tools.* `defineHub` generates a real navigable tile, and the Phase 18 gate correctly failed the build because that generated tile had no tier. Hubs now take the highest tier among their calculators and the union of their channels — a hub hosting a tier-3 screener is itself rights-adjacent, and must not slip under the bar by being a container.
 
 ### Phase 20: The sequencers
 

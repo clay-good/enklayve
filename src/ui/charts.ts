@@ -185,6 +185,107 @@ export function balanceTimeline(opts: TimelineOptions): HTMLElement {
   );
 }
 
+export interface CurvePoint {
+  /** X value: gross income. */
+  income: number;
+  /** Y value: total resources at that income. */
+  resources: number;
+  /** True when this point sits inside a cliff (resources not rising). */
+  inCliff?: boolean;
+  /** Marker text for a discrete status change at this income, if any. */
+  marker?: string;
+}
+
+/** Widest column count the curve draws before thinning; keeps the DOM small. */
+export const MAX_CURVE_COLUMNS = 120;
+
+/**
+ * Thin a series to at most {@link MAX_CURVE_COLUMNS} columns for display, always
+ * keeping the last point so the axis label matches the data. Points flagged
+ * `inCliff` or carrying a `marker` are **never** dropped: the fine sweep is what
+ * finds a narrow cliff, and thinning it away would hide the very thing the chart
+ * exists to show.
+ */
+export function downsampleCurve(points: CurvePoint[]): CurvePoint[] {
+  if (points.length <= MAX_CURVE_COLUMNS) return points;
+  const stride = Math.ceil(points.length / MAX_CURVE_COLUMNS);
+  return points.filter(
+    (p, i) => i % stride === 0 || i === points.length - 1 || p.inCliff || p.marker !== undefined,
+  );
+}
+
+export interface ResourceCurveOptions {
+  points: CurvePoint[];
+  locale: string;
+  ariaLabel: string;
+  /** Income to highlight as "you are here", if the user gave one. */
+  highlightIncome?: number;
+}
+
+/**
+ * Total resources plotted against gross income (SPEC-4 §A1) — the shape of the
+ * benefit cliff. Columns rather than a line, matching the rest of this
+ * framework-free chart layer.
+ *
+ * The y-axis is deliberately **zero-based**: a truncated axis exaggerates every
+ * wobble into a chasm, and this chart's whole job is to be believed. Cliff
+ * columns take the warning color so a fall reads instantly, and a status change
+ * (losing Medicaid) gets a marker rather than a bar, because it is not a dollar
+ * amount and must never look like one.
+ *
+ * Callers should pass a display-sized series (see {@link downsampleCurve}); the
+ * underlying analysis can sweep far more finely than a chart needs to draw.
+ */
+export function resourceCurve(opts: ResourceCurveOptions): HTMLElement {
+  const { points, locale } = opts;
+  const max = points.reduce((m, p) => Math.max(m, p.resources), 0) || 1;
+
+  const cols = points.map((p) => {
+    const height = Math.max(0, (p.resources / max) * 100);
+    const bar = el("div", {
+      class: `curve-bar${p.inCliff ? " curve-bar--cliff" : ""}`,
+      attrs: { "aria-hidden": "true" },
+    });
+    bar.style.height = `${height}%`;
+
+    const isHere =
+      opts.highlightIncome !== undefined &&
+      Math.abs(p.income - opts.highlightIncome) < Number.EPSILON;
+
+    // One wrapper per column, not two: at a couple of hundred columns the extra
+    // nesting is a measurable cost in layout and in assistive-tech tree walks.
+    return el(
+      "div",
+      {
+        class: `curve-col${isHere ? " curve-col--here" : ""}`,
+        attrs: {
+          title: `${currency(locale, p.income)} earned → ${currency(locale, p.resources)} in hand${p.marker ? ` · ${p.marker}` : ""}`,
+        },
+      },
+      bar,
+      p.marker
+        ? el("span", { class: "curve-marker", attrs: { "aria-hidden": "true" }, text: "!" })
+        : null,
+    );
+  });
+
+  const first = points[0];
+  const last = points[points.length - 1];
+  const axis = el(
+    "div",
+    { class: "curve-axis", attrs: { "aria-hidden": "true" } },
+    el("span", { text: first ? currency(locale, first.income) : "" }),
+    el("span", { text: last ? currency(locale, last.income) : "" }),
+  );
+
+  return el(
+    "figure",
+    { class: "chart chart--curve", attrs: { role: "img", "aria-label": opts.ariaLabel } },
+    el("div", { class: "curve-plot" }, ...cols),
+    axis,
+  );
+}
+
 export interface Stat {
   /** Small caption under the figure (e.g. "Income"). */
   label: string;

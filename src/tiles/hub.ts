@@ -9,8 +9,10 @@
  *     next, and
  *   - remaps a sub-tool's `navigate(<sibling id>)` to this hub + `?tool=<id>`
  *     (e.g. Pell linking to the FAFSA SAI estimator, now its sibling).
- * The sub-tool's own "How this works" + resources render under it; the hub
- * itself defines no `how`, so the shell appends only the privacy promise.
+ * The sub-tool's own "How this works" + resources render under it, so the hub
+ * normally defines no `how` and the shell appends only the privacy promise. The
+ * one exception is a Pillar 4 hub at harm tier 2 or 3, which carries a `how` so
+ * the release audit can see the advice line the bar requires (SPEC-4 §3.2).
  */
 import { el, clear } from "../ui/dom";
 import { tileHowResources } from "../ui/explainer";
@@ -39,12 +41,29 @@ export function defineHub(config: HubConfig): TileDefinition {
   const { id, title, pillar, description, tools } = config;
   const fallback = config.defaultTool ?? tools[0]!.id;
 
+  // A hub inherits the *strictest* harm tier among the calculators it hosts, and
+  // the union of their channels (SPEC-4 §3.2). A hub is a container, but it is
+  // also a real navigable tile, so it must satisfy the Pillar 4 bar rather than
+  // slipping under it: hosting a tier-3 screener makes the hub rights-adjacent.
+  const harmTier = tools.reduce<TileDefinition["harmTier"]>(
+    (worst, t) =>
+      t.harmTier !== undefined && (worst === undefined || t.harmTier > worst) ? t.harmTier : worst,
+    undefined,
+  );
+  const channels = tools.flatMap((t) => t.channels ?? []);
+  const advice = tools.find((t) => t.how)?.how;
+
   return {
     id,
     title,
     pillar,
     description,
     status: "ready",
+    ...(harmTier !== undefined ? { harmTier } : {}),
+    ...(channels.length > 0 ? { channels } : {}),
+    // Each sub-tool renders its own "how" (including its advice line) under the
+    // active calculator; the hub carries one so the audit can see it too.
+    ...(harmTier !== undefined && harmTier >= 2 && advice ? { how: advice } : {}),
     // Aggregate sub-tool keywords so the hub itself is still findable; direct
     // per-sub-tool search uses the registry's SEARCH_ENTRIES.
     keywords: Array.from(new Set(tools.flatMap((t) => [t.title, ...t.keywords]))),

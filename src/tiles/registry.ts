@@ -69,6 +69,7 @@ import { freedomDateTile } from "./freedomDate";
 import { debtFreedomTile } from "./debtFreedom";
 import { downshiftTile } from "./downshift";
 import { sabbaticalTile } from "./sabbatical";
+import { cliffExplorerTile, marginalRealityTile } from "./benefitCliffs";
 
 // The 10 topic hubs, ordered by pillar so the home grid preserves the
 // on-screen order. Each hub's first tool is its default (the one a bare hub
@@ -193,6 +194,16 @@ const HUB_CONFIGS: HubConfig[] = [
       pellTile,
       educationCreditsTile,
     ],
+  },
+  {
+    // Pillar 4, "Rough Water" (SPEC-4 §2.1, §7.1). Sits directly after Benefits
+    // & Aid: a household that just screened what it's owed is exactly the one
+    // that needs to know what happens to it when their income rises.
+    id: "benefit-cliffs",
+    title: "Benefit Cliffs",
+    pillar: "rough",
+    description: "Whether earning more actually leaves you better off, and where the edges are.",
+    tools: [cliffExplorerTile, marginalRealityTile],
   },
   {
     id: "where-you-stand",
