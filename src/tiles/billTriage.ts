@@ -337,7 +337,7 @@ export const billTriageTile: TileDefinition = {
     },
     {
       hubId: "benefits",
-      tool: "owed-screener",
+      tool: "screener",
       label: "What am I owed?",
       note: "Programs that could close the gap",
     },

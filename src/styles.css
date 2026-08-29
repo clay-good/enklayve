@@ -1102,6 +1102,84 @@ body {
 .cc-ask li {
   margin-bottom: 0.35rem;
 }
+/* Life-Event Sequences (SPEC-4 Phase 20b), harm tier 2. The numbered rail is
+   the point: this is a sequence, not a checklist, and a dated step is marked so
+   the eye finds the clocks before it reads the prose. */
+.lev-lede {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+.lev-clock {
+  margin: 0 0 1rem;
+  color: var(--enk-text-muted);
+  line-height: 1.55;
+}
+.lev-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+.lev-step {
+  display: grid;
+  grid-template-columns: 1.9rem 1fr;
+  gap: 0.7rem;
+  align-items: start;
+}
+.lev-step-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: var(--enk-surface-2);
+  color: var(--enk-text-muted);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.lev-step--dated .lev-step-n {
+  background: color-mix(in srgb, var(--enk-warn) 22%, var(--enk-surface));
+  color: var(--enk-text);
+}
+.lev-step-body {
+  min-width: 0;
+  display: grid;
+  gap: 0.35rem;
+  justify-items: start;
+}
+.lev-step-label {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.lev-step-detail {
+  margin: 0;
+  color: var(--enk-text-muted);
+  line-height: 1.55;
+}
+.lev-step-channel {
+  margin: 0;
+}
+.lev-ceiling {
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  border-radius: 9px;
+  background: var(--enk-surface-2);
+  border-left: 3px solid var(--enk-warn);
+  font-weight: 600;
+  line-height: 1.5;
+}
+.lev-limit {
+  margin-top: 1.1rem;
+  background: var(--enk-surface-2);
+  border-radius: var(--enk-radius);
+  padding: 0.85rem 1rem;
+  color: var(--enk-text-muted);
+}
+
 /* Enrollment & Appeal Windows (SPEC-4-safety-net §B4), harm tier 2. Every clock
    renders through `renderDeadline`, so the deadline styles carry the dates; what
    is styled here is the prose around them — above all the ceiling note, which is

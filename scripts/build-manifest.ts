@@ -236,6 +236,12 @@ const SHARDS: ShardSource[] = [
     shard: "enrollment-windows-2026.json",
     ...PILLAR4_ANNUAL,
   },
+  {
+    id: "life-events-2026",
+    kind: "life-events",
+    shard: "life-events-2026.json",
+    ...PILLAR4_ANNUAL,
+  },
 ];
 
 function sha256Hex(buf: Buffer): string {

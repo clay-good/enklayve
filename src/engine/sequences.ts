@@ -15,7 +15,7 @@
  * is exactly how the window gets missed.
  */
 import type { Deadline } from "./deadline";
-import type { EnrollmentWindowsData } from "../data/schemas";
+import type { EnrollmentWindowsData, LifeEventsData } from "../data/schemas";
 
 /** One window from the shard, plus the program it belongs to. */
 export interface EnrollmentWindow {
@@ -71,4 +71,76 @@ export function windowsForProgram(
 /** Every distinct program the shard carries, in first-appearance order. */
 export function programsIn(data: EnrollmentWindowsData): string[] {
   return Array.from(new Set(data.windows.map((w) => w.program)));
+}
+
+/** One step of a life-event sequence, with its clock resolved where it has one. */
+export interface SequenceStep {
+  id: string;
+  label: string;
+  detail: string;
+  /** Present only where the step names a window that the shard actually carries. */
+  deadline?: Deadline;
+  /** True where that window is a ceiling rather than a floor. */
+  isCeiling: boolean;
+  channel?: { label: string; url: string };
+  tileId?: string;
+}
+
+/** One life-event sequence, in order. */
+export interface Sequence {
+  id: string;
+  label: string;
+  triggerLabel: string;
+  lede: string;
+  steps: SequenceStep[];
+}
+
+/**
+ * Join a life-event sequence to the clocks that date it. A step's `windowId`
+ * points into the `enrollment-windows` shard, so the deadline and its citation
+ * come from the shard that was sourced against the regulation — this module
+ * never invents one.
+ *
+ * A `windowId` naming a window that is not present resolves to a step with no
+ * deadline rather than throwing. That degrades to a dateless instruction, which
+ * is the honest failure: the step is still worth doing, and inventing a clock
+ * for it would be the harm this whole phase exists to avoid.
+ */
+export function resolveSequences(
+  events: LifeEventsData,
+  windows: EnrollmentWindowsData,
+): Sequence[] {
+  const byId = new Map(enrollmentWindows(windows).map((w) => [w.id, w]));
+  return events.sequences.map((seq) => ({
+    id: seq.id,
+    label: seq.label,
+    triggerLabel: seq.triggerLabel,
+    lede: seq.lede,
+    steps: seq.steps.map((step) => {
+      const window = step.windowId ? byId.get(step.windowId) : undefined;
+      return {
+        id: step.id,
+        label: step.label,
+        detail: step.detail,
+        ...(window ? { deadline: window.deadline } : {}),
+        isCeiling: window?.isCeiling ?? false,
+        ...(step.channel ? { channel: step.channel } : {}),
+        ...(step.tileId ? { tileId: step.tileId } : {}),
+      };
+    }),
+  }));
+}
+
+/** Every `windowId` a sequence references that the windows shard does not carry.
+ * Empty in a healthy build; a test asserts it, so a renamed window cannot
+ * silently strip the clock off a step. */
+export function danglingWindowIds(
+  events: LifeEventsData,
+  windows: EnrollmentWindowsData,
+): string[] {
+  const known = new Set(windows.windows.map((w) => w.id));
+  return events.sequences
+    .flatMap((s) => s.steps)
+    .map((s) => s.windowId)
+    .filter((id): id is string => id !== undefined && !known.has(id));
 }

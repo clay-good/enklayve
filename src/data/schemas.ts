@@ -1017,6 +1017,50 @@ export const EnrollmentWindowsSchema = z.object({
 });
 export type EnrollmentWindowsData = z.infer<typeof EnrollmentWindowsSchema>;
 
+/**
+ * Life-event sequences (SPEC-4 §Phase 20b, SPEC-4-safety-net §B4).
+ *
+ * **This shard carries no figures at all**, and a schema test enforces it. A
+ * dated step names a `windowId` in the `enrollment-windows` shard, which carries
+ * its own citation to the statute that sets the clock — so no deadline is
+ * duplicated here and none can drift out of step with the rule behind it.
+ *
+ * What this shard does contribute is the *ordering*: which step unlocks the
+ * others, and which one has a clock on it that starts before anyone feels ready
+ * to think about it. That is editorial judgment rather than a published
+ * sequence, and the tile says so on screen rather than implying otherwise.
+ */
+export const LifeEventsSchema = z.object({
+  sequences: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        label: z.string().min(1),
+        /** What the clocks are counted from, in the user's words. */
+        triggerLabel: z.string().min(1),
+        lede: z.string().min(1),
+        steps: z
+          .array(
+            z.object({
+              id: z.string().min(1),
+              label: z.string().min(1),
+              detail: z.string().min(1),
+              /** A window in the `enrollment-windows` shard. The clock lives
+               * there, cited; this is only the reference to it. */
+              windowId: z.string().min(1).optional(),
+              channel: z.object({ label: z.string().min(1), url: z.string().url() }).optional(),
+              /** A tile that does the arithmetic this step calls for. */
+              tileId: z.string().min(1).optional(),
+            }),
+          )
+          .min(1),
+      }),
+    )
+    .min(1),
+  citation: CitationSchema,
+});
+export type LifeEventsData = z.infer<typeof LifeEventsSchema>;
+
 export const DATASET_SCHEMAS = {
   "federal-income-tax": JurisdictionSchema,
   "state-income-tax": JurisdictionSchema,
@@ -1045,6 +1089,7 @@ export const DATASET_SCHEMAS = {
   "no-surprises": NoSurprisesSchema,
   "garnishment-limits": GarnishmentLimitsSchema,
   "enrollment-windows": EnrollmentWindowsSchema,
+  "life-events": LifeEventsSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

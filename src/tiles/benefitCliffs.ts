@@ -575,7 +575,7 @@ export const cliffExplorerTile: TileDefinition = {
     },
     {
       hubId: "benefits",
-      tool: "owed-screener",
+      tool: "screener",
       label: "What am I owed?",
       note: "Screen every program in one place",
     },

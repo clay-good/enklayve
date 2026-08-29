@@ -1028,6 +1028,19 @@
       "sourceDocument": "Federal enrollment and appeal windows — 29 U.S.C. §§1162, 1165; 42 CFR §§406.24, 407.14, 407.15, 431.221; 45 CFR §§155.410, 155.420, 155.520; 7 CFR §273.15",
       "dateRetrieved": "2026-08-29",
       "contentHash": "385fe34fb344e4c10a4fdd87ea5c41cef96aba5b8c277d0b710bfdf79f4aedda"
+    },
+    {
+      "id": "life-events-2026",
+      "kind": "life-events",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "life-events-2026.json",
+      "sourceUrl": "https://www.healthcare.gov/sep-list/",
+      "sourceDocument": "enklayve life-event sequences — ordering hand-authored; every dated step cites the rule that sets its clock",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "4a4611191589810d803c220fd6e2399ea7c6509041785892494220a46606240d"
     }
   ]
 }

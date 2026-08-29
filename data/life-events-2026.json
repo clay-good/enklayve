@@ -1,0 +1,352 @@
+{
+  "sequences": [
+    {
+      "id": "job-loss",
+      "label": "I lost my job",
+      "triggerLabel": "The day your job ended",
+      "lede": "The order matters here more than anywhere else on this site. Two of the first three steps have clocks on them, and one of those clocks starts before you are likely to feel ready to think about it.",
+      "steps": [
+        {
+          "id": "ui-claim",
+          "label": "File for unemployment in your state, today",
+          "detail": "Do not wait to see whether something else comes through. Most states pay from the week you file, not from the week you lost the job, so a week of delay is usually a week of benefits you cannot get back. Severance does not always disqualify you, and neither does a layoff you agreed to.",
+          "channel": {
+            "label": "USA.gov: how to file for unemployment benefits in your state",
+            "url": "https://www.usa.gov/unemployment-benefits"
+          }
+        },
+        {
+          "id": "cobra-decide",
+          "label": "Read the COBRA election notice the day it arrives",
+          "detail": "It has a hard deadline on it and the coverage is retroactive, so an election made on the last day still covers the gap. Compare it against a Marketplace plan before you decide: COBRA usually costs the full premium plus 2%, while a Marketplace plan priced on your new, lower income can cost far less.",
+          "windowId": "cobra-election",
+          "channel": {
+            "label": "HealthCare.gov: moving from job-based coverage to a Marketplace plan",
+            "url": "https://www.healthcare.gov/have-job-based-coverage/change-to-marketplace-plan/"
+          },
+          "tileId": "health-plan"
+        },
+        {
+          "id": "marketplace-sep",
+          "label": "Or take the Marketplace special enrollment period instead",
+          "detail": "Losing job-based coverage opens a Marketplace window, and the same window is available before the loss if you know it is coming — which is how you get new coverage to start the day the old one ends, with no gap.",
+          "windowId": "aca-special-enrollment",
+          "channel": {
+            "label": "HealthCare.gov: coverage options after a job loss",
+            "url": "https://www.healthcare.gov/unemployed/coverage/"
+          },
+          "tileId": "aca-ptc"
+        },
+        {
+          "id": "recheck-income",
+          "label": "Re-screen every benefit against your new income, not last year's",
+          "detail": "Eligibility for Medicaid, SNAP, and the premium tax credit is based on current income. A household that did not qualify in January can qualify in March, and nothing tells you that automatically.",
+          "channel": {
+            "label": "HealthCare.gov: applying for Medicaid or CHIP",
+            "url": "https://www.healthcare.gov/medicaid-chip/getting-medicaid-chip/"
+          },
+          "tileId": "screener"
+        },
+        {
+          "id": "triage",
+          "label": "Put the month in order before anything goes unpaid",
+          "detail": "Which bill you skip first is a decision with very different consequences depending on which one it is, and it is much easier to make now than after a shutoff notice.",
+          "tileId": "bill-triage"
+        },
+        {
+          "id": "part-b",
+          "label": "If you or your spouse are 65 or older, check the Medicare clock",
+          "detail": "The Part B special enrollment period runs from the end of employment-based coverage, not from the end of COBRA. Electing COBRA does not pause it, and missing it means a penalty for as long as you have Part B.",
+          "windowId": "medicare-part-b-sep",
+          "channel": {
+            "label": "Medicare.gov: how and when to sign up",
+            "url": "https://www.medicare.gov/basics/get-started-with-medicare/sign-up"
+          }
+        }
+      ]
+    },
+    {
+      "id": "death",
+      "label": "Someone in my household died",
+      "triggerLabel": "The date of death",
+      "lede": "Almost nothing here is urgent in the first week, and the two things that are can be done by phone. The rest can wait until you can face it.",
+      "steps": [
+        {
+          "id": "certificates",
+          "label": "Ask the funeral home for ten certified copies of the death certificate",
+          "detail": "Nearly every organization below wants an original, not a photocopy, and ordering more later costs more and takes longer. Ten is not excessive."
+        },
+        {
+          "id": "ssa-survivors",
+          "label": "Check survivor benefits with Social Security",
+          "detail": "A surviving spouse or child may be eligible for a monthly benefit, and there is a one-time payment as well. The funeral home usually reports the death itself, but nobody applies on your behalf.",
+          "channel": {
+            "label": "SSA: survivor benefits",
+            "url": "https://www.ssa.gov/benefits/survivors/"
+          },
+          "tileId": "social-security"
+        },
+        {
+          "id": "coverage",
+          "label": "If you were covered by their health plan, your own window has already started",
+          "detail": "A death that ends your coverage is a qualifying event for both COBRA and the Marketplace. This is the clock most easily missed in this sequence, because it is the one nobody mentions.",
+          "windowId": "aca-special-enrollment",
+          "channel": {
+            "label": "HealthCare.gov: which life changes open a special enrollment period",
+            "url": "https://www.healthcare.gov/sep-list/"
+          }
+        },
+        {
+          "id": "employer",
+          "label": "Ask their employer about life insurance, unpaid wages, and the retirement plan",
+          "detail": "Employer-provided life insurance is commonly forgotten, and unpaid wages and accrued leave are owed to the estate. Ask in writing and keep the reply."
+        },
+        {
+          "id": "dont-pay",
+          "label": "Do not pay their debts from your own money before you get advice",
+          "detail": "In most cases you are not personally responsible for a deceased person's debts, and paying one voluntarily can change that. Collectors may call anyway. Free legal aid can tell you what applies in your state.",
+          "channel": {
+            "label": "Find free legal help near you",
+            "url": "https://www.lsc.gov/about-lsc/what-legal-aid/i-need-legal-help"
+          }
+        },
+        {
+          "id": "beneficiaries",
+          "label": "Update your own beneficiaries when you are able",
+          "detail": "A beneficiary designation overrides a will, and the one on your retirement account may still name the person who died."
+        }
+      ]
+    },
+    {
+      "id": "divorce",
+      "label": "I am getting divorced",
+      "triggerLabel": "The date the divorce was final",
+      "lede": "Two clocks and one document that outranks your will. The rest is slower than it feels.",
+      "steps": [
+        {
+          "id": "coverage",
+          "label": "If you were on their health plan, your window has started",
+          "detail": "Divorce is a qualifying event for COBRA and for a Marketplace special enrollment period. It is also one of the most commonly missed, because coverage often does not end on the day the decree is signed.",
+          "windowId": "aca-special-enrollment",
+          "channel": {
+            "label": "HealthCare.gov: which life changes open a special enrollment period",
+            "url": "https://www.healthcare.gov/sep-list/"
+          }
+        },
+        {
+          "id": "cobra",
+          "label": "Consider COBRA if you need to keep the same doctors",
+          "detail": "A former spouse can generally continue the plan after a divorce for a period the statute sets, at full cost. It is expensive, and sometimes it is still the right answer mid-treatment.",
+          "windowId": "cobra-election"
+        },
+        {
+          "id": "beneficiaries",
+          "label": "Change every beneficiary designation you have",
+          "detail": "A designation overrides a will and a decree. Retirement accounts, life insurance, and payable-on-death bank accounts each need changing separately, and a divorce does not do it for you."
+        },
+        {
+          "id": "filing-status",
+          "label": "Your filing status changes for the whole year",
+          "detail": "Your marital status on December 31 sets your filing status for that entire tax year, which changes your withholding, your brackets, and any premium tax credit you are receiving.",
+          "tileId": "federal-income-tax"
+        },
+        {
+          "id": "ptc",
+          "label": "Tell the Marketplace about the change in household size",
+          "detail": "A premium tax credit is computed on household size and income. Leaving it stale means either paying too much all year or owing it back at filing.",
+          "channel": {
+            "label": "HealthCare.gov: report a life change to the Marketplace",
+            "url": "https://www.healthcare.gov/reporting-changes/why-report-changes/"
+          },
+          "tileId": "aca-ptc"
+        },
+        {
+          "id": "social-security",
+          "label": "If the marriage was a long one, check spousal benefits",
+          "detail": "A divorced spouse can be eligible on a former spouse's record after a marriage of sufficient duration, without affecting what the former spouse receives and without their involvement. Social Security publishes the threshold; it is worth checking rather than assuming.",
+          "tileId": "social-security",
+          "channel": {
+            "label": "SSA: family benefits, including a divorced spouse",
+            "url": "https://www.ssa.gov/family"
+          }
+        }
+      ]
+    },
+    {
+      "id": "disability",
+      "label": "I can no longer work because of a disability",
+      "triggerLabel": "The date you stopped being able to work",
+      "lede": "The application is slow, so the single most useful thing is to start it. Everything else runs alongside.",
+      "steps": [
+        {
+          "id": "apply",
+          "label": "Apply to Social Security now, even if you are unsure you qualify",
+          "detail": "Decisions commonly take months, and benefits are generally paid from the application date rather than the date you became unable to work — so waiting to be sure costs money that cannot be recovered.",
+          "channel": {
+            "label": "SSA: disability benefits",
+            "url": "https://www.ssa.gov/disability/"
+          },
+          "tileId": "disability-insurance"
+        },
+        {
+          "id": "employer-ltd",
+          "label": "Check for short- and long-term disability coverage through your employer",
+          "detail": "Group disability coverage is common and commonly forgotten, and its own claim deadlines are usually much shorter than Social Security's. Ask HR in writing today."
+        },
+        {
+          "id": "coverage",
+          "label": "If your hours dropped enough to end your coverage, that is a qualifying event",
+          "detail": "A reduction in hours that ends job-based coverage opens both COBRA and the 60-day Marketplace window, the same as a job loss.",
+          "windowId": "aca-special-enrollment",
+          "channel": {
+            "label": "HealthCare.gov: which life changes open a special enrollment period",
+            "url": "https://www.healthcare.gov/sep-list/"
+          }
+        },
+        {
+          "id": "recheck",
+          "label": "Re-screen benefits against your new income",
+          "detail": "Medicaid, SNAP, and the premium tax credit are all based on current income, and a household that did not qualify while working often does now.",
+          "tileId": "screener"
+        },
+        {
+          "id": "appeal",
+          "label": "If you are denied, appeal — most first applications are",
+          "detail": "A denial is a stage, not an answer. There are deadlines on each level of appeal, and free legal help exists specifically for this.",
+          "channel": {
+            "label": "Find free legal help near you",
+            "url": "https://www.lsc.gov/about-lsc/what-legal-aid/i-need-legal-help"
+          }
+        },
+        {
+          "id": "medical-bills",
+          "label": "Ask about financial assistance on any hospital bill before you pay it",
+          "detail": "Every nonprofit hospital must have a written policy and hand you a copy free on request.",
+          "channel": {
+            "label": "IRS: what a nonprofit hospital's financial assistance policy must contain",
+            "url": "https://www.irs.gov/charities-non-profits/financial-assistance-policy-and-emergency-medical-care-policy-section-501r4"
+          },
+          "tileId": "charity-care"
+        }
+      ]
+    },
+    {
+      "id": "new-child",
+      "label": "We had or adopted a child",
+      "triggerLabel": "The date of birth, adoption, or placement",
+      "lede": "One 60-day clock, one number to get, and a beneficiary line almost everyone forgets.",
+      "steps": [
+        {
+          "id": "coverage",
+          "label": "Add the child to a health plan inside the enrollment window",
+          "detail": "Birth, adoption, and placement for adoption each open a special enrollment period, and coverage is generally backdated to the date of the event — but only if you act inside the window.",
+          "windowId": "aca-special-enrollment",
+          "channel": {
+            "label": "HealthCare.gov: which life changes open a special enrollment period",
+            "url": "https://www.healthcare.gov/sep-list/"
+          }
+        },
+        {
+          "id": "ssn",
+          "label": "Get the child a Social Security number",
+          "detail": "The hospital usually offers to start this at birth. You need it to claim the child on your return, so it is worth confirming rather than assuming.",
+          "channel": {
+            "label": "SSA: request a Social Security number for a newborn",
+            "url": "https://www.ssa.gov/number-card/request-number-first-time"
+          }
+        },
+        {
+          "id": "withholding",
+          "label": "Update your W-4 for the Child Tax Credit",
+          "detail": "The credit is worth real money each month if you adjust withholding, rather than waiting a year to receive it as a refund.",
+          "tileId": "child-tax"
+        },
+        {
+          "id": "beneficiaries",
+          "label": "Add the child to your beneficiary designations",
+          "detail": "A will is not enough on a retirement account: the beneficiary designation controls, and it is currently silent about a person who now exists."
+        },
+        {
+          "id": "benefits",
+          "label": "Re-screen benefits with the larger household size",
+          "detail": "Household size moves every threshold — the poverty level, SNAP, Medicaid, and the premium tax credit all recompute.",
+          "tileId": "screener"
+        },
+        {
+          "id": "leave",
+          "label": "Ask HR in writing what paid and unpaid leave you have",
+          "detail": "Employer policies and state programs vary widely and both often have their own notice deadlines. In writing means you have the answer later."
+        }
+      ]
+    },
+    {
+      "id": "moving-states",
+      "label": "I am moving to another state",
+      "triggerLabel": "The date you move",
+      "lede": "A move changes which rules apply to you, which is a bigger deal than the address change it looks like.",
+      "steps": [
+        {
+          "id": "coverage",
+          "label": "A permanent move opens a Marketplace window",
+          "detail": "Moving to a new coverage area is a qualifying event, and most plans do not follow you across a state line. Doing this before the move rather than after is what avoids a gap.",
+          "windowId": "aca-special-enrollment",
+          "channel": {
+            "label": "Find your state's health insurance marketplace",
+            "url": "https://www.healthcare.gov/marketplace-in-your-state/"
+          }
+        },
+        {
+          "id": "medicaid",
+          "label": "Medicaid does not transfer — you reapply in the new state",
+          "detail": "Eligibility rules and income limits differ by state, sometimes enormously. Coverage in the old state generally ends when residency does.",
+          "channel": {
+            "label": "HealthCare.gov: applying for Medicaid or CHIP",
+            "url": "https://www.healthcare.gov/medicaid-chip/getting-medicaid-chip/"
+          },
+          "tileId": "medicaid"
+        },
+        {
+          "id": "snap",
+          "label": "SNAP does not transfer either",
+          "detail": "Close the old case and apply in the new state. Benefits do not follow you, and holding both open can create an overpayment you have to repay.",
+          "channel": {
+            "label": "Your state's SNAP agency",
+            "url": "https://www.fna.usda.gov/snap/state-directory"
+          },
+          "tileId": "snap"
+        },
+        {
+          "id": "taxes",
+          "label": "You may owe a part-year return in both states",
+          "detail": "Two part-year returns is the common case, and withholding usually needs changing on the first paycheck in the new state, not at filing time.",
+          "tileId": "take-home"
+        },
+        {
+          "id": "address",
+          "label": "Change your address with the government, not just the post office",
+          "detail": "Forwarding expires, and a benefits notice that does not reach you still starts its appeal clock on the day it was mailed.",
+          "channel": {
+            "label": "USA.gov: change your address with the government",
+            "url": "https://www.usa.gov/change-address"
+          }
+        },
+        {
+          "id": "unemployment",
+          "label": "If you are drawing unemployment, tell the state paying you before you move",
+          "detail": "Benefits are paid by the state where you worked, not where you live, and rules on moving differ. Ask before, not after.",
+          "channel": {
+            "label": "USA.gov: how to file for unemployment benefits in your state",
+            "url": "https://www.usa.gov/unemployment-benefits"
+          }
+        }
+      ]
+    }
+  ],
+  "citation": {
+    "sourceUrl": "https://www.healthcare.gov/sep-list/",
+    "sourceDocument": "enklayve life-event sequences — ordering hand-authored; every dated step cites the rule that sets its clock",
+    "sourceNote": "The clocks in these sequences are not stated here: each dated step names a window in the enrollment-windows shard, which carries its own citation to the statute or regulation that sets it, so no figure is duplicated and none can drift. What this shard contributes is the ORDERING and the plain-English framing, which are enklayve's editorial judgment about which step unlocks the others and which has a clock on it — not a published sequence, and stated as such on screen. The qualifying events that open a special enrollment period are those HealthCare.gov lists; the rest of each sequence is grounded in the free government channel each step names.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-08-29"
+  }
+}
