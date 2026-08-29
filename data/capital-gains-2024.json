@@ -2,29 +2,74 @@
   "taxYear": 2026,
   "longTermBracketsByFilingStatus": {
     "single": [
-      { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 49450, "rate": 0.15 },
-      { "lowerBound": 545500, "rate": 0.2 }
+      {
+        "lowerBound": 0,
+        "rate": 0
+      },
+      {
+        "lowerBound": 49450,
+        "rate": 0.15
+      },
+      {
+        "lowerBound": 545500,
+        "rate": 0.2
+      }
     ],
     "married_jointly": [
-      { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 98900, "rate": 0.15 },
-      { "lowerBound": 613700, "rate": 0.2 }
+      {
+        "lowerBound": 0,
+        "rate": 0
+      },
+      {
+        "lowerBound": 98900,
+        "rate": 0.15
+      },
+      {
+        "lowerBound": 613700,
+        "rate": 0.2
+      }
     ],
     "married_separately": [
-      { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 49450, "rate": 0.15 },
-      { "lowerBound": 306850, "rate": 0.2 }
+      {
+        "lowerBound": 0,
+        "rate": 0
+      },
+      {
+        "lowerBound": 49450,
+        "rate": 0.15
+      },
+      {
+        "lowerBound": 306850,
+        "rate": 0.2
+      }
     ],
     "head_of_household": [
-      { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 66200, "rate": 0.15 },
-      { "lowerBound": 579600, "rate": 0.2 }
+      {
+        "lowerBound": 0,
+        "rate": 0
+      },
+      {
+        "lowerBound": 66200,
+        "rate": 0.15
+      },
+      {
+        "lowerBound": 579600,
+        "rate": 0.2
+      }
     ],
     "qualifying_surviving_spouse": [
-      { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 98900, "rate": 0.15 },
-      { "lowerBound": 613700, "rate": 0.2 }
+      {
+        "lowerBound": 0,
+        "rate": 0
+      },
+      {
+        "lowerBound": 98900,
+        "rate": 0.15
+      },
+      {
+        "lowerBound": 613700,
+        "rate": 0.2
+      }
     ]
   },
   "netInvestmentIncomeTaxRate": 0.038,
@@ -39,7 +84,11 @@
     "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     "sourceDocument": "IRS Revenue Procedure 2025-32 (2026 long-term capital gains brackets); IRC §1411 (Net Investment Income Tax)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "The preferential long-term capital gains rates are 0%, 15% and 20%, applied to a separate set of thresholds from the ordinary brackets. Rev. Proc. 2025-32 §2.02 gives the 2026 breakpoints as the maximum zero-rate and maximum 15%-rate amounts of TAXABLE INCOME: $98,900 and $613,700 married filing jointly or surviving spouse; $66,200 and $579,600 head of household; $49,450 and $306,850 married filing separately; $49,450 and $545,500 for all other individuals. Note the married-filing-separately 20% breakpoint is half the joint one while its zero-rate ceiling is half as well, and head of household gets its own pair — neither is a copy of single. The 3.8% Net Investment Income Tax (IRC §1411) stacks on top above $200,000 of modified AGI ($250,000 joint, $125,000 married filing separately); those thresholds are statutory and have never been indexed. Omitted at launch fidelity: the 28% collectibles rate, the 25% unrecaptured §1250 gain rate, §1202 qualified small business stock, and the interaction with the AMT. Verified against Rev. Proc. 2025-32 on 2026-08-29."
   },
-  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+  "effectiveDateRange": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  }
 }

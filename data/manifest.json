@@ -12,8 +12,8 @@
       "shard": "federal-income-tax-2024.json",
       "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
       "sourceDocument": "IRS Revenue Procedure 2025-32 (2026 inflation adjustments, reflecting the One Big Beautiful Bill Act)",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "7d94344701f96f367cfb1da6a722db056046edd00d1a6f9496c7545173ebcbc1"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "f7052d8c9ba6a9cbcaf4051db8d536f81eda4b7847bf076c40fe80798cf18f5b"
     },
     {
       "id": "fica-2024",
@@ -25,8 +25,8 @@
       "shard": "fica-2024.json",
       "sourceUrl": "https://www.ssa.gov/oact/cola/cbb.html",
       "sourceDocument": "SSA Contribution and Benefit Base 2026 ($184,500); IRS Topic No. 751 (Medicare and Additional Medicare rates)",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "e252088c010ba35e70145735b0ddd721ae2ba426e631b34e36b1802f777a4f3d"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "f91ca53b233c8279bd3a9c422ef64a4c440be49e12e9a8e50bbf1677b03bad67"
     },
     {
       "id": "retirement-limits-2024",
@@ -38,8 +38,8 @@
       "shard": "retirement-limits-2024.json",
       "sourceUrl": "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
       "sourceDocument": "IRS Notice 2025-67 (2026 retirement plan limits); IRS Rev. Proc. 2025-19 (2026 HSA limits)",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "b9b14ae3c2890de2d718c5febc15b6c62681fb5b3e2fdfec43e6586225399a78"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "ae44f8246e384fc69faaf5bb0ea9ba8fba9e38f0edc216f4578fee11b47ed5a3"
     },
     {
       "id": "capital-gains-2024",
@@ -51,8 +51,8 @@
       "shard": "capital-gains-2024.json",
       "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
       "sourceDocument": "IRS Revenue Procedure 2025-32 (2026 long-term capital gains brackets); IRC §1411 (Net Investment Income Tax)",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "fd9c8f12024664d6472c485aef4361fd3cf9e05937a69644472f74b3182e12bc"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "556cac76a176a284359fb7f326beb95a985e97f721df186df9b2927683c09bc2"
     },
     {
       "id": "rmd-uniform-lifetime-2024",

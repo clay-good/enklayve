@@ -15,6 +15,7 @@
     "sourceUrl": "https://www.ssa.gov/oact/cola/cbb.html",
     "sourceDocument": "SSA Contribution and Benefit Base 2026 ($184,500); IRS Topic No. 751 (Medicare and Additional Medicare rates)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "Social Security tax is 6.2% on wages up to the annual contribution and benefit base, which the SSA sets from the national average wage index; for 2026 it is $184,500, up from $176,100 in 2025 — so the maximum employee Social Security tax is $11,439. Medicare is 1.45% with NO wage ceiling, and the 0.9% Additional Medicare Tax (IRC §3101(b)(2), enacted by the ACA) applies to wages above a filing-status threshold. Those thresholds are statutory and have NEVER been indexed: $250,000 married filing jointly, $125,000 married filing separately, $200,000 for everyone else. Note the qualifying-surviving-spouse threshold is $200,000, not the $250,000 it would get if it were mapped to married filing jointly the way the income-tax brackets map it — which is why the schema requires this shard to name all five statuses explicitly rather than leaning on the engine's fallback chain. This shard is the employee side. The employer's matching 6.2% + 1.45% is not withheld from the employee and is not shown; the self-employment tile applies both halves (15.3%) with the §164(f) deduction for half. Verified against the SSA contribution and benefit base and IRS Topic No. 751 on 2026-08-29."
   }
 }
