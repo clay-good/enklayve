@@ -27,6 +27,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **80**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
 | Tests | **2,024** unit/golden across 89 files, **+25** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Source audits | **all 51 jurisdictions + the federal and benefits shards** read against the agency's own document; 8 wrong figures found and fixed | [`docs/data-sources.md`](docs/data-sources.md#source-audits) |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale/theme preference touches `localStorage`, asserted end-to-end across a full session | `npm run audit` / `npm run test:e2e` |
 | UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
@@ -455,6 +456,18 @@ flowchart TD
     GATE -- "tests fail" --> BLOCK["blocked: propose nothing"]
 ```
 
+### The failure the diagram doesn't show
+
+That flow is fail-safe against shipping a *wrong* number. It is not fail-safe against shipping a **stale** one, and in August 2026 an audit of all 51 jurisdictions found eight figures that were: Ohio missing a $332 statutory base, Idaho a whole 0% band, Wisconsin's exemption at $1,200 instead of $700, Georgia's deduction two years behind, Missouri's brackets a year behind its own deduction, Michigan's and Illinois's exemptions stuck on 2024, and the federal head-of-household 32% threshold quietly holding single's.
+
+Each had a working adapter pointed at a live `.gov` page. What had happened is the left edge of the diagram: the adapter could no longer *read* that page. A parse failure routes to the alert PR — correct, the shard keeps its last-good values — but the shard then stops being watched and sits at whatever year it was authored in, still carrying a citation that looks entirely current. A wrong number wearing a correct citation is the one failure this project cannot tolerate, and it had eight.
+
+So `npm run check:adapters` ([workflow](.github/workflows/check-adapters.yml), monthly) runs every adapter's parser against its live source and reports which can still find their figure. Its first run said 18 of 49. Three causes, all now fixed or surfaced: the runner identified itself as a bot and was WAF-blocked at sites the link check reads fine; the link check never swept `scripts/`, where an adapter's URL lives, so four were pointing at hard 404s; and the pipeline could not read **PDFs**, which is where agencies have moved these figures — Illinois states its exemption in a bulletin, Michigan its rate on page one of Form 446, Maryland its 24 county rates in Withholding Tax Facts.
+
+One caveat the check prints on its own second line: **anchored does not mean correct**. Pointing Maine's deduction adapter at the form that genuinely does state its deduction made it "anchor" a bracket threshold and the personal exemption. Repointing an adapter means dry-running it and reading the diff.
+
+Every audit, including the ones that changed nothing, is recorded in [`docs/data-sources.md`](docs/data-sources.md#source-audits).
+
 ### Refresh cadence cheat sheet
 
 | Dataset | Source | Cadence | Pillar |
@@ -745,7 +758,7 @@ The Playwright live-offline + responsiveness e2e suite, previously deferred, now
 
   Agencies reuse article ids. The CFPB URL labeled "what does it mean to refinance my mortgage" redirected to an article about **USDA rural housing loans**; "what is a balance transfer" to one about **mortgage payment calculations**; "the best way to pay off my debt" to the **foreclosure timeline**. A reader following any of them landed somewhere authoritative, plausible, and about something else, with no way to tell. Every one is fixed, each replacement fetched and confirmed live; the baseline is now **197 ok, 0 broken, 0 redirected**.
 
-  `npm run check:links` and a monthly [workflow](.github/workflows/check-links.yml) keep it that way. It reports a redirect as loudly as a failure, because a redirect means the canonical URL moved and nobody has checked where it went. It separates a third case — a server serving an **incomplete certificate chain**, which browsers repair and Node does not, so the page is fine and calling it broken would send someone to replace a working link. It checks with HEAD before GET, so a multi-megabyte cited PDF is not downloaded just to learn its status. And it stays out of the unit CI on purpose: a suite that fails when a state revenue site has a bad afternoon is a suite people learn to ignore. Dated, ordered checklists for job loss, death, divorce, disability, a new child, and moving states. Split out from Phase 20 on purpose: it turns on the COBRA, ACA special-enrollment, Medicare, and per-program appeal windows, which are the highest-harm numbers on the site and deserve their own sourcing pass against live published regulations.
+  `npm run check:links` and a monthly [workflow](.github/workflows/check-links.yml) keep it that way. It sweeps `src`, `data`, `docs` **and `scripts`** — that last root because a refresh adapter names the page it watches and that URL lives nowhere else; without it, four adapters were pointing at hard 404s with nothing to notice. It reports a redirect as loudly as a failure, because a redirect means the canonical URL moved and nobody has checked where it went. It separates a third case — a server serving an **incomplete certificate chain**, which browsers repair and Node does not, so the page is fine and calling it broken would send someone to replace a working link. It checks with HEAD before GET, so a multi-megabyte cited PDF is not downloaded just to learn its status. And it stays out of the unit CI on purpose: a suite that fails when a state revenue site has a bad afternoon is a suite people learn to ignore. Dated, ordered checklists for job loss, death, divorce, disability, a new child, and moving states. Split out from Phase 20 on purpose: it turns on the COBRA, ACA special-enrollment, Medicare, and per-program appeal windows, which are the highest-harm numbers on the site and deserve their own sourcing pass against live published regulations.
 
 ---
 
