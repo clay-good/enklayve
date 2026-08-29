@@ -391,6 +391,43 @@ describe("adapters: the federal standard deduction (IRS revenue procedure)", () 
   });
 });
 
+describe("adapters: Minnesota (a source behind its own department)", () => {
+  const adapter = adaptersForGroup("state-mn")[0]!;
+  const current = readShard("state-mn-income-tax-2024.json");
+
+  it("refuses the page that would roll Minnesota back a year", () => {
+    const result = adapter.parse(
+      "Then your Minnesota standard deduction is Single or Married Filing Separately $14,950" +
+        " Married Filing Jointly or Qualifying Surviving Spouse $29,900",
+      current,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("2025 amounts");
+    expect(result.reason).toContain("roll Minnesota back a year");
+  });
+
+  it("refuses the 2025 amounts even when the page states them readably", () => {
+    const result = adapter.parse(
+      "Then your standard deduction is: Single $14,950 Married Filing Jointly $29,900" +
+        " Head of Household $22,500",
+      current,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("roll Minnesota back a year");
+  });
+
+  it("clears itself when the page states the shard's figures", () => {
+    const result = adapter.parse(
+      "Then your standard deduction is: Single $15,300 Married Filing Jointly $30,600" +
+        " Head of Household $23,000",
+      current,
+    );
+    expect(result.ok).toBe(true);
+  });
+});
+
 describe("adapters: Utah (a source behind its own state's law)", () => {
   const adapter = adaptersForGroup("state-ut")[0]!;
   const current = readShard("state-ut-income-tax-2024.json");
@@ -409,6 +446,16 @@ describe("adapters: Utah (a source behind its own state's law)", () => {
     if (result.ok) return;
     expect(result.reason).toContain("SB 60");
     expect(result.reason).toContain("4.45%");
+  });
+
+  it("refuses the superseded rate even when the page states it readably", () => {
+    // The first version of this wrapper refused only when the PARSER failed, so
+    // a page rewritten into a readable shape while still carrying 4.5% would
+    // have sailed through and proposed exactly the rollback it exists to stop.
+    const result = adapter.parse("The Utah individual income tax rate is 4.5%.", current);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("SB 60");
   });
 
   it("clears itself the day the table grows a row for the shard's year", () => {

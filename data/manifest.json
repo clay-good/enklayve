@@ -504,10 +504,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-mn-income-tax-2024.json",
-      "sourceUrl": "https://www.revenue.state.mn.us/minnesota-income-tax-rates-and-brackets",
-      "sourceDocument": "Minnesota DOR 2026 income tax rate schedules (indexed) and standard deduction",
-      "dateRetrieved": "2026-06-06",
-      "contentHash": "d8f633fd589f7c8c6f998c05bb463c80c78c791e15bb8ef5bf8aa15ec625800b"
+      "sourceUrl": "https://www.revenue.state.mn.us/press-release/2025-12-16/minnesota-income-tax-brackets-standard-deduction-and-dependent-exemption",
+      "sourceDocument": "Minnesota DOR announcement, 2025-12-16: tax year 2026 income tax brackets, standard deduction and dependent exemption amounts",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "3c847f635b1997bfa743cd66cc79b7573afc147594f71ac485b55fc01535cc27"
     },
     {
       "id": "state-ks-income-tax-2024",

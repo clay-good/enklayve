@@ -669,14 +669,24 @@ function parseStandardDeductions(raw: string, current: Record<string, unknown>):
  * finds it, the rate agrees, and this explanation stops being printed without
  * anyone having to notice. A refusal that clears itself is worth more than one
  * someone has to remember.
+ *
+ * Which is why it takes a predicate rather than just refusing on failure. The
+ * first version returned the refusal only when the parser could not read the
+ * page — so a page that was rewritten into a shape the parser CAN read, still
+ * carrying the old figure, would have sailed through and proposed the rollback
+ * this exists to prevent. What is known here is not "this page is unreadable",
+ * it is "this page states X and X is superseded", so that is what is checked.
  */
 function refuseWhileSourceIsBehind(
   parse: (raw: string, current: Record<string, unknown>) => ParseOutcome,
+  /** True when the parsed shard still carries the figure known to be superseded. */
+  stillSuperseded: (shard: Record<string, unknown>) => boolean,
   reason: string,
 ): (raw: string, current: Record<string, unknown>) => ParseOutcome {
   return (raw, current) => {
     const outcome = parse(raw, current);
-    return outcome.ok ? outcome : { ok: false, reason };
+    if (!outcome.ok) return { ok: false, reason };
+    return stillSuperseded(outcome.shard) ? { ok: false, reason } : outcome;
   };
 }
 
@@ -1752,6 +1762,9 @@ export const ADAPTERS: RefreshAdapter[] = [
     // itself. See refuseWhileSourceIsBehind.
     parse: refuseWhileSourceIsBehind(
       parseFlatRateJurisdiction,
+      (shard) =>
+        (shard.bracketsByFilingStatus as Record<string, { rate: number }[]>)?.single?.[0]?.rate ===
+        0.045,
       "Utah's own rate pages still state 4.5% — the rate schedule's newest row reads " +
         '"January 1, 2025 - current" and the line-by-line instructions say "multiply line 9 ' +
         'by 4.5 percent". SB 60, signed 2026-03-23, cut the individual rate to 4.45% for tax ' +
@@ -2025,7 +2038,18 @@ export const ADAPTERS: RefreshAdapter[] = [
     // graduated parser can't overlay them. Anchor the cleanly-stated indexed
     // standard deduction; the per-status bracket tables roll alongside it as the
     // reviewer's data-only step (the standard-deduction PR is the annual prompt).
-    parse: parseStandardDeductions,
+    // Left pointed at the DOR's standard-deduction page on purpose: the day it
+    // turns over to 2026 the parser reads it and this refusal clears itself.
+    // See refuseWhileSourceIsBehind.
+    parse: refuseWhileSourceIsBehind(
+      parseStandardDeductions,
+      (shard) =>
+        (shard.standardDeductionByFilingStatus as Record<string, number>)?.single === 14950,
+      "the DOR's standard-deduction page still states the 2025 amounts ($14,950 single, " +
+        "$29,900 married jointly). Its own 2025-12-16 announcement gives the 2026 figures this " +
+        "shard carries — $15,300 single, $30,600 married jointly, $23,000 head of household — " +
+        "so parsing this page would roll Minnesota back a year",
+    ),
   },
   {
     id: "state-nj-income-tax-2024",
