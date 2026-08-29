@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import axe from "axe-core";
 import { SUB_TOOLS, TILES } from "../../src/tiles/registry";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
@@ -63,6 +64,18 @@ function mount(tile: TileDefinition, params: URLSearchParams): HTMLElement {
   } as TileContext);
   return root;
 }
+
+/**
+ * happy-dom has no layout engine, so the colour-contrast rule (which needs
+ * computed pixel colours) cannot run here and is verified by hand against the
+ * theme tokens; every structural rule — labels, roles, names, landmarks — does.
+ * Same configuration the shell's accessibility suite uses.
+ */
+const AXE_OPTIONS: axe.RunOptions = { rules: { "color-contrast": { enabled: false } } };
+
+afterEach(() => {
+  document.body.replaceChildren();
+});
 
 /** Text that must never reach the screen (SPEC-3 §2.1). */
 const NON_FINITE = /\b(NaN|Infinity|-Infinity)\b|∞/;
@@ -130,8 +143,39 @@ describe("every calculator in the catalog", () => {
   }
 });
 
+/**
+ * The README promises axe-core runs "across the home, About, All Tools, the
+ * Readout, the Report, and **every tile form**, with zero violations". It ran
+ * over eighteen of sixty-eight — a hand-kept list that new tiles were never
+ * added to. This makes the sentence true, and keeps it true for tiles that do
+ * not exist yet.
+ *
+ * Each tile is checked in the state a reader actually lands in: mounted with no
+ * params, which is the worked example every tile falls back to.
+ */
+describe("every calculator is accessible", () => {
+  for (const tile of CALCULATORS) {
+    it(`${tile.id} has no axe violations`, async () => {
+      const root = mount(tile, new URLSearchParams());
+      document.body.append(root);
+      const results = await axe.run(root, AXE_OPTIONS);
+      expect(results.violations.map((v) => `${v.id}: ${v.help}`).join("\n")).toBe("");
+    }, 30000);
+  }
+});
+
 describe("every hub in the catalog", () => {
   for (const hub of TILES.filter((t) => t.mount)) {
+    it(`${hub.id} has no axe violations`, async () => {
+      // The shell's accessibility suite lists ten hubs by hand and had never
+      // gained the two Pillar 4 ones. Deriving the roster from the registry is
+      // what stops that happening again.
+      const root = mount(hub, new URLSearchParams());
+      document.body.append(root);
+      const results = await axe.run(root, AXE_OPTIONS);
+      expect(results.violations.map((v) => `${v.id}: ${v.help}`).join("\n")).toBe("");
+    }, 30000);
+
     it(`${hub.id} mounts against a hostile deep link and paints nothing non-finite`, () => {
       const root = mount(hub, new URLSearchParams(HOSTILE));
       expect(root.textContent ?? "").not.toMatch(NON_FINITE);

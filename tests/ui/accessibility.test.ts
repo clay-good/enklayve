@@ -37,6 +37,14 @@ import type { TileContext } from "../../src/tiles/types";
  * rule (which needs computed pixel colors) is verified by hand against the
  * theme tokens in styles.css rather than by axe and is disabled here. Every
  * structural rule — labels, roles, names, landmarks — runs.
+ *
+ * **Coverage note.** The tile and hub lists below are hand-kept on purpose:
+ * each entry mounts a *populated* state (an itemized deduction, an overtime
+ * split, a refinance with real figures) that a default mount would not reach.
+ * They are no longer what makes the catalog covered — that is
+ * `catalogInvariants.test.ts`, which derives the full roster from the registry
+ * and axe-checks every calculator and every hub. These lists having drifted to
+ * eighteen of sixty-eight tiles and ten of twelve hubs is why that exists.
  */
 const AXE_OPTIONS: axe.RunOptions = {
   rules: { "color-contrast": { enabled: false } },
