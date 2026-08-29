@@ -84,14 +84,22 @@ export interface AnchorResult {
  * the adapter's fault. `unparsed` means the page came back and the parser could
  * not find its figure, which is the condition worth acting on: the source moved
  * and the shard is no longer being watched.
+ *
+ * A parser may also report that the source answered *and declined to serve* —
+ * a quota, a rate limit, a challenge page dressed as a 200. That is the first
+ * kind of failure wearing the second's clothes, so it counts as unreachable:
+ * nothing about the adapter is broken and nothing about it needs fixing. The
+ * BLS CPI API is the standing example, and it is why the distinction exists.
  */
 export function classifyAnchor(
   fetched: { ok: true; raw: string } | { ok: false; reason: string },
-  parse: () => { ok: true; diff: string[] } | { ok: false; reason: string },
+  parse: () => { ok: true; diff: string[] } | { ok: false; reason: string; denied?: boolean },
 ): { status: AnchorStatus; detail?: string; diff?: string[] } {
   if (!fetched.ok) return { status: "unreachable", detail: fetched.reason };
   const parsed = parse();
-  if (!parsed.ok) return { status: "unparsed", detail: parsed.reason };
+  if (!parsed.ok) {
+    return { status: parsed.denied ? "unreachable" : "unparsed", detail: parsed.reason };
+  }
   if (parsed.diff.length === 0) return { status: "agrees" };
   return { status: "wouldChange", diff: parsed.diff };
 }
@@ -225,9 +233,10 @@ export function renderAnchorReport(
     lines.push("## Unreachable");
     lines.push("");
     lines.push(
-      "The page did not come back. This may be transient — a government site having a bad" +
-        " afternoon is not an adapter defect — so it is reported separately and does not fail" +
-        " the check on its own.",
+      "The page did not come back, or came back declining to serve — a quota, a rate limit," +
+        " a challenge page dressed as a 200. This may be transient, and a government site" +
+        " having a bad afternoon is not an adapter defect, so it is reported separately and" +
+        " does not fail the check on its own.",
     );
     lines.push("");
     for (const r of unreachable) {
@@ -252,7 +261,7 @@ async function check(adapter: RefreshAdapter): Promise<AnchorResult> {
     if (!fetched.ok) return { ok: false, reason: fetched.reason };
     try {
       const outcome = adapter.parse(fetched.raw, current);
-      if (!outcome.ok) return { ok: false, reason: outcome.reason };
+      if (!outcome.ok) return { ok: false, reason: outcome.reason, denied: outcome.denied };
       return { ok: true, diff: diffShards(current, outcome.shard).lines };
     } catch (error) {
       return { ok: false, reason: `parser threw: ${(error as Error).message}` };
@@ -284,8 +293,14 @@ async function main(): Promise<void> {
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
   results.sort((a, b) => a.adapterId.localeCompare(b.adapterId));
 
-  const baseline = (JSON.parse(readFileSync(BASELINE_FILE, "utf8")) as { knownAnchoring: string[] })
-    .knownAnchoring;
+  // Scoped to what this run actually checked. `--group cpi` checks one adapter,
+  // and comparing that against the whole baseline reported the other eight as
+  // regressions — a red exit code every time anyone debugged a single group,
+  // which is the fastest way to teach someone that red means nothing.
+  const checked = new Set(results.map((r) => r.adapterId));
+  const baseline = (
+    JSON.parse(readFileSync(BASELINE_FILE, "utf8")) as { knownAnchoring: string[] }
+  ).knownAnchoring.filter((id) => checked.has(id));
   const report = renderAnchorReport(results, baseline);
   process.stdout.write(`${report}\n`);
 

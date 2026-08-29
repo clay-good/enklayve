@@ -169,7 +169,15 @@ export type RefreshGroup =
 
 export type ParseOutcome =
   | { ok: true; shard: Record<string, unknown> }
-  | { ok: false; reason: string };
+  /**
+   * `denied` says the source answered and its answer was a refusal to serve
+   * rather than data — a rate limit, a quota, a challenge page. That is not the
+   * same failure as "the page came back and the figure has moved", and calling
+   * it one is how the CPI adapter spent a month reporting that the BLS API had
+   * changed shape when the API was fine and the quota was spent. The adapter
+   * check reports these as unreachable, alongside a page that never arrived.
+   */
+  | { ok: false; reason: string; denied?: true };
 
 export interface RefreshAdapter {
   /** The manifest shard id and `${id}.json` filename. */
@@ -253,6 +261,20 @@ export function visibleText(raw: string): string {
  * "M13" / periodName "Annual"). We merge those into the shard's `byYear` map.
  * This is the only fully machine-readable source in the first set, so the
  * parser is robust rather than anchored-to-prose.
+ *
+ * It is also the source most likely to answer without answering. The v2 API is
+ * usable without a registration key, at a small daily quota counted per IP — and
+ * a CI runner shares its IP with everyone else on that runner. When the quota is
+ * spent BLS replies **200 OK** with `{"status":"REQUEST_NOT_PROCESSED",
+ * "message":["...the daily threshold ... has been reached"],"Results":{}}`.
+ * Valid JSON, no series, nothing wrong with the source and nothing wrong with
+ * this parser. Reported as a parse failure it reads as "the BLS API changed
+ * shape", which sends a reader to rewrite a parser that is fine.
+ *
+ * So the envelope is checked before the shape. BLS states its own status and its
+ * own message, and repeating them is more useful than anything this code could
+ * infer — the message is what names the quota, and the quota is what a
+ * registration key would fix.
  */
 function parseCpi(raw: string, current: Record<string, unknown>): ParseOutcome {
   let api: unknown;
@@ -260,6 +282,17 @@ function parseCpi(raw: string, current: Record<string, unknown>): ParseOutcome {
     api = JSON.parse(raw);
   } catch {
     return { ok: false, reason: "BLS response was not JSON" };
+  }
+  const envelope = api as { status?: unknown; message?: unknown };
+  if (typeof envelope?.status === "string" && envelope.status !== "REQUEST_SUCCEEDED") {
+    const said = Array.isArray(envelope.message)
+      ? envelope.message.map(String).join(" ").trim()
+      : "";
+    return {
+      ok: false,
+      denied: true,
+      reason: `BLS declined the request (${envelope.status})${said ? `: ${said}` : ""}`,
+    };
   }
   const series = (api as { Results?: { series?: { data?: unknown }[] } })?.Results?.series?.[0]
     ?.data;

@@ -208,6 +208,36 @@ describe("adapters: BLS CPI (machine-readable)", () => {
     expect(adapter.parse("<html>down for maintenance</html>", current).ok).toBe(false);
     expect(adapter.parse(JSON.stringify({ Results: {} }), current).ok).toBe(false);
   });
+
+  it("repeats what BLS said when BLS declines to serve, instead of blaming its shape", () => {
+    // The v2 API is keyless at a small daily quota counted per IP, and a CI
+    // runner shares its IP. Spent, it replies 200 with this. Valid JSON, no
+    // series, nothing wrong with the API and nothing wrong with the parser —
+    // but "unexpected BLS API shape" sends a reader to rewrite the parser.
+    const result = adapter.parse(
+      JSON.stringify({
+        status: "REQUEST_NOT_PROCESSED",
+        message: ["Request could not be serviced, as the daily threshold ... has been reached."],
+        Results: {},
+      }),
+      current,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.denied).toBe(true);
+    expect(result.reason).toContain("REQUEST_NOT_PROCESSED");
+    expect(result.reason).toContain("daily threshold");
+  });
+
+  it("does not call a real shape change a denial", () => {
+    const result = adapter.parse(
+      JSON.stringify({ status: "REQUEST_SUCCEEDED", Results: {} }),
+      current,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.denied).toBeUndefined();
+  });
 });
 
 describe("adapters: HHS poverty (anchored prose)", () => {

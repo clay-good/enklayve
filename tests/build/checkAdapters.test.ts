@@ -54,6 +54,23 @@ describe("classifying one adapter's outcome", () => {
     ).toEqual({ status: "unparsed", detail: "could not anchor the flat income-tax rate" });
   });
 
+  it("counts a source that answered and declined to serve as unreachable", () => {
+    // The BLS CPI API replies 200 with valid JSON and no series when its daily
+    // quota is spent — a CI runner shares its IP with everyone on that runner.
+    // Filed as unparsed it reads "the API changed shape", which sends someone to
+    // rewrite a parser that is fine. Nothing here is broken, so nothing fails.
+    expect(
+      classifyAnchor({ ok: true, raw: '{"status":"REQUEST_NOT_PROCESSED"}' }, () => ({
+        ok: false,
+        denied: true,
+        reason: "BLS declined the request (REQUEST_NOT_PROCESSED): daily threshold reached",
+      })),
+    ).toEqual({
+      status: "unreachable",
+      detail: "BLS declined the request (REQUEST_NOT_PROCESSED): daily threshold reached",
+    });
+  });
+
   it("does not run the parser at all when the fetch failed", () => {
     let ran = false;
     classifyAnchor({ ok: false, reason: "timeout" }, () => {
