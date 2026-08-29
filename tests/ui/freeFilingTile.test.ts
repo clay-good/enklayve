@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import axe from "axe-core";
-import { mountFreeFiling } from "../../src/tiles/freeFiling";
+import { mountFreeFiling, freeFilingTile } from "../../src/tiles/freeFiling";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import { getTile } from "../../src/tiles/registry";
@@ -97,11 +97,12 @@ describe("Do I Have to Pay to File?", () => {
     expect(mount(new URLSearchParams(), null).querySelector(".verify-banner")).not.toBeNull();
   });
 
-  it("is registered in the hub at harm tier 1", () => {
-    const tile = getTile("when-money-is-tight");
-    expect(tile).toBeDefined();
-    // The hub takes the strictest tier of its tools; Bill Triage is tier 2.
-    expect(tile!.harmTier).toBe(2);
+  it("is tier 1 itself, inside a hub that inherits the strictest tier it hosts", () => {
+    expect(freeFilingTile.harmTier).toBe(1);
+    const hub = getTile("when-money-is-tight");
+    expect(hub).toBeDefined();
+    // The hub also hosts the tier-3 charity-care screener.
+    expect(hub!.harmTier).toBe(3);
   });
 
   it("is axe-clean", async () => {

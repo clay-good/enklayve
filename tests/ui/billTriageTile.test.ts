@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import axe from "axe-core";
-import { mountBillTriage } from "../../src/tiles/billTriage";
+import { mountBillTriage, billTriageTile } from "../../src/tiles/billTriage";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import { getTile } from "../../src/tiles/registry";
@@ -136,11 +136,13 @@ describe("Bill Triage", () => {
     expect(mount(SHORT_MONTH, null).root.querySelector(".verify-banner")).not.toBeNull();
   });
 
-  it("is registered at harm tier 2 with the advice line", () => {
+  it("carries harm tier 2 itself, and its hub inherits the strictest tier it hosts", () => {
+    expect(billTriageTile.harmTier).toBe(2);
+    expect(billTriageTile.how).toMatch(/not\s+legal/i);
     const hub = getTile("when-money-is-tight");
     expect(hub).toBeDefined();
-    expect(hub!.harmTier).toBe(2);
-    expect(hub!.how).toMatch(/not\s+legal/i);
+    // The hub hosts the tier-3 charity-care screener, so the hub is tier 3.
+    expect(hub!.harmTier).toBe(3);
   });
 
   it("is axe-clean", async () => {

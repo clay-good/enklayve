@@ -152,45 +152,53 @@ describe("§2.9 boundary sweep: no public function throws or returns a non-finit
   // special-rule surtaxes, and local add-ons. Sweep it over EVERY seeded
   // jurisdiction × every filing status × a boundary space of income, and assert
   // the family invariants no tile may ever violate.
-  it("evaluateTaxes over every jurisdiction × filing status: finite, non-negative, never above 100%", () => {
-    const federal = data.federal()!;
-    const fica = data.fica()!;
-    const wagesGrid = [0, 1, 0.5, 12_345.67, 60_000, 95_000, 100_000, 300_000, 1e6, 1e9];
-    const extras = [
-      { otherIncome: 0, adjustments: 0 },
-      { otherIncome: 50_000, adjustments: 0 },
-      { otherIncome: 0, adjustments: 1e9 }, // drives AGI to its zero floor
-    ];
-    for (const code of data.stateCodes()) {
-      const state = data.state(code) ?? undefined;
-      for (const filingStatus of STATUSES) {
-        for (const wages of wagesGrid) {
-          for (const extra of extras) {
-            const label = `${code} ${filingStatus} wages=${wages} ${JSON.stringify(extra)}`;
-            const r = evaluateTaxes({ filingStatus, wages, ...extra }, { federal, state, fica });
-            const { totals } = r;
-            // Finiteness — a tile that formats any of these can never paint $NaN.
-            expect(isFinite(r.state!.incomeTax), label).toBe(true);
-            expect(isFinite(totals.totalTax) && isFinite(totals.takeHome), label).toBe(true);
-            expect(isFinite(r.local.total), label).toBe(true);
-            expect(Number.isFinite(totals.effectiveRate), label).toBe(true);
-            expect(Number.isFinite(totals.marginalRate), label).toBe(true);
-            // Tax is never negative; never more than 100% of gross (take-home ≥ 0).
-            expect(r.state!.incomeTax.isNegative(), label).toBe(false);
-            expect(totals.totalTax.isNegative(), label).toBe(false);
-            expect(r.local.total.isNegative(), label).toBe(false);
-            expect(totals.takeHome.toNumber(), label).toBeGreaterThanOrEqual(-0.01);
-            // Rates stay in a sane band: effective in [0,1]; marginal in [0,1]
-            // (no welfare cliff drives a $1 raise to cost more than $1 in tax).
-            expect(totals.effectiveRate, label).toBeGreaterThanOrEqual(0);
-            expect(totals.effectiveRate, label).toBeLessThanOrEqual(1);
-            expect(totals.marginalRate, label).toBeGreaterThanOrEqual(-1e-9);
-            expect(totals.marginalRate, label).toBeLessThanOrEqual(1);
+  // ~7,650 full tax evaluations. It runs in about 5s alone, which is exactly the
+  // default timeout, so under full-suite parallel load it flakes. The sweep is
+  // the point of this test — narrowing the grid to fit a default would weaken
+  // the invariant — so it gets an explicit budget instead.
+  it(
+    "evaluateTaxes over every jurisdiction × filing status: finite, non-negative, never above 100%",
+    { timeout: 30_000 },
+    () => {
+      const federal = data.federal()!;
+      const fica = data.fica()!;
+      const wagesGrid = [0, 1, 0.5, 12_345.67, 60_000, 95_000, 100_000, 300_000, 1e6, 1e9];
+      const extras = [
+        { otherIncome: 0, adjustments: 0 },
+        { otherIncome: 50_000, adjustments: 0 },
+        { otherIncome: 0, adjustments: 1e9 }, // drives AGI to its zero floor
+      ];
+      for (const code of data.stateCodes()) {
+        const state = data.state(code) ?? undefined;
+        for (const filingStatus of STATUSES) {
+          for (const wages of wagesGrid) {
+            for (const extra of extras) {
+              const label = `${code} ${filingStatus} wages=${wages} ${JSON.stringify(extra)}`;
+              const r = evaluateTaxes({ filingStatus, wages, ...extra }, { federal, state, fica });
+              const { totals } = r;
+              // Finiteness — a tile that formats any of these can never paint $NaN.
+              expect(isFinite(r.state!.incomeTax), label).toBe(true);
+              expect(isFinite(totals.totalTax) && isFinite(totals.takeHome), label).toBe(true);
+              expect(isFinite(r.local.total), label).toBe(true);
+              expect(Number.isFinite(totals.effectiveRate), label).toBe(true);
+              expect(Number.isFinite(totals.marginalRate), label).toBe(true);
+              // Tax is never negative; never more than 100% of gross (take-home ≥ 0).
+              expect(r.state!.incomeTax.isNegative(), label).toBe(false);
+              expect(totals.totalTax.isNegative(), label).toBe(false);
+              expect(r.local.total.isNegative(), label).toBe(false);
+              expect(totals.takeHome.toNumber(), label).toBeGreaterThanOrEqual(-0.01);
+              // Rates stay in a sane band: effective in [0,1]; marginal in [0,1]
+              // (no welfare cliff drives a $1 raise to cost more than $1 in tax).
+              expect(totals.effectiveRate, label).toBeGreaterThanOrEqual(0);
+              expect(totals.effectiveRate, label).toBeLessThanOrEqual(1);
+              expect(totals.marginalRate, label).toBeGreaterThanOrEqual(-1e-9);
+              expect(totals.marginalRate, label).toBeLessThanOrEqual(1);
+            }
           }
         }
       }
-    }
-  });
+    },
+  );
 });
 
 describe("§2.9 statutory identities", () => {

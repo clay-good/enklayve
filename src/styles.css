@@ -1081,6 +1081,35 @@ body {
   text-align: right;
   color: var(--enk-text-muted);
 }
+/* Hospital financial assistance (SPEC-4 §A6). Screener-only: the figure is
+   prominent, the "we can't tell you if you qualify" line is not buried. */
+.cc-figure {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.cc-screen,
+.cc-law {
+  margin: 0.5rem 0 0;
+}
+.cc-heading {
+  font-size: 1rem;
+  margin: 1rem 0 0.4rem;
+}
+.cc-ask {
+  margin: 0;
+  padding-left: 1.3rem;
+}
+.cc-ask li {
+  margin-bottom: 0.35rem;
+}
+.cc-limit {
+  margin-top: 0.8rem;
+  background: var(--enk-surface-2);
+  border-radius: var(--enk-radius);
+  padding: 0.85rem 1rem;
+  color: var(--enk-text-muted);
+}
+
 /* Free filing (SPEC-4 §A5). Options you don't qualify for are shown with the
    reason, so the list never looks like it quietly skipped something. */
 .ff-conditions {

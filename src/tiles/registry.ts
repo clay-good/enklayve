@@ -72,6 +72,7 @@ import { sabbaticalTile } from "./sabbatical";
 import { cliffExplorerTile, marginalRealityTile } from "./benefitCliffs";
 import { billTriageTile } from "./billTriage";
 import { freeFilingTile } from "./freeFiling";
+import { charityCareTile } from "./charityCare";
 
 // The 10 topic hubs, ordered by pillar so the home grid preserves the
 // on-screen order. Each hub's first tool is its default (the one a bare hub
@@ -214,7 +215,7 @@ const HUB_CONFIGS: HubConfig[] = [
     title: "When Money Is Tight",
     pillar: "rough",
     description: "What to pay first when you can't pay everything, and what happens to the rest.",
-    tools: [billTriageTile, freeFilingTile],
+    tools: [billTriageTile, charityCareTile, freeFilingTile],
   },
   {
     id: "where-you-stand",
