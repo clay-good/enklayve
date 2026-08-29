@@ -230,6 +230,40 @@ describe("every calculator meets the tile bar", () => {
   }
 });
 
+/**
+ * The worked example actually works (SPEC-2 §7 acceptance: each tool "passes its
+ * worked example").
+ *
+ * "Try an example" is what a visitor who has typed nothing presses, and it is
+ * the only moment a tile gets to explain itself. The tile bar above checks the
+ * button exists; this checks that pressing it produces a real answer — not an
+ * empty panel, and not a column of zeroes.
+ *
+ * Deliberately *not* asserted: that a tile opens on a populated result before
+ * the button is pressed. Most open at zero and that is a product choice, not a
+ * defect — though bill triage was reworked to open on its example precisely
+ * because "$0 covers $0 of $2,455" read as broken, so the question is a live one
+ * for the tiles where zero is alarming rather than merely neutral.
+ */
+describe("every calculator's worked example produces an answer", () => {
+  for (const tile of CALCULATORS) {
+    it(`${tile.id} answers when "Try an example" is pressed`, () => {
+      const root = mount(tile, new URLSearchParams());
+      const example = [...root.querySelectorAll("button")].find((b) =>
+        /try an example/i.test(b.textContent ?? ""),
+      );
+      expect(example, `${tile.id} has no "Try an example" button`).toBeDefined();
+      example!.click();
+      // The result may live in `.tile-result` or in the tile's own layout, so
+      // read the whole subtree and subtract the form the reader typed into.
+      for (const form of root.querySelectorAll("form")) form.remove();
+      const text = root.textContent ?? "";
+      expect(text.trim().length, `${tile.id} emptied its result`).toBeGreaterThan(20);
+      expect(/[1-9]/.test(text), `${tile.id}'s worked example shows nothing but zeroes`).toBe(true);
+    });
+  }
+});
+
 describe("every hub in the catalog", () => {
   for (const hub of TILES.filter((t) => t.mount)) {
     it(`${hub.id} has no axe violations`, async () => {
