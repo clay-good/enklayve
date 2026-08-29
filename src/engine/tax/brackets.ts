@@ -5,6 +5,8 @@ import type { FilingStatus, Jurisdiction } from "../../data/schemas";
 export interface Bracket {
   lowerBound: number;
   rate: number;
+  /** A fixed amount added for income landing in this band (Ohio). See TaxBracketSchema. */
+  baseTax?: number;
 }
 
 /**
@@ -27,6 +29,14 @@ export function bracketTax(taxable: Money, brackets: readonly Bracket[]): Money 
     const ceiling = nextLower !== null && taxable.greaterThan(nextLower) ? nextLower : taxable;
     const bandAmount = (ceiling instanceof Money ? ceiling : Money.from(ceiling)).subtract(lower);
     tax = tax.add(bandAmount.multiply(sorted[i]!.rate));
+    // A band may carry a fixed statutory amount on top of the marginal figure —
+    // Ohio's "$332.00 plus 2.75% of the amount in excess of $26,050". Only the
+    // band the income actually lands in contributes its base, so crossing into a
+    // higher band does not stack the ones below (see TaxBracketSchema.baseTax).
+    const base = sorted[i]!.baseTax;
+    if (base !== undefined && (nextLower === null || taxable.lessThanOrEqual(nextLower))) {
+      tax = tax.add(base);
+    }
   }
   return tax;
 }

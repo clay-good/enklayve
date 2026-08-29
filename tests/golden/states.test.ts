@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { evaluateTaxes } from "../../src/engine/tax";
+import { bracketTax } from "../../src/engine/tax/brackets";
+import { Money } from "../../src/engine/money";
 import { loadDatasets, type Datasets } from "../helpers/datasets";
 
 /**
@@ -58,12 +60,13 @@ describe("graduated states", () => {
     expect(cents(r.state!.incomeTax)).toBe("2453.5");
   });
 
-  it("Ohio single $60k → $933.63, plus opt-in Columbus 2.5%", () => {
+  it("Ohio single $60k → $1,265.63 — the $332 statutory base plus 2.75%, plus opt-in Columbus", () => {
     const base = evaluateTaxes(
       { filingStatus: "single", wages: 60000 },
       { federal: ds.federal, state: ds.state("oh"), fica: ds.fica },
     );
-    expect(cents(base.state!.incomeTax)).toBe("933.63"); // 2.75%·(60,000−26,050)
+    // ORC 5747.02(A)(3)(c): "$332.00 plus 2.75% of the amount in excess of $26,050".
+    expect(cents(base.state!.incomeTax)).toBe("1265.63"); // 332 + 2.75%·(60,000−26,050)
     expect(base.local.lines).toHaveLength(0);
 
     const withCity = evaluateTaxes(
@@ -71,6 +74,39 @@ describe("graduated states", () => {
       { federal: ds.federal, state: ds.state("oh"), fica: ds.fica },
     );
     expect(cents(withCity.local.total)).toBe("1500"); // 2.5%·60,000
+  });
+
+  it("Ohio's $332 base is a cliff at $26,050, exactly as the statute writes it", () => {
+    // The statute exempts a balance "equal to or less than twenty-six thousand
+    // fifty dollars" outright, then charges the full $332 on the next dollar. This
+    // is the discontinuity, not a modeling artifact — it is the frozen residue of
+    // the graduated schedule Ohio used to run below the threshold.
+    const at = evaluateTaxes(
+      { filingStatus: "single", wages: 26050 },
+      { federal: ds.federal, state: ds.state("oh"), fica: ds.fica },
+    );
+    expect(cents(at.state!.incomeTax)).toBe("0");
+    const justOver = evaluateTaxes(
+      { filingStatus: "single", wages: 26051 },
+      { federal: ds.federal, state: ds.state("oh"), fica: ds.fica },
+    );
+    expect(cents(justOver.state!.incomeTax)).toBe("332.03");
+  });
+
+  it("a base on one band never stacks onto a higher one (the cumulative-table trap)", () => {
+    // Published tax tables write each band's base CUMULATIVELY, so a naive
+    // implementation that summed every base below the income would double-count.
+    // Only the band the income lands in contributes.
+    const brackets = [
+      { lowerBound: 0, rate: 0 },
+      { lowerBound: 1000, rate: 0.1, baseTax: 50 },
+      { lowerBound: 2000, rate: 0.2, baseTax: 150 },
+    ];
+    // In the middle band: 50 + 10%·500.
+    expect(cents(bracketTax(Money.from(1500), brackets))).toBe("100");
+    // In the top band: 150 + 10%·1,000 (the middle band's marginal share) + 20%·500,
+    // and the middle band's own $50 base is NOT added.
+    expect(cents(bracketTax(Money.from(2500), brackets))).toBe("350");
   });
 });
 

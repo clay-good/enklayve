@@ -12,31 +12,34 @@
     "single": [
       {
         "lowerBound": 0,
-        "rate": 0
+        "rate": 0.0
       },
       {
         "lowerBound": 26050,
-        "rate": 0.0275
+        "rate": 0.0275,
+        "baseTax": 332.0
       }
     ],
     "married_jointly": [
       {
         "lowerBound": 0,
-        "rate": 0
+        "rate": 0.0
       },
       {
         "lowerBound": 26050,
-        "rate": 0.0275
+        "rate": 0.0275,
+        "baseTax": 332.0
       }
     ],
     "head_of_household": [
       {
         "lowerBound": 0,
-        "rate": 0
+        "rate": 0.0
       },
       {
         "lowerBound": 26050,
-        "rate": 0.0275
+        "rate": 0.0275,
+        "baseTax": 332.0
       }
     ]
   },
@@ -53,10 +56,11 @@
     }
   ],
   "citation": {
-    "sourceUrl": "https://tax.ohio.gov/individual/resources/annual-tax-rates",
-    "sourceDocument": "Ohio Department of Taxation, HB 96 flat 2.75% individual income tax on nonbusiness income over $26,050 (2026)",
+    "sourceUrl": "https://codes.ohio.gov/ohio-revised-code/section-5747.02",
+    "sourceDocument": "Ohio Rev. Code §5747.02(A)(3)(c) — for taxable years beginning in 2026 and thereafter, $332.00 plus 2.75% of the amount in excess of $26,050",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "Ohio taxes NONBUSINESS income on a schedule that is identical for every filing status — Ohio does not widen its brackets for couples. HB 96, the FY2026-27 budget, finished the multi-year flattening by retiring the 3.125% band that applied above $100,000 in 2025, so from tax year 2026 there is one taxed band. The statute is quoted exactly: ORC 5747.02(A)(3) exempts the balance outright when it is 'equal to or less than twenty-six thousand fifty dollars', and §5747.02(A)(3)(c) reads 'For taxable years beginning in 2026 and thereafter, $332.00 plus 2.75% of the amount in excess of $26,050.' THE $332 IS A REAL CLIFF, not a rounding artifact: a filer at $26,050 owes nothing and a filer at $26,051 owes $332.03. It is the frozen residue of the graduated schedule Ohio used to run below the threshold (the 2024 figure was $360.69, the 2025 figure $342.00), and it is modeled through the engine's `baseTax` bracket field. Worked example, single $60,000 of Ohio taxable nonbusiness income: tax = $332.00 + 2.75%·(60,000 − 26,050) = $332.00 + $933.63 = $1,265.63. Ohio has no standard deduction; the engine's starting point is Ohio adjusted gross income. Two Ohio reductions are omitted at launch fidelity, both erring high. First, the §5747.025 PERSONAL EXEMPTION — $2,400 per person at Ohio AGI of $40,000 or less, $2,150 from $40,001 to $80,000, and $1,900 above $80,000 — which this engine cannot express because it varies with income rather than filing status; for a single filer at $60,000 it would cut about $59. Second, the Business Income Deduction, the joint-filing credit, the retirement-income credit, and Ohio's other credits. Business income is separately taxed at a flat 3%, which the wage engine does not reach. Ohio's ~600 MUNICIPAL income taxes are opt-in `localAddOns` here rather than automatic, so a city resident must select their city. Verified verbatim against Ohio Rev. Code §5747.02 on 2026-08-29; the Department of Taxation's Annual Tax Rates page still stops at tax year 2025."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",

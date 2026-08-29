@@ -49,6 +49,20 @@ export type CitationData = z.infer<typeof CitationSchema>;
 export const TaxBracketSchema = z.object({
   lowerBound: z.number().gte(0),
   rate: z.number().gte(0).lte(1),
+  /**
+   * A fixed dollar amount the statute adds on top of the marginal computation
+   * for income landing in THIS band — Ohio's `$332.00 plus 2.75% of the amount
+   * in excess of $26,050` (ORC 5747.02(A)(3)(c), taxable years beginning 2026
+   * and thereafter). It is a genuine cliff: Ohio exempts income at or below
+   * $26,050 outright, and a filer one dollar over owes the whole $332.
+   *
+   * Only ever set this on a band whose lower bands are all 0%. In a published
+   * "tax table" schedule the base amounts are CUMULATIVE — each one already
+   * contains the tax from every band beneath it — so adding one on top of a
+   * non-zero accumulation would double-count. Ohio fits because its only band
+   * below the base is exempt, leaving nothing to double.
+   */
+  baseTax: z.number().gte(0).optional(),
 });
 
 const bracketsByStatus = z.record(FilingStatus, z.array(TaxBracketSchema).min(1));

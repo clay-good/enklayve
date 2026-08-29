@@ -179,10 +179,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-oh-income-tax-2024.json",
-      "sourceUrl": "https://tax.ohio.gov/individual/resources/annual-tax-rates",
-      "sourceDocument": "Ohio Department of Taxation, HB 96 flat 2.75% individual income tax on nonbusiness income over $26,050 (2026)",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "d3aa3fb4b13b7d4943759d404b69a286cf35898fb9b9c6c8704775b3c68bf843"
+      "sourceUrl": "https://codes.ohio.gov/ohio-revised-code/section-5747.02",
+      "sourceDocument": "Ohio Rev. Code §5747.02(A)(3)(c) — for taxable years beginning in 2026 and thereafter, $332.00 plus 2.75% of the amount in excess of $26,050",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "93db409d0423381cbd2bf2bc1c5bc48fc4516273f5e3878e1fb63be5bebba00a"
     },
     {
       "id": "state-ga-income-tax-2024",
