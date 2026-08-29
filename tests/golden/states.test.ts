@@ -1677,8 +1677,8 @@ describe("Oregon (graduated; CAPPED + AGI-phased federal-tax subtraction)", () =
 describe("flat-rate states", () => {
   const cases: Array<[string, number, string]> = [
     ["pa", 60000, "1842"], // 3.07%·60,000, no deduction
-    ["il", 60000, "2832.64"], // 4.95%·(60,000 − 2,775 exemption)
-    ["mi", 60000, "2312"], // 4.25%·(60,000 − 5,600 exemption)
+    ["il", 60000, "2825.21"], // 4.95%·(60,000 − 2,925 exemption)
+    ["mi", 60000, "2299.25"], // 4.25%·(60,000 − 5,900 exemption)
     ["ga", 60000, "2395.2"], // 4.99%·(60,000 − 12,000 std)
     ["nc", 60000, "1885.28"], // 3.99%·(60,000 − 12,750 std)
     ["az", 60000, "1097.5"], // 2.5%·(60,000 − 16,100 federal std)

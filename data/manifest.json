@@ -166,10 +166,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-il-income-tax-2024.json",
-      "sourceUrl": "https://tax.illinois.gov/research/taxrates/income.html",
-      "sourceDocument": "Illinois DOR, 4.95% flat tax; 2024 personal exemption $2,775",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "9de990faa9e7f51c17b72422619d4184ca78281bfaa5981fd29d78204c092af7"
+      "sourceUrl": "https://tax.illinois.gov/research/publications/bulletins/fy-2026-15.html",
+      "sourceDocument": "Illinois DOR Informational Bulletin FY 2026-15, \"What's New for Illinois Income Taxes\" (December 2025) — 4.95% flat rate, 2026 exemption allowance $2,925",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "2fed786fe1998ba4d8c5f150acc60e4a30b0b2f08ae34ce28b107b2e4fd53a73"
     },
     {
       "id": "state-oh-income-tax-2024",
@@ -218,10 +218,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-mi-income-tax-2024.json",
-      "sourceUrl": "https://www.michigan.gov/taxes/iit",
-      "sourceDocument": "Michigan Treasury, 4.25% flat tax; 2024 personal exemption $5,600",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "a5808a5861643f383ce0ccf6f29e10993778a52be5b5f3890e36188b3d9246d1"
+      "sourceUrl": "https://www.michigan.gov/taxes/-/media/Project/Websites/taxes/Forms/SUW/TY2026/446_Withholding-Guide_2026.pdf",
+      "sourceDocument": "Michigan Department of Treasury Form 446 (Rev. 02-26), 2026 Michigan Income Tax Withholding Guide — \"Withholding Rate: 4.25% Personal Exemption Amount: $5,900\"",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "93b66f2336d21d309a1919b254e96e0f3336219703bcded3733c0bfde026bde6"
     },
     {
       "id": "state-dc-income-tax-2024",

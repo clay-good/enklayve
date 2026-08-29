@@ -34,15 +34,16 @@
     "head_of_household": 0
   },
   "personalExemptionByFilingStatus": {
-    "single": 2775,
-    "married_jointly": 5550,
-    "head_of_household": 2775
+    "single": 2925,
+    "married_jointly": 5850,
+    "head_of_household": 2925
   },
   "citation": {
-    "sourceUrl": "https://tax.illinois.gov/research/taxrates/income.html",
-    "sourceDocument": "Illinois DOR, 4.95% flat tax; 2024 personal exemption $2,775",
+    "sourceUrl": "https://tax.illinois.gov/research/publications/bulletins/fy-2026-15.html",
+    "sourceDocument": "Illinois DOR Informational Bulletin FY 2026-15, \"What's New for Illinois Income Taxes\" (December 2025) — 4.95% flat rate, 2026 exemption allowance $2,925",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "Illinois levies a single flat rate of 4.95% on Illinois net income (35 ILCS 5/201(b)(5.4)); the rate is statutory and has not moved since 2017, and the Illinois Constitution's flat-tax requirement means a graduated schedule would take a constitutional amendment (the 2020 ballot measure to allow one failed). There is no Illinois standard deduction. Instead each filer claims a personal EXEMPTION ALLOWANCE, which is indexed annually: Bulletin FY 2026-15 states the 2025 amount is $2,850 and that for tax year 2026 it INCREASES TO $2,925, which is the figure this shard carries ($2,925 single and head of household, $5,850 married filing jointly for two exemptions). Worked example, single $60,000: taxable = 60,000 − 2,925 = $57,075; tax = 4.95%·57,075 = $2,825.21. Two Illinois rules are omitted at launch fidelity. First, the exemption allowance is DISALLOWED ENTIRELY above an AGI cliff — $500,000 married filing jointly, $250,000 for every other status (the same cliff also cuts off the Property Tax Credit and the K-12 Education Expense Credit) — so for a filer above it this engine understates Illinois tax by 4.95% of the exemption, about $145. Second, the $2,925-per-dependent exemption, the additional $1,000 age-65/blind exemptions, and Illinois's credits (EITC, property tax, K-12 education expense, volunteer emergency worker, and the new Child Tax Credit for EITC filers with a dependent under 12) are not modeled — the no-dependent, no-credit assumption every state in this engine shares. Illinois levies no local income tax. Verified against Illinois DOR Informational Bulletin FY 2026-15 (December 2025) on 2026-08-29."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",

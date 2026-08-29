@@ -34,15 +34,16 @@
     "head_of_household": 0
   },
   "personalExemptionByFilingStatus": {
-    "single": 5600,
-    "married_jointly": 11200,
-    "head_of_household": 5600
+    "single": 5900,
+    "married_jointly": 11800,
+    "head_of_household": 5900
   },
   "citation": {
-    "sourceUrl": "https://www.michigan.gov/taxes/iit",
-    "sourceDocument": "Michigan Treasury, 4.25% flat tax; 2024 personal exemption $5,600",
+    "sourceUrl": "https://www.michigan.gov/taxes/-/media/Project/Websites/taxes/Forms/SUW/TY2026/446_Withholding-Guide_2026.pdf",
+    "sourceDocument": "Michigan Department of Treasury Form 446 (Rev. 02-26), 2026 Michigan Income Tax Withholding Guide — \"Withholding Rate: 4.25% Personal Exemption Amount: $5,900\"",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "Michigan levies a single flat rate of 4.25% on Michigan taxable income (MCL 206.51). The rate carries a statutory trigger that cuts it for one year whenever general-fund revenue grows faster than inflation; that trigger fired once, for tax year 2023 (4.05%), and the rate returned to 4.25% for 2024 and has stayed there. There is no Michigan standard deduction. Instead each filer claims a PERSONAL EXEMPTION, indexed annually: Form 446, the 2026 Withholding Guide, states the 2026 figures on its first line — \"Withholding Rate: 4.25% Personal Exemption Amount: $5,900\" (up from $5,800 for 2025). This shard carries $5,900 single and head of household, $11,800 married filing jointly for two exemptions. Worked example, single $60,000: taxable = 60,000 − 5,900 = $54,100; tax = 4.25%·54,100 = $2,299.25. Omitted at launch fidelity: the $5,900-per-dependent exemption and the additional special exemptions (age 65+, blind, disabled, certain veterans); the retirement and pension subtraction, which the 2023 phase-in has grown large — for 2026, recipients born after 1945 may generally subtract up to $67,610 single or $135,220 joint; the Homestead Property Tax Credit and Home Heating Credit; and MICHIGAN CITY INCOME TAXES, which 24 cities levy on residents (Detroit at 2.4%, most others at 1%) and which this engine does not model — a Detroit resident therefore owes materially more than the figure shown here. Verified against Michigan Department of Treasury Form 446 (Rev. 02-26), the 2026 Michigan Income Tax Withholding Guide, on 2026-08-29."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",
