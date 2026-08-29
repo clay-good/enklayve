@@ -78,3 +78,53 @@ test("works offline after the first visit", async ({ page, context }) => {
   await expect(page.locator(".wordmark")).toHaveText("enklayve");
   await context.setOffline(false);
 });
+
+/**
+ * SPEC-4-ledger §6.1 and §7, and SPEC §2 principle 8 more broadly: a household
+ * that never opts into the Standing Ledger experiences the product exactly as it
+ * was, and Phase 24 adds no persistence at all.
+ *
+ * The assertion is deliberately over-broad — it walks a real session across the
+ * home, a calculator, the Readout, and the Report, then reads back *everything*
+ * the browser could be holding. Only the one allowed key may be there. A future
+ * change that starts quietly remembering a figure fails here rather than in a
+ * privacy review that may not happen.
+ */
+test("a session that never exports persists nothing financial", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForSelector(".wordmark");
+
+  await page.goto("/#/paycheck-taxes?tool=take-home");
+  await page.waitForSelector(".content");
+  await page.getByRole("button", { name: /try an example/i }).click();
+
+  await page.goto("/#/readout");
+  await page.waitForSelector(".readout-dropzone");
+
+  await page.goto("/#/report");
+  await page.waitForSelector(".report");
+
+  const stored = await page.evaluate(async () => {
+    const local = Object.fromEntries(
+      Object.keys(localStorage).map((k) => [k, localStorage.getItem(k)]),
+    );
+    const session = Object.fromEntries(
+      Object.keys(sessionStorage).map((k) => [k, sessionStorage.getItem(k)]),
+    );
+    const cookies = document.cookie;
+    let databases: string[] = [];
+    if (typeof indexedDB !== "undefined" && "databases" in indexedDB) {
+      databases = (await indexedDB.databases()).map((d) => d.name ?? "");
+    }
+    return { local, session, cookies, databases };
+  });
+
+  // The locale/theme preference is the single permitted key (the mechanical
+  // expression of SPEC §2 principle 8, enforced in code by `checkLocalStorage`).
+  for (const key of Object.keys(stored.local)) {
+    expect(key).toMatch(/^enklayve\.(locale|theme)$/);
+  }
+  expect(Object.keys(stored.session)).toEqual([]);
+  expect(stored.cookies).toBe("");
+  expect(stored.databases.filter((n) => n.length > 0)).toEqual([]);
+});

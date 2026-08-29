@@ -1102,6 +1102,89 @@ body {
 .cc-ask li {
   margin-bottom: 0.35rem;
 }
+/* The Standing Ledger recompute diff (SPEC-4-ledger §3). "Nothing changed" is
+   the common case and is styled as reassurance, not as an empty state. */
+.ledger {
+  border: 1px solid var(--enk-border);
+  border-radius: var(--enk-radius);
+  padding: 1rem 1.15rem;
+  background: var(--enk-surface);
+}
+.ledger-title {
+  margin: 0 0 0.4rem;
+  font-size: 1.15rem;
+}
+.ledger-taken,
+.ledger-note {
+  margin: 0 0 0.6rem;
+  color: var(--enk-text-muted);
+  line-height: 1.55;
+}
+.ledger-calm {
+  margin: 0.6rem 0;
+  padding: 0.8rem 1rem;
+  border-radius: var(--enk-radius);
+  background: var(--enk-primary-soft);
+  border: 1px solid var(--enk-primary);
+  font-weight: 600;
+  line-height: 1.5;
+}
+.ledger-heading {
+  font-size: 1rem;
+  margin: 1.1rem 0 0.35rem;
+}
+.ledger-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.ledger-row {
+  display: grid;
+  gap: 0.1rem;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--enk-border);
+  line-height: 1.5;
+}
+/* A crossing outranks a move, and the border says so before the words do. */
+.ledger-row--threshold,
+.ledger-row--gone {
+  border-left-color: var(--enk-warn);
+}
+.ledger-row-label {
+  font-weight: 700;
+}
+.ledger-row-move {
+  font-variant-numeric: tabular-nums;
+}
+.ledger-row-section {
+  font-size: 0.8rem;
+  color: var(--enk-text-muted);
+}
+.ledger-asof {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+  color: var(--enk-text-muted);
+}
+.ledger-unchanged-count {
+  margin: 1rem 0 0;
+  color: var(--enk-text-muted);
+}
+.ledger-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+.ledger-privacy {
+  margin: 0.9rem 0 0;
+  font-size: 0.85rem;
+  color: var(--enk-text-muted);
+}
+
 /* Life-Event Sequences (SPEC-4 Phase 20b), harm tier 2. The numbered rail is
    the point: this is a sequence, not a checklist, and a dated step is marked so
    the eye finds the clocks before it reads the prose. */

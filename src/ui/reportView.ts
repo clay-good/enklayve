@@ -13,6 +13,7 @@ import {
   isEncrypted,
   readFileText,
 } from "../profile/portable";
+import { exportLedger, takeSnapshot, watchableAnswers } from "../profile/ledger";
 import { buildReport, renderReportHtml, type ReportModel } from "../readout/report";
 import type { BundledData } from "../data/browser";
 import type { SituationStore } from "../profile/situation";
@@ -143,9 +144,10 @@ export function renderReport(opts: RenderReportOptions, flash?: string): void {
   // A successful restore rebuilds this view from the new profile; the flash
   // message rides through the re-render so the confirmation survives it.
   const portable = portableBlock(profile, (msg) => renderReport(opts, msg), flash);
+  const ledger = ledgerBlock(profile, opts.data ?? null, model);
 
   container.append(
-    el("article", { class: "tile report" }, head, actions, sections, appendix, portable),
+    el("article", { class: "tile report" }, head, actions, sections, appendix, portable, ledger),
   );
 }
 
@@ -289,6 +291,87 @@ function portableBlock(
         fileInput,
       ),
       unlock,
+    ),
+    status,
+  );
+}
+
+/**
+ * "Keep these answers" — the Standing Ledger, Path 1 (SPEC-4-ledger.md §4).
+ *
+ * The return-visit mechanic for a utility with no accounts and no server. The
+ * file holds your situation *and the answers themselves*, so when you drop it
+ * back on the Readout the site can recompute each one against the data bundled
+ * that day and show you only what moved — without ever needing a copy of last
+ * year's shards, or a copy of you.
+ *
+ * It uses the same envelope as the situation export above (PBKDF2 → AES-GCM,
+ * on-device) under its own format id, so there is one piece of crypto in the
+ * codebase rather than two, and the two files can never be confused for each
+ * other.
+ */
+function ledgerBlock(
+  profile: SituationStore,
+  data: BundledData | null,
+  model: ReportModel,
+): HTMLElement {
+  const answers = watchableAnswers(model);
+  const status = el("p", {
+    class: "report-note portable-status",
+    attrs: { "aria-live": "polite" },
+    text: "",
+  });
+
+  const passInput = el("input", {
+    type: "password",
+    class: "portable-pass",
+    name: "ledger-passphrase",
+    attrs: {
+      placeholder: "Passphrase (optional)",
+      autocomplete: "off",
+      "aria-label": "Passphrase to encrypt your ledger (optional)",
+    },
+  });
+
+  async function doSave(): Promise<void> {
+    const pass = passInput.value.trim();
+    try {
+      // The date the file was made is a record, not an input to any figure in
+      // it: every answer inside was already computed above.
+      const takenOn = new Date().toISOString().slice(0, 10);
+      const snapshot = takeSnapshot(profile, data, answers, [], takenOn);
+      const content = await exportLedger(snapshot, pass || undefined);
+      triggerDownload(pass ? "my-ledger.encrypted.json" : "my-ledger.json", content);
+      status.textContent = pass
+        ? `Saved ${answers.length} answers, encrypted, dated ${takenOn}. Keep the passphrase safe — there is no recovery. Drop the file on the Readout when you come back.`
+        : `Saved ${answers.length} answers, dated ${takenOn}. Drop the file on the Readout when you come back and it will show you what moved.`;
+    } catch (e) {
+      status.textContent = (e as Error).message;
+    }
+  }
+
+  return el(
+    "section",
+    { class: "report-section report-ledger" },
+    el("h2", { class: "report-section-title", text: "Keep these answers" }),
+    el("p", {
+      class: "report-note",
+      text: `Save this report's ${answers.length} answers to a file you keep. Drop it back on the Readout any time and the site recomputes every one against the data bundled that day, then shows you only what moved — an eligibility line that flipped, a figure that shifted, a deadline coming up. No account, no server, and nothing left on this machine: the file is the only copy, and a lost file means a lost snapshot.`,
+    }),
+    el(
+      "div",
+      { class: "portable-actions" },
+      passInput,
+      el("button", {
+        type: "button",
+        class: "btn btn--ghost",
+        text: "Keep these answers (.json)",
+        on: {
+          click: () => {
+            void doSave();
+          },
+        },
+      }),
     ),
     status,
   );

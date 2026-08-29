@@ -188,8 +188,10 @@ describe("Readout view", () => {
     it("shows a friendly error for a .json that isn't a saved situation, not a parse attempt", async () => {
       const { container } = setup();
       await dropSituation(container, '{"hello":"world"}');
+      // The dropzone now accepts three kinds of .json — a situation, a ledger,
+      // or an encrypted envelope of either — so the message names the family.
       expect(container.querySelector(".readout-status")?.textContent).toContain(
-        "isn't a saved enklayve situation",
+        "isn't a saved enklayve file",
       );
     });
   });

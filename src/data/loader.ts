@@ -34,6 +34,11 @@ export type DatasetStatus =
 export interface LoadedDataset<T = unknown> {
   readonly id: string;
   readonly kind: DatasetKind;
+  /** The manifest's pinned version string for this shard. Carried through so a
+   * consumer that needs provenance (the Standing Ledger's snapshot) can record
+   * exactly which shard version produced a figure, without re-reading the
+   * manifest. */
+  readonly version: string;
   readonly status: DatasetStatus;
   readonly effectiveYear: number;
   /** Parsed + validated data, or null when status is "invalid". */
@@ -97,6 +102,7 @@ export async function loadDataset(
     return {
       id: entry.id,
       kind: entry.kind,
+      version: entry.version,
       status: "stale",
       effectiveYear: entry.effectiveYear,
       data: result.data,
@@ -107,6 +113,7 @@ export async function loadDataset(
   return {
     id: entry.id,
     kind: entry.kind,
+    version: entry.version,
     status: "ok",
     effectiveYear: entry.effectiveYear,
     data: result.data,
@@ -118,6 +125,7 @@ function invalid(entry: ManifestEntry, problems: string[]): LoadedDataset {
   return {
     id: entry.id,
     kind: entry.kind,
+    version: entry.version,
     status: "invalid",
     effectiveYear: entry.effectiveYear,
     data: null,
@@ -126,6 +134,8 @@ function invalid(entry: ManifestEntry, problems: string[]): LoadedDataset {
 }
 
 export interface LoadedManifest {
+  /** The manifest's own schema version, recorded in a ledger snapshot's provenance. */
+  readonly schemaVersion: number;
   readonly datasets: LoadedDataset[];
   readonly byId: Map<string, LoadedDataset>;
   /** True when at least one dataset is stale or invalid. */
@@ -157,5 +167,5 @@ export async function loadManifest(
 
   const byId = new Map(datasets.map((d) => [d.id, d]));
   const hasFailSafe = datasets.some((d) => d.status !== "ok");
-  return { datasets, byId, hasFailSafe };
+  return { schemaVersion: manifest.schemaVersion, datasets, byId, hasFailSafe };
 }

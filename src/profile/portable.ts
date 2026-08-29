@@ -21,8 +21,13 @@ interface PlainFile {
   snapshot: SituationSnapshot;
 }
 
+/** The format ids the encrypted envelope may carry. A ledger snapshot reuses
+ * this exact envelope — same KDF, same cipher, same iteration count — under its
+ * own id, so there is one piece of crypto in the codebase rather than two. */
+export type EncryptedFormat = "enklayve.situation.encrypted" | "enklayve.ledger.encrypted";
+
 interface EncryptedEnvelope {
-  format: "enklayve.situation.encrypted";
+  format: EncryptedFormat;
   version: number;
   kdf: "PBKDF2-SHA256";
   iterations: number;
@@ -63,10 +68,14 @@ export function serialize(store: SituationStore): string {
   return JSON.stringify(file, null, 2);
 }
 
-/** True when `text` is an encrypted export envelope (needs a passphrase). */
-export function isEncrypted(text: string): boolean {
+/** True when `text` is an encrypted export envelope (needs a passphrase).
+ * `format` narrows it to one kind of export; omitted, any encrypted envelope
+ * matches, which is what the Readout dropzone wants before it knows which. */
+export function isEncrypted(text: string, format?: EncryptedFormat): boolean {
   try {
-    return (JSON.parse(text) as { format?: string }).format === "enklayve.situation.encrypted";
+    const actual = (JSON.parse(text) as { format?: string }).format;
+    if (format) return actual === format;
+    return actual === "enklayve.situation.encrypted" || actual === "enklayve.ledger.encrypted";
   } catch {
     return false;
   }
@@ -90,7 +99,11 @@ async function deriveKey(passphrase: string, salt: ArrayBuffer): Promise<CryptoK
 }
 
 /** Encrypt a plaintext export under a passphrase, returning the JSON envelope. */
-export async function encrypt(plaintext: string, passphrase: string): Promise<string> {
+export async function encrypt(
+  plaintext: string,
+  passphrase: string,
+  format: EncryptedFormat = "enklayve.situation.encrypted",
+): Promise<string> {
   if (!passphrase) throw new Error("a passphrase is required to encrypt the profile");
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -101,7 +114,7 @@ export async function encrypt(plaintext: string, passphrase: string): Promise<st
     toBuffer(enc.encode(plaintext)),
   );
   const envelope: EncryptedEnvelope = {
-    format: "enklayve.situation.encrypted",
+    format,
     version: FORMAT_VERSION,
     kdf: "PBKDF2-SHA256",
     iterations: PBKDF2_ITERATIONS,

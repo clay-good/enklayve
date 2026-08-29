@@ -321,7 +321,13 @@ Two notes from building 20a. The shard carries *state-set* timing as a pointer w
 
 **Deliverables.** The ledger snapshot schema; export/import reusing the existing `enklayve.situation.encrypted` envelope (PBKDF2-SHA256 → AES-GCM) under a new `enklayve.ledger` format id; the recompute-diff engine with its three-tier output; the deadline view.
 
-**Acceptance.** A snapshot round-trips bit-for-bit. The diff is golden-tested against a synthetic dataset-version bump. A schema test proves no snapshot can hold a document, an unconfirmed extracted value, or an identifier. A user who never exports sees no behavioral change — asserted by an e2e test that no new persisted state appears in a full session.
+**Acceptance.** ✅ All four hold. A snapshot round-trips bit-for-bit, plain and encrypted. The diff is golden-tested against a synthetic dataset-version bump, including the §3.1 floor and the boundary-wins rule. A `.strict()` Zod schema — not a convention — rejects any snapshot carrying a document, a name, an SSN, or an account number, including one smuggled inside a watched answer or a deadline. And an e2e walks a full session (home → calculator → Readout → Report) and reads back `localStorage`, `sessionStorage`, cookies, and IndexedDB, asserting the locale/theme key is the only thing there.
+
+**Three notes from building 24.**
+
+- *The recompute is `buildReport`, not a parallel engine.* §3 asks the site to recompute each watched answer against the currently bundled data. The Readout Report model is already pure, already deterministic, and already the surface a household's answers live on — so a snapshot watches report lines, and the recompute is `buildReport(importedSituation, currentData)`. A second engine built for this would have been a second engine free to drift from the one on screen.
+- *A "status" answer is anything that is not a plain money figure, and that is load-bearing.* The boundary-wins rule needs a mechanical test for "this is a threshold, not an amount". `parseDisplayedAmount` gives one: a value that is not a currency string has no amount, so a change to it is a crossing that no dollar floor can suppress — and so is a value that *changed shape* between a figure and a status ("$0.00" → "Not eligible"), which is the exact case a naive dollar diff would hide.
+- *Viewing a diff must not overwrite My Situation.* The snapshot's situation is loaded into a temporary store to recompute against; the live profile changes only on an explicit button press. A test asserts the profile is still empty after the diff renders.
 
 ### Gated, not scheduled
 

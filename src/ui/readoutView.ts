@@ -13,6 +13,14 @@ import { extractDocument, labelFor } from "../readout/extract";
 import { applyToSituation } from "../readout/toSituation";
 import { extractTextFromFile, type TextExtractor } from "../readout/extractText";
 import { importProfile, isEncrypted, readFileText } from "../profile/portable";
+import {
+  diffLedger,
+  importLedger,
+  isEncryptedLedger,
+  isLedgerFile,
+  type LedgerSnapshot,
+} from "../profile/ledger";
+import { renderLedgerDiff } from "./ledgerView";
 import { buildReport } from "../readout/report";
 import { buildAnswer } from "../readout/answer";
 import { citationLink } from "./resultCard";
@@ -22,7 +30,7 @@ import type {
   ExtractionResult,
   ReadoutAnswer,
 } from "../readout/types";
-import type { SituationStore } from "../profile/situation";
+import { SituationStore } from "../profile/situation";
 import type { BundledData } from "../data/browser";
 import type { FilingStatus } from "../data/schemas";
 
@@ -193,24 +201,68 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     }
   }
 
-  /** Restore a saved situation file (plain or encrypted) into the profile. */
+  /**
+   * Restore a saved file. A `.json` here is one of three things: a saved
+   * situation, a Standing Ledger snapshot, or an encrypted envelope of either.
+   * The format id in the file decides, so the three paths never guess.
+   */
   async function handleRestore(file: File): Promise<void> {
     status.textContent = "";
     try {
       const text = await readFileText(file);
+      if (isLedgerFile(text)) {
+        showLedger(await importLedger(text));
+        return;
+      }
       if (isEncrypted(text)) {
-        renderUnlock(text);
+        renderUnlock(text, isEncryptedLedger(text));
         return;
       }
       await importProfile(profile, text);
       renderRestored();
     } catch (e) {
-      status.textContent = `That .json isn't a saved enklayve situation: ${(e as Error).message}`;
+      status.textContent = `That .json isn't a saved enklayve file: ${(e as Error).message}`;
     }
   }
 
+  /** Today, as the default clock for the deadline view. Displayed and editable —
+   * the figures above it are pure; only "days remaining" needs a date. */
+  let ledgerAsOf = new Date().toISOString().slice(0, 10);
+
+  /**
+   * Recompute the answers in a dropped ledger against the data bundled today and
+   * show the diff. The snapshot's situation is loaded into a **temporary** store,
+   * so viewing the diff never overwrites My Situation — that stays a deliberate
+   * button press.
+   */
+  function showLedger(snapshot: LedgerSnapshot): void {
+    clear(resultRegion);
+    const temp = new SituationStore();
+    temp.load(snapshot.situation);
+    const current = buildReport(temp, data);
+    const shards = (data?.manifest.datasets ?? []).map((d) => ({
+      id: d.id,
+      version: d.version,
+      effectiveYear: d.effectiveYear,
+    }));
+    renderLedgerDiff(resultRegion, {
+      snapshot,
+      diff: diffLedger(snapshot, current, shards),
+      asOf: ledgerAsOf,
+      locale: "en-US",
+      onRestore: () => {
+        profile.load(snapshot.situation);
+        renderRestored();
+      },
+      onAsOfChange: (next) => {
+        ledgerAsOf = next;
+        showLedger(snapshot);
+      },
+    });
+  }
+
   /** An encrypted situation needs its passphrase before it can be restored. */
-  function renderUnlock(text: string): void {
+  function renderUnlock(text: string, isLedger = false): void {
     clear(resultRegion);
     const pass = el("input", {
       type: "password",
@@ -219,16 +271,22 @@ export function renderReadout(opts: RenderReadoutOptions): void {
       attrs: {
         placeholder: "Passphrase",
         autocomplete: "off",
-        "aria-label": "Passphrase to open the encrypted situation file",
+        "aria-label": "Passphrase to open the encrypted file",
       },
     });
     const msg = el("p", {
       class: "readout-note",
       attrs: { "aria-live": "polite" },
-      text: "That file is encrypted. Enter its passphrase to restore your situation.",
+      text: isLedger
+        ? "That ledger is encrypted. Enter its passphrase to see what changed."
+        : "That file is encrypted. Enter its passphrase to restore your situation.",
     });
     async function doUnlock(): Promise<void> {
       try {
+        if (isLedger) {
+          showLedger(await importLedger(text, pass.value.trim()));
+          return;
+        }
         await importProfile(profile, text, pass.value.trim());
         renderRestored();
       } catch (e) {
@@ -238,7 +296,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     const unlock = el("button", {
       type: "button",
       class: "btn btn--accent",
-      text: "Unlock & restore",
+      text: isLedger ? "Unlock & compare" : "Unlock & restore",
       on: {
         click: () => {
           void doUnlock();
