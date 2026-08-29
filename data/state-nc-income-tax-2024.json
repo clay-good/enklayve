@@ -34,10 +34,11 @@
     "head_of_household": 19125
   },
   "citation": {
-    "sourceUrl": "https://www.ncdor.gov/taxes-forms/individual-income-tax/tax-rate-schedules",
-    "sourceDocument": "NCDOR, 3.99% flat tax (2026, down from 4.25% in 2025); 2026 standard deduction $12,750/$25,500/$19,125",
+    "sourceUrl": "https://www.ncdor.gov/taxes-forms/individual-income-tax/filing-topics/north-carolina-standard-deduction-or-north-carolina-itemized-deductions",
+    "sourceDocument": "NCDOR — 3.99% flat rate for taxable years after 2025; NC standard deduction $12,750 / $25,500 / $19,125",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "North Carolina's flat rate has been stepping down on the schedule set by S.B. 105 (2021) and accelerated since; for taxable years after 2025 it is 3.99%, down from 4.25% in 2025. The NC standard deduction is NOT the federal one — the NCDOR's chart is explicit about that — and has been fixed at $12,750 single, $25,500 married filing jointly or surviving spouse, and $19,125 head of household since 2022, with no additional amount for age 65 or blindness (unlike the federal rules). There is no North Carolina personal exemption. Worked example, single $60,000: taxable = 60,000 − 12,750 = $47,250; tax = 3.99%·47,250 = $1,885.28. Two edges are omitted: a married-filing-separately filer whose spouse itemizes gets a standard deduction of ZERO, and a filer ineligible for the federal standard deduction gets zero as well — this engine grants the single amount in both cases, so it errs low for them. The child deduction, the NC 529 and other deductions, and North Carolina's credits are omitted too. North Carolina levies no local income tax. Verified against the NCDOR standard-deduction and rate-schedule pages on 2026-08-29."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",

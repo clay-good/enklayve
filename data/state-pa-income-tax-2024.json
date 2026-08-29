@@ -34,10 +34,11 @@
     "head_of_household": 0
   },
   "citation": {
-    "sourceUrl": "https://www.pa.gov/agencies/revenue/forms-and-publications/pa-personal-income-tax-guide",
-    "sourceDocument": "Pennsylvania DOR, 3.07% flat personal income tax (2024)",
+    "sourceUrl": "https://www.pa.gov/agencies/revenue/resources/tax-types-and-information/personal-income-tax",
+    "sourceDocument": "Pennsylvania DOR personal income tax — 3.07% flat, no standard deduction and no personal exemption (72 P.S. §7302)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "Pennsylvania levies a single flat rate of 3.07% and is constitutionally barred from a graduated one (the Uniformity Clause, Pa. Const. art. VIII §1), so the rate has been 3.07% since 2004 and cannot vary by income or filing status. The DOR states the other half plainly: 'The Pennsylvania personal income tax does not provide for a standard deduction or personal exemption.' So Pennsylvania taxable compensation is the starting point and the whole computation is one multiplication. Worked example, single $60,000: tax = 3.07%·60,000 = $1,842.00. Two Pennsylvania features are outside the engine, in opposite directions. TAX FORGIVENESS (Schedule SP, 72 P.S. §7304) can reduce or eliminate the tax for lower incomes — up to 100% at modest eligibility income, phasing out in 10% steps — so this figure is too high for a filer who qualifies. And Pennsylvania's LOCAL EARNED INCOME TAX, levied by most municipalities and school districts at roughly 1% to nearly 4% in Philadelphia, is not modeled here at all, so a resident of almost anywhere in the state owes more than the figure shown. The §125 cafeteria-plan and 529/HSA/MSA deductions and the credit for taxes paid to other states are also omitted. Verified against the Pennsylvania DOR personal income tax page on 2026-08-29."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",

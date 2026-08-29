@@ -155,9 +155,10 @@
   ],
   "citation": {
     "sourceUrl": "https://www.tax.ny.gov/pit/file/tax_tables.htm",
-    "sourceDocument": "NYS Department of Taxation and Finance, 2026 tax rate schedule (middle-class rate cuts: lowest bracket 3.9%) and NYC resident rates",
+    "sourceDocument": "NYS Tax & Finance — 2026 rate schedule, the FY2026 budget's 0.1-point cut to the bottom five brackets (3.9% lowest)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "New York's nine-bracket schedule differs by filing status (Tax Law §601). The FY2026 enacted budget, signed 2025-05-09, cuts the bottom FIVE brackets by 0.1 point for tax year 2026 and by a further 0.1 point for 2027, so the 2026 rates are 3.9% / 4.4% / 5.15% / 5.4% / 5.9% where 2025 had 4.0% / 4.5% / 5.25% / 5.5% / 6.0%. The upper four brackets are unchanged at 6.85% / 9.65% / 10.3% / 10.9%, and the temporary high-income surcharge that was to expire after 2027 is extended through 2032. The standard deduction is statutory and unindexed: $8,000 single, $16,050 married filing jointly, $11,200 head of household. There is no New York personal exemption for the filer (only a $1,000 dependent exemption, omitted here with every other state's). Worked example, single $60,000: taxable = 60,000 − 8,000 = $52,000, taxed across the first five brackets. Omitted at launch fidelity: the household credit, the empire state child credit and NY EITC, the itemized-deduction limitations that bite above $100,000 of AGI, the supplemental tax that recaptures lower-bracket benefits for high earners, and the NEW YORK CITY and YONKERS resident income taxes — which are seeded here as OPT-IN local add-ons, so a city resident must select their city for the figure to be right. Verified against the NYS Department of Taxation and Finance tax-rates pages and the FY2026 enacted budget on 2026-08-29; the department had not yet posted 2026 annual tax tables, whose latest year is 2025."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",

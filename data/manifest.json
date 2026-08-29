@@ -115,9 +115,9 @@
       "staleAfterYears": 2,
       "shard": "state-ny-income-tax-2024.json",
       "sourceUrl": "https://www.tax.ny.gov/pit/file/tax_tables.htm",
-      "sourceDocument": "NYS Department of Taxation and Finance, 2026 tax rate schedule (middle-class rate cuts: lowest bracket 3.9%) and NYC resident rates",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "ed590f77972ff67151956bd3626f8289be5d542100d3aa7d8ba6348a9d49b564"
+      "sourceDocument": "NYS Tax & Finance — 2026 rate schedule, the FY2026 budget's 0.1-point cut to the bottom five brackets (3.9% lowest)",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "cbb4af0ee94605734ce76f00da53cd97fb5d2752aba22d9aa76b1142dc71943c"
     },
     {
       "id": "state-tx-income-tax-2024",
@@ -153,10 +153,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-pa-income-tax-2024.json",
-      "sourceUrl": "https://www.pa.gov/agencies/revenue/forms-and-publications/pa-personal-income-tax-guide",
-      "sourceDocument": "Pennsylvania DOR, 3.07% flat personal income tax (2024)",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "1bbeadf45f1269bbd3d48540cb25d1ca5604a1aa899a5d3300ad93eab2af46b4"
+      "sourceUrl": "https://www.pa.gov/agencies/revenue/resources/tax-types-and-information/personal-income-tax",
+      "sourceDocument": "Pennsylvania DOR personal income tax — 3.07% flat, no standard deduction and no personal exemption (72 P.S. §7302)",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "a6cedf95b0fd64f58dc6a7da83b5c4b091a3c95e1975baa7a67953d66c7feaed"
     },
     {
       "id": "state-il-income-tax-2024",
@@ -205,10 +205,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-nc-income-tax-2024.json",
-      "sourceUrl": "https://www.ncdor.gov/taxes-forms/individual-income-tax/tax-rate-schedules",
-      "sourceDocument": "NCDOR, 3.99% flat tax (2026, down from 4.25% in 2025); 2026 standard deduction $12,750/$25,500/$19,125",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "6c8f0c7aa612c65aa4e8a831b484f9578f13351fe3cb760151fcde177a4ef821"
+      "sourceUrl": "https://www.ncdor.gov/taxes-forms/individual-income-tax/filing-topics/north-carolina-standard-deduction-or-north-carolina-itemized-deductions",
+      "sourceDocument": "NCDOR — 3.99% flat rate for taxable years after 2025; NC standard deduction $12,750 / $25,500 / $19,125",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "96a7425c9c877dd82bc1acdcd0494127a86d81c47aa5474fd74b20f5a1cebaec"
     },
     {
       "id": "state-mi-income-tax-2024",
@@ -335,10 +335,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-az-income-tax-2024.json",
-      "sourceUrl": "https://azdor.gov/forms/individual",
-      "sourceDocument": "Arizona DOR, 2.5% flat tax (2024); standard deduction matches the federal amounts",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "191cb8e4a80166d7082ecb4ba2fe0ed4d8515dc726bc90902cccbb7ad30b70d9"
+      "sourceUrl": "https://azdor.gov/sites/default/files/document/FORMS_INDIVIDUAL_2026_140ESBooklet.pdf",
+      "sourceDocument": "Arizona DOR 2026 Form 140ES booklet — 2.5% flat rate; standard deduction conformed to the federal amounts (A.R.S. §43-1041)",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "7772ee6c8674fa69722a9e8d1088b639063c330c93b17a8826dc8bbfce1ea4ba"
     },
     {
       "id": "state-co-income-tax-2024",
@@ -348,10 +348,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-co-income-tax-2024.json",
-      "sourceUrl": "https://tax.colorado.gov/individual-income-tax",
-      "sourceDocument": "Colorado DOR, 4.40% flat tax on federal taxable income (2024); federal standard deduction applies",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "e414e92ba15875a158fafd66465adbebf1fa4a502929c15194f732a1f62470e2"
+      "sourceUrl": "https://tax.colorado.gov/sites/tax/files/documents/Individual_Income_Tax_Guide_January_2026.pdf",
+      "sourceDocument": "Colorado DOR Individual Income Tax Guide (revised January 2026) — 4.4% flat rate on federal taxable income",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "2eb3b690d3ac241b6bc13919255d83f8206094027d207b29fb7eef8db744d283"
     },
     {
       "id": "state-in-income-tax-2024",
@@ -361,10 +361,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-in-income-tax-2024.json",
-      "sourceUrl": "https://www.in.gov/dor/i-am-a/individual/",
-      "sourceDocument": "Indiana DOR, 2.95% flat tax (2026, down from 3.05%); $1,000 personal exemption per filer. County income taxes are not modeled.",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "8f3df56c56ee8c3246bbc741e30be4bf27dc10182adb336299d3b1784e5f305c"
+      "sourceUrl": "https://www.in.gov/dor/resources/tax-rates-and-reports/rates-fees-and-penalties/",
+      "sourceDocument": "Indiana DOR Rates, Fees & Penalties — 2.95% adjusted gross income tax for 2026 (2.90% in 2027); $1,000 personal exemption",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "760f3470e175ca8e8f762c6b4d0ddf7a2835c39a6803c092ba0c6aec03c6a805"
     },
     {
       "id": "state-ky-income-tax-2024",
@@ -374,10 +374,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-ky-income-tax-2024.json",
-      "sourceUrl": "https://revenue.ky.gov/Individual/Individual-Income-Tax/Pages/default.aspx",
-      "sourceDocument": "Kentucky DOR, 3.5% flat tax (2026, down from 4.0%); 2026 standard deduction $3,360 per taxpayer",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "292d7ffa0ee209f626e4d45e8f044d041c3c4756b8d011ab87c3232b05dda33b"
+      "sourceUrl": "https://revenue.ky.gov/News/Pages/Kentucky-DOR-Announces-2026-Standard-Deduction.aspx",
+      "sourceDocument": "Kentucky DOR — 3.5% flat rate for 2026 (HB 1, 2025) and the announced 2026 standard deduction of $3,360",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "bc0135860e655d70fa6aa0f59a6ef5fcd0a4c1be3e51f112999ec170a321ea73"
     },
     {
       "id": "state-ma-income-tax-2024",

@@ -34,10 +34,11 @@
     "head_of_household": 3360
   },
   "citation": {
-    "sourceUrl": "https://revenue.ky.gov/Individual/Individual-Income-Tax/Pages/default.aspx",
-    "sourceDocument": "Kentucky DOR, 3.5% flat tax (2026, down from 4.0%); 2026 standard deduction $3,360 per taxpayer",
+    "sourceUrl": "https://revenue.ky.gov/News/Pages/Kentucky-DOR-Announces-2026-Standard-Deduction.aspx",
+    "sourceDocument": "Kentucky DOR — 3.5% flat rate for 2026 (HB 1, 2025) and the announced 2026 standard deduction of $3,360",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "Kentucky's flat rate steps down whenever statutory revenue triggers are met (HB 8, 2022). HB 1 of the 2025 session set the rate at 3.5% for tax years beginning on or after January 1, 2026, down from 4.0% in 2025. The standard deduction is indexed annually and announced by the DOR each autumn; the 2026 amount is $3,360, a $90 increase over 2025's $3,270. It is a per-taxpayer figure, so $3,360 for single and head of household and $6,720 on a joint return. Kentucky has no personal exemption. Worked example, single $60,000: taxable = 60,000 − 3,360 = $56,640; tax = 3.5%·56,640 = $1,982.40. Omitted at launch fidelity: the pension-income exclusion, the family size tax credit (which can zero out the tax at low incomes, so this figure is too high for those filers), the education tuition credit, and Kentucky's LOCAL OCCUPATIONAL LICENSE TAXES, levied by most cities and counties — Louisville Metro at 2.2%, Lexington at 2.25% — which this engine does not model, so an urban Kentucky filer owes more than shown. Verified against the Kentucky DOR's 2026 standard deduction announcement and 2026 withholding formula on 2026-08-29."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",

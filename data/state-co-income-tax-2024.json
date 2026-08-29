@@ -34,10 +34,11 @@
     "head_of_household": 24150
   },
   "citation": {
-    "sourceUrl": "https://tax.colorado.gov/individual-income-tax",
-    "sourceDocument": "Colorado DOR, 4.40% flat tax on federal taxable income (2024); federal standard deduction applies",
+    "sourceUrl": "https://tax.colorado.gov/sites/tax/files/documents/Individual_Income_Tax_Guide_January_2026.pdf",
+    "sourceDocument": "Colorado DOR Individual Income Tax Guide (revised January 2026) — 4.4% flat rate on federal taxable income",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "Colorado taxes FEDERAL TAXABLE INCOME directly — the conformity pattern, so the federal standard deduction is embedded in the starting point and there is no separate Colorado deduction or exemption. The rate is 4.4%, permanently set by the voters in 2020 (Proposition 116) and applied since 2022. It can be temporarily reduced for a single year when a TABOR surplus triggers the mechanism, which is what happened in 2024 (4.25%); the DOR's own rate history in the Individual Income Tax Guide, revised January 2026, shows the rate back at 4.4% for 2025 and lists no later year, so 4.4% is what this shard carries. Note that widely-syndicated secondary sources report a cut to 4.0% under HB24-1065; that bill did not become law, and the DOR's published table is the authority. Worked example, single $60,000: federal taxable = 60,000 − 16,100 = $43,900; tax = 4.4%·43,900 = $1,931.60. Omitted at launch fidelity: the Colorado alternative minimum tax, the state child tax credit and family affordability credit, the retirement-income subtraction, the TABOR sales-tax refund, and the itemized-deduction addback above $300,000 of AGI. Colorado levies no local income tax on wages (its occupational privilege taxes are flat monthly head charges, not income taxes). Verified against the Colorado DOR Individual Income Tax Guide on 2026-08-29."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",

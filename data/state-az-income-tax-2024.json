@@ -34,10 +34,11 @@
     "head_of_household": 24150
   },
   "citation": {
-    "sourceUrl": "https://azdor.gov/forms/individual",
-    "sourceDocument": "Arizona DOR, 2.5% flat tax (2024); standard deduction matches the federal amounts",
+    "sourceUrl": "https://azdor.gov/sites/default/files/document/FORMS_INDIVIDUAL_2026_140ESBooklet.pdf",
+    "sourceDocument": "Arizona DOR 2026 Form 140ES booklet — 2.5% flat rate; standard deduction conformed to the federal amounts (A.R.S. §43-1041)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "Arizona finished its move to a single flat rate in 2023 and has held it at 2.5% since; the 2026 Form 140ES worksheet says it outright — 'Multiply line 18 by 2.5% (.025) to calculate your Arizona estimated tax liability.' Arizona's standard deduction is CONFORMED to the federal amount by A.R.S. §43-1041(A), so it indexes with the IRS figure rather than on an Arizona schedule and this shard carries the 2026 federal $16,100 / $32,200 / $24,150. There is no Arizona personal exemption. Worked example, single $60,000: taxable = 60,000 − 16,100 = $43,900; tax = 2.5%·43,900 = $1,097.50. Omitted at launch fidelity: the STANDARD DEDUCTION INCREASE, an Arizona-only addition of a percentage of charitable contributions (34% for 2025) on top of the standard deduction for filers who do not itemize — so a charitable filer's real deduction is larger and this figure errs high; the dependent tax credit; and Arizona's other credits. Arizona levies no local income tax. Verified against the Arizona DOR 2026 Form 140ES booklet on 2026-08-29."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",
