@@ -323,9 +323,51 @@ function parseStandardDeductions(raw: string, current: Record<string, unknown>):
   let anchored = 0;
   for (const { key, pattern } of FILING_LABELS) {
     if (!(key in deductions)) continue;
-    const match = pattern.exec(raw);
-    if (match) {
-      deductions[key] = parseAmount(match[1] as string);
+    // Two ways a page can hand back the wrong number, both seen in the wild.
+    //
+    // 1. A SIDE-BY-SIDE table. Rhode Island's inflation advisory prints
+    //    "Filing status 2025 2026 / Single $10,900 $11,200" — last year beside
+    //    this one. The pattern stops at the first `$`, so it takes 2025's and
+    //    rolls the shard BACKWARDS a year. The tell is a second amount sitting
+    //    immediately after the first.
+    // 2. The label stated more than once with different amounts elsewhere on
+    //    the page.
+    //
+    // Either way: refuse. A wrong figure with a live citation is the failure
+    // this project cannot tolerate, and "could not parse" costs only an alert.
+    const values = new Set<number>();
+    let sideBySide: string | null = null;
+    for (const match of raw.matchAll(new RegExp(pattern.source, pattern.flags + "g"))) {
+      const amount = parseAmount(match[1] as string);
+      if (!Number.isFinite(amount) || amount <= 0) continue;
+      values.add(amount);
+      const after = raw.slice(match.index + match[0].length, match.index + match[0].length + 24);
+      const neighbour = /^\s*\$?([\d,]{4,})\b/.exec(after);
+      if (neighbour) {
+        const other = parseAmount(neighbour[1] as string);
+        if (Number.isFinite(other) && other > 0 && other !== amount) {
+          sideBySide = `${amount} and ${other}`;
+        }
+      }
+    }
+    if (sideBySide !== null) {
+      return {
+        ok: false,
+        reason:
+          `the ${key} standard deduction is followed immediately by a second amount ` +
+          `(${sideBySide}) — a two-column table, probably two tax years; refusing to guess which`,
+      };
+    }
+    if (values.size > 1) {
+      return {
+        ok: false,
+        reason:
+          `the page states more than one ${key} standard deduction ` +
+          `(${[...values].sort((a, b) => a - b).join(", ")}); refusing to guess which year is current`,
+      };
+    }
+    if (values.size === 1) {
+      deductions[key] = [...values][0]!;
       anchored += 1;
     }
   }
@@ -826,7 +868,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-ga-income-tax-2024",
     group: "state-ga",
     source: "Georgia Department of Revenue individual income tax",
-    sourceUrl: "https://dor.georgia.gov/taxes/important-tax-updates",
+    sourceUrl: "https://dor.georgia.gov/taxes/taxes-individuals",
     cadence: "Annual",
     parse: parseStandardDeductions,
   },

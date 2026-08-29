@@ -487,6 +487,27 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     expect(anchorFlatRate("The income tax rate is 0%.")).toBe("none");
   });
 
+  it("refuses a deduction page that prints two years side by side", () => {
+    // Rhode Island's inflation advisory prints "Filing status 2025 2026 / Single
+    // $10,900 $11,200". Taking the first match rolls the shard BACKWARDS a year,
+    // which the dry run caught the day PDF support made that page parseable at
+    // all. One year stated once is fine; two is a refusal.
+    const ri = adaptersForGroup("state-ri")[0]!;
+    const twoYears = ri.parse(
+      "Filing status 2025 2026 Single $10,900 $11,200 Married filing jointly $21,800 $22,400",
+      readShard("state-ri-income-tax-2024.json"),
+    );
+    expect(twoYears.ok).toBe(false);
+    if (!twoYears.ok) expect(twoYears.reason).toMatch(/two-column table, probably two tax years/);
+
+    // The same page with only the current year still anchors.
+    const oneYear = ri.parse(
+      "Filing status 2026 Single $11,200 Married filing jointly $22,400 Head of household $16,800",
+      readShard("state-ri-income-tax-2024.json"),
+    );
+    expect(oneYear.ok).toBe(true);
+  });
+
   it("overlays the KY and ID flat rates (flat parser reused)", () => {
     const ky = adaptersForGroup("state-ky")[0]!;
     const kyShard = ky.parse(

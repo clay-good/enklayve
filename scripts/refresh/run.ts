@@ -193,6 +193,18 @@ async function runCli(): Promise<void> {
 
     console.log(`\n[${adapter.id}] ${plan.outcome}${plan.reason ? ` — ${plan.reason}` : ""}`);
 
+    // A dry run's whole purpose is to answer "would this write the right
+    // values?", and the outcome word alone cannot: an adapter that anchors a
+    // bracket threshold where a deduction should be reports "open-pr" just as
+    // happily as one that is correct. Pointing Maine's deduction adapter at a
+    // form that does state the deduction produced exactly that. So print what
+    // it would change, which is the thing a person actually has to read.
+    if (dryRun && plan.shard) {
+      const lines = diffShards(current, plan.shard).lines;
+      for (const line of lines) console.log(`    ${line}`);
+      if (lines.length === 0) console.log("    (no value would change)");
+    }
+
     if (!dryRun) {
       // Append the diff-log entry for every run that produced a record
       // (a change or an alert); a no-op leaves the log untouched.
