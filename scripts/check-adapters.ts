@@ -17,9 +17,19 @@
  * their own sources.
  *
  * So this runs every adapter's parser against its live source and reports which
- * ones can still anchor. It is a *dry run*: nothing is written, no shard is
- * changed, and a parse that succeeds is not asserted to produce any particular
- * value — only that the source still speaks the parser's language.
+ * ones can still anchor. It is a *dry run*: nothing is written and no shard is
+ * changed.
+ *
+ * **"Anchored" does not mean "correct."** It means the parser found something
+ * shaped like its figure. Pointing Maine's standard-deduction adapter at the
+ * 2026 Form 1040ES, which does state the deduction, made it "anchor" $49,824 for
+ * single and $5,300 for married jointly — a bracket threshold and the personal
+ * exemption, scraped off a document dense with other numbers. It reported as
+ * anchored. Nothing downstream would have shipped those (the refresh only
+ * proposes a PR, the golden suite gates it, and a person reviews), but a green
+ * line here is a statement about reachability and phrasing, never about values.
+ * Anchoring the WRONG figure is worse than anchoring none, so repointing an
+ * adapter means dry-running it and reading the diff, not watching this go green.
  *
  * Like check-links, it runs on a schedule and on demand, never in the unit
  * suite: it needs the network, and a test that fails when a state's website has
@@ -80,6 +90,10 @@ export function renderAnchorReport(results: readonly AnchorResult[]): string {
 
   const lines: string[] = [];
   lines.push(`Checked ${results.length} refresh adapters.`);
+  lines.push(
+    "Anchored means the parser found something shaped like its figure — not that the" +
+      " value is right. Repointing an adapter means dry-running it and reading the diff.",
+  );
   lines.push(
     `${anchored.length} anchored · ${unparsed.length} could not parse · ${unreachable.length} unreachable.`,
   );

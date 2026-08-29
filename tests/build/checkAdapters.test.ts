@@ -78,6 +78,10 @@ describe("the report", () => {
       result({ adapterId: "c", status: "unreachable", detail: "HTTP 404" }),
     ]);
     expect(report).toMatch(/Checked 3 refresh adapters/);
+    // The report must never let a green line read as a data guarantee. Pointing
+    // Maine's deduction adapter at a form that does state the deduction made it
+    // "anchor" a bracket threshold and the personal exemption instead.
+    expect(report).toMatch(/not that the value is right/);
     expect(report).toMatch(/1 anchored · 1 could not parse · 1 unreachable/);
     expect(report).toMatch(/## Could not anchor/);
     expect(report).toMatch(/could not anchor the rate/);
