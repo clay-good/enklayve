@@ -1,7 +1,9 @@
 {
   "year": 2026,
   "expansionThresholdPctFpl": 138,
-  "thresholdOverridesPctFpl": { "DC": 215 },
+  "thresholdOverridesPctFpl": {
+    "DC": 215
+  },
   "expansionByState": {
     "AL": false,
     "AK": true,
@@ -59,6 +61,7 @@
     "sourceUrl": "https://www.medicaid.gov/medicaid/program-information/medicaid-and-chip-enrollment-data/report-highlights",
     "sourceDocument": "Medicaid.gov / KFF Status of State Medicaid Expansion Decisions (2026); ACA adult eligibility at 138% FPL",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "The ACA's Medicaid expansion covers adults up to 138% of the federal poverty level — nominally 133% plus a 5-percentage-point income disregard, which is why both numbers appear in the literature for the same rule. NFIB v. Sebelius (2012) made expansion optional for states, so whether a household qualifies depends first on which state it is in; this shard is that map, plus the District of Columbia's override at 215%, the most generous threshold in the country. What it does NOT decide is eligibility. Non-expansion states still cover children, pregnant women, people with disabilities, and very-low-income parents under separate pathways with their own thresholds, and several of them leave a COVERAGE GAP: adults over the parent limit but under 100% of poverty, who earn too much for Medicaid and too little for a marketplace subsidy. The shard also does not carry asset tests, immigration-status rules, the MAGI household-composition rules (which differ from a tax household), medically needy spend-down, or the state-by-state variation in what Medicaid covers once you have it. Treat the answer as \"is expansion available where you live, and does your income fall under it\" — a first question, not a determination. A state can also change its position by ballot measure or legislation, which is what the refresh watch is for."
   }
 }

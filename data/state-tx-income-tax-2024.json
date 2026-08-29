@@ -37,7 +37,8 @@
     "sourceUrl": "https://comptroller.texas.gov/taxes/",
     "sourceDocument": "Texas Comptroller, no state personal income tax",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "A state with no income tax is a first-class record here, not an omission: the shard exists, carries a citation, and answers \"nothing\" deliberately rather than by having nothing to say. The caveat that matters is what a $0 state income tax does NOT mean. A state still has to fund itself, and the ones without an income tax generally lean harder on sales and property taxes — neither of which this engine models. So a take-home figure here is exactly right about state income tax and silent about the rest of the state's tax burden; comparing two states on this number alone will mislead you. Texas levies no individual income tax, and Art. VIII §24-a of the Texas Constitution — added by Proposition 4 in 2019 — bars the legislature from imposing one without a further constitutional amendment. Texas funds itself substantially through property taxes, which are among the highest in the country as a share of home value, and a 6.25% state sales tax that local jurisdictions raise to as much as 8.25%."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",

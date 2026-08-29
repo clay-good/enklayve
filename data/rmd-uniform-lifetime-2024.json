@@ -56,6 +56,7 @@
     "sourceUrl": "https://www.irs.gov/publications/p590b",
     "sourceDocument": "IRS Publication 590-B, Appendix B, Uniform Lifetime Table (effective 2022, current for 2026)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "A required minimum distribution is the account balance on December 31 of the prior year divided by a distribution period read off the IRS Uniform Lifetime Table (IRS Pub. 590-B, Appendix B, Table III). The table used here is the one that took effect in 2022 and reflects longer life expectancies than its predecessor, so the same balance produces a smaller required withdrawal than it did before. SECURE 2.0 moved the beginning age to 73 for anyone reaching 72 after 2022, and it rises to 75 in 2033. Three cases this table does not cover. If your sole beneficiary is a spouse MORE THAN TEN YEARS YOUNGER, the Joint Life and Last Survivor Table (Table II) applies instead and gives a longer period, so this figure reads high. An INHERITED account follows the Single Life Table and, since SECURE, usually a ten-year emptying rule — a different calculation entirely. And a still-working owner may be able to defer distributions from a current employer's plan, though never from an IRA. Also omitted: the aggregation rules (IRAs may be aggregated, 401(k)s generally may not), qualified charitable distributions, and the excise tax on a missed distribution — 25%, reduced to 10% if corrected promptly, down from 50% before SECURE 2.0."
   }
 }

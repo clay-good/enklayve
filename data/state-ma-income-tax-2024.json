@@ -54,7 +54,8 @@
     "sourceUrl": "https://www.mass.gov/info-details/massachusetts-4-surtax-on-taxable-income",
     "sourceDocument": "Massachusetts DOR, 5.0% flat tax plus the 4% surtax (9.0% total) on taxable income over $1,107,750 (2026); personal exemptions $4,400/$8,800/$6,800",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "Massachusetts taxes most income at a single 5.0% rate (Mass. Gen. Laws ch. 62 §4) rather than on a graduated schedule. On top of it sits the 4% SURTAX approved by voters in 2022 as Art. CXXI of the state constitution — the \"millionaire's tax\" — applying to taxable income above an inflation-adjusted threshold, $1,107,750 for 2026. The engine models the surtax as a clean second bracket at 9.0%, which is exact for wage income. Massachusetts has no standard deduction; relief comes through personal exemptions of $4,400 single, $8,800 married filing jointly, and $6,800 head of household — note head of household is NOT halfway between, and is set by statute rather than derived. Worked example, single $60,000: taxable = 60,000 − 4,400 = $55,600; tax = 5%·55,600 = $2,780.00. Omitted at launch fidelity: the separate 8.5% rate on short-term capital gains and 12% on certain collectibles, the dependent and age-65/blind exemptions, the commuter and rent deductions, the Circuit Breaker and other credits, and the No Tax Status and Limited Income Credit that can eliminate the tax entirely at low incomes — so the figure reads high for those filers. Massachusetts levies no local income tax. Verified against the DOR's 2026 Form 1-ES and 2-ES instructions on 2026-08-29; mass.gov refuses automated fetch, so that confirmation is one step less direct than the rest of this set."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",

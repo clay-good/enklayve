@@ -118,6 +118,22 @@ describe("schema fail-safe", () => {
     }
   });
 
+  it("every shipped shard says what it leaves out", () => {
+    // `sourceNote` is the prose the result card's "What these figures leave out"
+    // disclosure renders. A shard without one shows a reader a number with no
+    // indication of its limits — that a state's city income taxes are outside
+    // this engine, that a credit could zero the figure out, that a $0 state
+    // income tax says nothing about that state's sales and property taxes. Every
+    // shard carries one as of the 2026-08-29 source audit; this keeps it true.
+    const missing = manifest.datasets
+      .filter((d) => {
+        const shard = JSON.parse(shards[d.id]!) as { citation?: { sourceNote?: string } };
+        return !shard.citation?.sourceNote?.trim();
+      })
+      .map((d) => d.id);
+    expect(missing).toEqual([]);
+  });
+
   it("keeps the sliding-deduction forms from being mixed (SC divisor vs WI rate vs WI two-segment)", () => {
     // Wisconsin is the shard that exercises every branch: two one-line statuses and
     // the two-segment head-of-household line. It must validate as shipped.

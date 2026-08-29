@@ -1,20 +1,61 @@
 {
   "rates": [
-    { "period": "2021-11", "fixedRate": 0.0, "inflationRate": 0.0356 },
-    { "period": "2022-05", "fixedRate": 0.0, "inflationRate": 0.0481 },
-    { "period": "2022-11", "fixedRate": 0.004, "inflationRate": 0.0324 },
-    { "period": "2023-05", "fixedRate": 0.009, "inflationRate": 0.0169 },
-    { "period": "2023-11", "fixedRate": 0.013, "inflationRate": 0.0197 },
-    { "period": "2024-05", "fixedRate": 0.013, "inflationRate": 0.0148 },
-    { "period": "2024-11", "fixedRate": 0.012, "inflationRate": 0.0095 },
-    { "period": "2025-05", "fixedRate": 0.011, "inflationRate": 0.0143 },
-    { "period": "2025-11", "fixedRate": 0.009, "inflationRate": 0.0156 },
-    { "period": "2026-05", "fixedRate": 0.009, "inflationRate": 0.0167 }
+    {
+      "period": "2021-11",
+      "fixedRate": 0.0,
+      "inflationRate": 0.0356
+    },
+    {
+      "period": "2022-05",
+      "fixedRate": 0.0,
+      "inflationRate": 0.0481
+    },
+    {
+      "period": "2022-11",
+      "fixedRate": 0.004,
+      "inflationRate": 0.0324
+    },
+    {
+      "period": "2023-05",
+      "fixedRate": 0.009,
+      "inflationRate": 0.0169
+    },
+    {
+      "period": "2023-11",
+      "fixedRate": 0.013,
+      "inflationRate": 0.0197
+    },
+    {
+      "period": "2024-05",
+      "fixedRate": 0.013,
+      "inflationRate": 0.0148
+    },
+    {
+      "period": "2024-11",
+      "fixedRate": 0.012,
+      "inflationRate": 0.0095
+    },
+    {
+      "period": "2025-05",
+      "fixedRate": 0.011,
+      "inflationRate": 0.0143
+    },
+    {
+      "period": "2025-11",
+      "fixedRate": 0.009,
+      "inflationRate": 0.0156
+    },
+    {
+      "period": "2026-05",
+      "fixedRate": 0.009,
+      "inflationRate": 0.0167
+    }
   ],
   "citation": {
     "sourceUrl": "https://www.treasurydirect.gov/savings-bonds/i-bonds/i-bonds-interest-rates/",
     "sourceDocument": "U.S. Treasury (TreasuryDirect), Series I Savings Bond fixed rate and semiannual inflation rate by rate period (through May 2026)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "A Series I savings bond's composite rate is set twice a year, each May 1 and November 1, from two parts: a FIXED rate that is set when you buy and then never changes for the life of that bond, and an INFLATION rate that follows CPI-U and resets every six months for every bond. They do not simply add — the Treasury's formula is fixed + 2×semiannual inflation + (fixed × semiannual inflation) — and the composite rate can never go below zero even when inflation does. This shard is the history of both components, so a bond bought in any period can be valued with the fixed rate it actually carries rather than today's. The rules that shape the answer and are not modeled: a one-year minimum holding period, a three-month interest penalty for redeeming before five years, a $10,000 per person per calendar year electronic purchase limit (plus $5,000 in paper bonds via a tax refund), and interest that is exempt from state and local tax and federally deferrable until redemption — or excludable entirely under the §135 education exclusion if you qualify. Each period's rate applies to a bond starting from ITS OWN six-month anniversary, not from the announcement date, so a bond's rate changes on a schedule set by its purchase month rather than in May and November."
   }
 }

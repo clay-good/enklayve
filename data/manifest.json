@@ -64,8 +64,8 @@
       "shard": "rmd-uniform-lifetime-2024.json",
       "sourceUrl": "https://www.irs.gov/publications/p590b",
       "sourceDocument": "IRS Publication 590-B, Appendix B, Uniform Lifetime Table (effective 2022, current for 2026)",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "e57ad886f029238ec4a3197b4033334cbc2d6496605dd53128c12a6873779da1"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "39672902246bdc4962027958caa183d3da0904f6d6880f6cf5ffcacb2d796009"
     },
     {
       "id": "treasury-bonds-2024",
@@ -77,8 +77,8 @@
       "shard": "treasury-bonds-2024.json",
       "sourceUrl": "https://www.treasurydirect.gov/savings-bonds/i-bonds/i-bonds-interest-rates/",
       "sourceDocument": "U.S. Treasury (TreasuryDirect), Series I Savings Bond fixed rate and semiannual inflation rate by rate period (through May 2026)",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "75a14f397e031afa9dd0ab6b81dd53c6129241229ecebe2530a12cbcf278e098"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "4ebfc08209793670f5566a265de3b61f6b0d8492e324c67ce6e77761ef9edc31"
     },
     {
       "id": "cpi-u-annual",
@@ -129,8 +129,8 @@
       "shard": "state-tx-income-tax-2024.json",
       "sourceUrl": "https://comptroller.texas.gov/taxes/",
       "sourceDocument": "Texas Comptroller, no state personal income tax",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "1342530b5eb74334f350399e9956e2c28e117a70d509efbee2de63e3869c7755"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "a32c9387065d9b026f173ac3b2be2d0e5cc8d831bdbf3a3d884a911c508cc4f8"
     },
     {
       "id": "state-fl-income-tax-2024",
@@ -142,8 +142,8 @@
       "shard": "state-fl-income-tax-2024.json",
       "sourceUrl": "https://floridarevenue.com/taxes/Pages/default.aspx",
       "sourceDocument": "Florida Department of Revenue, no state personal income tax",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "b12a901143c6add426d50b14b9542c39e58e0065b0c9d5ee847222138cd455c6"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "5ae2e1f455c5f8d70d51b5b39cbf463c1e7a8629d90713674fd5ef6e81109352"
     },
     {
       "id": "state-pa-income-tax-2024",
@@ -246,8 +246,8 @@
       "shard": "state-ak-income-tax-2024.json",
       "sourceUrl": "https://tax.alaska.gov/",
       "sourceDocument": "Alaska Department of Revenue, no state personal income tax",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "702ae90e0cbf0de710daee5dec2ba07569d868eb93a7ad5d2b58e21ca1bb4b76"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "748210bbbda192c310000732b1b53bc91b31d271d7e19447a94a201c74f8bf5b"
     },
     {
       "id": "state-nv-income-tax-2024",
@@ -259,8 +259,8 @@
       "shard": "state-nv-income-tax-2024.json",
       "sourceUrl": "https://tax.nv.gov/",
       "sourceDocument": "Nevada Department of Taxation, no state personal income tax",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "d0ce709a92a5bca57cce53782e629bfffffb2f08ef10f0a70e395a368e658a90"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "5322029a8e249840e493baec63acc4e998272e8d592ace8bce1e4360b3d5168a"
     },
     {
       "id": "state-nh-income-tax-2024",
@@ -272,8 +272,8 @@
       "shard": "state-nh-income-tax-2024.json",
       "sourceUrl": "https://www.revenue.nh.gov/",
       "sourceDocument": "New Hampshire Department of Revenue Administration, no tax on earned wages (the Interest & Dividends Tax was repealed effective January 1, 2025)",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "b013064dfd441ff86b554f381be7360eee1eccb40f8247aa4c1d330c3e3cf94d"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "398c741c6340bcd0318776043ec25a407de1b8055a1f4426cc8b15da937d0033"
     },
     {
       "id": "state-sd-income-tax-2024",
@@ -285,8 +285,8 @@
       "shard": "state-sd-income-tax-2024.json",
       "sourceUrl": "https://dor.sd.gov/",
       "sourceDocument": "South Dakota Department of Revenue, no state personal income tax",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "cf59a602c4383fa73a9efe8c4f217e0931225a55a9ea698dd95fff7c56b3a96d"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "4d744aaaa57c128afc108c7ecbfd21c87254cdc960da0f2f7fd9757feb34499c"
     },
     {
       "id": "state-tn-income-tax-2024",
@@ -298,8 +298,8 @@
       "shard": "state-tn-income-tax-2024.json",
       "sourceUrl": "https://www.tn.gov/revenue/taxes.html",
       "sourceDocument": "Tennessee Department of Revenue, no personal income tax (the Hall tax on investment income was fully repealed in 2021)",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "875b89bc67355ac50c30776c370b4b6761fc8b129b3958a4d523d3664d3155c8"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "77d75ce69a65059d9f287d5a66176496a9482b1c2042a0c2d0801940e95e7714"
     },
     {
       "id": "state-wa-income-tax-2024",
@@ -311,8 +311,8 @@
       "shard": "state-wa-income-tax-2024.json",
       "sourceUrl": "https://dor.wa.gov/taxes-rates/income-tax",
       "sourceDocument": "Washington Department of Revenue, no personal income tax on wages (a separate 7% capital-gains excise tax applies to certain high earners)",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "ab0ef00cd27ebe2053c38fcbbcfa00445174efbeff666c5cbf29f7f33d5b8bc1"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "e6c582e4691c291593bbe516e233210baf08f41889820f04367b007e5cdc1942"
     },
     {
       "id": "state-wy-income-tax-2024",
@@ -324,8 +324,8 @@
       "shard": "state-wy-income-tax-2024.json",
       "sourceUrl": "https://revenue.wyo.gov/",
       "sourceDocument": "Wyoming Department of Revenue, no state personal income tax",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "897ddfa2cbebed0d2dd1dba11a243bbb4aeba05f5c27168804b997801c956491"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "04550bb4784311e236595ff46f4b6556fb540ebec50868132e0c26dae6091d26"
     },
     {
       "id": "state-az-income-tax-2024",
@@ -389,8 +389,8 @@
       "shard": "state-ma-income-tax-2024.json",
       "sourceUrl": "https://www.mass.gov/info-details/massachusetts-4-surtax-on-taxable-income",
       "sourceDocument": "Massachusetts DOR, 5.0% flat tax plus the 4% surtax (9.0% total) on taxable income over $1,107,750 (2026); personal exemptions $4,400/$8,800/$6,800",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "d00805fd948a6aa4c5119536235086e42b4da3c0b7f875266521e0733c425d43"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "9eaf5c61aef042984b9109a8e1cac0b0745c6735fe63c9d8abff34805aac53d2"
     },
     {
       "id": "state-ms-income-tax-2024",
@@ -844,8 +844,8 @@
       "shard": "medicaid-2024.json",
       "sourceUrl": "https://www.medicaid.gov/medicaid/program-information/medicaid-and-chip-enrollment-data/report-highlights",
       "sourceDocument": "Medicaid.gov / KFF Status of State Medicaid Expansion Decisions (2026); ACA adult eligibility at 138% FPL",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "57b1580b27fa0920d8b8e45ba5b385aa0c95dc5bcd7ada3b41b12130da84c3ea"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "7a74fa51d95f9bac96294ddb3ab774a7b8885177fa1c296760a60f754a49160c"
     },
     {
       "id": "aca-2024",

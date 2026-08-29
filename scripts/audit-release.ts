@@ -154,8 +154,25 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  *
  * So it is a gate instead. Raising this number is a deliberate act with a reason
  * attached, not something that happens by accident over six phases.
+ *
+ * **Raised 260 -> 265 on 2026-08-29, and here is what bought it.** Every dataset
+ * shard now carries a `sourceNote` saying what its figures leave out, and every
+ * result card renders them under the number — that Michigan's city income taxes
+ * are outside this engine, that Pennsylvania's Tax Forgiveness can zero the tax
+ * out, that a $0 state income tax says nothing about that state's sales and
+ * property taxes. That is 115 kB of prose, about 19 kB gzipped, or roughly 7% of
+ * what a first visit costs.
+ *
+ * It cannot be split out of the eager shell. `connect-src 'none'` means shards
+ * are inlined at build time rather than fetched, and the manifest hash is
+ * computed over the exact shard bytes — so moving the notes into a lazily
+ * imported chunk would mean hashing a shard that is not the shard, which breaks
+ * the integrity gate to save bytes on prose about integrity.
+ *
+ * The headroom left is deliberately small (~4 kB). The point of the gate is that
+ * the next drift trips it too.
  */
-export const SHELL_GZIP_BUDGET_KB = 260;
+export const SHELL_GZIP_BUDGET_KB = 265;
 
 /** A precached asset and its gzipped size. */
 export interface ShellAsset {

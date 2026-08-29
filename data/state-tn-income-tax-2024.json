@@ -37,7 +37,8 @@
     "sourceUrl": "https://www.tn.gov/revenue/taxes.html",
     "sourceDocument": "Tennessee Department of Revenue, no personal income tax (the Hall tax on investment income was fully repealed in 2021)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "A state with no income tax is a first-class record here, not an omission: the shard exists, carries a citation, and answers \"nothing\" deliberately rather than by having nothing to say. The caveat that matters is what a $0 state income tax does NOT mean. A state still has to fund itself, and the ones without an income tax generally lean harder on sales and property taxes — neither of which this engine models. So a take-home figure here is exactly right about state income tax and silent about the rest of the state's tax burden; comparing two states on this number alone will mislead you. Tennessee levies no individual income tax. Its Hall tax on interest and dividend income phased down over several years and was fully repealed for tax years beginning January 1, 2021, so a source describing Tennessee as taxing investment income is out of date. Tennessee has one of the highest combined state-and-local sales tax rates in the country, which is the trade this shard's $0 does not show."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",

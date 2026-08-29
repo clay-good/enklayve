@@ -37,7 +37,8 @@
     "sourceUrl": "https://revenue.wyo.gov/",
     "sourceDocument": "Wyoming Department of Revenue, no state personal income tax",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "A state with no income tax is a first-class record here, not an omission: the shard exists, carries a citation, and answers \"nothing\" deliberately rather than by having nothing to say. The caveat that matters is what a $0 state income tax does NOT mean. A state still has to fund itself, and the ones without an income tax generally lean harder on sales and property taxes — neither of which this engine models. So a take-home figure here is exactly right about state income tax and silent about the rest of the state's tax burden; comparing two states on this number alone will mislead you. Wyoming levies no individual income tax, and Art. 15 §18 of the Wyoming Constitution constrains one. Mineral severance taxes and federal mineral royalties carry an unusually large share of the state's revenue, which is why its residents face comparatively low sales and property taxes too — a genuinely lighter overall burden rather than a shifted one."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",
