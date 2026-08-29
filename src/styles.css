@@ -1722,6 +1722,110 @@ body {
 .readout-next-step strong {
   color: var(--enk-primary-strong);
 }
+/* Readout v2, the four-part answer (SPEC-4-readout-v2 §2). Every document kind
+   renders the same four sections in the same order, so the layout is one block
+   rather than a per-kind treatment. */
+.readout-answer {
+  margin-top: 1.25rem;
+  border: 1px solid var(--enk-border);
+  border-radius: var(--enk-radius);
+  padding: 0.25rem 1.1rem 1rem;
+  background: var(--enk-surface);
+}
+.readout-answer-section {
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--enk-border);
+}
+.readout-answer-section:last-of-type {
+  border-bottom: 0;
+}
+.readout-answer-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--enk-text);
+}
+.readout-answer-empty {
+  margin: 0;
+  color: var(--enk-text-muted);
+  font-size: 0.9rem;
+}
+.readout-says {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.5rem 1.25rem;
+  margin: 0;
+}
+.readout-says dt {
+  font-size: 0.78rem;
+  color: var(--enk-text-muted);
+}
+.readout-says dd {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--enk-text);
+  font-variant-numeric: tabular-nums;
+}
+.readout-flags,
+.readout-owed,
+.readout-next {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+.readout-flags {
+  list-style: none;
+  padding-left: 0;
+}
+.readout-flag {
+  border-left: 3px solid var(--enk-border);
+  padding-left: 0.75rem;
+}
+/* The border weight tracks how much the check can stand behind itself: the
+   document disagreeing with itself is firmer than "this is unusual". */
+.readout-flag--arithmetic,
+.readout-flag--rule {
+  border-left-color: var(--enk-warn);
+}
+.readout-flag-q {
+  margin: 0;
+  font-weight: 700;
+  color: var(--enk-text);
+}
+.readout-flag-detail {
+  margin: 0.2rem 0;
+  color: var(--enk-text);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+.readout-flag-meta {
+  margin: 0.2rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+.readout-flag-ask {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: var(--enk-text-muted);
+}
+.readout-owed-item,
+.readout-next-item {
+  line-height: 1.5;
+}
+.readout-next-item .cite-link,
+.readout-owed-item .cite-link {
+  margin-left: 0.35rem;
+}
+.readout-answer-caveat {
+  margin: 0.9rem 0 0;
+  font-size: 0.83rem;
+  color: var(--enk-text-muted);
+}
 .readout-privacy {
   margin-top: 1.5rem;
   font-size: 0.85rem;

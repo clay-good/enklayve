@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **59** in **10 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **74**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | **963** unit/golden across 66 files, **+22** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | **1,130** unit/golden across 76 files, **+22** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale preference touches `localStorage` | `npm run audit` |
 | UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
@@ -468,18 +468,39 @@ sequenceDiagram
     participant V as Readout view
     participant X as Extractor (anchored, versioned)
     participant P as My Situation
-    U->>V: drop a PDF, Word .docx, or scanned image (W-2, 1040, 1099, 1095-A, 1098, pay stub, FAFSA SS)
+    U->>V: drop a PDF, Word .docx, or scanned image (W-2, 1040, 1099, 1095-A, 1098, pay stub, FAFSA SS,<br/>EOB, itemized medical bill, benefits notice)
     V->>X: extract text on-device (pdf.js / mammoth / tesseract.js OCR, dynamically imported)
     X->>X: detect kind + form revision → revision-pinned anchors
     X-->>V: typed fields, each with confidence + needs-review
     Note over X: unrecognized revision → flagged, not guessed<br/>OCR text → flagged lower-confidence
+    X-->>V: four-part answer: says / flags / owed / next
+    Note over V: checks are questions to ask, never verdicts<br/>OCR text → rule checks suppressed entirely
     V->>U: show fields for confirmation (always)
     U->>V: confirm
     V->>P: flow in (provenance: extracted)
     V-->>U: instant summary — effective rate, take-home, next right step
 ```
 
-Every document family in the spec has an extractor: the **typed W-2 / 1040 / pay stub**, the **1099 series** (INT, DIV, NEC, B), **1095-A**, **1098**, and the **FAFSA Submission Summary**. Typed PDFs are read with **pdf.js**, **Word `.docx`** files with **mammoth**, and **scanned or photographed images** (PNG/JPG/…) with on-device **OCR (tesseract.js)** — all three dynamically imported (each code-splits into its own lazy chunk, so the shell stays light) and all three run fully on-device, so `connect-src 'none'` stays literally true. The same anchored, revision-pinned extractors read every source, since each reduces to text; OCR output is marked the lower-confidence `"ocr"` source so every field it produces is flagged for review.
+Every document family in the spec has an extractor: the **typed W-2 / 1040 / pay stub**, the **1099 series** (INT, DIV, NEC, B), **1095-A**, **1098**, the **FAFSA Submission Summary**, and — new in Readout v2 — a health plan's **Explanation of Benefits**, an **itemized medical bill**, and a **benefits determination notice**. Typed PDFs are read with **pdf.js**, **Word `.docx`** files with **mammoth**, and **scanned or photographed images** (PNG/JPG/…) with on-device **OCR (tesseract.js)** — all three dynamically imported (each code-splits into its own lazy chunk, so the shell stays light) and all three run fully on-device, so `connect-src 'none'` stays literally true. The same anchored, revision-pinned extractors read every source, since each reduces to text; OCR output is marked the lower-confidence `"ocr"` source so every field it produces is flagged for review.
+
+### Readout v2: documents that answer
+
+A table of extracted fields answers a question nobody asked. Every recognized document now also produces an **answer** in a fixed four-part shape ([SPEC-4-readout-v2](docs/specs/SPEC-4-readout-v2.md) §2) — the same four sections, in the same order, for every kind:
+
+| Section | What it holds | The rule it obeys |
+|---|---|---|
+| **What this says** | The document restated in plain English. | Restatement only. Every figure traces to an extracted field. |
+| **What looks wrong** | Deterministic checks that fired. Empty is valid and common. | Never asserts an error. States the mismatch and names who to ask. |
+| **What you may be owed** | Programs or protections the document indicates, each linking to the tile that computes it. | An estimate with a citation, never a determination. |
+| **What to do next, by when** | An ordered list of next actions. | Free, and it names the specific channel. |
+
+A section that cannot be filled is left **empty with a one-line reason**. Empty is honest; filler is not.
+
+**The check catalog is a first-class artifact.** Checks live in a registry ([`src/readout/checks.ts`](src/readout/checks.ts)) rather than as inline conditionals, so their properties are testable in one place. Each declares its family — *arithmetic* (the document disagrees with itself), *plan-math* (it disagrees with parameters **you** supplied), *rule* (it appears to conflict with a published rule), *anomaly* (unusual, not provably wrong) — and **what a false positive looks like, in one sentence**. A check that can't state that does not ship; a registry test fails it, along with any `rule` check missing a citation or willing to run on OCR text. The failure mode this exists to prevent is a household disputing a *correct* bill because we flagged it confidently, so every outcome is phrased as a question, carries its confidence as a visible label, and names the free channel to raise it through.
+
+**Scanned documents degrade, they do not fail.** OCR-sourced text suppresses `rule` checks **entirely** — an OCR misread must never become a "this bill is wrong" claim — while arithmetic still runs, clearly labeled as read from a scan. The soft duplicate-line screen is suppressed too, since a scan is exactly what manufactures a spurious duplicate.
+
+**Cross-document reconciliation.** Documents read in one tab accumulate **in memory only**, which makes the **EOB × medical-bill** check possible: does the provider's bill match the patient responsibility the plan actually calculated? It catches real money, fires only when both halves of the pair are present, and — like everything else here — asks rather than accuses. Nothing is persisted, and nothing reaches My Situation without the same confirmation step as before.
 
 **How OCR keeps the privacy promise.** tesseract.js needs its WebAssembly core and a ~2 MB English language model at runtime — things that normally come from a CDN. enklayve instead **vendors the model** (`public/ocr/eng.traineddata.gz`) and **emits the worker + wasm core same-origin** (`dist/ocr/`, via a small Vite plugin), so nothing is ever fetched cross-origin. The OCR Web Worker is created from that same-origin URL (`workerBlobURL: false`) so it adopts its own response CSP — `connect-src 'self'` plus `'wasm-unsafe-eval'`, scoped to `/ocr/*` only — exactly the way the offline service worker (`/sw.js`) is the one other carve-out. **Every page still serves `connect-src 'none'`.** The assets are lazy and the service worker runtime-caches them on first use, so OCR works offline thereafter and never weighs down the first visit. tesseract.js and the language model are Apache-2.0.
 
@@ -513,7 +534,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**963 unit/golden tests across 66 files** (plus 22 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**1,130 unit/golden tests across 76 files** (plus 22 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -658,6 +679,10 @@ The Playwright live-offline + responsiveness e2e suite, previously deferred, now
 - ✅ **Phase 21b — Hospital Financial Assistance** (shipped). A hospital bill is the debt that causes the most fear and, unpaid for a month, usually carries the least immediate consequence — and it is the one most likely to shrink before you pay it. Every nonprofit hospital must have a written financial assistance policy under **IRC §501(r)(4)**, must say who qualifies, and must hand you a paper copy on request at no charge; most people who could use it never ask because nobody tells them it exists. The tile computes where the household sits as a percentage of the poverty level (the scale nearly every policy keys off, from the same cited guidelines the rest of the site uses) and gives the questions to ask.
 
   It is **harm tier 3, screener-only** — the first tier-3 tile on the site, and the first to exercise that branch of the audit gate. Thresholds are set per hospital and published nowhere central, so tests assert the tile can never say "you qualify", "you are eligible", or "you do not qualify" at any income; guessing would invent the single most important number in the answer.
+- ✅ **Phase 22a — Readout v2, the answer layer** (shipped). Until now a Readout ended at a table of extracted fields. Nobody has a field-extraction problem; they have a *"what does this mean and what do I do"* problem. Every recognized document now renders the same **four sections in the same order** — **what this says**, **what looks wrong**, **what you may be owed**, **what to do next** — and a section that cannot be filled states its one-line reason rather than padding itself. Three new document kinds join the ten existing ones: a health plan's **Explanation of Benefits**, an **itemized medical bill**, and a **benefits determination notice** (Medicaid / SNAP / Marketplace / UI). None is a standardized form, so each is exempt from the form-revision pin and anchors only on captions every issuer uses — and the bill reads a charge line *only* where a date of service introduces it and an amount closes it, so a paragraph of prose is never promoted to a line item.
+
+  "What looks wrong" is where a document reader earns its keep and where it can most easily do harm, so the checks live in a **registry** ([`src/readout/checks.ts`](src/readout/checks.ts)), not as inline conditionals. **A check that cannot state what a false positive looks like does not ship** — a registry test fails an empty `falsePositive`, fails a `rule` check with no citation, and fails one that would survive OCR. Every outcome is phrased as a question and names who to ask; a test asserts the copy never asserts a verdict. Phase 22a ships the arithmetic, plan-math, and anomaly families plus the **EOB × medical-bill cross-check** — the single most valuable one on the list, which fires only when both documents are read in one session and stays silent on a lone document. Documents accumulate **in memory for the tab only**; nothing is persisted, and nothing reaches My Situation without the same confirmation step as before.
+- **Next: Phase 22b — the No Surprises rule check**, which needs the `no-surprises` shard that would cite it. A protection claimed without a citation is exactly what the check contract forbids, so the EOB's "what you may be owed" section stays honestly empty until the shard lands.
 - **Next: Phase 20b — life-event sequences.** Dated, ordered checklists for job loss, death, divorce, disability, a new child, and moving states. Split out from Phase 20 on purpose: it turns on the COBRA, ACA special-enrollment, Medicare, and per-program appeal windows, which are the highest-harm numbers on the site and deserve their own sourcing pass against live published regulations.
 
 ---

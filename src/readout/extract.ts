@@ -25,6 +25,15 @@ import type { DocKind, ExtractedField, ExtractionResult, FieldConfidence } from 
  */
 const SUPPORTED_REVISIONS = ["2023", "2024", "2025", "2026"];
 
+/**
+ * Kinds with no standardized revision to pin. A pay stub, an EOB, an itemized
+ * bill, and an agency determination are laid out by an employer, a plan, a
+ * provider, or a state — there is no form designer and no revision number, so
+ * the §2.2 revision check has nothing to check. Their extractors compensate by
+ * anchoring only on captions and by flagging every varying value for review.
+ */
+const REVISIONLESS_KINDS: DocKind[] = ["paystub", "eobHealth", "medicalBill", "benefitsNotice"];
+
 /** Pay frequencies, most-specific first so "bi-weekly" isn't shadowed by
  * "weekly" (nor "semi-monthly" by "monthly"). */
 const PAY_FREQUENCIES: { re: RegExp; periods: number; label: string }[] = [
@@ -77,6 +86,28 @@ function amountsAfter(text: string, anchor: RegExp, count: number): number[] {
   return m.slice(1, count + 1).map(parseAmount);
 }
 
+/**
+ * Read the first `capture` group that appears just after `anchor`. The
+ * non-amount sibling of {@link amountAfter}, for the categorical values Readout
+ * v2's documents carry (a network status, a claim number, a date of service).
+ * `anchor` must contain no capturing group, so group 1 is always the capture.
+ */
+function tokenAfter(text: string, anchor: RegExp, capture: string): string | null {
+  const m = new RegExp(anchor.source + String.raw`[^A-Za-z0-9$]{0,20}` + capture, "i").exec(text);
+  return m?.[1]?.trim() ?? null;
+}
+
+/**
+ * One itemized-bill charge line, anchored on the date-of-service column that
+ * every itemized statement carries. Anchoring on the date (rather than trying
+ * to guess where a description ends) is what keeps this rule-based: a run of
+ * text only becomes a line item when a date introduces it and an amount closes
+ * it. Descriptions are capped so a flattened PDF cannot swallow a whole page
+ * into one "line".
+ */
+const BILL_LINE =
+  /(\d{1,2}\/\d{1,2}\/\d{2,4})\s+([A-Za-z][^$]{2,60}?)\s+\$?(\d[\d,]*\.\d{2})(?![\d.])/g;
+
 /** Filing-status phrases, longest/most-specific first so "single" can't shadow
  * "married filing separately". */
 const FILING_STATUS_PHRASES: { re: RegExp; status: string }[] = [
@@ -85,6 +116,26 @@ const FILING_STATUS_PHRASES: { re: RegExp; status: string }[] = [
   { re: /head of household/i, status: "head_of_household" },
   { re: /qualifying surviving spouse/i, status: "qualifying_surviving_spouse" },
   { re: /\bsingle\b/i, status: "single" },
+];
+
+/**
+ * Benefits-notice decision words, worst-news first. A notice that both denies
+ * one thing and approves another must read as a denial — that is the sentence
+ * the household needs to act on.
+ */
+const NOTICE_DECISIONS: { re: RegExp; value: string }[] = [
+  { re: /\b(?:denied|denial|ineligible|not eligible)\b/i, value: "denied" },
+  { re: /\b(?:terminated|termination|closing your case|case closure)\b/i, value: "terminated" },
+  { re: /\b(?:reduced|reduction|decreas(?:ed|e))\b/i, value: "reduced" },
+  { re: /\b(?:approved|eligible|granted)\b/i, value: "approved" },
+];
+
+/** The programs a benefits notice can come from, most-specific first. */
+const NOTICE_PROGRAMS: { re: RegExp; value: string }[] = [
+  { re: /\b(?:snap|supplemental nutrition assistance)\b/i, value: "SNAP" },
+  { re: /\bmedicaid\b/i, value: "Medicaid" },
+  { re: /\b(?:premium tax credit|marketplace)\b/i, value: "Marketplace / premium tax credit" },
+  { re: /\bunemployment\b/i, value: "Unemployment insurance" },
 ];
 
 /** Read the filing status from the window just after the "filing status" label. */
@@ -129,6 +180,24 @@ const DOC_MARKERS: { kind: DocKind; re: RegExp; also?: RegExp }[] = [
   // Anchored to "mortgage interest" so the 1098-T (tuition) and 1098-E (student
   // loan) variants don't masquerade as a mortgage statement.
   { kind: "form1098", re: /\b1098\b/, also: /mortgage interest/i },
+  // Readout v2 kinds (SPEC-4-readout-v2 §3). "Explanation of Benefits" is an
+  // unmistakable title, so it leads; the benefits notice needs both a decision
+  // word and a named program so a 1095-A's "Marketplace" cannot claim it; the
+  // itemized bill's markers are the broadest, so it goes last.
+  {
+    kind: "eobHealth",
+    re: /explanation of benefits/i,
+    also: /(this is not a bill|amount billed|allowed amount|patient responsibility)/i,
+  },
+  {
+    kind: "benefitsNotice",
+    re: /(notice of (?:action|decision|determination)|eligibility determination|determination notice|notice of eligibility)/i,
+    also: /(medicaid|snap|supplemental nutrition|marketplace|premium tax credit|unemployment)/i,
+  },
+  {
+    kind: "medicalBill",
+    re: /(itemi[sz]ed (?:statement|bill|charges)|statement of (?:account|charges)|patient (?:statement|account) summary)/i,
+  },
   { kind: "paystub", re: /(earnings statement|pay\s*stub|pay statement|payroll)/i },
 ];
 
@@ -459,6 +528,277 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
       return sai ? [sai] : [];
     },
   },
+  /**
+   * An Explanation of Benefits (SPEC-4-readout-v2 §3). Not a form — every plan
+   * lays one out differently — so we anchor on the captions the federal
+   * standard-notice conventions have made near-universal, and cite nothing: an
+   * EOB is the plan's own document, like a pay stub.
+   */
+  eobHealth: {
+    citation: () => null,
+    extract: (t) => {
+      const text = t.text;
+      const fields: ExtractedField[] = [];
+      const push = (f: ExtractedField | null): void => {
+        if (f) fields.push(f);
+      };
+
+      push(
+        field(
+          "eob-billed",
+          "Amount billed",
+          amountAfter(text, /(?:(?:amount|total)\s+billed|billed\s+(?:amount|charges?))/i),
+          undefined,
+          "What the provider charged, before the plan's negotiated rate.",
+        ),
+      );
+      push(
+        field(
+          "eob-allowed",
+          "Allowed amount",
+          amountAfter(text, /allowed\s+(?:amount|charges?)/i),
+          undefined,
+          "The most the plan's contract lets an in-network provider collect for this care.",
+        ),
+      );
+      push(
+        field(
+          "eob-plan-paid",
+          "Plan paid",
+          amountAfter(
+            text,
+            /(?:plan\s+paid|(?:amount\s+)?paid\s+by\s+(?:the\s+)?(?:plan|insurer|insurance)|we\s+paid)/i,
+          ),
+          undefined,
+        ),
+      );
+      push(
+        field(
+          "eob-patient-responsibility",
+          "Patient responsibility",
+          amountAfter(
+            text,
+            /(?:patient\s+responsibility|your\s+responsibility|what\s+you\s+(?:may\s+)?owe|you\s+may\s+owe)/i,
+          ),
+          undefined,
+        ),
+      );
+      push(
+        field(
+          "eob-deductible-applied",
+          "Applied to deductible",
+          amountAfter(
+            text,
+            /(?:deductible\s+(?:applied|amount)|applied\s+to\s+(?:your\s+)?deductible)/i,
+          ),
+          undefined,
+        ),
+      );
+      push(
+        field(
+          "eob-oop-applied",
+          "Applied to out-of-pocket maximum",
+          amountAfter(
+            text,
+            /(?:out[- ]of[- ]pocket(?:\s+(?:maximum|max))?\s+(?:applied|amount)|applied\s+to\s+(?:your\s+)?out[- ]of[- ]pocket(?:\s+(?:maximum|max))?)/i,
+          ),
+          undefined,
+        ),
+      );
+
+      // Network status decides whether the balance-billing protections are even
+      // in play, so it is read explicitly rather than inferred from the numbers.
+      // Out-of-network is checked first: an EOB that mentions both is describing
+      // an out-of-network claim against an in-network benefit.
+      const network = /\bout[- ]of[- ]network\b/i.test(text)
+        ? "out-of-network"
+        : /\bin[- ]network\b/i.test(text)
+          ? "in-network"
+          : null;
+      if (network) {
+        fields.push({
+          id: "eob-network",
+          label: "Network status",
+          value: network,
+          confidence: "high",
+          needsReview: false,
+        });
+      }
+
+      const claim = tokenAfter(
+        text,
+        /claim\s*(?:number|no\.?|#)/i,
+        String.raw`([A-Z0-9][A-Z0-9-]{3,24})`,
+      );
+      if (claim) {
+        fields.push({
+          id: "eob-claim",
+          label: "Claim number",
+          value: claim,
+          confidence: "high",
+          needsReview: false,
+          note: "Used to match this EOB to the provider's bill for the same claim.",
+        });
+      }
+
+      const dos = tokenAfter(
+        text,
+        /date[s]?\s+of\s+service/i,
+        String.raw`(\d{1,2}\/\d{1,2}\/\d{2,4})`,
+      );
+      if (dos) {
+        fields.push({
+          id: "eob-date-of-service",
+          label: "Date of service",
+          value: dos,
+          confidence: "high",
+          needsReview: false,
+        });
+      }
+      return fields;
+    },
+  },
+  /**
+   * An itemized provider or hospital bill. Charge lines are read only where a
+   * date of service introduces them and an amount closes them (see
+   * {@link BILL_LINE}) — a paragraph of text is never promoted to a line item.
+   */
+  medicalBill: {
+    citation: () => null,
+    extract: (t) => {
+      const text = t.text;
+      const fields: ExtractedField[] = [];
+
+      BILL_LINE.lastIndex = 0;
+      let m: RegExpExecArray | null;
+      let n = 0;
+      while ((m = BILL_LINE.exec(text)) !== null) {
+        const [, date = "", description = "", raw] = m;
+        const amount = parseAmount(raw);
+        if (!Number.isFinite(amount)) continue;
+        n += 1;
+        fields.push({
+          id: `bill-line-${n}`,
+          // The date stays in the label: the duplicate screen compares whole
+          // lines, and a reader needs to see which day a charge landed on.
+          label: `${date} ${description.replace(/\s+/g, " ").trim()}`,
+          value: amount,
+          confidence: "high",
+          needsReview: false,
+        });
+      }
+
+      const total = field(
+        "bill-total",
+        "Total on the bill",
+        amountAfter(text, /(?:total\s+charges?|amount\s+due|balance\s+due|total\s+due)/i),
+        undefined,
+      );
+      if (total) fields.push(total);
+      return fields;
+    },
+  },
+  /**
+   * A Medicaid / SNAP / Marketplace / UI determination or denial. The decision
+   * word and the appeal clock are the two things a household most needs read
+   * back to them, and the clock is read *off the notice* — the statutory windows
+   * behind it are the Phase 23 `appeal-windows` shard's job, not a literal here.
+   */
+  benefitsNotice: {
+    citation: () => null,
+    extract: (t) => {
+      const text = t.text;
+      const fields: ExtractedField[] = [];
+
+      const decision = NOTICE_DECISIONS.find((d) => d.re.test(text));
+      if (decision) {
+        fields.push({
+          id: "notice-decision",
+          label: "Decision",
+          value: decision.value,
+          // Notice wording varies by state and program far more than an IRS box
+          // number does, so the decision is always shown for review.
+          confidence: "needs-review",
+          needsReview: true,
+        });
+      }
+
+      const program = NOTICE_PROGRAMS.find((p) => p.re.test(text));
+      if (program) {
+        fields.push({
+          id: "notice-program",
+          label: "Program",
+          value: program.value,
+          confidence: "high",
+          needsReview: false,
+        });
+      }
+
+      const reason = tokenAfter(
+        text,
+        /reason\s*(?:code|for\s+(?:this\s+)?(?:decision|action))/i,
+        String.raw`([A-Z0-9][A-Z0-9.\-]{1,19})`,
+      );
+      if (reason) {
+        fields.push({
+          id: "notice-reason",
+          label: "Reason code",
+          value: reason,
+          confidence: "needs-review",
+          needsReview: true,
+          note: "Quote this code when you call — it is how the agency looks up the decision.",
+        });
+      }
+
+      const effective = tokenAfter(
+        text,
+        /effective\s+(?:date|on)/i,
+        String.raw`(\d{1,2}\/\d{1,2}\/\d{2,4})`,
+      );
+      if (effective) {
+        fields.push({
+          id: "notice-effective",
+          label: "Effective date",
+          value: effective,
+          confidence: "high",
+          needsReview: false,
+        });
+      }
+
+      const appealBy = tokenAfter(
+        text,
+        /(?:appeal|request\s+a\s+(?:fair\s+)?hearing)[^.]{0,80}?\bby\b/i,
+        String.raw`(\d{1,2}\/\d{1,2}\/\d{2,4})`,
+      );
+      if (appealBy) {
+        fields.push({
+          id: "notice-appeal-by",
+          label: "Appeal by (as printed on the notice)",
+          value: appealBy,
+          confidence: "needs-review",
+          needsReview: true,
+          note: "This is the date your notice states. Confirm it against the notice itself before you rely on it.",
+        });
+      } else {
+        const days = tokenAfter(
+          text,
+          /(?:appeal|request\s+a\s+(?:fair\s+)?hearing)[^.]{0,80}?within/i,
+          String.raw`(\d{1,3})\s*(?:calendar\s*|business\s*)?days`,
+        );
+        if (days) {
+          fields.push({
+            id: "notice-appeal-window-days",
+            label: "Appeal window in days (as printed on the notice)",
+            value: Number(days),
+            confidence: "needs-review",
+            needsReview: true,
+            note: "Counted from the date on the notice. Confirm it against the notice itself before you rely on it.",
+          });
+        }
+      }
+      return fields;
+    },
+  },
 };
 
 /**
@@ -473,7 +813,7 @@ export function extractDocument(t: ExtractedText): ExtractionResult {
 
   if (kind === "unknown") {
     warnings.push(
-      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B), 1095-A, 1098 mortgage statements, and the FAFSA Submission Summary.",
+      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B), 1095-A, 1098 mortgage statements, the FAFSA Submission Summary, health plan Explanations of Benefits, itemized medical bills, and benefits determination notices.",
     );
     return {
       kind,
@@ -488,10 +828,11 @@ export function extractDocument(t: ExtractedText): ExtractionResult {
 
   const extractor = EXTRACTORS[kind];
 
-  // Pin to a known form revision. Pay stubs carry no standardized revision, so
-  // they are exempt from the revision check.
+  // Pin to a known form revision. The {@link REVISIONLESS_KINDS} carry no
+  // standardized revision, so they are exempt from the revision check.
   const revisionOk =
-    kind === "paystub" || (revision !== null && SUPPORTED_REVISIONS.includes(revision));
+    REVISIONLESS_KINDS.includes(kind) ||
+    (revision !== null && SUPPORTED_REVISIONS.includes(revision));
   if (!revisionOk) {
     warnings.push(
       `This looks like a ${labelFor(kind)} but its form revision (${revision ?? "unknown"}) isn't one we've validated, enter the values manually rather than trust a guess.`,
@@ -526,10 +867,11 @@ export function extractDocument(t: ExtractedText): ExtractionResult {
     }));
   }
 
-  const citation = kind === "paystub" ? null : extractor.citation(revision as string);
+  const revisionless = REVISIONLESS_KINDS.includes(kind);
+  const citation = revisionless ? null : extractor.citation(revision as string);
   return {
     kind,
-    revision: kind === "paystub" ? revision : (revision as string),
+    revision: revisionless ? revision : (revision as string),
     recognized: true,
     fields,
     source: t.source,
@@ -561,6 +903,12 @@ export function labelFor(kind: DocKind | "unknown"): string {
       return "1098 mortgage statement";
     case "fafsaSummary":
       return "FAFSA Submission Summary";
+    case "eobHealth":
+      return "health plan Explanation of Benefits";
+    case "medicalBill":
+      return "itemized medical bill";
+    case "benefitsNotice":
+      return "benefits determination notice";
     default:
       return "document";
   }

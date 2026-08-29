@@ -14,7 +14,14 @@ import { applyToSituation } from "../readout/toSituation";
 import { extractTextFromFile, type TextExtractor } from "../readout/extractText";
 import { importProfile, isEncrypted, readFileText } from "../profile/portable";
 import { buildReport } from "../readout/report";
-import type { ExtractedField, ExtractionResult } from "../readout/types";
+import { buildAnswer } from "../readout/answer";
+import { citationLink } from "./resultCard";
+import type {
+  CheckOutcome,
+  ExtractedField,
+  ExtractionResult,
+  ReadoutAnswer,
+} from "../readout/types";
 import type { SituationStore } from "../profile/situation";
 import type { BundledData } from "../data/browser";
 import type { FilingStatus } from "../data/schemas";
@@ -26,6 +33,16 @@ const FILING_LABELS: Record<FilingStatus, string> = {
   head_of_household: "Head of household",
   qualifying_surviving_spouse: "Qualifying surviving spouse",
 };
+
+/** How each check family is labeled on screen (SPEC-4-readout-v2 §4). The label
+ * carries the confidence: "the document disagrees with itself" is not the same
+ * claim as "this is unusual". */
+const CHECK_KIND_LABEL = {
+  arithmetic: "the document's own arithmetic",
+  "plan-math": "against the plan details you entered",
+  rule: "against a published rule",
+  anomaly: "unusual, not necessarily wrong",
+} as const;
 
 const CONFIDENCE_LABEL = {
   high: "high confidence",
@@ -99,7 +116,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     el("h1", { class: "tile-title", text: "The Readout" }),
     el("p", {
       class: "tile-desc",
-      text: "Drop a typed pay stub, W-2, 1040, 1099, 1095-A, 1098 mortgage statement, or FAFSA Submission Summary and get an instant private readout. Parsed on your device, never uploaded.",
+      text: "Drop a typed pay stub, W-2, 1040, 1099, 1095-A, 1098 mortgage statement, FAFSA Submission Summary, health plan Explanation of Benefits, itemized medical bill, or benefits determination notice. You get what it says, what looks worth asking about, what you may be owed, and what to do next — parsed on your device, never uploaded.",
     }),
   );
 
@@ -150,6 +167,13 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     fileInput,
   );
 
+  /**
+   * Every document read in this tab, in memory only. It is what makes the §5
+   * cross-document checks (EOB × medical bill) possible, and it is gone the
+   * moment the tab is closed — nothing about a document is persisted anywhere.
+   */
+  const session: ExtractionResult[] = [];
+
   async function handleFile(file: File): Promise<void> {
     clear(resultRegion);
     // A saved enklayve situation (.json) is a restore, not a document to parse.
@@ -161,6 +185,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     try {
       const text = await extractor(file);
       const result = extractDocument(text);
+      if (result.recognized) session.push(result);
       status.textContent = "";
       renderResult(result);
     } catch (err) {
@@ -380,7 +405,133 @@ export function renderReadout(opts: RenderReadoutOptions): void {
       },
     });
 
-    resultRegion.append(list, el("div", { class: "readout-actions" }, confirm));
+    resultRegion.append(
+      list,
+      answerBlock(buildAnswer(result, { documents: session })),
+      el("div", { class: "readout-actions" }, confirm),
+    );
+  }
+
+  /** One section of the four-part answer, or its one-line reason for being empty. */
+  function answerSection(
+    title: string,
+    body: HTMLElement | null,
+    emptyReason: string | undefined,
+  ): HTMLElement {
+    return el(
+      "section",
+      { class: "readout-answer-section" },
+      // h2: the view's h1 is the Readout title, so these are its direct children.
+      el("h2", { class: "readout-answer-title", text: title }),
+      body ?? el("p", { class: "readout-answer-empty", text: emptyReason ?? "" }),
+    );
+  }
+
+  /** One check that fired: the question, the arithmetic behind it, and who to ask. */
+  function flagItem(flag: CheckOutcome): HTMLElement {
+    return el(
+      "li",
+      { class: `readout-flag readout-flag--${flag.kind}` },
+      el("p", { class: "readout-flag-q", text: flag.question }),
+      el("p", { class: "readout-flag-detail", text: flag.detail }),
+      el(
+        "p",
+        { class: "readout-flag-meta" },
+        el("span", { class: "badge badge--soon", text: CHECK_KIND_LABEL[flag.kind] }),
+        flag.fromOcr ? el("span", { class: "badge badge--warn", text: "read from a scan" }) : null,
+        flag.citation ? citationLink(flag.citation) : null,
+      ),
+      el("p", { class: "readout-flag-ask", text: `Who to ask: ${flag.askWho}` }),
+    );
+  }
+
+  /**
+   * The four-part answer (SPEC-4-readout-v2 §2): what this says, what looks
+   * wrong, what you may be owed, and what to do next. Same four sections in the
+   * same order for every document kind — the shape is the product.
+   */
+  function answerBlock(answer: ReadoutAnswer): HTMLElement {
+    const says =
+      answer.says.length > 0
+        ? el(
+            "dl",
+            { class: "readout-says" },
+            ...answer.says.flatMap((s) => [
+              el("dt", { text: s.label }),
+              el("dd", { text: s.value, attrs: { "data-field": s.fieldId } }),
+            ]),
+          )
+        : null;
+
+    const flags =
+      answer.flags.length > 0
+        ? el("ul", { class: "readout-flags" }, ...answer.flags.map(flagItem))
+        : null;
+
+    const owed =
+      answer.owed.length > 0
+        ? el(
+            "ul",
+            { class: "readout-owed" },
+            ...answer.owed.map((o) =>
+              el(
+                "li",
+                { class: "readout-owed-item" },
+                el("span", { text: `${o.label} ` }),
+                citationLink(o.citation),
+                " ",
+                el("button", {
+                  type: "button",
+                  class: "btn btn--ghost",
+                  text: "Open the tool →",
+                  on: { click: () => navigate(o.tileId) },
+                }),
+              ),
+            ),
+          )
+        : null;
+
+    const next =
+      answer.next.length > 0
+        ? el(
+            "ol",
+            { class: "readout-next" },
+            ...answer.next.map((n) =>
+              el(
+                "li",
+                { class: "readout-next-item" },
+                el("span", { text: n.label }),
+                n.channel
+                  ? el("a", {
+                      class: "cite-link",
+                      href: n.channel.url,
+                      text: n.channel.label,
+                      attrs: { rel: "noopener noreferrer", target: "_blank" },
+                    })
+                  : null,
+              ),
+            ),
+          )
+        : null;
+
+    // No `next` action carries a `Deadline` yet: the statutory clocks a Readout
+    // would attach (an appeal window, a COBRA election) are the Phase 23
+    // `appeal-windows` / `enrollment-windows` shards' job, and SPEC-4 §7.3 will
+    // not let one render without a citation. When the first one ships,
+    // `RenderReadoutOptions` gains the explicit `asOf` that `renderDeadline`
+    // requires — the clock is an input here, never `Date.now()`.
+    return el(
+      "section",
+      { class: "readout-answer", attrs: { "aria-label": "What this document means" } },
+      answerSection("What this says", says, answer.emptyReasons.says),
+      answerSection("What looks wrong", flags, answer.emptyReasons.flags),
+      answerSection("What you may be owed", owed, answer.emptyReasons.owed),
+      answerSection("What to do next, by when", next, answer.emptyReasons.next),
+      el("p", {
+        class: "readout-answer-caveat",
+        text: "Every line above is a question to ask, not a verdict. Nothing here is a determination, and nothing has been sent anywhere.",
+      }),
+    );
   }
 
   function wrapField(f: ExtractedField, control: HTMLElement): HTMLElement {

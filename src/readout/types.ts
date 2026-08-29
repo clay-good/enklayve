@@ -8,6 +8,8 @@
  * confirms before any value flows into My Situation (§2.2).
  */
 import type { CitationData } from "../data/schemas";
+import type { Deadline } from "../engine/deadline";
+import type { Money } from "../engine/money";
 import type { TextSource } from "./extractText";
 
 /** The personal-finance documents the Readout knows how to read (§2.1). */
@@ -21,7 +23,15 @@ export type DocKind =
   | "form1099b"
   | "form1095a"
   | "form1098"
-  | "fafsaSummary";
+  | "fafsaSummary"
+  // Readout v2 (SPEC-4-readout-v2 §3). Unlike the IRS forms above, these three
+  // carry no standardized revision — an EOB, an itemized bill, and an agency
+  // determination are laid out by the plan, provider, or state, not by a form
+  // designer. They are anchored on captions every issuer uses and are exempt
+  // from the revision pin, exactly as a pay stub is.
+  | "eobHealth"
+  | "medicalBill"
+  | "benefitsNotice";
 
 /** The My Situation fields the Readout can populate on confirmation. Kept
  * narrow (not all of {@link SituationKey}) so the mapping stays type-safe. */
@@ -69,4 +79,58 @@ export interface ExtractionResult {
   citation: CitationData | null;
   /** Human-readable flags (unrecognized revision, OCR caveat, missing fields). */
   warnings: string[];
+}
+
+/**
+ * The four families of check (SPEC-4-readout-v2 §4), ordered by how much we can
+ * stand behind them: arithmetic is the document disagreeing with itself,
+ * plan-math is the document disagreeing with what the *user* told us, rule is
+ * the document appearing to conflict with a published rule, and anomaly is
+ * merely unusual. The kind drives the framing, not just the label.
+ */
+export type CheckKind = "arithmetic" | "plan-math" | "rule" | "anomaly";
+
+/**
+ * One check that fired. Phrased as a question to ask, never a verdict — the
+ * failure mode this shape exists to prevent is a household disputing a correct
+ * bill because we flagged it confidently.
+ */
+export interface CheckOutcome {
+  /** The {@link CheckKind} registry id that produced this. */
+  checkId: string;
+  kind: CheckKind;
+  /** The question to ask, in the user's words. Never "this is wrong". */
+  question: string;
+  /** The arithmetic or rule mismatch, stated plainly. */
+  detail: string;
+  /** Who to raise it with. */
+  askWho: string;
+  /** Required for a "rule" check; absent for pure arithmetic. */
+  citation?: CitationData;
+  /** True when the text this ran against came from OCR, so the UI can say so. */
+  fromOcr: boolean;
+}
+
+/** A section of {@link ReadoutAnswer} that can legitimately be empty. */
+export type AnswerSection = "says" | "flags" | "owed" | "next";
+
+/**
+ * The four-part answer (SPEC-4-readout-v2 §2). Every document, every kind,
+ * renders the same four sections in the same order — the shape is the product.
+ * It sits *on top of* {@link ExtractionResult} rather than replacing it, so the
+ * anchoring and confirmation rules of BUILD-SPEC-2 §2.2 are untouched.
+ */
+export interface ReadoutAnswer {
+  /** The extraction this answer was built from — unchanged, still user-confirmed. */
+  source: ExtractionResult;
+  /** "What this says": the document restated. Every figure traces to a field. */
+  says: { label: string; value: string; fieldId: string }[];
+  /** "What looks wrong": checks that fired. Empty is valid and common. */
+  flags: CheckOutcome[];
+  /** "What you may be owed": an estimate with a citation, never a determination. */
+  owed: { label: string; estimate?: Money; citation: CitationData; tileId: string }[];
+  /** "What to do next, by when": ordered. A statutory clock is a {@link Deadline}. */
+  next: { label: string; channel?: { label: string; url: string }; deadline?: Deadline }[];
+  /** Why a section is empty, when it is. Empty is honest; filler is not. */
+  emptyReasons: Partial<Record<AnswerSection, string>>;
 }

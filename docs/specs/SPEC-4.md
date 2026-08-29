@@ -272,6 +272,14 @@ Two notes from building 20a. The shard carries *state-set* timing as a pointer w
 
 **Acceptance.** Every check declares its type, its citation where it has one, and its false-positive case — a registry test fails any check missing the last one. OCR-sourced text suppresses rule checks entirely. No extracted value reaches My Situation without confirmation. Nothing persists.
 
+**Split into 22a and 22b.** ✅ **22a — the answer layer — is shipped**: the `ReadoutAnswer` shape, the `src/readout/checks.ts` registry and its contract tests, the three new document kinds, the EOB × medical-bill cross-check, and the four sections rendered in the Readout view. **22b — the No Surprises rule check and the EOB tile — is deferred to its own phase**, because both turn on the `no-surprises-<yr>` shard. A `rule` check without a citation cannot pass the registry contract by construction, which is the seam working as designed rather than a gap.
+
+**Three notes from building 22a.**
+
+- *`ReadoutTarget` did not widen, and that is the finding.* Nothing on a health claim, an itemized bill, or a determination notice maps to income, retirement contributions, or filing status. The narrowness of the target set is the safety property (§2.1), and three new document kinds arriving without touching it is evidence the boundary was drawn in the right place. A test pins it: no EOB field carries a `target`.
+- *The EOB's "what you may be owed" section ships empty on purpose.* It is the most tempting place on the site to state a protection without citing it. The empty-with-a-reason mechanism — built for exactly this — carries the honest answer until the shard lands: "surprise-billing protections are stated only where we can cite the rule that grants them."
+- *The benefits notice reads its clock off the notice, and states none of its own.* A statutory appeal window is a Phase 23 `appeal-windows` shard figure, and SPEC-4 §7.3 makes `Deadline.citation` non-optional so an uncited one is a compile error. So the notice's *printed* deadline is extracted and shown for review, and every `next` action on it is undated — asserted by test, so a literal cannot creep in later.
+
 ### Phase 23: The rights-adjacent screeners
 
 **Goal.** Garnishment and enrollment windows — the two Tier 3 / Tier 2 items with the most careful copy on the site.

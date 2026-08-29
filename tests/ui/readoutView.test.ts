@@ -54,6 +54,29 @@ async function dropFile(container: HTMLElement, name = "w2.pdf"): Promise<void> 
   await new Promise((r) => setTimeout(r, 0));
 }
 
+/** A text extractor that yields a different document on each successive read,
+ * so a multi-document session (and its cross-document check) is testable. */
+function sequence(...texts: string[]): TextExtractor {
+  let i = 0;
+  return async () => {
+    const text = texts[Math.min(i++, texts.length - 1)]!;
+    return { text, pages: [text], source: "typed" as const };
+  };
+}
+
+const EOB_TEXT =
+  "Explanation of Benefits — This is not a bill. Claim Number: CLM-88213 " +
+  "Date of Service 09/12/2026 Out-of-Network " +
+  "Amount Billed 1,200.00 Allowed Amount 640.00 Plan Paid 512.00 " +
+  "Patient Responsibility 128.00";
+
+const BILL_TEXT =
+  "Riverside Clinic Itemized Statement Patient Account 44120 " +
+  "09/12/2026 Office visit level 3 400.00 " +
+  "09/12/2026 Metabolic panel 140.00 " +
+  "09/12/2026 Chest radiograph 100.00 " +
+  "Total Charges 640.00";
+
 afterEach(() => {
   document.body.replaceChildren();
 });
@@ -162,12 +185,94 @@ describe("Readout view", () => {
       expect(profile.get("annualIncome")).toBeUndefined();
     });
 
-    it("shows a friendly error for a .json that isn't a saved situation", async () => {
+    it("shows a friendly error for a .json that isn't a saved situation, not a parse attempt", async () => {
       const { container } = setup();
       await dropSituation(container, '{"hello":"world"}');
       expect(container.querySelector(".readout-status")?.textContent).toContain(
         "isn't a saved enklayve situation",
       );
     });
+  });
+});
+
+/**
+ * Readout v2 (SPEC-4-readout-v2 §2): every document, every kind, renders the
+ * same four sections in the same order. The shape is the product, so it is
+ * asserted structurally rather than by review.
+ */
+describe("Readout view, the four-part answer", () => {
+  const titles = (container: HTMLElement): string[] =>
+    Array.from(container.querySelectorAll(".readout-answer-title")).map((n) => n.textContent ?? "");
+
+  it("renders all four sections, in order, for an existing document kind", async () => {
+    const { container } = setup();
+    await dropFile(container);
+    expect(titles(container)).toEqual([
+      "What this says",
+      "What looks wrong",
+      "What you may be owed",
+      "What to do next, by when",
+    ]);
+    // Empty is honest: each empty section states its one-line reason.
+    const empties = Array.from(container.querySelectorAll(".readout-answer-empty")).map(
+      (n) => n.textContent ?? "",
+    );
+    expect(empties.every((e) => e.trim().length > 0)).toBe(true);
+  });
+
+  it("restates an EOB and routes an out-of-network claim to the free federal page", async () => {
+    const { container } = setup(sequence(EOB_TEXT));
+    await dropFile(container, "eob.pdf");
+    expect(container.querySelector(".readout-detected")?.textContent).toContain(
+      "Explanation of Benefits",
+    );
+    const says = Array.from(container.querySelectorAll(".readout-says dt")).map(
+      (n) => n.textContent ?? "",
+    );
+    expect(says).toContain("Patient responsibility");
+    const links = Array.from(container.querySelectorAll(".readout-next a")).map(
+      (a) => a.getAttribute("href") ?? "",
+    );
+    expect(links.some((h) => h.includes("cms.gov/medical-bill-rights"))).toBe(true);
+  });
+
+  it("fires the EOB × medical-bill cross-check once both are read in one session", async () => {
+    const { container } = setup(sequence(EOB_TEXT, BILL_TEXT));
+    await dropFile(container, "eob.pdf");
+    // The EOB alone: the cross-check has nothing to compare against.
+    expect(container.querySelectorAll(".readout-flag")).toHaveLength(0);
+
+    await dropFile(container, "bill.pdf");
+    const flags = Array.from(container.querySelectorAll(".readout-flag-q")).map(
+      (n) => n.textContent ?? "",
+    );
+    expect(flags.some((f) => f.includes("more than your plan says you owe"))).toBe(true);
+    // A question to ask, never a verdict — and it names who to ask.
+    expect(flags.every((f) => f.trim().endsWith("?"))).toBe(true);
+    expect(container.querySelector(".readout-flag-ask")?.textContent).toContain("Who to ask:");
+  });
+
+  it("points a medical bill at the hospital financial-assistance rule, with its source", async () => {
+    const { container } = setup(sequence(BILL_TEXT));
+    await dropFile(container, "bill.pdf");
+    const owed = container.querySelector(".readout-owed-item");
+    expect(owed?.textContent).toContain("financial assistance policy");
+    expect(owed?.querySelector("a")?.getAttribute("href")).toMatch(/irs\.gov/);
+  });
+
+  it("never states a determination about the household", async () => {
+    const { container } = setup(sequence(BILL_TEXT));
+    await dropFile(container, "bill.pdf");
+    const answer = container.querySelector(".readout-answer")?.textContent?.toLowerCase() ?? "";
+    expect(answer.length).toBeGreaterThan(0);
+    for (const forbidden of [
+      "you qualify",
+      "you are eligible",
+      "you do not qualify",
+      "you owe nothing",
+    ]) {
+      expect(answer).not.toContain(forbidden);
+    }
+    expect(answer).toContain("question to ask, not a verdict");
   });
 });

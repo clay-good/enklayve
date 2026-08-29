@@ -21,28 +21,12 @@
  */
 import { fplPercent } from "../engine/benefits";
 import { fplRegionFor } from "../data/usStates";
-import type { CitationData } from "../data/schemas";
+import { HOSPITAL_FAP_CITATION } from "../data/statutes";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { citationLink } from "../ui/resultCard";
 import { rememberShared } from "./profileSync";
 import type { TileContext, TileDefinition } from "./types";
-
-/**
- * Hand-authored statutory citation. A shard would carry no numbers — §501(r) is
- * a set of obligations, not a table — and the repo already treats a
- * hand-authored statutory citation without a contentHash as correct
- * (SPEC-3-hardening §C3).
- */
-const FAP_CITATION: CitationData = {
-  sourceUrl:
-    "https://www.irs.gov/charities-non-profits/financial-assistance-policy-and-emergency-medical-care-policy-section-501r4",
-  sourceDocument: "IRS, Financial assistance policy — IRC §501(r)(4)",
-  sourceNote:
-    "Section 501(r)(4) requires every 501(c)(3) hospital facility to establish a written financial assistance policy covering all emergency and other medically necessary care, to state its eligibility criteria and whether assistance is free or discounted, and to widely publicize it — including making paper copies available on request, without charge, in the emergency room and admissions areas.",
-  effectiveYear: 2026,
-  dateRetrieved: "2026-08-28",
-};
 
 interface Fields {
   income: number;
@@ -145,7 +129,7 @@ export function mountCharityCare(ctx: TileContext): void {
         "p",
         { class: "cc-law" },
         "Every nonprofit hospital must have a written financial assistance policy covering emergency and medically necessary care, must say who qualifies and whether help is free or discounted, and must give you a paper copy on request at no charge. ",
-        citationLink(FAP_CITATION),
+        citationLink(HOSPITAL_FAP_CITATION),
       ),
       el("h3", { class: "cc-heading", text: "What to ask for" }),
       el("ol", { class: "cc-ask" }, ...ASK.map((a) => el("li", { text: a }))),
