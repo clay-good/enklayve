@@ -34,6 +34,11 @@ function withStale(stale: { id: string; effectiveYear: number }[]): BundledData 
   return { ...data, staleDatasets: () => stale } as BundledData;
 }
 
+/** A BundledData stand-in reporting datasets that failed their integrity gate. */
+function withInvalid(invalid: { id: string; problems: string[] }[]): BundledData {
+  return { ...data, invalidDatasets: () => invalid } as BundledData;
+}
+
 describe("the staleness gate reaches the screen", () => {
   it("reports nothing stale in a healthy build", () => {
     expect(data.staleDatasets()).toEqual([]);
@@ -65,6 +70,36 @@ describe("the staleness gate reaches the screen", () => {
       staleBanner(withStale([{ id: "no-surprises-2026", effectiveYear: 2026 }]))?.textContent ?? "";
     expect(text).toContain("1 dataset on this site has passed");
     expect(text).not.toContain("datasets");
+  });
+
+  it("reports nothing invalid in a healthy build", () => {
+    expect(data.invalidDatasets()).toEqual([]);
+  });
+
+  it("says an integrity failure is an integrity failure, not staleness", () => {
+    // A stale figure is merely old. An invalid one did not match the content
+    // hash the manifest pins, which means the bytes are not the bytes that were
+    // reviewed — calling that "out of date" would understate it badly.
+    const node = withInvalid([
+      { id: "federal-income-tax-2024", problems: ["content hash mismatch (expected ab12…)"] },
+    ]);
+    const text = staleBanner(node)?.textContent ?? "";
+    expect(text).toContain("failed its integrity check");
+    expect(text).toContain("federal-income-tax-2024");
+    expect(text).toContain("content hash mismatch");
+    expect(text).toContain("do not rely on anything here");
+    expect(text).not.toContain("may be out of date");
+  });
+
+  it("reports an integrity failure ahead of a staleness one", () => {
+    const both = {
+      ...data,
+      invalidDatasets: () => [{ id: "fica-2024", problems: ["schema validation failed"] }],
+      staleDatasets: () => [{ id: "snap-fy2024-contiguous", effectiveYear: 2024 }],
+    } as BundledData;
+    const node = staleBanner(both);
+    expect(node?.className).toContain("stale-banner--invalid");
+    expect(node?.textContent).toContain("failed its integrity check");
   });
 
   it("marks a dataset stale once its window passes, and names it", async () => {

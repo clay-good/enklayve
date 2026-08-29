@@ -67,6 +67,15 @@ export interface BundledData {
    * degrade loudly rather than quietly (SPEC-3 §2.5, SPEC-4 §10.5).
    */
   staleDatasets(): { id: string; effectiveYear: number }[];
+  /**
+   * Datasets that failed their integrity or schema gate — a content hash that
+   * does not match the manifest, or a shard that no longer parses. `dataOf`
+   * already refuses to compute from these, so a tile shows its "unavailable"
+   * banner; nothing said *why*, which for a hash mismatch is the single most
+   * important fact on the page. A stale figure is old. An invalid one may have
+   * been altered.
+   */
+  invalidDatasets(): { id: string; problems: string[] }[];
   federal(): Jurisdiction | null;
   fica(): FicaData | null;
   /** IRS retirement / HSA / FSA contribution limits (BUILD-SPEC.md §3.4). */
@@ -159,6 +168,10 @@ async function build(): Promise<BundledData> {
       loaded.datasets
         .filter((d) => d.status === "stale")
         .map((d) => ({ id: d.id, effectiveYear: d.effectiveYear })),
+    invalidDatasets: () =>
+      loaded.datasets
+        .filter((d) => d.status === "invalid")
+        .map((d) => ({ id: d.id, problems: d.problems })),
     federal: () => dataOf("federal-income-tax-2024") as Jurisdiction | null,
     fica: () => dataOf("fica-2024") as FicaData | null,
     retirementLimits: () => dataOf("retirement-limits-2024") as RetirementLimitsData | null,

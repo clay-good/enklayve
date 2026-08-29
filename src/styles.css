@@ -1125,6 +1125,13 @@ body {
 .stale-banner strong {
   color: var(--enk-warn);
 }
+/* An integrity failure is a different fact from an out-of-date one and reads as
+   such — a heavier border and a stronger fill of the *same* warn red, rather
+   than a second red. The design language has one warning colour on purpose. */
+.stale-banner--invalid {
+  border-width: 2px;
+  background: color-mix(in srgb, var(--enk-warn) 22%, var(--enk-surface));
+}
 
 /* The Standing Ledger recompute diff (SPEC-4-ledger §3). "Nothing changed" is
    the common case and is styled as reassurance, not as an empty state. */
