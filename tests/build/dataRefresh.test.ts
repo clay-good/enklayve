@@ -390,6 +390,40 @@ describe("adapters: the federal standard deduction (IRS revenue procedure)", () 
   });
 });
 
+describe("adapters: Utah (a source behind its own state's law)", () => {
+  const adapter = adaptersForGroup("state-ut")[0]!;
+  const current = readShard("state-ut-income-tax-2024.json");
+
+  it("names the bill rather than rolling Utah back to the page's rate", () => {
+    // The Tax Commission's rate schedule still reads "January 1, 2025 -
+    // current, 4.5%". SB 60, signed 2026-03-23, cut it to 4.45% for 2026. The
+    // page parses; the page is wrong. This is Iowa's failure with the direction
+    // reversed, and only a named refusal is honest about it.
+    const result = adapter.parse(
+      "Date Range Tax Rate January 1, 2025 - current 4.5% or .045 January 1, 2024 -" +
+        " December 31, 2024 4.55% or .0455 January 1, 2023 - December 31, 2023 4.65%",
+      current,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("SB 60");
+    expect(result.reason).toContain("4.45%");
+  });
+
+  it("clears itself the day the table grows a row for the shard's year", () => {
+    // The refusal wraps the real parser rather than replacing it, so nobody has
+    // to remember to delete it — which is what Iowa's flat refusal needed.
+    const result = adapter.parse(
+      "Date Range Tax Rate 2026 4.45% 2025 4.5% 2024 4.55% 2023 4.65%",
+      current,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const b = result.shard.bracketsByFilingStatus as Record<string, { rate: number }[]>;
+    expect(b.single![0]!.rate).toBe(0.0445);
+  });
+});
+
 describe("adapters: Michigan (Form 446's masthead)", () => {
   const adapter = adaptersForGroup("state-mi")[0]!;
   const current = readShard("state-mi-income-tax-2024.json");

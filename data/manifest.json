@@ -427,9 +427,9 @@
       "staleAfterYears": 2,
       "shard": "state-ut-income-tax-2024.json",
       "sourceUrl": "https://incometax.utah.gov/line-by-line/",
-      "sourceDocument": "Utah State Tax Commission, 4.45% flat individual income tax for tax year 2026 (SB 60, 2026 session)",
-      "dateRetrieved": "2026-06-05",
-      "contentHash": "2bb8c0a44821168c744168299a9f1df9593d19f2cc2e2f7fe5f9b86492a3444e"
+      "sourceDocument": "Utah Code §59-10-104 as amended by SB 60 (2026 session, signed 2026-03-23): 4.45% flat individual income tax for tax years beginning on or after 2026-01-01",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "d1335e83639f032b9037ba285b500df9e119845e999cf8dc44d83760449d520b"
     },
     {
       "id": "state-la-income-tax-2024",

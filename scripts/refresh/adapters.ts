@@ -548,6 +548,44 @@ function parseStandardDeductions(raw: string, current: Record<string, unknown>):
   return { ok: true, shard };
 }
 
+// --- A source that is behind its own state's law -----------------------------
+
+/**
+ * Wrap a parser so that when it cannot read a page whose figures are KNOWN to be
+ * superseded, the refusal says which law superseded them.
+ *
+ * This is the one failure a plausibility guard cannot reach: a page that is
+ * reachable, parseable, and wrong. Iowa was the first — its provisions page
+ * still described a flat 3.9% that SF 2442 repealed before it took effect — and
+ * the honest outcome was a refusal naming the bill, because 3.8 to 3.9 is
+ * exactly the size of a real rate cut and nothing generic separates them.
+ *
+ * Utah is the same shape with the direction reversed. SB 60 was signed
+ * 2026-03-23 and cut the individual rate from 4.50% to 4.45% for tax years
+ * beginning on or after 2026-01-01 — the enrolled bill amends §59-10-104 to
+ * "(b) 4.45%" over a struck "[(b) 4.5%.]" — and the Tax Commission's own pages
+ * have not caught up: the rate schedule's newest row still reads "January 1,
+ * 2025 – current, 4.5%" and the line-by-line instructions still say "multiply
+ * line 9 by 4.5 percent". The shard carries the law. The page carries the year
+ * before it.
+ *
+ * The wrapper is deliberately not a flat refusal, which is what Iowa's was and
+ * what had to be deleted by hand once its source was replaced. The real parser
+ * runs first: the day Utah adds a 2026 row to that table, the by-year reader
+ * finds it, the rate agrees, and this explanation stops being printed without
+ * anyone having to notice. A refusal that clears itself is worth more than one
+ * someone has to remember.
+ */
+function refuseWhileSourceIsBehind(
+  parse: (raw: string, current: Record<string, unknown>) => ParseOutcome,
+  reason: string,
+): (raw: string, current: Record<string, unknown>) => ParseOutcome {
+  return (raw, current) => {
+    const outcome = parse(raw, current);
+    return outcome.ok ? outcome : { ok: false, reason };
+  };
+}
+
 // --- Michigan (its rate is on page one of a withholding guide) ----------------
 
 /**
@@ -1605,7 +1643,18 @@ export const ADAPTERS: RefreshAdapter[] = [
     source: "Utah State Tax Commission individual income tax (flat rate + taxpayer tax credit)",
     sourceUrl: "https://incometax.utah.gov/file-pay/tax-rates/",
     cadence: "Annual",
-    parse: parseFlatRateJurisdiction,
+    // Left pointed at the Tax Commission's rate schedule on purpose: the day it
+    // grows a 2026 row the by-year reader will find it and this refusal clears
+    // itself. See refuseWhileSourceIsBehind.
+    parse: refuseWhileSourceIsBehind(
+      parseFlatRateJurisdiction,
+      "Utah's own rate pages still state 4.5% — the rate schedule's newest row reads " +
+        '"January 1, 2025 - current" and the line-by-line instructions say "multiply line 9 ' +
+        'by 4.5 percent". SB 60, signed 2026-03-23, cut the individual rate to 4.45% for tax ' +
+        "years beginning on or after 2026-01-01 (enrolled bill, amending Utah Code " +
+        "§59-10-104), which is what this shard carries. Parsing this page would roll Utah " +
+        "back to a superseded rate, so it is refused until the Commission updates it",
+    ),
   },
   {
     id: "state-la-income-tax-2024",

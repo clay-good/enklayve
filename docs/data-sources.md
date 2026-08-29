@@ -53,6 +53,7 @@ The sweep below covers every one of the 51 jurisdictions plus the federal and be
 
 | Date | Jurisdiction | What the audit found |
 | --- | --- | --- |
+| 2026-08-29 | Utah (second pass) | **The state's own website is behind its own law.** SB 60, signed 2026-03-23, cut Utah's individual rate from 4.50% to **4.45%** for tax years beginning on or after 2026-01-01 (enrolled bill, amending Utah Code §59-10-104: `(b) 4.45%` over a struck `[(b) 4.5%.]`). The Tax Commission's rate schedule still shows "January 1, 2025 – current, 4.5%" and its line-by-line instructions still say "multiply line 9 by 4.5 percent". The shipped 4.45% is correct and is now cited to the bill rather than to the page that contradicts it. The refresh adapter refuses this source with that explanation, and clears itself the day a 2026 row appears. |
 | 2026-08-29 | Wisconsin | Personal exemption was **$1,200/$2,400**; the DOR's 2026 Form 1-ES worksheet says **$700/$1,400** (2025 Act 15 widened the brackets, it did not raise the exemption). Head of household was approximated as single; it is a two-segment sliding deduction, now modeled in full. Phase-out thresholds moved to the DOR's "of the amount over" figures ($20,120 / $29,040), which makes the computed zero points land on the printed $136,453 / $159,690. |
 | 2026-08-29 | Illinois | Exemption allowance was the **2024** figure, $2,775. Bulletin FY 2026-15 sets tax year 2026 at **$2,925**. |
 | 2026-08-29 | Michigan | Personal exemption was the **2024** figure, $5,600. Form 446, the 2026 Withholding Guide, states **$5,900**. |
