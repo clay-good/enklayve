@@ -29,15 +29,16 @@
     ]
   },
   "standardDeductionByFilingStatus": {
-    "single": 12000,
-    "married_jointly": 24000,
-    "head_of_household": 12000
+    "single": 15000,
+    "married_jointly": 30000,
+    "head_of_household": 15000
   },
   "citation": {
-    "sourceUrl": "https://dor.georgia.gov/taxes/important-tax-updates",
-    "sourceDocument": "Georgia DOR / HB 463, 4.99% flat individual income tax effective Jan 1, 2026; standard deduction $12,000/$24,000 (rises in 2027)",
+    "sourceUrl": "https://dor.georgia.gov/employers-tax-guide",
+    "sourceDocument": "Georgia DOR 2026 Employer's Withholding Tax Guide (revised June 2026) — HB 463: flat 4.99%, standard deduction $15,000 / $30,000",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "Georgia replaced its graduated schedule with a single flat rate in 2024 (HB 1437) and has been stepping it down since. HB 463 (2025) set the rate at 4.99% for tax years beginning on or after January 1, 2026 — down from 5.19% in 2025 — and RAISED THE STANDARD DEDUCTION to $30,000 for married filing jointly and $15,000 for single, head of household, and married filing separately, up from $24,000 / $12,000. Both figures are stated on the first page of the DOR's 2026 Employer's Withholding Tax Guide (revised June 2026) and on the DOR's 'Important Tax Updates' page under the heading '2026 Income Tax Changes'. Note the deduction does NOT double for head of household in Georgia — it takes the single amount, the same as married filing separately. Worked example, single $60,000: taxable = 60,000 − 15,000 = $45,000; tax = 4.99%·45,000 = $2,245.50. HB 463 also schedules further annual rate cuts and deduction increases, so both figures move again; the refresh adapter treats them as a change-watch. Omitted at launch fidelity: the $5,000-per-dependent exemption HB 463 raised from $4,000 (the no-dependent assumption every state here shares), the retirement-income exclusion, the low-income credit, and Georgia's other credits — so the figure errs slightly high. Georgia's partial exemption of up to $1,750 each of overtime and tipped wages (Georgia did not conform to the federal One Big Beautiful Bill Act treatment) is also not modeled. Georgia levies no local income tax. Verified against the Georgia DOR 2026 Employer's Withholding Tax Guide on 2026-08-29."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",

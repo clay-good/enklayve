@@ -192,10 +192,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-ga-income-tax-2024.json",
-      "sourceUrl": "https://dor.georgia.gov/taxes/important-tax-updates",
-      "sourceDocument": "Georgia DOR / HB 463, 4.99% flat individual income tax effective Jan 1, 2026; standard deduction $12,000/$24,000 (rises in 2027)",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "49fb277dd5894004b993bf34f790731205f446ac642c12e9c1d02d02f20ac2cc"
+      "sourceUrl": "https://dor.georgia.gov/employers-tax-guide",
+      "sourceDocument": "Georgia DOR 2026 Employer's Withholding Tax Guide (revised June 2026) — HB 463: flat 4.99%, standard deduction $15,000 / $30,000",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "68b85a2ae05b22c9fe59a18cfb314d6ae1a8c35815d519855454f4ed1e6b4a24"
     },
     {
       "id": "state-nc-income-tax-2024",
