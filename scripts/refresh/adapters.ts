@@ -692,11 +692,50 @@ function parseIrsStandardDeductions(raw: string, current: Record<string, unknown
  * The year has to be adjacent. Indiana's "income tax rate for 2026 is 2.95%"
  * names a year too, but with "is" between it and the number, which is the
  * difference between a sentence about this year and a column heading.
+ *
+ * The refusal is a second choice, not the first. A table labelled by year can be
+ * asked for a year, and the shard says which one it is — so the row for the
+ * shard's own tax year is read when there is one, exactly as the federal revenue
+ * procedure is. Only when there is no such row does this refuse, and then it
+ * says which year the rows stop at, because a table that ends before the shard
+ * begins is the state not having published yet, which is a different thing from
+ * a parser that cannot read.
  */
 const YEAR_LABELLED = /(?:19|20)\d{2}\s{0,3}$/;
 
-export function anchorFlatRate(raw: string): number | "none" | "ambiguous" | "historical" {
+export type FlatRateAnchor =
+  | number
+  | "none"
+  | "ambiguous"
+  /** Only by-year table rows matched, and none of them was the shard's year. */
+  | { historical: true; latestYear: number | null };
+
+export function anchorFlatRate(raw: string, taxYear?: number): FlatRateAnchor {
   const text = visibleText(raw);
+
+  // A by-year rate table, read for the year the shard is actually about. This
+  // runs first because it is the most specific thing a page can say: Colorado's
+  // guide prints "Tax Year / Tax Rate / 2019 4.5% ... 2025 4.4%", and asking it
+  // for one row by year is exact where reaching for "the current one" is a
+  // guess. It is also how a table that has not caught up announces itself —
+  // there is no 2026 row, so nothing matches and the refusal below can say the
+  // rows stop at 2025 rather than that the page is unreadable.
+  // A RUN of at least three year-then-rate pairs, not a single one. One "2026
+  // 8%" anywhere in a document is a coincidence — Colorado's guide has several,
+  // and the first draft of this read one of them and proposed an 8% flat tax.
+  // Three in a row is a table; nothing else in agency prose looks like that.
+  const yearRows: { year: number; rate: number }[] = [];
+  for (const run of text.matchAll(/(?:(?:19|20)\d{2}\s{1,3}[\d.]+\s*%\s{0,3}){3,}/g)) {
+    for (const pair of run[0].matchAll(/((?:19|20)\d{2})\s{1,3}([\d.]+)\s*%/g)) {
+      const rate = Number(pair[2]);
+      if (rate > 0 && rate <= 15) yearRows.push({ year: Number(pair[1]), rate });
+    }
+  }
+  if (yearRows.length > 0 && taxYear !== undefined) {
+    const mine = new Set(yearRows.filter((r) => r.year === taxYear).map((r) => r.rate));
+    if (mine.size === 1) return [...mine][0]!;
+    if (mine.size > 1) return "ambiguous";
+  }
   const patterns = [
     // "income tax rate for 2026 is 2.95%", "income tax rate is 4.95%"
     /income[- ]?tax\s+rate[^.;%]{0,48}?([\d.]+)\s*(?:percent|%)/gi,
@@ -738,13 +777,17 @@ export function anchorFlatRate(raw: string): number | "none" | "ambiguous" | "hi
     // elsewhere on the page.
     if (found.size === 1) return [...found][0]!;
     if (found.size > 1) return "ambiguous";
-    if (historical.size > 0) return "historical";
+    if (historical.size > 0) {
+      const years = yearRows.map((r) => r.year);
+      return { historical: true, latestYear: years.length > 0 ? Math.max(...years) : null };
+    }
   }
   return "none";
 }
 
 function parseFlatRateJurisdiction(raw: string, current: Record<string, unknown>): ParseOutcome {
-  const percent = anchorFlatRate(raw);
+  const taxYear = Number.isInteger(Number(current.taxYear)) ? Number(current.taxYear) : undefined;
+  const percent = anchorFlatRate(raw, taxYear);
   if (percent === "none") {
     return { ok: false, reason: "could not anchor the flat income-tax rate" };
   }
@@ -754,12 +797,16 @@ function parseFlatRateJurisdiction(raw: string, current: Record<string, unknown>
       reason: "the page states more than one income-tax rate; refusing to guess which is current",
     };
   }
-  if (percent === "historical") {
+  if (typeof percent === "object") {
+    const stops =
+      percent.latestYear === null
+        ? ""
+        : ` The rows stop at ${percent.latestYear}${taxYear === undefined ? "" : `, and this shard is ${taxYear}`}, so the state has probably not published the shard's year yet.`;
     return {
       ok: false,
       reason:
-        "the only rates on the page sit in a by-year table (a bare year, then the rate);" +
-        " refusing to guess which row is the current one",
+        "the only rates on the page sit in a by-year table and none of them is this shard's" +
+        ` year; refusing to guess which row is the current one.${stops}`,
     };
   }
   if (!Number.isFinite(percent) || percent <= 0 || percent > 15) {

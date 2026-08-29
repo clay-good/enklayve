@@ -630,17 +630,35 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     ).toBe(4.95);
   });
 
+  it("reads a by-year rate table for the shard's own year when it has one", () => {
+    // A table labelled by year can be asked for a year, and the shard says
+    // which one it is — the same anchor the federal revenue procedure uses.
+    const table =
+      "Colorado Income Tax Rates Tax Year Tax Rate 2022 4.4% 2023 4.4% 2024 4.25% 2026 4.55%";
+    expect(anchorFlatRate(table, 2026)).toBe(4.55);
+    expect(anchorFlatRate(table, 2024)).toBe(4.25);
+  });
+
+  it("needs a run of rows before it will treat anything as a by-year table", () => {
+    // One "2026 8%" in a document is a coincidence, and the first draft of the
+    // year-row reader found one in Colorado's guide and proposed an 8% flat
+    // tax. Three pairs in sequence is a table; nothing else reads like that.
+    expect(anchorFlatRate("Filed by 2026 8% of filers used the portal.", 2026)).toBe("none");
+  });
+
   it("refuses to read a rate out of a by-year history table", () => {
     // Colorado's Individual Income Tax Guide prints a rate per year, and every
     // pattern reaches the first row — so the guide would have proposed rolling
     // Colorado back to 2019. Each of these is a real Colorado rate differing by
     // tenths, so no plausibility band separates them; only the shape does.
-    expect(
-      anchorFlatRate(
-        "Colorado Income Tax Rates Tax Year Tax Rate 2019 4.5% 2020 4.55% 2021 4.5%" +
-          " 2022 4.4% 2023 4.4% 2024 4.25% 2025 4.4%",
-      ),
-    ).toBe("historical");
+    const history =
+      "Colorado Income Tax Rates Tax Year Tax Rate 2019 4.5% 2020 4.55% 2021 4.5%" +
+      " 2022 4.4% 2023 4.4% 2024 4.25% 2025 4.4%";
+    expect(anchorFlatRate(history)).toEqual({ historical: true, latestYear: 2025 });
+    // And a shard whose year the table has not reached is told exactly that,
+    // because a table ending before the shard begins is the state not having
+    // published yet — a different thing from a parser that cannot read.
+    expect(anchorFlatRate(history, 2026)).toEqual({ historical: true, latestYear: 2025 });
     // A sentence that names the year is not a table row. The difference is the
     // word between the year and the number.
     expect(anchorFlatRate("The income tax rate for 2026 is 2.95%.")).toBe(2.95);
