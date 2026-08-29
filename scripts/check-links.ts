@@ -22,9 +22,14 @@
 import { readFileSync, readdirSync, statSync, appendFileSync } from "node:fs";
 import { resolve, dirname, join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { BROWSER_USER_AGENT } from "./user-agent.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const SEARCH_ROOTS = ["src", "data", "docs"];
+// `scripts` is here for the refresh adapters: each one names the page it
+// watches, and those URLs live nowhere else. Without this root, an adapter
+// could point at a 404 for a year with nothing to notice — which is exactly
+// what happened to California's, North Carolina's, Utah's and Ohio's.
+const SEARCH_ROOTS = ["src", "data", "docs", "scripts"];
 const EXTENSIONS = new Set([".ts", ".json", ".md", ".css", ".html"]);
 
 /** A URL that is a fixture or our own site, not a source link the site ships. */
@@ -154,9 +159,7 @@ export function renderLinkReport(results: LinkResult[]): string {
 }
 
 /* c8 ignore start — the CLI shell: file reads, fetch, and output only. */
-const USER_AGENT =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
-  "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+const USER_AGENT = BROWSER_USER_AGENT;
 const CONCURRENCY = 8;
 const TIMEOUT_MS = 30_000;
 

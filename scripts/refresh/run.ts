@@ -23,6 +23,7 @@ import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { decideOutcome, diffShards, renderDiffLogEntry, type RefreshOutcome } from "./contract.ts";
 import { ADAPTERS, adaptersForGroup, type RefreshAdapter, type RefreshGroup } from "./adapters.ts";
+import { BROWSER_USER_AGENT } from "../user-agent.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const DATA_DIR = join(ROOT, "data");
@@ -156,7 +157,7 @@ async function fetchSource(
   url: string,
 ): Promise<{ ok: true; raw: string } | { ok: false; reason: string }> {
   try {
-    const response = await fetch(url, { headers: { "user-agent": "enklayve-data-refresh" } });
+    const response = await fetch(url, { headers: { "user-agent": BROWSER_USER_AGENT } });
     if (!response.ok) {
       return { ok: false, reason: `source returned HTTP ${response.status}` };
     }

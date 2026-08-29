@@ -19,12 +19,14 @@ Two more run on a schedule rather than per-commit, because they need the network
 
 ```sh
 npm run check:links                        # every external link, monthly
+npm run check:adapters                     # every refresh adapter still finds its figure, monthly
 node scripts/refresh/watch-sources.ts      # the hand-authored Pillar 4 sources, quarterly
 ```
 
 - [ ] `format:check`, `lint`, `typecheck` all clean.
 - [ ] `test` green, including the tax-engine golden corpus, the bounds/fuzz invariants, and the axe sweep with **zero violations** — home, About, All Tools, Readout, Report, and **every calculator and hub, the roster derived from the registry** rather than a hand-kept list ([`catalogInvariants.test.ts`](../tests/ui/catalogInvariants.test.ts)).
 - [ ] The same catalog sweep is green on its other invariants: no tile throws or paints a non-finite value for a hostile *deep link* (a separate path from the form inputs the e2e drives), every enum param falls back to a value the reader can see, and every tile clears the bar — worked example, "how this works", "Learn more", deep-linkable state.
+- [ ] `check:adapters` reports **0 that could not parse**. An adapter that cannot find its figure has stopped watching its shard, which then sits at whatever year it was authored in behind a citation that still looks live — the failure that left Illinois, Michigan, Missouri and Georgia stale until the August 2026 audit. (Unreachable is reported separately and does not gate: that is usually the agency's afternoon.)
 - [ ] `check:links` reports **0 broken and 0 redirected**. A redirect is not a pass: agencies reuse article ids, so an old link can land on a page that is authoritative and about something else.
 - [ ] `build` produces `dist/`; `deploy:dry` succeeds.
 - [ ] `audit` passes: `connect-src 'none'` on pages, no cross-origin loads in `index.html`, every dataset shard cited, `localStorage` touched only by the theme/locale boundary, and the **precached shell inside its gzipped budget** — the bytes a first visit costs and offline requires. A failure names the chunk that grew, so the fix is not simply raising the number.

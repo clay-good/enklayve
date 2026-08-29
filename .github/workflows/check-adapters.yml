@@ -1,0 +1,60 @@
+# Adapter anchoring (BUILD-SPEC.md §7.3).
+#
+# Each refresh adapter regexes one figure out of one page. That works only while
+# the page still states the figure. When an agency moves a number into a PDF or
+# behind client-side rendering, the refresh stops parsing — it opens a fail-safe
+# alert PR rather than shipping bad data, which is right — but the shard then
+# stops being watched and sits at whatever year it was authored in, still
+# carrying a live and apparently valid .gov citation.
+#
+# The August 2026 source audit found Illinois, Michigan, Missouri and Georgia a
+# year or two stale for exactly that reason. This is the check that surfaces it
+# without waiting for someone to read every alert PR.
+#
+# Like the link check it is deliberately NOT part of the unit CI: it needs the
+# network, and a test that fails when a state's website has a bad afternoon
+# teaches people to ignore failing tests.
+name: Check refresh adapters
+
+on:
+  schedule:
+    - cron: "0 11 8 * *" # the 8th of each month, 11:00 UTC — a week before the link check
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  adapters:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - id: adapters
+        continue-on-error: true
+        run: node scripts/check-adapters.ts
+
+      # Gated on "could not parse" only. Unreachable is usually the agency
+      # having an afternoon; alerting on it monthly is the noise that teaches
+      # people to close these issues unread. It still appears in the body.
+      - name: Open an issue when an adapter stopped anchoring
+        if: steps.adapters.outputs.unparsed != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Adapter check: ${process.env.UNPARSED} can no longer anchor their source`,
+              body: process.env.REPORT,
+              labels: ["data-review"],
+            });
+        env:
+          REPORT: ${{ steps.adapters.outputs.report }}
+          UNPARSED: ${{ steps.adapters.outputs.unparsed }}
