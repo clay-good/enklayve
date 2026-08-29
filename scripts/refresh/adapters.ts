@@ -319,23 +319,88 @@ function parseCpi(raw: string, current: Record<string, unknown>): ParseOutcome {
 // --- HHS Federal Poverty Guidelines (anchored prose) -------------------------
 
 /**
- * The HHS guidelines state a one-person amount and a per-additional-person
- * increment ("add $5,380 for each additional person"). We anchor both and
- * overlay `base` / `perAdditionalPerson`.
+ * The HHS poverty guidelines, read out of the ASPE page that states all three.
+ *
+ * This figure is the most load-bearing on the site — the premium tax credit,
+ * Medicaid eligibility, SNAP's income limits and every benefit-cliff answer are
+ * a percentage of it — and it is issued as **three separate guidelines**: the 48
+ * contiguous states and DC, a higher one for Alaska, a higher one for Hawaii.
+ * The page prints all three, one after another, in the same shape:
+ *
+ *   2026 POVERTY GUIDELINES FOR THE 48 CONTIGUOUS STATES AND THE DISTRICT OF
+ *   COLUMBIA / Persons in family/household / Poverty guideline / 1 $15,960 ...
+ *   For families/households with more than 8 persons, add $5,680 for each
+ *   additional person. / 2026 POVERTY GUIDELINES FOR ALASKA / 1 $19,950 ...
+ *
+ * The parser this replaces read "for each additional person" and the first "1"
+ * row from anywhere on the page, so it was taking Alaska's or Hawaii's figures
+ * on nothing but the order HHS happened to print them in, and would have kept
+ * doing so silently. Using the wrong region's guideline is a failure the shard's
+ * own note calls out by name: "a program that uses the wrong one for the
+ * household's state gets every downstream answer wrong."
+ *
+ * So each shard says which `region` and which `year` it is, and those select the
+ * heading. Nothing outside that region's section is read, and a page that does
+ * not carry the shard's year is refused rather than parsed against whatever it
+ * does carry. It also means Alaska and Hawaii can be watched at all: they had no
+ * adapter, because a region-blind parser could only ever have served one of the
+ * three shards.
  */
-function parsePovertyContiguous(raw: string, current: Record<string, unknown>): ParseOutcome {
-  const perMatch = /\$?([\d,]{3,})\s+for each additional person/i.exec(raw);
-  // The one-person guideline is the smallest household line; anchor "1" + dollars.
-  const oneMatch = /(?:^|\n)\s*1\s+\$?([\d,]{4,})/.exec(raw);
-  if (!perMatch || !oneMatch) {
+const POVERTY_REGION_HEADINGS: Record<string, RegExp> = {
+  contiguous: /POVERTY GUIDELINES FOR THE 48 CONTIGUOUS STATES/i,
+  alaska: /POVERTY GUIDELINES FOR ALASKA\b/i,
+  hawaii: /POVERTY GUIDELINES FOR HAWAII\b/i,
+};
+
+function parsePovertyGuidelines(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const region = String(current.region ?? "");
+  const heading = POVERTY_REGION_HEADINGS[region];
+  if (!heading) {
+    return { ok: false, reason: `shard names no known poverty region (got "${region}")` };
+  }
+  const text = visibleText(raw);
+  const year = Number(current.year);
+  if (Number.isInteger(year) && !new RegExp(`${year} POVERTY GUIDELINES`, "i").test(text)) {
     return {
       ok: false,
-      reason: "could not anchor the one-person guideline and per-additional-person increment",
+      reason: `the page states no ${year} poverty guidelines — HHS issues these each January, so this is last year's page or the shard is ahead of it`,
     };
   }
+  const at = heading.exec(text);
+  if (!at) {
+    return { ok: false, reason: `could not find the ${region} guidelines heading on the page` };
+  }
+  // From this region's heading to the next region's, so the increment sentence
+  // that closes the section can never be read out of the section below it.
+  const rest = text.slice(at.index + at[0].length);
+  const nextHeading = /POVERTY GUIDELINES FOR/i.exec(rest);
+  const section = nextHeading ? rest.slice(0, nextHeading.index) : rest.slice(0, 600);
+
+  const oneMatch = /\b1\s+\$([\d,]{4,})/.exec(section);
+  const perMatch = /add\s+\$([\d,]{3,})\s+for each additional person/i.exec(section);
+  if (!oneMatch || !perMatch) {
+    return {
+      ok: false,
+      reason: `could not anchor the ${region} one-person guideline and per-additional-person increment`,
+    };
+  }
+  const base = parseAmount(oneMatch[1] as string);
+  const perAdditionalPerson = parseAmount(perMatch[1] as string);
+  for (const [label, committed, anchored] of [
+    ["one-person guideline", current.base, base],
+    ["per-additional-person increment", current.perAdditionalPerson, perAdditionalPerson],
+  ] as const) {
+    const drift = implausibleDrift(committed as number, anchored);
+    if (drift) {
+      return {
+        ok: false,
+        reason: `the ${region} ${label} ${drift}; refusing — either the page moved or this is not the figure`,
+      };
+    }
+  }
   const shard = clone(current);
-  shard.base = parseAmount(oneMatch[1] as string);
-  shard.perAdditionalPerson = parseAmount(perMatch[1] as string);
+  shard.base = base;
+  shard.perAdditionalPerson = perAdditionalPerson;
   return { ok: true, shard };
 }
 
@@ -1108,7 +1173,23 @@ export const ADAPTERS: RefreshAdapter[] = [
     source: "HHS Poverty Guidelines (48 contiguous states and DC)",
     sourceUrl: "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
     cadence: "Annual, January",
-    parse: parsePovertyContiguous,
+    parse: parsePovertyGuidelines,
+  },
+  {
+    id: "federal-poverty-level-2024-alaska",
+    group: "hhs-poverty",
+    source: "HHS Poverty Guidelines (Alaska)",
+    sourceUrl: "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
+    cadence: "Annual, January",
+    parse: parsePovertyGuidelines,
+  },
+  {
+    id: "federal-poverty-level-2024-hawaii",
+    group: "hhs-poverty",
+    source: "HHS Poverty Guidelines (Hawaii)",
+    sourceUrl: "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
+    cadence: "Annual, January",
+    parse: parsePovertyGuidelines,
   },
   {
     id: "fica-2024",

@@ -19,11 +19,14 @@
     "right, and on 2026-08-29 nine adapters anchored the wrong number.",
     "",
     "Illinois, Arizona, Kentucky and Iowa joined on 2026-08-29, each dry-run to a",
-    "Illinois, Arizona, Kentucky, Iowa and the federal standard deduction joined on 2026-08-29, each dry-run to a no-op against its committed figures."
+    "Illinois, Arizona, Kentucky, Iowa, the federal standard deduction and all three poverty-guideline regions joined on 2026-08-29, each dry-run to a no-op against its committed figures."
   ],
   "recordedOn": "2026-08-29",
   "knownAnchoring": [
     "federal-income-tax-2024",
+    "federal-poverty-level-2024-alaska",
+    "federal-poverty-level-2024-contiguous",
+    "federal-poverty-level-2024-hawaii",
     "fica-2024",
     "state-az-income-tax-2024",
     "state-ia-income-tax-2024",

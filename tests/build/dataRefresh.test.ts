@@ -169,7 +169,7 @@ describe("adapters: registry", () => {
       "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(49);
+    expect(ADAPTERS).toHaveLength(51);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
@@ -240,25 +240,57 @@ describe("adapters: BLS CPI (machine-readable)", () => {
   });
 });
 
-describe("adapters: HHS poverty (anchored prose)", () => {
-  const adapter = adaptersForGroup("hhs-poverty")[0]!;
-  const current = readShard("federal-poverty-level-2024-contiguous.json");
+describe("adapters: HHS poverty guidelines (three regions, one page)", () => {
+  const contiguous = ADAPTERS.find((a) => a.id === "federal-poverty-level-2024-contiguous")!;
+  const alaska = ADAPTERS.find((a) => a.id === "federal-poverty-level-2024-alaska")!;
+  const hawaii = ADAPTERS.find((a) => a.id === "federal-poverty-level-2024-hawaii")!;
+  // The ASPE page, in the order HHS prints it.
+  const raw =
+    "2026 POVERTY GUIDELINES FOR THE 48 CONTIGUOUS STATES AND THE DISTRICT OF COLUMBIA" +
+    " Persons in family/household Poverty guideline 1 $15,960 2 $21,640 8 $55,720" +
+    " For families/households with more than 8 persons, add $5,680 for each additional person." +
+    " 2026 POVERTY GUIDELINES FOR ALASKA Persons in family/household Poverty guideline" +
+    " 1 $19,950 2 $27,050 8 $69,650" +
+    " For families/households with more than 8 persons, add $7,100 for each additional person." +
+    " 2026 POVERTY GUIDELINES FOR HAWAII Persons in family/household Poverty guideline" +
+    " 1 $18,360 2 $24,890 8 $64,070" +
+    " For families/households with more than 8 persons, add $6,530 for each additional person.";
 
-  it("anchors the one-person guideline and the per-person increment", () => {
-    const raw =
-      "Persons in family\n1 $15,600\n2 $21,000\nFor more than 8, add $5,500 for each additional person.";
-    const result = adapter.parse(raw, current);
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.shard.base).toBe(15600);
-    expect(result.shard.perAdditionalPerson).toBe(5500);
-    expect(FederalPovertyLevelSchema.safeParse(result.shard).success).toBe(true);
+  it("gives each region its own figures, not whichever table HHS printed first", () => {
+    // The parser this replaces read the first "1 $..." row and the first
+    // increment sentence from anywhere on the page, so Alaska and Hawaii could
+    // only ever have been served the contiguous numbers — the failure the
+    // shard's own note names: the wrong region gets every answer wrong.
+    for (const [adapter, base, per] of [
+      [contiguous, 15960, 5680],
+      [alaska, 19950, 7100],
+      [hawaii, 18360, 6530],
+    ] as const) {
+      const result = adapter.parse(raw, readShard(`${adapter.id}.json`));
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.shard.base).toBe(base);
+      expect(result.shard.perAdditionalPerson).toBe(per);
+      expect(FederalPovertyLevelSchema.safeParse(result.shard).success).toBe(true);
+    }
   });
 
-  it("fails (-> alert) when the anchors are missing", () => {
-    expect(adapter.parse("the guidelines were not published in this format", current).ok).toBe(
-      false,
-    );
+  it("refuses a page that does not state the shard's year", () => {
+    // HHS issues these each January. A page still showing last year's is the
+    // one case where every number parses and every number is stale.
+    const rolled = { ...readShard("federal-poverty-level-2024-contiguous.json"), year: 2027 };
+    const result = contiguous.parse(raw, rolled);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("no 2027 poverty guidelines");
+  });
+
+  it("fails (-> alert) when the region's section is absent", () => {
+    expect(
+      contiguous.parse("2026 POVERTY GUIDELINES FOR ALASKA 1 $19,950", {
+        ...readShard("federal-poverty-level-2024-contiguous.json"),
+      }).ok,
+    ).toBe(false);
   });
 });
 
@@ -941,14 +973,16 @@ describe("runner: planRefresh (no I/O)", () => {
   });
 
   it("no-ops when the source repeats the committed values", () => {
-    const raw = `1 $15,960\nadd $5,680 for each additional person`;
+    const raw =
+      "2026 POVERTY GUIDELINES FOR THE 48 CONTIGUOUS STATES AND THE DISTRICT OF COLUMBIA 1 $15,960 For families/households with more than 8 persons, add $5,680 for each additional person.";
     const plan = planRefresh(adapter, current, { ok: true, raw }, TODAY);
     expect(plan.outcome).toBe("no-op");
     expect(plan.shard).toBeNull();
   });
 
   it("opens a PR with a date-stamped shard when values change", () => {
-    const raw = `1 $15,600\nadd $5,500 for each additional person`;
+    const raw =
+      "2026 POVERTY GUIDELINES FOR THE 48 CONTIGUOUS STATES AND THE DISTRICT OF COLUMBIA 1 $15,600 For families/households with more than 8 persons, add $5,500 for each additional person.";
     const plan = planRefresh(adapter, current, { ok: true, raw }, TODAY);
     expect(plan.outcome).toBe("open-pr");
     expect(plan.shard).not.toBeNull();
