@@ -474,7 +474,33 @@ export function implausibleDrift(current: number, anchored: number): string | nu
  * golden gate make it safe). Returns failure if no deduction can be anchored,
  * so a layout change routes to the fail-safe alert instead of a silent no-op.
  */
+/**
+ * Drop the rows that state a DEPENDENT's standard deduction.
+ *
+ * A dependent's deduction is a different figure with the same status label
+ * beside it, and it is always the smaller one, so a parser that reaches it does
+ * not read a number that looks wrong — it reads a number that looks like a
+ * state with a stingier deduction. New York's page states both:
+ *
+ *   Single (and can be claimed as a dependent on another taxpayer's federal
+ *   return) $3,100
+ *   Single (and cannot be claimed as a dependent on another taxpayer's federal
+ *   return) $8,000
+ *
+ * The shard models a filer who is nobody's dependent — the same assumption it
+ * makes about dependents of its own — so the first row is not this shard's
+ * figure under any reading, and dropping it is not a guess. What is left is one
+ * single amount, which is what the ambiguity guard is there to require.
+ *
+ * "cannot be claimed" does not contain "can be claimed", so the row that is
+ * wanted survives this untouched.
+ */
+function withoutDependentRows(raw: string): string {
+  return raw.replace(/\(\s*(?:and\s+)?can be claimed as a dependent[^)]*\)\s*\$?[\d,]{3,}/gi, " ");
+}
+
 function parseStandardDeductions(raw: string, current: Record<string, unknown>): ParseOutcome {
+  raw = withoutDependentRows(visibleText(raw));
   const shard = clone(current);
   const deductions = {
     ...((shard.standardDeductionByFilingStatus as Record<string, number>) ?? {}),
@@ -522,7 +548,7 @@ function parseStandardDeductions(raw: string, current: Record<string, unknown>):
         ok: false,
         reason:
           `the page states more than one ${key} standard deduction ` +
-          `(${[...values].sort((a, b) => a - b).join(", ")}); refusing to guess which year is current`,
+          `(${[...values].sort((a, b) => a - b).join(", ")}); refusing to guess which one is this shard's`,
       };
     }
     if (values.size === 1) {
@@ -1516,8 +1542,10 @@ export const ADAPTERS: RefreshAdapter[] = [
   {
     id: "state-ny-income-tax-2024",
     group: "state-ny",
-    source: "New York State Department of Taxation and Finance tax-rate schedules",
-    sourceUrl: "https://www.tax.ny.gov/pit/file/tax_tables.htm",
+    source: "New York State Department of Taxation and Finance standard deductions",
+    // The standard-deduction page, not the tax tables: the tables state
+    // brackets, which are the reviewer's step, and never the deduction.
+    sourceUrl: "https://www.tax.ny.gov/pit/file/standard_deductions.htm",
     cadence: "Annual",
     parse: parseStandardDeductions,
   },

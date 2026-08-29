@@ -476,6 +476,33 @@ describe("adapters: state income tax (NY, the per-state template)", () => {
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
   });
 
+  it("skips the row stating a DEPENDENT's deduction", () => {
+    // New York's page states two single amounts, and the dependent one is
+    // smaller — so reaching it does not produce a number that looks wrong, it
+    // produces a number that looks like a stingier state. The shard models a
+    // filer who is nobody's dependent, so that row is not its figure under any
+    // reading, and skipping it is not a guess. ("cannot be claimed" does not
+    // contain "can be claimed", so the wanted row survives.)
+    const raw =
+      "Filing status Standard deduction amount" +
+      " Single (and can be claimed as a dependent on another taxpayer's federal return) $3,100" +
+      " Single (and cannot be claimed as a dependent on another taxpayer's federal return) $8,000" +
+      " Married filing joint return $16,050 Head of household (with qualifying person) $11,200";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const sd = result.shard.standardDeductionByFilingStatus as Record<string, number>;
+    expect(sd.single).toBe(8000);
+    expect(sd.married_jointly).toBe(16050);
+    expect(sd.head_of_household).toBe(11200);
+  });
+
+  it("watches the standard-deduction page, not the bracket tables", () => {
+    // The tax tables state brackets — the reviewer's step — and never the
+    // deduction, which is the figure this adapter exists to anchor.
+    expect(adapter.sourceUrl).toContain("standard_deductions");
+  });
+
   it("fails (-> alert) when no deduction can be anchored (layout changed)", () => {
     expect(
       adapter.parse("the rate schedule was published without deduction figures", current).ok,
