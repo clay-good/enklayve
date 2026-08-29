@@ -7,6 +7,14 @@ import { debtPayoff } from "../../src/engine/finance";
 import { requiredMinimumDistribution } from "../../src/engine/rmd";
 import { adjustForInflation } from "../../src/engine/inflation";
 import { selfEmploymentTax, itemizedTotal, evaluateTaxes } from "../../src/engine/tax";
+import {
+  MAX_POINTS,
+  findCliffs,
+  marginalReality,
+  sweepResources,
+  type CliffData,
+  type CliffInput,
+} from "../../src/engine/cliffs";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import type { CapitalGainsData, FilingStatus } from "../../src/data/schemas";
 
@@ -367,5 +375,122 @@ describe("§D coverage gaps (correct today, now pinned against future edits)", (
     const withZeroAgi = itemizedTotal({ medicalExpenses: 5_000 }, Money.zero());
     expect(withNegAgi.toNumber()).toBe(5_000); // whole expense, no more
     expect(withZeroAgi.toNumber()).toBe(5_000);
+  });
+});
+
+/**
+ * `sweepResources` joins the property suite (SPEC-4 §10 acceptance criterion 4).
+ *
+ * The Benefit Cliff Explorer is the one tool on the site that composes almost
+ * every other engine — federal tax, FICA, state tax, the EITC, the refundable
+ * CTC, the ACA premium tax credit, and SNAP — over a swept range. That makes it
+ * the most likely place for a non-finite value to appear from a combination
+ * nobody tried, and the *least* forgiving place for one to appear: a household
+ * reads this to decide whether to take a raise.
+ *
+ * So it is swept over **every one of the 51 jurisdictions × all 5 filing
+ * statuses**, which is the criterion as written, rather than the three statuses
+ * in one state the engine's own suite covers.
+ */
+describe("sweepResources over the whole jurisdiction × filing-status space", () => {
+  const STATUSES: FilingStatus[] = [
+    "single",
+    "married_jointly",
+    "married_separately",
+    "head_of_household",
+    "qualifying_surviving_spouse",
+  ];
+
+  function cliffDataFor(stateCode: string): CliffData {
+    const state = stateCode ? (data.state(stateCode) ?? undefined) : undefined;
+    return {
+      tax: { federal: data.federal()!, fica: data.fica()!, ...(state ? { state } : {}) },
+      fpl: data.fpl("contiguous"),
+      eitcCtc: data.eitcCtc(),
+      aca: data.aca(),
+      snap: data.snap(),
+      medicaid: data.medicaid(),
+      snapRegionSupported: true,
+    };
+  }
+
+  it("covers all 51 jurisdictions", () => {
+    expect(data.stateCodes().length).toBe(51);
+  });
+
+  it("returns no non-finite value, in any jurisdiction, for any filing status", () => {
+    const bad: string[] = [];
+    for (const stateCode of data.stateCodes()) {
+      const cliff = cliffDataFor(stateCode);
+      for (const filingStatus of STATUSES) {
+        const input: CliffInput = {
+          filingStatus,
+          householdSize: 3,
+          qualifyingChildren: 2,
+          stateCode,
+          benchmarkMonthlyPremium: 1200,
+        };
+        // A 5,000 step covers the same income range in 25 points rather than
+        // 121. Finiteness is a property of each point, not of how many there
+        // are, and the full 51 × 5 space at a fine step costs ~30,000 tax
+        // evaluations — enough to make the whole suite four times slower for no
+        // extra signal. The fine-grained sweep and the MAX_POINTS bound are
+        // exercised in the engine's own suite.
+        const sweep = sweepResources(input, cliff, { from: 0, to: 120_000, step: 5_000 });
+
+        // The bound is proven, not hoped for (SPEC-3 §2.7).
+        expect(
+          sweep.points.length,
+          `${stateCode}/${filingStatus} exceeded the bound`,
+        ).toBeLessThanOrEqual(MAX_POINTS);
+        expect(sweep.points.length).toBeGreaterThan(0);
+
+        for (const point of sweep.points) {
+          for (const [key, value] of Object.entries(point)) {
+            if (typeof value === "number" && !Number.isFinite(value)) {
+              bad.push(`${stateCode}/${filingStatus}: ${key} at ${point.grossIncome}`);
+            }
+          }
+        }
+        // The derived analyses that read the sweep must stay finite too — a
+        // cliff's depth is the figure the tile puts in front of the reader.
+        for (const cliff of findCliffs(sweep.points)) {
+          if (!Number.isFinite(cliff.depth) || !Number.isFinite(cliff.width)) {
+            bad.push(`${stateCode}/${filingStatus}: cliff at ${cliff.startIncome}`);
+          }
+        }
+        const reality = marginalReality(38_000, 1_000, input, cliff);
+        for (const [key, value] of Object.entries(reality)) {
+          if (typeof value === "number" && !Number.isFinite(value)) {
+            bad.push(`${stateCode}/${filingStatus}: marginalReality.${key}`);
+          }
+        }
+      }
+    }
+    expect(bad).toEqual([]);
+  }, 60_000);
+
+  it("never reports resources that contradict their own components", () => {
+    // The identity the whole chart rests on. Checked in every jurisdiction,
+    // because a state tax term is what varies across them.
+    for (const stateCode of data.stateCodes()) {
+      const sweep = sweepResources(
+        {
+          filingStatus: "head_of_household",
+          householdSize: 3,
+          qualifyingChildren: 2,
+          stateCode,
+          benchmarkMonthlyPremium: 1200,
+        },
+        cliffDataFor(stateCode),
+        { from: 0, to: 60_000, step: 10_000 },
+      );
+      for (const p of sweep.points) {
+        expect(p.totalResources, `${stateCode} at ${p.grossIncome}`).toBeCloseTo(
+          p.netAfterTax + p.credits + p.acaPremiumCredit + p.snapAllotment,
+          6,
+        );
+      }
+    }
   });
 });

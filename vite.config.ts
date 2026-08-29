@@ -177,6 +177,20 @@ export default defineConfig({
     environment: "happy-dom",
     include: ["tests/**/*.test.ts", "src/**/*.test.ts"],
     globals: false,
+    /**
+     * Vitest's 5s default was written for a suite of unit tests. This one now
+     * mounts all 68 calculators through axe-core and sweeps the benefit-cliff
+     * engine across 51 jurisdictions × 5 filing statuses, and those run in
+     * parallel with everything else — so a test doing real work can pass alone
+     * and time out under contention. That failure says nothing about the code,
+     * and a gate that fails at random is a gate people stop reading.
+     *
+     * 20s is still far below anything a genuine hang would need: the runaway
+     * loops this suite guards against would never finish, and the no-hang
+     * property is separately measured in a real browser by the Playwright
+     * robustness sweep.
+     */
+    testTimeout: 20_000,
     // The app runs in the browser, where mammoth resolves its `browser` package
     // field (an arrayBuffer-based unzip). Node's vitest resolver would otherwise
     // pull mammoth's Node build (which wants a Buffer), so the .docx extraction
