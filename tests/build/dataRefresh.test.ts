@@ -366,6 +366,28 @@ describe("adapters: the federal standard deduction (IRS revenue procedure)", () 
   it("fails (-> alert) when the table cannot be found at all", () => {
     expect(adapter.parse("no dollar figures in this layout", current).ok).toBe(false);
   });
+
+  it("also serves the states that conform to the federal deduction", () => {
+    // DC, New Mexico, Montana and North Dakota do not publish a standard
+    // deduction — they use the federal one, which their own shard notes say.
+    // Their adapters had been asking a state DOR page for a figure that page
+    // was never going to state; the revenue procedure is their actual source.
+    for (const id of [
+      "state-dc-income-tax-2024",
+      "state-nm-income-tax-2024",
+      "state-mt-income-tax-2024",
+      "state-nd-income-tax-2024",
+    ]) {
+      const conformity = ADAPTERS.find((a) => a.id === id)!;
+      expect(conformity.sourceUrl).toContain("rp-25-32");
+      const result = conformity.parse(raw, readShard(`${id}.json`));
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const sd = result.shard.standardDeductionByFilingStatus as Record<string, number>;
+      expect(sd).toEqual({ single: 16100, married_jointly: 32200, head_of_household: 24150 });
+      expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+    }
+  });
 });
 
 describe("adapters: state income tax (NY, the per-state template)", () => {

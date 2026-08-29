@@ -1377,9 +1377,13 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-dc-income-tax-2024",
     group: "state-dc",
     source: "DC Office of Tax and Revenue individual income tax rates",
-    sourceUrl: "https://otr.cfo.dc.gov/page/dc-individual-and-fiduciary-income-tax-rates",
+    // A federal-conformity deduction: this state does not publish a standard
+    // deduction, it uses the federal one, so the IRS revenue procedure is its
+    // source and its own DOR page never stated the figure this adapter was
+    // asking that page for. Rolls with the IRS refresh by construction.
+    sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     cadence: "Annual",
-    parse: parseStandardDeductions,
+    parse: parseIrsStandardDeductions,
   },
   {
     id: "state-pa-income-tax-2024",
@@ -1589,7 +1593,11 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-mt-income-tax-2024",
     group: "state-mt",
     source: "Montana Department of Revenue individual income tax (HB 337 two-rate schedule)",
-    sourceUrl: "https://revenue.mt.gov/taxes/individual-income-tax/",
+    // A federal-conformity deduction: this state does not publish a standard
+    // deduction, it uses the federal one, so the IRS revenue procedure is its
+    // source and its own DOR page never stated the figure this adapter was
+    // asking that page for. Rolls with the IRS refresh by construction.
+    sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     cadence: "Annual",
     // MT computes on federal taxable income (the conformity pattern), so its
     // standard deduction IS the federal one — it rolls with the IRS refresh, not a
@@ -1598,7 +1606,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     // (federal-conformity) standard deduction as the change-watch (the NM pattern);
     // the scheduled 2027 rate cut and the indexed thresholds stay the reviewer's
     // data-only step.
-    parse: parseStandardDeductions,
+    parse: parseIrsStandardDeductions,
   },
   {
     id: "state-me-income-tax-2024",
@@ -1620,7 +1628,11 @@ export const ADAPTERS: RefreshAdapter[] = [
     group: "state-nd",
     source:
       "North Dakota Office of State Tax Commissioner individual income tax (SB 2034 three-band schedule)",
-    sourceUrl: "https://www.tax.nd.gov/individual-income-tax",
+    // A federal-conformity deduction: this state does not publish a standard
+    // deduction, it uses the federal one, so the IRS revenue procedure is its
+    // source and its own DOR page never stated the figure this adapter was
+    // asking that page for. Rolls with the IRS refresh by construction.
+    sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     cadence: "Annual",
     // ND computes on federal taxable income (the conformity pattern), so its
     // standard deduction IS the federal one — it rolls with the IRS refresh, not a
@@ -1628,7 +1640,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     // (SB 2034); the per-status thresholds index annually. Anchor the
     // (federal-conformity) standard deduction as the change-watch (the MT pattern);
     // the indexed thresholds stay the reviewer's data-only step.
-    parse: parseStandardDeductions,
+    parse: parseIrsStandardDeductions,
   },
   {
     id: "state-vt-income-tax-2024",
@@ -1690,8 +1702,11 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-nm-income-tax-2024",
     group: "state-nm",
     source: "New Mexico Taxation & Revenue personal income tax rate schedules (standard deduction)",
-    sourceUrl:
-      "https://www.tax.newmexico.gov/all-nm-taxes/current-historic-tax-rates-overview/personal-income-tax-rates/",
+    // A federal-conformity deduction: this state does not publish a standard
+    // deduction, it uses the federal one, so the IRS revenue procedure is its
+    // source and its own DOR page never stated the figure this adapter was
+    // asking that page for. Rolls with the IRS refresh by construction.
+    sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     cadence: "Annual",
     // NM's six-rate schedule is statutory and fixed (HB 252, 2024; thresholds not
     // indexed) and differs by filing status — heads of household share the joint
@@ -1699,7 +1714,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     // standard deduction (the MN pattern); since NM's deduction is federal-
     // conformity it rolls with the IRS refresh, and the per-status bracket tables
     // stay the reviewer's data-only step on any HB 252 successor.
-    parse: parseStandardDeductions,
+    parse: parseIrsStandardDeductions,
   },
   {
     id: "state-de-income-tax-2024",
