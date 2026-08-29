@@ -2,7 +2,12 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { diffShards, decideOutcome, renderDiffLogEntry } from "../../scripts/refresh/contract";
-import { ADAPTERS, adaptersForGroup, REFRESH_GROUPS } from "../../scripts/refresh/adapters";
+import {
+  ADAPTERS,
+  adaptersForGroup,
+  REFRESH_GROUPS,
+  anchorFlatRate,
+} from "../../scripts/refresh/adapters";
 import { planRefresh, serializeShard, insertLogEntry } from "../../scripts/refresh/run";
 import {
   CpiSchema,
@@ -443,6 +448,43 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     const exemptions = result.shard.personalExemptionByFilingStatus as Record<string, number>;
     expect(exemptions.single).toBe(1000);
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("anchors a flat rate out of real agency prose, not a lab sentence", () => {
+    // Agencies do not write "the income tax rate is 4.95%". They write these.
+    expect(
+      anchorFlatRate("The Indiana Individual adjusted gross income tax rate for 2026 is 2.95%."),
+    ).toBe(2.95);
+    expect(
+      anchorFlatRate(
+        "Pennsylvania personal income tax is levied at the rate of 3.07 percent against taxable income.",
+      ),
+    ).toBe(3.07);
+    expect(
+      anchorFlatRate("The Georgia income tax rate has been reduced to a flat rate of 4.99%."),
+    ).toBe(4.99);
+    expect(anchorFlatRate("Nothing about rates here at all.")).toBe("none");
+  });
+
+  it("refuses rather than guess when a page states two different rates", () => {
+    // Bridging words between "rate" and the number is what makes real prose
+    // parse, and also what could let a page's OTHER rate through. An adapter
+    // that anchors the wrong figure is worse than one that anchors none, so
+    // disagreement routes to the fail-safe alert.
+    expect(
+      anchorFlatRate(
+        "The income tax rate for 2025 is 4.25%. The income tax rate for 2026 is 4.05%.",
+      ),
+    ).toBe("ambiguous");
+    // Agreement across several statements of the same rate is not ambiguity.
+    expect(
+      anchorFlatRate("The income tax rate is 4.95%. Illinois income tax rate: 4.95 percent."),
+    ).toBe(4.95);
+  });
+
+  it("rejects an implausible percentage before it can reach a shard", () => {
+    expect(anchorFlatRate("The income tax rate is 95%.")).toBe("none");
+    expect(anchorFlatRate("The income tax rate is 0%.")).toBe("none");
   });
 
   it("overlays the KY and ID flat rates (flat parser reused)", () => {

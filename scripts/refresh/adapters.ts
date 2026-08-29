@@ -356,17 +356,63 @@ function parseStandardDeductions(raw: string, current: Record<string, unknown>):
  * boundary as the standard-deduction parser. A plausibility guard rejects an
  * out-of-range percentage so a stray figure routes to the fail-safe alert.
  */
+/**
+ * Anchor the one income-tax rate a page states, or say why not.
+ *
+ * Real agency prose does not read "the income tax rate is 4.95%". It reads "The
+ * Indiana Individual adjusted gross income tax rate for 2026 is 2.95%" and
+ * "Pennsylvania personal income tax is levied at the rate of 3.07 percent" —
+ * the words "tax", "rate" and the number separated by a clause. So the pattern
+ * bridges a bounded run of characters between them, stopping at a sentence end
+ * or a percent sign so it can never reach across into a neighbouring figure.
+ *
+ * Bridging widens what matches, which is the danger: a page that also carries a
+ * sales-tax rate, an interest rate, or last year's income-tax rate could hand
+ * back a plausible wrong number, and an adapter that anchors the WRONG figure is
+ * far worse than one that anchors none. So this collects EVERY match and refuses
+ * unless they all agree. Disagreement routes to the fail-safe alert and a human,
+ * which is the same posture the rest of the pipeline takes.
+ */
+export function anchorFlatRate(raw: string): number | "none" | "ambiguous" {
+  const patterns = [
+    // "income tax rate for 2026 is 2.95%", "income tax rate is 4.95%"
+    /income[- ]?tax\s+rate[^.;%]{0,48}?([\d.]+)\s*(?:percent|%)/gi,
+    // "personal income tax is levied at the rate of 3.07 percent"
+    /income[- ]?tax\b[^.;%]{0,60}?\brate\s+of\s+([\d.]+)\s*(?:percent|%)/gi,
+    // "a flat 3.07% tax"
+    /\b([\d.]+)\s*(?:percent|%)\s+flat\b/gi,
+    // "flat rate of 4.99%"
+    /\bflat\s+rate\s+of\s+([\d.]+)\s*(?:percent|%)/gi,
+  ];
+  const found = new Set<number>();
+  for (const pattern of patterns) {
+    for (const match of raw.matchAll(pattern)) {
+      const value = Number(match[1]);
+      if (Number.isFinite(value) && value > 0 && value <= 15) found.add(value);
+    }
+    // Patterns are ordered most- to least-specific. The first that matches at
+    // all decides, so a precise phrasing is never diluted by a looser one
+    // elsewhere on the page.
+    if (found.size > 0) break;
+  }
+  if (found.size === 0) return "none";
+  if (found.size > 1) return "ambiguous";
+  return [...found][0]!;
+}
+
 function parseFlatRateJurisdiction(raw: string, current: Record<string, unknown>): ParseOutcome {
-  const rateMatch =
-    /income[- ]?tax rate(?:\s+(?:is|of))?\s*:?\s*([\d.]+)\s*(?:percent|%)/i.exec(raw) ??
-    /\btax rate(?:\s+(?:is|of))?\s*:?\s*([\d.]+)\s*(?:percent|%)/i.exec(raw) ??
-    /\b([\d.]+)\s*(?:percent|%)\s+flat\b/i.exec(raw);
-  if (!rateMatch) {
+  const percent = anchorFlatRate(raw);
+  if (percent === "none") {
     return { ok: false, reason: "could not anchor the flat income-tax rate" };
   }
-  const percent = Number(rateMatch[1]);
+  if (percent === "ambiguous") {
+    return {
+      ok: false,
+      reason: "the page states more than one income-tax rate; refusing to guess which is current",
+    };
+  }
   if (!Number.isFinite(percent) || percent <= 0 || percent > 15) {
-    return { ok: false, reason: `anchored an implausible flat rate (${rateMatch[1]}%)` };
+    return { ok: false, reason: `anchored an implausible flat rate (${percent}%)` };
   }
   const rate = pctToRate(percent);
 
@@ -780,7 +826,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-ga-income-tax-2024",
     group: "state-ga",
     source: "Georgia Department of Revenue individual income tax",
-    sourceUrl: "https://dor.georgia.gov/taxes/taxes-individuals",
+    sourceUrl: "https://dor.georgia.gov/taxes/important-tax-updates",
     cadence: "Annual",
     parse: parseStandardDeductions,
   },
@@ -805,7 +851,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     group: "state-pa",
     source: "Pennsylvania DOR personal income tax (flat rate)",
     sourceUrl:
-      "https://www.pa.gov/agencies/revenue/forms-and-publications/pa-personal-income-tax-guide",
+      "https://www.pa.gov/agencies/revenue/resources/tax-types-and-information/personal-income-tax",
     cadence: "Annual",
     parse: parseFlatRateJurisdiction,
   },
@@ -853,7 +899,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-in-income-tax-2024",
     group: "state-in",
     source: "Indiana DOR individual income tax (flat rate + personal exemption)",
-    sourceUrl: "https://www.in.gov/dor/i-am-a/individual/",
+    sourceUrl: "https://www.in.gov/dor/resources/tax-rates-and-reports/rates-fees-and-penalties/",
     cadence: "Annual",
     parse: parseFlatRateJurisdiction,
   },
