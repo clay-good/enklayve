@@ -78,7 +78,8 @@ function evaluate(channel: FreeFilingChannel, input: FreeFilingInput): ChannelEl
   // is the branch most likely to be missed by someone reading the raw rules, so
   // it is stated explicitly rather than folded into a generic "eligible".
   const condition = channel.alsoQualifies.find(
-    (c) => (c === "disability" && input.disability) || (c === "limited-english" && input.limitedEnglish),
+    (c) =>
+      (c === "disability" && input.disability) || (c === "limited-english" && input.limitedEnglish),
   );
   if (channel.agiLimit !== null && agi > channel.agiLimit) {
     if (condition) {
@@ -112,10 +113,7 @@ function evaluate(channel: FreeFilingChannel, input: FreeFilingInput): ChannelEl
 }
 
 /** Which free filing channels this household can use, and why not for the rest. */
-export function freeFilingOptions(
-  input: FreeFilingInput,
-  data: FreeFilingData,
-): FreeFilingResult {
+export function freeFilingOptions(input: FreeFilingInput, data: FreeFilingData): FreeFilingResult {
   const evaluated = data.channels.map((c) => evaluate(c, input));
   const eligible = evaluated.filter((e) => e.eligible);
   return {

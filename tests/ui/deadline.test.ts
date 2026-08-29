@@ -79,7 +79,11 @@ describe("renderDeadlineList", () => {
   const list = renderDeadlineList(
     [
       { ...fixed, label: "Later", due: { on: "2026-12-01" } },
-      { ...fixed, label: "No trigger yet", due: { daysFromTrigger: 60, trigger: "coverage ended" } },
+      {
+        ...fixed,
+        label: "No trigger yet",
+        due: { daysFromTrigger: 60, trigger: "coverage ended" },
+      },
       { ...fixed, label: "Soonest", due: { on: "2026-09-03" } },
     ],
     OPTS,

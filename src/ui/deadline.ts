@@ -30,7 +30,12 @@ function formatIso(iso: string, locale: string): string {
 }
 
 /** The plain-English timing line: what is due, when, and how long is left. */
-function timingText(deadline: Deadline, asOf: string, locale: string, triggerDate?: string): string {
+function timingText(
+  deadline: Deadline,
+  asOf: string,
+  locale: string,
+  triggerDate?: string,
+): string {
   const status = deadlineStatus(deadline, asOf, triggerDate);
   const atLeast = deadline.isFloor ? "at least " : "";
 

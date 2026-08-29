@@ -63,7 +63,10 @@ function finite(value: number, fallback = 0): number {
 function categoryFor(id: string, data: BillTriageData): BillTriageCategory {
   const found = data.categories.find((c) => c.id === id);
   if (found) return found;
-  return data.categories.reduce((worst, c) => (c.rank > worst.rank ? c : worst), data.categories[0]!);
+  return data.categories.reduce(
+    (worst, c) => (c.rank > worst.rank ? c : worst),
+    data.categories[0]!,
+  );
 }
 
 /**
@@ -105,7 +108,11 @@ export function triageBills(
       position: i + 1,
       funded,
       short,
-      coverage: short.equals(Money.zero()) ? "full" : funded.equals(Money.zero()) ? "none" : "partial",
+      coverage: short.equals(Money.zero())
+        ? "full"
+        : funded.equals(Money.zero())
+          ? "none"
+          : "partial",
     };
   });
 

@@ -21,7 +21,11 @@ const CITATION: CitationData = {
   dateRetrieved: "2026-08-28",
 };
 
-const fixed = (on: string): Deadline => ({ label: "File the appeal", due: { on }, citation: CITATION });
+const fixed = (on: string): Deadline => ({
+  label: "File the appeal",
+  due: { on },
+  citation: CITATION,
+});
 const window60: Deadline = {
   label: "Elect COBRA coverage",
   due: { daysFromTrigger: 60, trigger: "the date coverage ended" },

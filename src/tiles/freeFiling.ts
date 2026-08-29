@@ -195,18 +195,26 @@ export function mountFreeFiling(ctx: TileContext): void {
   agiInput.addEventListener("input", recompute);
   ageInput.addEventListener("input", recompute);
 
-  const milBox = checkbox("Someone in the household is in the military community", fields.military, (v) => {
-    fields.military = v;
-    recompute();
-  });
+  const milBox = checkbox(
+    "Someone in the household is in the military community",
+    fields.military,
+    (v) => {
+      fields.military = v;
+      recompute();
+    },
+  );
   const disBox = checkbox("Someone filing has a disability", fields.disability, (v) => {
     fields.disability = v;
     recompute();
   });
-  const lepBox = checkbox("You'd rather get help in a language other than English", fields.limitedEnglish, (v) => {
-    fields.limitedEnglish = v;
-    recompute();
-  });
+  const lepBox = checkbox(
+    "You'd rather get help in a language other than English",
+    fields.limitedEnglish,
+    (v) => {
+      fields.limitedEnglish = v;
+      recompute();
+    },
+  );
 
   const tryExample = tryExampleButton(() => {
     fields = { ...EXAMPLE };
@@ -257,12 +265,18 @@ export const freeFilingTile: TileDefinition = {
   mount: mountFreeFiling,
   how: "Most households can file a federal return for nothing, and a great many pay anyway. That's not an accident: the paid products have the advertising budget, and the free ones have a .gov page and no marketing at all.\n\nThe rules are small and published, so this just applies them. An income ceiling for the guided software, a lower one for free in-person help, an age of 60 for the retirement-focused volunteers, and no ceiling at all for the plain electronic forms or for the military community. Two routes are easy to miss reading the raw rules: the in-person program is open to people with disabilities and to taxpayers who'd rather work in another language, regardless of the income guideline.\n\nOptions you don't qualify for are listed too, with the exact reason and how far off you are, so nothing looks quietly skipped. So are options the IRS has discontinued, so their absence reads as something we checked rather than a list we forgot to update.\n\nThese thresholds move every filing season, and each Free File partner adds criteria of its own, so treat this as the map and the official page as the territory.",
   resources: [
-    { label: "IRS Free File", url: "https://www.irs.gov/filing/irs-free-file-do-your-taxes-for-free" },
+    {
+      label: "IRS Free File",
+      url: "https://www.irs.gov/filing/irs-free-file-do-your-taxes-for-free",
+    },
     {
       label: "Find a free tax-prep site near you (VITA / TCE)",
       url: "https://www.irs.gov/individuals/free-tax-return-preparation-for-qualifying-taxpayers",
     },
-    { label: "MilTax, for the military community", url: "https://www.militaryonesource.mil/financial-legal/tax-resource-center/" },
+    {
+      label: "MilTax, for the military community",
+      url: "https://www.militaryonesource.mil/financial-legal/tax-resource-center/",
+    },
   ],
   related: [
     {
