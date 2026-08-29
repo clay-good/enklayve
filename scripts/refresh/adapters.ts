@@ -380,8 +380,16 @@ function parseFlatRateJurisdiction(raw: string, current: Record<string, unknown>
   let overlaid = 0;
   for (const status of Object.keys(brackets)) {
     const arr = brackets[status];
-    if (Array.isArray(arr) && arr.length === 1 && arr[0]) {
-      arr[0].rate = rate;
+    if (!Array.isArray(arr)) continue;
+    // A "flat" state is one with a single taxed rate. That is usually a
+    // one-element ladder, but Idaho's schedule puts a 0% band underneath its one
+    // rate (0% to $4,811 single, then 5.3% of the excess), and the rate is still
+    // the only thing this parser anchors. So overlay whenever exactly one bracket
+    // carries a non-zero rate, and leave the 0% band's threshold — which indexes
+    // on its own schedule — for the reviewer.
+    const taxed = arr.filter((b) => b && b.rate > 0);
+    if (taxed.length === 1 && taxed[0]) {
+      taxed[0].rate = rate;
       overlaid += 1;
     }
   }

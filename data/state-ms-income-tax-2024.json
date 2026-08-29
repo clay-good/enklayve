@@ -51,10 +51,11 @@
     "head_of_household": 8000
   },
   "citation": {
-    "sourceUrl": "https://www.dor.ms.gov/individual/individual-income-tax-frequently-asked-questions",
-    "sourceDocument": "Mississippi DOR, 4.0% flat tax on taxable income over $10,000 (2026); standard deduction $2,300/$4,600/$3,400, personal exemption $6,000/$12,000/$8,000",
+    "sourceUrl": "https://www.dor.ms.gov/general-information",
+    "sourceDocument": "Mississippi DOR Tax Rates — tax year 2026: 0% on the first $10,000, 4% on the excess (HB 1, 2025)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "Mississippi is on the statutory rate path HB 1 (2025) set, and the DOR publishes it year by year: the excess over $10,000 of taxable income is taxed at 4.4% for 2025, 4% FOR 2026, and 3.75% for 2027. The first $10,000 is taxed at 0% — the 3% and 4% brackets that once applied below it were eliminated for 2024 and forward. Mississippi then subtracts BOTH a standard deduction and a personal exemption, read from the DOR's tax-rates page and the Form 80-100 instructions: deduction $2,300 single and married filing separately, $4,600 married filing joint or combined, $3,400 head of family; exemption $6,000 single and MFS, $12,000 joint, $8,000 head of family. Worked example, single $60,000: taxable = 60,000 − 2,300 − 6,000 = $51,700; tax = 4%·(51,700 − 10,000) = $1,668.00. One structural detail is worth stating because it looks like an error otherwise. The $10,000 zero band is PER TAXPAYER, not per return: the DOR's computation worksheet has separate Taxpayer and Spouse columns and says 'if filing a combined return (both spouses work), each spouse can calculate their tax liability separately and add the results.' A two-earner couple therefore gets up to $20,000 at 0%. This engine models a single wage income, where one $10,000 band is correct; for a genuine two-earner couple it reads high by up to $400. Omitted at launch fidelity: the $1,500 additional head-of-family amount that feeds the dependent exemption, the $1,500 dependent exemption itself, the age-65 and blind exemptions, and Mississippi's credits. Mississippi levies no local income tax. Verified against the Mississippi DOR tax-rates page and the 2025 Form 80-100 instructions on 2026-08-29."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",

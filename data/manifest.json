@@ -400,10 +400,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-ms-income-tax-2024.json",
-      "sourceUrl": "https://www.dor.ms.gov/individual/individual-income-tax-frequently-asked-questions",
-      "sourceDocument": "Mississippi DOR, 4.0% flat tax on taxable income over $10,000 (2026); standard deduction $2,300/$4,600/$3,400, personal exemption $6,000/$12,000/$8,000",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "ea1222165e80b60722ed9c8ebbf2e1ed4cff3718dfa1e35f7ec966b035851a09"
+      "sourceUrl": "https://www.dor.ms.gov/general-information",
+      "sourceDocument": "Mississippi DOR Tax Rates — tax year 2026: 0% on the first $10,000, 4% on the excess (HB 1, 2025)",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "bf78d349c851edd53fabd8140e801ea333be6f66b99440c1e37c6d42566ce55d"
     },
     {
       "id": "state-id-income-tax-2024",
@@ -414,9 +414,9 @@
       "staleAfterYears": 2,
       "shard": "state-id-income-tax-2024.json",
       "sourceUrl": "https://tax.idaho.gov/taxes/income-tax/individual-income/individual-income-tax-rate-schedule/",
-      "sourceDocument": "Idaho State Tax Commission, 5.3% flat tax on Idaho taxable income (HB 40, 2025)",
-      "dateRetrieved": "2026-06-03",
-      "contentHash": "e2218fe49c952d54f0667f134a17ba8ca261a907d13899ec29057ed3ab6d1692"
+      "sourceDocument": "Idaho State Tax Commission Individual Income Tax Rate Schedule — 0% to $4,811 / $9,622, then 5.3% of the excess (HB 40, 2025)",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "14d8c44b754f3ee6ed20869b6bfc2b629dd1116eff0bcd21b7c4c286282214f9"
     },
     {
       "id": "state-ut-income-tax-2024",

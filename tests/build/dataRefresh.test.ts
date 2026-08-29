@@ -464,8 +464,18 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     );
     expect(idShard.ok).toBe(true);
     if (idShard.ok) {
-      const b = idShard.shard.bracketsByFilingStatus as Record<string, { rate: number }[]>;
-      expect(b.single![0]!.rate).toBe(0.053);
+      const b = idShard.shard.bracketsByFilingStatus as Record<
+        string,
+        { lowerBound: number; rate: number }[]
+      >;
+      // Idaho is not a one-element ladder: a 0% band sits under its single rate,
+      // so the flat parser anchors the one taxed bracket and leaves the band's
+      // threshold (which indexes separately) alone.
+      expect(b.single!.map((x) => [x.lowerBound, x.rate])).toEqual([
+        [0, 0],
+        [4811, 0.053],
+      ]);
+      expect(b.married_jointly![1]!.lowerBound).toBe(9622);
       expect(JurisdictionSchema.safeParse(idShard.shard).success).toBe(true);
     }
   });

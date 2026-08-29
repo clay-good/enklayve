@@ -12,18 +12,30 @@
     "single": [
       {
         "lowerBound": 0,
+        "rate": 0.0
+      },
+      {
+        "lowerBound": 4811,
         "rate": 0.053
       }
     ],
     "married_jointly": [
       {
         "lowerBound": 0,
+        "rate": 0.0
+      },
+      {
+        "lowerBound": 9622,
         "rate": 0.053
       }
     ],
     "head_of_household": [
       {
         "lowerBound": 0,
+        "rate": 0.0
+      },
+      {
+        "lowerBound": 9622,
         "rate": 0.053
       }
     ]
@@ -35,10 +47,10 @@
   },
   "citation": {
     "sourceUrl": "https://tax.idaho.gov/taxes/income-tax/individual-income/individual-income-tax-rate-schedule/",
-    "sourceDocument": "Idaho State Tax Commission, 5.3% flat tax on Idaho taxable income (HB 40, 2025)",
-    "sourceNote": "Idaho conforms to the federal standard deduction. The rate schedule's small 0% floor on the first ~$4,811 (single) / ~$9,622 (MFJ) of taxable income is omitted, so the figure errs slightly high (the conservative side for setting money aside); the 2026 floor is not yet published.",
+    "sourceDocument": "Idaho State Tax Commission Individual Income Tax Rate Schedule — 0% to $4,811 / $9,622, then 5.3% of the excess (HB 40, 2025)",
+    "sourceNote": "Idaho computes on Idaho taxable income, which starts from FEDERAL taxable income (the conformity pattern), so the federal standard deduction is the starting point and there is no separate Idaho deduction or exemption. HB 40 (2025) cut the rate to 5.3%, and Idaho Code §63-3024 is not quite flat: the Tax Commission's rate schedule carries a 0% BAND on the first slice of taxable income, then 5.3% OF THE AMOUNT OVER it. For the latest published year, 2025, the band runs to $4,811 for single and married filing separately and $9,622 for married jointly, head of household, and surviving spouse — exactly double, the ratio the statute fixes. The band is worth about $255 of tax to a single filer and $510 to a couple, which is why it is modeled rather than dropped; earlier versions of this shard omitted it. Worked example, single $60,000: federal taxable = 60,000 − 16,100 = $43,900; tax = 5.3%·(43,900 − 4,811) = $2,071.72. The band indexes annually and the Tax Commission's schedule page had not posted 2026 at retrieval (its latest year is 2025), so these are the latest-published figures — the same convention Arkansas, Connecticut, Kansas, Nebraska, Oregon and Vermont declare. Using the 2025 band slightly understates the 2026 one, so the figure errs a few dollars high, the conservative side. Omitted at launch fidelity: the grocery credit, the child tax credit, the retirement-benefits deduction, and Idaho's other credits. Idaho levies no local income tax. Verified against the Idaho State Tax Commission Individual Income Tax Rate Schedule on 2026-08-29.",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-03"
+    "dateRetrieved": "2026-08-29"
   },
   "effectiveDateRange": {
     "start": "2026-01-01",
