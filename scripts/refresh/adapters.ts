@@ -1603,7 +1603,12 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-ca-income-tax-2024",
     group: "state-ca",
     source: "California FTB tax-rate schedules",
-    sourceUrl: "https://www.ftb.ca.gov/file/personal/tax-calculator-tables-rates.asp",
+    // The deductions page, which states the chart. NOT the tax-calculator page
+    // (rate schedules, no deduction) and NOT the 2026 Form 540-ES instructions,
+    // which state the right figures in the wrong order — "$5,706 single or
+    // married/RDP filing separately $11,412 married/RDP filing jointly" — where
+    // a label-then-amount pattern reads single's deduction as $11,412.
+    sourceUrl: "https://www.ftb.ca.gov/file/personal/deductions/index.html",
     cadence: "Annual",
     parse: parseStandardDeductions,
   },

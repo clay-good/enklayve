@@ -19,7 +19,7 @@
     "right, and on 2026-08-29 nine adapters anchored the wrong number.",
     "",
     "Illinois, Arizona, Kentucky and Iowa joined on 2026-08-29, each dry-run to a",
-    "Illinois, Arizona, Kentucky, Iowa, the federal standard deduction, all three poverty-guideline regions, SNAP, the I-bond rates and the four federal-conformity states (DC, NM, MT, ND) joined on 2026-08-29, each dry-run to a no-op against its committed figures."
+    "The list grew from five to twenty-three on 2026-08-29, each addition dry-run to a no-op against its committed figures."
   ],
   "recordedOn": "2026-08-29",
   "knownAnchoring": [
@@ -30,6 +30,7 @@
     "fica-2024",
     "snap-fy2024-contiguous",
     "state-az-income-tax-2024",
+    "state-ca-income-tax-2024",
     "state-dc-income-tax-2024",
     "state-ia-income-tax-2024",
     "state-il-income-tax-2024",

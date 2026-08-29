@@ -425,6 +425,34 @@ describe("adapters: Utah (a source behind its own state's law)", () => {
   });
 });
 
+describe("adapters: California (the chart, not the sentence)", () => {
+  const adapter = adaptersForGroup("state-ca")[0]!;
+  const current = readShard("state-ca-income-tax-2024.json");
+
+  it("reads the FTB deduction chart", () => {
+    const raw =
+      "2025 Standard deduction amounts Filing status Enter on line 18 of your 540" +
+      " Single or married/Registered Domestic Partner (RDP) filing separately $5,706" +
+      " Married/RDP filing jointly, head of household, or qualifying widow(er) $11,412";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const sd = result.shard.standardDeductionByFilingStatus as Record<string, number>;
+    expect(sd).toEqual({ single: 5706, married_jointly: 11412, head_of_household: 11412 });
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("is not pointed at the Form 540-ES sentence, which states them backwards", () => {
+    // "$5,706 single or married/RDP filing separately $11,412 married/RDP filing
+    // jointly, head of household" is amount-then-label, and every pattern here
+    // is label-then-amount — so `single` reaches past its own figure to the
+    // next one and reads California's single deduction as $11,412. The chart
+    // states the same numbers the right way round.
+    expect(adapter.sourceUrl).toContain("/deductions/");
+    expect(adapter.sourceUrl).not.toContain("540-es");
+  });
+});
+
 describe("adapters: North Carolina (a table, then pages about itemizing)", () => {
   const adapter = adaptersForGroup("state-nc")[0]!;
   const current = readShard("state-nc-income-tax-2024.json");
