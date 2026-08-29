@@ -9,6 +9,7 @@ import { Router, permalinkFor, type Route } from "./router";
 import { donutChart, paletteVar, type Slice } from "./charts";
 import { CommandPalette } from "./commandPalette";
 import { renderReadout } from "./readoutView";
+import { staleBanner } from "./staleBanner";
 import { renderReport } from "./reportView";
 import { applyStoredPreferences } from "./theme";
 import { el, clear, option } from "./dom";
@@ -930,7 +931,8 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
     "Skip to content",
   );
 
-  root.replaceChildren(skipLink, header, content, footer);
+  const stale = staleBanner(data);
+  root.replaceChildren(skipLink, header, ...(stale ? [stale] : []), content, footer);
   document.body.append(palette.element);
 
   // Cmd/Ctrl-K toggles the palette from anywhere.

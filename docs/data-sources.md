@@ -46,3 +46,16 @@ Each shard has a sibling `.sha256` and an entry in the manifest. See [`adding-a-
 A refresh job fetches the source, parses it with a source-specific adapter, emits normalized JSON plus a content hash, appends a human-readable diff, and runs the full golden suite. It opens a PR **only if tests pass and values changed**; if a source 404s or fails schema validation it opens an *alert* PR that flips the affected rules into fail-safe mode rather than shipping a wrong number. Data is never auto-committed to `main` without passing the test gate. At runtime, a shard whose effective year is older than its refresh window — or whose hash fails — is marked **stale**, and the tiles that depend on it surface a "verify before relying" banner instead of presenting a number as current.
 
 This contract is implemented under [`scripts/refresh/`](../scripts/refresh/): a pure, unit-tested harness (`contract.ts`: the diff and the open-PR-vs-alert decision), the source adapters (`adapters.ts`: IRS, BLS CPI, SSA, HHS, the TreasuryDirect I-bond rates, USDA SNAP, CMS Medicaid, and **one adapter for every one of the 41 income-tax states + DC**, grouped by shape — standard-deduction parsers, flat-rate parsers, graduated bracket-table parsers (e.g. Ohio / Mississippi's "0% then a flat rate over a floor" schedule), and dedicated special-case parsers (Massachusetts's 5% base + 4% surtax, New Jersey's per-status schedule, Connecticut's recapture, and the rest) — each anchoring to known labels and flagging rather than guessing when a layout changes; the full roster is pinned by [`tests/build/dataRefresh.test.ts`](../tests/build/dataRefresh.test.ts)), and the runner (`run.ts`). With this set, **every seeded jurisdiction with an income tax has a refresh adapter, and every one of the 50 states + DC is modeled.** One GitHub Actions workflow per source group (`.github/workflows/refresh-*.yml`) runs on the cadence above and on manual dispatch, gates every data PR on the golden suite, and writes each change to the [source diff log](source-diff-log.md). The adapters refresh the committed figures in place; rolling a shard to a new effective year and transcribing a full bracket table remain the reviewer's data-only step on the resulting PR (see [`adding-a-state.md`](adding-a-state.md)).
+
+### The Pillar 4 source watch
+
+Six shards carry prose transcribed from statutes and government consumer pages rather than a table of figures: `bill-triage`, `free-filing`, `no-surprises`, `garnishment-limits`, `enrollment-windows`, and `life-events`. They are refreshed by **review, not by parsing**.
+
+`watch-pillar4-sources.yml` runs quarterly, fingerprints the visible text of each source (`scripts/refresh/source-watch.json` holds the last-reviewed fingerprint and the reason that shard cannot be auto-parsed), and opens an issue naming the shards whose sources moved. **It never edits a shard.** Auto-rewriting a sentence about what a federal protection covers, from a scraped page, is the failure this design exists to avoid.
+
+After reading a changed source and updating the shard by hand, refresh the fingerprint:
+
+```bash
+node scripts/refresh/watch-sources.ts --accept
+```
+

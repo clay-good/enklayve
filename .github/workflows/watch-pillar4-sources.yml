@@ -1,0 +1,56 @@
+# Source watch for the hand-authored Pillar 4 shards (SPEC-4 §10.7).
+#
+# The refresh-*.yml workflows fetch a source and parse figures out of it. That
+# is right for a bracket table and wrong for these six: they carry prose
+# transcribed from statutes and government consumer pages, and auto-rewriting
+# the site's most safety-critical sentences from a scraped page is precisely the
+# failure to avoid. So this job never edits a shard. It fingerprints each source
+# and opens an issue when one moved, asking a person to go re-read it.
+name: Watch Pillar 4 sources
+
+on:
+  schedule:
+    # Quarterly, on the 8th at 11:00 UTC. These sources change by amendment or
+    # program announcement rather than on an annual calendar, so a fixed date
+    # would miss them; a quarterly sweep catches a change within a season.
+    - cron: "0 11 8 1,4,7,10 *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - id: watch
+        run: node scripts/refresh/watch-sources.ts
+
+      # An issue, not a PR: there is no automated edit to review. The action a
+      # person takes is reading the source and deciding whether the shard's
+      # prose still says what the rule says.
+      - name: Open a review issue when a source moved
+        if: steps.watch.outputs.changed != '0' || steps.watch.outputs.unreachable != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const report = process.env.REPORT;
+            const title = `Pillar 4 source watch: ${process.env.CHANGED} source(s) changed`;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body: report,
+              labels: ["data-review"],
+            });
+        env:
+          REPORT: ${{ steps.watch.outputs.report }}
+          CHANGED: ${{ steps.watch.outputs.changed }}

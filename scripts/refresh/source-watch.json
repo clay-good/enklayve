@@ -1,0 +1,46 @@
+{
+  "entries": [
+    {
+      "shard": "no-surprises-2026",
+      "url": "https://www.cms.gov/medical-bill-rights",
+      "why": "The Act's scope is prose, not a table. Auto-rewriting which situations are protected from a scraped page would let the site's most consequential sentences change without a person reading them.",
+      "fingerprint": "4c1dc58a615c2ee52179a059d36ddd5a5817524112c6c4fcfadcba319a4c3694",
+      "checkedOn": "2026-08-29"
+    },
+    {
+      "shard": "garnishment-limits-2026",
+      "url": "https://www.law.cornell.edu/uscode/text/15/1673",
+      "why": "The shard is a transcription of statutory text. A statute changes by amendment, rarely and deliberately, and the change must be read rather than parsed.",
+      "fingerprint": "62859a1b2348e91a5e28aa42c750f19f94f7afed7d7930e3fd389eff24d1c92d",
+      "checkedOn": "2026-08-29"
+    },
+    {
+      "shard": "enrollment-windows-2026",
+      "url": "https://www.ecfr.gov/current/title-45/section-155.420",
+      "why": "Eleven clocks across four titles of the CFR, each cited to its own section. A missed enrollment window costs a household its coverage, so a human reads every change.",
+      "fingerprint": "41a3fa019d6b7c9ee7abe4239c40c7b7f51a75a44790be5afa4a1c134e0c5eec",
+      "checkedOn": "2026-08-29"
+    },
+    {
+      "shard": "free-filing-2026",
+      "url": "https://www.irs.gov/filing/irs-free-file-do-your-taxes-for-free",
+      "why": "Channel availability and eligibility change by program announcement, not on a schedule — and an absence (Direct File in 2026) is itself a recorded fact.",
+      "fingerprint": "50272ab09bcc927af50af34b6d463ca5d30a8783899df4c3cfe143fcc16fadbf",
+      "checkedOn": "2026-08-29"
+    },
+    {
+      "shard": "bill-triage-2026",
+      "url": "https://www.consumerfinance.gov/consumer-tools/educator-tools/your-money-your-goals/toolkit/",
+      "why": "The ordering framing and consequence language come from the CFPB's own tool. A change there is a reason to re-read the ordering, not to rewrite it automatically.",
+      "fingerprint": "eb2aca684f91aa079df24661b7c04b330153a9bbb7a7351a8924a56b34a47f2e",
+      "checkedOn": "2026-08-29"
+    },
+    {
+      "shard": "life-events-2026",
+      "url": "https://www.healthcare.gov/sep-list/",
+      "why": "The qualifying events that open a special enrollment period. The sequence ordering is editorial; this watches the list it is grounded in.",
+      "fingerprint": "71bcd93cc7225fc2f49ee9d9dce988470353e0ee5e158850aac13d5575462e41",
+      "checkedOn": "2026-08-29"
+    }
+  ]
+}

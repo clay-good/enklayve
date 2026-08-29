@@ -58,6 +58,15 @@ function basename(path: string): string {
 /** Typed, gated accessors over the bundled datasets for the tiles. */
 export interface BundledData {
   readonly manifest: LoadedManifest;
+  /**
+   * Datasets whose effective year has fallen outside their staleness window.
+   * The loader has always computed this; nothing consumed it, so a shard could
+   * pass its window and keep rendering as though it were current. It matters
+   * most for the Pillar 4 shards pinned at `staleAfterYears: 0` — a COBRA
+   * election window or a garnishment ceiling is exactly the figure that must
+   * degrade loudly rather than quietly (SPEC-3 §2.5, SPEC-4 §10.5).
+   */
+  staleDatasets(): { id: string; effectiveYear: number }[];
   federal(): Jurisdiction | null;
   fica(): FicaData | null;
   /** IRS retirement / HSA / FSA contribution limits (BUILD-SPEC.md §3.4). */
@@ -146,6 +155,10 @@ async function build(): Promise<BundledData> {
 
   return {
     manifest: loaded,
+    staleDatasets: () =>
+      loaded.datasets
+        .filter((d) => d.status === "stale")
+        .map((d) => ({ id: d.id, effectiveYear: d.effectiveYear })),
     federal: () => dataOf("federal-income-tax-2024") as Jurisdiction | null,
     fica: () => dataOf("fica-2024") as FicaData | null,
     retirementLimits: () => dataOf("retirement-limits-2024") as RetirementLimitsData | null,

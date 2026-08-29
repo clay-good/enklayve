@@ -1102,6 +1102,30 @@ body {
 .cc-ask li {
   margin-bottom: 0.35rem;
 }
+/* The site-wide staleness banner. Warn-coloured and above the content on every
+   view, because a dataset past its window must never render a figure that looks
+   as current as the rest (SPEC-3 §2.5, SPEC-4 §10.5). */
+.stale-banner {
+  margin: 0 auto;
+  /* Matches the `.content` column exactly, so the banner lines up with the
+     text it is warning about at every width. */
+  max-width: 64rem;
+  width: 100%;
+  padding: 0.8rem 1.1rem;
+  border: 1px solid var(--enk-warn);
+  border-radius: var(--enk-radius);
+  background: color-mix(in srgb, var(--enk-warn) 12%, var(--enk-surface));
+  color: var(--enk-text);
+  line-height: 1.55;
+  /* The banner is a sibling of `.content`, outside its `overflow-x: clip`, so
+     it takes the same horizontal padding guarantee the content column has. */
+  padding-left: max(1.1rem, env(safe-area-inset-left));
+  padding-right: max(1.1rem, env(safe-area-inset-right));
+}
+.stale-banner strong {
+  color: var(--enk-warn);
+}
+
 /* The Standing Ledger recompute diff (SPEC-4-ledger §3). "Nothing changed" is
    the common case and is styled as reassurance, not as an empty state. */
 .ledger {

@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **63** in **10 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **78**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | **1,239** unit/golden across 83 files, **+23** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | **1,261** unit/golden across 85 files, **+23** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale/theme preference touches `localStorage`, asserted end-to-end across a full session | `npm run audit` / `npm run test:e2e` |
 | UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
@@ -558,7 +558,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**1,239 unit/golden tests across 83 files** (plus 23 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**1,261 unit/golden tests across 85 files** (plus 23 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -732,7 +732,14 @@ The Playwright live-offline + responsiveness e2e suite, previously deferred, now
 
   **"Nothing changed" is a first-class result** and renders as one calm line of reassurance, not an empty state. It is also the common one, which is the point.
 
-  What a snapshot may never hold — a document, a name, an SSN, an account number, anything extracted but unconfirmed — is enforced by a **`.strict()` Zod schema rather than a convention**: an unrecognized key fails the import whole, including one smuggled inside a watched answer or a deadline, and tests prove it. Viewing a diff loads the snapshot into a *temporary* store, so it never quietly overwrites My Situation. And **Phase 24 adds no persistence at all**: a new e2e walks a full session and reads back `localStorage`, `sessionStorage`, cookies, and IndexedDB, asserting the locale/theme key is the only thing there. **Path 2 — "remember on this device" — stays deferred**, because widening a privacy gate should be paid for with evidence that users actually lose snapshots on the carried-file path, not with the observation that it would be more convenient. Dated, ordered checklists for job loss, death, divorce, disability, a new child, and moving states. Split out from Phase 20 on purpose: it turns on the COBRA, ACA special-enrollment, Medicare, and per-program appeal windows, which are the highest-harm numbers on the site and deserve their own sourcing pass against live published regulations.
+  What a snapshot may never hold — a document, a name, an SSN, an account number, anything extracted but unconfirmed — is enforced by a **`.strict()` Zod schema rather than a convention**: an unrecognized key fails the import whole, including one smuggled inside a watched answer or a deadline, and tests prove it. Viewing a diff loads the snapshot into a *temporary* store, so it never quietly overwrites My Situation. And **Phase 24 adds no persistence at all**: a new e2e walks a full session and reads back `localStorage`, `sessionStorage`, cookies, and IndexedDB, asserting the locale/theme key is the only thing there. **Path 2 — "remember on this device" — stays deferred**, because widening a privacy gate should be paid for with evidence that users actually lose snapshots on the carried-file path, not with the observation that it would be more convenient.
+- ✅ **Phase 25 — closing SPEC-4's own acceptance criteria** (shipped). Auditing the spec against the code turned up two gaps, one of them consequential.
+
+  **The staleness banner did not exist.** The loader had always gated each shard on its staleness window and marked the ones that lapsed — and *nothing consumed the flag*, so a dataset past its window kept producing figures that looked exactly as current as everything else. That is the failure the window exists to prevent, and it would have landed first on the six Pillar 4 shards deliberately pinned at `staleAfterYears: 0`, where the figures are a COBRA election period and a garnishment ceiling. There is now a site-wide banner above the content on every view. It **names** the lapsed datasets rather than gesturing at "some data", and it renders nothing at all in the healthy case — a warning that cries wolf is a warning people learn to skip.
+
+  **The Pillar 4 shards needed a refresh workflow, and the right one is a review.** The existing `refresh-*.yml` jobs fetch a source and parse the figures out of it, which is correct for a bracket table and wrong for a shard carrying what the No Surprises Act protects or what a benefits notice must tell you — auto-rewriting the site's most safety-critical sentences from a scraped page is exactly the failure to avoid. So [`watch-pillar4-sources.yml`](.github/workflows/watch-pillar4-sources.yml) fingerprints the **visible text** of each source quarterly and opens an issue naming the shards whose sources moved. It never edits a shard. Markup churn does not register, a change to the words does, and an unreachable source is reported separately — "we could not check" and "nothing moved" are different facts. All six baselines were fetched live, not assumed.
+
+  Also landed: a test asserting that every deadline the site can render carries a source link and that a *ceiling* is never rendered with the "at least" wording reserved for a floor — run over the real shard, so a window added later without a citation fails here. Dated, ordered checklists for job loss, death, divorce, disability, a new child, and moving states. Split out from Phase 20 on purpose: it turns on the COBRA, ACA special-enrollment, Medicare, and per-program appeal windows, which are the highest-harm numbers on the site and deserve their own sourcing pass against live published regulations.
 
 ---
 
