@@ -19,14 +19,14 @@ See [docs/specs/SPEC.md](docs/specs/SPEC.md) (the vision + Phases 0–11), [docs
 
 ### By the numbers
 
-A verifiable snapshot — every figure here is reproducible from the repo, not marketing. The counts are **checked by a test** ([`tests/build/readmeCounts.test.ts`](tests/build/readmeCounts.test.ts)) that reads them out of this file and compares them against the registry, the manifest, and the build's own page list, so a claim here cannot drift from the code that backs it.
+A verifiable snapshot — every figure here is reproducible from the repo, not marketing. Every repo-relative link in every markdown file is checked too — a claim you can click into is checkable, one you cannot is marketing. The counts are **checked by a test** ([`tests/build/readmeCounts.test.ts`](tests/build/readmeCounts.test.ts)) that reads them out of this file and compares them against the registry, the manifest, and the build's own page list, so a claim here cannot drift from the code that backs it.
 
 | Metric | Value | Where to check |
 |---|---|---|
 | Deterministic calculators | **68** in **12 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **80**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | **2,004** unit/golden across 88 files, **+25** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | **2,007** unit/golden across 88 files, **+25** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale/theme preference touches `localStorage`, asserted end-to-end across a full session | `npm run audit` / `npm run test:e2e` |
 | UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
@@ -559,7 +559,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**2,004 unit/golden tests across 88 files** (plus 25 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**2,007 unit/golden tests across 88 files** (plus 25 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 

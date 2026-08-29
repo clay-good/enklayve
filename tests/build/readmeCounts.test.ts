@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { resolve, join } from "node:path";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { resolve, join, dirname, normalize } from "node:path";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
 import { toolPages } from "../../scripts/tool-pages";
 import { ManifestSchema } from "../../src/data/schemas";
@@ -123,5 +123,72 @@ describe("the README's counts are reproducible from the repo", () => {
   it("counts a crawlable page for every hub and every calculator", () => {
     // The page count is only meaningful if it is what the build actually emits.
     expect(toolPages().length).toBe(TILES.length + SUB_TOOLS.length);
+  });
+});
+
+/**
+ * Every link the docs make to a file in this repo resolves.
+ *
+ * The README alone points at ~250 paths — engine modules, tiles, tests,
+ * datasets, workflows — and that is the whole reason it is credible: a claim
+ * you can click into is checkable, and one you cannot is marketing. A link to a
+ * file that has been renamed or deleted is the same silent rot as a rotted
+ * external link, which is already checked monthly. Two of the specs referenced
+ * tiles that had been retired before this test existed.
+ */
+describe("every internal doc link resolves", () => {
+  function markdownFiles(dir: string): string[] {
+    const out: string[] = [];
+    for (const name of readdirSync(dir)) {
+      if (["node_modules", ".git", "dist", "playwright-report", "test-results"].includes(name)) {
+        continue;
+      }
+      const p = join(dir, name);
+      if (statSync(p).isDirectory()) out.push(...markdownFiles(p));
+      else if (name.endsWith(".md")) out.push(p);
+    }
+    return out;
+  }
+
+  // `](path)` or `](path#anchor)`, skipping external and mail links.
+  const LINK = /\]\(([^)#\s]+)(?:#[^)]*)?\)/g;
+
+  const files = markdownFiles(ROOT);
+
+  it("finds the docs it is supposed to be checking", () => {
+    expect(files.length).toBeGreaterThan(5);
+    expect(files.some((f) => f.endsWith("README.md"))).toBe(true);
+  });
+
+  it("resolves every repo-relative link in every markdown file", () => {
+    const broken: string[] = [];
+    let checked = 0;
+    for (const file of files) {
+      const text = readFileSync(file, "utf8");
+      for (const match of text.matchAll(LINK)) {
+        const target = match[1]!;
+        if (/^(https?:|mailto:|\/\/)/.test(target)) continue;
+        checked += 1;
+        const resolved = normalize(join(dirname(file), target));
+        if (!existsSync(resolved)) {
+          broken.push(`${file.slice(ROOT.length + 1)} -> ${target}`);
+        }
+      }
+    }
+    // A pattern that matches nothing is a check switched off by a reword.
+    expect(checked, "no repo-relative links found — is the pattern still right?").toBeGreaterThan(
+      100,
+    );
+    expect(broken).toEqual([]);
+  });
+
+  it("would catch a link to a file that does not exist", () => {
+    // Guards the guard: without this, a regex change that silently stops
+    // matching would leave the suite green and the links unchecked.
+    const target = "src/tiles/thisTileWasDeleted.ts";
+    expect(existsSync(join(ROOT, target))).toBe(false);
+    const sample = `See [the tile](${target}) for details.`;
+    const found = [...sample.matchAll(LINK)].map((m) => m[1]);
+    expect(found).toEqual([target]);
   });
 });
