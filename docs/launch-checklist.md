@@ -1,6 +1,6 @@
 # Launch checklist
 
-A single pass that confirms every acceptance criterion across Phases 0–17 still holds, plus the launch-specific gates (offline, audit, crawlability, clean deploy). Run it before announcing. Each box is either a command to run or a thing to verify; the commands are the same gate CI runs.
+A single pass that confirms every acceptance criterion across **Phases 0–26** still holds — [SPEC](specs/SPEC.md) 0–11, [SPEC-2](specs/SPEC-2.md) 12–17, [SPEC-3](specs/SPEC-3.md)'s trust pass, and [SPEC-4](specs/SPEC-4.md)'s Pillar 4 (18–24) plus the two closing passes — along with the launch-specific gates (offline, audit, crawlability, clean deploy). Run it before announcing. Each box is either a command to run or a thing to verify; the commands are the same gate CI runs.
 
 ## The automated gate (must all be green)
 
@@ -12,10 +12,20 @@ npm run test          # unit + golden corpus + axe accessibility
 npm run build
 npm run audit         # CSP, no cross-origin loads, provenance, no sensitive persistence
 npm run deploy:dry
+npm run test:e2e      # Playwright, its own CI job
+```
+
+Two more run on a schedule rather than per-commit, because they need the network and a flaky government site must not fail a build:
+
+```sh
+npm run check:links                        # every external link, monthly
+node scripts/refresh/watch-sources.ts      # the hand-authored Pillar 4 sources, quarterly
 ```
 
 - [ ] `format:check`, `lint`, `typecheck` all clean.
-- [ ] `test` green, including the tax-engine golden corpus, the bounds/fuzz invariants, and the axe sweep (home, About, All Tools, Readout, Report, and every tile form) with **zero violations**.
+- [ ] `test` green, including the tax-engine golden corpus, the bounds/fuzz invariants, and the axe sweep with **zero violations** — home, About, All Tools, Readout, Report, and **every calculator and hub, the roster derived from the registry** rather than a hand-kept list ([`catalogInvariants.test.ts`](../tests/ui/catalogInvariants.test.ts)).
+- [ ] The same catalog sweep is green on its other invariants: no tile throws or paints a non-finite value for a hostile *deep link* (a separate path from the form inputs the e2e drives), every enum param falls back to a value the reader can see, and every tile clears the bar — worked example, "how this works", "Learn more", deep-linkable state.
+- [ ] `check:links` reports **0 broken and 0 redirected**. A redirect is not a pass: agencies reuse article ids, so an old link can land on a page that is authoritative and about something else.
 - [ ] `build` produces `dist/`; `deploy:dry` succeeds.
 - [ ] `audit` passes: `connect-src 'none'` on pages, no cross-origin loads in `index.html`, every dataset shard cited, `localStorage` touched only by the theme/locale boundary.
 
@@ -34,7 +44,7 @@ npm run deploy:dry
 
 ## Accessibility (Phase 4, SPEC §11)
 
-- [ ] axe-core: zero violations across all views (in CI).
+- [ ] axe-core: zero violations across all views, all 68 calculators, and all 12 hubs (in CI).
 - [ ] Full keyboard navigation; visible focus; modals are never traps (Close + Done + Escape + click-outside) and restore focus to the prior element on dismiss. A skip-to-content link (WCAG 2.4.1) is the first focusable element and focuses `<main>` directly; focus moves into the content region after each route change.
 - [ ] Reduced-motion preference is respected (count-up and hover transitions).
 - [ ] The single calm light theme is legible throughout (the dark and high-contrast themes and the toggle were retired 2026-06-01 for the simplest default); red used only for genuine warnings.
@@ -54,6 +64,15 @@ npm run deploy:dry
 - [ ] One workflow per source group (`.github/workflows/refresh-*.yml`) runs on its §7.2 cadence and on manual dispatch (IRS, BLS CPI, SSA, HHS, USDA SNAP, CMS Medicaid, the TreasuryDirect I-bond rates, the standard-deduction states CA / NY / GA / NC / DC / VA / MN / KS / DE / NM / RI / SC / OK / WI / HI / MT / ME / ND / VT (the adapter anchors the standard deduction — for SC, the statutory SCIAD base amounts; for OK, the frozen §2358 amounts while a trigger-based rate cut is the reviewer's step; for WI, the indexed sliding-deduction maximum; for HI, the Act 46 amounts; for MT, the federal-conformity deduction with the scheduled 2027 rate cut the reviewer's step; for ME, the indexed deduction with its phase-out thresholds and the per-status brackets the reviewer's step; for ND, the federal-conformity deduction (the MT pattern) with the independently-indexed per-status 1.95%/2.50% thresholds the reviewer's step; for VT, the indexed standard deduction (the RI pattern) with its per-status bracket tables and the $5,300 exemption the reviewer's step; VA's and KS's brackets are statutory, DE's brackets and standard deduction are both statutory so its adapter is a pure change-watch, NM's six-rate per-status schedule is statutory (HB 252) with a federal-conformity deduction that rolls with the IRS refresh, while MN's index in lockstep with the deduction, so their per-status / statutory bracket tables roll alongside as the reviewer's data-only step), the flat-rate states PA / IL / MI / AZ / CO / IN / KY / ID / UT / LA / IA (the rate anchored by the same flat parser; Utah's taxpayer-credit base amounts and Louisiana's inflation-indexed standard deduction roll as the reviewer's data-only step, and Iowa's federal-conformity deduction rolls with the IRS refresh), the graduated states OH / MO / MS / WV (MO's eight uniform tiers and WV's five — its 2026 5% cut over a uniform schedule with no standard deduction and a $2,000 exemption — anchored by the same graduated parser; MO's federal-conformity standard deduction rolls with the IRS refresh, and a future WV trigger-based cut is the reviewer's data-only step), the special-case NJ (the one state whose tiers differ by filing status — a dedicated parser anchors its live top "millionaire's" rate and $1M threshold), the special-case MA — its dedicated parser anchors the 5% base rate and the inflation-adjusted surtax threshold — the two federal-tax-deduction states AL / OR (the standard-deduction parser anchors the deduction maximums; for AL, the Form 40 chart maximums while the per-$500 reduction steps, the $2,500/$5,000 floors, and the uncapped federal-tax deduction are statutory, the reviewer's data-only step; for OR, the indexed standard deduction while the per-status bracket tables, the $8,500 federal-subtraction cap, and the OR-40 Table 4 phase-out roll alongside it as the reviewer's step), NE (the standard-deduction parser anchors the indexed deduction; the per-status three-bracket schedule, the statutory LB 754 rate path — 4.55% for 2026, 3.99% for 2027 — and the ~$171 exemption credit are the reviewer's data-only step), MD (the standard-deduction parser anchors the fixed $3,350/$6,700 deduction the 2025 session set; the per-status ten-rate state schedule, the 24-county local-rate chart — including the Anne Arundel / Frederick income-tiered schedules — and the $3,200 exemption are the reviewer's data-only step on each new Comptroller withholding memo), AR (the standard-deduction parser anchors the indexed $2,470/$4,940 deduction; the uniform 0/2/3/3.4/3.9% brackets, the high-income bracket-adjustment recapture band/amount, and the $29 personal credit are the reviewer's data-only step on each new AR1000F), and CT (the standard-deduction parser anchors the personal exemption; the seven-rate schedule, the per-status recapture stages (Tables C/D), and the Table E personal-credit steps are the reviewer's data-only step on each new CT-1040 Tax Calculation Schedule). **Every seeded income-tax jurisdiction now has a refresh adapter, and every one of the 50 states + DC is modeled.**
 - [ ] A refresh opens a data PR only when values changed **and** the full golden suite passes; a fetch/parse failure opens a fail-safe alert PR instead; nothing is auto-committed to `main`.
 - [ ] Each change is recorded in [`source-diff-log.md`](source-diff-log.md) with old-to-new values. (Repo setting: "Allow GitHub Actions to create and approve pull requests" must be enabled.)
+- [ ] The six hand-authored Pillar 4 shards are refreshed by **review, not by parsing** ([`watch-pillar4-sources.yml`](../.github/workflows/watch-pillar4-sources.yml)): the job fingerprints each source's visible text and opens an issue when one moved. It never edits a shard — auto-rewriting a sentence about what a federal protection covers, from a scraped page, is the failure that design exists to avoid.
+- [ ] A shard past its staleness window raises the **site-wide banner** above the content on every view, naming the lapsed datasets. The six Pillar 4 shards are pinned at `staleAfterYears: 0`, so they lapse the moment their year turns.
+
+## Pillar 4, "Rough Water" (SPEC-4, Phases 18–24)
+
+- [ ] `checkHarmTier` passes over the real catalog: every tile that declares a harm tier clears its bar — a tier-3 screener names free channels to act through, and a tier-2 or tier-3 tile carries the advice line. The gate binds **any** tile that declares a tier, not only tiles in the `rough` pillar.
+- [ ] Every deadline on the site renders through `renderDeadline`, carries the citation the type makes non-optional, and is counted from an `asOf` the user sets — never `Date.now()`. A floor renders as "at least"; a ceiling never does.
+- [ ] The Readout answers in the four-part shape for every kind, every check states its false-positive case, a `rule` check is dropped rather than rendered if it reaches the screen uncited, and OCR-sourced text runs zero rule checks.
+- [ ] The Standing Ledger round-trips exactly, plain and encrypted, and **a user who never exports sees no new persisted state** — asserted end-to-end across a full session against `localStorage`, `sessionStorage`, cookies, and IndexedDB.
 
 ## Content & correctness
 
