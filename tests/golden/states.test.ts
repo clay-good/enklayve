@@ -643,61 +643,102 @@ describe("West Virginia (uniform five-bracket schedule, no standard deduction, $
   });
 });
 
-describe("Wisconsin (graduated; the SLIDING standard deduction reduced by a flat % of income)", () => {
-  // WI (2026) levies 3.50% / 4.40% / 5.30% / 7.65% over per-status thresholds
-  // (single 4.40% at $15,110, 5.30% at $51,950; joint at $20,150 / $69,260). Its
-  // signature is the sliding standard deduction (Wis. Stat. §71.05(23)(a)): a max
-  // of $13,960 single / $25,840 joint reduced by a flat percentage of AGI above a
-  // threshold — 12% over $20,119 single, 19.778% over $29,039 joint — the
-  // `reductionRate` form of the engine's standardDeductionPhaseOut (distinct from
-  // South Carolina's `divisor` form). A $1,200-per-exemption personal exemption
-  // ($1,200 single/HoH, $2,400 joint; 2025 Act 15) stacks on top. HoH maps to single.
-  it("single $60k → $2,047.54 (deduction $13,960 − 12%·39,881 = $9,174.28)", () => {
+describe("Wisconsin (graduated; the SLIDING standard deduction, incl. the two-segment HoH line)", () => {
+  // WI (2026) levies 3.50% / 4.40% / 5.30% / 7.65%. The DOR's Schedule A covers
+  // SINGLE AND HEAD OF HOUSEHOLD together (4.40% at $15,110, 5.30% at $51,950),
+  // Schedule B married jointly ($20,150 / $69,260). Its signature is the sliding
+  // standard deduction (Wis. Stat. §71.05(23)(a)) — the `reductionRate` form of the
+  // engine's standardDeductionPhaseOut, distinct from South Carolina's `divisor`
+  // form: single $13,960 less 12% of income over $20,120; joint $25,840 less
+  // 19.778% over $29,040; and head of household a TWO-SEGMENT schedule — $18,030
+  // less 22.515% over $20,120 until that curve meets the single line at $58,827,
+  // then the single line to $0 at $136,453. A $700-per-exemption personal exemption
+  // ($700 single/HoH, $1,400 joint) stacks on top. Every figure below is read off
+  // the DOR's 2026 Form 1-ES Instructions, D-101A (R. 1-26).
+  it("single $60k → $2,069.54 (deduction $13,960 − 12%·39,880 = $9,174.40)", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 60000 },
       { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
     );
-    // taxable 60,000 − 9,174.28 − 1,200 = 49,625.72: 3.5%·15,110 + 4.4%·34,515.72.
-    expect(cents(r.state!.incomeTax)).toBe("2047.54");
+    // taxable 60,000 − 9,174.40 − 700 = 50,125.60: 3.5%·15,110 + 4.4%·35,015.60.
+    expect(cents(r.state!.incomeTax)).toBe("2069.54");
   });
 
-  it("single $18k below the $20,119 phase-out start keeps the full $13,960 deduction → $99.40", () => {
+  it("single $18k below the $20,120 phase-out start keeps the full $13,960 deduction → $116.90", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 18000 },
       { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
     );
-    // taxable 18,000 − 13,960 − 1,200 = 2,840: 3.5%·2,840.
-    expect(cents(r.state!.incomeTax)).toBe("99.4");
+    // taxable 18,000 − 13,960 − 700 = 3,340: 3.5%·3,340.
+    expect(cents(r.state!.incomeTax)).toBe("116.9");
   });
 
-  it("married jointly $120k → $5,012.07 (deduction $25,840 − 19.778%·90,961 = $7,849.73)", () => {
+  it("married jointly $120k → $5,065.06 (deduction $25,840 − 19.778%·90,960 = $7,849.93)", () => {
     const r = evaluateTaxes(
       { filingStatus: "married_jointly", wages: 120000 },
       { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
     );
-    // taxable 120,000 − 7,849.73 − 2,400 = 109,750.27: 3.5%·20,150 + 4.4%·49,110 + 5.3%·40,490.27.
-    expect(cents(r.state!.incomeTax)).toBe("5012.07");
+    // taxable 120,000 − 7,849.93 − 1,400 = 110,750.07: 3.5%·20,150 + 4.4%·49,110 + 5.3%·41,490.07.
+    expect(cents(r.state!.incomeTax)).toBe("5065.06");
   });
 
-  it("single $150k past $136,453 has the deduction fully phased out to $0 → $7,282.86", () => {
+  it("single $150k past $136,453 has the deduction fully phased out to $0 → $7,309.36", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 150000 },
       { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
     );
-    // taxable 150,000 − 0 − 1,200 = 148,800: 528.85 + 4.4%·36,840 + 5.3%·96,850.
-    expect(cents(r.state!.incomeTax)).toBe("7282.86");
+    // taxable 150,000 − 0 − 700 = 149,300: 528.85 + 4.4%·36,840 + 5.3%·97,350.
+    expect(cents(r.state!.incomeTax)).toBe("7309.36");
   });
 
-  it("head of household maps to the single schedule + deduction → equals single", () => {
+  it("head of household $18k keeps the full $18,030 deduction — more than single's $13,960", () => {
     const hoh = evaluateTaxes(
-      { filingStatus: "head_of_household", wages: 60000 },
+      { filingStatus: "head_of_household", wages: 18000 },
+      { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
+    );
+    // 18,000 − 18,030 − 700 clamps to zero taxable income, where single still owes $116.90.
+    expect(cents(hoh.state!.incomeTax)).toBe("0");
+  });
+
+  it("head of household $40k rides the steeper first segment → $996.83", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 40000 },
+      { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
+    );
+    // deduction = 18,030 − 22.515%·19,880 = 13,554.02, which beats the single line's
+    // 11,574.40; taxable 40,000 − 13,554.02 − 700 = 25,745.98: 528.85 + 4.4%·10,635.98.
+    expect(cents(r.state!.incomeTax)).toBe("996.83");
+  });
+
+  it("head of household $70k has crossed to the single line → $2,646.72, same as single", () => {
+    const hoh = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 70000 },
       { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
     );
     const single = evaluateTaxes(
-      { filingStatus: "single", wages: 60000 },
+      { filingStatus: "single", wages: 70000 },
       { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
     );
+    expect(cents(hoh.state!.incomeTax)).toBe("2646.72");
     expect(cents(hoh.state!.incomeTax)).toBe(cents(single.state!.incomeTax));
+  });
+
+  it("the two head-of-household segments cross at $58,827, the band the DOR prints", () => {
+    // The crossover is not stored anywhere — it falls out of the two lines. Asserting
+    // it against the printed band boundary is what proves the stored figures are right.
+    const hohBeats = (wages: number) => {
+      const hoh = evaluateTaxes(
+        { filingStatus: "head_of_household", wages },
+        { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
+      );
+      const single = evaluateTaxes(
+        { filingStatus: "single", wages },
+        { federal: ds.federal, state: ds.state("wi"), fica: ds.fica },
+      );
+      return hoh.state!.incomeTax.lessThan(single.state!.incomeTax);
+    };
+    expect(hohBeats(58826)).toBe(true); // still on the higher first segment
+    expect(hohBeats(58827)).toBe(false); // the single line has taken over
   });
 
   it("a qualifying surviving spouse falls back to the married-jointly schedule + phase-out", () => {

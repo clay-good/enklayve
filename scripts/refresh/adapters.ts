@@ -958,7 +958,10 @@ export const ADAPTERS: RefreshAdapter[] = [
     // the generic graduated parser can't overlay it. Anchor the standard-deduction
     // maximum (the MN pattern); the per-status bracket thresholds and the
     // sliding-deduction parameters roll alongside it as the reviewer's data-only
-    // step, as do any 2025 Act 15 successor's bracket-widening changes.
+    // step, as do any 2025 Act 15 successor's bracket-widening changes. That step
+    // now includes the head-of-household schedule's own maximum and its steeper
+    // first-segment rate, which index on the same annual cycle as the single and
+    // joint maxima the parser anchors.
     parse: parseStandardDeductions,
   },
   {

@@ -95,6 +95,10 @@ function computeState(
   // the status `floor` (zero unless set — Alabama floors at $5,000 joint /
   // $2,500 otherwise, Ala. Code §40-18-15(b)). The reduction rounds down to the
   // nearest `roundReductionDownTo` dollars where the statute requires it (SC: $10).
+  // A `secondSegment` adds Wisconsin's two-line head-of-household schedule: a higher
+  // base sliding faster until it meets the flatter single line, which then carries it
+  // to zero. Both lines run from the same threshold, so "whichever gives more" is the
+  // schedule exactly (Wis. Stat. §71.05(23)(a)3.).
   const phaseOut = standardDeductionPhaseOutFor(state, input.filingStatus);
   if (phaseOut) {
     const over = agi.toNumber() - phaseOut.agiThreshold;
@@ -106,6 +110,14 @@ function computeState(
       const step = state.standardDeductionPhaseOut?.roundReductionDownTo;
       const reduction = step ? Math.floor(rawReduction / step) * step : rawReduction;
       standard = clampZero(standard.subtract(reduction));
+      if (phaseOut.secondSegment) {
+        const second = clampZero(
+          Money.from(phaseOut.secondSegment.base).subtract(
+            over * phaseOut.secondSegment.reductionRate,
+          ),
+        );
+        if (second.greaterThan(standard)) standard = second;
+      }
       if (phaseOut.floor !== undefined && standard.lessThan(phaseOut.floor)) {
         standard = Money.from(phaseOut.floor);
       }

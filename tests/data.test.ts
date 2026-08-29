@@ -6,6 +6,7 @@ import {
   FicaSchema,
   ManifestSchema,
   RetirementLimitsSchema,
+  JurisdictionSchema,
   type Jurisdiction,
   type ManifestEntry,
 } from "../src/data/schemas";
@@ -115,6 +116,30 @@ describe("schema fail-safe", () => {
       delete missing.additionalMedicareThresholdByFilingStatus[status];
       expect(FicaSchema.safeParse(missing).success).toBe(false);
     }
+  });
+
+  it("keeps the sliding-deduction forms from being mixed (SC divisor vs WI rate vs WI two-segment)", () => {
+    // Wisconsin is the shard that exercises every branch: two one-line statuses and
+    // the two-segment head-of-household line. It must validate as shipped.
+    const wi = JSON.parse(readShard("state-wi-income-tax-2024.json"));
+    expect(JurisdictionSchema.safeParse(wi).success).toBe(true);
+
+    // A status may carry the SC `divisor` form or the WI `reductionRate` form, never
+    // both and never neither — otherwise the evaluator would silently pick a branch.
+    const both = JSON.parse(readShard("state-wi-income-tax-2024.json"));
+    both.standardDeductionPhaseOut.byFilingStatus.single.divisor = 116333;
+    expect(JurisdictionSchema.safeParse(both).success).toBe(false);
+    const neither = JSON.parse(readShard("state-wi-income-tax-2024.json"));
+    delete neither.standardDeductionPhaseOut.byFilingStatus.single.reductionRate;
+    expect(JurisdictionSchema.safeParse(neither).success).toBe(false);
+
+    // The second segment is the WI head-of-household form: it is a flatter line
+    // measured from the same threshold, so it is meaningless without a first rate.
+    const orphanSegment = JSON.parse(readShard("state-wi-income-tax-2024.json"));
+    const hoh = orphanSegment.standardDeductionPhaseOut.byFilingStatus.head_of_household;
+    delete hoh.reductionRate;
+    hoh.divisor = 80000;
+    expect(JurisdictionSchema.safeParse(orphanSegment).success).toBe(false);
   });
 });
 

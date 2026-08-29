@@ -122,7 +122,15 @@ export function taxpayerCreditBaseFor(jurisdiction: Jurisdiction, status: Filing
 export function standardDeductionPhaseOutFor(
   jurisdiction: Jurisdiction,
   status: FilingStatus,
-): { agiThreshold: number; divisor?: number; reductionRate?: number; floor?: number } | undefined {
+):
+  | {
+      agiThreshold: number;
+      divisor?: number;
+      reductionRate?: number;
+      floor?: number;
+      secondSegment?: { base: number; reductionRate: number };
+    }
+  | undefined {
   const table = jurisdiction.standardDeductionPhaseOut?.byFilingStatus;
   if (!table) return undefined;
   for (const candidate of fallbackChain(status)) {

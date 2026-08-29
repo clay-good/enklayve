@@ -157,6 +157,17 @@ export type TaxpayerCreditData = z.infer<typeof TaxpayerCreditSchema>;
  * — rather than to zero. Every status phases over the same $25,500→$35,500 AGI
  * band, each at its own `reductionRate` (single 5%, MFS 17.5%, head-of-family
  * 27%, joint 35% of AGI over $25,500), reaching its floor at exactly $35,500.
+ *
+ * `secondSegment` carries the **two-segment** variant — Wisconsin's head-of-household
+ * schedule (Wis. Stat. §71.05(23)(a)3., printed as the "Schedule for Head of
+ * Household" table in the DOR's Form 1-ES instructions). Head of household starts
+ * from a *higher* base ($18,030 for 2026) and slides *faster* (22.515%) until the
+ * curve meets the single schedule ($13,960 sliding at 12% from the same threshold),
+ * after which it follows that flatter line to zero. Because both segments are lines
+ * measured from the same `agiThreshold`, the schedule is exactly the **greater of the
+ * two** at every AGI, so the crossover AGI is implied rather than stored — one less
+ * number that can drift out of agreement with the two it is derived from. (For 2026
+ * it lands at $58,827, the band boundary the DOR prints.)
  */
 export const StandardDeductionPhaseOutSchema = z.object({
   byFilingStatus: z.record(
@@ -168,9 +179,23 @@ export const StandardDeductionPhaseOutSchema = z.object({
         reductionRate: z.number().gt(0).lte(1).optional(),
         /** The minimum the deduction slides to (Alabama); 0 when omitted (SC/WI/ME). */
         floor: z.number().gte(0).optional(),
+        /**
+         * A flatter second line, measured from the same `agiThreshold`, that takes
+         * over once it yields the larger deduction (Wisconsin head of household).
+         * Only meaningful alongside `reductionRate`.
+         */
+        secondSegment: z
+          .object({
+            base: z.number().gte(0),
+            reductionRate: z.number().gt(0).lte(1),
+          })
+          .optional(),
       })
       .refine((e) => (e.divisor === undefined) !== (e.reductionRate === undefined), {
         message: "supply exactly one of `divisor` (SC form) or `reductionRate` (WI form)",
+      })
+      .refine((e) => e.secondSegment === undefined || e.reductionRate !== undefined, {
+        message: "`secondSegment` is the two-line WI head-of-household form; it needs `reductionRate`",
       }),
   ),
   roundReductionDownTo: z.number().gt(0).optional(),

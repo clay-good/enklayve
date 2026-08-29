@@ -608,10 +608,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-wi-income-tax-2024.json",
-      "sourceUrl": "https://www.revenue.wi.gov/Pages/Individuals/income.aspx",
-      "sourceDocument": "Wisconsin DOR 2026 rate schedule (Wis. Stat. §71.06) + §71.05(23) sliding standard deduction + $1,200 personal exemption (2025 Wisconsin Act 15)",
-      "dateRetrieved": "2026-06-06",
-      "contentHash": "facce4711e6dc3873422c9315d4dc89e37ac433dc9d1ee6087aba7ea5bd37653"
+      "sourceUrl": "https://www.revenue.wi.gov/TaxForms2026/2026-Form1-ES-Inst.pdf",
+      "sourceDocument": "Wisconsin DOR 2026 Form 1-ES Instructions, D-101A (R. 1-26) — 2026 Tax Rate Schedules + 2026 Standard Deduction schedules (Wis. Stat. §§71.05(23), 71.06)",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "3a2882e99cff01133188d97ec3564fb566288adab13b1b246c3cbfaa4eaa084b"
     },
     {
       "id": "state-hi-income-tax-2024",
