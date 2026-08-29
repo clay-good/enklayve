@@ -1,0 +1,236 @@
+{
+  "benefitYear": 2026,
+  "windows": [
+    {
+      "id": "cobra-election",
+      "program": "COBRA",
+      "label": "Elect COBRA continuation coverage",
+      "due": {
+        "days": 60,
+        "trigger": "the later of the day your coverage ended and the day your election notice is dated"
+      },
+      "bound": "floor",
+      "detail": "The election period must run at least 60 days and may not end earlier than 60 days after the later of the date coverage terminated or the date you were sent the election notice. A plan may allow longer; it may not allow less.",
+      "citation": {
+        "sourceUrl": "https://www.law.cornell.edu/uscode/text/29/1165",
+        "sourceDocument": "ERISA §605 — 29 U.S.C. §1165(a)(1)",
+        "sourceNote": "The election period is of at least 60 days' duration and ends not earlier than 60 days after the later of the date coverage terminates or the date of the election notice.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-08-29"
+      }
+    },
+    {
+      "id": "cobra-first-premium",
+      "program": "COBRA",
+      "label": "Pay the first COBRA premium",
+      "due": {
+        "days": 45,
+        "trigger": "the day you made your COBRA election"
+      },
+      "bound": "floor",
+      "detail": "A plan may not require any premium payment before the 45th day after you elected. That first payment covers every month back to the day coverage was lost, so it is usually the largest single bill in the sequence — worth knowing before the election deadline, not after.",
+      "citation": {
+        "sourceUrl": "https://www.law.cornell.edu/uscode/text/29/1162",
+        "sourceDocument": "ERISA §602(3) — 29 U.S.C. §1162(3)",
+        "sourceNote": "In no event may the plan require the payment of any premium before the day which is 45 days after the day on which the qualified beneficiary made the initial election.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-08-29"
+      }
+    },
+    {
+      "id": "cobra-premium-grace",
+      "program": "COBRA",
+      "label": "Pay each later COBRA premium",
+      "due": {
+        "days": 30,
+        "trigger": "each premium's due date"
+      },
+      "bound": "floor",
+      "detail": "A payment counts as timely if it is made within 30 days after the due date, or within any longer period the plan allows. Miss it and coverage ends on the date of the failure — there is no notice requirement before termination.",
+      "citation": {
+        "sourceUrl": "https://www.law.cornell.edu/uscode/text/29/1162",
+        "sourceDocument": "ERISA §602(2)(C) — 29 U.S.C. §1162(2)(C)",
+        "sourceNote": "Payment of any premium is considered timely if made within 30 days after the date due, or within such longer period as applies under the plan.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-08-29"
+      }
+    },
+    {
+      "id": "aca-special-enrollment",
+      "program": "Marketplace",
+      "label": "Choose a Marketplace plan after a qualifying life event",
+      "due": {
+        "days": 60,
+        "trigger": "the qualifying event"
+      },
+      "bound": "floor",
+      "detail": "Sixty days from the triggering event to select a plan. For a loss of coverage you know is coming, the same 60 days is also available *before* the event, so you can line up new coverage with no gap rather than a month without it.",
+      "citation": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-45/section-155.420",
+        "sourceDocument": "45 CFR §155.420(c)(1)-(2)",
+        "sourceNote": "Unless stated otherwise, a qualified individual or enrollee has 60 days from the date of a triggering event to select a QHP; for a loss of coverage and certain other triggers, 60 days before the event as well.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-08-29"
+      }
+    },
+    {
+      "id": "aca-open-enrollment",
+      "program": "Marketplace",
+      "label": "Choose a Marketplace plan for the 2026 benefit year",
+      "due": {
+        "on": "2026-01-15"
+      },
+      "bound": "floor",
+      "detail": "Open enrollment for the 2026 benefit year ran from November 1, 2025 through January 15, 2026 on HealthCare.gov. A State-based Exchange may set a later end date, so check your own state's marketplace.",
+      "citation": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-45/section-155.410",
+        "sourceDocument": "45 CFR §155.410(e)(4)",
+        "sourceNote": "For benefit years beginning January 1, 2022 through January 1, 2026, annual open enrollment begins November 1 of the preceding calendar year and extends through January 15 of the benefit year; a State Exchange may adopt a later end date.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-08-29"
+      }
+    },
+    {
+      "id": "medicare-initial-enrollment",
+      "program": "Medicare",
+      "label": "Enroll in Medicare Part B when first eligible",
+      "due": {
+        "months": 3,
+        "trigger": "the last day of the month you first become eligible"
+      },
+      "bound": "floor",
+      "detail": "The initial enrollment period is seven months long: the three months before the month you first meet the eligibility requirements, that month, and the three months after. It is counted in calendar months, not days. Missing it can mean waiting for the general enrollment period and paying a late-enrollment penalty for as long as you have Part B.",
+      "citation": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-42/section-407.14",
+        "sourceDocument": "42 CFR §407.14(a)(1)",
+        "sourceNote": "The initial enrollment period is the 7-month period that begins 3 months before the month an individual first meets the eligibility requirements and ends 3 months after that first month of eligibility.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-08-29"
+      }
+    },
+    {
+      "id": "medicare-general-enrollment",
+      "program": "Medicare",
+      "label": "Enroll in Medicare Part B during general enrollment",
+      "due": {
+        "on": "2026-03-31"
+      },
+      "bound": "floor",
+      "detail": "January through March of each calendar year, for anyone who missed their initial enrollment period and has no special enrollment period available.",
+      "citation": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-42/section-407.15",
+        "sourceDocument": "42 CFR §407.15(a)",
+        "sourceNote": "The general enrollment period is January through March of each calendar year.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-08-29"
+      }
+    },
+    {
+      "id": "medicare-part-b-sep",
+      "program": "Medicare",
+      "label": "Enroll in Medicare Part B after employer coverage ends",
+      "due": {
+        "months": 8,
+        "trigger": "the last day of the month your employment-based coverage ended"
+      },
+      "bound": "floor",
+      "detail": "Eight consecutive months, counted from the end of group health coverage based on current employment. Using it avoids the Part B late-enrollment penalty entirely. Note that it runs from the end of *employment-based* coverage — COBRA is not employment-based coverage for this purpose, so the clock does not restart when COBRA ends.",
+      "citation": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-42/section-406.24",
+        "sourceDocument": "42 CFR §406.24(b)(2)",
+        "sourceNote": "The special enrollment period ends on the last day of the eighth consecutive month during which the individual is at no time enrolled in a group health plan or large group health plan by reason of current employment status.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-08-29"
+      }
+    },
+    {
+      "id": "medicaid-fair-hearing",
+      "program": "Medicaid",
+      "label": "Request a Medicaid fair hearing",
+      "due": {
+        "days": 90,
+        "trigger": "the date your notice of action was mailed"
+      },
+      "bound": "ceiling",
+      "detail": "This is the MOST your state may give you, not a guarantee. The rule requires a reasonable time not exceeding 90 days from the date the notice was mailed, and a state may set a shorter one. Go by the date printed on your own notice, and if it is not printed, ask the agency in writing today.",
+      "citation": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-42/section-431.221",
+        "sourceDocument": "42 CFR §431.221(d)",
+        "sourceNote": "The agency must allow the applicant or beneficiary a reasonable time, not to exceed 90 days from the date that notice of action is mailed, to request a hearing.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-08-29"
+      }
+    },
+    {
+      "id": "snap-fair-hearing",
+      "program": "SNAP",
+      "label": "Request a SNAP fair hearing",
+      "due": {
+        "days": 90,
+        "trigger": "the state agency's action or the loss of benefits"
+      },
+      "bound": "floor",
+      "detail": "A household must be allowed to request a hearing on any action or loss of benefits in the prior 90 days. Separately, at any time within a certification period a household may request a hearing to dispute its current benefit level.",
+      "citation": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-7/section-273.15",
+        "sourceDocument": "7 CFR §273.15(g)",
+        "sourceNote": "A household shall be allowed to request a hearing on any action by the State agency or loss of benefits which occurred in the prior 90 days.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-08-29"
+      }
+    },
+    {
+      "id": "marketplace-appeal",
+      "program": "Marketplace",
+      "label": "Appeal a Marketplace eligibility decision",
+      "due": {
+        "days": 90,
+        "trigger": "the date of your eligibility determination notice"
+      },
+      "bound": "floor",
+      "detail": "Ninety days from the date of the notice. A State-based Exchange may instead use its state Medicaid agency's timeframe, which can be shorter but never less than 30 days — so check the date on your own notice.",
+      "citation": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-45/section-155.520",
+        "sourceDocument": "45 CFR §155.520(b)",
+        "sourceNote": "The Exchange and the appeals entity must allow an appeal request within 90 days of the date of the notice of eligibility determination, or a timeframe consistent with the state Medicaid agency's requirement provided that timeframe is no less than 30 days.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-08-29"
+      }
+    }
+  ],
+  "stateSet": [
+    {
+      "id": "unemployment-appeal",
+      "program": "Unemployment insurance",
+      "label": "Appeal an unemployment determination",
+      "note": "Every state sets its own appeal window and they differ widely. Your determination notice states yours — go by that date, and file as soon as you can. No figure is given here because there is no federal one to give."
+    },
+    {
+      "id": "state-continuation",
+      "program": "State continuation coverage",
+      "label": "Elect state continuation (“mini-COBRA”) coverage",
+      "note": "Most states have their own continuation law for employers too small for federal COBRA, each with its own election window. Your state insurance department can tell you whether one applies and how long you have."
+    }
+  ],
+  "upcomingChanges": [
+    {
+      "id": "aca-open-enrollment-2027",
+      "label": "Marketplace open enrollment shortens for the 2027 benefit year",
+      "detail": "For benefit years beginning on or after January 1, 2027, open enrollment must begin no later than November 1, must end no later than December 31 of the preceding calendar year, and may not exceed nine weeks. The January 15 end date on this page is the 2026 rule and does not carry forward.",
+      "citation": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-45/section-155.410",
+        "sourceDocument": "45 CFR §155.410(e)(5)",
+        "sourceNote": "For benefit years beginning on or after January 1, 2027, the annual open enrollment period for all Exchanges must begin no later than November 1 and end no later than December 31 of the preceding calendar year, and must not exceed 9 weeks in duration.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-08-29"
+      }
+    }
+  ],
+  "citation": {
+    "sourceUrl": "https://www.ecfr.gov/current/title-45/section-155.420",
+    "sourceDocument": "Federal enrollment and appeal windows — 29 U.S.C. §§1162, 1165; 42 CFR §§406.24, 407.14, 407.15, 431.221; 45 CFR §§155.410, 155.420, 155.520; 7 CFR §273.15",
+    "sourceNote": "Each window carries its own citation to the section that sets it; this shard-level citation names the set. Every figure was transcribed from the statutory or regulatory text, not from a summary. One distinction the sources make and summaries routinely lose: the Medicaid fair-hearing period is a CEILING on what a state must allow (“reasonable time, not to exceed 90 days”), while the COBRA, SNAP, and Marketplace windows are floors a plan or agency may exceed but not shorten.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-08-29"
+  }
+}

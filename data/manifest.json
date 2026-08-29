@@ -1015,6 +1015,19 @@
       "sourceDocument": "Consumer Credit Protection Act Title III — 15 U.S.C. §§1673, 1674, 1677; 29 U.S.C. §206(a)(1)",
       "dateRetrieved": "2026-08-29",
       "contentHash": "2423c81932c9e8417bff552a1ad647f7ec7ae7d9699d57a9672a5f19e5736ad1"
+    },
+    {
+      "id": "enrollment-windows-2026",
+      "kind": "enrollment-windows",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "enrollment-windows-2026.json",
+      "sourceUrl": "https://www.ecfr.gov/current/title-45/section-155.420",
+      "sourceDocument": "Federal enrollment and appeal windows — 29 U.S.C. §§1162, 1165; 42 CFR §§406.24, 407.14, 407.15, 431.221; 45 CFR §§155.410, 155.420, 155.520; 7 CFR §273.15",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "385fe34fb344e4c10a4fdd87ea5c41cef96aba5b8c277d0b710bfdf79f4aedda"
     }
   ]
 }

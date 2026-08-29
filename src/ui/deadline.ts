@@ -44,6 +44,11 @@ function timingText(
       const { daysFromTrigger, trigger } = deadline.due;
       return `Within ${atLeast}${daysFromTrigger} days of ${trigger}.`;
     }
+    if ("monthsFromTrigger" in deadline.due) {
+      const { monthsFromTrigger, trigger } = deadline.due;
+      const unit = monthsFromTrigger === 1 ? "month" : "months";
+      return `Within ${atLeast}${monthsFromTrigger} ${unit} of ${trigger}.`;
+    }
     return "This date could not be resolved — check the source.";
   }
 

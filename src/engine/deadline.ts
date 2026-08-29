@@ -23,7 +23,18 @@ export type DeadlineDue =
   /** A fixed calendar date, ISO `YYYY-MM-DD`. */
   | { on: string }
   /** A window of `days` counted from a named event ("the date coverage ended"). */
-  | { daysFromTrigger: number; trigger: string };
+  | { daysFromTrigger: number; trigger: string }
+  /**
+   * A window counted in *calendar months*, because some rules are written that
+   * way and converting them to days would be wrong rather than merely
+   * imprecise: Medicare's initial enrollment period is "3 months before ...
+   * through 3 months after that first month of eligibility" (42 CFR §407.14),
+   * and its Part B special enrollment period ends "on the last day of the
+   * eighth consecutive month" (42 CFR §406.24). Three months is 89, 90, 91, or
+   * 92 days depending on where in the year it falls, and the difference is
+   * whether someone enrolls in time.
+   */
+  | { monthsFromTrigger: number; trigger: string };
 
 /** One dated obligation, inseparable from the rule that sets it. */
 export interface Deadline {
@@ -67,8 +78,31 @@ export function resolveDueDate(due: DeadlineDue, triggerDate?: string): string |
   if (!triggerDate) return null;
   const start = parseIsoUtc(triggerDate);
   if (Number.isNaN(start)) return null;
+  if ("monthsFromTrigger" in due) {
+    if (!Number.isFinite(due.monthsFromTrigger)) return null;
+    return addMonthsIso(start, Math.trunc(due.monthsFromTrigger));
+  }
   if (!Number.isFinite(due.daysFromTrigger)) return null;
   return toIso(start + Math.trunc(due.daysFromTrigger) * MS_PER_DAY);
+}
+
+/**
+ * Add whole calendar months to a UTC timestamp, clamping to the end of the
+ * target month. Clamping is what makes the month form usable for the rules that
+ * need it: a period counted from the last day of a month lands on the last day
+ * of the later month, whatever its length — January 31 plus three months is
+ * April 30, not May 1.
+ */
+function addMonthsIso(startMs: number, months: number): string {
+  const d = new Date(startMs);
+  const year = d.getUTCFullYear();
+  const month = d.getUTCMonth();
+  const day = d.getUTCDate();
+  const target = new Date(Date.UTC(year, month + months, 1));
+  const lastDay = new Date(
+    Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  return toIso(Date.UTC(target.getUTCFullYear(), target.getUTCMonth(), Math.min(day, lastDay)));
 }
 
 /** How a deadline stands relative to `asOf`. */

@@ -951,6 +951,72 @@ export const GarnishmentLimitsSchema = z.object({
 });
 export type GarnishmentLimitsData = z.infer<typeof GarnishmentLimitsSchema>;
 
+/**
+ * Statutory enrollment and appeal clocks (SPEC-4 §7.3, SPEC-4-safety-net §B4).
+ *
+ * These are the highest-harm numbers on the site: a missed COBRA election or
+ * Medicare enrollment costs a household the coverage itself, and a missed appeal
+ * window costs them the benefit. So every window carries **its own citation** to
+ * the section that sets it — the shard-level citation names the set, it does not
+ * stand in for the individual ones.
+ *
+ * `bound` is the distinction summaries routinely lose and this shard refuses to.
+ * A **floor** is a period a plan or agency may exceed but never shorten (COBRA,
+ * SNAP, the Marketplace). A **ceiling** is the most a state must allow, and it
+ * may allow less — which is what 42 CFR §431.221(d) actually says about the
+ * Medicaid fair hearing, and reading it as a guarantee is how someone misses it.
+ */
+const WindowDueSchema = z.union([
+  /** A fixed calendar date. */
+  z.object({ on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }),
+  /** A window in days from a named trigger. */
+  z.object({ days: z.number().int().positive(), trigger: z.string().min(1) }),
+  /** A window in whole calendar months, for the rules written that way. */
+  z.object({ months: z.number().int().positive(), trigger: z.string().min(1) }),
+]);
+export const EnrollmentWindowsSchema = z.object({
+  benefitYear: z.number().int(),
+  windows: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        program: z.string().min(1),
+        label: z.string().min(1),
+        due: WindowDueSchema,
+        bound: z.enum(["floor", "ceiling"]),
+        detail: z.string().min(1),
+        citation: CitationSchema,
+      }),
+    )
+    .min(1),
+  /** Clocks the states set, carried as pointers with **no figure in them** —
+   * the 50-jurisdiction problem must not leak back in as a plausible default. */
+  stateSet: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        program: z.string().min(1),
+        label: z.string().min(1),
+        note: z.string().min(1),
+      }),
+    )
+    .min(1),
+  /** Rule changes already published for a later year, so a figure that is about
+   * to stop being true says so rather than quietly rotting. */
+  upcomingChanges: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        label: z.string().min(1),
+        detail: z.string().min(1),
+        citation: CitationSchema,
+      }),
+    )
+    .default([]),
+  citation: CitationSchema,
+});
+export type EnrollmentWindowsData = z.infer<typeof EnrollmentWindowsSchema>;
+
 export const DATASET_SCHEMAS = {
   "federal-income-tax": JurisdictionSchema,
   "state-income-tax": JurisdictionSchema,
@@ -978,6 +1044,7 @@ export const DATASET_SCHEMAS = {
   "free-filing": FreeFilingSchema,
   "no-surprises": NoSurprisesSchema,
   "garnishment-limits": GarnishmentLimitsSchema,
+  "enrollment-windows": EnrollmentWindowsSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

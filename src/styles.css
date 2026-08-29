@@ -1102,6 +1102,58 @@ body {
 .cc-ask li {
   margin-bottom: 0.35rem;
 }
+/* Enrollment & Appeal Windows (SPEC-4-safety-net §B4), harm tier 2. Every clock
+   renders through `renderDeadline`, so the deadline styles carry the dates; what
+   is styled here is the prose around them — above all the ceiling note, which is
+   the sentence that stops a maximum being read as a guarantee. */
+.enw-lede {
+  margin: 0 0 0.9rem;
+  color: var(--enk-text-muted);
+  line-height: 1.55;
+}
+.enw-windows {
+  display: grid;
+  gap: 0.9rem;
+}
+.enw-window {
+  border-left: 3px solid var(--enk-border);
+  padding-left: 0.85rem;
+}
+.enw-ceiling {
+  margin: 0.4rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 9px;
+  background: var(--enk-surface-2);
+  border-left: 3px solid var(--enk-warn);
+  font-weight: 600;
+  line-height: 1.5;
+}
+.enw-detail {
+  margin: 0.4rem 0 0;
+  color: var(--enk-text-muted);
+  line-height: 1.55;
+}
+.enw-heading {
+  font-size: 1rem;
+  margin: 1.2rem 0 0.4rem;
+}
+.enw-list {
+  margin: 0;
+  padding-left: 1.3rem;
+  color: var(--enk-text-muted);
+}
+.enw-list li {
+  margin-bottom: 0.4rem;
+  line-height: 1.55;
+}
+.enw-limit {
+  margin-top: 1rem;
+  background: var(--enk-surface-2);
+  border-radius: var(--enk-radius);
+  padding: 0.85rem 1rem;
+  color: var(--enk-text-muted);
+}
+
 /* Wage Garnishment Limits (SPEC-4-safety-net §B2), harm tier 3. The caveat is
    styled to read first and read loudly: below the figure, or quieter than it, it
    would be a footnote to a number the reader has already taken as the answer. */

@@ -294,7 +294,13 @@ Two notes from building 20a. The shard carries *state-set* timing as a pointer w
 
 **Acceptance.** The garnishment tile renders the federal-ceiling caveat above the figure — asserted by a DOM-order test, not by review. `checkHarmTier` passes on tier-3 channel coverage. A copy review confirms the §3.4 dignity rule.
 
-**Split into 23a and 23b.** ✅ **23a — Wage Garnishment Limits — is shipped**: the `garnishment-limits-2026` shard, `engine/garnishment.ts`, and the `garnishment` tile in the *When Money Is Tight* hub at tier 3. **23b — the enrollment-windows tile — is deferred with Phase 20b**, since both turn on the same statutory-clock sourcing pass.
+**Split into 23a and 23b, both now shipped.** ✅ **23a — Wage Garnishment Limits**: the `garnishment-limits-2026` shard, `engine/garnishment.ts`, and the `garnishment` tile at tier 3. ✅ **23b — Enrollment & Appeal Windows**: the `enrollment-windows-2026` shard, `engine/sequences.ts`, and the `enrollment-windows` tile at tier 2 — which also unblocks **Phase 20b**, whose six life-event sequences are dated by exactly these clocks.
+
+**Three notes from building 23b.**
+
+- *`Deadline` gained a calendar-month window, because two of these rules are written in months.* Medicare's initial enrollment period runs "3 months before … through 3 months after that first month of eligibility" (42 CFR §407.14) and its Part B special enrollment period ends "on the last day of the eighth consecutive month" (42 CFR §406.24). Three months is 89, 90, 91, or 92 days depending on where in the year it lands, and the difference is whether someone enrolls in time — so `monthsFromTrigger` was added rather than an approximation in days.
+- *Floors and ceilings are not the same thing, and summaries lose the difference.* COBRA, SNAP, and the Marketplace windows are floors a plan or agency may exceed but never shorten. The Medicaid fair-hearing period is not: 42 CFR §431.221(d) gives a state "a reasonable time, not to exceed 90 days", which makes 90 days the **most** a state must allow. So the shard carries `bound`, only a floor maps to `isFloor` (which renders as "at least"), and a test asserts the floor caveat never appears on a ceiling.
+- *A rule change already published for 2027 is carried as data, not left to rot.* 45 CFR §155.410(e)(5) shortens Marketplace open enrollment for benefit years from 2027 — no later than November 1 to no later than December 31, and no longer than nine weeks — so the January 15 date on the page is explicitly labeled as the 2026 rule that does not carry forward. An `upcomingChanges` block is the same instinct as Phase 21's `omitted` block: a fact about the future of the data, stated rather than discovered later.
 
 **Three notes from building 23a.**
 

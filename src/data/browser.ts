@@ -26,6 +26,7 @@ import {
   type FreeFilingData,
   type NoSurprisesData,
   type GarnishmentLimitsData,
+  type EnrollmentWindowsData,
   type SocialSecurityData,
   type SocialSecurityTaxationData,
   type AcaData,
@@ -84,6 +85,7 @@ export interface BundledData {
   freeFiling(): FreeFilingData | null;
   noSurprises(): NoSurprisesData | null;
   garnishmentLimits(): GarnishmentLimitsData | null;
+  enrollmentWindows(): EnrollmentWindowsData | null;
   /** ACA premium-tax-credit applicable-percentage table (BUILD-SPEC.md §4.2). */
   aca(): AcaData | null;
   /** Social Security claiming-age benefit adjustment rules (BUILD-SPEC-2 §6.7). */
@@ -158,8 +160,8 @@ async function build(): Promise<BundledData> {
     billTriage: () => dataOf("bill-triage-2026") as BillTriageData | null,
     freeFiling: () => dataOf("free-filing-2026") as FreeFilingData | null,
     noSurprises: () => dataOf("no-surprises-2026") as NoSurprisesData | null,
-    garnishmentLimits: () =>
-      dataOf("garnishment-limits-2026") as GarnishmentLimitsData | null,
+    garnishmentLimits: () => dataOf("garnishment-limits-2026") as GarnishmentLimitsData | null,
+    enrollmentWindows: () => dataOf("enrollment-windows-2026") as EnrollmentWindowsData | null,
     aca: () => dataOf("aca-2024") as AcaData | null,
     socialSecurity: () => dataOf("social-security-2024") as SocialSecurityData | null,
     socialSecurityTaxation: () =>

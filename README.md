@@ -23,10 +23,10 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 
 | Metric | Value | Where to check |
 |---|---|---|
-| Deterministic calculators | **61** in **10 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
+| Deterministic calculators | **62** in **10 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
-| Cited dataset shards | **76**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | **1,178** unit/golden across 78 files, **+22** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Cited dataset shards | **77**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
+| Tests | **1,194** unit/golden across 80 files, **+22** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale preference touches `localStorage` | `npm run audit` |
 | UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
@@ -57,7 +57,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 
 ## What you can do with it
 
-**61 deterministic calculators**, each with a worked example, per-figure citations, a plain-English "How this works," "Learn more" links, and deep-linkable URL state. They're grouped into **10 plainly-named topic hubs** (a hub is one page with a segmented control switching between its calculators; the underlying engine is shared, so a number entered in one tool prefills every other). The **anti-budget** that gives every dollar a job lives directly on the home — it *is* the plan, in written form. Reach any calculator by ⌘K search or the crawlable [All Tools index](#cicd-and-deploy), which lists **every calculator by name under its hub** (and the static `tools.html` mirror links each one's pre-rendered landing page, so all 69 pages are reachable in one hop, not just via the sitemap).
+**62 deterministic calculators**, each with a worked example, per-figure citations, a plain-English "How this works," "Learn more" links, and deep-linkable URL state. They're grouped into **10 plainly-named topic hubs** (a hub is one page with a segmented control switching between its calculators; the underlying engine is shared, so a number entered in one tool prefills every other). The **anti-budget** that gives every dollar a job lives directly on the home — it *is* the plan, in written form. Reach any calculator by ⌘K search or the crawlable [All Tools index](#cicd-and-deploy), which lists **every calculator by name under its hub** (and the static `tools.html` mirror links each one's pre-rendered landing page, so all 69 pages are reachable in one hop, not just via the sitemap).
 
 ![The All Tools index: every calculator listed by name under its topic hub — Paycheck & Taxes (Take-Home Pay, W-4 Withholding & Refund Check, Hourly ↔ Salary, Federal Income Tax, Marginal Rate Explorer, …), Self-Employed & 1099, and the rest.](docs/screenshots/all-tools.png)
 
@@ -180,6 +180,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Tool | What it answers |
 |---|---|
 | Bill Triage | What to pay first when you can't pay everything, ordered by consequence, not interest rate (tier 2) |
+| Enrollment & Appeal Windows | The federal deadlines that decide whether you keep coverage or a benefit, counted from a date you set (tier 2) |
 | Wage Garnishment Limits | The federal ceiling on what a garnishment can take, and why your state may allow less (tier 3, screener-only) |
 | Hospital Financial Assistance | The discount a nonprofit hospital must let you ask for (tier 3, screener-only) |
 | Do I Have to Pay to File? | Which free federal filing channel you qualify for — there is always one |
@@ -256,7 +257,7 @@ The home is stripped to the essentials (redesigned through 2026-06-02; BUILD-SPE
 +---------------------------------------------------------------+
 ```
 
-Every U.S. income-tax state and DC is modeled, so selecting any state shows a real combined figure — no "not modeled yet" caveat anywhere. Every view is **vertical-scroll only on every device width** — form controls shrink inside their grid track (`min-width: 0`), wide "show the math" tables and chart timelines get their own contained horizontal scroll, and an `overflow-x: clip` backstop on both the content column *and the document root* guarantees the viewport itself never scrolls sideways. `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch. A Playwright suite **measures** this — every view and all 61 calculators, from 320px to 1440px, plus landscape phones — so a regression fails CI rather than shipping.
+Every U.S. income-tax state and DC is modeled, so selecting any state shows a real combined figure — no "not modeled yet" caveat anywhere. Every view is **vertical-scroll only on every device width** — form controls shrink inside their grid track (`min-width: 0`), wide "show the math" tables and chart timelines get their own contained horizontal scroll, and an `overflow-x: clip` backstop on both the content column *and the document root* guarantees the viewport itself never scrolls sideways. `viewport-fit=cover` + safe-area insets keep the chrome clear of the notch. A Playwright suite **measures** this — every view and all 62 calculators, from 320px to 1440px, plus landscape phones — so a regression fails CI rather than shipping.
 
 ---
 
@@ -272,7 +273,7 @@ flowchart TD
         CP["⌘K command palette (fuzzy)"]
         CH["accessible charts (donut / timeline)"]
     end
-    subgraph TILES["src/tiles — 61 calculators in 10 hubs"]
+    subgraph TILES["src/tiles — 62 calculators in 10 hubs"]
         T1["one module per tool; a hub hosts several"]
     end
     subgraph PROFILE["src/profile — My Situation"]
@@ -549,13 +550,13 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 - **Accessibility.** axe-core runs inside the test suite across the home, About, All Tools, the Readout, the Report, and every tile form, with **zero violations**. A **skip-to-content link** (WCAG 2.4.1) is the first focusable element on every page — it focuses the `<main>` directly (no hash navigation), and focus moves into the content region after each route change; visible focus rings throughout, and the command palette is fully keyboard-operable, never traps, and restores focus to the prior element when dismissed. On any **coarse pointer** (a `@media (pointer: coarse)` block), every primary control — buttons, links, the switch-calculator tabs, the All Tools hub headers, every `<select>`, the checkbox rows, and the disclosure toggles — is sized to a **≥44px tap target** (WCAG 2.5.8), so nothing is fiddly under a thumb.
 - **Release audit.** `npm run audit` mechanically verifies CSP `connect-src 'none'`, no cross-origin loads in the built output, full citation coverage, the ≤160-char citation-name cap, and no sensitive persistence.
 - **Security-header contract.** A unit test drives the real Cloudflare Worker `fetch` with a mock asset binding and asserts the full family on every response — `connect-src 'none'` on pages (relaxed to `'self'` only for `/sw.js` and the `/ocr/*` wasm worker), HSTS with `preload`, `Referrer-Policy: no-referrer`, `X-Content-Type-Options`, `X-Frame-Options: DENY`, a locked-down `Permissions-Policy`, COOP/CORP, and the immutable-vs-`no-cache` policy — so a dropped header or a loosened CSP fails CI rather than shipping.
-- **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 61 calculators** down to the **320px iPhone SE** (and the modern 360px baseline), **plus landscape phones** (short viewports, where the ⌘K palette must also stay within the screen) and **every Readout state that renders only after a file drop** — the confirm + summary (driven through the real anchored extractor with a sample W-2), and the unrecognized-document warning, the encrypted-restore unlock row, the wrong-passphrase error, and a successful restore feeding a populated Report — the **offline** service worker (loads with the network cut), the deep-link → compute path, that a **clamped deep link** still shows its disclosure note and fits a phone, that **print media strips the app chrome** so the Report prints as a clean document, that **no tool hangs or renders NaN/Infinity** when every field is set to an absurd value, and that on a **coarse pointer** every primary control (switch-calculator tabs, selects, hub headers, checkbox rows) renders at a **≥44px tap target** (WCAG 2.5.8). It runs as its own CI job so the unit suite stays fast.
+- **End-to-end in a real browser.** A Playwright suite (`npm run test:e2e`) runs the production build in headless Chromium to verify what happy-dom can't: **no horizontal scroll on every view across eight device widths (320–1440px)** and on **all 62 calculators** down to the **320px iPhone SE** (and the modern 360px baseline), **plus landscape phones** (short viewports, where the ⌘K palette must also stay within the screen) and **every Readout state that renders only after a file drop** — the confirm + summary (driven through the real anchored extractor with a sample W-2), and the unrecognized-document warning, the encrypted-restore unlock row, the wrong-passphrase error, and a successful restore feeding a populated Report — the **offline** service worker (loads with the network cut), the deep-link → compute path, that a **clamped deep link** still shows its disclosure note and fits a phone, that **print media strips the app chrome** so the Report prints as a clean document, that **no tool hangs or renders NaN/Infinity** when every field is set to an absurd value, and that on a **coarse pointer** every primary control (switch-calculator tabs, selects, hub headers, checkbox rows) renders at a **≥44px tap target** (WCAG 2.5.8). It runs as its own CI job so the unit suite stays fast.
 
 <img src="docs/screenshots/mobile.png" alt="The same Federal Income Tax result on a 390px phone: stacked inputs, the gold 'Try an example' button, and the $11,212.00 result card whose breakdown wraps long amounts rather than scrolling sideways." width="320" />
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**1,178 unit/golden tests across 78 files** (plus 22 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**1,194 unit/golden tests across 80 files** (plus 22 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -605,7 +606,7 @@ See the spec files for the full per-wave history.
 |---|---|
 | `src/engine` | Money math, citation/provenance, the tax evaluator, and per-domain math |
 | `src/data` | Dataset schemas, integrity check, manifest loader, fail-safe gate, browser loader |
-| `src/tiles` | One module per calculator (61 of them), the hub factory, and the registry |
+| `src/tiles` | One module per calculator (62 of them), the hub factory, and the registry |
 | `src/ui` | Render layer, the light theme, result card, command palette, router, charts, views |
 | `src/profile` | My Situation — the in-memory session profile and the portable encrypted-export module |
 | `src/readout` | Anchored extractors, the confirm flow, and the Readout Report builder |
@@ -713,7 +714,12 @@ The Playwright live-offline + responsiveness e2e suite, previously deferred, now
   **The caveat renders above the figure, and a DOM-order test asserts it.** Several states bar wage garnishment for ordinary consumer debt outright and many protect more than the federal floor; where a state protects more, the state rule governs (§1677). Below the number that sentence reads as a footnote to an answer the reader has already accepted — so it sits on top, and the ordering is pinned by test across every input rather than trusted to review.
 
   Two notes from the build. The shard stores the statutory **inputs** — the $7.25 wage and the thirty-hour multiple — and the biweekly, semi-monthly, and monthly floors are derived from the one weekly figure, so there is one number to refresh when the minimum wage moves and no way for four literals to drift apart. And that derivation had to be exact: `$217.50 × 52 ÷ 24` in floating point is `$471.24999999999994` where the statute means `$471.25`, which is precisely what the repo's `Money` decimal type exists for.
-- **Next: Phase 20b — life-event sequences.** Dated, ordered checklists for job loss, death, divorce, disability, a new child, and moving states. Split out from Phase 20 on purpose: it turns on the COBRA, ACA special-enrollment, Medicare, and per-program appeal windows, which are the highest-harm numbers on the site and deserve their own sourcing pass against live published regulations.
+- ✅ **Phase 23b — Enrollment & Appeal Windows** (shipped). The statutory clocks, sourced against the regulations themselves rather than a summary. The new [`enrollment-windows-2026`](data/enrollment-windows-2026.json) shard carries eleven windows, **each with its own citation to the section that sets it**: the COBRA election period and both premium clocks (29 U.S.C. §§1165, 1162), the ACA 60-day special enrollment period and the 2026 open-enrollment dates (45 CFR §§155.420, 155.410), Medicare's seven-month initial period, its January–March general period, and the eight-month Part B special enrollment period (42 CFR §§407.14, 407.15, 406.24), and the Medicaid, SNAP, and Marketplace appeal windows (42 CFR §431.221, 7 CFR §273.15, 45 CFR §155.520). Every one renders through `renderDeadline`, counted from an `asOf` date the **user sets** — shown on screen and in the deep link, never `Date.now()`.
+
+  Three things the sourcing pass turned up. **`Deadline` gained a calendar-month window**, because two of these rules are written in months and three months is 89, 90, 91, or 92 days depending on where in the year it lands — a difference that decides whether someone enrolls in time. **A floor is not a ceiling.** COBRA, SNAP, and the Marketplace windows are floors a plan may exceed and never shorten; the Medicaid fair-hearing period is the opposite — 42 CFR §431.221(d) gives a state "a reasonable time, not to exceed 90 days", so 90 days is the *most* a state must allow, and a test asserts the "this is the federal minimum" caveat never appears on it. And **a rule change already published for 2027 is carried as data**: 45 CFR §155.410(e)(5) shortens Marketplace open enrollment from the 2027 benefit year, so the January 15 date is labeled as the 2026 rule that does not carry forward, rather than left to quietly rot.
+
+  Where the states set the clock — unemployment appeals above all — **no number is shown at all**, and a schema test asserts none can creep in: there is no federal figure, the states differ widely, and a plausible-looking default would be worse than a pointer to the reader's own notice.
+- **Next: Phase 20b — life-event sequences**, now unblocked: its six dated checklists are ordered by exactly these clocks. Dated, ordered checklists for job loss, death, divorce, disability, a new child, and moving states. Split out from Phase 20 on purpose: it turns on the COBRA, ACA special-enrollment, Medicare, and per-program appeal windows, which are the highest-harm numbers on the site and deserve their own sourcing pass against live published regulations.
 
 ---
 
