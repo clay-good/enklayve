@@ -6,6 +6,7 @@ import {
 } from "../../scripts/check-adapters";
 import { ADAPTERS } from "../../scripts/refresh/adapters";
 import { extractUrls, sourceFiles } from "../../scripts/check-links";
+import { isPdf } from "../../scripts/fetch-source";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -117,5 +118,22 @@ describe("what the check can be run against", () => {
     }
     const invisible = ADAPTERS.filter((a) => !seen.has(a.sourceUrl)).map((a) => a.id);
     expect(invisible).toEqual([]);
+  });
+});
+
+describe("reading a source that is a PDF", () => {
+  it("recognises a PDF by content type or by path, and markup as neither", () => {
+    // Agencies keep moving figures off HTML pages and into a form or bulletin.
+    // While the pipeline could only read markup, every one of those shards was
+    // unwatched — which is how four of them went a year or two stale behind
+    // live, correct-looking citations.
+    expect(isPdf("https://x.test/a", "application/pdf")).toBe(true);
+    expect(isPdf("https://x.test/a", "application/pdf; charset=binary")).toBe(true);
+    // Some servers send octet-stream for a .pdf path, so the path decides too.
+    expect(isPdf("https://x.test/facts-2026.pdf", "application/octet-stream")).toBe(true);
+    expect(isPdf("https://x.test/facts-2026.PDF?v=2", null)).toBe(true);
+    expect(isPdf("https://x.test/rates.html", "text/html")).toBe(false);
+    // A path that merely mentions pdf is not one.
+    expect(isPdf("https://x.test/pdf-guide", "text/html")).toBe(false);
   });
 });

@@ -23,7 +23,7 @@ import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { decideOutcome, diffShards, renderDiffLogEntry, type RefreshOutcome } from "./contract.ts";
 import { ADAPTERS, adaptersForGroup, type RefreshAdapter, type RefreshGroup } from "./adapters.ts";
-import { BROWSER_USER_AGENT } from "../user-agent.ts";
+import { fetchSource } from "../fetch-source.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const DATA_DIR = join(ROOT, "data");
@@ -151,20 +151,6 @@ export function insertLogEntry(logContents: string, entry: string): string {
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
-}
-
-async function fetchSource(
-  url: string,
-): Promise<{ ok: true; raw: string } | { ok: false; reason: string }> {
-  try {
-    const response = await fetch(url, { headers: { "user-agent": BROWSER_USER_AGENT } });
-    if (!response.ok) {
-      return { ok: false, reason: `source returned HTTP ${response.status}` };
-    }
-    return { ok: true, raw: await response.text() };
-  } catch (error) {
-    return { ok: false, reason: `fetch failed: ${(error as Error).message}` };
-  }
 }
 
 function emitOutput(key: string, value: string): void {

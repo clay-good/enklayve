@@ -37,12 +37,11 @@ import {
   type RefreshAdapter,
   type RefreshGroup,
 } from "./refresh/adapters.ts";
-import { BROWSER_USER_AGENT } from "./user-agent.ts";
+import { fetchSource } from "./fetch-source.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DATA_DIR = join(ROOT, "data");
 const CONCURRENCY = 6;
-const TIMEOUT_MS = 30_000;
 
 /** Why an adapter could not anchor: the page, or the parser reading it. */
 export type AnchorStatus = "anchored" | "unparsed" | "unreachable";
@@ -125,25 +124,6 @@ export function renderAnchorReport(results: readonly AnchorResult[]): string {
 }
 
 /* c8 ignore start -- network + CLI */
-
-async function fetchSource(
-  url: string,
-): Promise<{ ok: true; raw: string } | { ok: false; reason: string }> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const response = await fetch(url, {
-      headers: { "user-agent": BROWSER_USER_AGENT },
-      signal: controller.signal,
-    });
-    if (!response.ok) return { ok: false, reason: `source returned HTTP ${response.status}` };
-    return { ok: true, raw: await response.text() };
-  } catch (error) {
-    return { ok: false, reason: `fetch failed: ${(error as Error).message}` };
-  } finally {
-    clearTimeout(timer);
-  }
-}
 
 async function check(adapter: RefreshAdapter): Promise<AnchorResult> {
   const current = JSON.parse(readFileSync(join(DATA_DIR, `${adapter.id}.json`), "utf8")) as Record<
