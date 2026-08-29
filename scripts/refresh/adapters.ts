@@ -1028,34 +1028,125 @@ function parseNewJerseyTopRate(raw: string, current: Record<string, unknown>): P
 // --- USDA FNS SNAP cost-of-living adjustment (anchored prose) ----------------
 
 /**
- * The USDA FNS annual SNAP COLA memo states the maximum allotment table by
- * household size and an each-additional-person increment. Like the HHS poverty
- * parser (the same table-plus-increment shape) we anchor the two cleanest single
- * figures — the one-person maximum allotment and the each-additional-person
- * amount — and overlay them. Rolling the full size-2-through-8 allotment table
- * stays the reviewer's data-only step on the resulting PR (the diff surfaces the
- * size-1 move to prompt it), exactly like a jurisdiction's full bracket table.
+ * The USDA FNS SNAP cost-of-living tables, read by column.
+ *
+ * FNS publishes one table for the whole country: household size down the side,
+ * and a column per region across the top — 48 States and DC, Alaska (Urban),
+ * Alaska (Rural 1), Alaska (Rural 2), Guam, Hawaii, Virgin Islands. A row reads
+ * `1 $298 $385 $491 $598 $439 $506 $383`, so the figure this shard wants is the
+ * first of seven and the others are three to twice as large.
+ *
+ * The parser this replaces anchored `1 $...` and an each-additional-person
+ * amount, which on this page would take the first column by position and no
+ * more. It never got the chance, for a reason that is a page and not a host:
+ * the adapter watched `/snap/allotment/cola/fy26`, the per-year page, which
+ * renders its tables client-side and arrives as a title and nothing else. The
+ * August 2026 audit had already noticed — it recorded the allotments as
+ * unverifiable, "stand as authored" — and read that as a limit of the source
+ * rather than of the URL. The COLA index one level up states the same tables in
+ * the markup, and its address carries no year, so next October's figures arrive
+ * at it too.
+ *
+ * Reading a column is more than this file usually does, and the reason it is
+ * safe here is that the table says which column is which. The header row is
+ * parsed first, the shard's region picks an index out of it, and every data row
+ * must carry exactly as many amounts as the header has columns — otherwise the
+ * shape has changed underneath and the parser refuses rather than counting into
+ * the wrong region. Structure is never invented either: only household sizes the
+ * committed shard already carries are filled, and every one of them must be
+ * present or nothing is written.
+ *
+ * Scope: Table 1, the maximum allotments, which is what a benefit estimate is
+ * built from. The standard-deduction and excess-shelter tables below it stay the
+ * reviewer's data-only step — the diff on an allotment move is what prompts it.
  */
+const SNAP_REGION_COLUMNS: Record<string, RegExp> = {
+  contiguous: /^48 States and District of Columbia$/i,
+};
+
 function parseSnap(raw: string, current: Record<string, unknown>): ParseOutcome {
-  // "Each additional person ... $219" or "$219 for each additional person".
-  const perMatch =
-    /each additional person[^$\d]*\$?([\d,]{2,})/i.exec(raw) ??
-    /\$?([\d,]{2,})\s+for each additional person/i.exec(raw);
-  // The one-person maximum allotment is the smallest household line: "1 $292".
-  const oneMatch = /(?:^|\n)\s*1\s+\$?([\d,]{3,})/.exec(raw);
-  if (!perMatch || !oneMatch) {
+  const region = String(current.region ?? "");
+  const column = SNAP_REGION_COLUMNS[region];
+  if (!column) {
+    return { ok: false, reason: `shard names no known SNAP region (got "${region}")` };
+  }
+  const text = visibleText(raw);
+  const fiscalYear = Number(current.fiscalYear);
+  if (Number.isInteger(fiscalYear) && !new RegExp(`FY ?${fiscalYear}\\b`, "i").test(text)) {
     return {
       ok: false,
-      reason: "could not anchor the one-person maximum allotment and each-additional-person amount",
+      reason: `the page states no FY ${fiscalYear} figures — SNAP's COLA takes effect each October, so this is a prior year's page or the shard is ahead of it`,
     };
   }
+
+  const table = /Table 1\. Maximum Monthly Allotment([\s\S]*?)(?:Table 2\.|Deductions\b)/i.exec(
+    text,
+  );
+  if (!table) {
+    return { ok: false, reason: "could not find Table 1 (maximum monthly allotment) on the page" };
+  }
+  const body = table[1] as string;
+
+  // The header runs from "Household Size" to the first data row ("1 $...").
+  const header = /Household Size([\s\S]*?)\b1\s+\$/i.exec(body);
+  if (!header) {
+    return { ok: false, reason: "Table 1 has no readable header row of region columns" };
+  }
+  const columns = (header[1] as string)
+    .split(
+      /\s{2,}|(?<=\))\s+(?=[A-Z48])|(?<=[a-z])\s+(?=48 States)|\s+(?=Alaska|Guam|Hawaii|Virgin)/,
+    )
+    .map((c) => c.trim())
+    .filter(Boolean);
+  const index = columns.findIndex((c) => column.test(c));
+  if (index === -1) {
+    return {
+      ok: false,
+      reason: `Table 1 no longer has a "${region}" column (header reads: ${columns.join(" | ")})`,
+    };
+  }
+
+  /** The `index`-th amount of a row, refusing if the row is not the header's width. */
+  function cell(label: string, row: string | undefined): number | string {
+    if (row === undefined) return `Table 1 has no "${label}" row`;
+    const amounts = [...row.matchAll(/\$([\d,]+)/g)].map((m) => parseAmount(m[1] as string));
+    if (amounts.length !== columns.length) {
+      return `the "${label}" row carries ${amounts.length} amounts for ${columns.length} columns — the table's shape changed, and counting into it would read another region`;
+    }
+    return amounts[index] as number;
+  }
+
+  const allotments = { ...((current.maxAllotmentByHouseholdSize as Record<string, number>) ?? {}) };
+  const rows = new Map<string, string>();
+  for (const m of body.matchAll(/(?:^|\s)(\d+|Each Additional Member)((?:\s+\$[\d,]+)+)/gi)) {
+    rows.set(String(m[1]).toLowerCase(), m[2] as string);
+  }
+  const parsed: Record<string, number> = {};
+  for (const size of Object.keys(allotments)) {
+    const value = cell(size, rows.get(size));
+    if (typeof value === "string") return { ok: false, reason: value };
+    const drift = implausibleDrift(allotments[size] as number, value);
+    if (drift) {
+      return {
+        ok: false,
+        reason: `the household-size-${size} maximum allotment ${drift}; refusing — either the table moved or this is not the figure`,
+      };
+    }
+    parsed[size] = value;
+  }
+  const additional = cell("Each Additional Member", rows.get("each additional member"));
+  if (typeof additional === "string") return { ok: false, reason: additional };
+  const additionalDrift = implausibleDrift(current.additionalPersonAllotment as number, additional);
+  if (additionalDrift) {
+    return {
+      ok: false,
+      reason: `the each-additional-member allotment ${additionalDrift}; refusing — either the table moved or this is not the figure`,
+    };
+  }
+
   const shard = clone(current);
-  const allotments = {
-    ...((shard.maxAllotmentByHouseholdSize as Record<string, number>) ?? {}),
-  };
-  allotments["1"] = parseAmount(oneMatch[1] as string);
-  shard.maxAllotmentByHouseholdSize = allotments;
-  shard.additionalPersonAllotment = parseAmount(perMatch[1] as string);
+  shard.maxAllotmentByHouseholdSize = parsed;
+  shard.additionalPersonAllotment = additional;
   return { ok: true, shard };
 }
 
@@ -1723,7 +1814,12 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "snap-fy2024-contiguous",
     group: "usda-snap",
     source: "USDA FNS SNAP cost-of-living adjustment (48 contiguous states and DC)",
-    sourceUrl: "https://www.fna.usda.gov/snap/allotment/cola/fy26",
+    // The COLA index, not /cola/fy26: the per-year page renders its tables
+    // client-side and arrives empty, and this address carries no year. The host
+    // is `fna` because FNS became the Food and Nutrition Administration on
+    // 2026-06-01 and fns.usda.gov redirects here — a redirect the link check
+    // counts as a failure, correctly.
+    sourceUrl: "https://www.fna.usda.gov/snap/allotment/cola",
     cadence: "Annual, October",
     parse: parseSnap,
   },

@@ -875,35 +875,67 @@ describe("adapters: seventh set — the remaining seeded states", () => {
   });
 });
 
-describe("adapters: USDA SNAP (anchored prose)", () => {
+describe("adapters: USDA SNAP (one table, a column per region)", () => {
   const adapter = adaptersForGroup("usda-snap")[0]!;
   const current = readShard("snap-fy2024-contiguous.json");
+  // FNS Table 1 as the page states it: seven region columns, and the figure
+  // this shard wants is the first of them.
+  const raw =
+    "SNAP FY 2026 Cost-of-Living Adjustments ... Table 1. Maximum Monthly Allotment" +
+    " Household Size 48 States and District of Columbia Alaska (Urban) Alaska (Rural 1)" +
+    " Alaska (Rural 2) Guam Hawaii Virgin Islands" +
+    " 1 $298 $385 $491 $598 $439 $506 $383" +
+    " 2 $546 $707 $901 $1,097 $806 $929 $703" +
+    " 3 $785 $1,015 $1,295 $1,576 $1,157 $1,334 $1,009" +
+    " 4 $994 $1,285 $1,639 $1,995 $1,465 $1,689 $1,278" +
+    " 5 $1,183 $1,529 $1,950 $2,374 $1,743 $2,010 $1,521" +
+    " 6 $1,421 $1,838 $2,344 $2,853 $2,095 $2,415 $1,827" +
+    " 7 $1,571 $2,031 $2,590 $3,152 $2,315 $2,668 $2,019" +
+    " 8 $1,789 $2,314 $2,950 $3,591 $2,637 $3,040 $2,300" +
+    " Each Additional Member $218 $282 $360 $438 $322 $371 $281" +
+    " Deductions Table 2. Standard Deductions Household Size 48 States and District of" +
+    " Columbia Alaska Guam Hawaii Virgin Islands 1 $209 $358 $420 $295 $184";
 
-  it("anchors the one-person allotment and each-additional-person amount", () => {
-    const raw =
-      "Maximum allotments, FY2025:\n1 $292\n2 $536\n8 $1,756\nEach additional person, add $220.";
+  it("reads the shard's own region column, not the first amount in the row", () => {
     const result = adapter.parse(raw, current);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect((result.shard.maxAllotmentByHouseholdSize as Record<string, number>)["1"]).toBe(292);
-    expect(result.shard.additionalPersonAllotment).toBe(220);
-    // The unstated sizes are preserved from the committed shard for review.
-    expect((result.shard.maxAllotmentByHouseholdSize as Record<string, number>)["4"]).toBe(994);
+    const a = result.shard.maxAllotmentByHouseholdSize as Record<string, number>;
+    expect(a["1"]).toBe(298);
+    expect(a["4"]).toBe(994);
+    expect(a["8"]).toBe(1789);
+    expect(result.shard.additionalPersonAllotment).toBe(218);
     expect(SnapSchema.safeParse(result.shard).success).toBe(true);
   });
 
-  it("accepts the reversed each-additional-person phrasing", () => {
-    const raw = "1 $292\n$220 for each additional person beyond eight.";
-    const result = adapter.parse(raw, current);
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.shard.additionalPersonAllotment).toBe(220);
+  it("refuses a row that is not the header's width rather than counting into it", () => {
+    // A dropped or added column shifts every row one region to the side, and
+    // Alaska (Rural 2) is twice the contiguous figure — plausible money, wrong
+    // households. The only thing that catches it is the count.
+    const narrowed = raw.replace(
+      " 4 $994 $1,285 $1,639 $1,995 $1,465 $1,689 $1,278",
+      " 4 $994 $1,285 $1,639 $1,995 $1,465 $1,689",
+    );
+    const result = adapter.parse(narrowed, current);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("the table's shape changed");
   });
 
-  it("fails (-> alert) when the anchors are missing", () => {
-    expect(adapter.parse("the COLA memo did not state allotments this way", current).ok).toBe(
-      false,
-    );
+  it("refuses a page that does not state the shard's fiscal year", () => {
+    const rolled = { ...current, fiscalYear: 2028 };
+    const result = adapter.parse(raw, rolled);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("no FY 2028 figures");
+  });
+
+  it("watches the COLA index, not the per-year page that renders its tables in JS", () => {
+    expect(adapter.sourceUrl).toBe("https://www.fna.usda.gov/snap/allotment/cola");
+  });
+
+  it("fails (-> alert) when Table 1 is absent", () => {
+    expect(adapter.parse("SNAP FY 2026 Cost-of-Living Adjustments", current).ok).toBe(false);
   });
 });
 
