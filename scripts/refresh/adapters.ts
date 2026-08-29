@@ -308,6 +308,33 @@ const FILING_LABELS: { key: string; pattern: RegExp }[] = [
 ];
 
 /**
+ * How far an anchored figure may move from the committed one before the parser
+ * refuses and asks a person.
+ *
+ * An indexed figure moves a few percent a year. A figure that moves by half is
+ * either a real reform — which deserves a human transcribing it, since a reform
+ * usually changes brackets and credits the parser does not touch — or the parser
+ * has grabbed the wrong number off the page. A dry run of every adapter on
+ * 2026-08-29 found six of the second kind, including California's standard
+ * deduction anchoring `2019` and Delaware's `2014`: page furniture, read as
+ * dollars.
+ *
+ * 25% is chosen so ordinary indexation always passes and nothing else does.
+ * Refusing a genuine reform costs an alert PR and a reviewer's transcription,
+ * which is the boundary this pipeline already draws everywhere else. Shipping a
+ * wrong figure under a live citation costs the thing the project is for.
+ */
+const MAX_PLAUSIBLE_DRIFT = 0.25;
+
+/** Reject an anchored amount that moved implausibly far from the committed one. */
+export function implausibleDrift(current: number, anchored: number): string | null {
+  if (!Number.isFinite(current) || current <= 0) return null;
+  const drift = Math.abs(anchored - current) / current;
+  if (drift <= MAX_PLAUSIBLE_DRIFT) return null;
+  return `${anchored} is ${(drift * 100).toFixed(0)}% away from the committed ${current}`;
+}
+
+/**
  * Overlay the standard deduction by filing status for a jurisdiction shard
  * (federal IRS Rev. Proc. and the CA FTB schedule both state these plainly).
  * Bracket bounds are intentionally NOT scraped here — transcribing a full
@@ -367,7 +394,15 @@ function parseStandardDeductions(raw: string, current: Record<string, unknown>):
       };
     }
     if (values.size === 1) {
-      deductions[key] = [...values][0]!;
+      const amount = [...values][0]!;
+      const drift = implausibleDrift(deductions[key] as number, amount);
+      if (drift !== null) {
+        return {
+          ok: false,
+          reason: `the ${key} standard deduction ${drift}; refusing — either the page moved or this is not the figure`,
+        };
+      }
+      deductions[key] = amount;
       anchored += 1;
     }
   }
@@ -768,8 +803,29 @@ function parseMedicaidThreshold(raw: string, current: Record<string, unknown>): 
       reason: "could not anchor the expansion eligibility threshold (% of the poverty line)",
     };
   }
+  const anchored = Number(match[1]);
+  const committed = Number(current.expansionThresholdPctFpl);
+  // The statutory / effective trap. CMS writes "133 percent of the federal
+  // poverty line", which is the STATUTORY figure; the number that decides
+  // eligibility is that plus the 5-point income disregard, an effective 138%,
+  // and 138 is what the shard carries and what every tile computes against.
+  // A dry run on 2026-08-29 showed this adapter proposing 138 -> 133: five
+  // points of the poverty line, about $800 of annual income for a household of
+  // one, silently narrowing who this site tells that they qualify.
+  //
+  // Both numbers are correct statements about the same rule, so no amount of
+  // pattern-tightening lets a scrape choose between them. It refuses instead.
+  if (Number.isFinite(committed) && anchored !== committed) {
+    return {
+      ok: false,
+      reason:
+        `the page states ${anchored}% of the poverty line where the shard carries ${committed}% — ` +
+        "probably the statutory figure against the effective one (the 5-point disregard). " +
+        "That distinction is a reviewer's call, not a scrape's",
+    };
+  }
   const shard = clone(current);
-  shard.expansionThresholdPctFpl = Number(match[1]);
+  shard.expansionThresholdPctFpl = anchored;
   return { ok: true, shard };
 }
 
@@ -803,6 +859,19 @@ function parseTreasuryBonds(raw: string, current: Record<string, unknown>): Pars
   if (!(inflationRate >= -0.05 && inflationRate <= 0.1)) {
     return { ok: false, reason: `implausible semiannual inflation rate ${inflMatch[1]}%` };
   }
+  // The two components are set independently by different mechanisms — the fixed
+  // rate by Treasury policy, the inflation rate by CPI-U — so their landing on
+  // the same figure to the basis point is not a coincidence, it is both patterns
+  // matching the same number on the page. A dry run on 2026-08-29 had both
+  // anchoring 4.26%, which is the COMPOSITE rate TreasuryDirect leads with.
+  if (fixedRate === inflationRate) {
+    return {
+      ok: false,
+      reason:
+        `both the fixed and semiannual inflation rate anchored ${fixedMatch[1]}% — ` +
+        "the patterns have collided, probably on the composite rate",
+    };
+  }
   const shard = clone(current);
   const rates = shard.rates as { fixedRate: number; inflationRate: number }[] | undefined;
   if (!Array.isArray(rates) || rates.length === 0) {
@@ -812,6 +881,26 @@ function parseTreasuryBonds(raw: string, current: Record<string, unknown>): Pars
   latest.fixedRate = fixedRate;
   latest.inflationRate = inflationRate;
   return { ok: true, shard };
+}
+
+/**
+ * A parser for a source that is REACHABLE and PARSEABLE and states the wrong
+ * thing — the one case a plausibility guard cannot reach.
+ *
+ * Iowa's DOR "Individual Income Tax Provisions" page still describes the 2022
+ * reform: "converts to a flat tax rate of 3.9% for tax years 2026 and later".
+ * SF 2442 (2024) superseded that, accelerating the flat rate to 3.8% for 2025
+ * and later, which is what the shard carries and what the IDR's own 2026 rate
+ * announcement states. The old figure parses perfectly and 3.8 to 3.9 is exactly
+ * the size of a real rate cut, so nothing generic can tell them apart.
+ *
+ * The honest outcome is neither a data PR nor a silent pass: it is a refusal
+ * that says what is wrong with the source, which is what the fail-safe alert is
+ * for. Keeping the entry means the page is still watched — if it is finally
+ * corrected, or moves, the reason a reviewer reads will change with it.
+ */
+function refuseSupersededSource(reason: string): (raw: string) => ParseOutcome {
+  return () => ({ ok: false, reason });
 }
 
 /** The first set of adapters (Phase 9 prompt). */
@@ -986,7 +1075,15 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl:
       "https://revenue.iowa.gov/taxes/tax-guidance/individual-income-tax/individual-income-tax-provisions",
     cadence: "Annual",
-    parse: parseFlatRateJurisdiction,
+    // This page parses cleanly and states a REPEALED rate — see
+    // refuseSupersededSource. Restore parseFlatRateJurisdiction once the IDR
+    // corrects the page, or point it at one that states 3.8% parseably.
+    parse: refuseSupersededSource(
+      "the IDR's provisions page still describes the 2022 reform (HF 2317, a flat 3.9% " +
+        "for 2026 and later). SF 2442 (2024) superseded it with 3.8% for 2025 and later, " +
+        "which is what this shard carries. Parsing this page would roll Iowa backwards to " +
+        "a repealed rate, so it is refused until the page is corrected",
+    ),
   },
   {
     id: "state-va-income-tax-2024",

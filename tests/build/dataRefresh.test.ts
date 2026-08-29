@@ -7,6 +7,7 @@ import {
   adaptersForGroup,
   REFRESH_GROUPS,
   anchorFlatRate,
+  implausibleDrift,
 } from "../../scripts/refresh/adapters";
 import { planRefresh, serializeShard, insertLogEntry } from "../../scripts/refresh/run";
 import {
@@ -487,6 +488,24 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     expect(anchorFlatRate("The income tax rate is 0%.")).toBe("none");
   });
 
+  it("refuses an anchored figure that moved implausibly far", () => {
+    // A dry run of every adapter found six anchoring page furniture as dollars:
+    // California's standard deduction came back as 2019 and Delaware's as 2014.
+    // Those are years. An indexed figure moves a few percent a year, so a figure
+    // that moves by a third is either a reform a person should transcribe or a
+    // number the parser had no business reading.
+    expect(implausibleDrift(11412, 2019)).toMatch(/82% away/);
+    expect(implausibleDrift(3250, 2014)).toMatch(/38% away/);
+    // Ordinary indexation passes untouched.
+    expect(implausibleDrift(15300, 15700)).toBeNull();
+    expect(implausibleDrift(2470, 2530)).toBeNull();
+    // Exactly at the band is still fine; past it is not.
+    expect(implausibleDrift(1000, 1250)).toBeNull();
+    expect(implausibleDrift(1000, 1251)).toMatch(/away from the committed 1000/);
+    // A committed zero has no scale to judge against, so it is not second-guessed.
+    expect(implausibleDrift(0, 5000)).toBeNull();
+  });
+
   it("refuses a deduction page that prints two years side by side", () => {
     // Rhode Island's inflation advisory prints "Filing status 2025 2026 / Single
     // $10,900 $11,200". Taking the first match rolls the shard BACKWARDS a year,
@@ -543,19 +562,22 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     }
   });
 
-  it("overlays the IA flat rate, preserving its federal-conformity deduction (flat parser reused)", () => {
+  it("refuses Iowa's source outright, because it states a repealed rate", () => {
+    // The IDR's provisions page still describes the 2022 reform's flat 3.9% for
+    // "2026 and later". SF 2442 (2024) superseded it with 3.8%, which the shard
+    // carries. The old figure parses perfectly and 3.8 to 3.9 is the size of a
+    // real rate cut, so no plausibility guard can tell them apart — the only
+    // honest outcome is a refusal that says what is wrong with the source.
     const ia = adaptersForGroup("state-ia")[0]!;
     const result = ia.parse(
-      "The Iowa income tax rate is 3.8%.",
+      "Converts to a flat tax rate of 3.9% for tax years 2026 and later.",
       readShard("state-ia-income-tax-2024.json"),
     );
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    const b = result.shard.bracketsByFilingStatus as Record<string, { rate: number }[]>;
-    expect(b.single![0]!.rate).toBe(0.038);
-    const std = result.shard.standardDeductionByFilingStatus as Record<string, number>;
-    expect(std.single).toBe(16100); // federal-conformity, the reviewer's IRS-roll step
-    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toMatch(/repealed rate/);
+      expect(result.reason).toMatch(/SF 2442/);
+    }
   });
 
   it("overlays the LA flat rate, preserving its standard deduction (flat parser reused)", () => {
