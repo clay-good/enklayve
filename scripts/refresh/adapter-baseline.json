@@ -16,12 +16,19 @@
     "watched again. Adding one means dry-running the adapter and reading the diff",
     "(`node scripts/refresh/run.ts --adapter <id> --dry-run`) -- anchoring proves",
     "the parser found something shaped like its figure, never that the value is",
-    "right, and on 2026-08-29 nine adapters anchored the wrong number."
+    "right, and on 2026-08-29 nine adapters anchored the wrong number.",
+    "",
+    "Illinois, Arizona, Kentucky and Iowa joined on 2026-08-29, each dry-run to a",
+    "no-op against its committed rate."
   ],
   "recordedOn": "2026-08-29",
   "knownAnchoring": [
     "fica-2024",
+    "state-az-income-tax-2024",
+    "state-ia-income-tax-2024",
+    "state-il-income-tax-2024",
     "state-in-income-tax-2024",
+    "state-ky-income-tax-2024",
     "state-la-income-tax-2024",
     "state-pa-income-tax-2024",
     "state-va-income-tax-2024"

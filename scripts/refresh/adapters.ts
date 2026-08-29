@@ -212,6 +212,40 @@ function clone(current: Record<string, unknown>): Record<string, unknown> {
   return JSON.parse(JSON.stringify(current)) as Record<string, unknown>;
 }
 
+/**
+ * Reduce a fetched page to the text a reader actually sees.
+ *
+ * The adapters regex over whatever `fetchSource` returns, which for an HTML page
+ * is the markup. That was survivable while every figure sat in a sentence, and
+ * it stops being survivable the moment a figure sits in a table — which is where
+ * flat-rate states put theirs. Illinois publishes its rate as a table row whose
+ * label cell says "Individual Income Tax" and whose value cell says "4.95 percent
+ * of net income": in prose those are eleven words apart, and in markup they are
+ * separated by a hundred characters of `<td valign="top" class="soi-rteTableOddCol-0">`
+ * that no bounded bridge can cross without also crossing half the page.
+ *
+ * Stripping tags is also what removes the *noise* that made bridging dangerous.
+ * A page's `<style>` block is full of percentages (Idaho's mega-menu carries
+ * `33.3333333333%`), and its `<meta name="description">` repeats the body text
+ * inside an attribute, so a page could state one rate and match it four times.
+ * Both disappear here, which makes the ambiguity guard below mean what it says:
+ * two different matches are two different figures on the page, not the same
+ * figure counted twice.
+ *
+ * This is not a renderer. Text hidden by CSS still shows up, and table geometry
+ * is gone — a parser that needs to know which column a cell is in is a parser
+ * that should be a reviewer step instead.
+ */
+export function visibleText(raw: string): string {
+  return raw
+    .replace(/<(script|style|noscript)\b[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/\s+/g, " ");
+}
+
 // --- BLS CPI-U (machine-readable JSON API) -----------------------------------
 
 /**
@@ -450,7 +484,27 @@ function parseStandardDeductions(raw: string, current: Record<string, unknown>):
  * unless they all agree. Disagreement routes to the fail-safe alert and a human,
  * which is the same posture the rest of the pipeline takes.
  */
-export function anchorFlatRate(raw: string): number | "none" | "ambiguous" {
+/**
+ * A rate whose number is introduced by a bare four-digit year is a row in a
+ * by-year table, not a statement of the current rate.
+ *
+ * Colorado's Individual Income Tax Guide prints "Colorado Income Tax Rates / Tax
+ * Year / Tax Rate / 2019 4.5% / 2020 4.55% / 2021 4.5% / 2022 4.4% / 2023 4.4% /
+ * 2024 4.25% / 2025 4.4%". Every pattern here reaches the first row, so the
+ * guide would have proposed rolling Colorado to its 2019 rate — the same failure
+ * as the standard-deduction parser's two-column table, in a different shape. And
+ * a rate history is the one table where the wrong row is always plausible: these
+ * are all real Colorado rates, they differ by tenths, and 2024's 4.25% was a
+ * one-year reduction, so nothing about the value itself says which row it is.
+ *
+ * The year has to be adjacent. Indiana's "income tax rate for 2026 is 2.95%"
+ * names a year too, but with "is" between it and the number, which is the
+ * difference between a sentence about this year and a column heading.
+ */
+const YEAR_LABELLED = /(?:19|20)\d{2}\s{0,3}$/;
+
+export function anchorFlatRate(raw: string): number | "none" | "ambiguous" | "historical" {
+  const text = visibleText(raw);
   const patterns = [
     // "income tax rate for 2026 is 2.95%", "income tax rate is 4.95%"
     /income[- ]?tax\s+rate[^.;%]{0,48}?([\d.]+)\s*(?:percent|%)/gi,
@@ -458,23 +512,43 @@ export function anchorFlatRate(raw: string): number | "none" | "ambiguous" {
     /income[- ]?tax\b[^.;%]{0,60}?\brate\s+of\s+([\d.]+)\s*(?:percent|%)/gi,
     // "a flat 3.07% tax"
     /\b([\d.]+)\s*(?:percent|%)\s+flat\b/gi,
-    // "flat rate of 4.99%"
-    /\bflat\s+rate\s+of\s+([\d.]+)\s*(?:percent|%)/gi,
+    // "flat rate of 4.99%", "flat tax rate of 2.5%", "flat income tax rate of..."
+    // — Arizona's is the middle one, and the words between "flat" and "rate"
+    // are the only thing that was keeping it unread.
+    /\bflat\s+(?:\w+\s+){0,2}?rate\s+of\s+([\d.]+)\s*(?:percent|%)/gi,
+    // The table row: a label cell reading "Individual Income Tax" and a value
+    // cell reading "4.95 percent of net income", with no "rate" between them
+    // because the column heading already said it (Illinois, Louisiana's RIB).
+    //
+    // This is the loosest pattern here, so it is last, and its label carries
+    // the word that keeps it honest: "individual". Illinois' page states four
+    // rates in one table — corporate 7%, trusts 4.95%, replacement 2.5%/1.5%,
+    // individual 4.95% — and "income tax" alone would match the first row it
+    // reached. "Individual income tax" matches one row, and if a page ever has
+    // two that disagree the guard below refuses rather than picks.
+    /\bindividual\s+income[- ]?tax\b[^%]{0,120}?([\d.]+)\s*(?:percent|%)/gi,
   ];
-  const found = new Set<number>();
   for (const pattern of patterns) {
-    for (const match of raw.matchAll(pattern)) {
+    const found = new Set<number>();
+    const historical = new Set<number>();
+    for (const match of text.matchAll(pattern)) {
       const value = Number(match[1]);
-      if (Number.isFinite(value) && value > 0 && value <= 15) found.add(value);
+      if (!Number.isFinite(value) || value <= 0 || value > 15) continue;
+      // Where the captured number starts, so the words immediately before it
+      // can be read. `match.index` is the start of the whole bridge, which for
+      // these patterns is a clause or a table label away.
+      const at = (match.index ?? 0) + match[0].lastIndexOf(match[1] as string);
+      if (YEAR_LABELLED.test(text.slice(Math.max(0, at - 8), at))) historical.add(value);
+      else found.add(value);
     }
     // Patterns are ordered most- to least-specific. The first that matches at
     // all decides, so a precise phrasing is never diluted by a looser one
     // elsewhere on the page.
-    if (found.size > 0) break;
+    if (found.size === 1) return [...found][0]!;
+    if (found.size > 1) return "ambiguous";
+    if (historical.size > 0) return "historical";
   }
-  if (found.size === 0) return "none";
-  if (found.size > 1) return "ambiguous";
-  return [...found][0]!;
+  return "none";
 }
 
 function parseFlatRateJurisdiction(raw: string, current: Record<string, unknown>): ParseOutcome {
@@ -486,6 +560,14 @@ function parseFlatRateJurisdiction(raw: string, current: Record<string, unknown>
     return {
       ok: false,
       reason: "the page states more than one income-tax rate; refusing to guess which is current",
+    };
+  }
+  if (percent === "historical") {
+    return {
+      ok: false,
+      reason:
+        "the only rates on the page sit in a by-year table (a bare year, then the rate);" +
+        " refusing to guess which row is the current one",
     };
   }
   if (!Number.isFinite(percent) || percent <= 0 || percent > 15) {
@@ -883,26 +965,6 @@ function parseTreasuryBonds(raw: string, current: Record<string, unknown>): Pars
   return { ok: true, shard };
 }
 
-/**
- * A parser for a source that is REACHABLE and PARSEABLE and states the wrong
- * thing — the one case a plausibility guard cannot reach.
- *
- * Iowa's DOR "Individual Income Tax Provisions" page still describes the 2022
- * reform: "converts to a flat tax rate of 3.9% for tax years 2026 and later".
- * SF 2442 (2024) superseded that, accelerating the flat rate to 3.8% for 2025
- * and later, which is what the shard carries and what the IDR's own 2026 rate
- * announcement states. The old figure parses perfectly and 3.8 to 3.9 is exactly
- * the size of a real rate cut, so nothing generic can tell them apart.
- *
- * The honest outcome is neither a data PR nor a silent pass: it is a refusal
- * that says what is wrong with the source, which is what the fail-safe alert is
- * for. Keeping the entry means the page is still watched — if it is finally
- * corrected, or moves, the reason a reviewer reads will change with it.
- */
-function refuseSupersededSource(reason: string): (raw: string) => ParseOutcome {
-  return () => ({ ok: false, reason });
-}
-
 /** The first set of adapters (Phase 9 prompt). */
 export const ADAPTERS: RefreshAdapter[] = [
   {
@@ -1022,7 +1084,13 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-co-income-tax-2024",
     group: "state-co",
     source: "Colorado DOR individual income tax (flat rate)",
-    sourceUrl: "https://tax.colorado.gov/individual-income-tax",
+    // The DOR's landing page renders its rate through a widget, so nothing in the
+    // markup states it. The guide the shard cites does state it — in a by-year
+    // table the parser refuses to read a row out of (see YEAR_LABELLED). That is
+    // still the better source to watch: the refusal names the real obstacle, and
+    // the day Colorado states its current rate in prose the adapter reads it.
+    sourceUrl:
+      "https://tax.colorado.gov/sites/tax/files/documents/Individual_Income_Tax_Guide_January_2026.pdf",
     cadence: "Annual",
     parse: parseFlatRateJurisdiction,
   },
@@ -1038,7 +1106,12 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-ky-income-tax-2024",
     group: "state-ky",
     source: "Kentucky DOR individual income tax (flat rate)",
-    sourceUrl: "https://revenue.ky.gov/Individual/Individual-Income-Tax/Pages/default.aspx",
+    // The DOR's individual-income landing page states no rate at all — it is a
+    // menu — so this watches the withholding formula, which opens with "2026
+    // Kentucky Tax Rate: 3.5% of taxable income". Kentucky's withholding rate and
+    // its flat income-tax rate are the same figure (KRS 141.020), which is why
+    // the formula is a legitimate place to read it and not merely a parseable one.
+    sourceUrl: "https://revenue.ky.gov/Forms/2026%20Withholding%20Formula.pdf",
     cadence: "Annual",
     parse: parseFlatRateJurisdiction,
   },
@@ -1072,18 +1145,16 @@ export const ADAPTERS: RefreshAdapter[] = [
     group: "state-ia",
     source:
       "Iowa Department of Revenue individual income tax (flat rate, federal-conformity deduction)",
+    // NOT the IDR's "Individual Income Tax Provisions" page, which this adapter
+    // watched until it was caught proposing 3.9% — the 2022 reform's rate, which
+    // SF 2442 (2024) superseded with 3.8% before it ever took effect. That page
+    // parses cleanly and says a repealed number, so the adapter had to refuse it
+    // outright. The IDR's own rate announcement says 3.8%, and reading it is the
+    // resolution the refusal was holding the place for.
     sourceUrl:
-      "https://revenue.iowa.gov/taxes/tax-guidance/individual-income-tax/individual-income-tax-provisions",
+      "https://revenue.iowa.gov/press-release/2025-10-21/idr-announces-2026-individual-income-tax-and-interest-rates",
     cadence: "Annual",
-    // This page parses cleanly and states a REPEALED rate — see
-    // refuseSupersededSource. Restore parseFlatRateJurisdiction once the IDR
-    // corrects the page, or point it at one that states 3.8% parseably.
-    parse: refuseSupersededSource(
-      "the IDR's provisions page still describes the 2022 reform (HF 2317, a flat 3.9% " +
-        "for 2026 and later). SF 2442 (2024) superseded it with 3.8% for 2025 and later, " +
-        "which is what this shard carries. Parsing this page would roll Iowa backwards to " +
-        "a repealed rate, so it is refused until the page is corrected",
-    ),
+    parse: parseFlatRateJurisdiction,
   },
   {
     id: "state-va-income-tax-2024",

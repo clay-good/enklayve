@@ -483,6 +483,54 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     ).toBe(4.95);
   });
 
+  it("reads a rate out of a table, which is where flat states actually put it", () => {
+    // Illinois states its rate as a table row: a label cell and a value cell,
+    // with the word "rate" only in the column heading. In the markup those two
+    // cells are a hundred characters of attributes apart, and in the visible
+    // text they are adjacent — which is the whole reason the markup is stripped
+    // before anything is matched.
+    expect(
+      anchorFlatRate(
+        "<td><strong>Business Income Tax</strong></td>" +
+          "<td>Effective July 1, 2017:<ul><li>Corporations – 7 percent of net income</li></ul></td>" +
+          "<td><strong>Individual Income Tax</strong></td>" +
+          "<td>Effective July 1, 2017:<ul><li>4.95 percent of net income</li></ul></td>",
+      ),
+    ).toBe(4.95);
+    // "Individual" is what keeps that loose pattern honest: the corporate row
+    // above states 7% in exactly the same shape.
+    expect(anchorFlatRate("Arizona's flat tax rate of 2.5%.")).toBe(2.5);
+  });
+
+  it("ignores a page's own stylesheet and meta tags", () => {
+    // A mega-menu's CSS is full of percentages (33.3333333333%) and a meta
+    // description repeats the body text, so one stated rate could match four
+    // times. Both would have made the ambiguity guard mean something else.
+    expect(
+      anchorFlatRate(
+        "<style>.col{width:33.3333333333%;}</style>" +
+          '<meta name="description" content="Individual Income Tax: 4.95 percent">' +
+          "<p>Individual Income Tax: 4.95 percent of net income</p>",
+      ),
+    ).toBe(4.95);
+  });
+
+  it("refuses to read a rate out of a by-year history table", () => {
+    // Colorado's Individual Income Tax Guide prints a rate per year, and every
+    // pattern reaches the first row — so the guide would have proposed rolling
+    // Colorado back to 2019. Each of these is a real Colorado rate differing by
+    // tenths, so no plausibility band separates them; only the shape does.
+    expect(
+      anchorFlatRate(
+        "Colorado Income Tax Rates Tax Year Tax Rate 2019 4.5% 2020 4.55% 2021 4.5%" +
+          " 2022 4.4% 2023 4.4% 2024 4.25% 2025 4.4%",
+      ),
+    ).toBe("historical");
+    // A sentence that names the year is not a table row. The difference is the
+    // word between the year and the number.
+    expect(anchorFlatRate("The income tax rate for 2026 is 2.95%.")).toBe(2.95);
+  });
+
   it("rejects an implausible percentage before it can reach a shard", () => {
     expect(anchorFlatRate("The income tax rate is 95%.")).toBe("none");
     expect(anchorFlatRate("The income tax rate is 0%.")).toBe("none");
@@ -562,22 +610,25 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     }
   });
 
-  it("refuses Iowa's source outright, because it states a repealed rate", () => {
-    // The IDR's provisions page still describes the 2022 reform's flat 3.9% for
-    // "2026 and later". SF 2442 (2024) superseded it with 3.8%, which the shard
-    // carries. The old figure parses perfectly and 3.8 to 3.9 is the size of a
-    // real rate cut, so no plausibility guard can tell them apart — the only
-    // honest outcome is a refusal that says what is wrong with the source.
+  it("reads Iowa's rate from the announcement, not the page that states a repealed one", () => {
+    // The IDR's "Individual Income Tax Provisions" page still describes the 2022
+    // reform's flat 3.9% for "2026 and later". SF 2442 (2024) superseded it with
+    // 3.8%, which the shard carries. The old figure parses perfectly and 3.8 to
+    // 3.9 is the size of a real rate cut, so no plausibility guard can tell them
+    // apart — the adapter had to refuse that page outright. It watches the IDR's
+    // own rate announcement instead, which states the rate that is actually law.
     const ia = adaptersForGroup("state-ia")[0]!;
+    expect(ia.sourceUrl).toContain("idr-announces-2026-individual-income-tax");
     const result = ia.parse(
-      "Converts to a flat tax rate of 3.9% for tax years 2026 and later.",
+      "Individual Income Tax Rate Since the enactment of Iowa Senate File 2442 in May 2024," +
+        " Iowa law provides for a flat tax rate of 3.8 percent.",
       readShard("state-ia-income-tax-2024.json"),
     );
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.reason).toMatch(/repealed rate/);
-      expect(result.reason).toMatch(/SF 2442/);
-    }
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const b = result.shard.bracketsByFilingStatus as Record<string, { rate: number }[]>;
+    expect(b.single![0]!.rate).toBe(0.038);
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
   });
 
   it("overlays the LA flat rate, preserving its standard deduction (flat parser reused)", () => {
