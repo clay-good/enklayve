@@ -407,7 +407,12 @@ export function renderReadout(opts: RenderReadoutOptions): void {
 
     resultRegion.append(
       list,
-      answerBlock(buildAnswer(result, { documents: session })),
+      answerBlock(
+        buildAnswer(result, {
+          documents: session,
+          noSurprises: data?.noSurprises() ?? undefined,
+        }),
+      ),
       el("div", { class: "readout-actions" }, confirm),
     );
   }

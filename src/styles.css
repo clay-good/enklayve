@@ -1102,6 +1102,73 @@ body {
 .cc-ask li {
   margin-bottom: 0.35rem;
 }
+/* Medical Bill & EOB Checker (SPEC-4-safety-net §B1), harm tier 3. Two blocks —
+   the plan's arithmetic and the No Surprises scope — kept visually separate,
+   because they answer different questions and fail in different ways. */
+.eob-block {
+  margin-bottom: 1.1rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--enk-border);
+}
+.eob-block:last-of-type {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.eob-heading {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+}
+.eob-subheading {
+  font-size: 0.9rem;
+  margin: 0.9rem 0 0.35rem;
+}
+.eob-figure {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+.eob-screen {
+  margin: 0.5rem 0 0;
+}
+/* Gold, not green: a reconciling figure and a covered situation are good news
+   about the *rule*, never a verdict about the bill. */
+.eob-screen--ok {
+  color: var(--enk-primary-strong);
+  font-weight: 600;
+}
+.eob-detail,
+.eob-cite {
+  margin: 0.45rem 0 0;
+  font-size: 0.9rem;
+  color: var(--enk-text-muted);
+  line-height: 1.5;
+}
+.eob-caveat {
+  margin: 0.5rem 0 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 9px;
+  background: var(--enk-surface-2);
+  font-size: 0.9rem;
+  color: var(--enk-text-muted);
+}
+.eob-list {
+  margin: 0;
+  padding-left: 1.3rem;
+  font-size: 0.9rem;
+  color: var(--enk-text-muted);
+}
+.eob-list li {
+  margin-bottom: 0.35rem;
+  line-height: 1.5;
+}
+.eob-limit {
+  margin-top: 0.8rem;
+  background: var(--enk-surface-2);
+  border-radius: var(--enk-radius);
+  padding: 0.85rem 1rem;
+  color: var(--enk-text-muted);
+}
 .cc-limit {
   margin-top: 0.8rem;
   background: var(--enk-surface-2);

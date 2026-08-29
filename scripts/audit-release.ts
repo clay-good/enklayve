@@ -114,11 +114,17 @@ export interface AuditTile {
 export function checkHarmTier(tiles: AuditTile[]): string[] {
   const violations: string[] = [];
   for (const tile of tiles) {
-    if (tile.pillar !== "rough") continue;
-    if (tile.harmTier === undefined) {
+    // Two separate rules. Pillar 4 must *declare* a tier — that is the
+    // admission bar. But the tier rules below bind any tile that declares one,
+    // whatever pillar hosts it: a rights-adjacent screener living in an older
+    // hub (the EOB checker sits in Insurance & Protection, where someone
+    // holding a health claim actually goes) is no less rights-adjacent for it,
+    // and keying the gate on the pillar would have let it through unchecked.
+    if (tile.pillar === "rough" && tile.harmTier === undefined) {
       violations.push(`tile ${tile.id} is pillar "rough" but declares no harmTier (SPEC-4 §3.2)`);
       continue;
     }
+    if (tile.harmTier === undefined) continue;
     if (tile.harmTier === 3 && !tile.channels?.length) {
       violations.push(
         `tile ${tile.id} is harmTier 3 (screener-only) but names no channels to act through`,

@@ -45,13 +45,20 @@ export function defineHub(config: HubConfig): TileDefinition {
   // the union of their channels (SPEC-4 §3.2). A hub is a container, but it is
   // also a real navigable tile, so it must satisfy the Pillar 4 bar rather than
   // slipping under it: hosting a tier-3 screener makes the hub rights-adjacent.
-  const harmTier = tools.reduce<TileDefinition["harmTier"]>(
+  const strictest = tools.reduce<TileDefinition | undefined>(
     (worst, t) =>
-      t.harmTier !== undefined && (worst === undefined || t.harmTier > worst) ? t.harmTier : worst,
+      t.harmTier !== undefined && (worst?.harmTier === undefined || t.harmTier > worst.harmTier)
+        ? t
+        : worst,
     undefined,
   );
+  const harmTier = strictest?.harmTier;
   const channels = tools.flatMap((t) => t.channels ?? []);
-  const advice = tools.find((t) => t.how)?.how;
+  // The advice line comes from the tool that *set* the tier, not from whichever
+  // calculator happens to be listed first. The hub is rights-adjacent because of
+  // that one tool, so its "how" is the one that must carry the line — picking
+  // any other tool's silently inherits a "how" with no advice line in it.
+  const advice = strictest?.how ?? tools.find((t) => t.how)?.how;
 
   return {
     id,

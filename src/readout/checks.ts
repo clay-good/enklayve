@@ -17,7 +17,7 @@
  *
  * The module is pure: extractions in, outcomes out.
  */
-import type { CitationData } from "../data/schemas";
+import type { CitationData, NoSurprisesData } from "../data/schemas";
 import { Money } from "../engine/money";
 import type { CheckKind, CheckOutcome, DocKind, ExtractionResult } from "./types";
 
@@ -38,6 +38,10 @@ export interface CheckContext {
   /** Every extraction in the session, including `primary`. Enables §5 cross-checks. */
   documents: ExtractionResult[];
   plan?: PlanParameters;
+  /** The No Surprises Act scope shard, for the balance-billing rule check.
+   * Absent simply skips that check — a rule we cannot cite is a rule we do not
+   * state (SPEC-4-readout-v2 §4). */
+  noSurprises?: NoSurprisesData;
 }
 
 /** What a check returns when it fires. The registry stamps on the rest. */
@@ -48,6 +52,11 @@ export interface CheckFinding {
   detail: string;
   /** Who to raise it with. */
   askWho: string;
+  /**
+   * The citation for a rule check whose rule travels with a hashed dataset
+   * rather than being hard-coded here. Overrides the definition's `citation`.
+   */
+  citation?: CitationData;
 }
 
 /** One check (SPEC-4-readout-v2 §4.1). */
@@ -62,6 +71,15 @@ export interface CheckDefinition {
   appliesTo: DocKind[];
   /** Required for kind "rule"; forbidden for kind "arithmetic". */
   citation?: CitationData;
+  /**
+   * Declares that this rule check's citation arrives with the dataset it reads,
+   * so `citation` above is legitimately absent. The alternative — copying a
+   * shard's citation into the code that reads it — is exactly the drift seam
+   * where the hashed source and the cited source quietly diverge. The promise is
+   * enforced at run time as well as declared: {@link runChecks} drops a rule
+   * outcome that reaches it with no citation, so an uncited rule cannot render.
+   */
+  citationFromData?: boolean;
   /** What a false positive looks like, in one sentence. Required for every check. */
   falsePositive: string;
   /** Suppressed when the source text came from OCR (always true for "rule"). */
@@ -218,6 +236,37 @@ export const CHECKS: CheckDefinition[] = [
     },
   },
   {
+    /**
+     * The balance-billing screen (SPEC-4-safety-net §B1, check 2). Tier 3
+     * framing throughout: it states what the rule protects, says plainly that
+     * whether *this* care falls inside it cannot be read off the notice, and
+     * names the free federal channel. It never says "you don't owe this".
+     */
+    id: "eob-out-of-network-balance-bill",
+    kind: "rule",
+    appliesTo: ["eobHealth"],
+    citationFromData: true,
+    falsePositive:
+      "Most out-of-network care is simply out-of-network care you chose and do owe — the protections cover specific settings, and signing a notice and consent form gives them up.",
+    // An OCR misread must never become a balance-billing claim (§6.4).
+    suppressOnOcr: true,
+    run: (ctx) => {
+      const ns = ctx.noSurprises;
+      if (!ns) return null;
+      const d = doc(ctx, "eobHealth");
+      if (d?.fields.find((f) => f.id === "eob-network")?.value !== "out-of-network") return null;
+      const patient = amount(d, "eob-patient-responsibility");
+      if (patient === null || patient <= 0) return null;
+      const ground = ns.exclusions.find((e) => e.id === "ground-ambulance");
+      return {
+        question: "Was this one of the situations the No Surprises Act protects?",
+        detail: `This claim is marked out-of-network and puts ${usd(patient)} on you. Since ${ns.effectiveFrom}, federal law has barred a balance bill in ${ns.protections.length} situations: ${ns.protections.map((p) => p.label.toLowerCase()).join("; ")}. It does not reach every case${ground ? ` — ${ground.label.toLowerCase()} is one it does not` : ""}, and signing a notice and consent form gives the protection up. Which of those describes your care is not something this notice can tell us — it is the question to ask.`,
+        askWho: ns.channels[0]?.label ?? "The federal No Surprises Help Desk.",
+        citation: ns.citation,
+      };
+    },
+  },
+  {
     // The single most valuable cross-check on the list (§5): the provider's bill
     // against the responsibility the plan actually calculated.
     id: "eob-x-bill-responsibility",
@@ -250,7 +299,9 @@ export function validateCheck(c: CheckDefinition): string[] {
   }
   if (c.appliesTo.length === 0) problems.push(`${c.id}: appliesTo must name at least one kind`);
   if (c.kind === "rule") {
-    if (!c.citation) problems.push(`${c.id}: a rule check must carry a citation`);
+    if (!c.citation && !c.citationFromData) {
+      problems.push(`${c.id}: a rule check must carry a citation`);
+    }
     if (!c.suppressOnOcr) problems.push(`${c.id}: a rule check must set suppressOnOcr`);
   }
   if (c.kind === "arithmetic" && c.citation) {
@@ -287,13 +338,18 @@ export function runChecks(ctx: CheckContext, registry: CheckDefinition[] = CHECK
     if (fromOcr && check.suppressOnOcr) continue;
     const finding = check.run(ctx);
     if (!finding) continue;
+    const citation = finding.citation ?? check.citation;
+    // A rule check states that a document may conflict with a published rule.
+    // Without the rule in hand it is an accusation with no source, so it is
+    // dropped rather than rendered — the run-time half of `citationFromData`.
+    if (check.kind === "rule" && !citation) continue;
     outcomes.push({
       checkId: check.id,
       kind: check.kind,
       question: finding.question,
       detail: finding.detail,
       askWho: finding.askWho,
-      citation: check.citation,
+      citation,
       fromOcr,
     });
   }

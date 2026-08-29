@@ -218,6 +218,12 @@ const SHARDS: ShardSource[] = [
     shard: "free-filing-2026.json",
     ...PILLAR4_ANNUAL,
   },
+  {
+    id: "no-surprises-2026",
+    kind: "no-surprises",
+    shard: "no-surprises-2026.json",
+    ...PILLAR4_ANNUAL,
+  },
 ];
 
 function sha256Hex(buf: Buffer): string {

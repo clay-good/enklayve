@@ -10,6 +10,17 @@ import {
 } from "../../src/readout/checks";
 import type { ExtractedText } from "../../src/readout/extractText";
 import type { ExtractionResult } from "../../src/readout/types";
+import { NoSurprisesSchema, type NoSurprisesData } from "../../src/data/schemas";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+/** The real bundled shard, parsed through its own schema — so these tests fail
+ * if the shard drifts out of shape, not just if the code does. */
+const NO_SURPRISES: NoSurprisesData = NoSurprisesSchema.parse(
+  JSON.parse(
+    readFileSync(resolve(__dirname, "..", "..", "data", "no-surprises-2026.json"), "utf8"),
+  ),
+);
 
 /**
  * Readout v2 (SPEC-4-readout-v2): the four-part answer and the check registry.
@@ -315,9 +326,10 @@ describe("Readout v2, the four-part answer (§2)", () => {
     ]);
     expect(answer.flags).toHaveLength(0);
     expect(answer.emptyReasons.flags).toContain("Nothing flagged");
-    // The surprise-billing protections wait on the shard that would cite them.
+    // An in-network claim: the surprise-billing rule covers out-of-network
+    // charges, so it is not the rule in play, and the section says so.
     expect(answer.owed).toHaveLength(0);
-    expect(answer.emptyReasons.owed).toContain("cite the rule");
+    expect(answer.emptyReasons.owed).toContain("not the rule in play");
     expect(answer.next[0]?.label).toContain("An EOB is not a bill");
   });
 
@@ -382,5 +394,108 @@ describe("Readout v2, the four-part answer (§2)", () => {
     expect(answer.source).toBe(w2);
     expect(answer.says.map((s) => s.value)).toContain("$75,000.00");
     expect(answer.next[0]?.label).toContain("Nothing is used until you confirm");
+  });
+});
+
+/**
+ * The balance-billing screen (SPEC-4-safety-net §B1 check 2, Phase 22b). Tier 3
+ * throughout: it states the rule, says plainly that whether *this* care falls
+ * inside it cannot be read off the notice, and names the free federal channel.
+ */
+describe("Readout v2, the No Surprises balance-billing screen", () => {
+  const outOfNetwork = extractDocument(typed(EOB_MISMATCH));
+  const inNetwork = extractDocument(typed(EOB_CLEAN));
+
+  it("does not run at all without the shard that cites it", () => {
+    const flags = runChecks({ primary: outOfNetwork, documents: [outOfNetwork] });
+    expect(flags.find((f) => f.checkId === "eob-out-of-network-balance-bill")).toBeUndefined();
+  });
+
+  it("fires on an out-of-network claim and carries the shard's own citation", () => {
+    const flags = runChecks({
+      primary: outOfNetwork,
+      documents: [outOfNetwork],
+      noSurprises: NO_SURPRISES,
+    });
+    const flag = flags.find((f) => f.checkId === "eob-out-of-network-balance-bill");
+    expect(flag?.kind).toBe("rule");
+    // The citation travels with the hashed shard, not a copy in the code.
+    expect(flag?.citation).toBe(NO_SURPRISES.citation);
+    expect(flag?.citation?.sourceUrl).toContain("cms.gov");
+    expect(flag?.askWho).toContain("Help Desk");
+  });
+
+  it("stays silent on an in-network claim", () => {
+    const flags = runChecks({
+      primary: inNetwork,
+      documents: [inNetwork],
+      noSurprises: NO_SURPRISES,
+    });
+    expect(flags.find((f) => f.checkId === "eob-out-of-network-balance-bill")).toBeUndefined();
+  });
+
+  it("is suppressed entirely on a scan — an OCR misread is never a balance-billing claim", () => {
+    const scan = extractDocument(scanned(EOB_MISMATCH));
+    const flags = runChecks({ primary: scan, documents: [scan], noSurprises: NO_SURPRISES });
+    expect(flags.find((f) => f.checkId === "eob-out-of-network-balance-bill")).toBeUndefined();
+  });
+
+  it("never tells the household it does not owe the bill", () => {
+    const flags = runChecks({
+      primary: outOfNetwork,
+      documents: [outOfNetwork],
+      noSurprises: NO_SURPRISES,
+    });
+    const flag = flags.find((f) => f.checkId === "eob-out-of-network-balance-bill");
+    const copy = `${flag?.question} ${flag?.detail}`.toLowerCase();
+    for (const forbidden of [
+      "you do not owe",
+      "you don't owe",
+      "you are protected",
+      "this is illegal",
+      "you were overcharged",
+    ]) {
+      expect(copy).not.toContain(forbidden);
+    }
+    // It names the limits of its own scope in the same breath as the rule.
+    expect(copy).toContain("ground ambulance");
+    expect(copy).toContain("notice and consent");
+    expect(copy).toContain("not something this notice can tell us");
+  });
+
+  it("drops a rule outcome that reaches the renderer with no citation", () => {
+    // `citationFromData` is a promise enforced at run time, not only declared.
+    const uncited: CheckDefinition = {
+      id: "fixture-uncited-rule",
+      kind: "rule",
+      appliesTo: ["eobHealth"],
+      citationFromData: true,
+      falsePositive: "The provider may hold an agreement this notice does not show.",
+      suppressOnOcr: true,
+      run: () => ({ question: "q?", detail: "d", askWho: "w" }),
+    };
+    expect(validateCheck(uncited)).toEqual([]);
+    expect(runChecks({ primary: outOfNetwork, documents: [outOfNetwork] }, [uncited])).toEqual([]);
+  });
+
+  it("fills the EOB's 'what you may be owed' only for an out-of-network claim", () => {
+    const answer = buildAnswer(outOfNetwork, { noSurprises: NO_SURPRISES });
+    expect(answer.owed).toHaveLength(1);
+    expect(answer.owed[0]?.tileId).toBe("eob-checker");
+    expect(answer.owed[0]?.citation).toBe(NO_SURPRISES.citation);
+    // An obligation on the plan and provider, never a determination, and never
+    // an amount: the Act sets who may bill you, not what care costs.
+    expect(answer.owed[0]?.estimate).toBeUndefined();
+
+    expect(buildAnswer(inNetwork, { noSurprises: NO_SURPRISES }).owed).toHaveLength(0);
+  });
+
+  it("names every exclusion the shard carries, so the scope is never overstated", () => {
+    expect(NO_SURPRISES.exclusions.map((e) => e.id)).toContain("ground-ambulance");
+    expect(NO_SURPRISES.protections.length).toBeGreaterThanOrEqual(3);
+    // No price anywhere: the Act governs who may bill you, not what care costs.
+    // The one dollar figure it carries is the dispute threshold, which is a
+    // procedural door, not a benchmark.
+    expect(NO_SURPRISES.uninsured.disputeThresholdDollars).toBe(400);
   });
 });

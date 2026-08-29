@@ -8,7 +8,17 @@ import { el } from "./dom";
 
 /** Wrap a control in a labeled `.field`, linking the label via a derived id. */
 export function field(labelText: string, control: HTMLElement): HTMLElement {
-  const id = `f-${control.getAttribute("name") ?? labelText.toLowerCase().replace(/\s+/g, "-")}`;
+  // The slug must be a valid CSS identifier, not just a lowercased label:
+  // punctuation in a label ("Your plan's deductible", "Coinsurance (%)") used to
+  // land verbatim in the id, producing a selector nothing could query — which
+  // is how it surfaced, as axe-core failing to build a selector for the node.
+  const slug =
+    control.getAttribute("name") ??
+    labelText
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  const id = `f-${slug}`;
   control.id = id;
   return el(
     "div",

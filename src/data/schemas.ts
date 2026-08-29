@@ -862,6 +862,50 @@ export const FreeFilingSchema = z.object({
 export type FreeFilingData = z.infer<typeof FreeFilingSchema>;
 export type FreeFilingChannel = z.infer<typeof FreeFilingChannelSchema>;
 
+/**
+ * No Surprises Act scope (SPEC-4-safety-net §B1). The Act sets **who may bill
+ * you**, not what care costs — there is not a benchmark price anywhere in this
+ * shard, and there must never be one: price-benchmarking would need data we
+ * cannot bundle and judgment we should not make. Every entry is a situation, an
+ * exclusion, or a channel, carried as text so the screener can name the rule
+ * without ever concluding that a particular bill falls inside it.
+ */
+const NoSurprisesEntrySchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  detail: z.string().min(1),
+});
+export const NoSurprisesSchema = z.object({
+  /** ISO date the Act took effect. */
+  effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  /** The situations the Act protects against a balance bill. */
+  protections: z.array(NoSurprisesEntrySchema).min(1),
+  /** Coverage and services the protections do not reach. Never empty: an
+   * exclusion list nobody filled in is how a screener overstates its scope. */
+  exclusions: z.array(NoSurprisesEntrySchema).min(1),
+  /** The notice-and-consent form, which gives the protection up. */
+  waiver: z.object({ label: z.string().min(1), detail: z.string().min(1) }),
+  /** The uninsured / self-pay route: a good faith estimate and its dispute door. */
+  uninsured: z.object({
+    goodFaithEstimateAdvanceBusinessDays: z.number().int().positive(),
+    disputeThresholdDollars: z.number().positive(),
+    detail: z.string().min(1),
+  }),
+  /** Free channels to raise a bill through. Required by the Tier 3 bar. */
+  channels: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        label: z.string().min(1),
+        note: z.string().min(1),
+        url: z.string().url(),
+      }),
+    )
+    .min(1),
+  citation: CitationSchema,
+});
+export type NoSurprisesData = z.infer<typeof NoSurprisesSchema>;
+
 export const DATASET_SCHEMAS = {
   "federal-income-tax": JurisdictionSchema,
   "state-income-tax": JurisdictionSchema,
@@ -887,6 +931,7 @@ export const DATASET_SCHEMAS = {
   "education-credits": EducationCreditsSchema,
   "bill-triage": BillTriageSchema,
   "free-filing": FreeFilingSchema,
+  "no-surprises": NoSurprisesSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

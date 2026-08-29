@@ -656,6 +656,69 @@ export function healthPlanAnnualCost(input: HealthPlanInput): HealthPlanResult {
   return { annualPremium, memberCost, totalAnnualCost: annualPremium.add(memberCost) };
 }
 
+/** What a plan's own terms say one claim should cost the member. */
+export interface ClaimShareInput {
+  /** The EOB's allowed amount — the contracted price, not the billed charge. */
+  allowedAmount: number;
+  /** The plan's annual deductible. */
+  deductible: number;
+  /** How much of the deductible was already met before this claim. */
+  deductibleMet: number;
+  /** Member's share above the deductible (0–1, e.g. 0.2 for 20%). */
+  coinsuranceRate: number;
+  /** The plan's annual out-of-pocket maximum. */
+  outOfPocketMax: number;
+  /** How much of the out-of-pocket maximum was already met before this claim. */
+  outOfPocketMet: number;
+}
+
+export interface ClaimShareResult {
+  /** The part of the allowed amount that lands on the remaining deductible. */
+  toDeductible: Money;
+  /** The coinsurance share of what is left after the deductible. */
+  coinsurance: Money;
+  /** What the plan's terms make the member's share, capped by the OOP maximum. */
+  patientResponsibility: Money;
+  /** True when the out-of-pocket maximum, not the coinsurance, set the answer. */
+  cappedByOutOfPocketMax: boolean;
+}
+
+/**
+ * Recompute one claim's patient responsibility from the plan's own terms
+ * (SPEC-4-safety-net §B1, check 1). The same waterfall as
+ * {@link healthPlanAnnualCost}, applied to a single claim against where the
+ * member already stands: the allowed amount fills the remaining deductible
+ * first, coinsurance applies to what is left, and the total is capped by the
+ * remaining out-of-pocket maximum.
+ *
+ * The result is a figure to *compare* against an EOB, never a verdict about it.
+ * A mismatch has many innocent explanations — a second payer, a mid-year
+ * deductible reset, a family versus individual accumulator — so the tile that
+ * calls this states the difference and who to ask, and never concludes the plan
+ * is wrong.
+ */
+export function claimPatientResponsibility(input: ClaimShareInput): ClaimShareResult {
+  const at = (v: number): number => (Number.isFinite(v) ? Math.max(0, v) : 0);
+  const allowed = at(input.allowedAmount);
+  const coins = Number.isFinite(input.coinsuranceRate)
+    ? Math.min(1, Math.max(0, input.coinsuranceRate))
+    : 0;
+  const deductibleLeft = Math.max(0, at(input.deductible) - at(input.deductibleMet));
+  const oopLeft = Math.max(0, at(input.outOfPocketMax) - at(input.outOfPocketMet));
+
+  const toDeductible = Math.min(allowed, deductibleLeft);
+  const coinsurance = (allowed - toDeductible) * coins;
+  const raw = toDeductible + coinsurance;
+  const capped = Math.min(raw, oopLeft);
+
+  return {
+    toDeductible: Money.from(toDeductible),
+    coinsurance: Money.from(coinsurance),
+    patientResponsibility: Money.from(capped),
+    cappedByOutOfPocketMax: capped < raw,
+  };
+}
+
 /**
  * Remaining loan balance after `monthsPaid` scheduled payments. Closed form:
  * balance = P·(1+i)^k − PMT·((1+i)^k − 1)/i, with a zero-rate branch. Internal

@@ -272,7 +272,13 @@ Two notes from building 20a. The shard carries *state-set* timing as a pointer w
 
 **Acceptance.** Every check declares its type, its citation where it has one, and its false-positive case — a registry test fails any check missing the last one. OCR-sourced text suppresses rule checks entirely. No extracted value reaches My Situation without confirmation. Nothing persists.
 
-**Split into 22a and 22b.** ✅ **22a — the answer layer — is shipped**: the `ReadoutAnswer` shape, the `src/readout/checks.ts` registry and its contract tests, the three new document kinds, the EOB × medical-bill cross-check, and the four sections rendered in the Readout view. **22b — the No Surprises rule check and the EOB tile — is deferred to its own phase**, because both turn on the `no-surprises-<yr>` shard. A `rule` check without a citation cannot pass the registry contract by construction, which is the seam working as designed rather than a gap.
+**Split into 22a and 22b, both now shipped.** ✅ **22a — the answer layer**: the `ReadoutAnswer` shape, the `src/readout/checks.ts` registry and its contract tests, the three new document kinds, the EOB × medical-bill cross-check, and the four sections rendered in the Readout view. ✅ **22b — the rule check and the tile**: the `no-surprises-2026` shard, the balance-billing screen, and the `eob-checker` tile (§B1) in the Insurance & Protection hub at tier 3.
+
+**Three notes from building 22b.**
+
+- *A rule check's citation travels with the shard, not with the code.* Copying a hashed shard's citation into the module that reads it is the drift seam where the cited source and the hashed source quietly diverge. So `CheckDefinition` gained `citationFromData`, a declared promise that the run supplies the citation — and `runChecks` **drops** a rule outcome that arrives without one. The promise is enforced at run time, not merely declared, and a fixture test proves the drop.
+- *The harm-tier gate keyed on the wrong thing.* It applied only to tiles in the `rough` pillar. `eob-checker` belongs in Insurance & Protection, which is where someone holding a health claim actually goes — and a rights-adjacent screener is no less rights-adjacent for its hub. The gate now binds **any** tile that declares a tier; declaring one at all remains Pillar 4's admission bar.
+- *That gate immediately caught a latent bug.* `defineHub` copied the `how` of whichever tool was listed first, not of the tool that set the tier — so a hub could inherit tier 3 and a `how` block with no advice line in it. It now takes the strictest tool's `how`, which by the same gate must carry the line.
 
 **Three notes from building 22a.**
 

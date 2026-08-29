@@ -989,6 +989,19 @@
       "sourceDocument": "IRS, 2026 tax filing season opens with several free filing options available",
       "dateRetrieved": "2026-08-28",
       "contentHash": "2cd7964b13205430275df8e3db8f8304f0e7879bfa9227599be7bc4c2d5825dc"
+    },
+    {
+      "id": "no-surprises-2026",
+      "kind": "no-surprises",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "no-surprises-2026.json",
+      "sourceUrl": "https://www.cms.gov/medical-bill-rights",
+      "sourceDocument": "CMS, Medical bill rights — the No Surprises Act (effective 2022-01-01)",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "a1624bb091096e9fbfbd1d583600ed4342c272e57981854e4ce75d57752092d5"
     }
   ]
 }

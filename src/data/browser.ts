@@ -24,6 +24,7 @@ import {
   type MedicaidData,
   type BillTriageData,
   type FreeFilingData,
+  type NoSurprisesData,
   type SocialSecurityData,
   type SocialSecurityTaxationData,
   type AcaData,
@@ -80,6 +81,7 @@ export interface BundledData {
   billTriage(): BillTriageData | null;
   /** Free tax-filing channels and their eligibility tests (SPEC-4 §A5). */
   freeFiling(): FreeFilingData | null;
+  noSurprises(): NoSurprisesData | null;
   /** ACA premium-tax-credit applicable-percentage table (BUILD-SPEC.md §4.2). */
   aca(): AcaData | null;
   /** Social Security claiming-age benefit adjustment rules (BUILD-SPEC-2 §6.7). */
@@ -153,6 +155,7 @@ async function build(): Promise<BundledData> {
     medicaid: () => dataOf("medicaid-2024") as MedicaidData | null,
     billTriage: () => dataOf("bill-triage-2026") as BillTriageData | null,
     freeFiling: () => dataOf("free-filing-2026") as FreeFilingData | null,
+    noSurprises: () => dataOf("no-surprises-2026") as NoSurprisesData | null,
     aca: () => dataOf("aca-2024") as AcaData | null,
     socialSecurity: () => dataOf("social-security-2024") as SocialSecurityData | null,
     socialSecurityTaxation: () =>

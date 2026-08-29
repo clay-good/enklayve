@@ -52,6 +52,7 @@ import { homeAffordabilityTile } from "./homeAffordability";
 import { sinkingFundTile } from "./sinkingFund";
 import { rentVsBuyTile } from "./rentVsBuy";
 import { healthPlanTile } from "./healthPlan";
+import { eobCheckerTile } from "./eobChecker";
 import { cashFlowTile } from "./cashFlow";
 import { lifeInsuranceTile } from "./lifeInsurance";
 import { fplTile } from "./fpl";
@@ -177,7 +178,14 @@ const HUB_CONFIGS: HubConfig[] = [
     pillar: "protect",
     description:
       "Health plan choice, life and disability cover, umbrella liability, and estate basics.",
-    tools: [healthPlanTile, lifeInsuranceTile, disabilityTile, umbrellaTile, estateChecklistTile],
+    tools: [
+      healthPlanTile,
+      eobCheckerTile,
+      lifeInsuranceTile,
+      disabilityTile,
+      umbrellaTile,
+      estateChecklistTile,
+    ],
   },
   {
     id: "benefits",

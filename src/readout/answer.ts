@@ -16,6 +16,7 @@
  * module is pure: extractions in, an answer out.
  */
 import { HOSPITAL_FAP_CITATION } from "../data/statutes";
+import type { NoSurprisesData } from "../data/schemas";
 import { runChecks, type CheckDefinition, type PlanParameters } from "./checks";
 import type { AnswerSection, ExtractedField, ExtractionResult, ReadoutAnswer } from "./types";
 
@@ -48,6 +49,9 @@ export interface BuildAnswerOptions {
   documents?: ExtractionResult[];
   /** Plan parameters the user supplied, for `plan-math` checks. */
   plan?: PlanParameters;
+  /** The No Surprises Act scope shard. Absent leaves the rule check unrun and
+   * the EOB's "what you may be owed" honestly empty. */
+  noSurprises?: NoSurprisesData;
   /** Injectable registry, so a test can exercise the contract without a fixture shard. */
   registry?: CheckDefinition[];
 }
@@ -118,22 +122,39 @@ function saysFor(result: ExtractionResult): ReadoutAnswer["says"] {
 }
 
 /**
- * "What you may be owed". Only the itemized bill fills this today: a nonprofit
- * hospital's financial assistance policy is a *federal obligation on the
- * hospital*, so pointing at it asserts nothing about this household. The EOB's
- * entry waits on the `no-surprises` shard that would cite it — a protection
- * claimed without a citation is exactly what §4 forbids.
+ * "What you may be owed". Both entries are *obligations on the other party* —
+ * what a nonprofit hospital must have, what a plan and provider may not do —
+ * so pointing at them asserts nothing about this household. Neither carries an
+ * `estimate`, because neither is a determination. The EOB entry appears only
+ * when the No Surprises shard is loaded: a protection claimed without the rule
+ * that grants it is exactly what §4 forbids.
  */
-function owedFor(result: ExtractionResult): ReadoutAnswer["owed"] {
-  if (result.kind !== "medicalBill") return [];
-  return [
-    {
-      label:
-        "If this bill is from a nonprofit hospital, it must have a written financial assistance policy and give you a paper copy free, on request.",
-      citation: HOSPITAL_FAP_CITATION,
-      tileId: "charity-care",
-    },
-  ];
+function owedFor(
+  result: ExtractionResult,
+  noSurprises: NoSurprisesData | undefined,
+): ReadoutAnswer["owed"] {
+  if (result.kind === "medicalBill") {
+    return [
+      {
+        label:
+          "If this bill is from a nonprofit hospital, it must have a written financial assistance policy and give you a paper copy free, on request.",
+        citation: HOSPITAL_FAP_CITATION,
+        tileId: "charity-care",
+      },
+    ];
+  }
+  if (result.kind === "eobHealth" && noSurprises) {
+    if (valueOf(result, "eob-network") !== "out-of-network") return [];
+    return [
+      {
+        label:
+          "This claim is out-of-network. Federal law protects you from a balance bill in specific situations — emergency care, care from an out-of-network provider during a visit to an in-network hospital or surgical center, and air ambulance. Check whether yours is one of them before you pay.",
+        citation: noSurprises.citation,
+        tileId: "eob-checker",
+      },
+    ];
+  }
+  return [];
 }
 
 /** The appeal channel for the program the notice names. */
@@ -217,9 +238,12 @@ function emptyReason(section: AnswerSection, result: ExtractionResult): string {
       : "Nothing flagged — the figures on this document reconcile against each other.";
   }
   if (section === "owed") {
-    return result.kind === "eobHealth"
-      ? "Nothing listed here yet. Surprise-billing protections are stated only where we can cite the rule that grants them."
-      : "This document reports figures; it does not by itself indicate a credit or a program.";
+    if (result.kind === "eobHealth") {
+      return valueOf(result, "eob-network") === "in-network"
+        ? "This claim is in-network, so the federal surprise-billing protections — which cover out-of-network charges — are not the rule in play."
+        : "Nothing listed here. Surprise-billing protections are stated only where we can cite the rule that grants them.";
+    }
+    return "This document reports figures; it does not by itself indicate a credit or a program.";
   }
   if (section === "says") {
     return "We recognized the document but could not read its fields — enter them by hand.";
@@ -239,7 +263,7 @@ export function buildAnswer(
   const documents = options.documents ?? [result];
   const says = saysFor(result);
   const flags = runChecks({ primary: result, documents, plan: options.plan }, options.registry);
-  const owed = owedFor(result);
+  const owed = owedFor(result, options.noSurprises);
   const next = nextFor(result);
 
   const emptyReasons: ReadoutAnswer["emptyReasons"] = {};

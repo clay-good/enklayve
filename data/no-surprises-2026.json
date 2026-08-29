@@ -1,0 +1,88 @@
+{
+  "effectiveFrom": "2022-01-01",
+  "protections": [
+    {
+      "id": "emergency-room",
+      "label": "An emergency room visit",
+      "detail": "If your plan covers emergency care, neither the hospital, nor the providers who treated you there, nor an air ambulance that brought you may charge you more than your in-network cost-sharing rate. This covers hospital emergency rooms, independent freestanding emergency departments, and any hospital department where you get post-stabilization services."
+    },
+    {
+      "id": "post-stabilization",
+      "label": "Care to stabilize you after an emergency",
+      "detail": "Post-stabilization services are protected in most cases, whether you get them in the emergency room or in another department of the hospital. An out-of-network provider may ask you to sign a notice and consent form for this care; signing gives the protection up."
+    },
+    {
+      "id": "in-network-facility",
+      "label": "Non-emergency care at an in-network facility",
+      "detail": "An out-of-network provider who treats you during a visit to an in-network hospital, hospital outpatient department, or ambulatory surgical center may not balance-bill you. This does not extend to other settings, such as a doctor's office that is not a hospital outpatient department, and it does not apply if the facility itself was out-of-network."
+    },
+    {
+      "id": "air-ambulance",
+      "label": "Air ambulance services",
+      "detail": "An out-of-network air ambulance provider may not charge you more than your in-network cost-sharing rate."
+    }
+  ],
+  "exclusions": [
+    {
+      "id": "ground-ambulance",
+      "label": "Ground ambulance",
+      "detail": "Ground ambulance services are generally not covered by the No Surprises Act's billing protections and may still charge out-of-network rates, unless a state law says otherwise."
+    },
+    {
+      "id": "vision-dental-only",
+      "label": "Vision-only and dental-only plans",
+      "detail": "The protections generally do not apply to vision-only or dental-only insurance, though they may apply where vision or dental benefits are part of your health plan."
+    },
+    {
+      "id": "short-term-and-sharing-ministry",
+      "label": "Short-term limited-duration plans and health care sharing ministries",
+      "detail": "Services covered by these plans are not subject to the No Surprises Act's billing protections."
+    },
+    {
+      "id": "fixed-indemnity",
+      "label": "Fixed indemnity excepted-benefit plans, such as hospital indemnity insurance",
+      "detail": "Services covered by these plans are not part of the No Surprises Act's billing protections."
+    },
+    {
+      "id": "government-coverage",
+      "label": "Medicare, Medicaid, Indian Health Service, Veterans Affairs, and TRICARE",
+      "detail": "These programs already protect you from some unexpected out-of-network bills under their own rules, so the No Surprises Act's protections are not the ones that apply. The federal help desk can still help with a billing problem."
+    }
+  ],
+  "waiver": {
+    "label": "A notice and consent form gives the protection up",
+    "detail": "For scheduled out-of-network care, or for post-stabilization care, a provider may ask you to sign a notice and consent form. Signing means you agree to be treated out-of-network and give up your protection from a surprise bill, and you will likely pay more. Signing is your choice; a provider may refuse the non-emergency care if you decline, in which case you can reschedule with an in-network provider."
+  },
+  "uninsured": {
+    "goodFaithEstimateAdvanceBusinessDays": 3,
+    "disputeThresholdDollars": 400,
+    "detail": "If you are uninsured or are not using your insurance, a provider must generally give you a good faith estimate of what your care will cost when you schedule at least 3 business days in advance, or whenever you ask for one. You may be able to dispute the bill if it is at least $400 more than that estimate."
+  },
+  "channels": [
+    {
+      "id": "help-desk",
+      "label": "No Surprises Help Desk — 1-800-985-3059",
+      "note": "Free, 7 days a week, with language support. Call with a question or to submit a complaint about a provider, facility, or insurer.",
+      "url": "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights/get-help"
+    },
+    {
+      "id": "action-plan",
+      "label": "CMS: find an action plan for your medical bill",
+      "note": "Answer a few questions and get the steps that fit your situation.",
+      "url": "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights/get-help/find-action-plan-your-medical-bill"
+    },
+    {
+      "id": "dispute",
+      "label": "CMS: dispute a medical bill",
+      "note": "The patient-provider dispute resolution process, for a bill at least $400 above a good faith estimate.",
+      "url": "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights/get-help/dispute-medical-bill"
+    }
+  ],
+  "citation": {
+    "sourceUrl": "https://www.cms.gov/medical-bill-rights",
+    "sourceDocument": "CMS, Medical bill rights — the No Surprises Act (effective 2022-01-01)",
+    "sourceNote": "Transcribed from the CMS consumer pages 'Medical bill rights' and 'Know your rights with insurance', which state the three protected situations (emergency room visits; non-emergency care related to a visit to an in-network hospital, hospital outpatient department, or ambulatory surgical center; air ambulance services), the exclusions (ground ambulance, vision-only and dental-only plans, short-term limited-duration and health care sharing ministry plans, fixed indemnity excepted-benefit plans), the notice-and-consent waiver, and the uninsured good-faith-estimate route (3 business days' advance scheduling; a bill at least $400 above the estimate may be disputed). No dollar figure here is a benchmark price: the Act sets who may bill you, not what care costs.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-08-29"
+  }
+}
