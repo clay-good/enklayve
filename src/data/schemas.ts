@@ -906,6 +906,51 @@ export const NoSurprisesSchema = z.object({
 });
 export type NoSurprisesData = z.infer<typeof NoSurprisesSchema>;
 
+/**
+ * Consumer Credit Protection Act Title III garnishment limits (SPEC-4-safety-net
+ * §B2). Only the statutory *inputs* are stored: the federal minimum hourly wage
+ * and the thirty-hour multiple that together set the protected floor, and the
+ * caps as shares. The per-pay-period equivalents are derived in the engine from
+ * the weekly figure rather than carried as four separate literals, so there is
+ * one number to refresh when the minimum wage moves and no way for the four to
+ * drift apart (SPEC-3 §A4, the magic-number rule).
+ *
+ * The shard is a **federal ceiling**. Every state may protect more, and where it
+ * does, the state rule is the one that governs (§1677) — which is why the tile
+ * that reads this renders that caveat above the figure, not beneath it.
+ */
+const GarnishmentNoteSchema = z.object({
+  label: z.string().min(1),
+  detail: z.string().min(1),
+});
+export const GarnishmentLimitsSchema = z.object({
+  /** 29 U.S.C. §206(a)(1) — $7.25 since 2009. */
+  federalMinimumHourlyWage: z.number().positive(),
+  /** §1673(a)(2) — thirty times the minimum hourly wage is protected each week. */
+  protectedHoursMultiple: z.number().positive(),
+  /** §1673(a)(1) — the ordinary-debt ceiling, as a share of disposable earnings. */
+  ordinaryDebtMaxShare: z.number().gt(0).lte(1),
+  /** §1673(b)(2) — support orders have their own, higher caps. */
+  supportOrder: z.object({
+    supportingOtherDependentsShare: z.number().gt(0).lte(1),
+    notSupportingOtherDependentsShare: z.number().gt(0).lte(1),
+    /** The five points added where the order answers older arrears. */
+    arrearsSurchargeShare: z.number().gte(0).lte(1),
+    arrearsOlderThanWeeks: z.number().int().positive(),
+  }),
+  /** §1673(b)(1) — debts Title III's ceiling does not reach at all. Never empty:
+   * a screener that omits them overstates the protection it is describing. */
+  noFederalCeiling: z.array(GarnishmentNoteSchema.extend({ id: z.string().min(1) })).min(1),
+  /** §1674 — no discharge over one indebtedness. */
+  jobProtection: GarnishmentNoteSchema,
+  /** §1677 — a more protective state law governs. */
+  statePreemption: GarnishmentNoteSchema,
+  /** What "disposable earnings" means, in the user's words. */
+  disposableEarnings: GarnishmentNoteSchema,
+  citation: CitationSchema,
+});
+export type GarnishmentLimitsData = z.infer<typeof GarnishmentLimitsSchema>;
+
 export const DATASET_SCHEMAS = {
   "federal-income-tax": JurisdictionSchema,
   "state-income-tax": JurisdictionSchema,
@@ -932,6 +977,7 @@ export const DATASET_SCHEMAS = {
   "bill-triage": BillTriageSchema,
   "free-filing": FreeFilingSchema,
   "no-surprises": NoSurprisesSchema,
+  "garnishment-limits": GarnishmentLimitsSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

@@ -1002,6 +1002,19 @@
       "sourceDocument": "CMS, Medical bill rights — the No Surprises Act (effective 2022-01-01)",
       "dateRetrieved": "2026-08-29",
       "contentHash": "a1624bb091096e9fbfbd1d583600ed4342c272e57981854e4ce75d57752092d5"
+    },
+    {
+      "id": "garnishment-limits-2026",
+      "kind": "garnishment-limits",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "garnishment-limits-2026.json",
+      "sourceUrl": "https://www.law.cornell.edu/uscode/text/15/1673",
+      "sourceDocument": "Consumer Credit Protection Act Title III — 15 U.S.C. §§1673, 1674, 1677; 29 U.S.C. §206(a)(1)",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "2423c81932c9e8417bff552a1ad647f7ec7ae7d9699d57a9672a5f19e5736ad1"
     }
   ]
 }

@@ -1102,6 +1102,57 @@ body {
 .cc-ask li {
   margin-bottom: 0.35rem;
 }
+/* Wage Garnishment Limits (SPEC-4-safety-net §B2), harm tier 3. The caveat is
+   styled to read first and read loudly: below the figure, or quieter than it, it
+   would be a footnote to a number the reader has already taken as the answer. */
+.grn-caveat {
+  margin: 0 0 0.9rem;
+  padding: 0.8rem 1rem;
+  border-left: 3px solid var(--enk-warn);
+  border-radius: 9px;
+  background: var(--enk-surface-2);
+  line-height: 1.55;
+}
+.grn-figure {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.5;
+}
+.grn-math {
+  margin: 0.45rem 0 0;
+  color: var(--enk-text-muted);
+  line-height: 1.55;
+}
+.grn-heading {
+  font-size: 1rem;
+  margin: 1rem 0 0.4rem;
+}
+.grn-detail {
+  margin: 0;
+  color: var(--enk-text-muted);
+  line-height: 1.55;
+}
+.grn-list {
+  margin: 0;
+  padding-left: 1.3rem;
+  color: var(--enk-text-muted);
+}
+.grn-list li {
+  margin-bottom: 0.35rem;
+  line-height: 1.5;
+}
+.grn-support-rows[hidden] {
+  display: none;
+}
+.grn-limit {
+  margin-top: 0.9rem;
+  background: var(--enk-surface-2);
+  border-radius: var(--enk-radius);
+  padding: 0.85rem 1rem;
+  color: var(--enk-text-muted);
+}
+
 /* Medical Bill & EOB Checker (SPEC-4-safety-net §B1), harm tier 3. Two blocks —
    the plan's arithmetic and the No Surprises scope — kept visually separate,
    because they answer different questions and fail in different ways. */

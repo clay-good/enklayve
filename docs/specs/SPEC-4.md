@@ -294,6 +294,14 @@ Two notes from building 20a. The shard carries *state-set* timing as a pointer w
 
 **Acceptance.** The garnishment tile renders the federal-ceiling caveat above the figure — asserted by a DOM-order test, not by review. `checkHarmTier` passes on tier-3 channel coverage. A copy review confirms the §3.4 dignity rule.
 
+**Split into 23a and 23b.** ✅ **23a — Wage Garnishment Limits — is shipped**: the `garnishment-limits-2026` shard, `engine/garnishment.ts`, and the `garnishment` tile in the *When Money Is Tight* hub at tier 3. **23b — the enrollment-windows tile — is deferred with Phase 20b**, since both turn on the same statutory-clock sourcing pass.
+
+**Three notes from building 23a.**
+
+- *The shard stores statutory inputs, not the four numbers a reader sees.* The protected floor is thirty times the $7.25 federal minimum wage — $217.50 a week — and the biweekly, semi-monthly, and monthly equivalents are **derived** from that one figure rather than stored beside it. One number to refresh when the minimum wage moves, and no way for four literals to drift apart (§A4).
+- *That derivation had to be exact, not merely close.* `217.50 × 52 / 24` in floating point is `$471.24999999999994`, where the statute means `$471.25`. The engine does it through `Money` instead, which is the reason `Money` exists.
+- *The caveat's position is the product.* Below the figure, "your state may protect more" reads as a footnote to a number the reader has already taken as the answer — and several states bar wage garnishment for ordinary consumer debt outright. So it renders above, and a DOM-order test asserts that ordering across every input combination rather than trusting review to catch an edit that moved it.
+
 ### Phase 24: The Standing Ledger (Path 1)
 
 **Goal.** The recompute diff, on the carried-file path only.

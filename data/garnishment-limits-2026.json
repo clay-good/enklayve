@@ -1,0 +1,42 @@
+{
+  "federalMinimumHourlyWage": 7.25,
+  "protectedHoursMultiple": 30,
+  "ordinaryDebtMaxShare": 0.25,
+  "supportOrder": {
+    "supportingOtherDependentsShare": 0.5,
+    "notSupportingOtherDependentsShare": 0.6,
+    "arrearsSurchargeShare": 0.05,
+    "arrearsOlderThanWeeks": 12
+  },
+  "noFederalCeiling": [
+    {
+      "id": "tax-debt",
+      "label": "A debt due for any state or federal tax",
+      "detail": "Title III's 25% ceiling does not apply. Federal tax levies run under their own rules (IRC §6334), which protect a different, separately-computed amount that this page does not model. Contact the taxing authority — a levy can often be released or reduced for hardship."
+    },
+    {
+      "id": "bankruptcy-chapter-13",
+      "label": "An order of a United States court in a chapter 13 bankruptcy case",
+      "detail": "Title III's ceiling does not apply to a chapter 13 order. The plan itself, confirmed by the court, sets what is paid."
+    }
+  ],
+  "jobProtection": {
+    "label": "You cannot be fired over one debt's garnishment",
+    "detail": "An employer may not discharge you because your earnings were garnished for any one indebtedness. A willful violation is punishable by a fine of up to $1,000, imprisonment of up to a year, or both. The federal protection covers one debt; some states protect more."
+  },
+  "statePreemption": {
+    "label": "A more protective state law governs",
+    "detail": "Title III does not annul or alter any state law that prohibits garnishment outright or allows less of it than federal law does, nor any state law that protects a worker from discharge over more than one debt. Where your state protects more, the state rule is the one that applies — and the figure on this page is only the federal ceiling."
+  },
+  "disposableEarnings": {
+    "label": "What counts as disposable earnings",
+    "detail": "Pay left after legally required deductions — federal, state, and local taxes, Social Security and Medicare, and required retirement contributions. Voluntary deductions such as health insurance premiums, union dues, and elective retirement savings are not subtracted before the limit is applied."
+  },
+  "citation": {
+    "sourceUrl": "https://www.law.cornell.edu/uscode/text/15/1673",
+    "sourceDocument": "Consumer Credit Protection Act Title III — 15 U.S.C. §§1673, 1674, 1677; 29 U.S.C. §206(a)(1)",
+    "sourceNote": "Transcribed from the statutory text. §1673(a) caps ordinary garnishment at the lesser of 25% of disposable earnings for the workweek or the amount by which those earnings exceed thirty times the federal minimum hourly wage set by 29 U.S.C. §206(a)(1), which has been $7.25 since 2009 — a protected floor of $217.50 a week, with the equivalents for other pay periods derived from that weekly figure rather than stored as separate literals. §1673(b)(1) removes that ceiling for support orders, chapter 13 bankruptcy orders, and state or federal tax debt; §1673(b)(2) substitutes 50% (supporting another spouse or dependent child) or 60% (not), each rising five points where the earnings answer support arrears for a period before the twelve weeks ending with the workweek. §1674 bars discharge over one indebtedness. §1677 preserves any state law that prohibits or more narrowly limits garnishment.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-08-29"
+  }
+}

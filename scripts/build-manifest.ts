@@ -224,6 +224,12 @@ const SHARDS: ShardSource[] = [
     shard: "no-surprises-2026.json",
     ...PILLAR4_ANNUAL,
   },
+  {
+    id: "garnishment-limits-2026",
+    kind: "garnishment-limits",
+    shard: "garnishment-limits-2026.json",
+    ...PILLAR4_ANNUAL,
+  },
 ];
 
 function sha256Hex(buf: Buffer): string {
