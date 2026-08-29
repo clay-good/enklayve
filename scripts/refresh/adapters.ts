@@ -548,6 +548,85 @@ function parseStandardDeductions(raw: string, current: Record<string, unknown>):
   return { ok: true, shard };
 }
 
+// --- Michigan (its rate is on page one of a withholding guide) ----------------
+
+/**
+ * Michigan's flat rate and personal exemption, from Form 446.
+ *
+ * The michigan.gov individual-income page states neither figure — it is a menu,
+ * and the adapter had been asking it for a rate for a year. Form 446, the
+ * withholding guide, states both in its masthead:
+ *
+ *   446 (Rev. 02-26) 2026 Michigan Income Tax Withholding Guide
+ *   Withholding Rate: 4.25%   Personal Exemption Amount: $5,900
+ *
+ * Which needs a word of justification, because "withholding rate" is not
+ * generally the same figure as an income-tax rate — plenty of states withhold
+ * supplemental wages at a rate that appears nowhere in their bracket schedule,
+ * and a generic pattern for it would quietly import that error into every state
+ * that has one. Michigan is a case where they are the same by statute: MCL
+ * 206.51 sets one rate on all taxable income and MCL 206.351 withholds at it.
+ * So this is a dedicated parser rather than another pattern in the shared list,
+ * the same way Massachusetts' surtax and New Jersey's top bracket are.
+ *
+ * The document's own year is checked against the shard's. Form 446 is reissued
+ * annually at a URL that carries the tax year, so the day this one goes stale it
+ * will still parse perfectly and state last year's rate — the Iowa failure, and
+ * the only defence against it is to insist the document says which year it is.
+ */
+function parseMichigan(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const text = visibleText(raw);
+  const taxYear = Number(current.taxYear);
+  if (
+    Number.isInteger(taxYear) &&
+    !new RegExp(`${taxYear} Michigan Income Tax Withholding Guide`, "i").test(text)
+  ) {
+    return {
+      ok: false,
+      reason: `this is not the ${taxYear} Michigan Income Tax Withholding Guide — Form 446 is reissued each year at a URL carrying the year, and a stale one states last year's rate perfectly`,
+    };
+  }
+  const rateMatch = /Withholding Rate:\s*([\d.]+)\s*%/i.exec(text);
+  if (!rateMatch) {
+    return { ok: false, reason: "could not anchor Form 446's stated withholding rate" };
+  }
+  const percent = Number(rateMatch[1]);
+  if (!(percent > 0 && percent <= 15)) {
+    return { ok: false, reason: `anchored an implausible flat rate (${rateMatch[1]}%)` };
+  }
+
+  const shard = clone(current);
+  const brackets = shard.bracketsByFilingStatus as
+    | Record<string, { lowerBound: number; rate: number }[]>
+    | undefined;
+  if (!brackets) {
+    return { ok: false, reason: "shard has no bracketsByFilingStatus to overlay" };
+  }
+  const rate = pctToRate(percent);
+  for (const arr of Object.values(brackets)) {
+    if (!Array.isArray(arr)) continue;
+    const taxed = arr.filter((b) => b && b.rate > 0);
+    if (taxed.length === 1 && taxed[0]) taxed[0].rate = rate;
+  }
+
+  // The exemption is stated beside the rate, and the paired statuses stay for
+  // the reviewer exactly as they do in the shared flat parser.
+  const exemptions = shard.personalExemptionByFilingStatus as Record<string, number> | undefined;
+  const exMatch = /Personal Exemption Amount:\s*\$([\d,]{3,})/i.exec(text);
+  if (exemptions && "single" in exemptions && exMatch) {
+    const amount = parseAmount(exMatch[1] as string);
+    const drift = implausibleDrift(exemptions.single as number, amount);
+    if (drift) {
+      return {
+        ok: false,
+        reason: `the personal exemption ${drift}; refusing — either the form moved or this is not the figure`,
+      };
+    }
+    exemptions.single = amount;
+  }
+  return { ok: true, shard };
+}
+
 // --- IRS revenue procedure (statutory-cite anchored) --------------------------
 
 /**
@@ -1453,9 +1532,13 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-mi-income-tax-2024",
     group: "state-mi",
     source: "Michigan Treasury individual income tax (flat rate + personal exemption)",
-    sourceUrl: "https://www.michigan.gov/taxes/iit",
+    // Form 446's masthead states both figures; michigan.gov/taxes/iit, which
+    // this watched before, states neither. The URL carries the tax year, which
+    // the parser checks against the shard rather than trusting.
+    sourceUrl:
+      "https://www.michigan.gov/taxes/-/media/Project/Websites/taxes/Forms/SUW/TY2026/446_Withholding-Guide_2026.pdf",
     cadence: "Annual",
-    parse: parseFlatRateJurisdiction,
+    parse: parseMichigan,
   },
   {
     id: "state-oh-income-tax-2024",

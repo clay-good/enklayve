@@ -390,6 +390,41 @@ describe("adapters: the federal standard deduction (IRS revenue procedure)", () 
   });
 });
 
+describe("adapters: Michigan (Form 446's masthead)", () => {
+  const adapter = adaptersForGroup("state-mi")[0]!;
+  const current = readShard("state-mi-income-tax-2024.json");
+  const raw =
+    "446 (Rev. 02-26) 2026 Michigan Income Tax Withholding Guide Withholding Rate: 4.25%" +
+    " Personal Exemption Amount: $5,900 INCOME TAX WITHHOLDING: Every Michigan employer";
+
+  it("reads the rate and the exemption the form states side by side", () => {
+    // michigan.gov/taxes/iit, which this adapter watched, states neither: it is
+    // a menu. "Withholding rate" is only the income-tax rate because Michigan
+    // makes them the same figure by statute (MCL 206.51 / 206.351), which is
+    // why this is a dedicated parser and not another shared pattern.
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const b = result.shard.bracketsByFilingStatus as Record<string, { rate: number }[]>;
+    expect(b.single![0]!.rate).toBe(0.0425);
+    expect(b.married_jointly![0]!.rate).toBe(0.0425);
+    expect((result.shard.personalExemptionByFilingStatus as Record<string, number>).single).toBe(
+      5900,
+    );
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("refuses a Form 446 from another year", () => {
+    // Form 446 is reissued annually at a URL carrying the tax year, so a stale
+    // one parses perfectly and states last year's rate — the Iowa failure, and
+    // insisting the document names its year is the only defence against it.
+    const result = adapter.parse(raw, { ...current, taxYear: 2027 });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("not the 2027 Michigan Income Tax Withholding Guide");
+  });
+});
+
 describe("adapters: state income tax (NY, the per-state template)", () => {
   const adapter = adaptersForGroup("state-ny")[0]!;
   const current = readShard("state-ny-income-tax-2024.json");
