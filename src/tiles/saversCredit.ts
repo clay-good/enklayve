@@ -182,7 +182,7 @@ export const saversCreditTile: TileDefinition = {
   resources: [
     {
       label: "IRS, Retirement Savings Contributions Credit",
-      url: "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-savings-contributions-savers-credit",
+      url: "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-savings-contributions-credit-savers-credit",
     },
     { label: "IRS Form 8880", url: "https://www.irs.gov/forms-pubs/about-form-8880" },
   ],

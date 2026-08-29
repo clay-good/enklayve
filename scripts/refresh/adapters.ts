@@ -764,7 +764,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-ny-income-tax-2024",
     group: "state-ny",
     source: "New York State Department of Taxation and Finance tax-rate schedules",
-    sourceUrl: "https://www.tax.ny.gov/pit/file/tax-tables/nys-tax-rate-schedule.htm",
+    sourceUrl: "https://www.tax.ny.gov/pit/file/tax_tables.htm",
     cadence: "Annual",
     parse: parseStandardDeductions,
   },
@@ -772,7 +772,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-ga-income-tax-2024",
     group: "state-ga",
     source: "Georgia Department of Revenue individual income tax",
-    sourceUrl: "https://dor.georgia.gov/taxes/individual-taxes",
+    sourceUrl: "https://dor.georgia.gov/taxes/taxes-individuals",
     cadence: "Annual",
     parse: parseStandardDeductions,
   },
@@ -798,7 +798,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     group: "state-pa",
     source: "Pennsylvania DOR personal income tax (flat rate)",
     sourceUrl:
-      "https://www.pa.gov/agencies/revenue/forms-and-publications/pa-personal-income-tax-guide.html",
+      "https://www.pa.gov/agencies/revenue/forms-and-publications/pa-personal-income-tax-guide",
     cadence: "Annual",
     parse: parseFlatRateJurisdiction,
   },
@@ -806,7 +806,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-il-income-tax-2024",
     group: "state-il",
     source: "Illinois DOR individual income tax (flat rate + personal exemption)",
-    sourceUrl: "https://tax.illinois.gov/individuals/rates.html",
+    sourceUrl: "https://tax.illinois.gov/research/taxrates/income.html",
     cadence: "Annual",
     parse: parseFlatRateJurisdiction,
   },
@@ -814,7 +814,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-mi-income-tax-2024",
     group: "state-mi",
     source: "Michigan Treasury individual income tax (flat rate + personal exemption)",
-    sourceUrl: "https://www.michigan.gov/taxes/iit/tax-time/whats-new-for-tax-year-2024",
+    sourceUrl: "https://www.michigan.gov/taxes/iit",
     cadence: "Annual",
     parse: parseFlatRateJurisdiction,
   },
@@ -846,7 +846,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-in-income-tax-2024",
     group: "state-in",
     source: "Indiana DOR individual income tax (flat rate + personal exemption)",
-    sourceUrl: "https://www.in.gov/dor/individual-income-taxes/",
+    sourceUrl: "https://www.in.gov/dor/i-am-a/individual/",
     cadence: "Annual",
     parse: parseFlatRateJurisdiction,
   },
@@ -981,7 +981,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-mt-income-tax-2024",
     group: "state-mt",
     source: "Montana Department of Revenue individual income tax (HB 337 two-rate schedule)",
-    sourceUrl: "https://mtrevenue.gov/2025/05/12/hb-337/",
+    sourceUrl: "https://revenue.mt.gov/taxes/individual-income-tax/",
     cadence: "Annual",
     // MT computes on federal taxable income (the conformity pattern), so its
     // standard deduction IS the federal one — it rolls with the IRS refresh, not a
@@ -997,8 +997,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     group: "state-me",
     source:
       "Maine Revenue Services individual income tax rate schedule (annual inflation adjustment)",
-    sourceUrl:
-      "https://www.maine.gov/revenue/sites/maine.gov.revenue/files/inline-files/ind_tax_rate_sched_2026.pdf",
+    sourceUrl: "https://www.maine.gov/revenue/taxes/income-estate-tax",
     cadence: "Annual",
     // ME's three rates (5.8% / 6.75% / 7.15%) and the 2% surtax are statutory
     // (36 M.R.S. §5111), but the bracket thresholds, the standard deduction, the
@@ -1138,7 +1137,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-ms-income-tax-2024",
     group: "state-ms",
     source: "Mississippi DOR individual income tax (flat rate over a floor)",
-    sourceUrl: "https://www.dor.ms.gov/individual/tax-rates",
+    sourceUrl: "https://www.dor.ms.gov/individual/individual-income-tax-frequently-asked-questions",
     cadence: "Annual",
     parse: parseGraduatedBracketJurisdiction,
   },
@@ -1196,7 +1195,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     group: "state-md",
     source:
       "Comptroller of Maryland State & Local Income Tax Withholding memo (Central Payroll Bureau)",
-    sourceUrl: "https://www.marylandtaxes.gov/individual/income/tax-info/index.php",
+    sourceUrl: "https://www.marylandcomptroller.gov/individuals/tax-services.html",
     cadence: "Annual",
     // Maryland's per-status state brackets are statutory (the FY2026 budget bill
     // added the 6.25%/6.5% top brackets) and the 24 county local rates are set
@@ -1211,7 +1210,8 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-ar-income-tax-2024",
     group: "state-ar",
     source: "Arkansas DFA AR1000F instructions (Regular Income Tax Table + standard deduction)",
-    sourceUrl: "https://www.dfa.arkansas.gov/income-tax/individual-income-tax/",
+    sourceUrl:
+      "https://www.dfa.arkansas.gov/office/taxes/income-tax-administration/individual-income-tax/",
     cadence: "Annual",
     // Arkansas's rates (0/2/3/3.4/3.9%) are statutory and its brackets index
     // annually; the cleanly-stated indexed figure the refresh anchors is the
@@ -1254,7 +1254,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "medicaid-2024",
     group: "cms-medicaid",
     source: "CMS / Medicaid.gov MAGI eligibility and expansion status",
-    sourceUrl: "https://www.medicaid.gov/medicaid/eligibility/index.html",
+    sourceUrl: "https://www.medicaid.gov/medicaid/eligibility-policy",
     cadence: "Annual",
     parse: parseMedicaidThreshold,
   },

@@ -82,7 +82,7 @@
           "detail": "A surviving spouse or child may be eligible for a monthly benefit, and there is a one-time payment as well. The funeral home usually reports the death itself, but nobody applies on your behalf.",
           "channel": {
             "label": "SSA: survivor benefits",
-            "url": "https://www.ssa.gov/benefits/survivors/"
+            "url": "https://www.ssa.gov/survivor"
           },
           "tileId": "social-security"
         },
@@ -184,7 +184,7 @@
           "detail": "Decisions commonly take months, and benefits are generally paid from the application date rather than the date you became unable to work — so waiting to be sure costs money that cannot be recovered.",
           "channel": {
             "label": "SSA: disability benefits",
-            "url": "https://www.ssa.gov/disability/"
+            "url": "https://www.ssa.gov/disability"
           },
           "tileId": "disability-insurance"
         },

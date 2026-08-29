@@ -267,7 +267,7 @@ export const freeFilingTile: TileDefinition = {
   resources: [
     {
       label: "IRS Free File",
-      url: "https://www.irs.gov/filing/irs-free-file-do-your-taxes-for-free",
+      url: "https://www.irs.gov/e-file-do-your-taxes-for-free",
     },
     {
       label: "Find a free tax-prep site near you (VITA / TCE)",

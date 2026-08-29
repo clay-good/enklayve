@@ -214,7 +214,7 @@ export const balanceTransferTile: TileDefinition = {
   resources: [
     {
       label: "CFPB, balance transfer credit cards",
-      url: "https://www.consumerfinance.gov/ask-cfpb/what-is-a-balance-transfer-en-1965/",
+      url: "https://www.consumerfinance.gov/consumer-tools/credit-cards/",
     },
   ],
   mount: mountBalanceTransfer,

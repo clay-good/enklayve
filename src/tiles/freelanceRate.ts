@@ -189,7 +189,7 @@ export const freelanceRateTile: TileDefinition = {
   resources: [
     {
       label: "SBA, pricing your products & services",
-      url: "https://www.sba.gov/business-guide/manage-your-business/pricing-your-products-services",
+      url: "https://www.sba.gov/counseling/manage-your-business/",
     },
   ],
   mount: mountFreelanceRate,

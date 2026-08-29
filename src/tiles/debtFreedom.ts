@@ -520,7 +520,7 @@ export const debtFreedomTile: TileDefinition = {
   resources: [
     {
       label: "CFPB, ways to pay down debt",
-      url: "https://www.consumerfinance.gov/ask-cfpb/what-is-the-best-way-to-pay-off-my-debt-en-1849/",
+      url: "https://www.consumerfinance.gov/consumer-tools/debt-collection/",
     },
   ],
   mount: mountDebtFreedom,

@@ -59,3 +59,17 @@ After reading a changed source and updating the shard by hand, refresh the finge
 node scripts/refresh/watch-sources.ts --accept
 ```
 
+### Link health
+
+`npm run check:links` fetches every external URL the repo ships — from tile "Learn more" lists, shard citations, and these docs — and reports three things separately:
+
+| Result | What it means |
+|---|---|
+| **Broken** | A 4xx/5xx, a DNS failure, or a refused connection. The link is dead. |
+| **Redirected** | The canonical URL moved. **Not a pass:** agencies reuse article ids, so an old link can land on a page that is authoritative, plausible, and about something else entirely. |
+| **Unreachable** | The server did not serve a complete certificate chain. Browsers repair that and Node does not, so the page is almost certainly fine — open it before replacing it. |
+
+[`check-links.yml`](../.github/workflows/check-links.yml) runs it monthly and opens an issue on broken or redirected results. It is deliberately not part of the unit CI: it needs the network, and a suite that fails when a state revenue site has a bad afternoon is a suite people learn to ignore.
+
+**Note for the next state refresh.** Several state adapters' `sourceUrl`s were repointed at live pages after their originals rotted (NY, GA, IL, MI, IN, MT, ME, MS, MD, AR). Their parsers anchor on text in the *old* pages and have **not** been re-validated against the new ones. That is safe rather than silent: a parser that cannot find its anchors takes the fail-safe path and opens an alert PR instead of writing data, which is exactly what should happen. Expect that on the next run for those states, and re-anchor the parser then.
+

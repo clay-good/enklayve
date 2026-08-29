@@ -216,7 +216,7 @@ export const sinkingFundTile: TileDefinition = {
   resources: [
     {
       label: "CFPB, saving for a goal",
-      url: "https://www.consumerfinance.gov/about-us/blog/budgeting-how-to-create-a-budget-and-stick-with-it/",
+      url: "https://www.consumerfinance.gov/consumer-tools/",
     },
     {
       label: "Investor.gov, savings goal calculator",

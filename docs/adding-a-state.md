@@ -31,7 +31,7 @@ The fifty-state tax engine is the moat, and it is built so **adding a state is a
   },
   "standardDeductionByFilingStatus": { "single": 12000, "married_jointly": 24000, "head_of_household": 12000 },
   "citation": {                  // required — the no-orphan-numbers rule (SPEC §9)
-    "sourceUrl": "https://dor.georgia.gov/taxes/individual-taxes",
+    "sourceUrl": "https://dor.georgia.gov/taxes/taxes-individuals",
     "sourceDocument": "Georgia DOR / HB 463, 4.99% flat individual income tax effective Jan 1, 2026; standard deduction $12,000/$24,000 (rises in 2027)",
     "effectiveYear": 2026,
     "dateRetrieved": "2026-06-02"

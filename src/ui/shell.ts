@@ -612,7 +612,7 @@ function renderHome(
 /** Trusted U.S. resources to learn the public rules behind the numbers. */
 const US_RESOURCES: { label: string; url: string }[] = [
   { label: "IRS, federal taxes", url: "https://www.irs.gov/" },
-  { label: "Benefits.gov, federal benefits", url: "https://www.benefits.gov/" },
+  { label: "Benefits.gov, federal benefits", url: "https://www.usa.gov/benefit-finder" },
   { label: "HealthCare.gov, ACA marketplace", url: "https://www.healthcare.gov/" },
   {
     label: "Consumer Financial Protection Bureau",

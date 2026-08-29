@@ -154,7 +154,7 @@ export const rmdTile: TileDefinition = {
   resources: [
     {
       label: "IRS, required minimum distributions",
-      url: "https://www.irs.gov/retirement-plans/required-minimum-distributions-rmds",
+      url: "https://www.irs.gov/retirement-plans/retirement-plan-and-ira-required-minimum-distributions-faqs",
     },
     { label: "IRS Publication 590-B", url: "https://www.irs.gov/publications/p590b" },
   ],

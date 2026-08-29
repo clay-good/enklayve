@@ -202,7 +202,7 @@ export const lifeInsuranceTile: TileDefinition = {
   resources: [
     {
       label: "CFPB, life insurance basics",
-      url: "https://www.consumerfinance.gov/ask-cfpb/what-is-life-insurance-en-1352/",
+      url: "https://content.naic.org/consumer/life-insurance.htm",
     },
     { label: "Investor.gov, insurance", url: "https://www.investor.gov/" },
   ],

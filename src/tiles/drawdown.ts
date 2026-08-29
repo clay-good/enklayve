@@ -249,7 +249,7 @@ export const drawdownTile: TileDefinition = {
   resources: [
     {
       label: "IRS, required minimum distributions",
-      url: "https://www.irs.gov/retirement-plans/required-minimum-distributions-rmds",
+      url: "https://www.irs.gov/retirement-plans/retirement-plan-and-ira-required-minimum-distributions-faqs",
     },
     { label: "Investor.gov, retirement", url: "https://www.investor.gov/" },
   ],

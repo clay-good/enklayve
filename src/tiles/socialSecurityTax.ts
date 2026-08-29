@@ -207,7 +207,7 @@ export const socialSecurityTaxTile: TileDefinition = {
     },
     {
       label: "SSA, income taxes and your Social Security benefit",
-      url: "https://www.ssa.gov/benefits/retirement/planner/taxes.html",
+      url: "https://www.ssa.gov/manage-benefits/request-withhold-taxes",
     },
     {
       label: "26 U.S. Code §86 (taxation of Social Security benefits)",

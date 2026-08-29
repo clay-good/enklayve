@@ -16,14 +16,14 @@
     },
     {
       "shard": "enrollment-windows-2026",
-      "url": "https://www.ecfr.gov/current/title-45/section-155.420",
+      "url": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-E/section-155.420",
       "why": "Eleven clocks across four titles of the CFR, each cited to its own section. A missed enrollment window costs a household its coverage, so a human reads every change.",
-      "fingerprint": "41a3fa019d6b7c9ee7abe4239c40c7b7f51a75a44790be5afa4a1c134e0c5eec",
+      "fingerprint": "fc128f65ca713c60b0362b2c1b2deb9e6e84343ad4b67088eb779e92b53381fc",
       "checkedOn": "2026-08-29"
     },
     {
       "shard": "free-filing-2026",
-      "url": "https://www.irs.gov/filing/irs-free-file-do-your-taxes-for-free",
+      "url": "https://www.irs.gov/e-file-do-your-taxes-for-free",
       "why": "Channel availability and eligibility change by program announcement, not on a schedule — and an absence (Direct File in 2026) is itself a recorded fact.",
       "fingerprint": "50272ab09bcc927af50af34b6d463ca5d30a8783899df4c3cfe143fcc16fadbf",
       "checkedOn": "2026-08-29"

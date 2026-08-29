@@ -190,7 +190,7 @@ export const medicaidTile: TileDefinition = {
   resources: [
     {
       label: "Medicaid.gov, eligibility",
-      url: "https://www.medicaid.gov/medicaid/eligibility/index.html",
+      url: "https://www.medicaid.gov/medicaid/eligibility-policy",
     },
     { label: "HealthCare.gov, Medicaid & CHIP", url: "https://www.healthcare.gov/medicaid-chip/" },
   ],

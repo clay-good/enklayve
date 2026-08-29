@@ -182,7 +182,7 @@ export const loanAmortizationTile: TileDefinition = {
     { label: "CFPB, mortgages", url: "https://www.consumerfinance.gov/owning-a-home/" },
     {
       label: "CFPB, paying extra on your mortgage",
-      url: "https://www.consumerfinance.gov/ask-cfpb/what-is-amortization-en-103/",
+      url: "https://www.consumerfinance.gov/consumer-tools/mortgages/",
     },
   ],
   mount: mountLoanAmortization,

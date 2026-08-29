@@ -114,10 +114,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-ny-income-tax-2024.json",
-      "sourceUrl": "https://www.tax.ny.gov/pit/file/tax-tables/nys-tax-rate-schedule.htm",
+      "sourceUrl": "https://www.tax.ny.gov/pit/file/tax_tables.htm",
       "sourceDocument": "NYS Department of Taxation and Finance, 2026 tax rate schedule (middle-class rate cuts: lowest bracket 3.9%) and NYC resident rates",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "5e8627524efd9bd3b4eaac121e1a42db09bb57fb0c2cb7ecf872007bcc492a15"
+      "contentHash": "ed590f77972ff67151956bd3626f8289be5d542100d3aa7d8ba6348a9d49b564"
     },
     {
       "id": "state-tx-income-tax-2024",
@@ -140,10 +140,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-fl-income-tax-2024.json",
-      "sourceUrl": "https://floridarevenue.com/taxes/",
+      "sourceUrl": "https://floridarevenue.com/taxes/Pages/default.aspx",
       "sourceDocument": "Florida Department of Revenue, no state personal income tax",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "09db443eabd12c08f2fc59bea0d72370b124b6c80c3a15d563bfeffbdf7b7b3c"
+      "contentHash": "b12a901143c6add426d50b14b9542c39e58e0065b0c9d5ee847222138cd455c6"
     },
     {
       "id": "state-pa-income-tax-2024",
@@ -153,10 +153,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-pa-income-tax-2024.json",
-      "sourceUrl": "https://www.pa.gov/agencies/revenue/forms-and-publications/pa-personal-income-tax-guide.html",
+      "sourceUrl": "https://www.pa.gov/agencies/revenue/forms-and-publications/pa-personal-income-tax-guide",
       "sourceDocument": "Pennsylvania DOR, 3.07% flat personal income tax (2024)",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "f6c267bc7e7f9d5197b6a8ef0d4e0b0e6502d99bca47a5efda8d2e77b1ee28e6"
+      "contentHash": "1bbeadf45f1269bbd3d48540cb25d1ca5604a1aa899a5d3300ad93eab2af46b4"
     },
     {
       "id": "state-il-income-tax-2024",
@@ -166,10 +166,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-il-income-tax-2024.json",
-      "sourceUrl": "https://tax.illinois.gov/individuals/rates.html",
+      "sourceUrl": "https://tax.illinois.gov/research/taxrates/income.html",
       "sourceDocument": "Illinois DOR, 4.95% flat tax; 2024 personal exemption $2,775",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "535db4f0a243cc55b6c05f2257d35a5ed0f8af17fc3a76d4cc1688cf1b2109a1"
+      "contentHash": "9de990faa9e7f51c17b72422619d4184ca78281bfaa5981fd29d78204c092af7"
     },
     {
       "id": "state-oh-income-tax-2024",
@@ -218,10 +218,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-mi-income-tax-2024.json",
-      "sourceUrl": "https://www.michigan.gov/taxes/iit/tax-time/whats-new-for-tax-year-2024",
+      "sourceUrl": "https://www.michigan.gov/taxes/iit",
       "sourceDocument": "Michigan Treasury, 4.25% flat tax; 2024 personal exemption $5,600",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "7b5278f061490ade53787a730af31c8da445e56da8d06f9f629d87bc9b1d135a"
+      "contentHash": "a5808a5861643f383ce0ccf6f29e10993778a52be5b5f3890e36188b3d9246d1"
     },
     {
       "id": "state-dc-income-tax-2024",
@@ -361,10 +361,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-in-income-tax-2024.json",
-      "sourceUrl": "https://www.in.gov/dor/individual-income-taxes/",
+      "sourceUrl": "https://www.in.gov/dor/i-am-a/individual/",
       "sourceDocument": "Indiana DOR, 2.95% flat tax (2026, down from 3.05%); $1,000 personal exemption per filer. County income taxes are not modeled.",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "a3fc40c44dc913fedbac2dafa71e16a449cae89d41deda9ecabc72eb301894f6"
+      "contentHash": "8f3df56c56ee8c3246bbc741e30be4bf27dc10182adb336299d3b1784e5f305c"
     },
     {
       "id": "state-ky-income-tax-2024",
@@ -400,10 +400,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-ms-income-tax-2024.json",
-      "sourceUrl": "https://www.dor.ms.gov/individual/tax-rates",
+      "sourceUrl": "https://www.dor.ms.gov/individual/individual-income-tax-frequently-asked-questions",
       "sourceDocument": "Mississippi DOR, 4.0% flat tax on taxable income over $10,000 (2026); standard deduction $2,300/$4,600/$3,400, personal exemption $6,000/$12,000/$8,000",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "f17c62a6d41eb4beb593f2751421f03d6580de7bbc49263e495f3555abf95ba9"
+      "contentHash": "ea1222165e80b60722ed9c8ebbf2e1ed4cff3718dfa1e35f7ec966b035851a09"
     },
     {
       "id": "state-id-income-tax-2024",
@@ -426,10 +426,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-ut-income-tax-2024.json",
-      "sourceUrl": "https://incometax.utah.gov/credits/taxpayer-tax-credit",
+      "sourceUrl": "https://incometax.utah.gov/line-by-line/",
       "sourceDocument": "Utah State Tax Commission, 4.45% flat individual income tax for tax year 2026 (SB 60, 2026 session)",
       "dateRetrieved": "2026-06-05",
-      "contentHash": "d12e1197fdd51843ba952086fb61727eb71f6b1d91841c3baa3d80ec7b5c4f76"
+      "contentHash": "2bb8c0a44821168c744168299a9f1df9593d19f2cc2e2f7fe5f9b86492a3444e"
     },
     {
       "id": "state-la-income-tax-2024",
@@ -634,10 +634,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-mt-income-tax-2024.json",
-      "sourceUrl": "https://mtrevenue.gov/2025/05/12/hb-337/",
+      "sourceUrl": "https://revenue.mt.gov/taxes/individual-income-tax/",
       "sourceDocument": "Montana DOR 2026 rate schedule (HB 337, 2025; MCA §15-30-2103): 4.70% / 5.65% over federal taxable income; conforms to the federal standard deduction",
       "dateRetrieved": "2026-06-06",
-      "contentHash": "ff4f42daacaff72b12f2a08a5747d498518a450f7bc6c6d2f6b2107b61329f84"
+      "contentHash": "1647bd73f7e537983c901b29c1af2544ff5a04a57b6198d4fcf1bcf13b810528"
     },
     {
       "id": "state-me-income-tax-2024",
@@ -647,10 +647,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-me-income-tax-2024.json",
-      "sourceUrl": "https://www.maine.gov/revenue/sites/maine.gov.revenue/files/inline-files/ind_tax_rate_sched_2026.pdf",
+      "sourceUrl": "https://www.maine.gov/revenue/taxes/income-estate-tax",
       "sourceDocument": "Maine Revenue Services 2026 rate schedule (36 M.R.S. §5111 brackets; §5124-C standard deduction + phase-out; §5126-A $5,300 exemption)",
       "dateRetrieved": "2026-06-06",
-      "contentHash": "cbde205c445512125fa2ebc7f92b22216dbdfbf18cddba062c9c8745410318ca"
+      "contentHash": "c18247014e7b42f0280769e2cf74784c2d282957d24fe440e80692f61ac31eda"
     },
     {
       "id": "state-nd-income-tax-2024",
@@ -725,10 +725,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-md-income-tax-2024.json",
-      "sourceUrl": "https://www.marylandtaxes.gov/individual/income/tax-info/index.php",
+      "sourceUrl": "https://www.marylandcomptroller.gov/individuals/tax-services.html",
       "sourceDocument": "Comptroller of Maryland 2026 State & Local Income Tax Withholding memo (Feb 4 2026) + FY2026 budget bill (HB 352, 2025); Md. Code Tax-Gen §10",
       "dateRetrieved": "2026-06-08",
-      "contentHash": "7a247e9eca21e85a3dabadb1a89bccc6ff31535062b9843fd4108b53c669b8a0"
+      "contentHash": "5b3b15faf00273201c3be1bc074c7c03c35568dcb985a2cc0c9b5f0f18297fab"
     },
     {
       "id": "state-ar-income-tax-2024",
@@ -738,10 +738,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-ar-income-tax-2024.json",
-      "sourceUrl": "https://www.dfa.arkansas.gov/income-tax/individual-income-tax/",
+      "sourceUrl": "https://www.dfa.arkansas.gov/office/taxes/income-tax-administration/individual-income-tax/",
       "sourceDocument": "Arkansas DFA 2025 AR1000F Regular Income Tax Table + bracket-adjustment recapture; standard deduction; Ark. Code §26-51-201",
       "dateRetrieved": "2026-06-08",
-      "contentHash": "a6a897d589fd04acb35d31a56b098ee82ba0aac68c99da4fa21e7a410bb0665b"
+      "contentHash": "fc80db345c2ce7b57cd8836fa38773d70443e44f26c13f77f5f555a9815494a1"
     },
     {
       "id": "state-ct-income-tax-2024",
@@ -816,10 +816,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "savers-credit-2024.json",
-      "sourceUrl": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-savings-contributions-savers-credit",
+      "sourceUrl": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-savings-contributions-credit-savers-credit",
       "sourceDocument": "IRS Retirement Savings Contributions Credit (Form 8880), 2026 AGI limits per IRS Notice 2025-67",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "949d3c35c13be8ac18c770738283ae47d47c1e3bc7ccf1b0d55d821e0efd5de3"
+      "contentHash": "28534eb2c921244e1c441ae645417ea6f056ba8c38c86dc5a578cc6e4e857f62"
     },
     {
       "id": "snap-fy2024-contiguous",
@@ -829,10 +829,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "snap-fy2024-contiguous.json",
-      "sourceUrl": "https://www.fns.usda.gov/snap/allotment/cola/fy26",
+      "sourceUrl": "https://www.fna.usda.gov/snap/allotment/cola/fy26",
       "sourceDocument": "USDA FNS SNAP Fiscal Year 2026 Cost-of-Living Adjustments (48 contiguous states and DC), effective Oct 1, 2025",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "3e5705cac30bbe234209bc091a3b28324ca3630bd4d2fd563fd1e87db36e54da"
+      "contentHash": "7da80a39777aab46c5940885991f8897967398b98532e17278e32890591aa22d"
     },
     {
       "id": "medicaid-2024",
@@ -842,10 +842,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "medicaid-2024.json",
-      "sourceUrl": "https://www.medicaid.gov/medicaid/program-information/medicaid-and-chip-enrollment-data/report-highlights/index.html",
+      "sourceUrl": "https://www.medicaid.gov/medicaid/program-information/medicaid-and-chip-enrollment-data/report-highlights",
       "sourceDocument": "Medicaid.gov / KFF Status of State Medicaid Expansion Decisions (2026); ACA adult eligibility at 138% FPL",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "b6a014d34da0a2d36ebe7ad86c778ed2a50dba7418004276c565ddc54205674d"
+      "contentHash": "57b1580b27fa0920d8b8e45ba5b385aa0c95dc5bcd7ada3b41b12130da84c3ea"
     },
     {
       "id": "aca-2024",
@@ -988,7 +988,7 @@
       "sourceUrl": "https://www.irs.gov/newsroom/2026-tax-filing-season-opens-with-several-free-filing-options-available",
       "sourceDocument": "IRS, 2026 tax filing season opens with several free filing options available",
       "dateRetrieved": "2026-08-28",
-      "contentHash": "2cd7964b13205430275df8e3db8f8304f0e7879bfa9227599be7bc4c2d5825dc"
+      "contentHash": "d5db98637d2f4d0531b5ae85e939be502ae89c653df0be995f49079a47ced349"
     },
     {
       "id": "no-surprises-2026",
@@ -1024,10 +1024,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 0,
       "shard": "enrollment-windows-2026.json",
-      "sourceUrl": "https://www.ecfr.gov/current/title-45/section-155.420",
+      "sourceUrl": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-E/section-155.420",
       "sourceDocument": "Federal enrollment and appeal windows — 29 U.S.C. §§1162, 1165; 42 CFR §§406.24, 407.14, 407.15, 431.221; 45 CFR §§155.410, 155.420, 155.520; 7 CFR §273.15",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "385fe34fb344e4c10a4fdd87ea5c41cef96aba5b8c277d0b710bfdf79f4aedda"
+      "contentHash": "8ca12978bd008851e582292bd70d5f8ae435ec25af0995ed38033e90c7e6a7ea"
     },
     {
       "id": "life-events-2026",
@@ -1040,7 +1040,7 @@
       "sourceUrl": "https://www.healthcare.gov/sep-list/",
       "sourceDocument": "enklayve life-event sequences — ordering hand-authored; every dated step cites the rule that sets its clock",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "4a4611191589810d803c220fd6e2399ea7c6509041785892494220a46606240d"
+      "contentHash": "a02c9fb54e457e0afdedd0ee1f6d182f4f0f90211b5dc5fd444d85897fe8027b"
     }
   ]
 }

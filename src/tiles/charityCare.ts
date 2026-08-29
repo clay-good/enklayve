@@ -191,7 +191,7 @@ export const charityCareTile: TileDefinition = {
     },
     {
       label: "Find free legal help near you",
-      url: "https://www.lsc.gov/about-lsc/what-legal-aid/get-legal-help",
+      url: "https://www.lsc.gov/about-lsc/what-legal-aid/i-need-legal-help",
       note: "If a hospital refuses to provide its policy or moves to collect",
     },
     {

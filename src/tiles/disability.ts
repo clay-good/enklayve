@@ -162,7 +162,7 @@ export const disabilityTile: TileDefinition = {
       label: "CFPB, disability insurance basics",
       url: "https://www.consumerfinance.gov/",
     },
-    { label: "SSA, disability benefits", url: "https://www.ssa.gov/disability/" },
+    { label: "SSA, disability benefits", url: "https://www.ssa.gov/disability" },
   ],
   mount: mountDisability,
 };

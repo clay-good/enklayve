@@ -204,7 +204,7 @@ export const spendingPlanTile: TileDefinition = {
   resources: [
     {
       label: "CFPB, making a budget",
-      url: "https://www.consumerfinance.gov/about-us/blog/budgeting-how-to-create-a-budget-and-stick-with-it/",
+      url: "https://www.consumerfinance.gov/consumer-tools/",
     },
   ],
   mount: mountSpendingPlan,

@@ -241,11 +241,11 @@ export const enrollmentWindowsTile: TileDefinition = {
   resources: [
     {
       label: "45 CFR §155.420 — Special enrollment periods",
-      url: "https://www.ecfr.gov/current/title-45/section-155.420",
+      url: "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-E/section-155.420",
     },
     {
       label: "42 CFR §431.221 — Medicaid hearing requests",
-      url: "https://www.ecfr.gov/current/title-42/section-431.221",
+      url: "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-C/part-431/subpart-E/subject-group-ECFR4e89d7b32b71f9d/section-431.221",
     },
   ],
   related: [

@@ -7,7 +7,7 @@
     { "rate": 0.1, "agiCapSingle": 40250, "agiCapHeadOfHousehold": 60375, "agiCapMarried": 80500 }
   ],
   "citation": {
-    "sourceUrl": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-savings-contributions-savers-credit",
+    "sourceUrl": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-savings-contributions-credit-savers-credit",
     "sourceDocument": "IRS Retirement Savings Contributions Credit (Form 8880), 2026 AGI limits per IRS Notice 2025-67",
     "effectiveYear": 2026,
     "dateRetrieved": "2026-06-02"

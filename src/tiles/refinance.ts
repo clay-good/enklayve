@@ -185,7 +185,7 @@ export const refinanceTile: TileDefinition = {
   resources: [
     {
       label: "CFPB, should I refinance?",
-      url: "https://www.consumerfinance.gov/ask-cfpb/what-does-it-mean-to-refinance-my-mortgage-en-114/",
+      url: "https://www.consumerfinance.gov/consumer-tools/mortgages/",
     },
     { label: "CFPB, owning a home", url: "https://www.consumerfinance.gov/owning-a-home/" },
   ],

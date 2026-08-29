@@ -324,9 +324,9 @@ export const billTriageTile: TileDefinition = {
     },
     {
       label: "Find a HUD-approved housing counselor",
-      url: "https://www.hud.gov/housing_counseling",
+      url: "https://www.hud.gov/counseling",
     },
-    { label: "LIHEAP, help with energy bills", url: "https://www.acf.hhs.gov/ocs/programs/liheap" },
+    { label: "LIHEAP, help with energy bills", url: "https://acf.gov/ocs/programs/liheap" },
   ],
   related: [
     {

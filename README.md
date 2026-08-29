@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **63** in **10 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **78**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | **1,261** unit/golden across 85 files, **+23** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | **1,273** unit/golden across 86 files, **+23** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale/theme preference touches `localStorage`, asserted end-to-end across a full session | `npm run audit` / `npm run test:e2e` |
 | UI framework / runtime deps that phone home | **none** | [`package.json`](package.json) |
@@ -558,7 +558,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**1,261 unit/golden tests across 85 files** (plus 23 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**1,273 unit/golden tests across 86 files** (plus 23 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -739,7 +739,12 @@ The Playwright live-offline + responsiveness e2e suite, previously deferred, now
 
   **The Pillar 4 shards needed a refresh workflow, and the right one is a review.** The existing `refresh-*.yml` jobs fetch a source and parse the figures out of it, which is correct for a bracket table and wrong for a shard carrying what the No Surprises Act protects or what a benefits notice must tell you — auto-rewriting the site's most safety-critical sentences from a scraped page is exactly the failure to avoid. So [`watch-pillar4-sources.yml`](.github/workflows/watch-pillar4-sources.yml) fingerprints the **visible text** of each source quarterly and opens an issue naming the shards whose sources moved. It never edits a shard. Markup churn does not register, a change to the words does, and an unreachable source is reported separately — "we could not check" and "nothing moved" are different facts. All six baselines were fetched live, not assumed.
 
-  Also landed: a test asserting that every deadline the site can render carries a source link and that a *ceiling* is never rendered with the "at least" wording reserved for a floor — run over the real shard, so a window added later without a citation fails here. Dated, ordered checklists for job loss, death, divorce, disability, a new child, and moving states. Split out from Phase 20 on purpose: it turns on the COBRA, ACA special-enrollment, Medicare, and per-program appeal windows, which are the highest-harm numbers on the site and deserve their own sourcing pass against live published regulations.
+  Also landed: a test asserting that every deadline the site can render carries a source link and that a *ceiling* is never rendered with the "at least" wording reserved for a floor — run over the real shard, so a window added later without a citation fails here.
+- ✅ **Phase 26 — link health** (shipped). The site's whole trust model is that every rule links its source, so a link that has quietly rotted breaks the thing it is built on. A sweep of all **198 external URLs** the repo ships found **13 dead links and 34 redirects** — and the worst of them were not the 404s.
+
+  Agencies reuse article ids. The CFPB URL labeled "what does it mean to refinance my mortgage" redirected to an article about **USDA rural housing loans**; "what is a balance transfer" to one about **mortgage payment calculations**; "the best way to pay off my debt" to the **foreclosure timeline**. A reader following any of them landed somewhere authoritative, plausible, and about something else, with no way to tell. Every one is fixed, each replacement fetched and confirmed live; the baseline is now **197 ok, 0 broken, 0 redirected**.
+
+  `npm run check:links` and a monthly [workflow](.github/workflows/check-links.yml) keep it that way. It reports a redirect as loudly as a failure, because a redirect means the canonical URL moved and nobody has checked where it went. It separates a third case — a server serving an **incomplete certificate chain**, which browsers repair and Node does not, so the page is fine and calling it broken would send someone to replace a working link. It checks with HEAD before GET, so a multi-megabyte cited PDF is not downloaded just to learn its status. And it stays out of the unit CI on purpose: a suite that fails when a state revenue site has a bad afternoon is a suite people learn to ignore. Dated, ordered checklists for job loss, death, divorce, disability, a new child, and moving states. Split out from Phase 20 on purpose: it turns on the COBRA, ACA special-enrollment, Medicare, and per-program appeal windows, which are the highest-harm numbers on the site and deserve their own sourcing pass against live published regulations.
 
 ---
 

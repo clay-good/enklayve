@@ -252,7 +252,7 @@ export const collegeCostTile: TileDefinition = {
     { label: "Federal Student Aid", url: "https://studentaid.gov/" },
     {
       label: "SEC, saving for college (529 plans)",
-      url: "https://www.investor.gov/introduction-investing/investing-basics/investment-products/529-plans",
+      url: "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/introduction-529-plans-investor-bulletin",
     },
   ],
   mount: mountCollegeCost,
