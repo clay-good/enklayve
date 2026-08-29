@@ -3,19 +3,41 @@
   "name": "Kansas",
   "taxYear": 2026,
   "hasIncomeTax": true,
-  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "supportedFilingStatuses": [
+    "single",
+    "married_jointly",
+    "head_of_household"
+  ],
   "bracketsByFilingStatus": {
     "single": [
-      { "lowerBound": 0, "rate": 0.052 },
-      { "lowerBound": 23000, "rate": 0.0558 }
+      {
+        "lowerBound": 0,
+        "rate": 0.052
+      },
+      {
+        "lowerBound": 23000,
+        "rate": 0.0558
+      }
     ],
     "married_jointly": [
-      { "lowerBound": 0, "rate": 0.052 },
-      { "lowerBound": 46000, "rate": 0.0558 }
+      {
+        "lowerBound": 0,
+        "rate": 0.052
+      },
+      {
+        "lowerBound": 46000,
+        "rate": 0.0558
+      }
     ],
     "head_of_household": [
-      { "lowerBound": 0, "rate": 0.052 },
-      { "lowerBound": 23000, "rate": 0.0558 }
+      {
+        "lowerBound": 0,
+        "rate": 0.052
+      },
+      {
+        "lowerBound": 23000,
+        "rate": 0.0558
+      }
     ]
   },
   "standardDeductionByFilingStatus": {
@@ -31,9 +53,12 @@
   "citation": {
     "sourceUrl": "https://www.ksrevenue.gov/incomebook25.html",
     "sourceDocument": "Kansas DOR 2025 income tax (SB 1, 2024 special session): two rates 5.20%/5.58%, standard deduction & exemption",
-    "sourceNote": "Senate Bill 1 (2024 special session) collapsed Kansas's old three-bracket schedule (3.1% / 5.25% / 5.7%) into two rates effective 2024 and after: 5.20% on the first dollars of taxable income and 5.58% above a threshold that depends on filing status. Kansas publishes two rate schedules — 'married filing joint' (5.58% over $46,000) and 'all other filers' (5.58% over $23,000), which covers single, married-filing-separately, and head of household — so head-of-household uses the $23,000 threshold. Taxable income = federal AGI − the Kansas standard deduction ($3,605 single / $8,240 married jointly / $6,180 head of household) − the personal exemption ($9,160 per filer, $18,320 married jointly). The $2,320-per-dependent exemption is omitted for the no-dependent filer (conservative). The two rates, the thresholds, and the exemption are statutory (SB 1); the standard deduction is the latest KS DOR published amount (lightly indexed) and rolls as the reviewer's data-only step. Kansas has no local income tax and fully exempts Social Security (not relevant to wage take-home). Threshold cross-checked against the Tax Foundation 2025 table; verified against the KS DOR 2025 booklet on 2026-06-06.",
+    "sourceNote": "Kansas's 2024 special-session SB 1 replaced the three-bracket schedule with TWO rates — 5.20% and 5.58% — crossing at $23,000 of Kansas taxable income for single, head of household, and married filing separately, and at $46,000 for married filing jointly (K.S.A. 79-32,110). The rates are uniform across statuses; only the crossover differs. Kansas then subtracts BOTH a standard deduction ($3,605 single, $8,240 married jointly, $6,180 head of household, $4,120 married separately) and a personal exemption ($9,160 per filer, so $18,320 on a joint return) — the deduction-plus-exemption stack Rhode Island, Virginia, and Vermont also use. Worked example, single $60,000: taxable = 60,000 − 3,605 − 9,160 = $47,235; tax = 5.20%·23,000 + 5.58%·24,235 = $1,196.00 + $1,352.31 = $2,548.31. SB 1 also began indexing the standard deduction and the personal exemption for inflation from tax year 2025. The figures here are the latest PUBLISHED official amounts, from the Kansas DOR's 2025 individual income tax booklet; the department had not posted a 2026 booklet at retrieval (the 2026 URL 404s), so 2026 will index slightly above these — the same latest-published convention this engine uses for Arkansas, Connecticut, Nebraska, Oregon, and Vermont, and it errs slightly high, the conservative side for setting money aside. Omitted at launch fidelity: the $2,320-per-dependent exemption (and the additional $2,320 for a child born or stillborn in the tax year), the age-65/blind additional standard deduction, Kansas's food sales tax credit and other credits, and itemized deductions. Kansas levies no local income tax on wages. Verified against the Kansas DOR 2025 individual income tax booklet and K.S.A. 79-32,110 on 2026-08-29.",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-06"
+    "dateRetrieved": "2026-08-29"
   },
-  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+  "effectiveDateRange": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  }
 }

@@ -478,10 +478,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-mo-income-tax-2024.json",
-      "sourceUrl": "https://dor.mo.gov/taxation/individual/tax-types/income/year-changes/",
-      "sourceDocument": "Missouri DOR individual income tax rate schedule (top 4.7%, SB 3 2022); federal-conformity standard deduction",
-      "dateRetrieved": "2026-06-06",
-      "contentHash": "b78651ecbb32946f9cdecf915007c0844dfb1777e8a1d7d165114dd5a9deee77"
+      "sourceUrl": "https://dor.mo.gov/forms/Withholding%20Formula_2026.pdf",
+      "sourceDocument": "Missouri DOR 2026 Missouri Withholding Tax Formula — 2026 indexed eight-tier schedule (0%→4.7% in $1,348 steps) and the federal-conformity standard deduction",
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "dff4a5a58253bb91cd4e667ca8235efe96d9196b26ea2801ad0e58fa1cf50fcc"
     },
     {
       "id": "state-nj-income-tax-2024",
@@ -519,8 +519,8 @@
       "shard": "state-ks-income-tax-2024.json",
       "sourceUrl": "https://www.ksrevenue.gov/incomebook25.html",
       "sourceDocument": "Kansas DOR 2025 income tax (SB 1, 2024 special session): two rates 5.20%/5.58%, standard deduction & exemption",
-      "dateRetrieved": "2026-06-06",
-      "contentHash": "9f75d90e5c319fd53be8b19e57118066451c4e152d418546b2a7e1e498ab7304"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "9a55cefed9fa4e53b3e4df51b0d49fb7d7c2612bd9d469e91c7f432ec407ed1e"
     },
     {
       "id": "state-de-income-tax-2024",

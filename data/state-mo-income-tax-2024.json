@@ -3,37 +3,113 @@
   "name": "Missouri",
   "taxYear": 2026,
   "hasIncomeTax": true,
-  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "supportedFilingStatuses": [
+    "single",
+    "married_jointly",
+    "head_of_household"
+  ],
   "bracketsByFilingStatus": {
     "single": [
-      { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 1313, "rate": 0.02 },
-      { "lowerBound": 2626, "rate": 0.025 },
-      { "lowerBound": 3939, "rate": 0.03 },
-      { "lowerBound": 5252, "rate": 0.035 },
-      { "lowerBound": 6565, "rate": 0.04 },
-      { "lowerBound": 7878, "rate": 0.045 },
-      { "lowerBound": 9191, "rate": 0.047 }
+      {
+        "lowerBound": 0,
+        "rate": 0.0
+      },
+      {
+        "lowerBound": 1348,
+        "rate": 0.02
+      },
+      {
+        "lowerBound": 2696,
+        "rate": 0.025
+      },
+      {
+        "lowerBound": 4044,
+        "rate": 0.03
+      },
+      {
+        "lowerBound": 5392,
+        "rate": 0.035
+      },
+      {
+        "lowerBound": 6740,
+        "rate": 0.04
+      },
+      {
+        "lowerBound": 8088,
+        "rate": 0.045
+      },
+      {
+        "lowerBound": 9436,
+        "rate": 0.047
+      }
     ],
     "married_jointly": [
-      { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 1313, "rate": 0.02 },
-      { "lowerBound": 2626, "rate": 0.025 },
-      { "lowerBound": 3939, "rate": 0.03 },
-      { "lowerBound": 5252, "rate": 0.035 },
-      { "lowerBound": 6565, "rate": 0.04 },
-      { "lowerBound": 7878, "rate": 0.045 },
-      { "lowerBound": 9191, "rate": 0.047 }
+      {
+        "lowerBound": 0,
+        "rate": 0.0
+      },
+      {
+        "lowerBound": 1348,
+        "rate": 0.02
+      },
+      {
+        "lowerBound": 2696,
+        "rate": 0.025
+      },
+      {
+        "lowerBound": 4044,
+        "rate": 0.03
+      },
+      {
+        "lowerBound": 5392,
+        "rate": 0.035
+      },
+      {
+        "lowerBound": 6740,
+        "rate": 0.04
+      },
+      {
+        "lowerBound": 8088,
+        "rate": 0.045
+      },
+      {
+        "lowerBound": 9436,
+        "rate": 0.047
+      }
     ],
     "head_of_household": [
-      { "lowerBound": 0, "rate": 0 },
-      { "lowerBound": 1313, "rate": 0.02 },
-      { "lowerBound": 2626, "rate": 0.025 },
-      { "lowerBound": 3939, "rate": 0.03 },
-      { "lowerBound": 5252, "rate": 0.035 },
-      { "lowerBound": 6565, "rate": 0.04 },
-      { "lowerBound": 7878, "rate": 0.045 },
-      { "lowerBound": 9191, "rate": 0.047 }
+      {
+        "lowerBound": 0,
+        "rate": 0.0
+      },
+      {
+        "lowerBound": 1348,
+        "rate": 0.02
+      },
+      {
+        "lowerBound": 2696,
+        "rate": 0.025
+      },
+      {
+        "lowerBound": 4044,
+        "rate": 0.03
+      },
+      {
+        "lowerBound": 5392,
+        "rate": 0.035
+      },
+      {
+        "lowerBound": 6740,
+        "rate": 0.04
+      },
+      {
+        "lowerBound": 8088,
+        "rate": 0.045
+      },
+      {
+        "lowerBound": 9436,
+        "rate": 0.047
+      }
     ]
   },
   "standardDeductionByFilingStatus": {
@@ -42,11 +118,14 @@
     "head_of_household": 24150
   },
   "citation": {
-    "sourceUrl": "https://dor.mo.gov/taxation/individual/tax-types/income/year-changes/",
-    "sourceDocument": "Missouri DOR individual income tax rate schedule (top 4.7%, SB 3 2022); federal-conformity standard deduction",
-    "sourceNote": "Missouri's eight-tier schedule is identical for every filing status (RSMo 143.011): 0% on the first $1,313 of taxable income, then 2% / 2.5% / 3% / 3.5% / 4% / 4.5% in $1,313 increments, and a top rate of 4.7% above $9,191 — the rate reduced from 4.8% to 4.7% effective 2025 under the SB 3 (2022) revenue triggers and stays 4.7% for 2026. These are the MO DOR's latest officially published thresholds (its 2025 'year changes' schedule); the 2026 CPI-indexed brackets shift each tier up by about $35 (the top reaches $9,436 per the Tax Foundation 2026 table), immaterial to the computed tax since all income above ~$9,200 is taxed at 4.7% either way, and they roll as the reviewer's data-only step. The standard deduction equals the federal standard deduction by statute, shown here at the confirmed 2026 federal amounts ($16,100 / $32,200 / $24,150). Missouri has no personal or dependent exemption (TCJA conformity zeroed it). The Missouri deduction for a percentage of federal income tax paid (phased down from 35% to 0% of federal tax as Missouri AGI rises, capped at $5,000 / $10,000) is omitted at launch fidelity — worth roughly $15-50 of Missouri tax for a typical filer — so the figure errs slightly high, the conservative side. Kansas City and St. Louis local earnings taxes (1%) are out of scope like other municipal add-ons. Cross-checked against the Tax Foundation 2026 table; verified on 2026-06-06.",
+    "sourceUrl": "https://dor.mo.gov/forms/Withholding%20Formula_2026.pdf",
+    "sourceDocument": "Missouri DOR 2026 Missouri Withholding Tax Formula — 2026 indexed eight-tier schedule (0%→4.7% in $1,348 steps) and the federal-conformity standard deduction",
+    "sourceNote": "Missouri's eight-tier schedule (§143.011) is UNIFORM across filing statuses — Missouri does not widen the brackets for couples — and its thresholds are indexed for inflation annually. For 2026 the step is $1,348: 0% on the first $1,348 of Missouri taxable income, then 2.00% / 2.50% / 3.00% / 3.50% / 4.00% / 4.50% in $1,348 increments, and a top rate of 4.70% above $9,436. The 2025 step was $1,313 (top rate over $9,191); the 2026 figures are read from the DOR's 2026 Missouri Withholding Tax Formula, whose Annual Payroll Period percentage table states the indexed thresholds and whose standard-deduction block states $16,100 single / married filing separately, $32,200 married with a non-working spouse, $24,150 head of household. The internal check that pins the schedule: summing the graduated portion below the top bracket gives $262.86 for 2026, exactly the '$X plus 4.70% of the excess' base amount the DOR's own rate table publishes (the 2025 sum, $256.04, matches its published $256 the same way). Missouri's standard deduction is FEDERAL CONFORMITY, so it rolls with the IRS refresh rather than a Missouri source, and there is no personal exemption (TCJA conformity). Worked example, single $60,000: taxable = 60,000 − 16,100 = $43,900; tax = $262.86 + 4.70%·(43,900 − 9,436) = $1,882.67. Omitted at launch fidelity: the additional standard deductions for age 65, blindness, and a dependent filer; the percentage-of-federal-income-tax deduction (§143.171, capped at $5,000 single / $10,000 joint and itself phased by AGI); the 2025 capital-gains subtraction; Missouri's credits; and the KANSAS CITY and ST. LOUIS 1% earnings taxes, which this engine does not model — a resident of either city owes materially more than the figure shown here. Verified against the Missouri DOR's 2026 Missouri Withholding Tax Formula on 2026-08-29.",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-06"
+    "dateRetrieved": "2026-08-29"
   },
-  "effectiveDateRange": { "start": "2026-01-01", "end": "2026-12-31" }
+  "effectiveDateRange": {
+    "start": "2026-01-01",
+    "end": "2026-12-31"
+  }
 }
