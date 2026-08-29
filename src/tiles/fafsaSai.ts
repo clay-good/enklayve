@@ -7,7 +7,7 @@
  * the official SAI Formula Guide and to their FAFSA Submission Summary to
  * confirm the figure (§2.1, §2.3). It also shows the Pell Grant the SAI implies.
  */
-import { Money } from "../engine/money";
+import { Money, formatMoney } from "../engine/money";
 import { estimateSai, estimatePell } from "../engine/fafsa";
 import { el } from "../ui/dom";
 import { clampNote, didClamp, field, parseNonNegative, tryExampleButton } from "../ui/form";
@@ -124,7 +124,7 @@ export function mountFafsaSai(ctx: TileContext): void {
       fafsa,
     );
     const pell = estimatePell(r.sai, fafsa);
-    const fmt = (n: number): string => Money.from(n).format(ctx.locale);
+    const fmt = (n: number): string => formatMoney(n, ctx.locale);
     const lines: BreakdownLine[] = [
       {
         label: "Income protection allowance",

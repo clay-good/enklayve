@@ -28,18 +28,41 @@ export function field(labelText: string, control: HTMLElement): HTMLElement {
   );
 }
 
+/**
+ * The largest magnitude a parsed input may carry (SPEC-3 §2.3, "inputs are
+ * clamped at the boundary").
+ *
+ * A quadrillion is many orders of magnitude past any real figure a household
+ * enters, and it leaves enough headroom below `Number.MAX_VALUE` that no product
+ * or sum downstream can overflow to Infinity. Without it, a *finite* input like
+ * `?bal=1e308` parsed cleanly, overflowed one multiplication later, and threw a
+ * `RangeError` out of `Money.from` — which rendered a blank page rather than a
+ * bad number. Sixteen tiles were reachable that way through a crafted or stale
+ * deep link.
+ *
+ * The clamp lives here rather than in each engine because this is the boundary:
+ * every tile reads its URL params through these two helpers, so one guard
+ * covers the catalog and covers tiles that do not exist yet.
+ */
+export const MAX_INPUT_MAGNITUDE = 1e15;
+
+/** Clamp a parsed number to the bounded range. */
+function bounded(n: number): number {
+  return Math.max(-MAX_INPUT_MAGNITUDE, Math.min(MAX_INPUT_MAGNITUDE, n));
+}
+
 /** Parse a non-negative finite number, falling back when blank or invalid. */
 export function parseNonNegative(value: string | null, fallback: number): number {
   if (value === null || value.trim() === "") return fallback;
   const n = Number(value);
-  return Number.isFinite(n) && n >= 0 ? n : fallback;
+  return Number.isFinite(n) && n >= 0 ? bounded(n) : fallback;
 }
 
 /** Parse a finite number (any sign), falling back when blank or invalid. */
 export function parseNumber(value: string | null, fallback: number): number {
   if (value === null || value.trim() === "") return fallback;
   const n = Number(value);
-  return Number.isFinite(n) ? n : fallback;
+  return Number.isFinite(n) ? bounded(n) : fallback;
 }
 
 /** Format a 0–1 rate as a percentage string (e.g. 0.2235 -> "22.35%"). A

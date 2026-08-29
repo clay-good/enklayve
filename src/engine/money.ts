@@ -141,3 +141,20 @@ export class Money {
     }).format(n);
   }
 }
+
+/**
+ * Format a raw number as currency for display, without throwing.
+ *
+ * {@link Money.from} rejects a non-finite number on purpose — a NaN paycheck is
+ * always a bug, and failing loudly in the engine is right. But the *display*
+ * layer is the last line of defense (SPEC-3 §2.1): a crafted or stale deep link
+ * that overflows an intermediate to Infinity must render a neutral sentinel, not
+ * take the whole tile down with a `RangeError`. `Money.format` already returns
+ * "(out of range)" for a non-finite Decimal; this closes the one step earlier
+ * where the throw actually happens, so a tile formatting an engine result can
+ * never blank its own page.
+ */
+export function formatMoney(value: number, locale = "en-US", currency = "USD"): string {
+  if (!Number.isFinite(value)) return "(out of range)";
+  return Money.from(value).format(locale, currency);
+}

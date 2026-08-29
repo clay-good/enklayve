@@ -28,10 +28,22 @@ function payrollAllowance(income: number, ssWageBase: number): number {
   return socialSecurity + medicare;
 }
 
+/**
+ * The largest household this engine will extrapolate to. The published table
+ * stops well below it; beyond that the per-additional-person increment is a
+ * linear extension, and past a point it stops describing a household at all. A
+ * cap is needed rather than merely tidy: without one a crafted `?size=1e308`
+ * link extrapolated to Infinity, and the tile then threw a `RangeError` out of
+ * `Money.from` and rendered nothing — a blank page from a URL (SPEC-3 §2.1,
+ * §2.7). Same shape as the horizon caps in `finance.ts`.
+ */
+const MAX_HOUSEHOLD_SIZE = 100;
+
 /** Parents' income protection allowance for a family size, extrapolating above
  * the largest tabulated size by the per-additional-person increment. */
 function incomeProtectionAllowance(familySize: number, data: FafsaData): number {
-  const size = Math.max(1, Math.floor(familySize));
+  const requested = Number.isFinite(familySize) ? Math.floor(familySize) : 1;
+  const size = Math.min(MAX_HOUSEHOLD_SIZE, Math.max(1, requested));
   const table = data.saiIncomeProtectionAllowance;
   const exact = table[String(size)];
   if (exact !== undefined) return exact;
@@ -107,8 +119,38 @@ export interface SaiResult {
   assetContribution: number;
 }
 
+/**
+ * The ceiling every dollar input is clamped to. A quadrillion dollars is many
+ * orders of magnitude past any household the FAFSA describes, and it leaves
+ * enough headroom below `Number.MAX_VALUE` that no product or sum downstream can
+ * overflow to Infinity. Without it a crafted `?pinc=1e308` link produced a
+ * non-finite SAI, which threw out of `Money.from` and blanked the tile — the
+ * §2.1 "no non-finite number reaches the screen" invariant failing as a crash
+ * rather than as a bad number.
+ */
+const MAX_DOLLARS = 1e15;
+
+/** Clamp a user-supplied dollar figure to a finite, bounded value. */
+function dollars(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(-MAX_DOLLARS, Math.min(MAX_DOLLARS, value));
+}
+
 /** Estimate the dependent-student SAI from the 2026-27 methodology and tables. */
-export function estimateSai(input: SaiInput, data: FafsaData): SaiResult {
+export function estimateSai(rawInput: SaiInput, data: FafsaData): SaiResult {
+  // Every dollar field is clamped at the boundary, so the whole computation
+  // below is guaranteed finite however hostile the deep link that produced it.
+  const input: SaiInput = {
+    familySize: rawInput.familySize,
+    ssWageBase: dollars(rawInput.ssWageBase),
+    parentIncome: dollars(rawInput.parentIncome),
+    parentIncomeTax: dollars(rawInput.parentIncomeTax),
+    lowerEarnerIncome: dollars(rawInput.lowerEarnerIncome),
+    parentAssets: dollars(rawInput.parentAssets),
+    studentIncome: dollars(rawInput.studentIncome),
+    studentIncomeTax: dollars(rawInput.studentIncomeTax),
+    studentAssets: dollars(rawInput.studentAssets),
+  };
   const ipa = incomeProtectionAllowance(input.familySize, data);
   const payroll = payrollAllowance(input.parentIncome, input.ssWageBase);
   const eea = Math.min(
