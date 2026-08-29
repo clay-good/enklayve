@@ -805,8 +805,8 @@
       "shard": "eitc-ctc-2024.json",
       "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
       "sourceDocument": "IRS Revenue Procedure 2025-32 (2026 EITC) and IRC §24 (Child Tax Credit, $2,200 per child under the One Big Beautiful Bill Act)",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "c7e6bde34c46dfeb870d0c82e609e51187f920e0b10b6aa76af5fe73bd938480"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "f4bddd041d36f59abb494350e2587d91cd98cd4d64bd2c189bfec55bba9fbd15"
     },
     {
       "id": "savers-credit-2024",
@@ -818,8 +818,8 @@
       "shard": "savers-credit-2024.json",
       "sourceUrl": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-savings-contributions-credit-savers-credit",
       "sourceDocument": "IRS Retirement Savings Contributions Credit (Form 8880), 2026 AGI limits per IRS Notice 2025-67",
-      "dateRetrieved": "2026-06-02",
-      "contentHash": "28534eb2c921244e1c441ae645417ea6f056ba8c38c86dc5a578cc6e4e857f62"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "387378267ec438ba6395582d425b0856f5679d7b31a3751e510b8ba0188d8bfe"
     },
     {
       "id": "snap-fy2024-contiguous",
@@ -896,8 +896,8 @@
       "shard": "ira-deduction-2024.json",
       "sourceUrl": "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
       "sourceDocument": "IRS Notice 2025-67 (2026 IRA deduction phase-out ranges); IRC §219(g)",
-      "dateRetrieved": "2026-06-05",
-      "contentHash": "ff7a0b4fdca0f1b841f61da32d9b3b7efd4a123fa53e04bd5dfa0cc42c8b1d73"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "4e640063bb1547f5d82b5f1700383be693b0005020950c73c88d1cde772c986b"
     },
     {
       "id": "social-security-taxation-2024",
@@ -922,8 +922,8 @@
       "shard": "gift-tax-2024.json",
       "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
       "sourceDocument": "IRS Rev. Proc. 2025-32 (2026 gift/estate figures); IRC §2503(b), §2010, §2001(c)",
-      "dateRetrieved": "2026-06-05",
-      "contentHash": "4d74975b517d641df5903c19819703313b57b0b1ee96bc925797c4bc5c15a8e0"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "90628fd1b09c7a3e0c6439503e60b3d1df22f5722ec5e535c76a775a7c9658fa"
     },
     {
       "id": "amt-2024",
@@ -935,8 +935,8 @@
       "shard": "amt-2024.json",
       "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
       "sourceDocument": "IRS Rev. Proc. 2025-32 (2026 AMT exemption & thresholds); IRC §55 (26%/28% rates)",
-      "dateRetrieved": "2026-06-05",
-      "contentHash": "c5584df6a18a45f6176834d0285d179f56e0bcf91ae93bced18082e47a573bc2"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "61a522b378b95e600f6bf9fe7aa442763d173b359361b9c712e539e51b12ff7a"
     },
     {
       "id": "child-tax-2024",
@@ -948,8 +948,8 @@
       "shard": "child-tax-2024.json",
       "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
       "sourceDocument": "IRS Rev. Proc. 2025-32 (2026 dependent standard deduction); IRC §1(g), Form 8615",
-      "dateRetrieved": "2026-06-06",
-      "contentHash": "d8521bc7bff08e6babe57838677efeafd508bae1b7a76b5e3d3fb8a640f3a04f"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "c74024275195b8917cadbf864e9d9b9de0e2420afe43039189d5b2ed494aa674"
     },
     {
       "id": "education-credits-2024",
@@ -961,8 +961,8 @@
       "shard": "education-credits-2024.json",
       "sourceUrl": "https://www.irs.gov/credits-deductions/individuals/education-credits-aotc-and-llc",
       "sourceDocument": "IRS Education Credits (Form 8863); IRC §25A (AOTC & Lifetime Learning Credit)",
-      "dateRetrieved": "2026-06-06",
-      "contentHash": "307a2505ec87996f06e92032b54fb25ec7fab644e60e0f7731cdb659c630d33f"
+      "dateRetrieved": "2026-08-29",
+      "contentHash": "85022739ea43c72e334f0089bbfce6bfcf2a28b1c08bafb3a3c1eeedd1410c8f"
     },
     {
       "id": "bill-triage-2026",

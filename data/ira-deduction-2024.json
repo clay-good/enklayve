@@ -1,15 +1,28 @@
 {
   "taxYear": 2026,
   "phaseOuts": {
-    "singleCovered": { "low": 81000, "high": 91000 },
-    "marriedJointlyCovered": { "low": 129000, "high": 149000 },
-    "marriedJointlySpouseCovered": { "low": 242000, "high": 252000 },
-    "marriedSeparatelyCovered": { "low": 0, "high": 10000 }
+    "singleCovered": {
+      "low": 81000,
+      "high": 91000
+    },
+    "marriedJointlyCovered": {
+      "low": 129000,
+      "high": 149000
+    },
+    "marriedJointlySpouseCovered": {
+      "low": 242000,
+      "high": 252000
+    },
+    "marriedSeparatelyCovered": {
+      "low": 0,
+      "high": 10000
+    }
   },
   "citation": {
     "sourceUrl": "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
     "sourceDocument": "IRS Notice 2025-67 (2026 IRA deduction phase-out ranges); IRC §219(g)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-05"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "Whether a traditional IRA contribution is DEDUCTIBLE depends on being covered by a workplace retirement plan and on modified AGI; the contribution itself is always allowed. IRS Notice 2025-67 gives the 2026 phase-out ranges under §219(g): a single filer covered by a plan phases out between $81,000 and $91,000; a married couple filing jointly where the CONTRIBUTOR is covered, between $129,000 and $149,000; a spouse who is NOT covered but whose partner is, between $242,000 and $252,000 — much higher, and the case most often missed. Married filing separately phases out between $0 and $10,000, a range the statute fixes and that receives no annual cost-of-living adjustment, so a separated filer with any meaningful income gets no deduction. A filer covered by no workplace plan at all has no phase-out and deducts in full at any income — the case this shard represents by the absence of a range rather than by a number. Omitted: the Roth IRA contribution phase-out (a different range for the same incomes), the saver's credit (its own shard), the spousal IRA earned-income requirement, and the partial-deduction rounding rule that rounds up to the next $10 with a $200 floor. Verified against IRS Notice 2025-67 on 2026-08-29."
   }
 }

@@ -8,6 +8,7 @@
     "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     "sourceDocument": "IRS Rev. Proc. 2025-32 (2026 gift/estate figures); IRC §2503(b), §2010, §2001(c)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-05"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "Two separate figures, often confused. The ANNUAL EXCLUSION (IRC §2503(b)) is $19,000 per recipient for calendar year 2026 — give any one person up to that and there is nothing to report at all, and it resets every year and applies per recipient, so a couple splitting gifts can move $38,000 to each of any number of people. A gift to a non-citizen spouse has its own, much larger exclusion of $194,000. The LIFETIME EXEMPTION (the §2010(c) basic exclusion amount) is $15,000,000 for 2026, set by the One Big Beautiful Bill Act, and gifts above the annual exclusion draw against it rather than triggering tax; the 40% top rate applies only once it is exhausted. The generation-skipping transfer exemption under §2631(c) is the same $15,000,000. Omitted: gift splitting mechanics, the §2503(e) unlimited exclusion for tuition and medical expenses paid directly to the institution, gifts in trust and the present-interest requirement, prior-year taxable gifts, and estate-tax portability. This is a screener for whether Form 709 is in play. Verified against Rev. Proc. 2025-32 on 2026-08-29."
   }
 }

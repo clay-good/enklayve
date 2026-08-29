@@ -2,14 +2,30 @@
   "taxYear": 2026,
   "maxContributionPerPerson": 2000,
   "tiers": [
-    { "rate": 0.5, "agiCapSingle": 24250, "agiCapHeadOfHousehold": 36375, "agiCapMarried": 48500 },
-    { "rate": 0.2, "agiCapSingle": 26250, "agiCapHeadOfHousehold": 39375, "agiCapMarried": 52500 },
-    { "rate": 0.1, "agiCapSingle": 40250, "agiCapHeadOfHousehold": 60375, "agiCapMarried": 80500 }
+    {
+      "rate": 0.5,
+      "agiCapSingle": 24250,
+      "agiCapHeadOfHousehold": 36375,
+      "agiCapMarried": 48500
+    },
+    {
+      "rate": 0.2,
+      "agiCapSingle": 26250,
+      "agiCapHeadOfHousehold": 39375,
+      "agiCapMarried": 52500
+    },
+    {
+      "rate": 0.1,
+      "agiCapSingle": 40250,
+      "agiCapHeadOfHousehold": 60375,
+      "agiCapMarried": 80500
+    }
   ],
   "citation": {
     "sourceUrl": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-savings-contributions-credit-savers-credit",
     "sourceDocument": "IRS Retirement Savings Contributions Credit (Form 8880), 2026 AGI limits per IRS Notice 2025-67",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "The Retirement Savings Contributions Credit (IRC §25B) is a nonrefundable credit of 50%, 20% or 10% of up to $2,000 of retirement contributions per person, and it is a CLIFF, not a phase-out: one dollar of AGI over a tier's cap drops the rate to the next step, and one dollar over the last cap ends the credit entirely. IRS Notice 2025-67 gives the 2026 caps for married filing jointly — $48,500 for the 50% rate, $52,500 for 20%, $80,500 for 10%. Single and married-filing-separately caps are half of those ($24,250 / $26,250 / $40,250) and head of household is three-quarters ($36,375 / $39,375 / $60,375), the statutory ratios §25B(b) fixes, which is also the internal check on the transcription. Omitted: the reduction for recent distributions from any retirement plan (which can wipe out the credit for someone who took money out in the testing window), the full-time-student and dependent disqualifications, the age-18 minimum, and the fact that being nonrefundable caps it at the filer's tax liability — so many households in the 50% band get less than the arithmetic suggests. Verified against IRS Notice 2025-67 on 2026-08-29."
   }
 }

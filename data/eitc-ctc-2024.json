@@ -45,6 +45,7 @@
     "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     "sourceDocument": "IRS Revenue Procedure 2025-32 (2026 EITC) and IRC §24 (Child Tax Credit, $2,200 per child under the One Big Beautiful Bill Act)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "The Earned Income Credit rises with earned income at a phase-in rate to a maximum, sits flat, then phases out above a threshold. Rev. Proc. 2025-32 §2.06 gives the 2026 table: maximum credit $664 with no qualifying children, $4,427 with one, $7,316 with two, $8,231 with three or more. The phase-out threshold is $10,860 / $23,890 for most filers and $18,140 / $31,160 married filing jointly — the joint figures include the §32(b)(2)(B) marriage-penalty relief and are NOT double. The Child Tax Credit is $2,200 per qualifying child for 2026 with up to $1,700 refundable (both set by the One Big Beautiful Bill Act's amendments to §24(h)), phasing out at $50 per $1,000 of modified AGI above $200,000, or $400,000 on a joint return — thresholds that are statutory and have never been indexed. Omitted: the §32(i) disqualifying investment income limit ($12,200 for 2026), which cuts off the EITC entirely regardless of earnings; the qualifying-child relationship, age, residency and joint-return tests; the age 25-64 rule for childless filers; the $500 credit for other dependents; and the separate rules for separated spouses under §32(d). The tile estimates the credit for a filer who already qualifies. Verified against Rev. Proc. 2025-32 on 2026-08-29."
   }
 }

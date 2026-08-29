@@ -6,6 +6,7 @@
     "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     "sourceDocument": "IRS Rev. Proc. 2025-32 (2026 dependent standard deduction); IRC §1(g), Form 8615",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-06"
+    "dateRetrieved": "2026-08-29",
+    "sourceNote": "This shard carries the §63(c)(5) limit on the standard deduction of an individual who can be claimed as a dependent by someone else — for 2026, the GREATER of $1,350 or the sum of $450 and the dependent's earned income, capped at the ordinary single standard deduction. It is what makes a working teenager's first tax return come out the way it does, and it is the base the kiddie-tax computation (IRC §1(g)) builds on: unearned income above twice this base is taxed at the parents' rate rather than the child's. Omitted: the parents' rate itself (the tile asks for it), the election to include a child's income on the parents' return under §1(g)(7), the separate AMT exemption for a child subject to the kiddie tax under §59(j), and the age and support tests that decide whether the kiddie tax applies at all. Verified against Rev. Proc. 2025-32 §2.14(2) on 2026-08-29."
   }
 }
