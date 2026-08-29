@@ -164,6 +164,72 @@ describe("every calculator is accessible", () => {
   }
 });
 
+/**
+ * The tile bar (SPEC-3 §4 acceptance criterion 4, restated as a gate).
+ *
+ * Every calculator is supposed to ship with a worked example, a plain-English
+ * "how this works" block, at least one "Learn more" resource, and deep-linkable
+ * URL state. That was a review checklist; a review checklist is a hand-kept
+ * list wearing a different hat, so here it is as a test over the whole roster.
+ */
+describe("every calculator meets the tile bar", () => {
+  for (const tile of CALCULATORS) {
+    describe(tile.id, () => {
+      it("explains itself in plain English", () => {
+        expect(
+          tile.how?.trim().length ?? 0,
+          `${tile.id} has no "how this works" block`,
+        ).toBeGreaterThan(200);
+        expect(tile.description.trim().length).toBeGreaterThan(10);
+        expect(tile.keywords.length, `${tile.id} is unfindable in search`).toBeGreaterThan(1);
+      });
+
+      it("points somewhere authoritative to learn more", () => {
+        expect(tile.resources?.length ?? 0, `${tile.id} names no source to read`).toBeGreaterThan(
+          0,
+        );
+        for (const r of tile.resources ?? []) {
+          expect(r.url).toMatch(/^https:\/\//);
+          expect(r.label.trim().length).toBeGreaterThan(3);
+        }
+      });
+
+      it("offers a worked example the reader can start from", () => {
+        const root = mount(tile, new URLSearchParams());
+        const buttons = [...root.querySelectorAll("button")].map((b) => b.textContent ?? "");
+        expect(
+          buttons.some((t) => /try an example/i.test(t)),
+          `${tile.id} has no "Try an example" button`,
+        ).toBe(true);
+      });
+
+      it("writes its state to the URL, so a result is shareable", () => {
+        // Deep-linkability is the property that makes every answer reproducible
+        // (SPEC §2 principle 1). A tile that never calls `setParams` produces a
+        // result nobody can link to or come back to.
+        let wrote = 0;
+        const root = document.createElement("div");
+        tile.mount!({
+          root,
+          params: new URLSearchParams(),
+          setParams: () => (wrote += 1),
+          permalink: () => "https://enklayve.com/#/x",
+          navigate: () => {},
+          locale: "en-US",
+          data,
+          profile: new SituationStore(),
+        } as TileContext);
+
+        const example = [...root.querySelectorAll("button")].find((b) =>
+          /try an example/i.test(b.textContent ?? ""),
+        );
+        example?.click();
+        expect(wrote, `${tile.id} never wrote its state to the URL`).toBeGreaterThan(0);
+      });
+    });
+  }
+});
+
 describe("every hub in the catalog", () => {
   for (const hub of TILES.filter((t) => t.mount)) {
     it(`${hub.id} has no axe violations`, async () => {

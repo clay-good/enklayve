@@ -598,6 +598,17 @@ export const marginalRealityTile: TileDefinition = {
   how:
     "The Marginal Rate Explorer adds up federal income tax, FICA, and state tax on your next dollars. This tile adds the part that's usually left out: what happens to your benefits at the same time.\n\nWe evaluate your whole position twice, at your current income and again after the raise, and report the difference split into its two halves, the tax you pay and the benefits you lose. The combined rate can exceed 100%, and we show it that way rather than tidying it up. A household that keeps none of its next $1,000 deserves to see exactly that." +
     SHARED_HOW_TAIL,
+  // The two figures this rate is built from that a reader will most want to
+  // check independently: the EITC's published phase-out, which supplies most of
+  // the benefit-loss term, and the screener that says which programs are in play
+  // at all. Both fetched and confirmed live.
+  resources: [
+    {
+      label: "IRS, EITC tables (the phase-out this rate is mostly made of)",
+      url: "https://www.irs.gov/credits-deductions/individuals/earned-income-tax-credit/earned-income-and-earned-income-tax-credit-eitc-tables",
+    },
+    { label: "USA.gov, find benefits", url: "https://www.usa.gov/benefit-finder" },
+  ],
   related: [
     {
       hubId: "benefit-cliffs",
