@@ -589,38 +589,81 @@ describe("adapters: Missouri (a ladder split across two rows)", () => {
   });
 });
 
-describe("adapters: West Virginia (two rates claiming one threshold)", () => {
+describe("adapters: West Virginia (a published tax table, read as rows)", () => {
   const adapter = adaptersForGroup("state-wv")[0]!;
   const current = readShard("state-wv-income-tax-2024.json");
+  // tax.wv.gov's 2026 rate-cut page, abridged — including the SB 392 headline
+  // and the married-filing-separately schedule underneath, both of which are
+  // what defeated the generic parser.
+  const raw =
+    "W. Va. Code § 11-21-4j will be codified to reflect a 5% income tax cut for all West" +
+    " Virginians retroactive to January 1, 2026. If the WV Taxable Income is: The tax is:" +
+    " Not over $10,000 2.11% of taxable income" +
+    " Over $10,000 but not over $25,000 $211.00 plus 2.81% of the excess over $10,000" +
+    " Over $25,000 but not over $40,000 $632.50 plus 3.16% of excess over $25,000" +
+    " Over $40,000 but not over $60,000 $1,106.50 plus 4.22% of excess over $40,000" +
+    " Over $60,000 $1,950.50 plus 4.58% of excess over $60,000" +
+    " For married individuals filing separate returns: Not over $5,000 2.11% of taxable" +
+    " income Over $5,000 but not over $12,500 $105.50 plus 2.81% of excess over $5,000";
 
-  it("refuses a ladder assembled from a collision instead of keeping the first", () => {
-    // tax.wv.gov's rate-cut page, abridged. Three different things anchor at
-    // $10,000: the SB 392 headline ("a 5% income tax cut"), the base tier ("Not
-    // over $10,000 2.11%"), and the second tier ("$211.00 plus 2.81% of the
-    // excess over $10,000"). First-wins used to resolve that silently, and a
-    // ladder built from a collision is wrong in the way nothing downstream can
-    // see: right shape, right thresholds, one rate off.
-    const raw =
-      "W. Va. Code § 11-21-4j will be codified to reflect a 5% income tax cut for all West" +
-      " Virginians retroactive to January 1, 2026. If the WV Taxable Income is: The tax is:" +
-      " Not over $10,000 2.11% of taxable income Over $10,000 but not over $25,000 $211.00" +
-      " plus 2.81% of the excess over $10,000";
+  it("pairs each rate with the floor stated inside its own clause", () => {
+    // Three things on this page anchor at $10,000: the SB 392 headline ("a 5%
+    // income tax cut"), the base tier ("Not over $10,000 2.11%"), and the second
+    // tier ("plus 2.81% of the excess over $10,000"). Reading the trailing "of
+    // the excess over" figure rather than the leading one is what keeps the base
+    // rate out of the second bracket.
     const result = adapter.parse(raw, current);
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toMatch(/two rates claim the same bracket threshold/);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const b = result.shard.bracketsByFilingStatus as Record<
+      string,
+      { lowerBound: number; rate: number }[]
+    >;
+    expect(b.single).toEqual([
+      { lowerBound: 0, rate: 0.0211 },
+      { lowerBound: 10000, rate: 0.0281 },
+      { lowerBound: 25000, rate: 0.0316 },
+      { lowerBound: 40000, rate: 0.0422 },
+      { lowerBound: 60000, rate: 0.0458 },
+    ]);
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
   });
 
-  it("still reads a ladder where each threshold is claimed once", () => {
-    const clean =
-      "For taxable years beginning in 2026: 2.81% of the excess over $10,000;" +
-      " 3.16% of excess over $25,000; 4.22% of excess over $40,000;" +
-      " 4.58% of excess over $60,000";
-    const result = adapter.parse(clean, current);
+  it("stops where the married-filing-separately schedule begins", () => {
+    // Those bands are half as wide ($5,000 / $12,500 / …), and a ladder
+    // assembled from both schedules is thirteen tiers of nonsense.
+    const result = adapter.parse(raw, current);
     expect(result.ok).toBe(true);
     if (result.ok) {
-      const b = result.shard.bracketsByFilingStatus as Record<string, { rate: number }[]>;
-      expect(b.single![1]!.rate).toBeCloseTo(0.0281, 6);
+      const b = result.shard.bracketsByFilingStatus as Record<string, { lowerBound: number }[]>;
+      expect(b.single!.map((t) => t.lowerBound)).not.toContain(5000);
+      expect(b.single!.map((t) => t.lowerBound)).not.toContain(12500);
     }
+  });
+
+  it("refuses when two rates claim one band", () => {
+    const conflicting = raw.replace(
+      "$632.50 plus 3.16% of excess over $25,000",
+      "$632.50 plus 3.16% of excess over $25,000 and 3.90% of excess over $25,000",
+    );
+    const result = adapter.parse(conflicting, current);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toMatch(/two rates claim the \$25000 band/);
+  });
+});
+
+describe("the graduated parser's collision guard", () => {
+  it("refuses rather than keeping whichever rate the regex reached first", () => {
+    // A ladder assembled from a collision is wrong in the way nothing
+    // downstream can see: right shape, right thresholds, one rate off, so it
+    // passes the count-and-shape check that exists to catch reshapes.
+    const ms = adaptersForGroup("state-ms")[0]!;
+    const result = ms.parse(
+      "5% income tax cut ... 3% on taxable income over $10,000 and 4% on income over $10,000",
+      readShard("state-ms-income-tax-2024.json"),
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toMatch(/two rates claim the same bracket threshold/);
   });
 });
 
@@ -1223,13 +1266,9 @@ describe("adapters: graduated bracket-table state income tax (OH)", () => {
     // ladder was 2025's: $1,313 steps where the 2026 shard carries $1,348. Read
     // whole it parsed cleanly and proposed rolling every threshold in the state
     // back a year, under a live citation. (Missouri now reads its dated
-    // withholding formula instead; West Virginia's page is still undated.)
-    const wv = adaptersForGroup("state-wv")[0]!;
-    const wvShard = readShard("state-wv-income-tax-2024.json");
-    const moved =
-      "2.81% of the excess over $11,000; 3.16% of excess over $25,000;" +
-      " 4.22% of excess over $40,000; 4.58% of excess over $60,000";
-    const rolled = wv.parse(moved, wvShard);
+    // withholding formula instead.)
+    const moved = "2.75% of the amount in excess of $26,150.";
+    const rolled = adapter.parse(moved, current);
     expect(rolled.ok).toBe(false);
     if (!rolled.ok) expect(rolled.reason).toMatch(/no tax year attached to it/);
 
@@ -1910,6 +1949,28 @@ describe("adapters: CMS Medicaid expansion (anchored prose)", () => {
 
   it("fails (-> alert) when the threshold cannot be anchored", () => {
     expect(adapter.parse("eligibility rules vary by state and category", current).ok).toBe(false);
+  });
+
+  it("files 133-against-138 as settled and any other disagreement as not", () => {
+    // CMS writes the STATUTORY 133%; eligibility turns on that plus the 5-point
+    // disregard, an effective 138%, which is what the shard carries and what
+    // every tile computes against. Two correct statements of one rule, so no
+    // pattern-tightening lets a scrape choose — and nobody needs to act on it.
+    const statutory = adapter.parse(
+      "adults with income at or below 133 percent of the federal poverty line",
+      current,
+    );
+    expect(statutory.ok).toBe(false);
+    if (!statutory.ok) expect(statutory.settled).toBe(true);
+
+    // Any other number is a surprise that wants a person now, and must not be
+    // filed under "nothing to do here".
+    const surprise = adapter.parse(
+      "adults with income at or below 100 percent of the federal poverty line",
+      current,
+    );
+    expect(surprise.ok).toBe(false);
+    if (!surprise.ok) expect(surprise.settled).toBe(false);
   });
 });
 

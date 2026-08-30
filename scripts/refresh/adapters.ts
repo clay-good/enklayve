@@ -1074,6 +1074,87 @@ function parseMissouriWithholdingFormula(
   return { ok: true, shard };
 }
 
+// --- West Virginia (a published tax table, read as rows) ---------------------
+
+/**
+ * West Virginia's schedule, from the rate-cut page's own table.
+ *
+ * The generic graduated parser cannot read this page, and the reason is worth
+ * keeping: three different things on it anchor at $10,000. The SB 392 headline
+ * ("a 5% income tax cut for all West Virginians"), the base tier ("Not over
+ * $10,000 2.11% of taxable income"), and the second tier ("$211.00 plus 2.81%
+ * of the excess over $10,000"). A generic rate-then-threshold pattern reaches
+ * all three and the collision guard, rightly, refuses the lot.
+ *
+ * The page states the ladder unambiguously all the same, as the table a filer
+ * reads down:
+ *
+ *   If the WV Taxable Income is:      The tax is:
+ *   Not over $10,000                  2.11% of taxable income
+ *   Over $10,000 but not over $25,000 $211.00 plus 2.81% of the excess over $10,000
+ *   Over $25,000 but not over $40,000 $632.50 plus 3.16% of excess over $25,000
+ *   ...
+ *
+ * Every row states its own floor twice — once to open the band, once as "of the
+ * excess over" — and the second one is the authoritative pairing, because it
+ * sits inside the same clause as its rate. Reading the trailing figure rather
+ * than the leading one is what keeps the base rate out of the second bracket.
+ *
+ * The page also carries a SECOND schedule, for married individuals filing
+ * separate returns, whose bands are half as wide ($5,000 / $12,500 / …). That
+ * status is not modelled here, and a ladder assembled from both is thirteen
+ * tiers of nonsense, so the read stops where that schedule begins.
+ */
+function parseWestVirginiaTable(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const text = visibleText(raw);
+  const separate = /For married individuals filing separate returns/i.exec(text);
+  const scope = separate ? text.slice(0, separate.index) : text;
+
+  const base = /Not over \$?([\d,]+)\s*([\d.]+)\s*%/i.exec(scope);
+  const tiers: { lowerBound: number; rate: number }[] = [];
+  for (const m of scope.matchAll(/([\d.]+)\s*%\s*of\s*(?:the\s*)?excess\s*over\s*\$?([\d,]+)/gi)) {
+    const rate = pctToRate(Number(m[1]));
+    const lowerBound = parseAmount(m[2] as string);
+    if (!(rate > 0 && rate <= 0.15) || !(lowerBound > 0)) continue;
+    const clash = tiers.find((t) => t.lowerBound === lowerBound);
+    if (clash) {
+      if (clash.rate === rate) continue;
+      return {
+        ok: false,
+        reason: `two rates claim the $${lowerBound} band (${(clash.rate * 100).toFixed(2)}% and ${(rate * 100).toFixed(2)}%); refusing`,
+      };
+    }
+    tiers.push({ lowerBound, rate });
+  }
+  if (!base || tiers.length === 0) {
+    return { ok: false, reason: "could not read West Virginia's tax table as rows" };
+  }
+  tiers.sort((a, b) => a.lowerBound - b.lowerBound);
+  const assembled = [{ lowerBound: 0, rate: pctToRate(Number(base[2])) }, ...tiers];
+
+  const shard = clone(current);
+  const brackets = shard.bracketsByFilingStatus as
+    | Record<string, { lowerBound: number; rate: number }[]>
+    | undefined;
+  if (!brackets) {
+    return { ok: false, reason: "shard has no bracketsByFilingStatus to overlay" };
+  }
+  let overlaid = 0;
+  for (const status of Object.keys(brackets)) {
+    const arr = brackets[status];
+    if (!Array.isArray(arr) || arr.length !== assembled.length) continue;
+    brackets[status] = assembled.map((tier) => ({ ...tier }));
+    overlaid += 1;
+  }
+  if (overlaid === 0) {
+    return {
+      ok: false,
+      reason: `the table states ${assembled.length} tiers and the committed schedule has a different count; a reshape is the reviewer's step`,
+    };
+  }
+  return { ok: true, shard };
+}
+
 // --- A source that is behind its own state's law -----------------------------
 
 /**
@@ -2187,6 +2268,11 @@ function parseMedicaidThreshold(raw: string, current: Record<string, unknown>): 
         `the page states ${anchored}% of the poverty line where the shard carries ${committed}% — ` +
         "probably the statutory figure against the effective one (the 5-point disregard). " +
         "That distinction is a reviewer's call, not a scrape's",
+      // Settled only for the pair this comment is about. 133 against 138 is two
+      // correct statements of one rule and needs nobody; ANY other disagreement
+      // is a surprise that wants a person now, and must not be filed under
+      // "nothing to do here".
+      settled: anchored === 133 && committed === 138,
     };
   }
   const shard = clone(current);
@@ -2605,7 +2691,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     // the rates (a trigger can cut them again from 2027); the $10k/$25k/$40k/$60k
     // thresholds and the $2,000 exemption are statutory. A full-schedule cut stays
     // the reviewer's data-only step.
-    parse: parseGraduatedBracketJurisdiction,
+    parse: parseWestVirginiaTable,
   },
   {
     id: "state-wi-income-tax-2024",
