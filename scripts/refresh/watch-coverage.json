@@ -30,7 +30,13 @@
     "",
     "That is worth leaving in the note rather than quietly editing away. A reason is",
     "a claim like any other, and a list of unchecked claims about why things are not",
-    "checked is the last place anyone would think to look for an error."
+    "checked is the last place anyone would think to look for an error.",
+    "",
+    "Three entries whose reasons ended '...and has not been added yet' were added on",
+    "2026-08-30: social-security-taxation and education-credits at their statutes on",
+    "Cornell LII, rmd-uniform-lifetime at the regulation on eCFR. Each matches a",
+    "precedent already on the change-watch. 'Belongs on the change-watch' is not a",
+    "reason to be unwatched; it is a description of the work."
   ],
   "recordedOn": "2026-08-30",
   "unwatched": {
@@ -44,10 +50,6 @@
     "state-wa-income-tax-2024": "carries hasIncomeTax: false, so there is no figure to index and nothing for an adapter to read. A state adopting an income tax is an act of a legislature that would be national news rather than a diff, and it changes the shard's shape, not a number in it.",
     "state-wy-income-tax-2024": "carries hasIncomeTax: false, so there is no figure to index and nothing for an adapter to read. A state adopting an income tax is an act of a legislature that would be national news rather than a diff, and it changes the shard's shape, not a number in it.",
     "aca-2024": "Its applicable-percentage table comes from its own annual revenue procedure (rp-25-25.pdf), reissued at a new URL each year, so an adapter pointed at this one would be reading a closed document that reports agreement forever. It wants a watch on whatever page lists the current procedure, which has not been found yet.",
-    "rmd-uniform-lifetime-2024": "The Uniform Lifetime Table is a regulation, not an indexed figure: Treasury last reissued it for 2022 and it moves only when the mortality assumptions are revised. Pub 590-B restates it. A change is a rulemaking somebody reads, so this belongs on the change-watch rather than under an adapter, and has not been added yet.",
-    "education-credits-2024": "The AOTC and Lifetime Learning phase-out ranges are STATUTORY and do not index: \u00a7 25A(i) fixed them at $80,000-$90,000 (single) and $160,000-$180,000 (joint), and the 2020 Act aligned the Lifetime Learning range to the same figures rather than continuing to adjust it. So there is no annual figure for an adapter to chase and the inflation-adjustment procedure states none \u2014 a change is an act of Congress. This is Delaware's shape and belongs on the change-watch, which wants a fetchable statutory source that has not been found yet.",
-    "social-security-2024": "The full-retirement-age schedule is statutory (42 U.S.C. 416(l)) and keyed to year of birth, so it does not index and has not moved since the 1983 amendments. The figures that DO move annually -- the wage base and the COLA -- live in fica-2024, which the SSA adapter watches.",
-    "social-security-taxation-2024": "The $25,000 / $32,000 provisional-income thresholds are statutory and were deliberately never indexed: they have not moved since 1983 and 1993 respectively, which is why an ever-growing share of benefits is taxable. There is no annual figure to chase, so this belongs on the change-watch beside Delaware.",
     "fafsa-2024-2025": "The SAI formula tables are reissued annually in the ED SAI Formula Guide, a PDF at a new path each award year, so an adapter pointed at this one would report agreement forever. It wants a watch on the Knowledge Center page that lists the current guide."
   }
 }
