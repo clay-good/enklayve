@@ -2385,7 +2385,18 @@ export const ADAPTERS: RefreshAdapter[] = [
     // tables, the scheduled 2027 rate cut, and the ~$171 exemption credit roll
     // alongside it as the reviewer's data-only step on each new Tax Calculation
     // Schedule.
-    parse: parseStandardDeductions,
+    //
+    // Nebraska has not posted a 2026 Tax Calculation Schedule and this shard is
+    // on 2026, so there is nothing to watch here yet.
+    parse: refuseUntilTheStatePublishes(
+      parseStandardDeductions,
+      "Nebraska has not published its 2026 Tax Calculation Schedule — the newest is 2025 " +
+        "(the 2026 URL 404s, and the 2026 final-forms page lists only the payment voucher and " +
+        "1040N-EB), and this shard is on 2026. Its 2026 Circular EN states withholding tables " +
+        "and no standard deduction at all. The shard deliberately carries the 2025 indexed " +
+        "figures forward, which its own note records; the 2025 schedule is a closed year and " +
+        "would report agreement forever. Repoint this adapter the day the 2026 schedule appears",
+    ),
   },
   {
     id: "state-md-income-tax-2024",

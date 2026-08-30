@@ -601,6 +601,13 @@ describe("adapters: a state that has not published the shard's year", () => {
     expect(menu.ok).toBe(false);
     if (!menu.ok) expect(menu.reason).toMatch(/has not published its 2026 Form OR-40/);
 
+    const ne = adaptersForGroup("state-ne")[0]!;
+    const forms = ne.parse("Individual Income Tax Forms 2025 2024 2023 Prior years", {
+      ...readShard("state-ne-income-tax-2024.json"),
+    });
+    expect(forms.ok).toBe(false);
+    if (!forms.ok) expect(forms.reason).toMatch(/has not published its 2026 Tax Calculation/);
+
     const vt = adaptersForGroup("state-vt")[0]!;
     const rates = vt.parse("2025 Vermont Rate Schedules 2025 Vermont Tax Tables", {
       ...readShard("state-vt-income-tax-2024.json"),
