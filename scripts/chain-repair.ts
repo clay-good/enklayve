@@ -129,12 +129,64 @@ export interface ChainRepairedResponse {
 }
 
 /**
+ * Where a redirect points, when it is one worth following. Relative locations
+ * are resolved against the request; anything that is not https is refused
+ * outright, because following a repaired-chain fetch onto plaintext would throw
+ * away the verification this module exists to preserve.
+ */
+export function redirectTarget(
+  from: string,
+  status: number,
+  location: string | string[] | undefined,
+): string | undefined {
+  if (status < 300 || status >= 400) return undefined;
+  const raw = Array.isArray(location) ? location[0] : location;
+  if (!raw) return undefined;
+  try {
+    const next = new URL(raw, from);
+    return next.protocol === "https:" ? next.toString() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * The same request again, against a bundle carrying the intermediate the server
  * omitted. `node:https` is used rather than `fetch` only because it takes a
  * `ca`; verification is not relaxed anywhere, and this runs only once a chain
  * failure has already been diagnosed.
+ *
+ * `followRedirects` exists because the two callers want opposite things and the
+ * difference is not cosmetic. `fetch` follows redirects by default, so a page
+ * that moved reads the same either way — unless the transport is this one, and
+ * then it would suddenly report "HTTP 301" for a page that resolves fine. The
+ * link check wants the opposite and passes 0: a redirect there is the finding,
+ * because agencies reuse article ids and a moved link can land somewhere
+ * authoritative and unrelated.
  */
-export function requestWithChain(
+export async function requestWithChain(
+  url: string,
+  options: {
+    method?: string;
+    headers?: Record<string, string>;
+    ca: string[];
+    timeoutMs?: number;
+    followRedirects?: number;
+  },
+): Promise<ChainRepairedResponse> {
+  let current = url;
+  const seen = new Set<string>();
+  for (let hop = 0; hop <= (options.followRedirects ?? 0); hop += 1) {
+    const response = await requestOnce(current, options);
+    const next = redirectTarget(current, response.status, response.headers["location"]);
+    if (!next || seen.has(next)) return response;
+    seen.add(current);
+    current = next;
+  }
+  return requestOnce(current, options);
+}
+
+function requestOnce(
   url: string,
   options: { method?: string; headers?: Record<string, string>; ca: string[]; timeoutMs?: number },
 ): Promise<ChainRepairedResponse> {

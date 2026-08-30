@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import tls from "node:tls";
 import { X509Certificate } from "node:crypto";
-import { caIssuerUrl, trustedIssuer } from "../../scripts/chain-repair";
+import { caIssuerUrl, redirectTarget, trustedIssuer } from "../../scripts/chain-repair";
 
 /**
  * Repairing a certificate chain a server did not serve completely.
@@ -80,5 +80,34 @@ describe("deciding whether to trust the certificate that comes back", () => {
       },
     } as unknown as X509Certificate;
     expect(trustedIssuer(throws, [roots[0]!])).toBeUndefined();
+  });
+});
+
+describe("following a redirect on the repaired transport", () => {
+  const from = "https://www.dor.ms.gov/individual/faq";
+
+  it("resolves a relative location against the request", () => {
+    expect(redirectTarget(from, 301, "/individual/moved")).toBe(
+      "https://www.dor.ms.gov/individual/moved",
+    );
+    expect(redirectTarget(from, 302, "https://other.ms.gov/x")).toBe("https://other.ms.gov/x");
+  });
+
+  it("refuses to leave https", () => {
+    // Following a repaired-chain fetch onto plaintext would throw away exactly
+    // the verification this module exists to preserve.
+    expect(redirectTarget(from, 301, "http://www.dor.ms.gov/individual/faq")).toBeUndefined();
+    expect(redirectTarget(from, 301, "ftp://example.gov/x")).toBeUndefined();
+  });
+
+  it("has no target for a status that is not a redirect, or a missing location", () => {
+    expect(redirectTarget(from, 200, "/elsewhere")).toBeUndefined();
+    expect(redirectTarget(from, 404, "/elsewhere")).toBeUndefined();
+    expect(redirectTarget(from, 301, undefined)).toBeUndefined();
+    expect(redirectTarget(from, 301, "")).toBeUndefined();
+  });
+
+  it("takes the first location when a server sends several", () => {
+    expect(redirectTarget(from, 301, ["/first", "/second"])).toBe("https://www.dor.ms.gov/first");
   });
 });

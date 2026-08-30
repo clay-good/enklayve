@@ -132,6 +132,10 @@ async function fetchRaw(url: string, signal: AbortSignal): Promise<RawResponse> 
       headers: { "user-agent": BROWSER_USER_AGENT },
       ca,
       timeoutMs: TIMEOUT_MS,
+      // `fetch` follows redirects, so this transport must too, or a repaired
+      // host that moves a page starts reporting "HTTP 301" for a page that is
+      // there. Only the link check wants a redirect left unfollowed.
+      followRedirects: 5,
     });
     const contentType = repaired.headers["content-type"];
     return {
