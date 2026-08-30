@@ -4,6 +4,7 @@ import { resolve, join, dirname, normalize } from "node:path";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
 import { toolPages } from "../../scripts/tool-pages";
 import { ManifestSchema } from "../../src/data/schemas";
+import { ADAPTERS } from "../../scripts/refresh/adapters";
 
 /**
  * The README's counts must be true (SPEC §2 principle 5, in spirit).
@@ -34,6 +35,25 @@ import { ManifestSchema } from "../../src/data/schemas";
  */
 const ROOT = resolve(__dirname, "..", "..");
 const README = readFileSync(resolve(ROOT, "README.md"), "utf8");
+/**
+ * Some claims are made in more than one document and drift independently. The
+ * refresh pipeline's "N of M adapters watch their shard" was stated in three
+ * places and all three went stale within hours of each other on 2026-08-30, so
+ * those claims are checked against every prose file rather than the README
+ * alone. The phrasing is deliberately one fixed sentence fragment: the same
+ * page also carries a *historical* "30 of 49 adapters no longer anchoring",
+ * which is true and must not be rewritten to today's number.
+ */
+const PROSE = [
+  "README.md",
+  "docs/data-sources.md",
+  "docs/launch-checklist.md",
+  "docs/adding-a-state.md",
+  "docs/contributing.md",
+].map((f) => readFileSync(resolve(ROOT, f), "utf8"));
+const baseline = JSON.parse(
+  readFileSync(resolve(ROOT, "scripts", "refresh", "adapter-baseline.json"), "utf8"),
+) as { knownAnchoring: string[] };
 const manifest = ManifestSchema.parse(
   JSON.parse(readFileSync(resolve(ROOT, "data", "manifest.json"), "utf8")),
 );
@@ -44,6 +64,8 @@ interface Claim {
   value: number;
   /** Every phrasing the README uses for it. Group 1 is the number. */
   patterns: RegExp[];
+  /** Check every prose file, not the README alone. */
+  prose?: boolean;
 }
 
 /** Every `*.test.ts` under `tests/`, which is what "across N files" counts. */
@@ -100,6 +122,18 @@ const CLAIMS: Claim[] = [
     patterns: [/unit\/golden across \*\*(\d+)\*\* files/g, /golden suite across (\d+) files/g],
   },
   {
+    what: "adapters watching their shard",
+    value: baseline.knownAnchoring.length,
+    prose: true,
+    patterns: [/(\d+) of \d+ adapters watch their shard/g],
+  },
+  {
+    what: "refresh adapters in total",
+    value: ADAPTERS.length,
+    prose: true,
+    patterns: [/\d+ of (\d+) adapters watch their shard/g],
+  },
+  {
     what: "tax jurisdictions",
     value: manifest.datasets.filter((d) => d.kind === "state-income-tax").length,
     patterns: [/\*\*(\d+) — every one of the 50 states \+ DC\*\*/g],
@@ -111,7 +145,10 @@ describe("the README's counts are reproducible from the repo", () => {
     describe(claim.what, () => {
       for (const pattern of claim.patterns) {
         it(`is ${claim.value} everywhere it is stated as /${pattern.source}/`, () => {
-          const found = [...README.matchAll(pattern)].map((m) => Number(m[1]!.replace(/,/g, "")));
+          const corpus = claim.prose ? PROSE : [README];
+          const found = corpus.flatMap((text) =>
+            [...text.matchAll(pattern)].map((m) => Number(m[1]!.replace(/,/g, ""))),
+          );
           // A pattern that matches nothing is a check that has been switched off
           // by a reword. That must fail, not pass quietly.
           expect(found.length, `no README text matches /${pattern.source}/`).toBeGreaterThan(0);
