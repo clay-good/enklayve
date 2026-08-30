@@ -538,6 +538,57 @@ describe("adapters: North Carolina (a table, then pages about itemizing)", () =>
   });
 });
 
+describe("adapters: Missouri (a ladder split across two rows)", () => {
+  const adapter = adaptersForGroup("state-mo")[0]!;
+  const current = readShard("state-mo-income-tax-2024.json");
+  // Withholding Formula_2026.pdf, abridged — the four other payroll frequencies
+  // that sit between the two rows are kept, because they are the reason no
+  // "rate in excess of a threshold" pattern can pair them.
+  const raw =
+    "2026 Missouri Withholding Tax Formula ... Rates 0.00% 2.00% 2.50% 3.00% 3.50% 4.00%" +
+    " 4.50% 4.70% Daily Payroll $ 0.00 to $ 5.00 5.01 to 10.00 10.01 to 16.00 16.01 to 21.00" +
+    " 21.01 to 26.00 26.01 to 31.00 31.01 to 36.00 36.01 and over Monthly Payroll $ 0.00 to" +
+    " $ 112.00 112.01 to 225.00 225.01 to 337.00 337.01 to 449.00 449.01 to 562.00 562.01 to" +
+    " 674.00 674.01 to 786.00 786.01 and over Annual Payroll $ 0.00 to $1,348.00 1,348.01 to" +
+    " 2,696.00 2,696.01 to 4,044.00 4,044.01 to 5,392.00 5,392.01 to 6,740.00 6,740.01 to" +
+    " 8,088.00 8,088.01 to 9,436.00 9,436.01 and over Note: By agreement between the employee";
+
+  it("zips the rate row to the annual band row", () => {
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const b = result.shard.bracketsByFilingStatus as Record<
+      string,
+      { lowerBound: number; rate: number }[]
+    >;
+    // A band's opening cent is its predecessor's ceiling plus a penny, so the
+    // bounds dedupe on the dollar.
+    expect(b.single!.map((t) => t.lowerBound)).toEqual([
+      0, 1348, 2696, 4044, 5392, 6740, 8088, 9436,
+    ]);
+    expect(b.single!.at(-1)!.rate).toBeCloseTo(0.047, 6);
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("refuses to zip rows that do not line up", () => {
+    const short = adapter.parse(raw.replace(" 4.50% 4.70%", " 4.50%"), current);
+    expect(short.ok).toBe(false);
+    if (!short.ok) expect(short.reason).toMatch(/rows that do not line up/);
+  });
+
+  it("refuses a formula from another year", () => {
+    const stale = adapter.parse(
+      raw.replace("2026 Missouri Withholding", "2025 Missouri Withholding"),
+      current,
+    );
+    expect(stale.ok).toBe(false);
+    if (!stale.ok) {
+      expect(stale.reason).toMatch(/not the 2026 Missouri Withholding Tax Formula/);
+      expect(stale.settled).toBe(true);
+    }
+  });
+});
+
 describe("adapters: West Virginia (two rates claiming one threshold)", () => {
   const adapter = adaptersForGroup("state-wv")[0]!;
   const current = readShard("state-wv-income-tax-2024.json");
@@ -1167,22 +1218,18 @@ describe("adapters: graduated bracket-table state income tax (OH)", () => {
   });
 
   it("lets an undated schedule confirm the shard but never change it", () => {
-    // Missouri's year-changes page prints an eight-tier ladder under "Tax Rate
+    // Missouri's year-changes page printed an eight-tier ladder under "Tax Rate
     // Changes – Indexed for Inflation" with no year anywhere near it, and that
-    // ladder is 2025's: $1,313 steps where the 2026 shard carries $1,348. Read
-    // whole it parses cleanly and proposes rolling every threshold in the state
-    // back a year, under a live citation.
-    const mo = adaptersForGroup("state-mo")[0]!;
-    const moShard = readShard("state-mo-income-tax-2024.json");
-    const lastYear =
-      "Tax Rate Changes – Indexed for Inflation $0 to $1,313 $0 Over $1,313 but not over" +
-      " $2,626 2.00% of excess over $1,313 Over $2,626 but not over $3,939 $26 plus 2.50% of" +
-      " excess over $2,626 Over $3,939 but not over $5,252 $59 plus 3.00% of excess over" +
-      " $3,939 Over $5,252 but not over $6,565 $98 plus 3.50% of excess over $5,252 Over" +
-      " $6,565 but not over $7,878 $144 plus 4.00% of excess over $6,565 Over $7,878 but not" +
-      " over $9,191 $197 plus 4.50% of excess over $7,878 Over $9,191 $256 plus 4.70% of" +
-      " excess over $9,191";
-    const rolled = mo.parse(lastYear, moShard);
+    // ladder was 2025's: $1,313 steps where the 2026 shard carries $1,348. Read
+    // whole it parsed cleanly and proposed rolling every threshold in the state
+    // back a year, under a live citation. (Missouri now reads its dated
+    // withholding formula instead; West Virginia's page is still undated.)
+    const wv = adaptersForGroup("state-wv")[0]!;
+    const wvShard = readShard("state-wv-income-tax-2024.json");
+    const moved =
+      "2.81% of the excess over $11,000; 3.16% of excess over $25,000;" +
+      " 4.22% of excess over $40,000; 4.58% of excess over $60,000";
+    const rolled = wv.parse(moved, wvShard);
     expect(rolled.ok).toBe(false);
     if (!rolled.ok) expect(rolled.reason).toMatch(/no tax year attached to it/);
 

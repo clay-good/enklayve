@@ -982,6 +982,98 @@ function parseWisconsinDeduction(raw: string, current: Record<string, unknown>):
   return { ok: true, shard };
 }
 
+// --- Missouri (a ladder split across a rate row and a payroll row) -----------
+
+/**
+ * Missouri's brackets, from the withholding formula the shard already cites.
+ *
+ * The page this adapter used to watch — dor.mo.gov's year-changes page — prints
+ * an eight-tier ladder under "Tax Rate Changes – Indexed for Inflation" with no
+ * year anywhere near it, and that ladder is last year's. Reading it proposed
+ * rolling every threshold in the state back a year, which the undated-schedule
+ * rule in the graduated parser now refuses.
+ *
+ * The Withholding Tax Formula states the same ladder and states its year. It
+ * splits it across two rows, because it is a form a payroll clerk works down:
+ *
+ *   Rates            0.00%  2.00%  2.50%  3.00%  3.50%  4.00%  4.50%  4.70%
+ *   Annual Payroll   $ 0.00 to $1,348.00   1,348.01 to 2,696.00   ...
+ *                    ...  8,088.01 to 9,436.00   9,436.01 and over
+ *
+ * so the rate and the threshold it applies to are four hundred characters and
+ * four other payroll frequencies apart, and no "rate in excess of a threshold"
+ * pattern can pair them. They are read as two rows and zipped, which is only
+ * safe because the count is checked twice over: the rates and the bounds must
+ * agree with each other AND with the committed schedule, or a reviewer owns the
+ * reshape — the same boundary the graduated parser draws.
+ *
+ * A band's opening cent is its predecessor's ceiling plus a penny ($1,348.01
+ * follows $1,348.00), so bounds are deduped on the dollar and the ladder comes
+ * out as 0 / 1,348 / 2,696 / … / 9,436.
+ */
+function parseMissouriWithholdingFormula(
+  raw: string,
+  current: Record<string, unknown>,
+): ParseOutcome {
+  const text = visibleText(raw);
+  const taxYear = Number(current.taxYear);
+  if (
+    Number.isInteger(taxYear) &&
+    !new RegExp(`${taxYear} Missouri Withholding Tax Formula`, "i").test(text)
+  ) {
+    return {
+      ok: false,
+      reason: `this is not the ${taxYear} Missouri Withholding Tax Formula — it is reissued each year, and a stale one states last year's ladder perfectly`,
+      settled: true,
+    };
+  }
+  const ratesRow = /\bRates\b((?:\s*[\d.]+\s*%){4,})/i.exec(text);
+  const annualRow = /\bAnnual Payroll\b([\s\S]{0,400}?)(?:Note:|$)/i.exec(text);
+  if (!ratesRow || !annualRow) {
+    return {
+      ok: false,
+      reason: "could not find the formula's Rates row and its Annual Payroll bands",
+    };
+  }
+  const rates = [...(ratesRow[1] as string).matchAll(/([\d.]+)\s*%/g)].map((m) =>
+    pctToRate(Number(m[1])),
+  );
+  const bounds: number[] = [];
+  for (const m of (annualRow[1] as string).matchAll(/([\d,]+)\.\d{2}/g)) {
+    const dollars = parseAmount(m[1] as string);
+    if (Number.isFinite(dollars) && !bounds.includes(dollars)) bounds.push(dollars);
+  }
+  bounds.sort((a, b) => a - b);
+  if (rates.length !== bounds.length) {
+    return {
+      ok: false,
+      reason: `the formula states ${rates.length} rates and ${bounds.length} annual bands; refusing to zip rows that do not line up`,
+    };
+  }
+  const shard = clone(current);
+  const brackets = shard.bracketsByFilingStatus as
+    | Record<string, { lowerBound: number; rate: number }[]>
+    | undefined;
+  if (!brackets) {
+    return { ok: false, reason: "shard has no bracketsByFilingStatus to overlay" };
+  }
+  const assembled = rates.map((rate, i) => ({ lowerBound: bounds[i]!, rate }));
+  let overlaid = 0;
+  for (const status of Object.keys(brackets)) {
+    const arr = brackets[status];
+    if (!Array.isArray(arr) || arr.length !== assembled.length) continue;
+    brackets[status] = assembled.map((tier) => ({ ...tier }));
+    overlaid += 1;
+  }
+  if (overlaid === 0) {
+    return {
+      ok: false,
+      reason: `the formula states ${assembled.length} tiers and the committed schedule has a different count; a reshape is the reviewer's step`,
+    };
+  }
+  return { ok: true, shard };
+}
+
 // --- A source that is behind its own state's law -----------------------------
 
 /**
@@ -2469,13 +2561,16 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-mo-income-tax-2024",
     group: "state-mo",
     source: "Missouri DOR individual income tax rate schedule (eight-tier, top 4.7%)",
-    sourceUrl: "https://dor.mo.gov/taxation/individual/tax-types/income/year-changes/",
+    // The withholding formula the shard cites, not the year-changes page: that
+    // page prints an eight-tier ladder with no year on it, and the ladder is
+    // last year's.
+    sourceUrl: "https://dor.mo.gov/forms/Withholding%20Formula_2026.pdf",
     cadence: "Annual",
     // Missouri's eight tiers are the same for every filing status, so the
     // graduated parser (OH/MS pattern) overlays one anchored schedule onto all
     // — anchoring the indexed thresholds and any SB 3 trigger-based rate cut.
     // The federal-conformity standard deduction rolls with the IRS refresh.
-    parse: parseGraduatedBracketJurisdiction,
+    parse: parseMissouriWithholdingFormula,
   },
   {
     id: "state-ks-income-tax-2024",
