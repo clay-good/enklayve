@@ -201,7 +201,7 @@ describe("adapters: registry", () => {
       "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(53);
+    expect(ADAPTERS).toHaveLength(54);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
@@ -1661,6 +1661,68 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     const credit = result.shard.taxpayerCredit as { creditRate: number } | undefined;
     expect(credit?.creditRate).toBe(0.06);
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  describe("the dependent's standard deduction — one sentence, two figures", () => {
+    const adapter = adaptersForGroup("irs").find((a) => a.id === "child-tax-2024")!;
+    const current = readShard("child-tax-2024.json");
+    // rp-25-32.pdf: the kiddie-tax paragraph first, then §4.14(2), as printed.
+    const raw =
+      '.02 Unearned Income of Minor Children Subject to the "Kiddie Tax". For taxable years' +
+      " beginning in 2026, the amount in § 1(g)(4)(A)(ii)(I), which is used to reduce the net" +
+      ' unearned income reported on the child\'s return that is subject to the "kiddie tax," is' +
+      " $1,350. This $1,350 amount is the same as the amount provided in § 63(c)(5)(A), as" +
+      " adjusted for inflation." +
+      " (2) Dependent. For taxable years beginning in 2026, the standard deduction amount under" +
+      " § 63(c)(5) for an individual who may be claimed as a dependent by another taxpayer cannot" +
+      " exceed the greater of (1) $1,350, or (2) the sum of $450 and the individual's earned" +
+      " income. (3) Aged or blind. For taxable years beginning in 2026, the additional standard" +
+      " deduction amount under § 63(f) for the aged or the blind is $1,650.";
+
+    it("reads both figures out of the sentence that states them", () => {
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.shard.dependentStandardDeductionBase).toBe(1_350);
+      expect(result.shard.earnedIncomeAddOn).toBe(450);
+    });
+
+    it("anchors on the section, not on the number the kiddie-tax rule shares", () => {
+      // The same $1,350 is printed nine thousand characters earlier under
+      // § 1(g)(4)(A)(ii)(I). Two rules that agree today and are not the same
+      // rule: anchoring on the value would be right by accident and would end
+      // silently the first year Congress moved one and not the other. Change
+      // only the § 63(c)(5) sentence and the adapter must follow it.
+      const moved = raw.replace(
+        "greater of (1) $1,350, or (2) the sum of $450",
+        "greater of (1) $1,400, or (2) the sum of $500",
+      );
+      const result = adapter.parse(moved, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.shard.dependentStandardDeductionBase).toBe(1_400);
+      expect(result.shard.earnedIncomeAddOn).toBe(500);
+    });
+
+    it("refuses rather than reaching for the kiddie-tax figure", () => {
+      const withoutSection = raw.replace(/ \(2\) Dependent\.[\s\S]*$/, "");
+      const result = adapter.parse(withoutSection, current);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toMatch(/kiddie-tax section states about another rule/);
+    });
+
+    it("refuses a procedure for another year", () => {
+      const result = adapter.parse(raw, { ...current, taxYear: 2027 });
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.settled).toBe(true);
+    });
+
+    it("refuses a figure that moved implausibly far", () => {
+      const moved = raw.replace("greater of (1) $1,350", "greater of (1) $11,350");
+      const result = adapter.parse(moved, current);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toMatch(/dependentStandardDeductionBase 11350 is/);
+    });
   });
 
   describe("AMT — three tables that share a filing-status label", () => {

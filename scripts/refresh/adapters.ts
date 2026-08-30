@@ -2173,6 +2173,63 @@ function parseAmtProcedure(raw: string, current: Record<string, unknown>): Parse
   return { ok: true, shard };
 }
 
+/**
+ * The dependent's standard deduction, from the revenue procedure this shard
+ * has always cited.
+ *
+ * Both figures live in one sentence, which is what makes this the smallest of
+ * the procedure adapters:
+ *
+ *   (2) Dependent. For taxable years beginning in 2026, the standard deduction
+ *   amount under § 63(c)(5) for an individual who may be claimed as a dependent
+ *   by another taxpayer cannot exceed the greater of (1) $1,350, or (2) the sum
+ *   of $450 and the individual's earned income.
+ *
+ * It is anchored on § 63(c)(5) rather than on the value, because the same
+ * $1,350 is printed nine thousand characters earlier under § 1(g)(4)(A)(ii)(I)
+ * — the "kiddie tax" reduction, which the procedure notes is the same amount as
+ * adjusted for inflation. Two rules that agree today and are not the same rule:
+ * anchoring on the number would be right by accident and would end silently the
+ * first year Congress moved one and not the other, which is the Connecticut
+ * lesson in a federal document.
+ */
+function parseDependentDeduction(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const text = raw.replace(/\s+/g, " ");
+  const taxYear = Number(current.taxYear);
+  const wrongYear = refuseIfNotTheShardsProcedure(text, taxYear);
+  if (wrongYear) return wrongYear;
+
+  const m =
+    /standard deduction amount under § 63\(c\)\(5\)[\s\S]{0,240}?greater of \(1\) \$([\d,]+),? or \(2\) the sum of \$([\d,]+)/i.exec(
+      text,
+    );
+  if (!m) {
+    return {
+      ok: false,
+      reason:
+        "could not anchor the § 63(c)(5) dependent standard deduction sentence; refusing rather " +
+        "than reaching for the identical $1,350 the kiddie-tax section states about another rule",
+    };
+  }
+
+  const shard = clone(current);
+  for (const [key, value] of [
+    ["dependentStandardDeductionBase", parseAmount(m[1] as string)],
+    ["earnedIncomeAddOn", parseAmount(m[2] as string)],
+  ] as [string, number][]) {
+    if (!(value > 0)) return { ok: false, reason: `anchored a non-positive ${key} (${value})` };
+    const drift = implausibleDrift(Number(current[key]), value);
+    if (drift !== null) {
+      return {
+        ok: false,
+        reason: `${key} ${drift}; refusing — either the procedure moved or this is not the figure`,
+      };
+    }
+    shard[key] = value;
+  }
+  return { ok: true, shard };
+}
+
 function parseGiftTaxProcedure(raw: string, current: Record<string, unknown>): ParseOutcome {
   const text = raw.replace(/\s+/g, " ");
   const taxYear = Number(current.taxYear);
@@ -2806,6 +2863,14 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     cadence: "Annual, October-November",
     parse: parseIrsStandardDeductions,
+  },
+  {
+    id: "child-tax-2024",
+    group: "irs",
+    source: "IRS annual inflation-adjustment revenue procedure — dependent standard deduction",
+    sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+    cadence: "Annual, autumn",
+    parse: parseDependentDeduction,
   },
   {
     id: "amt-2024",
