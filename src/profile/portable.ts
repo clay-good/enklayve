@@ -13,6 +13,27 @@ import { MAX_DOCUMENT_BYTES, tooLargeMessage } from "../readout/extractText";
 
 const FORMAT_VERSION = 1;
 const PBKDF2_ITERATIONS = 210_000;
+
+/**
+ * The iteration counts a file may ask this to run.
+ *
+ * The envelope records `iterations` because the number is meant to rise: OWASP's
+ * PBKDF2-SHA256 guidance goes up as hardware does, and 210,000 is a figure from
+ * one revision of it. Reading used to ignore the recorded value and use the
+ * constant, which meant the day anyone raised the constant — the obvious, correct
+ * security maintenance — **every file a user had already exported became
+ * permanently undecryptable**, reported to them as "wrong passphrase or corrupted
+ * file". There are no accounts here; the exported file is the only copy, and this
+ * is the mechanic the product tells people to carry. So the recorded value is
+ * honored.
+ *
+ * It is honored inside bounds, because it arrives in a file. A count of a
+ * billion is not a stronger file, it is a frozen tab, and one of a hundred is a
+ * file that was not written by this. Both are refused by name, so neither is
+ * reported as a wrong passphrase.
+ */
+const MIN_ITERATIONS = 100_000;
+const MAX_ITERATIONS = 5_000_000;
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
@@ -82,7 +103,11 @@ export function isEncrypted(text: string, format?: EncryptedFormat): boolean {
   }
 }
 
-async function deriveKey(passphrase: string, salt: ArrayBuffer): Promise<CryptoKey> {
+async function deriveKey(
+  passphrase: string,
+  salt: ArrayBuffer,
+  iterations: number = PBKDF2_ITERATIONS,
+): Promise<CryptoKey> {
   const baseKey = await crypto.subtle.importKey(
     "raw",
     toBuffer(enc.encode(passphrase)),
@@ -91,12 +116,39 @@ async function deriveKey(passphrase: string, salt: ArrayBuffer): Promise<CryptoK
     ["deriveKey"],
   );
   return crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
+    { name: "PBKDF2", salt, iterations, hash: "SHA-256" },
     baseKey,
     { name: "AES-GCM", length: 256 },
     false,
     ["encrypt", "decrypt"],
   );
+}
+
+/**
+ * The work factor to run for this envelope, or a refusal naming why.
+ *
+ * A file with no `iterations` at all is read at the current constant: every
+ * envelope this has ever written records one, so an absent field is a
+ * hand-edited or truncated file rather than an older format, and the constant
+ * is the only defensible guess.
+ */
+export function iterationsFor(envelope: { kdf?: string; iterations?: unknown }): number {
+  if (envelope.kdf !== undefined && envelope.kdf !== "PBKDF2-SHA256") {
+    throw new Error(`this file uses an unsupported key derivation (${envelope.kdf})`);
+  }
+  const raw = envelope.iterations;
+  if (raw === undefined || raw === null) return PBKDF2_ITERATIONS;
+  if (typeof raw !== "number" || !Number.isInteger(raw)) {
+    throw new Error("this file's iteration count is not a whole number");
+  }
+  if (raw < MIN_ITERATIONS || raw > MAX_ITERATIONS) {
+    throw new Error(
+      `this file asks for ${raw.toLocaleString("en-US")} PBKDF2 iterations, outside the ` +
+        `${MIN_ITERATIONS.toLocaleString("en-US")}–${MAX_ITERATIONS.toLocaleString("en-US")} ` +
+        "this will run",
+    );
+  }
+  return raw;
 }
 
 /** Encrypt a plaintext export under a passphrase, returning the JSON envelope. */
@@ -129,7 +181,10 @@ export async function encrypt(
 /** Decrypt an envelope produced by {@link encrypt}. Throws on a wrong passphrase. */
 export async function decrypt(envelopeText: string, passphrase: string): Promise<string> {
   const envelope = JSON.parse(envelopeText) as EncryptedEnvelope;
-  const key = await deriveKey(passphrase, base64ToBuffer(envelope.salt));
+  // Outside the try: an unsupported work factor is not a wrong passphrase, and
+  // must not be reported as one.
+  const iterations = iterationsFor(envelope);
+  const key = await deriveKey(passphrase, base64ToBuffer(envelope.salt), iterations);
   try {
     const plain = await crypto.subtle.decrypt(
       { name: "AES-GCM", iv: base64ToBuffer(envelope.iv) },
