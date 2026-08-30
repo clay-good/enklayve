@@ -48,6 +48,13 @@
       "why": "Delaware's standard deduction is statutory and does not index: 30 Del. C. §1108 has set it at $3,250 / $6,500 for every taxable period beginning after December 31, 1999. There is no annual figure to parse, and the section states the amounts as a history of periods without ever using a filing-status label a parser knows — it says \"resident spouses ... if they file a joint return\". A value adapter is the wrong instrument; a change here is an amendment, and an amendment must be read.",
       "fingerprint": "6f5bf1351571fac8dc9a39c4e0836126031b0c1c58a2ec90b7befd0b743bdad9",
       "checkedOn": "2026-08-30"
+    },
+    {
+      "shard": "medicaid-2024",
+      "url": "https://www.medicaid.gov/medicaid/national-medicaid-chip-program-information/medicaid-childrens-health-insurance-program-basic-health-program-eligibility-levels",
+      "why": "This shard's consequential content is not its threshold — 138% has been the effective ACA figure since 2014 — but the MAP: which of the 51 jurisdictions expanded, since NFIB v. Sebelius made it optional and a state can change position by ballot measure or legislation. The adapter watches the threshold and refuses, so the map was watched by nothing at all, behind a citation note promising a refresh watch covered it. This is the only Medicaid.gov page that states the map in readable text, one row per state with an 'Expansion to Adults' column reading a percentage or 'No' — but it is dated ('based on state decisions as of December 1, 2023'), so parsing it would confirm a 2026 shard forever and could never report a change, the Rev. Proc. 2023-34 trap. Fingerprinting it is the honest half: CMS republishing the table is what a state changing position looks like here, and a person reads the diff. The map was verified row by row against this page on 2026-08-30 and agrees for all 51.",
+      "fingerprint": "cf737e6f714f9355cea1c03c1c676225775a432e04d3b7839467ac346af740ab",
+      "checkedOn": "2026-08-30"
     }
   ]
 }

@@ -2337,6 +2337,19 @@ function parseSnap(raw: string, current: Record<string, unknown>): ParseOutcome 
  * changes only when a state expands, so flipping a state stays the reviewer's
  * deliberate data-only step (the same honesty boundary as a full bracket table),
  * not a prose scrape. Failure here routes to the fail-safe alert.
+ *
+ * Worth stating plainly, because it is the whole reason this adapter looked
+ * healthier than the shard was: the threshold has not moved since 2014, and the
+ * MAP is what changes. NFIB v. Sebelius made expansion optional, so a ballot
+ * measure or a legislature can flip a state, and telling a household in a
+ * non-expansion state that it may qualify is the worst answer this shard can
+ * give. That map was watched by nothing at all — the shard's own citation note
+ * said "which is what the refresh watch is for", and no watch covered it. It is
+ * covered now, by fingerprint rather than by parser, for the reason the watch
+ * list records: the only CMS page that states the map row by row is dated
+ * "as of December 1, 2023", so a parser reading it would confirm a 2026 shard
+ * forever and could never report a change. The map was verified against that
+ * table for all 51 jurisdictions on 2026-08-30 and agrees.
  */
 function parseMedicaidThreshold(raw: string, current: Record<string, unknown>): ParseOutcome {
   const match = /(\d{2,3}(?:\.\d+)?)\s*(?:percent|%)\s+of the (?:federal )?poverty/i.exec(raw);
@@ -2363,8 +2376,12 @@ function parseMedicaidThreshold(raw: string, current: Record<string, unknown>): 
       ok: false,
       reason:
         `the page states ${anchored}% of the poverty line where the shard carries ${committed}% — ` +
-        "probably the statutory figure against the effective one (the 5-point disregard). " +
-        "That distinction is a reviewer's call, not a scrape's",
+        "the statutory figure against the effective one: §1902(a)(10)(A)(i)(VIII) says 133%, " +
+        "§1902(e)(14)(I) adds a 5-percentage-point income disregard, and 138% is what decides " +
+        "eligibility. Two correct statements of one rule, which no pattern can choose between. " +
+        "The threshold is also not what moves here — the per-state expansion map is, and it is " +
+        "fingerprinted in scripts/refresh/source-watch.json against the CMS eligibility-levels " +
+        "table so a state changing position reaches a person",
       // Settled only for the pair this comment is about. 133 against 138 is two
       // correct statements of one rule and needs nobody; ANY other disagreement
       // is a surprise that wants a person now, and must not be filed under
