@@ -9,6 +9,7 @@
  * anywhere — the user holds the only copy.
  */
 import { SituationStore, type SituationSnapshot } from "./situation";
+import { MAX_DOCUMENT_BYTES, tooLargeMessage } from "../readout/extractText";
 
 const FORMAT_VERSION = 1;
 const PBKDF2_ITERATIONS = 210_000;
@@ -189,7 +190,15 @@ export function triggerDownload(filename: string, content: string): void {
   URL.revokeObjectURL(url);
 }
 
-/** Read a chosen file as text. */
+/**
+ * Read a chosen file as text.
+ *
+ * The same ceiling the document reader uses, for the same reason: this runs in
+ * the tab, so a file large enough takes the page down before any of the three
+ * restore paths gets to say the file is not one of ours. A saved situation is
+ * kilobytes; nothing legitimate comes near the limit.
+ */
 export function readFileText(file: File): Promise<string> {
+  if (file.size > MAX_DOCUMENT_BYTES) return Promise.reject(new Error(tooLargeMessage(file.size)));
   return file.text();
 }

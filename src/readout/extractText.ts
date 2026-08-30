@@ -12,6 +12,33 @@
  * physically cannot send the document anywhere.
  */
 
+/**
+ * The largest file this will try to read.
+ *
+ * Everything here runs in the tab: `arrayBuffer()` pulls the whole file into
+ * memory before pdf.js or mammoth sees a byte of it, so a file big enough
+ * takes the page down with no message at all — the worst way to fail, because
+ * the person cannot tell a refusal from a crash. The documents this reads are
+ * far smaller: a typed W-2 is under a megabyte, a phone photo ten or fifteen,
+ * a long scanned PDF a few dozen. This sits above all of them and below the
+ * point where a tab is in trouble.
+ */
+export const MAX_DOCUMENT_BYTES = 64 * 1024 * 1024;
+
+/** Round to a whole megabyte for a message a person reads, never for arithmetic. */
+function megabytes(bytes: number): string {
+  return `${Math.round(bytes / (1024 * 1024))} MB`;
+}
+
+/** What to say about a file too large to read here, rather than freezing on it. */
+export function tooLargeMessage(bytes: number): string {
+  return (
+    `That file is ${megabytes(bytes)}, and everything here is read in this tab — above about ` +
+    `${megabytes(MAX_DOCUMENT_BYTES)} the page runs out of memory rather than reading it. ` +
+    "Save just the pages with your figures on them, or paste the text."
+  );
+}
+
 /** Where the text came from. OCR is a clearly-labeled, lower-confidence source. */
 export type TextSource = "typed" | "ocr";
 
@@ -154,7 +181,10 @@ async function ocrPdfPages(doc: {
     const pages: string[] = [];
     for (let i = 1; i <= doc.numPages; i += 1) {
       const page = await doc.getPage(i);
-      const viewport = page.getViewport({ scale: OCR_RENDER_SCALE });
+      const unscaled = page.getViewport({ scale: 1 });
+      const viewport = page.getViewport({
+        scale: ocrRenderScale(unscaled.width, unscaled.height),
+      });
       const canvas = new OffscreenCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
       const context = canvas.getContext("2d");
       if (!context) throw new Error(SCANNED_PDF_MESSAGE);
@@ -213,6 +243,24 @@ const OCR_ASSET_PATH = "/ocr";
  */
 const OCR_RENDER_SCALE = 2;
 
+/**
+ * The longest side a rendered page may reach, in pixels.
+ *
+ * 2× is right for a letter page and wrong for the oversized MediaBox some
+ * scanners emit: at 2× a large-format page becomes a bitmap of tens of millions
+ * of pixels, and the allocation fails inside the canvas rather than anywhere
+ * this could explain. Scale is reduced to fit instead, which costs resolution on
+ * a page that had plenty and keeps the read working.
+ */
+const OCR_MAX_PAGE_PIXELS = 3_000;
+
+/** The render scale for a page, reduced from 2× only when 2× would be enormous. */
+export function ocrRenderScale(unscaledWidth: number, unscaledHeight: number): number {
+  const longest = Math.max(unscaledWidth, unscaledHeight);
+  if (!Number.isFinite(longest) || longest <= 0) return OCR_RENDER_SCALE;
+  return Math.min(OCR_RENDER_SCALE, OCR_MAX_PAGE_PIXELS / longest);
+}
+
 /** True for the raster image formats the OCR fallback can read. */
 export function isImageFile(file: File): boolean {
   if (file.type.startsWith("image/")) return true;
@@ -261,6 +309,7 @@ async function extractImage(file: File): Promise<ExtractedText> {
  * see whether the pages carry text.)
  */
 export const extractTextFromFile: TextExtractor = async (file) => {
+  if (file.size > MAX_DOCUMENT_BYTES) throw new Error(tooLargeMessage(file.size));
   const name = file.name.toLowerCase();
   if (name.endsWith(".pdf") || file.type === "application/pdf") {
     return extractPdf(file);
