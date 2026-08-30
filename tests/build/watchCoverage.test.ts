@@ -75,8 +75,15 @@ describe("watch coverage over the bundled datasets", () => {
     // of it. That is not a shard that cannot be watched; it is one nobody has
     // written yet, and the reason has to say so or the list becomes a place
     // where work goes to be forgotten.
+    // Deliberately no count. The list is meant to shrink, and a threshold here
+    // would be one more hand-tended number going stale the moment it does —
+    // which is what this repo spent 2026-08-30 learning. The rule is about each
+    // entry, not about how many there are.
     const gaps = Object.entries(coverage.unwatched).filter(([, r]) => r.includes("THE REAL GAP"));
-    expect(gaps.length).toBeGreaterThanOrEqual(7);
-    for (const [, reason] of gaps) expect(reason).toMatch(/wants an adapter/);
+    for (const [id, reason] of gaps) {
+      expect(reason, `${id} is called a gap but does not say what would close it`).toMatch(
+        /wants an adapter/,
+      );
+    }
   });
 });

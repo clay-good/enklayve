@@ -201,7 +201,7 @@ describe("adapters: registry", () => {
       "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(51);
+    expect(ADAPTERS).toHaveLength(52);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
@@ -1661,6 +1661,80 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     const credit = result.shard.taxpayerCredit as { creditRate: number } | undefined;
     expect(credit?.creditRate).toBe(0.06);
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  describe("gift tax — the revenue procedure the shard has always cited", () => {
+    const adapter = adaptersForGroup("irs").find((a) => a.id === "gift-tax-2024")!;
+    const current = readShard("gift-tax-2024.json");
+    // irs.gov/pub/irs-drop/rp-25-32.pdf, verbatim through the PDF reader.
+    const raw =
+      "SECTION 4. 2026 ADJUSTED ITEMS .14 Section 70106 of the OBBBA amends § 2010(c)(3) by" +
+      " increasing the basic exclusion amount to $15,000,000 for calendar year 2026. The basic" +
+      " exclusion amount is a component of the applicable exclusion amount described in §" +
+      " 2010(c)(2)." +
+      " .42 Annual Exclusion for Gifts and Annual Exception for Covered Gifts and Covered Bequests" +
+      " Received from a Covered Expatriate. (1) For calendar year 2026, the first $19,000 of gifts" +
+      " to any person (other than gifts of future interests in property) are not included in the" +
+      " total amount of taxable gifts under § 2503 made during that year. (2) For calendar year" +
+      " 2026, the first $194,000 (instead of the amount provided in paragraph (1) of this section" +
+      " 4.42) of gifts to a spouse who is not a citizen of the United States (other than gifts of" +
+      " future interests in property) are not included in the total amount of taxable gifts under" +
+      " §§ 2503 and 2523(i)(2) made during that year.";
+
+    it("reads all three figures out of the sections that state them", () => {
+      // This shard cited this document from the day it was written and nothing
+      // read it — one of five naming the very PDF the federal bracket adapter
+      // fetches every month. "Watch what you cite" fixed twenty-one adapters
+      // pointed at the wrong page; these were pointed at the right one with
+      // nobody looking.
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.shard.annualExclusion).toBe(19_000);
+      expect(result.shard.annualExclusionNonCitizenSpouse).toBe(194_000);
+      expect(result.shard.lifetimeExemption).toBe(15_000_000);
+      // Statutory (§ 2001(c)) and not adjusted by the procedure, so it is not
+      // demanded — demanding it would be the Massachusetts mistake, a parser
+      // reporting a moved source about a document that says what the shard has.
+      expect(result.shard.topRate).toBe(0.4);
+    });
+
+    it("reaches past the period inside a section number", () => {
+      // "the first $194,000 (instead of the amount provided in paragraph (1) of
+      // this section 4.42) of gifts to a spouse who is not a citizen" — a
+      // "[^.]*" reach ends at the dot in "4.42" and never arrives, which is
+      // exactly what the first dry run of this adapter reported.
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.shard.annualExclusionNonCitizenSpouse).toBe(194_000);
+    });
+
+    it("refuses a procedure that adjusts another year", () => {
+      // A revenue procedure at a year-stamped URL is a closed document: read
+      // without this check it reports agreement forever and can never report a
+      // change, which is how the federal adapter watched Rev. Proc. 2023-34 for
+      // three years.
+      const result = adapter.parse(raw, { ...current, taxYear: 2027 });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.reason).toMatch(/adjusts 2026 and the shard is 2027/);
+        expect(result.settled).toBe(true);
+      }
+    });
+
+    it("fails (-> alert) when a figure is absent rather than writing the others", () => {
+      const partial = raw.replace(/\(2\) For calendar year 2026[\s\S]*$/, "");
+      const result = adapter.parse(partial, current);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toMatch(/non-citizen-spouse exclusion/);
+    });
+
+    it("refuses a figure that moved implausibly far", () => {
+      const moved = raw.replace("the first $19,000 of gifts", "the first $99,000 of gifts");
+      const result = adapter.parse(moved, current);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toMatch(/annualExclusion 99000 is/);
+    });
   });
 
   describe("MS — the rate is a by-year table, beside two rates that are not it", () => {

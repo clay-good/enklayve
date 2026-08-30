@@ -1965,6 +1965,109 @@ function parseGraduatedBracketJurisdiction(
  * sentence and a sequence of them is a table. A table that stops short of the
  * shard's year is a state that has not published it, not a broken parser.
  */
+/**
+ * The gift-tax figures, from the annual inflation-adjustment revenue procedure
+ * the federal bracket adapter already reads.
+ *
+ * This shard cited `rp-25-32.pdf` from the day it was written and nothing read
+ * it — one of five that named the very document this pipeline fetches every
+ * month and had no adapter of their own. *Watch what you cite* fixed
+ * twenty-one adapters pointed at the wrong page; these were pointed at the
+ * right one with nobody looking.
+ *
+ * Every figure is taken from the section that states it, anchored on the
+ * shard's own year, which the procedure prints in each one:
+ *
+ *   .42 ... (1) For calendar year 2026, the first $19,000 of gifts to any
+ *   person ... (2) For calendar year 2026, the first $194,000 ... of gifts to a
+ *   spouse who is not a citizen of the United States
+ *
+ * The year anchor is what makes this safe to point at a document whose URL
+ * carries its own number. A revenue procedure states the year it adjusts, so
+ * one that does not state the shard's year is refused by name rather than read
+ * — the Rev. Proc. 2023-34 rule, which is how the federal adapter spent three
+ * years reporting agreement with a frozen document.
+ *
+ * The top rate is not read. It is statutory (§ 2001(c)) and the procedure does
+ * not adjust it, so demanding it here would be Massachusetts' mistake: a parser
+ * reporting a moved source about a document that says exactly what the shard
+ * carries.
+ */
+function parseGiftTaxProcedure(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const text = raw.replace(/\s+/g, " ");
+  const taxYear = Number(current.taxYear);
+  const year = String(taxYear);
+
+  // A revenue procedure states the year it adjusts, and states it in every
+  // section. If this document is not about the shard's year, nothing in it is
+  // this shard's figure.
+  if (!new RegExp(`(?:calendar|taxable) years? (?:beginning in )?${year}\\b`, "i").test(text)) {
+    const stated = [
+      ...text.matchAll(/(?:calendar|taxable) years? (?:beginning in )?((?:19|20)\d{2})\b/gi),
+    ]
+      .map((m) => Number(m[1]))
+      .sort((a, b) => b - a)[0];
+    return {
+      ok: false,
+      reason: stated
+        ? `this revenue procedure adjusts ${stated} and the shard is ${taxYear}; refusing — ` +
+          "a procedure that does not state the shard's year is a closed document that would " +
+          "report agreement forever"
+        : "this document states no adjustment year at all; refusing to read figures out of it",
+      settled: stated !== undefined && stated < taxYear,
+    };
+  }
+
+  const exclusion = new RegExp(
+    `calendar year ${year}, the first \\$([\\d,]+) of gifts to any person`,
+    "i",
+  ).exec(text);
+  // Bounded by characters rather than by the next full stop: the sentence runs
+  // "the first $194,000 (instead of the amount provided in paragraph (1) of
+  // this section 4.42) of gifts to a spouse who is not a citizen", and the
+  // period inside the section number ends a "[^.]*" reach before it arrives.
+  const nonCitizen = new RegExp(
+    `calendar year ${year}, the first \\$([\\d,]+)[\\s\\S]{0,220}?spouse who is not a citizen`,
+    "i",
+  ).exec(text);
+  // "increasing the basic exclusion amount to $15,000,000 for calendar year 2026"
+  const basic = new RegExp(
+    `basic exclusion amount to \\$([\\d,]+) for calendar year ${year}`,
+    "i",
+  ).exec(text);
+
+  const missing = [
+    exclusion ? null : "the annual exclusion",
+    nonCitizen ? null : "the non-citizen-spouse exclusion",
+    basic ? null : "the basic exclusion amount",
+  ].filter((x): x is string => x !== null);
+  if (missing.length > 0) {
+    return {
+      ok: false,
+      reason: `could not anchor ${missing.join(", ")} for ${taxYear} in this revenue procedure`,
+    };
+  }
+
+  const shard = clone(current);
+  const fields: [string, number][] = [
+    ["annualExclusion", parseAmount(exclusion![1] as string)],
+    ["annualExclusionNonCitizenSpouse", parseAmount(nonCitizen![1] as string)],
+    ["lifetimeExemption", parseAmount(basic![1] as string)],
+  ];
+  for (const [key, value] of fields) {
+    if (!(value > 0)) return { ok: false, reason: `anchored a non-positive ${key} (${value})` };
+    const drift = implausibleDrift(Number(current[key]), value);
+    if (drift !== null) {
+      return {
+        ok: false,
+        reason: `${key} ${drift}; refusing — either the procedure moved or this is not the figure`,
+      };
+    }
+    shard[key] = value;
+  }
+  return { ok: true, shard };
+}
+
 function parseMississippiRateByYear(raw: string, current: Record<string, unknown>): ParseOutcome {
   const text = visibleText(raw);
   const taxYear = Number(current.taxYear);
@@ -2540,6 +2643,16 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     cadence: "Annual, October-November",
     parse: parseIrsStandardDeductions,
+  },
+  {
+    id: "gift-tax-2024",
+    group: "irs",
+    source: "IRS annual inflation-adjustment revenue procedure — gift and estate figures",
+    // The document the shard has cited since it was written, and which the
+    // federal bracket adapter beside it already fetches every month.
+    sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+    cadence: "Annual, autumn",
+    parse: parseGiftTaxProcedure,
   },
   {
     id: "state-ca-income-tax-2024",

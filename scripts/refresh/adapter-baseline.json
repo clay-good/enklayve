@@ -27,7 +27,13 @@
     "cpi-u-annual joined on 2026-08-30. It had been reported unreachable because BLS's",
     "keyless API spends its daily quota against a shared runner IP; the quota resets, and",
     "since an unreachable adapter no longer counts as a regression even when it is on this",
-    "list, a source that answers most days can now be watched without a monthly false alarm."
+    "list, a source that answers most days can now be watched without a monthly false alarm.",
+    "",
+    "gift-tax-2024 joined on 2026-08-30 and is the first adapter written for a shard",
+    "that had none. It reads the same revenue procedure the federal bracket adapter",
+    "already fetched every month -- the document its citation had named since it was",
+    "written. Four more shards cite that same PDF and still have no adapter; see",
+    "scripts/refresh/watch-coverage.json."
   ],
   "recordedOn": "2026-08-30",
   "knownAnchoring": [
@@ -37,6 +43,7 @@
     "federal-poverty-level-2024-contiguous",
     "federal-poverty-level-2024-hawaii",
     "fica-2024",
+    "gift-tax-2024",
     "snap-fy2024-contiguous",
     "state-az-income-tax-2024",
     "state-ca-income-tax-2024",
