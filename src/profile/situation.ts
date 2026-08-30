@@ -11,7 +11,8 @@
  * Continuity across sessions is opt-in and user-held via the portable export in
  * profile/portable.ts. Nothing is ever sent anywhere.
  */
-import type { FilingStatus } from "../data/schemas";
+import { z } from "zod";
+import { FilingStatus } from "../data/schemas";
 
 /** Where a field's value came from (§3.1). */
 export type FieldSource = "typed" | "extracted" | "assumed";
@@ -57,6 +58,100 @@ export interface SituationValues {
 }
 
 export type SituationKey = keyof SituationValues;
+
+/**
+ * A finite number, or nothing.
+ *
+ * `.catch(undefined)` is the whole shape of this schema: a snapshot arrives
+ * from a file the user chose, and one unreadable field should cost that field
+ * and not the rest of their situation. So every entry drops on its own rather
+ * than failing the object.
+ */
+const num = z.number().finite().optional().catch(undefined);
+const str = z.string().optional().catch(undefined);
+
+/**
+ * What a restored snapshot is allowed to contain.
+ *
+ * `SituationStore.load` used to spread whatever it was handed straight into the
+ * store, and both paths that reach it — the portable profile file and the
+ * Standing Ledger — accepted any shape at all: the ledger's schema said
+ * `values: z.record(z.string(), z.unknown())`, which checks that `values` is an
+ * object and nothing else. So a restore was a way into every tile that the
+ * catalog's "no tile throws or paints a non-finite value" sweep does not cover,
+ * because that sweep drives form inputs and deep links rather than a restored
+ * profile. A `NaN` for `annualIncome` reaches the tax engine the same as a
+ * typed one.
+ *
+ * Only the runtime shape is enforced, not the economics. A negative balance or
+ * a zero income is a state a person can genuinely be in and the tiles handle
+ * it; a string where a number belongs is not, and never came from here.
+ */
+export const SituationValuesSchema = z
+  .object({
+    filingStatus: FilingStatus.optional().catch(undefined),
+    stateCode: str,
+    county: str,
+    householdSize: num,
+    ages: z.array(z.number().finite()).optional().catch(undefined),
+    annualIncome: num,
+    preTaxContributions: num,
+    retirementContributionsAnnual: num,
+    employerMatchAnnual: num,
+    employerMatchCaptured: num,
+    debts: z
+      .array(
+        z.object({
+          name: z.string(),
+          balance: z.number().finite(),
+          ratePct: z.number().finite(),
+        }),
+      )
+      .optional()
+      .catch(undefined),
+    essentialMonthlyExpenses: num,
+    totalMonthlyExpenses: num,
+    liquidSavings: num,
+  })
+  .catch({});
+
+const FieldSourceSchema = z.enum(["typed", "extracted", "assumed"]);
+
+export const SituationSnapshotSchema = z
+  .object({
+    values: SituationValuesSchema,
+    sources: z.record(z.string(), FieldSourceSchema).optional().catch({}),
+  })
+  .catch({ values: {}, sources: {} });
+
+/**
+ * Keep what a snapshot got right and drop what it did not, never throwing.
+ *
+ * A restore that refuses the whole file over one bad field is worse than one
+ * that restores the rest: there are no accounts here, so the file is the only
+ * copy the person has.
+ */
+export function sanitizeSnapshot(snapshot: unknown): SituationSnapshot {
+  const parsed = SituationSnapshotSchema.parse(snapshot ?? {});
+  const given = (snapshot ?? {}) as { values?: unknown; sources?: unknown };
+  const accepted = (parsed.values ?? {}) as Record<string, unknown>;
+  const acceptedSources = (parsed.sources ?? {}) as Record<string, unknown>;
+
+  // Walk the keys the file gave, not the schema's — a snapshot that survives
+  // this should come back out in the order it went in, because a ledger file
+  // round-trips bit for bit and its situation is this object.
+  const values: Record<string, unknown> = {};
+  for (const key of Object.keys((given.values as Record<string, unknown>) ?? {})) {
+    if (accepted[key] !== undefined) values[key] = accepted[key];
+  }
+  const sources: Record<string, unknown> = {};
+  for (const key of Object.keys((given.sources as Record<string, unknown>) ?? {})) {
+    // A provenance entry for a value that did not survive is provenance for
+    // nothing, and would show a field as "extracted" that is not there.
+    if (key in values && acceptedSources[key] !== undefined) sources[key] = acceptedSources[key];
+  }
+  return { values, sources } as SituationSnapshot;
+}
 
 /** A serializable snapshot of the profile (used by the portable export). */
 export interface SituationSnapshot {
@@ -136,9 +231,18 @@ export class SituationStore {
   }
 
   /** Replace the profile contents from a snapshot (used by import). */
+  /**
+   * Replace the profile from a snapshot, keeping only what it got right.
+   *
+   * This is the boundary every restore crosses — the portable profile file and
+   * the Standing Ledger both land here — so the check belongs here rather than
+   * in either caller, where it would have to be written twice and could
+   * disagree with itself.
+   */
   load(snapshot: SituationSnapshot): void {
-    this.values = { ...snapshot.values };
-    this.sources = { ...snapshot.sources };
+    const clean = sanitizeSnapshot(snapshot);
+    this.values = { ...clean.values };
+    this.sources = { ...clean.sources };
     this.emit();
   }
 

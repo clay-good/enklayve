@@ -90,6 +90,17 @@ const WatchedAnswerSchema = z
   })
   .strict();
 
+/**
+ * The situation half of a ledger file, checked for *shape* only.
+ *
+ * Deliberately loose about the values, and the division is the point. A ledger
+ * file's job is fidelity — it round-trips bit for bit, key order included, so a
+ * person can carry it and get back exactly what they saved. Checking the values
+ * here would mean rebuilding the object through a schema and normalizing that
+ * order away. The values are checked where they can actually do harm, at
+ * `SituationStore.load`, which is the one boundary both this and the portable
+ * profile file cross on the way into the tiles.
+ */
 const SituationSnapshotSchema = z
   .object({
     values: z.record(z.string(), z.unknown()),
