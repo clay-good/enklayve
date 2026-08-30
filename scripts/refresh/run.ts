@@ -82,6 +82,7 @@ export function planRefresh(
       schemaValid: false,
       valuesChanged: false,
       testsPass: false,
+      settled: parsed.settled,
     });
     return {
       adapterId: adapter.id,
@@ -207,7 +208,9 @@ async function runCli(): Promise<void> {
 
     if (!dryRun) {
       // Append the diff-log entry for every run that produced a record
-      // (a change or an alert); a no-op leaves the log untouched.
+      // (a change or an alert); a no-op leaves the log untouched, and so does a
+      // settled refusal — it proposes nothing, and a journal of proposals that
+      // records the same seventeen non-events every month is not a journal.
       if (plan.outcome === "open-pr" || plan.outcome === "alert-pr") {
         const log = readFileSync(DIFF_LOG, "utf8");
         writeFileSync(DIFF_LOG, insertLogEntry(log, plan.logEntry), "utf8");
@@ -219,14 +222,19 @@ async function runCli(): Promise<void> {
     }
   }
 
-  // Roll the group's outcome up: an alert wins (needs a human), then open-pr.
+  // Roll the group's outcome up: an alert wins (needs a human), then open-pr,
+  // then blocked. `settled` sits below all three and above no-op — it is worth
+  // saying out loud in the job log that an adapter declined on purpose, and it
+  // must never be what a group reports while a real alert is in the same run.
   const groupOutcome: RefreshOutcome = outcomes.includes("alert-pr")
     ? "alert-pr"
     : outcomes.includes("open-pr")
       ? "open-pr"
       : outcomes.includes("blocked")
         ? "blocked"
-        : "no-op";
+        : outcomes.includes("settled")
+          ? "settled"
+          : "no-op";
 
   emitOutput("outcome", groupOutcome);
   emitOutput("changed", changedShards.length > 0 ? "true" : "false");

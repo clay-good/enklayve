@@ -91,6 +91,36 @@ describe("contract: decideOutcome (the §7.3 gate)", () => {
       decideOutcome({ fetchOk: true, schemaValid: true, valuesChanged: true, testsPass: true }),
     ).toBe("open-pr");
   });
+
+  it("does not alert on a refusal the adapter says is a decision", () => {
+    // Seventeen of the fifty-one adapters refuse on purpose. Without this, every
+    // scheduled run opened seventeen fail-safe alert PULL REQUESTS saying
+    // "source unreachable or failed validation" about sources that are neither
+    // — the alert nobody reads by the third month, arriving as a PR.
+    expect(
+      decideOutcome({
+        fetchOk: true,
+        schemaValid: false,
+        valuesChanged: false,
+        testsPass: false,
+        settled: true,
+      }),
+    ).toBe("settled");
+  });
+
+  it("still alerts when the fetch failed, settled or not", () => {
+    // The adapter never got to answer, so "nothing to do here" is not a claim
+    // anything on this side can make.
+    expect(
+      decideOutcome({
+        fetchOk: false,
+        schemaValid: false,
+        valuesChanged: false,
+        testsPass: false,
+        settled: true,
+      }),
+    ).toBe("alert-pr");
+  });
 });
 
 describe("contract: renderDiffLogEntry", () => {
@@ -1977,6 +2007,22 @@ describe("adapters: CMS Medicaid expansion (anchored prose)", () => {
 describe("runner: planRefresh (no I/O)", () => {
   const adapter = adaptersForGroup("hhs-poverty")[0]!;
   const current = readShard("federal-poverty-level-2024-contiguous.json");
+
+  it("settles rather than alerting when the adapter refused on purpose", () => {
+    // Delaware's deduction has not moved since 2000, so its adapter refuses with
+    // `settled`. The shard is left alone exactly as for an alert; the difference
+    // is that nothing is opened and nothing is written to the diff log.
+    const de = adaptersForGroup("state-de")[0]!;
+    const plan = planRefresh(
+      de,
+      readShard("state-de-income-tax-2024.json"),
+      { ok: true, raw: "The Delaware Code, Title 30, Chapter 11." },
+      TODAY,
+    );
+    expect(plan.outcome).toBe("settled");
+    expect(plan.shard).toBeNull();
+    expect(plan.reason).toMatch(/does not index/);
+  });
 
   it("alerts and writes no shard when the fetch fails", () => {
     const plan = planRefresh(adapter, current, { ok: false, reason: "HTTP 404" }, TODAY);

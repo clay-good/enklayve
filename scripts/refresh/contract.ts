@@ -96,9 +96,14 @@ function walk(
  *                  rather than ship a wrong number (the fail-safe branch).
  *   - `blocked`  — the new data fails the golden test gate; propose nothing
  *                  (never auto-commit data that breaks a golden case, §7.3.5).
+ *   - `settled`  — the adapter refused ON PURPOSE and said why (a statutory
+ *                  figure that does not index, a state that has not published
+ *                  the shard's year, a page whose numbers mean something else).
+ *                  The shard is left alone exactly as for an alert, and no PR is
+ *                  opened, because there is nothing for anyone to do.
  *   - `no-op`    — fetched and valid, but nothing changed; do nothing.
  */
-export type RefreshOutcome = "open-pr" | "alert-pr" | "blocked" | "no-op";
+export type RefreshOutcome = "open-pr" | "alert-pr" | "blocked" | "settled" | "no-op";
 
 export interface OutcomeInput {
   /** Did the source fetch succeed (no 404 / network error)? */
@@ -109,6 +114,17 @@ export interface OutcomeInput {
   valuesChanged: boolean;
   /** Did the full golden suite pass against the new data? */
   testsPass: boolean;
+  /**
+   * Did the adapter say its refusal is a decision rather than a defect?
+   *
+   * Seventeen of the fifty-one adapters refuse on purpose today, and without
+   * this every scheduled run opened seventeen fail-safe alert PRs saying
+   * "source unreachable or failed validation" about sources that are neither.
+   * That is the alert nobody reads by the third month — the same failure the
+   * adapter check's own report had, one layer down, and worse here because it
+   * arrives as a pull request.
+   */
+  settled?: boolean;
 }
 
 /**
@@ -117,7 +133,10 @@ export interface OutcomeInput {
  * the diff or the test result is even considered.
  */
 export function decideOutcome(input: OutcomeInput): RefreshOutcome {
-  if (!input.fetchOk || !input.schemaValid) return "alert-pr";
+  // A fetch failure is never settled: the adapter never got to answer, so
+  // "nothing to do here" is not a claim anything on this side can make.
+  if (!input.fetchOk) return "alert-pr";
+  if (!input.schemaValid) return input.settled ? "settled" : "alert-pr";
   if (!input.valuesChanged) return "no-op";
   if (!input.testsPass) return "blocked";
   return "open-pr";
@@ -132,6 +151,8 @@ export function describeOutcome(outcome: RefreshOutcome): string {
       return "source unreachable or failed validation — opening a fail-safe alert";
     case "blocked":
       return "new data fails the golden test gate — proposing nothing";
+    case "settled":
+      return "the adapter refuses on purpose and said why — nothing to open";
     case "no-op":
       return "source fetched and valid, but no values changed — nothing to do";
   }
