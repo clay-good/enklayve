@@ -21,11 +21,14 @@ Two more run on a schedule rather than per-commit, because they need the network
 npm run check:links                        # every external link, monthly
 npm run check:adapters                     # every refresh adapter still finds its figure, monthly
 node scripts/refresh/watch-sources.ts      # the hand-authored Pillar 4 sources, quarterly
+npm run check:boundaries                   # which inclusive/exclusive comparisons any test holds
 ```
 
 - [ ] `format:check`, `lint`, `typecheck` all clean.
 - [ ] `test` green, including the tax-engine golden corpus, the bounds/fuzz invariants, and the axe sweep with **zero violations** — home, About, All Tools, Readout, Report, and **every calculator and hub, the roster derived from the registry** rather than a hand-kept list ([`catalogInvariants.test.ts`](../tests/ui/catalogInvariants.test.ts)).
 - [ ] Every calculator **announces its answer**: its result sits inside an `aria-live` region, so a screen-reader user who types an income hears that the page replied. axe cannot catch this — it is an absence, not a violation — so the catalog sweep asserts it directly. Two mechanisms satisfy it (the `resultCard` headline `<output>`, and a tile's own `.tile-result` container); the sweep asserts the property rather than either one, since the eight Pillar 4 screeners have no single headline number and rely on the container alone.
+- [ ] `check:boundaries` reports **no newly unheld comparison** against [`boundary-baseline.json`](../scripts/boundary-baseline.json). It flips every `<=`/`>=` in `src/engine` to its strict form and runs the suite: a comparison whose mutation still passes is a line no test holds. The statutes write these lines "at or below", so `<=` and `<` are different answers to a real person — and an exact threshold is measure-zero for an arbitrary input, so it only ever appears in a case somebody wrote on purpose. **47 of 68 were unheld on 2026-08-30**, including the ACA 400% FPL cliff, the 100% FPL floor for the premium tax credit, Social Security's $25,000/$32,000 provisional-income bases, and the IRA and education-credit phase-out endpoints. The baseline holds that backlog so only a *new* one fails, and it is meant to shrink. Slow by construction (one suite run per comparison, ~25 minutes), so it runs on a schedule and on demand, never in the unit suite. It refuses to start if `src/engine` has uncommitted changes, because it rewrites files in place.
+
 - [ ] The golden corpus **bites**, not merely covers. Twenty-five state shards carry an engine capability beyond brackets-and-deduction, and "the state appears in the golden file" does not show that the capability is constrained by anything. Checked on 2026-08-30 by disabling each one in [`evaluate.ts`](../src/engine/tax/evaluate.ts) and running `tests/golden/states.test.ts` — every one fails, none silently:
 
   | Capability disabled | Golden tests that fail |
