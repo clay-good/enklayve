@@ -538,6 +538,37 @@ describe("adapters: North Carolina (a table, then pages about itemizing)", () =>
   });
 });
 
+describe("adapters: Connecticut (a page whose wrong answer is plausible)", () => {
+  const ct = adaptersForGroup("state-ct")[0]!;
+  const current = readShard("state-ct-income-tax-2024.json");
+
+  it("refuses without letting the parser try, because succeeding is the danger", () => {
+    // Connecticut has no standard deduction; the shard's field carries the
+    // CT-1040 Table A personal exemption. The DRS page states neither phrase —
+    // its $15,000 / $19,000 / $24,000 are the gross-income FILING THRESHOLDS,
+    // which equal the exemption amounts today and are a different figure. Every
+    // other wrapper here runs the real parser first so the refusal clears
+    // itself; that reasoning inverts on a page whose wrong answer is plausible.
+    const thresholds = ct.parse(
+      "... exceeds: $12,000 and you are married filing separately; $15,000 and you are" +
+        " filing single; $19,000 and you are filing head of household; or $24,000 and you" +
+        " are married filing jointly or qualifying surviving spouse.",
+      current,
+    );
+    expect(thresholds.ok).toBe(false);
+    if (!thresholds.ok) expect(thresholds.reason).toMatch(/no standard deduction/);
+
+    // Even a page stating exactly the committed figures under the right labels
+    // is refused: it is the concept that is wrong, not the numbers.
+    const exact = ct.parse(
+      "Standard deduction: Single $15,000 Married filing jointly $24,000" +
+        " Head of household $19,000",
+      current,
+    );
+    expect(exact.ok).toBe(false);
+  });
+});
+
 describe("adapters: a table that names its own tax year", () => {
   const hi = adaptersForGroup("state-hi")[0]!;
   const current = readShard("state-hi-income-tax-2024.json");

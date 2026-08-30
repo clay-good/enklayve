@@ -989,6 +989,41 @@ function refuseWhileSourceIsBehind(
  * person to read any change rather than parsing an amendment. That is the same
  * remedy the adapter check's own report recommends, taken.
  */
+/**
+ * A refusal that does NOT run the parser first, because the parser succeeding is
+ * the danger.
+ *
+ * Every other wrapper here puts the real parser in front, so the explanation
+ * clears itself the day the page starts stating the figure. Connecticut is the
+ * case where that reasoning inverts. Connecticut has **no standard deduction**;
+ * the shard's `standardDeductionByFilingStatus` carries the CT-1040 Table A
+ * *personal exemption*, which is the subtraction Connecticut actually makes.
+ * The DRS page the adapter watches states neither phrase. What it states is the
+ * gross-income filing thresholds:
+ *
+ *   ... exceeds: $12,000 and you are married filing separately; $15,000 and you
+ *   are filing single; $19,000 and you are filing head of household; or $24,000
+ *   and you are married filing jointly ...
+ *
+ * Those are $15,000 / $24,000 / $19,000 — the exemption amounts, exactly. They
+ * coincide today and they are different things, so an anchor there is right by
+ * accident, and the accident ends silently the first year Connecticut moves one
+ * and not the other. A guard that lets the parser try and accepts a plausible
+ * answer is precisely the wrong shape for a page whose wrong answer is
+ * plausible.
+ *
+ * So this refuses outright and says why. Connecticut having no standard
+ * deduction is statutory (Conn. Gen. Stat. §12-701 defines Connecticut taxable
+ * income without one), so unlike Iowa's flat refusal this premise does not go
+ * stale quietly — and if Connecticut ever enacts one, that is a reform a person
+ * transcribes, not a figure a scrape rolls forward.
+ */
+function refuseBecauseThePageMeansSomethingElse(
+  reason: string,
+): (raw: string, current: Record<string, unknown>) => ParseOutcome {
+  return () => ({ ok: false, reason });
+}
+
 function refuseBecauseTheFigureIsStatutory(
   parse: (raw: string, current: Record<string, unknown>) => ParseOutcome,
   reason: string,
@@ -2578,7 +2613,19 @@ export const ADAPTERS: RefreshAdapter[] = [
     // adapter anchors as the standard deduction (the MN/RI pattern). The brackets,
     // the per-status recapture stages, and the Table E credit steps are the
     // reviewer's data-only step on each new CT-1040 Tax Calculation Schedule.
-    parse: parseStandardDeductions,
+    //
+    // Which this page cannot supply, and would appear to: see
+    // refuseBecauseThePageMeansSomethingElse.
+    parse: refuseBecauseThePageMeansSomethingElse(
+      "Connecticut has no standard deduction \u2014 this shard's " +
+        "standardDeductionByFilingStatus carries the CT-1040 Table A personal exemption, and " +
+        "this page states neither phrase. The $15,000 / $19,000 / $24,000 on it are the " +
+        "gross-income FILING THRESHOLDS, which equal the exemption amounts today and are a " +
+        "different figure; anchoring them would be right by accident and would diverge " +
+        "silently the first year Connecticut moves one and not the other. Table A lives in " +
+        "Form CT-1040 TCS, whose URL carries the year (Rev. 12/25 is the newest), so the " +
+        "exemption stays the reviewer's transcription alongside Tables B\u2013E",
+    ),
   },
   {
     id: "treasury-bonds-2024",
