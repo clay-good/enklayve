@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **68** in **12 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **80**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | unit/golden across **92** files, **+26** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | unit/golden across **92** files, **+27** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Source audits | **all 51 jurisdictions + the federal and benefits shards** read against the agency's own document; 8 wrong figures found and fixed | [`docs/data-sources.md`](docs/data-sources.md#source-audits) |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale/theme preference touches `localStorage`, asserted end-to-end across a full session | `npm run audit` / `npm run test:e2e` |
@@ -540,7 +540,7 @@ sequenceDiagram
     participant V as Readout view
     participant X as Extractor (anchored, versioned)
     participant P as My Situation
-    U->>V: drop a PDF, Word .docx, or scanned image (W-2, 1040, 1099, 1095-A, 1098, pay stub, FAFSA SS,<br/>EOB, itemized medical bill, benefits notice)
+    U->>V: drop a PDF (typed or scanned), Word .docx, or image (W-2, 1040, 1099, 1095-A, 1098, pay stub, FAFSA SS,<br/>EOB, itemized medical bill, benefits notice)
     V->>X: extract text on-device (pdf.js / mammoth / tesseract.js OCR, dynamically imported)
     X->>X: detect kind + form revision → revision-pinned anchors
     X-->>V: typed fields, each with confidence + needs-review
@@ -608,7 +608,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**The unit and golden suite across 92 files** (plus 26 Playwright e2e tests) passes today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**The unit and golden suite across 92 files** (plus 27 Playwright e2e tests) passes today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -644,7 +644,7 @@ All phases from both specs are complete or at a deliberately-deferred boundary. 
 | 10 | ✅ | CI, the release audit, the Cloudflare Git-integration deploy, and the Playwright e2e job (responsiveness + offline + smoke) |
 | 11 | ✅ | Crawlability (per-tile shells, sitemap, robots), on-page SEO/social (incl. a raster 1200×630 social card), docs, mobile responsiveness |
 | 12–13 | ✅ | My Situation (session profile + encrypted export); the home (redesigned to three calm zones, §0.7) |
-| 14 | ✅ | The Readout — every document family has an anchored, revision-pinned extractor; reads typed PDF (pdf.js), Word `.docx` (mammoth), and scanned images (on-device OCR, tesseract.js) on-device |
+| 14 | ✅ | The Readout — every document family has an anchored, revision-pinned extractor; reads typed PDF (pdf.js), Word `.docx` (mammoth), and scans (on-device OCR, tesseract.js) on-device — a scan is read whether it arrives as an image or **inside a PDF**, since a PDF is a container and a phone photo saved as one has no text layer at all |
 | 15–16 | ✅ | The guidance engine (`plan.ts`, now surfaced as the home anti-budget); My Readout Report |
 | 17 | ✅ | The §6 expansion catalog — budgeting, debt, home, open enrollment, tax moves, protection, long-horizon |
 

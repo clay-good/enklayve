@@ -124,7 +124,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     el("h1", { class: "tile-title", text: "The Readout" }),
     el("p", {
       class: "tile-desc",
-      text: "Drop a typed pay stub, W-2, 1040, 1099, 1095-A, 1098 mortgage statement, FAFSA Submission Summary, health plan Explanation of Benefits, itemized medical bill, or benefits determination notice. You get what it says, what looks worth asking about, what you may be owed, and what to do next — parsed on your device, never uploaded.",
+      text: "Drop a pay stub, W-2, 1040, 1099, 1095-A, 1098 mortgage statement, FAFSA Submission Summary, health plan Explanation of Benefits, itemized medical bill, or benefits determination notice. You get what it says, what looks worth asking about, what you may be owed, and what to do next — parsed on your device, never uploaded.",
     }),
   );
 
@@ -170,7 +170,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     el("span", { class: "readout-dropzone-title", text: "Drop a file here, or choose one" }),
     el("span", {
       class: "readout-dropzone-sub",
-      text: "Typed PDF, Word (.docx), text, or a scanned image (PNG/JPG). Images are read on-device with OCR and flagged for review. Already have a saved situation? Drop its .json here to restore it.",
+      text: "PDF, Word (.docx), text, or a scanned image (PNG/JPG). A scan — a photo or a scanner's output, whether it arrives as an image or inside a PDF — is read on-device with OCR and flagged for review. Already have a saved situation? Drop its .json here to restore it.",
     }),
     fileInput,
   );

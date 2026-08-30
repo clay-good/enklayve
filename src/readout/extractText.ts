@@ -1,6 +1,6 @@
 /**
  * On-device document text extraction (BUILD-SPEC-2 §2). Turns a dropped file
- * into plain text in the browser. pdf.js (typed PDFs), mammoth (Word .docx), and
+ * into plain text in the browser. pdf.js (PDFs, typed or scanned), mammoth (Word .docx), and
  * tesseract.js (scanned images, the lower-confidence OCR fallback) are each
  * dynamically imported so they never weigh down the shell and load only when a
  * matching document is actually read.
@@ -50,16 +50,25 @@ export function looksLikeScannedPdf(pages: readonly string[]): boolean {
 }
 
 /**
- * What to tell someone holding a scan. It names the situation, says why, and
- * gives the one step that works today — rather than the old message, which told
- * them their supported document was unsupported.
+ * What to tell someone whose scan could not be read even by OCR.
+ *
+ * A scanned PDF is rendered and read now rather than refused, so this is the
+ * last resort: a browser with no `OffscreenCanvas`, or pages OCR came back
+ * empty-handed on — a photograph too dark, too skewed, or too low-resolution
+ * for the engine. It names the situation and gives a step that works, rather
+ * than the message this replaced, which told the person their supported
+ * document was unsupported.
  */
 export const SCANNED_PDF_MESSAGE =
-  "This PDF has no selectable text — it is a scan or a photo saved as a PDF, so there is " +
-  "nothing to read out of it. Save or screenshot the page as an image (PNG or JPG) and drop " +
-  "that instead: images are read here on your device with OCR. Pasting the text works too.";
+  "This PDF is a scan, and reading it here on your device found no text on the page — usually " +
+  "a photo that is dark, skewed, or too low-resolution. A straight-on, well-lit image of the " +
+  "page (PNG or JPG) reads better than a photo of a screen. Pasting the text works too.";
 
-/** Read a typed PDF entirely on the device, with no network access. */
+/**
+ * Read a PDF entirely on the device, with no network access. A PDF with a text
+ * layer is read from it directly; one without — a scan — is rendered page by
+ * page and read by OCR instead.
+ */
 async function extractPdf(file: File): Promise<ExtractedText> {
   const pdfjs = await import("pdfjs-dist");
   // The worker is bundled as a same-origin asset (CSP `worker-src 'self'`); it
@@ -82,8 +91,91 @@ async function extractPdf(file: File): Promise<ExtractedText> {
       .trim();
     pages.push(text);
   }
-  if (looksLikeScannedPdf(pages)) throw new Error(SCANNED_PDF_MESSAGE);
+  if (looksLikeScannedPdf(pages)) return ocrPdfPages(doc);
   return { text: pages.join("\n"), pages, source: "typed" };
+}
+
+/**
+ * How many pages of a scanned PDF this will read.
+ *
+ * Every page has to be rasterized at print-ish resolution and run through the
+ * OCR engine, which is seconds and tens of megabytes each. The documents this
+ * reader recognizes are one to a handful of pages — a W-2, a 1099, a pay stub,
+ * an EOB — so a scan far past that is a whole file someone dropped, and grinding
+ * through it silently for several minutes is worse than saying so. The limit is
+ * generous enough that no real form reaches it.
+ */
+export const MAX_OCR_PDF_PAGES = 12;
+
+/** What to say when a scan is longer than this will read, rather than truncating quietly. */
+export function tooManyScannedPagesMessage(pageCount: number): string {
+  return (
+    `This PDF is a scan of ${pageCount} pages, and reading a scan means running each page ` +
+    `through OCR on your device — so it is capped at ${MAX_OCR_PDF_PAGES}. Save just the ` +
+    "pages with your figures on them and drop those, as a shorter PDF or as images."
+  );
+}
+
+/**
+ * Read a PDF that has no text layer by rendering each page and running the same
+ * on-device OCR the image path uses.
+ *
+ * This is the reason a scan is not a dead end. A PDF is a container, not a
+ * format: a phone photo or a scanner's output saved as a PDF carries pixels and
+ * no text, and until this existed the reader told the person holding a scanned
+ * W-2 that W-2s were not supported. The pages are rendered at 2× so small print
+ * survives, drawn on an OffscreenCanvas that never enters the document, and
+ * handed to the worker one at a time so only one page's bitmap is alive at once.
+ *
+ * The result is marked `"ocr"`, which is not a formality: it flags every
+ * extracted field for review and stops the rule checks from running, because a
+ * rule check on a misread number is the one thing this reader must never do.
+ * Nothing is uploaded — the worker, its wasm core, and the language model are
+ * same-origin `/ocr/` assets, and the page keeps `connect-src 'none'`.
+ */
+async function ocrPdfPages(doc: {
+  numPages: number;
+  getPage(n: number): Promise<{
+    getViewport(o: { scale: number }): { width: number; height: number };
+    render(o: { canvasContext: unknown; viewport: unknown }): { promise: Promise<void> };
+  }>;
+}): Promise<ExtractedText> {
+  if (doc.numPages > MAX_OCR_PDF_PAGES) throw new Error(tooManyScannedPagesMessage(doc.numPages));
+  if (typeof OffscreenCanvas === "undefined") throw new Error(SCANNED_PDF_MESSAGE);
+
+  const { createWorker } = await import("tesseract.js");
+  const worker = await createWorker("eng", 1, {
+    workerPath: `${OCR_ASSET_PATH}/worker.min.js`,
+    corePath: OCR_ASSET_PATH,
+    langPath: OCR_ASSET_PATH,
+    workerBlobURL: false,
+  });
+  try {
+    const pages: string[] = [];
+    for (let i = 1; i <= doc.numPages; i += 1) {
+      const page = await doc.getPage(i);
+      const viewport = page.getViewport({ scale: OCR_RENDER_SCALE });
+      const canvas = new OffscreenCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error(SCANNED_PDF_MESSAGE);
+      // A scan's own page is white, but a PDF page is transparent until drawn,
+      // and OCR on a transparent-over-black bitmap reads nothing at all.
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: context, viewport }).promise;
+      const { data } = await worker.recognize(await canvas.convertToBlob());
+      pages.push(
+        data.text
+          .replace(/[ \t]+/g, " ")
+          .replace(/\n{2,}/g, "\n")
+          .trim(),
+      );
+    }
+    if (looksLikeScannedPdf(pages)) throw new Error(SCANNED_PDF_MESSAGE);
+    return { text: pages.join("\n"), pages, source: "ocr" };
+  } finally {
+    await worker.terminate();
+  }
 }
 
 /** Read a Word (.docx) document on the device with mammoth, dynamically imported
@@ -113,6 +205,13 @@ async function extractPlainText(file: File): Promise<ExtractedText> {
  * trailing slash: tesseract.js appends `/<lang>.traineddata.gz` and the core
  * filename itself. */
 const OCR_ASSET_PATH = "/ocr";
+
+/**
+ * Render scale for a scanned PDF page. A PDF's own units are 72 dpi, which OCR
+ * reads badly on the small print these forms are full of; 2× lands near 150 dpi,
+ * enough for a box label without the memory a 300-dpi bitmap costs.
+ */
+const OCR_RENDER_SCALE = 2;
 
 /** True for the raster image formats the OCR fallback can read. */
 export function isImageFile(file: File): boolean {
@@ -157,7 +256,9 @@ async function extractImage(file: File): Promise<ExtractedText> {
  * text are read deterministically on the device; scanned or photographed images
  * fall back to on-device OCR (a clearly-labeled, lower-confidence path). The
  * order matters — the type/extension checks run before the image check so a
- * typed PDF is never sent to OCR.
+ * typed PDF is never sent to OCR. (A PDF *without* a text layer still is —
+ * that decision belongs to the PDF reader, which is the only thing that can
+ * see whether the pages carry text.)
  */
 export const extractTextFromFile: TextExtractor = async (file) => {
   const name = file.name.toLowerCase();
@@ -177,6 +278,6 @@ export const extractTextFromFile: TextExtractor = async (file) => {
     return extractImage(file);
   }
   throw new Error(
-    "Unsupported file. Drop a typed PDF, a Word (.docx) document, a scanned image (PNG/JPG), or paste the text.",
+    "Unsupported file. Drop a PDF, a Word (.docx) document, a scanned image (PNG/JPG), or paste the text.",
   );
 };

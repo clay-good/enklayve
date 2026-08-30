@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { looksLikeScannedPdf, SCANNED_PDF_MESSAGE } from "../../src/readout/extractText";
+import {
+  looksLikeScannedPdf,
+  MAX_OCR_PDF_PAGES,
+  SCANNED_PDF_MESSAGE,
+  tooManyScannedPagesMessage,
+} from "../../src/readout/extractText";
 
 /**
  * A PDF is a container, not a format.
@@ -40,5 +45,30 @@ describe("recognizing a PDF with no text layer", () => {
     expect(SCANNED_PDF_MESSAGE).toMatch(/PNG|JPG/);
     // And it stays true to the promise: OCR runs on the device.
     expect(SCANNED_PDF_MESSAGE).toMatch(/on your device/i);
+  });
+
+  it("is also the test for whether OCR came back with anything", () => {
+    // The same predicate gates the input and checks the output: a scan that
+    // rendered and OCR'd to nothing must not be reported as a read document
+    // with no fields in it.
+    expect(looksLikeScannedPdf(["", "", ""])).toBe(true);
+    expect(looksLikeScannedPdf(["Wages, tips, other compensation 62,150.00"])).toBe(false);
+  });
+});
+
+describe("a scan longer than the reader will OCR", () => {
+  it("says how long it is and what to send instead, rather than truncating", () => {
+    // Every page is rasterized and run through the engine — seconds and tens of
+    // megabytes each. Grinding silently through a 60-page file for minutes is
+    // worse than saying so, and dropping pages without saying so is worse still.
+    const message = tooManyScannedPagesMessage(60);
+    expect(message).toContain("60 pages");
+    expect(message).toContain(String(MAX_OCR_PDF_PAGES));
+    expect(message).toMatch(/pages with your figures/);
+  });
+
+  it("leaves room for any form this reader recognizes", () => {
+    // A W-2, a 1099, a pay stub, an EOB: one to a handful of pages.
+    expect(MAX_OCR_PDF_PAGES).toBeGreaterThanOrEqual(8);
   });
 });
