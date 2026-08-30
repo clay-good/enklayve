@@ -570,6 +570,25 @@ describe("adapters: a table that names its own tax year", () => {
     ).toEqual([]);
   });
 
+  it("finds a table announced by a phrase that ends in a colon", () => {
+    // Kansas states its figures once, in the annual income booklet, under "The
+    // following amounts will be the standard deduction for most people in tax
+    // year 2025 to enter on line 4:" — a lead-in with no "your", no "amounts",
+    // no "table", and eleven words between the phrase and its colon. Without
+    // it the region was the whole booklet, and the refusal was about a tax
+    // table 150 amounts wide instead of about the year.
+    const ks = adaptersForGroup("state-ks")[0]!;
+    const result = ks.parse(
+      "April 15, 2026 is the due date for filing 2025 income tax returns. Kansas Standard" +
+        " Deduction The following amounts will be the standard deduction for most people in" +
+        " tax year 2025 to enter on line 4: Single - $3,605 Married Filing Joint - $8,240" +
+        " Head of Household - $6,180 Married Filing Separate - $4,120",
+      readShard("state-ks-income-tax-2024.json"),
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toMatch(/states tax year 2025 and this shard is 2026/);
+  });
+
   it("reads a table that names the shard's own year", () => {
     const thisYear = hi.parse(
       "For tax year 2026 the standard deduction amounts are: Single $8,000" +

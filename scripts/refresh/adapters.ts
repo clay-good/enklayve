@@ -583,7 +583,7 @@ function withoutDependentRows(raw: string): string {
  * dependent-row lesson in a second shape — so the region stops where it starts.
  */
 const DEDUCTION_TABLE_LEADIN =
-  /(?:your standard deduction is|standard deduction (?:amounts?|table)|filing status\s+standard deduction|standard deduction\s*:)\s*:?/gi;
+  /(?:your standard deduction is|standard deduction (?:amounts?|table)|filing status\s+standard deduction|standard deduction[^.:;]{0,80}:)\s*:?/gi;
 
 /** Where the age/blindness ADD-ON begins, which is where the base table ends. */
 const ADDITIONAL_AGE_BLIND =
@@ -2186,6 +2186,14 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-ks-income-tax-2024",
     group: "state-ks",
     source: "Kansas DOR individual income tax standard deduction (SB 1 brackets statutory)",
+    // The annual income booklet, which is the only Kansas page that states the
+    // figure at all: perstaxtypesii.html is a menu and taxnotices.html is a
+    // stub. Its URL carries the tax year, so this one has to be bumped by hand
+    // each January — until it is, the booklet says "in tax year 2025" and the
+    // year check refuses it by name rather than rolling the shard backwards.
+    // ksrevenue.gov/incomebook26.html answers 200 with 1,530 characters of
+    // nothing today, so pointing at it early would trade a true refusal for a
+    // vague one.
     sourceUrl: "https://www.ksrevenue.gov/incomebook25.html",
     cadence: "Annual",
     // KS's two rates, thresholds, and the personal exemption are statutory
