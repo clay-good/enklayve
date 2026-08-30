@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **68** in **12 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **80**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | **2,077** unit/golden across 89 files, **+26** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | **2,079** unit/golden across 89 files, **+26** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Source audits | **all 51 jurisdictions + the federal and benefits shards** read against the agency's own document; 8 wrong figures found and fixed | [`docs/data-sources.md`](docs/data-sources.md#source-audits) |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale/theme preference touches `localStorage`, asserted end-to-end across a full session | `npm run audit` / `npm run test:e2e` |
@@ -480,7 +480,7 @@ Running that dry run across all 49 answered a question the check could not: **fi
 | The page mentions the table before it states one | Maine's rate schedule talks about the standard deduction's inflation factor 1,500 characters above the line that states the amounts. Narrowing to the *first* lead-in narrowed to prose with no figure in it, and the adapter reported "could not anchor" about a document stating all three. The region is now the first lead-in with a table actually under it. |
 | The figure is stated, for a different reason | Maine states the **additional** deduction for age and blindness directly under the base table, in a sentence containing "married … filing jointly" — so $3,300 became a second joint candidate and the ambiguity guard refused the page over a figure that is not a standard deduction at all. The table ends where the add-on begins. |
 | Nothing to parse, ever | Delaware's standard deduction is statutory and unindexed — 30 Del. C. §1108 has set it at $3,250 / $6,500 since tax year 2000 — so an annual value adapter asks a question with no annual answer. The section is a bad target too: a history of periods (the Colorado trap) that never says "married filing jointly", only "resident spouses ... if they file a joint return". Moved to the change-watch, which asks a person to read an amendment. |
-| Nothing to watch yet | Oregon has no 2026 OR-40 booklet; Vermont has posted 2026 *withholding* charts and no 2026 annual schedule; Nebraska's 2026 final-forms page lists a payment voucher and nothing else. Both shards carry last year's indexed figures deliberately and say so. "Could not anchor" and "the state has not published this year" look identical in a report and mean opposite things — one says fix a parser, the other says nothing is wrong — so these now say which. |
+| Nothing to watch yet | Oregon has no 2026 OR-40 booklet; Vermont has posted 2026 *withholding* charts and no 2026 annual schedule; Nebraska's 2026 final-forms page lists a payment voucher and nothing else. Idaho's rate schedule is a heading per year with a schedule under it — a shape the by-year reader could not see at all — and its headings stop at 2025. Both shards carry last year's indexed figures deliberately and say so. "Could not anchor" and "the state has not published this year" look identical in a report and mean opposite things — one says fix a parser, the other says nothing is wrong — so these now say which. |
 | Nobody was asking | Alaska and Hawaii's poverty guidelines had **no adapter at all**, because a region-blind parser could only ever serve one of three shards. |
 
 Two of those are worth generalising. **A source is not better for being denser or more official** — a form thick with numbers is a worse source than a menu with none, because it parses; running every adapter against the document its own shard cites fixed two of twenty-one and the other nineteen refused, correctly. And **the shard usually knows the thing the page is ambiguous about**: its tax year, its region, its filing statuses. Four state adapters were asking a state DOR page for a standard deduction those states do not publish, because they conform to the federal one — which their own shard notes say.
@@ -597,7 +597,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**2,077 unit/golden tests across 89 files** (plus 26 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**2,079 unit/golden tests across 89 files** (plus 26 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 

@@ -1219,6 +1219,33 @@ export function anchorFlatRate(raw: string, taxYear?: number): FlatRateAnchor {
       if (rate > 0 && rate <= 15) yearRows.push({ year: Number(pair[1]), rate });
     }
   }
+  // The same table in the other layout: a heading per year with a whole rate
+  // schedule under it, rather than one row per year. Idaho's is
+  //
+  //   Year 2025  Single  At least  No more than  Tax rate
+  //              $1      $4,811    0.0%
+  //              $4,812            5.3%
+  //   Year 2024  ...
+  //
+  // which the row form cannot see — the year and its rate are forty characters
+  // and two dollar amounts apart. A block is only read when it states exactly
+  // ONE non-zero rate: Idaho repeats 5.3% for single and married, and a block
+  // stating two different rates is a graduated schedule this parser has no
+  // business reading. Two headings are required, because one "Year 2026" over a
+  // percentage is a sentence, and several in sequence are a table.
+  const headings = [...text.matchAll(/\bYear\s+((?:19|20)\d{2})\b/g)];
+  if (headings.length >= 2) {
+    for (const [i, heading] of headings.entries()) {
+      const from = heading.index + heading[0].length;
+      const to = headings[i + 1]?.index ?? Math.min(text.length, from + 400);
+      const rates = new Set<number>();
+      for (const hit of text.slice(from, to).matchAll(/([\d.]+)\s*%/g)) {
+        const rate = Number(hit[1]);
+        if (rate > 0 && rate <= 15) rates.add(rate);
+      }
+      if (rates.size === 1) yearRows.push({ year: Number(heading[1]), rate: [...rates][0]! });
+    }
+  }
   if (yearRows.length > 0 && taxYear !== undefined) {
     const mine = new Set(yearRows.filter((r) => r.year === taxYear).map((r) => r.rate));
     if (mine.size === 1) return [...mine][0]!;
@@ -1269,6 +1296,16 @@ export function anchorFlatRate(raw: string, taxYear?: number): FlatRateAnchor {
       const years = yearRows.map((r) => r.year);
       return { historical: true, latestYear: years.length > 0 ? Math.max(...years) : null };
     }
+  }
+  // Nothing in prose, but the page did offer a by-year table and none of its
+  // rows is this shard's year. That is the state not having published yet, and
+  // it is a different fact from a page the parser cannot read — Idaho's
+  // schedule stops at 2025 while its shard is on 2026, and reporting that as
+  // "could not anchor the flat income-tax rate" sends a reader to fix a parser
+  // that is working. The prose patterns run first, because Colorado's guide
+  // carries BOTH a rate history and a sentence stating the current year.
+  if (yearRows.length > 0 && taxYear !== undefined) {
+    return { historical: true, latestYear: Math.max(...yearRows.map((r) => r.year)) };
   }
   return "none";
 }
@@ -2017,8 +2054,13 @@ export const ADAPTERS: RefreshAdapter[] = [
   {
     id: "state-id-income-tax-2024",
     group: "state-id",
-    source: "Idaho State Tax Commission individual income tax (flat rate)",
-    sourceUrl: "https://tax.idaho.gov/taxes/income-tax/individual-income/",
+    source: "Idaho State Tax Commission individual income tax rate schedule",
+    // The rate schedule the shard cites, not the individual-income landing page:
+    // the landing page is a menu. The schedule is a year-headed table, so the
+    // day a 2026 block appears the by-year reader finds it; until then the
+    // refusal says the rows stop at 2025.
+    sourceUrl:
+      "https://tax.idaho.gov/taxes/income-tax/individual-income/individual-income-tax-rate-schedule/",
     cadence: "Annual",
     parse: parseFlatRateJurisdiction,
   },

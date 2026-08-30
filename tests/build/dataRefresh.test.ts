@@ -1020,6 +1020,34 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     expect(anchorFlatRate(table, 2024)).toBe(4.25);
   });
 
+  it("reads a year-HEADED rate schedule, not just a year-per-row table", () => {
+    // Idaho publishes the same fact in the other layout: a heading per year with
+    // a whole schedule under it. The year and its rate are forty characters and
+    // two dollar amounts apart, so the row reader cannot see it, and the report
+    // said "could not anchor the flat income-tax rate" about a page that states
+    // Idaho's rate plainly.
+    const idaho =
+      "Individual Income Tax Rate Schedule How to Use: Calculate your tax rate based upon" +
+      " your taxable income (the first two columns)." +
+      " Year 2025 Single At least No more than Tax rate $1 $4,811 0.0% $4,812 5.3%" +
+      " Married At least No more than Tax rate $1 $9,622 0.0% $9,623 5.3%" +
+      " Year 2024 Single At least No more than Tax rate $1 $4,673 0.0% $4,674 5.695%";
+    expect(anchorFlatRate(idaho, 2025)).toBe(5.3);
+    expect(anchorFlatRate(idaho, 2024)).toBe(5.695);
+    // And the year that is not there is the point: the state has not published
+    // it, which is a different fact from a page nobody can read.
+    expect(anchorFlatRate(idaho, 2026)).toEqual({ historical: true, latestYear: 2025 });
+  });
+
+  it("will not read a year-headed block that states two different rates", () => {
+    // A block with more than one non-zero rate is a graduated schedule, which
+    // this parser has no business reading. Idaho's repeats 5.3% for single and
+    // married, which is why its blocks are legible at all.
+    const graduated =
+      "Year 2025 First $10,000 3.0% Next $20,000 5.0% Year 2024 First $10,000 3.0% Next 5.0%";
+    expect(anchorFlatRate(graduated, 2025)).toBe("none");
+  });
+
   it("needs a run of rows before it will treat anything as a by-year table", () => {
     // One "2026 8%" in a document is a coincidence, and the first draft of the
     // year-row reader found one in Colorado's guide and proposed an 8% flat
