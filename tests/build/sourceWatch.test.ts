@@ -214,6 +214,24 @@ describe("the committed watch list", () => {
     expect(de?.why).toMatch(/does not index/);
   });
 
+  it("watches Medicaid's expansion map, which its adapter never looked at", () => {
+    // The threshold this shard carries — 138% of the poverty line — has not
+    // moved since 2014, and its adapter watches that. What changes is the MAP:
+    // NFIB v. Sebelius made expansion optional, so a ballot measure or a
+    // legislature can flip a state, and telling a household in a non-expansion
+    // state that it may qualify is the worst answer this shard can give. The
+    // map was watched by nothing, behind a citation note that said a refresh
+    // watch covered it.
+    const medicaid = watch.entries.find((e) => e.shard === "medicaid-2024");
+    expect(medicaid, "Medicaid's expansion map has no source watch").toBeDefined();
+    expect(medicaid?.url).toContain("medicaid.gov");
+    // It gets a fingerprint rather than a parser because the only CMS page that
+    // states the map row by row is dated December 2023 — a closed document a
+    // parser would confirm forever and could never see change.
+    expect(medicaid?.why).toMatch(/December 1, 2023/);
+    expect(medicaid?.why).toMatch(/map/i);
+  });
+
   it("watches only shards that actually exist in the manifest", () => {
     const known = new Set(manifest.datasets.map((d) => d.id));
     for (const entry of watch.entries) {

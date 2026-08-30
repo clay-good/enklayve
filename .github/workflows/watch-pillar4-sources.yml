@@ -4,12 +4,16 @@
 # is right for a bracket table and wrong for the six hand-authored Pillar 4
 # shards (SPEC-4 §10.7), which carry prose transcribed from statutes and
 # government consumer pages: auto-rewriting the site's most safety-critical
-# sentences from a scraped page is precisely the failure to avoid. Delaware's
-# income-tax shard joined them on 2026-08-30 for the opposite reason — its
-# standard deduction is statutory and unindexed, so there is no annual figure to
-# parse and a change to it is an amendment. So this job never edits a shard. It
-# fingerprints each source and opens an issue when one moved, asking a person to
-# go re-read it.
+# sentences from a scraped page is precisely the failure to avoid. Two more
+# joined them on 2026-08-30, for reasons the other refresh jobs cannot serve:
+# Delaware's income tax, whose standard deduction is statutory and unindexed, so
+# there is no annual figure to parse and a change to it is an amendment; and
+# Medicaid, whose consequential content is not its 138% threshold but the map of
+# which states expanded, stated only on a CMS table dated December 2023 — a
+# closed document a parser would confirm forever and never see change. So this
+# job never edits a shard. It fingerprints each source and opens an issue when
+# one moved, asking a person to go re-read it. Its name says pillar4 for the
+# history; `scripts/refresh/source-watch.json` is the list it actually watches.
 name: Watch source documents
 
 on:
