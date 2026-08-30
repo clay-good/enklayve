@@ -968,20 +968,48 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     expect(implausibleDrift(0, 5000)).toBeNull();
   });
 
-  it("refuses a deduction page that prints two years side by side", () => {
+  it("lets the shard's year pick the column when the table labels its columns", () => {
     // Rhode Island's inflation advisory prints "Filing status 2025 2026 / Single
-    // $10,900 $11,200". Taking the first match rolls the shard BACKWARDS a year,
-    // which the dry run caught the day PDF support made that page parseable at
-    // all. One year stated once is fine; two is a refusal.
+    // $10,900 $11,200" — last year beside this one. Taking the first match rolls
+    // the shard BACKWARDS a year, which the dry run caught the day PDF support
+    // made that page parseable at all, so it was refused outright.
+    //
+    // But a table that labels its columns is not ambiguous. The shard knows its
+    // own tax year, and the header says which column that is — the same anchor
+    // the federal revenue procedure and the SNAP region tables already use. So
+    // the refusal now applies only where the page declines to say.
     const ri = adaptersForGroup("state-ri")[0]!;
-    const twoYears = ri.parse(
-      "Filing status 2025 2026 Single $10,900 $11,200 Married filing jointly $21,800 $22,400",
+    const labelled = ri.parse(
+      "Rhode Island standard deduction amounts by Tax Year Filing status 2025 2026" +
+        " Single $10,900 $11,200 Married filing jointly* $21,800 $22,400" +
+        " Head of household $16,350 $16,800 Married filing separately $10,900 $11,200",
       readShard("state-ri-income-tax-2024.json"),
     );
-    expect(twoYears.ok).toBe(false);
-    if (!twoYears.ok) expect(twoYears.reason).toMatch(/two-column table, probably two tax years/);
+    expect(labelled.ok).toBe(true);
+    if (labelled.ok) {
+      expect(labelled.shard.standardDeductionByFilingStatus).toEqual({
+        single: 11200,
+        married_jointly: 22400,
+        head_of_household: 16800,
+      });
+    }
 
-    // The same page with only the current year still anchors.
+    // Strip the header and the same two columns are a guess again: refused.
+    const unlabelled = ri.parse(
+      "Single $10,900 $11,200 Married filing jointly $21,800 $22,400",
+      readShard("state-ri-income-tax-2024.json"),
+    );
+    expect(unlabelled.ok).toBe(false);
+    if (!unlabelled.ok) expect(unlabelled.reason).toMatch(/no year header above it/);
+
+    // A header that does not name the shard's year is no better than none.
+    const wrongYears = ri.parse(
+      "Filing status 2023 2024 Single $10,900 $11,200 Married filing jointly $21,800 $22,400",
+      readShard("state-ri-income-tax-2024.json"),
+    );
+    expect(wrongYears.ok).toBe(false);
+
+    // One year stated once still anchors, exactly as before.
     const oneYear = ri.parse(
       "Filing status 2026 Single $11,200 Married filing jointly $22,400 Head of household $16,800",
       readShard("state-ri-income-tax-2024.json"),

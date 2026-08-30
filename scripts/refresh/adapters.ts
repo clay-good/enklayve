@@ -605,6 +605,55 @@ export function deductionTableRegion(text: string): string {
   return text;
 }
 
+/**
+ * Which column of a by-year table is this shard's, if the table says.
+ *
+ * A side-by-side table is only ambiguous while nothing says which column is
+ * which. Rhode Island's inflation advisory says it, in a header directly above
+ * the rows:
+ *
+ *   Rhode Island standard deduction amounts by Tax Year
+ *   Filing status   2025      2026
+ *   Single          $10,900   $11,200
+ *   Married filing jointly*   $21,800   $22,400
+ *
+ * The shard knows its own tax year, so the shard picks the column — the same
+ * anchor the federal revenue procedure and the SNAP region tables already use,
+ * and the reason those two are watched instead of refused. Without a header
+ * this returns null and the caller refuses exactly as before: this reads an
+ * answer the document gives, it never guesses one.
+ *
+ * The header must be a run of two or more consecutive years, and it must sit
+ * above the first row — a year mentioned in prose underneath the table is not a
+ * column heading.
+ */
+const YEAR_HEADER = /\b(20\d{2})(?:\s+(?:20\d{2}))+\b/;
+
+export function yearColumnIndex(region: string, taxYear: unknown, before: number): number | null {
+  if (typeof taxYear !== "number" || !Number.isFinite(taxYear)) return null;
+  const head = region.slice(0, before);
+  const at = YEAR_HEADER.exec(head);
+  if (!at) return null;
+  const years = (at[0].match(/20\d{2}/g) ?? []).map(Number);
+  const index = years.indexOf(taxYear);
+  return index < 0 ? null : index;
+}
+
+/** The run of amounts a label introduces: `$10,900 $11,200` is two, not one. */
+function amountRun(text: string, from: number): number[] {
+  const run: number[] = [];
+  let at = from;
+  for (;;) {
+    const next = /^\s*\$?([\d,]{4,})\b/.exec(text.slice(at, at + 24));
+    if (!next) break;
+    const amount = parseAmount(next[1] as string);
+    if (!Number.isFinite(amount) || amount <= 0) break;
+    run.push(amount);
+    at += next[0].length;
+  }
+  return run;
+}
+
 function parseStandardDeductions(raw: string, current: Record<string, unknown>): ParseOutcome {
   raw = deductionTableRegion(withoutDependentRows(visibleText(raw)));
   const shard = clone(current);
@@ -624,29 +673,44 @@ function parseStandardDeductions(raw: string, current: Record<string, unknown>):
     // 2. The label stated more than once with different amounts elsewhere on
     //    the page.
     //
-    // Either way: refuse. A wrong figure with a live citation is the failure
-    // this project cannot tolerate, and "could not parse" costs only an alert.
+    // (2) is always a refusal. (1) is a refusal only while the table declines to
+    // say which column is which — where it says so in a year header, the shard's
+    // own tax year picks the column, because a document that labels its columns
+    // is not ambiguous and refusing it would be the parser's failure, not the
+    // page's. Everything else refuses: a wrong figure with a live citation is
+    // the failure this project cannot tolerate, and "could not parse" costs only
+    // an alert.
     const values = new Set<number>();
     let sideBySide: string | null = null;
     for (const match of raw.matchAll(new RegExp(pattern.source, pattern.flags + "g"))) {
       const amount = parseAmount(match[1] as string);
       if (!Number.isFinite(amount) || amount <= 0) continue;
-      values.add(amount);
-      const after = raw.slice(match.index + match[0].length, match.index + match[0].length + 24);
-      const neighbour = /^\s*\$?([\d,]{4,})\b/.exec(after);
-      if (neighbour) {
-        const other = parseAmount(neighbour[1] as string);
-        if (Number.isFinite(other) && other > 0 && other !== amount) {
-          sideBySide = `${amount} and ${other}`;
+      // The whole row, not just the first cell: the label's own amount plus any
+      // sitting beside it.
+      const amountAt = match.index + match[0].length - (match[1] as string).length;
+      const run = amountRun(raw, amountAt);
+      if (run.length > 1) {
+        const column = yearColumnIndex(raw, shard.taxYear, match.index);
+        if (column !== null && column < run.length) {
+          values.add(run[column]!);
+          continue;
         }
+        // Kansas' book runs a whole tax table into one row, so say how wide the
+        // run is and show its head rather than printing two hundred numbers at
+        // a reader who stopped at the third.
+        const head = run.slice(0, 3).join(", ");
+        sideBySide = run.length > 3 ? `${run.length} amounts: ${head}, …` : head;
+        continue;
       }
+      values.add(amount);
     }
     if (sideBySide !== null) {
       return {
         ok: false,
         reason:
-          `the ${key} standard deduction is followed immediately by a second amount ` +
-          `(${sideBySide}) — a two-column table, probably two tax years; refusing to guess which`,
+          `the ${key} standard deduction is followed immediately by more amounts ` +
+          `(${sideBySide}) — a table row, and no year header above it says which column ` +
+          `is this shard's; refusing to guess`,
       };
     }
     if (values.size > 1) {
