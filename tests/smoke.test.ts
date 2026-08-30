@@ -176,6 +176,40 @@ describe("shell chrome (header + footer)", () => {
     expect(location.hash).toBe(hashBefore);
   });
 
+  it("moves focus into the content after a route change, but not on the first paint", async () => {
+    // The launch checklist promises "focus moves into the content region after
+    // each route change", and nothing asserted it. Both halves matter and both
+    // break silently.
+    //
+    // Without the move, a keyboard user who activates a tool link keeps focus
+    // wherever the link was — often the footer — and has to tab back through
+    // the whole page to reach the thing they just opened. Without the
+    // first-paint exemption, the app steals focus the moment it loads, which
+    // takes it off the skip link that is supposed to be the first focusable
+    // element and is the whole reason that link exists.
+    const root = document.createElement("div");
+    document.body.append(root);
+    location.hash = "";
+    await mountApp(root);
+
+    const content = root.querySelector<HTMLElement>("#content")!;
+    expect(content, "the shell has no #content region").toBeTruthy();
+    // First paint: focus is left where the browser put it.
+    expect(document.activeElement).not.toBe(content);
+
+    // A route change moves it in.
+    location.hash = "#/about";
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    expect(document.activeElement, "focus did not move into the content").toBe(content);
+
+    // And again on the next one, rather than only the first time.
+    (document.body as HTMLElement).focus();
+    location.hash = "#/tools";
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+    expect(document.activeElement).toBe(content);
+    location.hash = "";
+  });
+
   it("footer holds uniform buttons (All tools, Why enklayve, GitHub); My situation is gone", async () => {
     const root = document.createElement("div");
     document.body.append(root);
