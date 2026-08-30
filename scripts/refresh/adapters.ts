@@ -555,16 +555,54 @@ function withoutDependentRows(raw: string): string {
  * A page that says "your standard deduction is" is telling the parser where to
  * look, so it looks there and nowhere else. A page that says no such thing is
  * read whole, exactly as before — this narrows, it never widens.
+ *
+ * Three things a document does that the first version of this got wrong, all
+ * three of them on one page — Maine's 2026 Individual Income Tax Rates, the
+ * document that states Maine's figures and the one its adapter now watches.
+ *
+ * **A lead-in can be a bare colon.** Maine's table is introduced by
+ * "Standard Deduction: Single - $15,700 Married Filing Jointly - $31,400 …",
+ * with no "amounts", no "table", and no "your". A colon after the words is a
+ * document announcing a list as plainly as a heading does.
+ *
+ * **A page can MENTION the phrase before it STATES the table.** Maine's talks
+ * about the inflation adjustment first — "The Maine standard deduction and
+ * personal exemption amounts are adjusted by multiplying …" — some 1,500
+ * characters above the figures. Taking the first lead-in narrowed the page to
+ * prose containing no figure at all, and the adapter reported "could not anchor"
+ * about a document that states all three amounts in one line. So the region is
+ * the first lead-in that is actually followed by a status label and an amount;
+ * a lead-in with no table under it is a mention, and mentions are skipped.
+ *
+ * **The table ends where the ADDITIONAL amounts begin.** Every state that
+ * states a standard deduction states the extra amount for age and blindness
+ * right underneath it, and Maine's $1,650/$3,300/$6,600 sit inside 400
+ * characters of its table, in a sentence containing the words "married" and
+ * "filing jointly". That is a different figure wearing the same label — the
+ * dependent-row lesson in a second shape — so the region stops where it starts.
  */
 const DEDUCTION_TABLE_LEADIN =
-  /(?:your standard deduction is|standard deduction (?:amounts?|table)|filing status\s+standard deduction)\s*:?/i;
+  /(?:your standard deduction is|standard deduction (?:amounts?|table)|filing status\s+standard deduction|standard deduction\s*:)\s*:?/gi;
+
+/** Where the age/blindness ADD-ON begins, which is where the base table ends. */
+const ADDITIONAL_AGE_BLIND =
+  /additional\s+(?:standard\s+deduction|amounts?|deductions?)?[^.]{0,40}?\b(?:age|blind)/i;
+
+/** Does this slice hold a status label with an amount after it — a table? */
+function statesATable(region: string): boolean {
+  return FILING_LABELS.some(({ pattern }) => pattern.test(region));
+}
 
 export function deductionTableRegion(text: string): string {
-  const at = DEDUCTION_TABLE_LEADIN.exec(text);
-  if (!at) return text;
-  // Long enough for the four or five rows a table has, short enough that it
-  // cannot reach the prose underneath it.
-  return text.slice(at.index, at.index + 400);
+  for (const at of text.matchAll(DEDUCTION_TABLE_LEADIN)) {
+    // Long enough for the four or five rows a table has, short enough that it
+    // cannot reach the prose underneath it.
+    let region = text.slice(at.index, at.index + 400);
+    const addOn = ADDITIONAL_AGE_BLIND.exec(region);
+    if (addOn && addOn.index > 0) region = region.slice(0, addOn.index);
+    if (statesATable(region)) return region;
+  }
+  return text;
 }
 
 function parseStandardDeductions(raw: string, current: Record<string, unknown>): ParseOutcome {
@@ -1909,7 +1947,12 @@ export const ADAPTERS: RefreshAdapter[] = [
     group: "state-me",
     source:
       "Maine Revenue Services individual income tax rate schedule (annual inflation adjustment)",
-    sourceUrl: "https://www.maine.gov/revenue/taxes/income-estate-tax",
+    // The rate-schedule PDF, not the tax division's landing page: the landing
+    // page is a menu and states no figure at all. This document states all
+    // three amounts in one line, under the cost-of-living factors that produced
+    // them and the statute (36 M.R.S. §5403) that requires them.
+    sourceUrl:
+      "https://www.maine.gov/revenue/sites/maine.gov.revenue/files/2026-05/ind_tax_rate_sched_2026_rev.pdf",
     cadence: "Annual",
     // ME's three rates (5.8% / 6.75% / 7.15%) and the 2% surtax are statutory
     // (36 M.R.S. §5111), but the bracket thresholds, the standard deduction, the

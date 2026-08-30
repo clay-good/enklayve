@@ -537,6 +537,62 @@ describe("adapters: North Carolina (a table, then pages about itemizing)", () =>
   });
 });
 
+describe("adapters: Maine (a rate schedule that mentions the table before stating it)", () => {
+  const adapter = adaptersForGroup("state-me")[0]!;
+  const current = readShard("state-me-income-tax-2024.json");
+  // Maine Revenue Services, "2026 Individual Income Tax Rates", revised
+  // 2026-05-20 — abridged, but every phrase below is the document's own, in the
+  // document's order. maine.gov/revenue/taxes/income-estate-tax, which this
+  // adapter watched, is a menu and states none of it.
+  const raw =
+    "State of Maine 2026 Individual Income Tax Rates ... The Maine standard deduction and" +
+    " personal exemption amounts are adjusted by multiplying the cost-of-living adjustment," +
+    " 1.279, by the dollar amount of the standard deduction specified in 36 M.R.S. § 5124-C." +
+    " Single Individuals and Married Persons Filing Separate Returns If the taxable income is:" +
+    " The tax is: Less than $27,400 5.8% of Maine taxable income $27,400 but less than $64,850" +
+    " $1,589 plus 6.75% of excess over $27,400 ... Married Individuals and Surviving Spouses" +
+    " Filing Joint Returns Less than $54,850 5.8% of Maine taxable income" +
+    " Personal Exemption: $5,300 – applicable to the taxpayer (and spouse if married filing" +
+    " jointly) Standard Deduction: Single - $15,700 Married Filing Jointly - $31,400" +
+    " Head of Household - $23,550 Married Filing Separately - $15,700" +
+    " Additional Amount for Age or Blindness: $1,650 if married (whether filing jointly or" +
+    " separately) or a qualified surviving spouse. The additional amount is $3,300 if one" +
+    " spouse is 65 or over and blind, $6,600 if both spouses are 65 or over and blind.";
+
+  it("reads the standard deduction the rate schedule states", () => {
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const sd = result.shard.standardDeductionByFilingStatus as Record<string, number>;
+    expect(sd).toEqual({ single: 15700, married_jointly: 31400, head_of_household: 23550 });
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("skips a lead-in with no table under it and stops at the age/blindness add-on", () => {
+    // Three separate ways this document defeated the first version of the
+    // narrowing, each of which alone left Maine unwatched:
+    const region = deductionTableRegion(raw);
+    // 1. It MENTIONS "standard deduction ... amounts" 1,500 characters above
+    //    the table. Taking the first lead-in narrowed to prose with no figure.
+    expect(region).not.toContain("cost-of-living");
+    // 2. Its lead-in is a bare colon — no "your", no "amounts", no "table".
+    expect(region.startsWith("Standard Deduction:")).toBe(true);
+    // 3. The ADDITIONAL amount for age and blindness sits inside 400 characters
+    //    of the table, in a sentence containing "married ... filing jointly",
+    //    so $3,300 is a second married_jointly candidate and the ambiguity
+    //    guard would refuse the whole page over a figure that is not a standard
+    //    deduction at all.
+    expect(region).not.toContain("Additional Amount");
+    expect(region).not.toContain("3,300");
+  });
+
+  it("cites the document that states the figures, not the tax division's menu", () => {
+    expect(adapter.sourceUrl).toContain("ind_tax_rate_sched");
+    const citation = current.citation as { sourceUrl: string };
+    expect(citation.sourceUrl).toBe(adapter.sourceUrl);
+  });
+});
+
 describe("adapters: Michigan (Form 446's masthead)", () => {
   const adapter = adaptersForGroup("state-mi")[0]!;
   const current = readShard("state-mi-income-tax-2024.json");

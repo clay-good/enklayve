@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-29",
+  "generatedAt": "2026-08-30",
   "datasets": [
     {
       "id": "federal-income-tax-2024",
@@ -647,10 +647,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-me-income-tax-2024.json",
-      "sourceUrl": "https://www.maine.gov/revenue/taxes/income-estate-tax",
+      "sourceUrl": "https://www.maine.gov/revenue/sites/maine.gov.revenue/files/2026-05/ind_tax_rate_sched_2026_rev.pdf",
       "sourceDocument": "Maine Revenue Services 2026 rate schedule (36 M.R.S. §5111 brackets; §5124-C standard deduction + phase-out; §5126-A $5,300 exemption)",
       "dateRetrieved": "2026-06-06",
-      "contentHash": "c18247014e7b42f0280769e2cf74784c2d282957d24fe440e80692f61ac31eda"
+      "contentHash": "ac94d8e31265f4e719b89ad627e1fc7e48826104968f05fcced9dff1ab326dcb"
     },
     {
       "id": "state-nd-income-tax-2024",
