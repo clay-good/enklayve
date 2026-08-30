@@ -1356,11 +1356,22 @@ describe("adapters: seventh set — the remaining seeded states", () => {
   describe("MA — 5% base rate + 4% surtax (dedicated parser)", () => {
     const adapter = adaptersForGroup("state-ma")[0]!;
     const current = readShard("state-ma-income-tax-2024.json");
+    // mass.gov/info-details/massachusetts-4-surtax-on-taxable-income, verbatim.
+    const raw =
+      "Massachusetts personal income taxpayers pay an additional 4% surtax on taxable income" +
+      " that exceeds the surtax threshold. This surtax threshold increases annually for" +
+      " inflation. The surtax threshold for: Tax year 2026 is $1,107,750 Tax year 2025 is" +
+      " $1,083,150 Tax year 2024 is $1,053,750 Tax year 2023 is $1,000,000." +
+      " Can pass-through entities elect to pay a 9% PTE excise to take into account the 4%" +
+      " surtax? No. The elective PTE excise is imposed at a statutory rate of 5%.";
 
-    it("anchors the base rate, surtax rate, and inflation-adjusted threshold", () => {
-      const raw =
-        "The Massachusetts income tax rate is 5.0%. A 4% surtax applies to taxable " +
-        "income in excess of $1,107,750 for tax year 2026.";
+    it("reads the surtax rate and the by-year threshold the page actually states", () => {
+      // The old parser demanded the 5% base rate off this page, which is about
+      // the surtax and states no base rate — the only "5%" on it is the
+      // pass-through excise, in an answer explaining that the excise is NOT the
+      // surtax. And it wanted "4% surtax ... in excess of $X" on one line, where
+      // the threshold is a by-year list. So it reported a moved source about a
+      // page that says exactly what the shard carries.
       const result = adapter.parse(raw, current);
       expect(result.ok).toBe(true);
       if (!result.ok) return;
@@ -1368,8 +1379,8 @@ describe("adapters: seventh set — the remaining seeded states", () => {
         string,
         { lowerBound: number; rate: number }[]
       >;
-      // Base bracket carries the 5% rate; the surtax bracket carries the combined
-      // 9% at the inflation-adjusted threshold, applied to every filing status.
+      // Base bracket keeps the statutory 5% (M.G.L. c. 62 §4, not on this page);
+      // the surtax bracket carries the combined 9% at the year's threshold.
       expect(brackets.single).toEqual([
         { lowerBound: 0, rate: 0.05 },
         { lowerBound: 1107750, rate: 0.09 },
@@ -1379,27 +1390,39 @@ describe("adapters: seventh set — the remaining seeded states", () => {
       expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
     });
 
-    it("catches a moved (inflation-adjusted) surtax threshold", () => {
-      const raw = "The income tax rate is 5.0%. The 4% surtax applies to income over $1,150,000.";
-      const result = adapter.parse(raw, current);
+    it("takes the shard's own year from the list, not the first row", () => {
+      // Every year DOR has ever published is on that page, newest first. Reading
+      // "the first one" is right this year and wrong the moment the list grows a
+      // row, which is the Rhode Island lesson on a different page.
+      const result = adapter.parse(raw, { ...current, taxYear: 2024 });
       expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      const brackets = result.shard.bracketsByFilingStatus as Record<
-        string,
-        { lowerBound: number }[]
-      >;
-      expect(brackets.single![1]!.lowerBound).toBe(1150000);
+      if (result.ok) {
+        const b = result.shard.bracketsByFilingStatus as Record<string, { lowerBound: number }[]>;
+        expect(b.single![1]!.lowerBound).toBe(1053750);
+      }
     });
 
-    it("fails (-> alert) when the surtax threshold cannot be anchored", () => {
-      expect(adapter.parse("The income tax rate is 5.0%. A surtax also applies.", current).ok).toBe(
-        false,
+    it("says so when the list stops before the shard's year", () => {
+      const result = adapter.parse(raw, { ...current, taxYear: 2027 });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.reason).toMatch(/stops at tax year 2026 and this shard is 2027/);
+        // Not a defect: the state has not published it.
+        expect(result.settled).toBe(true);
+      }
+    });
+
+    it("fails (-> alert) when the page states no threshold list at all", () => {
+      expect(adapter.parse("A 4% surtax also applies to high earners.", current).ok).toBe(false);
+    });
+
+    it("refuses a threshold that moved implausibly far", () => {
+      const moved = adapter.parse(
+        raw.replace("Tax year 2026 is $1,107,750", "Tax year 2026 is $9,107,750"),
+        current,
       );
-    });
-
-    it("fails (-> alert) on an implausible base rate", () => {
-      const raw = "The income tax rate is 55%. A 4% surtax applies to income over $1,107,750.";
-      expect(adapter.parse(raw, current).ok).toBe(false);
+      expect(moved.ok).toBe(false);
+      if (!moved.ok) expect(moved.reason).toMatch(/surtax threshold 9107750 is/);
     });
   });
 

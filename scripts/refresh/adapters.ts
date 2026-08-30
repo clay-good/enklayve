@@ -1580,29 +1580,83 @@ function parseGraduatedBracketJurisdiction(
  * else (deductions, exemptions) for the reviewer, the same boundary as the
  * other state parsers. A plausibility guard on both percentages and a positive
  * threshold routes a garbled read to the fail-safe alert rather than a guess.
+ *
+ * Two things had to change before it could read the page it watches.
+ *
+ * **It demanded the 5% base rate, which this page does not state.** DOR's
+ * surtax page is about the surtax; the only "5%" on it is the elective
+ * pass-through excise in an FAQ answer explaining that the excise is NOT the
+ * surtax. Requiring a figure a source was never going to state, and reporting
+ * the absence as a moved source, is the failure four other adapters were fixed
+ * for. The base rate is statutory (M.G.L. c. 62 §4, 5% since 2020) and is taken
+ * from the shard's own first bracket, which is what the shard is for.
+ *
+ * **The threshold is a by-year list, not a clause.** The page states it as
+ *
+ *   The surtax threshold for:
+ *   Tax year 2026 is $1,107,750
+ *   Tax year 2025 is $1,083,150
+ *   Tax year 2024 is $1,053,750
+ *
+ * and the old pattern wanted "4% surtax ... in excess of $X" on one line. The
+ * shard says which year it is, so the shard picks the row — the anchor the
+ * revenue procedure, the Rhode Island columns and the Idaho blocks all use. A
+ * list whose newest year is older than the shard's is the state not having
+ * published yet, and says so.
  */
 function parseMassachusettsSurtax(raw: string, current: Record<string, unknown>): ParseOutcome {
-  const baseMatch =
-    /income[- ]?tax rate(?:\s+(?:is|of))?\s*:?\s*([\d.]+)\s*(?:percent|%)/i.exec(raw) ??
-    /\b([\d.]+)\s*(?:percent|%)\s+(?:base|flat)\b/i.exec(raw);
-  const surtaxMatch =
-    /([\d.]+)\s*(?:percent|%)\s+surtax[^$%]*?(?:in excess of|over|above|exceeding)\s*\$?([\d,]{5,})/i.exec(
-      raw,
-    );
-  if (!baseMatch || !surtaxMatch) {
+  const text = visibleText(raw);
+  const taxYear = Number(current.taxYear);
+
+  const surtaxRates = new Set<number>();
+  for (const m of text.matchAll(/\b([\d.]+)\s*(?:percent|%)\s+surtax\b/gi)) {
+    const pct = Number(m[1]);
+    if (pct > 0 && pct <= 15) surtaxRates.add(pct);
+  }
+  if (surtaxRates.size > 1) {
     return {
       ok: false,
-      reason: "could not anchor the MA base rate and the surtax rate + threshold",
+      reason: `the page states more than one surtax rate (${[...surtaxRates].sort((a, b) => a - b).join(", ")}%); refusing to guess which is current`,
     };
   }
-  const basePct = Number(baseMatch[1]);
-  const surtaxPct = Number(surtaxMatch[1]);
-  const threshold = parseAmount(surtaxMatch[2] as string);
-  if (!(basePct > 0 && basePct <= 15)) {
-    return { ok: false, reason: `anchored an implausible base rate (${baseMatch[1]}%)` };
+
+  // "Tax year 2026 is $1,107,750" — the shard's own year picks the row.
+  const rows = new Map<number, number>();
+  for (const m of text.matchAll(/tax\s+year\s+((?:19|20)\d{2})\s+is\s+\$?([\d,]{7,})/gi)) {
+    rows.set(Number(m[1]), parseAmount(m[2] as string));
   }
-  if (!(surtaxPct > 0 && surtaxPct <= 15)) {
-    return { ok: false, reason: `anchored an implausible surtax rate (${surtaxMatch[1]}%)` };
+  if (surtaxRates.size === 0 || rows.size === 0) {
+    return {
+      ok: false,
+      reason: "could not anchor the MA surtax rate and its by-year threshold list",
+    };
+  }
+  if (!rows.has(taxYear)) {
+    const newest = Math.max(...rows.keys());
+    return {
+      ok: false,
+      reason:
+        `the surtax-threshold list stops at tax year ${newest} and this shard is ${taxYear}, ` +
+        "so Massachusetts has probably not published the shard's year yet",
+      settled: newest < taxYear,
+    };
+  }
+
+  // The 5% base is statutory (M.G.L. c. 62 §4) and is not on this page, so it
+  // comes from the shard rather than being demanded of a source that has it not.
+  const committed = (current.bracketsByFilingStatus as Record<string, { rate: number }[]>)?.single;
+  const basePct = Number(committed?.[0]?.rate) * 100;
+  const surtaxPct = [...surtaxRates][0]!;
+  const threshold = rows.get(taxYear)!;
+  const drift = implausibleDrift(Number(committed?.[1]?.["lowerBound" as never]), threshold);
+  if (drift !== null) {
+    return {
+      ok: false,
+      reason: `the surtax threshold ${drift}; refusing — either the page moved or this is not the figure`,
+    };
+  }
+  if (!(basePct > 0 && basePct <= 15)) {
+    return { ok: false, reason: `the shard's base rate is implausible (${basePct}%)` };
   }
   if (!(threshold > 0)) {
     return { ok: false, reason: "anchored a non-positive surtax threshold" };
