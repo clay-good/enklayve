@@ -23,6 +23,7 @@ import { readFileSync, readdirSync, statSync, appendFileSync } from "node:fs";
 import { resolve, dirname, join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BROWSER_USER_AGENT } from "./user-agent.ts";
+import { INCOMPLETE_CERT_CHAIN } from "./fetch-source.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 // `scripts` is here for the refresh adapters: each one names the page it
@@ -84,14 +85,17 @@ export interface LinkResult {
 export type LinkStatus = "ok" | "redirect" | "broken" | "unreachable";
 
 /**
- * A TLS chain the server did not serve completely. Several state revenue sites
- * omit an intermediate certificate; a browser and curl repair that by fetching
- * the missing one, and Node's `fetch` refuses. The page is fine, so calling it
- * "broken" would send someone to replace a link that works — it gets its own
+ * A TLS chain the server did not serve completely. The page is fine, so calling
+ * it "broken" would send someone to replace a link that works — it gets its own
  * category instead. Every other transport failure (DNS, refused, timeout after
  * retries) really is a broken link.
+ *
+ * The pattern itself lives beside the shared fetch, because the adapter check
+ * needs the same fact about the same servers and the two used to disagree: this
+ * one told a reader Mississippi's certificate chain was short, while the adapter
+ * check called the identical failure a bad afternoon and waited for it to pass.
  */
-const CERT_ERROR = /certificate|CERT_|self[- ]signed|SSL|TLS/i;
+const CERT_ERROR = INCOMPLETE_CERT_CHAIN;
 
 /**
  * Classify one checked URL. Pure, so the reporting is testable without a

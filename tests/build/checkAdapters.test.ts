@@ -7,7 +7,8 @@ import {
 import { ADAPTERS } from "../../scripts/refresh/adapters";
 import { extractUrls, sourceFiles } from "../../scripts/check-links";
 import { isPdf } from "../../scripts/fetch-source";
-import { againstBaseline } from "../../scripts/check-adapters";
+import { againstBaseline, willNotClearOnItsOwn } from "../../scripts/check-adapters";
+import { describeFetchError } from "../../scripts/fetch-source";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -120,6 +121,81 @@ describe("classifying one adapter's outcome", () => {
       status: "wouldChange",
       diff: ["standardDeductionByFilingStatus.single: 5706 -> 2019"],
     });
+  });
+});
+
+describe("a source that will not come back", () => {
+  it("reads the reason out of the cause chain Node hides it in", () => {
+    // Node reports every transport failure as the same four words and puts the
+    // reason in `cause`. Unwrapped, Mississippi's adapter reported "fetch
+    // failed: fetch failed" every month — a sentence naming neither the problem
+    // nor anybody who could fix it — while the link check on the same server
+    // said "unable to verify the first certificate".
+    const cause = Object.assign(new Error("unable to verify the first certificate"), {
+      code: "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+    });
+    const wrapped = new TypeError("fetch failed", { cause });
+    expect(describeFetchError(wrapped)).toBe(
+      "unable to verify the first certificate [UNABLE_TO_VERIFY_LEAF_SIGNATURE]",
+    );
+  });
+
+  it("keeps the wrapper when the wrapper is all there is", () => {
+    expect(describeFetchError(new TypeError("fetch failed"))).toBe("fetch failed");
+    expect(describeFetchError(new Error("The operation was aborted"))).toBe(
+      "The operation was aborted",
+    );
+  });
+
+  it("does not loop on a cause chain that points back at itself", () => {
+    const a = new Error("outer");
+    const b = new Error("inner", { cause: a });
+    (a as { cause?: unknown }).cause = b;
+    expect(describeFetchError(a)).toBe("outer: inner");
+  });
+
+  it("tells a bad afternoon apart from a wall", () => {
+    // A quota and a 503 clear by themselves; an incomplete certificate chain
+    // fails identically every run, so the shard behind it has stopped being
+    // watched for good while the report says to wait it out.
+    expect(
+      willNotClearOnItsOwn(
+        "fetch failed: unable to verify the first certificate [UNABLE_TO_VERIFY_LEAF_SIGNATURE]",
+      ),
+    ).toBe(true);
+    expect(willNotClearOnItsOwn("source returned HTTP 503")).toBe(false);
+    expect(willNotClearOnItsOwn("BLS declined the request (REQUEST_NOT_PROCESSED)")).toBe(false);
+    expect(willNotClearOnItsOwn(undefined)).toBe(false);
+  });
+
+  it("reports the permanent one apart from the transient one, and gates on neither", () => {
+    const report = renderAnchorReport([
+      result({
+        adapterId: "state-ms-income-tax-2024",
+        status: "unreachable",
+        detail: "fetch failed: unable to verify the first certificate",
+      }),
+      result({ adapterId: "cpi-u-annual", status: "unreachable", detail: "daily threshold" }),
+    ]);
+    expect(report).toContain("2 unreachable (1 of them permanently)");
+    expect(report).toMatch(/## Unreachable, and not by accident/);
+    expect(report).toMatch(/## Unreachable\n/);
+    // Each entry appears under exactly one heading.
+    const walled = report.indexOf("## Unreachable, and not by accident");
+    const afternoon = report.indexOf("## Unreachable\n");
+    expect(walled).toBeLessThan(afternoon);
+    expect(report.slice(walled, afternoon)).toContain("state-ms-income-tax-2024");
+    expect(report.slice(walled, afternoon)).not.toContain("cpi-u-annual");
+    expect(report.slice(afternoon)).toContain("cpi-u-annual");
+    // It fails every run by definition, so it must not fail the check: an alarm
+    // that always fires is not an alarm.
+    expect(againstBaseline([], []).regressions).toEqual([]);
+  });
+
+  it("says nothing at all when every source came back", () => {
+    const report = renderAnchorReport([result({ status: "agrees" })]);
+    expect(report).not.toContain("## Unreachable");
+    expect(report).toContain("0 unreachable.");
   });
 });
 

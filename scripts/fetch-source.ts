@@ -30,6 +30,45 @@ export type FetchedSource = { ok: true; raw: string } | { ok: false; reason: str
 
 const TIMEOUT_MS = 30_000;
 
+/**
+ * A TLS chain the server did not serve completely. Several state revenue sites
+ * omit an intermediate certificate; a browser and curl repair that by fetching
+ * the missing one, and Node's `fetch` refuses. Nothing about the page is wrong
+ * and nothing about the adapter is broken — but nothing about it will change
+ * either, which is the fact both checks need and neither could see while each
+ * carried its own idea of what a transport failure means. It lives here, beside
+ * the one fetch they share, so they cannot disagree about it.
+ */
+export const INCOMPLETE_CERT_CHAIN = /certificate|CERT_|self[- ]signed|SSL|TLS/i;
+
+/**
+ * Say what actually went wrong.
+ *
+ * Node's `fetch` reports every transport failure as the same four words —
+ * `TypeError: fetch failed` — and puts the reason in `cause`, one or more links
+ * down. Unwrapped, Mississippi's adapter reported "fetch failed: fetch failed"
+ * every month, which named neither the problem nor anyone who could fix it,
+ * while the link check on the same server said "unable to verify the first
+ * certificate" and suggested the flag that repairs it. The distinction between
+ * an afternoon and a wall is in the cause chain, so read it.
+ */
+export function describeFetchError(error: unknown): string {
+  const seen = new Set<unknown>();
+  const messages: string[] = [];
+  let current: unknown = error;
+  while (current instanceof Error && !seen.has(current)) {
+    seen.add(current);
+    const code = (current as { code?: string }).code;
+    const text = code ? `${current.message} [${code}]` : current.message;
+    if (text && text !== messages[messages.length - 1]) messages.push(text);
+    current = current.cause;
+  }
+  // "fetch failed" is Node's wrapper, not a reason. Drop it when something
+  // below it in the chain says more, and keep it when it is all there is.
+  const reasons = messages.filter((m) => m !== "fetch failed");
+  return (reasons.length > 0 ? reasons : messages).join(": ") || String(error);
+}
+
 /** Does this response carry a PDF rather than markup? */
 export function isPdf(url: string, contentType: string | null): boolean {
   if (contentType && /application\/pdf/i.test(contentType)) return true;
@@ -82,7 +121,7 @@ export async function fetchSource(url: string): Promise<FetchedSource> {
       return { ok: false, reason: `could not read the PDF: ${(error as Error).message}` };
     }
   } catch (error) {
-    return { ok: false, reason: `fetch failed: ${(error as Error).message}` };
+    return { ok: false, reason: `fetch failed: ${describeFetchError(error)}` };
   } finally {
     clearTimeout(timer);
   }

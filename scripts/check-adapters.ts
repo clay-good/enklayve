@@ -47,7 +47,7 @@ import {
   type RefreshAdapter,
   type RefreshGroup,
 } from "./refresh/adapters.ts";
-import { fetchSource } from "./fetch-source.ts";
+import { fetchSource, INCOMPLETE_CERT_CHAIN } from "./fetch-source.ts";
 import { diffShards } from "./refresh/contract.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -116,6 +116,27 @@ export function classifyAnchor(
 }
 
 /**
+ * Of the sources that did not come back, which ones will still not come back
+ * next month?
+ *
+ * "Unreachable" is reported and not gated because it is usually weather: an
+ * agency's bad afternoon, a keyless API's spent daily quota. Both clear by
+ * themselves. A server that does not serve a complete certificate chain does
+ * not: Node's `fetch` will refuse it every run forever, so the shard behind it
+ * has stopped being watched permanently while the report says to wait. That is
+ * the failure this whole check exists to catch — a shard sitting at whatever
+ * year it was authored in behind a citation that still looks live — filed as
+ * something that fixes itself. Mississippi sat there.
+ *
+ * It still does not fail the check: it fails every run by definition, and an
+ * alarm that always fires is not an alarm. It is separated so a reader can see
+ * that one of these two entries wants a decision and the other wants a week.
+ */
+export function willNotClearOnItsOwn(detail: string | undefined): boolean {
+  return detail !== undefined && INCOMPLETE_CERT_CHAIN.test(detail);
+}
+
+/**
  * Split the adapters that cannot anchor into the ones already known not to and
  * the ones that just stopped.
  *
@@ -156,6 +177,8 @@ export function renderAnchorReport(
   const unparsed = by("unparsed");
   const settled = by("settled");
   const unreachable = by("unreachable");
+  const walled = unreachable.filter((r) => willNotClearOnItsOwn(r.detail));
+  const transient = unreachable.filter((r) => !willNotClearOnItsOwn(r.detail));
 
   const lines: string[] = [];
   lines.push(`Checked ${results.length} refresh adapters.`);
@@ -185,7 +208,10 @@ export function renderAnchorReport(
   lines.push(
     `${agrees.length} agree with their shard · ${wouldChange.length} would change it · ` +
       `${unparsed.length} could not parse · ${settled.length} settled · ` +
-      `${unreachable.length} unreachable.`,
+      `${unreachable.length} unreachable` +
+      // Saying how many of those will fail again next month is the difference
+      // between a number to skim and a number to act on.
+      `${walled.length > 0 ? ` (${walled.length} of them permanently)` : ""}.`,
   );
 
   const { regressions, recovered } = againstBaseline(
@@ -261,7 +287,27 @@ export function renderAnchorReport(
     }
   }
 
-  if (unreachable.length > 0) {
+  if (walled.length > 0) {
+    lines.push("");
+    lines.push("## Unreachable, and not by accident");
+    lines.push("");
+    lines.push(
+      "The server did not serve a complete certificate chain. A browser and curl repair" +
+        " that by fetching the missing intermediate; Node does not, so this fetch will fail" +
+        " identically every month. Waiting is not a plan: the shard behind it has stopped" +
+        " being watched for good, and will sit at whatever year it was authored in behind a" +
+        " citation that still looks live. Repoint the adapter at a host that serves its" +
+        " chain, or record the shard as a reviewer step so somebody reads the source.",
+    );
+    lines.push("");
+    for (const r of walled) {
+      lines.push(`- \`${r.adapterId}\` (${r.group})`);
+      lines.push(`  - ${r.url}`);
+      lines.push(`  - ${r.detail ?? "no reason given"}`);
+    }
+  }
+
+  if (transient.length > 0) {
     lines.push("");
     lines.push("## Unreachable");
     lines.push("");
@@ -272,7 +318,7 @@ export function renderAnchorReport(
         " does not fail the check on its own.",
     );
     lines.push("");
-    for (const r of unreachable) {
+    for (const r of transient) {
       lines.push(`- \`${r.adapterId}\` (${r.group})`);
       lines.push(`  - ${r.url}`);
       lines.push(`  - ${r.detail ?? "no reason given"}`);
