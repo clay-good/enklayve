@@ -101,16 +101,23 @@ export function resolveDueDate(due: DeadlineDue, triggerDate?: string): string |
  */
 export function addCalendarMonths(iso: string, months: number): string {
   const startMs = parseIsoUtc(iso);
-  if (!Number.isFinite(startMs)) return iso;
+  if (!Number.isFinite(startMs) || !Number.isFinite(months)) return iso;
   const d = new Date(startMs);
   const year = d.getUTCFullYear();
   const month = d.getUTCMonth();
   const day = d.getUTCDate();
   const target = new Date(Date.UTC(year, month + Math.trunc(months), 1));
+  // A count far enough out lands past the range a Date can hold, and
+  // `toISOString` answers that by throwing — the one way this function could
+  // break the §2.9 rule that no public function throws. Nothing reaches it
+  // today (a payoff is capped at 1,200 months), which is exactly why it is
+  // worth pinning now rather than after some later caller finds it.
+  if (Number.isNaN(target.getTime())) return iso;
   const lastDay = new Date(
     Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
   ).getUTCDate();
-  return toIso(Date.UTC(target.getUTCFullYear(), target.getUTCMonth(), Math.min(day, lastDay)));
+  const result = Date.UTC(target.getUTCFullYear(), target.getUTCMonth(), Math.min(day, lastDay));
+  return Number.isNaN(result) ? iso : toIso(result);
 }
 
 /** How a deadline stands relative to `asOf`. */

@@ -57,4 +57,18 @@ describe("adding calendar months", () => {
   it("hands back a malformed date rather than inventing one", () => {
     expect(addCalendarMonths("not-a-date", 1)).toBe("not-a-date");
   });
+
+  it("never throws, however absurd the count (§2.9)", () => {
+    // A count far enough out lands past the range a Date can hold, and
+    // `toISOString` answers that by throwing. Nothing reaches it today — a
+    // payoff is capped at 1,200 months — but "no public function throws" is a
+    // property of the function, not of today's callers.
+    for (const months of [Infinity, -Infinity, NaN, 1e9, 1e15, Number.MAX_SAFE_INTEGER]) {
+      expect(() => addCalendarMonths("2026-08-30", months)).not.toThrow();
+      expect(addCalendarMonths("2026-08-30", months)).toBe("2026-08-30");
+      expect(() => monthsAheadLabel(months, "en-US", "2026-08-30")).not.toThrow();
+    }
+    // A large-but-representable count still answers properly.
+    expect(addCalendarMonths("2026-08-30", 1200)).toBe("2126-08-30");
+  });
 });
