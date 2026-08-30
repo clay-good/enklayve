@@ -333,6 +333,47 @@ describe("the known-anchoring baseline", () => {
     ]);
   });
 
+  it("does not call a watched adapter that was never reached a regression", () => {
+    // The defect this fixes, observed live: Pennsylvania flaked once under
+    // six-way concurrency and was reported under "Stopped anchoring" — the
+    // loudest thing this check says, the one that exits non-zero and opens an
+    // issue claiming a shard has gone unwatched — then anchored fine on its own
+    // a minute later. "Unreachable" is documented as the agency's afternoon and
+    // is not supposed to gate; it did, for exactly the adapters that matter.
+    const baseline = ["fica-2024", "state-pa-income-tax-2024"];
+    const { regressions, unchecked } = againstBaseline(["fica-2024"], baseline, [
+      "state-pa-income-tax-2024",
+    ]);
+    expect(regressions).toEqual([]);
+    // Not reached is not the same as fine, so it is still said out loud.
+    expect(unchecked).toEqual(["state-pa-income-tax-2024"]);
+  });
+
+  it("still fails when a watched adapter answered and stopped anchoring", () => {
+    // The page came back and the parser could not read it. That is the failure
+    // the gate exists for, and nothing above may soften it.
+    const baseline = ["fica-2024", "state-pa-income-tax-2024"];
+    const { regressions, unchecked } = againstBaseline(["fica-2024"], baseline, []);
+    expect(regressions).toEqual(["state-pa-income-tax-2024"]);
+    expect(unchecked).toEqual([]);
+  });
+
+  it("names the unreached ones in the report without claiming they broke", () => {
+    const report = renderAnchorReport(
+      [
+        result({ adapterId: "fica-2024", status: "agrees" }),
+        result({
+          adapterId: "state-pa-income-tax-2024",
+          status: "unreachable",
+          detail: "fetch failed: terminated",
+        }),
+      ],
+      ["fica-2024", "state-pa-income-tax-2024"],
+    );
+    expect(report).toMatch(/## On the watched list and not reached/);
+    expect(report).not.toMatch(/## Stopped anchoring/);
+  });
+
   it("notices an adapter anchoring that the baseline does not list yet", () => {
     // Not a failure — anchoring is not correctness, so it wants a dry run first
     // — but it is how the healthy list grows, so it has to be said.

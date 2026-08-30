@@ -140,6 +140,17 @@ export function willNotClearOnItsOwn(detail: string | undefined): boolean {
  * Split the adapters that cannot anchor into the ones already known not to and
  * the ones that just stopped.
  *
+ * An adapter that was never *reached* belongs to neither group, and conflating
+ * it with the second was a real defect: `unreachable` is documented as "usually
+ * the agency's afternoon, not our defect" and reported without gating, but a
+ * watched adapter that flaked still fell out of the anchoring set and was filed
+ * under "Stopped anchoring" — the loudest thing this check says, the one that
+ * exits non-zero and opens an issue claiming a shard has gone unwatched.
+ * Pennsylvania did exactly that on 2026-08-30 under six-way concurrency and
+ * anchored fine on its own a minute later. A check that cries wolf about the
+ * failure it exists to catch is worse than no check, so a run that did not
+ * reach an adapter now says so instead of guessing.
+ *
  * More than forty adapters cannot read their sources today. Reporting that every
  * month, in full, would be an alert nobody reads by the third time — the exact
  * failure the shell-size gate was written to escape ("a warning that always
@@ -152,17 +163,22 @@ export function willNotClearOnItsOwn(detail: string | undefined): boolean {
 export function againstBaseline(
   anchored: readonly string[],
   baseline: readonly string[],
-): { regressions: string[]; recovered: string[] } {
+  unreached: readonly string[] = [],
+): { regressions: string[]; recovered: string[]; unchecked: string[] } {
   const nowAnchored = new Set(anchored);
   const known = new Set(baseline);
+  const missed = new Set(unreached);
   return {
     // An adapter that was watching its shard and has stopped. This is the only
     // thing that fails the check.
-    regressions: baseline.filter((id) => !nowAnchored.has(id)).sort(),
+    regressions: baseline.filter((id) => !nowAnchored.has(id) && !missed.has(id)).sort(),
     // An adapter anchoring that the baseline does not list yet. Not a failure —
     // it wants a dry run first, since anchoring is not correctness — but worth
     // saying, because this is how the healthy list grows.
     recovered: anchored.filter((id) => !known.has(id)).sort(),
+    // On the watched list and never reached, so this run has no opinion about
+    // it either way. Reported, never gated.
+    unchecked: baseline.filter((id) => missed.has(id)).sort(),
   };
 }
 
@@ -214,10 +230,25 @@ export function renderAnchorReport(
       `${walled.length > 0 ? ` (${walled.length} of them permanently)` : ""}.`,
   );
 
-  const { regressions, recovered } = againstBaseline(
+  const { regressions, recovered, unchecked } = againstBaseline(
     [...agrees, ...wouldChange].map((r) => r.adapterId),
     baseline,
+    unreachable.map((r) => r.adapterId),
   );
+  if (unchecked.length > 0) {
+    lines.push("");
+    lines.push("## On the watched list and not reached");
+    lines.push("");
+    lines.push(
+      "These are adapters the baseline says were watching their shard, and this run never" +
+        " got an answer from their source — so it has no opinion about whether they still" +
+        " anchor, and does not claim one. Read the unreachable entry below for the reason." +
+        " A single dropped connection means nothing; the same adapter here two months" +
+        " running means its source has gone away and its shard is no longer watched.",
+    );
+    lines.push("");
+    for (const id of unchecked) lines.push(`- \`${id}\``);
+  }
   if (recovered.length > 0) {
     lines.push("");
     lines.push("## Anchoring again");
@@ -330,12 +361,28 @@ export function renderAnchorReport(
 
 /* c8 ignore start -- network + CLI */
 
+/**
+ * Fetch, and on a transport failure fetch once more.
+ *
+ * A government site dropping a single connection is common and means nothing —
+ * the link check has retried once for exactly this reason since it was written.
+ * The stakes are higher here: fifty-one sources go out six at a time, and a
+ * dropped connection to a *watched* adapter used to read as "this shard has
+ * stopped being watched". An HTTP status is not retried, because a 404 is an
+ * answer, and neither is a page that came back and failed to parse.
+ */
+async function fetchTwice(url: string): Promise<Awaited<ReturnType<typeof fetchSource>>> {
+  const first = await fetchSource(url);
+  if (first.ok || !first.reason.startsWith("fetch failed")) return first;
+  return fetchSource(url);
+}
+
 async function check(adapter: RefreshAdapter): Promise<AnchorResult> {
   const current = JSON.parse(readFileSync(join(DATA_DIR, `${adapter.id}.json`), "utf8")) as Record<
     string,
     unknown
   >;
-  const fetched = await fetchSource(adapter.sourceUrl);
+  const fetched = await fetchTwice(adapter.sourceUrl);
   const { status, detail, diff } = classifyAnchor(fetched, () => {
     if (!fetched.ok) return { ok: false, reason: fetched.reason };
     try {
@@ -396,6 +443,7 @@ async function main(): Promise<void> {
         .filter((r) => r.status === "agrees" || r.status === "wouldChange")
         .map((r) => r.adapterId),
       baseline,
+      results.filter((r) => r.status === "unreachable").map((r) => r.adapterId),
     );
     const wouldChange = results.filter((r) => r.status === "wouldChange").length;
     const unreachable = results.filter((r) => r.status === "unreachable").length;
@@ -405,14 +453,18 @@ async function main(): Promise<void> {
     );
     appendFileSync(out, `report<<EOF\n${report}\nEOF\n`);
   }
-  // Only a NEW breakage fails. The forty-odd known ones are a backlog, not a
-  // monthly alarm, and an alarm that always fires is not an alarm. Unreachable
-  // is reported and left alone: usually the agency's afternoon, not our defect.
+  // Only a NEW breakage fails. The known refusals are a backlog, not a monthly
+  // alarm, and an alarm that always fires is not an alarm. Unreachable is
+  // reported and left alone — usually the agency's afternoon, not our defect —
+  // and that now holds for a WATCHED adapter too, which is where it used to
+  // fail: a flake dropped it out of the anchoring set and it was reported as a
+  // shard that had stopped being watched.
   const { regressions } = againstBaseline(
     results
       .filter((r) => r.status === "agrees" || r.status === "wouldChange")
       .map((r) => r.adapterId),
     baseline,
+    results.filter((r) => r.status === "unreachable").map((r) => r.adapterId),
   );
   if (regressions.length > 0) process.exitCode = 1;
 }
