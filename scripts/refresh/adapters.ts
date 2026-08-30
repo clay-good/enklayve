@@ -655,8 +655,54 @@ function amountRun(text: string, from: number): number[] {
   return run;
 }
 
+/**
+ * The tax years a deduction table says out loud about itself.
+ *
+ * Hawaii's tax-year-information page introduces its figures with the sentence
+ * "For tax year 2025, the standard deduction amounts are the same as in tax year
+ * 2024: $8,800 for Joint or Surviving Spouse; $6,424 for Head of Household" —
+ * and the shard is on 2026, where Act 46 (2023) steps the amounts up to
+ * $16,000 / $12,000 / $8,000. The drift guard caught that, at 45%, which is
+ * luck: it is the size of the gap that saved the shard, not anything the parser
+ * understood, and two adjacent years of ordinary indexation differ by 3%.
+ *
+ * A table that names its own year is the easiest thing in this file to check
+ * and the least excusable to ignore. Both years are collected, because "the
+ * same as in tax year 2024" is a real sentence and 2024 is a year this table
+ * genuinely states.
+ *
+ * The window reaches back before the region because the year is usually in the
+ * sentence that INTRODUCES the table, which the narrowing has already cut away.
+ *
+ * It only applies to a NARROWED region. On a page with no table on it the
+ * region is the whole document, and a "for tax year 2025" anywhere in a
+ * department's news column would refuse a page for a year its deduction table
+ * never claimed — a refusal whose sentence would not be true. A page that
+ * states no table has a different problem, and it already has its own message.
+ */
+const STATED_TAX_YEAR = /\b(?:for|in)\s+tax\s+years?\s+((?:19|20)\d{2})/gi;
+const YEAR_LEAD_IN = 80;
+
+export function statedTaxYears(full: string, region: string): number[] {
+  if (region === full) return [];
+  const at = full.indexOf(region);
+  const window = full.slice(Math.max(0, at - YEAR_LEAD_IN), at + region.length);
+  return [...window.matchAll(STATED_TAX_YEAR)].map((m) => Number(m[1]));
+}
+
 function parseStandardDeductions(raw: string, current: Record<string, unknown>): ParseOutcome {
-  raw = deductionTableRegion(withoutDependentRows(visibleText(raw)));
+  const full = withoutDependentRows(visibleText(raw));
+  raw = deductionTableRegion(full);
+  const taxYear = Number(current.taxYear);
+  const stated = statedTaxYears(full, raw);
+  if (Number.isInteger(taxYear) && stated.length > 0 && !stated.includes(taxYear)) {
+    return {
+      ok: false,
+      reason:
+        `this table states tax year ${[...new Set(stated)].join(" and ")} and this shard is ` +
+        `${taxYear}; refusing — a page that names its own year has said it is not this one`,
+    };
+  }
   const shard = clone(current);
   const deductions = {
     ...((shard.standardDeductionByFilingStatus as Record<string, number>) ?? {}),

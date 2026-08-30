@@ -7,6 +7,7 @@ import {
   adaptersForGroup,
   REFRESH_GROUPS,
   anchorFlatRate,
+  statedTaxYears,
   deductionTableRegion,
   implausibleDrift,
 } from "../../scripts/refresh/adapters";
@@ -534,6 +535,55 @@ describe("adapters: North Carolina (a table, then pages about itemizing)", () =>
     expect(deductionTableRegion("prose prose Your standard deduction is: Single $12,750")).toBe(
       "Your standard deduction is: Single $12,750",
     );
+  });
+});
+
+describe("adapters: a table that names its own tax year", () => {
+  const hi = adaptersForGroup("state-hi")[0]!;
+  const current = readShard("state-hi-income-tax-2024.json");
+  // tax.hawaii.gov/tax-year-information/, verbatim. The shard is on 2026, where
+  // Act 46 (2023) steps Hawaii's amounts up to $16,000 / $12,000 / $8,000.
+  const raw =
+    "Standard Deductions For tax year 2025, the standard deduction amounts are the same as" +
+    " in tax year 2024: $8,800 for Joint or Surviving Spouse; $6,424 for Head of Household;" +
+    " or $4,400 for Single or Married Filing Separately.";
+
+  it("refuses a table for a year that is not the shard's", () => {
+    // The drift guard did catch this, at 63% — which is luck. It is the size of
+    // the gap that saved the shard, not anything the parser understood, and two
+    // adjacent years of ordinary indexation differ by 3%.
+    const result = hi.parse(raw, current);
+    expect(result.ok).toBe(false);
+    if (!result.ok)
+      expect(result.reason).toMatch(/states tax year 2025 and 2024 and this shard is 2026/);
+  });
+
+  it("says nothing about the year when the page states no table at all", () => {
+    // With no lead-in the region is the whole document, and a "for tax year
+    // 2025" in a department's news column would refuse a page for a year its
+    // deduction table never claimed — a refusal whose sentence is not true.
+    expect(
+      statedTaxYears(
+        "prose about tax year 2025 and other things",
+        "prose about tax year 2025 and other things",
+      ),
+    ).toEqual([]);
+  });
+
+  it("reads a table that names the shard's own year", () => {
+    const thisYear = hi.parse(
+      "For tax year 2026 the standard deduction amounts are: Single $8,000" +
+        " Married filing jointly $16,000 Head of household $12,000",
+      current,
+    );
+    expect(thisYear.ok).toBe(true);
+    if (thisYear.ok) {
+      expect(thisYear.shard.standardDeductionByFilingStatus).toEqual({
+        single: 8000,
+        married_jointly: 16000,
+        head_of_household: 12000,
+      });
+    }
   });
 });
 
