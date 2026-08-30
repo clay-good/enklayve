@@ -18,6 +18,16 @@ import { ManifestSchema } from "../../src/data/schemas";
  * A number in a document is a claim, and a claim nothing checks is a claim that
  * will be wrong eventually. This checks them.
  *
+ * The corollary is why the README no longer states a test *count*. That was the
+ * one number in the table nothing here could derive, and on 2026-08-30 it was
+ * corrected by hand four times in a morning — each time only because the file
+ * count happened to move with it, so tests added to an existing file would have
+ * left it stale in silence. `vitest list --json` does produce it exactly, but
+ * spawning that from inside a running suite deadlocks. Rather than keep a
+ * figure under a promise of "reproducible from the repo, not marketing" that
+ * nothing reproduces, the sentence now states the file count, which is checked
+ * below. If the number ever comes back, it needs a check to come back with it.
+ *
  * Each pattern must match **at least once**, so rewording the sentence a claim
  * lives in fails loudly rather than silently turning the check off — which is
  * the usual way a test like this rots into decoration.
@@ -87,7 +97,7 @@ const CLAIMS: Claim[] = [
   {
     what: "test files",
     value: testFileCount(),
-    patterns: [/unit\/golden across (\d+) files/g, /unit\/golden tests across (\d+) files/g],
+    patterns: [/unit\/golden across \*\*(\d+)\*\* files/g, /golden suite across (\d+) files/g],
   },
   {
     what: "tax jurisdictions",
