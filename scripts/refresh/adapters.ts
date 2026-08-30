@@ -902,6 +902,86 @@ function parseAmountThenStatusDeductions(
   return { ok: true, shard };
 }
 
+// --- Wisconsin (a deduction that is the third cell of a phase-out schedule) ---
+
+/**
+ * Wisconsin's standard deduction, from Form 1-ES's schedules.
+ *
+ * Wisconsin does not state a standard deduction as a figure. It states four
+ * phase-out schedules, one per filing status, and the number this shard wants is
+ * the *maximum* — the amount that applies before the phase-out starts biting,
+ * which is the third cell of the first row:
+ *
+ *   Schedule for Single Taxpayers
+ *   If Wisconsin income is:  but over –  not over –  The 2026 Standard Deduction is:
+ *                            $ 0        $ 20,119    $ 13,960
+ *                              20,119     136,453     13,960 less 12% of ...
+ *
+ * No label-then-amount pattern reaches that. "Single" is 85 characters and a
+ * column heading away from anything shaped like dollars, and the first thing it
+ * would reach is the `$ 0` that starts the income band. Worse, the same document
+ * carries "Schedule for Married Filing Separately" ($12,280) directly under
+ * "Married Filing Jointly" ($25,840), and a shared pattern for `married ...
+ * jointly` has nothing to keep it out of the wrong schedule.
+ *
+ * So the schedules are addressed by name and the row is read positionally: the
+ * band that begins at $0, its ceiling, then the deduction. The document's own
+ * year gates it — Form 1-ES is reissued annually at a URL carrying the year
+ * (TaxForms2026/), and its schedules say "The 2026 Standard Deduction is",
+ * which is the Form 446 rule and the reason a stale one cannot read as current.
+ */
+const WISCONSIN_SCHEDULES: { key: string; heading: RegExp }[] = [
+  { key: "single", heading: /Schedule for Single\b/i },
+  { key: "head_of_household", heading: /Schedule for Head of Household\b/i },
+  { key: "married_jointly", heading: /Schedule for Married Filing Jointly\b/i },
+];
+
+function parseWisconsinDeduction(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const text = visibleText(raw);
+  const taxYear = Number(current.taxYear);
+  if (
+    Number.isInteger(taxYear) &&
+    !new RegExp(`The ${taxYear} Standard Deduction is`, "i").test(text)
+  ) {
+    return {
+      ok: false,
+      reason: `this document does not state "The ${taxYear} Standard Deduction" — Form 1-ES is reissued each year at a URL carrying the year, and a stale one states last year's schedules perfectly`,
+      settled: true,
+    };
+  }
+  const shard = clone(current);
+  const deductions = {
+    ...((shard.standardDeductionByFilingStatus as Record<string, number>) ?? {}),
+  };
+  for (const { key, heading } of WISCONSIN_SCHEDULES) {
+    if (!(key in deductions)) continue;
+    const at = heading.exec(text);
+    if (!at) {
+      return { ok: false, reason: `could not find Wisconsin's ${key} deduction schedule` };
+    }
+    const row = /\$\s*0\s+\$\s*([\d,]{4,})\s+\$\s*([\d,]{4,})/.exec(
+      text.slice(at.index, at.index + 260),
+    );
+    if (!row) {
+      return {
+        ok: false,
+        reason: `Wisconsin's ${key} schedule does not open with the $0 band and its deduction`,
+      };
+    }
+    const amount = parseAmount(row[2] as string);
+    const drift = implausibleDrift(deductions[key] as number, amount);
+    if (drift !== null) {
+      return {
+        ok: false,
+        reason: `the ${key} standard deduction ${drift}; refusing — either the form moved or this is not the figure`,
+      };
+    }
+    deductions[key] = amount;
+  }
+  shard.standardDeductionByFilingStatus = deductions;
+  return { ok: true, shard };
+}
+
 // --- A source that is behind its own state's law -----------------------------
 
 /**
@@ -2419,7 +2499,9 @@ export const ADAPTERS: RefreshAdapter[] = [
     group: "state-wi",
     source:
       "Wisconsin Department of Revenue individual income tax (rates, brackets, standard deduction)",
-    sourceUrl: "https://www.revenue.wi.gov/Pages/Individuals/income.aspx",
+    // Form 1-ES's instructions, which state all four sliding schedules; the
+    // individuals landing page is a menu. This is the document the shard cites.
+    sourceUrl: "https://www.revenue.wi.gov/TaxForms2026/2026-Form1-ES-Inst.pdf",
     cadence: "Annual",
     // WI's four rates (3.50% / 4.40% / 5.30% / 7.65%) are uniform across statuses
     // but its thresholds differ by filing status, and its standard deduction is a
@@ -2431,7 +2513,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     // now includes the head-of-household schedule's own maximum and its steeper
     // first-segment rate, which index on the same annual cycle as the single and
     // joint maxima the parser anchors.
-    parse: parseStandardDeductions,
+    parse: parseWisconsinDeduction,
   },
   {
     id: "state-hi-income-tax-2024",

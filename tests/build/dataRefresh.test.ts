@@ -538,6 +538,52 @@ describe("adapters: North Carolina (a table, then pages about itemizing)", () =>
   });
 });
 
+describe("adapters: Wisconsin (a deduction inside a phase-out schedule)", () => {
+  const adapter = adaptersForGroup("state-wi")[0]!;
+  const current = readShard("state-wi-income-tax-2024.json");
+  // 2026-Form1-ES-Inst.pdf, verbatim, including the Married Filing SEPARATELY
+  // schedule that sits directly under the joint one.
+  const raw =
+    "Schedule for Single Taxpayers If Wisconsin income is: but over – not over –" +
+    " The 2026 Standard Deduction is: of the amount over – $ 0 $ 20,119 $ 13,960" +
+    " 20,119 136,453 13,960 less 12% ........ $ 20,120 136,453 0" +
+    " Schedule for Head of Household If Wisconsin income is: but over – not over –" +
+    " The 2026 Standard Deduction is: of the amount over – $ 0 $ 20,119 $ 18,030" +
+    " 20,119 58,827 18,030 less 22.515% $ 20,120" +
+    " Schedule for Married Filing Jointly If Wisconsin income is: but over – not over –" +
+    " The 2026 Standard Deduction is: of the amount over – $ 0 $ 29,039 $ 25,840" +
+    " 29,039 159,690 25,840 less 19.778% $ 29,040 159,690 0" +
+    " Schedule for Married Filing Separately If Wisconsin income is: but over – not over –" +
+    " The 2026 Standard Deduction is: of the amount over – $ 0 $ 13,779 $ 12,280";
+
+  it("reads the maximum out of each named schedule, not the band that starts it", () => {
+    // Wisconsin states no standard deduction as a figure — it states four
+    // phase-out schedules, and the shard wants the maximum, which is the third
+    // cell of the first row. A label-then-amount pattern reaches the `$ 0` that
+    // opens the income band, 85 characters and a column heading later.
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.shard.standardDeductionByFilingStatus).toEqual({
+      single: 13960,
+      married_jointly: 25840,
+      head_of_household: 18030,
+    });
+    // Married filing SEPARATELY sits directly under joint, and $12,280 never
+    // reaches the joint slot.
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("refuses a form from another year", () => {
+    const stale = adapter.parse(raw.replaceAll("The 2026 Standard", "The 2025 Standard"), current);
+    expect(stale.ok).toBe(false);
+    if (!stale.ok) {
+      expect(stale.reason).toMatch(/does not state "The 2026 Standard Deduction"/);
+      expect(stale.settled).toBe(true);
+    }
+  });
+});
+
 describe("adapters: Connecticut (a page whose wrong answer is plausible)", () => {
   const ct = adaptersForGroup("state-ct")[0]!;
   const current = readShard("state-ct-income-tax-2024.json");
