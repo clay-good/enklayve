@@ -676,6 +676,28 @@ describe("adapters: Georgia (the amount, then the statuses it applies to)", () =
     if (!stale.ok) expect(stale.reason).toMatch(/not the 2026 Employer's Withholding Tax Guide/);
   });
 
+  it("serves South Carolina too, whose SCIAD is stated the same way round", () => {
+    // dor.sc.gov/news/information-about-h-4216, verbatim. Same shape, different
+    // state, and no annual masthead to check: H. 4216 is a one-off bill
+    // announcement, not a guide reissued each year at a year-stamped URL.
+    const sc = adaptersForGroup("state-sc")[0]!;
+    const result = sc.parse(
+      "Creates a new South Carolina Income Adjusted Deduction (SCIAD) in place of the" +
+        " federal standard deduction. $15,000 for taxpayers who file as single or married" +
+        " filing separately $22,500 for taxpayers who file as head of household $30,000 for" +
+        " taxpayers who file as married filing jointly",
+      readShard("state-sc-income-tax-2024.json"),
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.shard.standardDeductionByFilingStatus).toEqual({
+        single: 15000,
+        married_jointly: 30000,
+        head_of_household: 22500,
+      });
+    }
+  });
+
   it("refuses when two amounts claim the same status", () => {
     const conflicting = adapter.parse(
       raw + " Georgia standard deductions have increased to $24,000 for Married Filing Jointly.",

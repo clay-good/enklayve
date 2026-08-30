@@ -842,17 +842,21 @@ function parseStandardDeductions(raw: string, current: Record<string, unknown>):
  * reissued annually at a URL carrying the year, and a stale one states last
  * year's figures perfectly.
  */
-function parseGeorgiaDeductions(raw: string, current: Record<string, unknown>): ParseOutcome {
+function parseAmountThenStatusDeductions(
+  raw: string,
+  current: Record<string, unknown>,
+  /**
+   * A masthead the document must carry, for a source reissued annually at a URL
+   * that carries the year — Georgia's guide, the Form 446 rule. A one-off
+   * document (South Carolina's H. 4216 announcement) has no such masthead and
+   * passes none.
+   */
+  mustState?: { pattern: (taxYear: number) => RegExp; reason: (taxYear: number) => string },
+): ParseOutcome {
   const text = visibleText(raw);
   const taxYear = Number(current.taxYear);
-  if (
-    Number.isInteger(taxYear) &&
-    !new RegExp(`withholding tax guide\\s+${taxYear}\\b`, "i").test(text)
-  ) {
-    return {
-      ok: false,
-      reason: `this is not the ${taxYear} Employer's Withholding Tax Guide — Georgia reissues it each year at a URL carrying the year, and a stale one states last year's deduction perfectly`,
-    };
+  if (mustState && Number.isInteger(taxYear) && !mustState.pattern(taxYear).test(text)) {
+    return { ok: false, reason: mustState.reason(taxYear) };
   }
   const shard = clone(current);
   const deductions = {
@@ -2180,7 +2184,12 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl:
       "https://dor.georgia.gov/document/document/2026-employers-tax-guide-updated-june-2026/download",
     cadence: "Annual",
-    parse: parseGeorgiaDeductions,
+    parse: (raw, current) =>
+      parseAmountThenStatusDeductions(raw, current, {
+        pattern: (year) => new RegExp(`withholding tax guide\\s+${year}\\b`, "i"),
+        reason: (year) =>
+          `this is not the ${year} Employer's Withholding Tax Guide — Georgia reissues it each year at a URL carrying the year, and a stale one states last year's deduction perfectly`,
+      }),
   },
   {
     id: "state-nc-income-tax-2024",
@@ -2548,7 +2557,10 @@ export const ADAPTERS: RefreshAdapter[] = [
     // base amounts as the standard deduction (the change-watch); a future
     // trigger-based top-rate cut and any SCIAD/phase-out change stay the
     // reviewer's data-only step.
-    parse: parseStandardDeductions,
+    // SCIAD is stated amount-first, the Georgia shape: "$15,000 for taxpayers
+    // who file as single or married filing separately". Label-first, "married
+    // filing separately" reaches forward past its own figure.
+    parse: parseAmountThenStatusDeductions,
   },
   {
     id: "state-ri-income-tax-2024",
