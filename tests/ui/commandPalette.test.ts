@@ -73,6 +73,39 @@ describe("command palette", () => {
     trigger.remove();
   });
 
+  it("keeps Tab inside the dialog, in both directions", () => {
+    // aria-modal="true" tells assistive tech the rest of the page is not there;
+    // it does nothing to the Tab order. Without this, one press moves focus to
+    // whatever sits behind the backdrop — a control the reader cannot see,
+    // cannot click, and has no obvious way back from except guessing Escape.
+    const palette = new CommandPalette(() => {});
+    document.body.append(palette.element);
+    const outside = document.createElement("button");
+    outside.textContent = "behind the backdrop";
+    document.body.append(outside);
+    palette.show();
+
+    expect(document.activeElement).toBe(input(palette));
+    for (const shiftKey of [false, true]) {
+      const event = new KeyboardEvent("keydown", {
+        key: "Tab",
+        shiftKey,
+        bubbles: true,
+        cancelable: true,
+      });
+      input(palette).dispatchEvent(event);
+      expect(event.defaultPrevented, `Tab${shiftKey ? "+Shift" : ""} was not held`).toBe(true);
+      expect(document.activeElement).toBe(input(palette));
+    }
+
+    // And it is a hold rather than a freeze: Escape still leaves.
+    press(input(palette), "Escape");
+    expect(palette.isOpen()).toBe(false);
+
+    outside.remove();
+    palette.element.remove();
+  });
+
   it("shows an empty state for a non-matching query", () => {
     const palette = new CommandPalette(() => {});
     document.body.append(palette.element);

@@ -181,6 +181,17 @@ export class CommandPalette {
         e.preventDefault();
         this.close();
         break;
+      case "Tab":
+        // A dialog marked aria-modal="true" owes the keyboard what it already
+        // tells assistive tech: that the rest of the page is not there. Tab
+        // order ignores aria-modal, so without this, one press moves focus to
+        // whatever sits behind the backdrop — a control the reader cannot see,
+        // cannot click, and has no obvious way back from except guessing at
+        // Escape. This panel has exactly one tab stop, the query field, so
+        // holding focus on it is the whole of the cycle.
+        e.preventDefault();
+        this.input.focus();
+        break;
     }
   }
 
