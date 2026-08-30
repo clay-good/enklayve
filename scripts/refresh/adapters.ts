@@ -1503,12 +1503,39 @@ function parseGraduatedBracketJurisdiction(
   raw: string,
   current: Record<string, unknown>,
 ): ParseOutcome {
+  const text = visibleText(raw);
+  // A schedule stated once per year, which is how a department publishes a
+  // reform. Ohio prints "For taxable years beginning in 2025:" over a three-tier
+  // schedule and "For taxable years beginning in 2024:" over the one before it,
+  // and its 2026 schedule — two tiers, after HB 96 collapses the top rate — is
+  // simply not up yet. Reading the page whole mixes years into one ladder and
+  // then reports "count or shape changed", which is true of the mixture and
+  // false of the page. The shard says which year it is, so the shard picks the
+  // block; if its year is not there, the state has not published it.
+  const years = [...text.matchAll(/for\s+taxable\s+years?\s+beginning\s+in\s+((?:19|20)\d{2})/gi)];
+  const taxYear = Number(current.taxYear);
+  let scope = text;
+  if (years.length > 0 && Number.isInteger(taxYear)) {
+    const mine = years.findIndex((y) => Number(y[1]) === taxYear);
+    if (mine < 0) {
+      const newest = Math.max(...years.map((y) => Number(y[1])));
+      return {
+        ok: false,
+        reason:
+          `the page states a schedule per year and none of them is ${taxYear}; the schedules ` +
+          `stop at ${newest}, so the state has probably not published the shard's year yet`,
+        settled: newest < taxYear,
+      };
+    }
+    const from = years[mine]!.index;
+    scope = text.slice(from, years[mine + 1]?.index ?? text.length);
+  }
   const tierRe =
     /([\d.]+)\s*(?:percent|%)[^%$]*?(?:in excess of|over|above|exceeding)\s*\$?([\d,]{3,})/gi;
   const seen = new Set<number>();
   const tiers: { lowerBound: number; rate: number }[] = [];
   let match: RegExpExecArray | null;
-  while ((match = tierRe.exec(raw)) !== null) {
+  while ((match = tierRe.exec(scope)) !== null) {
     const rate = pctToRate(Number(match[1]));
     const lowerBound = parseAmount(match[2] as string);
     if (!Number.isFinite(rate) || rate <= 0 || rate > 0.15) continue;
@@ -1547,6 +1574,36 @@ function parseGraduatedBracketJurisdiction(
       if (assembled[i]!.lowerBound <= assembled[i - 1]!.lowerBound) ascending = false;
     }
     if (!ascending) continue;
+    // A schedule with NO year on it may CONFIRM the shard and may not change it.
+    //
+    // Missouri proved why the moment this parser started reading visible text
+    // instead of markup. Its year-changes page prints an eight-tier ladder under
+    // "Tax Rate Changes – Indexed for Inflation", with no year anywhere near it,
+    // and that ladder is 2025's: $1,313 steps where the 2026 shard carries
+    // $1,348. Read whole it parsed cleanly and proposed rolling every threshold
+    // in the state back a year, under a live citation. An indexed schedule that
+    // does not say which year it is cannot be told from one that is a year
+    // stale — the Colorado lesson with brackets instead of a rate.
+    //
+    // Refusing every unlabelled schedule would be the wrong correction, because
+    // a schedule that does not index has no year to state: Mississippi's 4%
+    // over $10,000 is statutory and has read correctly for years. So the test is
+    // not "is there a year" but "is this a change I cannot date". Confirming is
+    // always safe; changing on an undated page never is.
+    if (years.length === 0) {
+      const differs = assembled.find(
+        (tier, i) => tier.lowerBound !== arr[i]?.lowerBound || tier.rate !== arr[i]?.rate,
+      );
+      if (differs) {
+        return {
+          ok: false,
+          reason:
+            "the page states a bracket schedule with no tax year attached to it and it does " +
+            `not match the committed one (${differs.lowerBound} at ${(differs.rate * 100).toFixed(2)}%); ` +
+            "refusing — an undated indexed schedule cannot be told from one that is a year stale",
+        };
+      }
+    }
     brackets[status] = assembled;
     overlaid += 1;
   }

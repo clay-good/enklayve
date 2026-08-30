@@ -948,9 +948,11 @@ describe("adapters: graduated bracket-table state income tax (OH)", () => {
   const current = readShard("state-oh-income-tax-2024.json");
 
   it("overlays the graduated schedule (rate + threshold) onto every status", () => {
+    // Dated, because it is a change: Ohio states one schedule per year, and the
+    // shard's year picks the block.
     const raw =
-      "For 2026, Ohio taxable nonbusiness income up to $26,150 is taxed at 0%. " +
-      "Income is taxed at 2.75% of the amount in excess of $26,150.";
+      "For taxable years beginning in 2026: Ohio taxable nonbusiness income up to $26,150" +
+      " is taxed at 0%. Income is taxed at 2.75% of the amount in excess of $26,150.";
     const result = adapter.parse(raw, current);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -981,6 +983,65 @@ describe("adapters: graduated bracket-table state income tax (OH)", () => {
     // Base tier stays 0% at $0 — never 0% at $26,050.
     expect(brackets.single![0]).toEqual({ lowerBound: 0, rate: 0 });
     expect(brackets.single![1]!.rate).toBe(0.0275);
+  });
+
+  it("takes the shard's year out of a page that states a schedule per year", () => {
+    // tax.ohio.gov/individual/resources/annual-tax-rates prints every year since
+    // 2005, newest first. Read whole, the years mix into one ladder and the
+    // report says "count or shape changed" — true of the mixture and false of
+    // the page.
+    const perYear =
+      "For taxable years beginning in 2026: $0 - $26,150 0.000% of Ohio taxable nonbusiness" +
+      " income; 2.75% of the amount in excess of $26,150." +
+      " For taxable years beginning in 2025: $0 - $26,050 0.000%; $342 + 2.75% of excess" +
+      " over $26,050; $2,394.32 + 3.125% of excess over $100,000.";
+    const result = adapter.parse(perYear, current);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const b = result.shard.bracketsByFilingStatus as Record<string, { lowerBound: number }[]>;
+      expect(b.single).toHaveLength(2);
+      expect(b.single![1]!.lowerBound).toBe(26150);
+    }
+
+    // And when the shard's year is not among them, that is the state not having
+    // published it — not a parser to fix.
+    const notYet = adapter.parse(perYear, { ...current, taxYear: 2027 });
+    expect(notYet.ok).toBe(false);
+    if (!notYet.ok) {
+      expect(notYet.reason).toMatch(/schedules stop at 2026/);
+      expect(notYet.settled).toBe(true);
+    }
+  });
+
+  it("lets an undated schedule confirm the shard but never change it", () => {
+    // Missouri's year-changes page prints an eight-tier ladder under "Tax Rate
+    // Changes – Indexed for Inflation" with no year anywhere near it, and that
+    // ladder is 2025's: $1,313 steps where the 2026 shard carries $1,348. Read
+    // whole it parses cleanly and proposes rolling every threshold in the state
+    // back a year, under a live citation.
+    const mo = adaptersForGroup("state-mo")[0]!;
+    const moShard = readShard("state-mo-income-tax-2024.json");
+    const lastYear =
+      "Tax Rate Changes – Indexed for Inflation $0 to $1,313 $0 Over $1,313 but not over" +
+      " $2,626 2.00% of excess over $1,313 Over $2,626 but not over $3,939 $26 plus 2.50% of" +
+      " excess over $2,626 Over $3,939 but not over $5,252 $59 plus 3.00% of excess over" +
+      " $3,939 Over $5,252 but not over $6,565 $98 plus 3.50% of excess over $5,252 Over" +
+      " $6,565 but not over $7,878 $144 plus 4.00% of excess over $6,565 Over $7,878 but not" +
+      " over $9,191 $197 plus 4.50% of excess over $7,878 Over $9,191 $256 plus 4.70% of" +
+      " excess over $9,191";
+    const rolled = mo.parse(lastYear, moShard);
+    expect(rolled.ok).toBe(false);
+    if (!rolled.ok) expect(rolled.reason).toMatch(/no tax year attached to it/);
+
+    // Refusing every undated schedule would be the wrong correction: one that
+    // does not index has no year to state. Mississippi's 4% over $10,000 is
+    // statutory, and confirming the shard is always safe.
+    const ms = adaptersForGroup("state-ms")[0]!;
+    const msShard = readShard("state-ms-income-tax-2024.json");
+    const flat =
+      "Mississippi taxable income is exempt to $10,000, " +
+      "and 4% on taxable income in excess of $10,000.";
+    expect(ms.parse(flat, msShard).ok).toBe(true);
   });
 
   it("fails (-> alert) when no tier can be anchored", () => {
