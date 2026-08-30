@@ -27,6 +27,38 @@ export interface ExtractedText {
 /** A function that turns a file into text — injectable so the UI is testable. */
 export type TextExtractor = (file: File) => Promise<ExtractedText>;
 
+/**
+ * Does this PDF carry no selectable text worth reading?
+ *
+ * A PDF is a container, not a format: a phone photo or a scanner's output saved
+ * as a PDF has no text layer at all, and `getTextContent()` returns empty pages
+ * or a few stray characters — a page number, a fax header. Before this existed,
+ * such a document fell all the way through to "We couldn't recognize this
+ * document. Supported: typed W-2, Form 1040, …", which is wrong twice over: the
+ * document usually IS one of those, and the reader owns an OCR engine that would
+ * read it if the same pages arrived as a PNG.
+ *
+ * A stray character or two must not count as text, and a genuine page carries
+ * hundreds, so the threshold sits far from both: fewer than twenty non-space
+ * characters per page on average. It is advisory — the message it produces asks
+ * the reader to supply the pages another way; nothing is discarded on its word.
+ */
+export function looksLikeScannedPdf(pages: readonly string[]): boolean {
+  if (pages.length === 0) return true;
+  const dense = pages.join("").replace(/\s+/g, "").length;
+  return dense < 20 * pages.length;
+}
+
+/**
+ * What to tell someone holding a scan. It names the situation, says why, and
+ * gives the one step that works today — rather than the old message, which told
+ * them their supported document was unsupported.
+ */
+export const SCANNED_PDF_MESSAGE =
+  "This PDF has no selectable text — it is a scan or a photo saved as a PDF, so there is " +
+  "nothing to read out of it. Save or screenshot the page as an image (PNG or JPG) and drop " +
+  "that instead: images are read here on your device with OCR. Pasting the text works too.";
+
 /** Read a typed PDF entirely on the device, with no network access. */
 async function extractPdf(file: File): Promise<ExtractedText> {
   const pdfjs = await import("pdfjs-dist");
@@ -50,6 +82,7 @@ async function extractPdf(file: File): Promise<ExtractedText> {
       .trim();
     pages.push(text);
   }
+  if (looksLikeScannedPdf(pages)) throw new Error(SCANNED_PDF_MESSAGE);
   return { text: pages.join("\n"), pages, source: "typed" };
 }
 
