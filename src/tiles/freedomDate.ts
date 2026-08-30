@@ -12,6 +12,7 @@ import { debtPayoff } from "../engine/finance";
 import { el } from "../ui/dom";
 import { field, parseNonNegative, parseNumber, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { monthsAheadLabel, todayIso } from "../ui/deadline";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
 
@@ -49,14 +50,9 @@ function writeFields(f: Fields): URLSearchParams {
   return p;
 }
 
-function freedomDateLabel(monthsAhead: number, locale: string): string {
-  const d = new Date();
-  d.setMonth(d.getMonth() + monthsAhead);
-  return d.toLocaleDateString(locale, { month: "long", year: "numeric" });
-}
-
 export function mountFreedomDate(ctx: TileContext): void {
   const { root, profile } = ctx;
+  const today = todayIso();
   root.replaceChildren();
   let fields = readFields(ctx.params, profile);
 
@@ -121,7 +117,11 @@ export function mountFreedomDate(ctx: TileContext): void {
         value: `${pct(fields.ratePct / 100)} (your assumption)`,
       },
       { label: "Monthly payment", value: fmt(Money.from(fields.monthlyPayment)) },
-      { label: "Freedom date", value: freedomDateLabel(result.months, ctx.locale), emphasis: true },
+      {
+        label: "Freedom date",
+        value: monthsAheadLabel(result.months, ctx.locale, today),
+        emphasis: true,
+      },
       { label: "Total interest paid", value: fmt(result.totalInterest) },
       { label: "Total paid", value: fmt(result.totalPaid) },
     ];

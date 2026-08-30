@@ -15,6 +15,7 @@ import { el, clear } from "../ui/dom";
 import { field, parseNonNegative, parseNumber, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { donutChart, statStrip, paletteVar, type Stat } from "../ui/charts";
+import { monthsAheadLabel, todayIso } from "../ui/deadline";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
 
@@ -94,13 +95,6 @@ function writeFields(f: Fields): URLSearchParams {
   return p;
 }
 
-/** A calendar label for a number of whole months ahead (e.g. "March 2027"). */
-function freedomDateLabel(monthsAhead: number, locale: string): string {
-  const d = new Date();
-  d.setMonth(d.getMonth() + monthsAhead);
-  return d.toLocaleDateString(locale, { month: "long", year: "numeric" });
-}
-
 function monthsLabel(months: number): string {
   if (months < 12) return `${months} month${months === 1 ? "" : "s"}`;
   const years = Math.floor(months / 12);
@@ -111,6 +105,7 @@ function monthsLabel(months: number): string {
 
 export function mountDebtFreedom(ctx: TileContext): void {
   const { root, profile } = ctx;
+  const today = todayIso();
   root.replaceChildren();
   let fields = readFields(ctx.params, profile);
 
@@ -187,7 +182,7 @@ export function mountDebtFreedom(ctx: TileContext): void {
     const stats: Stat[] = [
       {
         label: "Debt-free by",
-        value: freedomDateLabel(chosen.months, ctx.locale),
+        value: monthsAheadLabel(chosen.months, ctx.locale, today),
         tone: "good",
         hint: monthsLabel(chosen.months),
       },
@@ -225,7 +220,8 @@ export function mountDebtFreedom(ctx: TileContext): void {
           el("span", { class: "payoff-order__name", text: step.name }),
           el("span", {
             class: "payoff-order__when",
-            text: step.month === 0 ? "already clear" : freedomDateLabel(step.month, ctx.locale),
+            text:
+              step.month === 0 ? "already clear" : monthsAheadLabel(step.month, ctx.locale, today),
           }),
         ),
       );
@@ -246,7 +242,7 @@ export function mountDebtFreedom(ctx: TileContext): void {
       { label: "Paid each month", value: fmt(Money.from(plan.monthlyTotal)) },
       {
         label: `Freedom date (${methodName(fields.method)})`,
-        value: freedomDateLabel(chosen.months, ctx.locale),
+        value: monthsAheadLabel(chosen.months, ctx.locale, today),
         emphasis: true,
       },
       { label: "Total interest", value: fmt(chosen.totalInterest) },
@@ -288,7 +284,10 @@ export function mountDebtFreedom(ctx: TileContext): void {
         ),
         el("p", {
           class: "compare-card__date",
-          text: r.months === null ? "never at this budget" : freedomDateLabel(r.months, ctx.locale),
+          text:
+            r.months === null
+              ? "never at this budget"
+              : monthsAheadLabel(r.months, ctx.locale, today),
         }),
         el("p", {
           class: "compare-card__sub",

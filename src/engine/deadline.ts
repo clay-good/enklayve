@@ -80,25 +80,33 @@ export function resolveDueDate(due: DeadlineDue, triggerDate?: string): string |
   if (Number.isNaN(start)) return null;
   if ("monthsFromTrigger" in due) {
     if (!Number.isFinite(due.monthsFromTrigger)) return null;
-    return addMonthsIso(start, Math.trunc(due.monthsFromTrigger));
+    return addCalendarMonths(toIso(start), Math.trunc(due.monthsFromTrigger));
   }
   if (!Number.isFinite(due.daysFromTrigger)) return null;
   return toIso(start + Math.trunc(due.daysFromTrigger) * MS_PER_DAY);
 }
 
 /**
- * Add whole calendar months to a UTC timestamp, clamping to the end of the
- * target month. Clamping is what makes the month form usable for the rules that
- * need it: a period counted from the last day of a month lands on the last day
- * of the later month, whatever its length — January 31 plus three months is
- * April 30, not May 1.
+ * Add whole calendar months to an ISO date, clamping to the end of the target
+ * month. Clamping is what makes the month form usable for the rules that need
+ * it: a period counted from the last day of a month lands on the last day of the
+ * later month, whatever its length — January 31 plus three months is April 30,
+ * not May 1.
+ *
+ * The native alternative, `d.setMonth(d.getMonth() + n)`, overflows instead of
+ * clamping: it builds February 31 and lets the Date roll forward into March, so
+ * the answer is a month later than asked for. Every tile that projects a date
+ * forward uses this, because a label reading "March 2026" for one month from
+ * January 31 is wrong in a way nobody double-checks.
  */
-function addMonthsIso(startMs: number, months: number): string {
+export function addCalendarMonths(iso: string, months: number): string {
+  const startMs = parseIsoUtc(iso);
+  if (!Number.isFinite(startMs)) return iso;
   const d = new Date(startMs);
   const year = d.getUTCFullYear();
   const month = d.getUTCMonth();
   const day = d.getUTCDate();
-  const target = new Date(Date.UTC(year, month + months, 1));
+  const target = new Date(Date.UTC(year, month + Math.trunc(months), 1));
   const lastDay = new Date(
     Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
   ).getUTCDate();

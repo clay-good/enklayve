@@ -13,7 +13,7 @@
  * degrades to a plain statement, never to a wrong number (SPEC-3 §2.5).
  */
 import type { Deadline } from "../engine/deadline";
-import { byNearness, deadlineStatus } from "../engine/deadline";
+import { addCalendarMonths, byNearness, deadlineStatus } from "../engine/deadline";
 import { el } from "./dom";
 import { citationLink } from "./resultCard";
 
@@ -27,6 +27,42 @@ function formatIso(iso: string, locale: string): string {
     day: "numeric",
     timeZone: "UTC",
   }).format(new Date(Date.UTC(y, m - 1, d)));
+}
+
+/**
+ * A calendar label for a number of whole months ahead of `fromIso`, e.g.
+ * "March 2027" — the "freedom date" the payoff tiles put on a payoff horizon.
+ *
+ * Both tiles used to carry their own copy built on `d.setMonth(d.getMonth() +
+ * n)`, which overflows rather than clamping: one month from January 31 built
+ * February 31, rolled into March, and labelled the month after next. That is
+ * wrong on the 31st of January, March, May, August and October, and it is the
+ * kind of wrong nobody checks, because the answer is a plausible month.
+ *
+ * `fromIso` is a parameter rather than a call to the clock inside, so the label
+ * can be tested at a chosen date instead of only on the days the bug shows.
+ */
+/**
+ * Today, as an ISO date, for the tiles that project a horizon forward from now.
+ *
+ * A deadline never comes through here — `renderDeadline` takes its `asOf` from
+ * the user, because a statutory clock the machine set is a number nobody can
+ * check (SPEC-4 §7.3). A payoff horizon is the other case: "when am I clear"
+ * genuinely starts today, and the only thing that must not happen is each tile
+ * spelling that out differently.
+ */
+export function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export function monthsAheadLabel(monthsAhead: number, locale: string, fromIso: string): string {
+  const [y, m] = addCalendarMonths(fromIso, monthsAhead).split("-").map(Number);
+  if (!y || !m) return fromIso;
+  return new Intl.DateTimeFormat(locale, {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(y, m - 1, 1)));
 }
 
 /** The plain-English timing line: what is due, when, and how long is left. */
