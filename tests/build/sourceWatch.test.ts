@@ -202,6 +202,18 @@ describe("the committed watch list", () => {
     }
   });
 
+  it("watches Delaware, whose standard deduction is statutory and does not index", () => {
+    // The other direction into this list: not a figure too consequential to
+    // auto-rewrite, but one that never moves on a schedule. 30 Del. C. §1108
+    // has set it at $3,250 / $6,500 since tax year 2000, so an annual value
+    // adapter asks a question with no annual answer and reports the absence as
+    // a broken parser.
+    const de = watch.entries.find((e) => e.shard === "state-de-income-tax-2024");
+    expect(de, "Delaware has no source watch").toBeDefined();
+    expect(de?.url).toContain("delcode.delaware.gov");
+    expect(de?.why).toMatch(/does not index/);
+  });
+
   it("watches only shards that actually exist in the manifest", () => {
     const known = new Set(manifest.datasets.map((d) => d.id));
     for (const entry of watch.entries) {

@@ -1,5 +1,10 @@
 /**
- * The source watch for the hand-authored Pillar 4 shards (SPEC-4 §10.7).
+ * The source watch: shards whose sources must be READ on a change, not parsed.
+ *
+ * Six hand-authored Pillar 4 shards (SPEC-4 §10.7) and, since 2026-08-30, one
+ * tax shard — Delaware, whose standard deduction is statutory and unindexed, so
+ * there is no annual figure for an adapter to anchor and a change to it is an
+ * amendment somebody has to read.
  *
  * The existing data-refresh pipeline fetches a source, *parses figures out of
  * it*, and opens a PR with the new numbers. That is exactly right for a bracket
@@ -8,6 +13,14 @@
  * prose transcribed from a statute or a consumer page — auto-rewriting it from
  * a scraped page would let the site's most safety-critical sentences change
  * without anyone reading them.
+ *
+ * Delaware arrives at the same place from the other direction: not a figure too
+ * consequential to auto-rewrite, but one that never moves on a schedule. 30 Del.
+ * C. §1108 has set it at $3,250 / $6,500 for every taxable period beginning
+ * after December 31, 1999, and the section states that as a history of periods
+ * without ever using a filing-status label a parser knows. An annual value
+ * adapter asking it for this year's figure asks a question with no annual
+ * answer, and reports the absence as a broken parser.
  *
  * So these shards get the other half of the guarantee instead: a scheduled job
  * that notices when the source itself moved and asks a human to go re-read it.

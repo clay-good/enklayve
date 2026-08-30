@@ -918,6 +918,38 @@ function refuseWhileSourceIsBehind(
  * shard's year, it anchors and this explanation stops being printed, with
  * nobody having to remember to delete it.
  */
+/**
+ * The third reason a source cannot be read, after "the parser broke" and "the
+ * year is not out yet": **there is no annual figure, because the figure is
+ * statutory.**
+ *
+ * Delaware's standard deduction has been $3,250 / $6,500 since tax year 2000.
+ * 30 Del. C. §1108 sets it and nothing indexes it, so an adapter asking a page
+ * for this year's Delaware deduction is asking a question with no annual answer,
+ * and reporting the absence as "could not anchor" says a parser is broken when
+ * the truth is that nothing moved and nothing was ever going to.
+ *
+ * The section is also a genuinely bad parse target, which is the second half of
+ * the argument. It states the amounts as a HISTORY of periods — "$1,300 ...
+ * before January 1, 1999", then "$3,250 ... before January 1, 2000", then
+ * "$3,250 ... after December 31, 1999" — the Colorado trap, where every pattern
+ * reaches the first row and each row is a real Delaware figure. And it never
+ * uses a filing-status label the parser knows: it says "resident spouses ... if
+ * they file a joint return".
+ *
+ * So it moves to the other half of the guarantee, the one already carrying six
+ * hand-authored shards: a fingerprint of the statute in
+ * `scripts/refresh/source-watch.json`, checked on a schedule, which asks a
+ * person to read any change rather than parsing an amendment. That is the same
+ * remedy the adapter check's own report recommends, taken.
+ */
+function refuseBecauseTheFigureIsStatutory(
+  parse: (raw: string, current: Record<string, unknown>) => ParseOutcome,
+  reason: string,
+): (raw: string, current: Record<string, unknown>) => ParseOutcome {
+  return refuseWhileSourceIsBehind(parse, () => false, reason);
+}
+
 function refuseUntilTheStatePublishes(
   parse: (raw: string, current: Record<string, unknown>) => ParseOutcome,
   reason: string,
@@ -2277,10 +2309,20 @@ export const ADAPTERS: RefreshAdapter[] = [
     // Delaware's seven-tier schedule (30 Del. C. §1102) and standard deduction
     // (§1108) are both statutory and unindexed — the rates have held since 2014
     // and the deduction since 2000 — so nothing moves on the usual cadence.
-    // Anchor the standard deduction (the VA pattern) as the watch on any future
-    // change; a bracket restructure (e.g. the pending HB 13) would land as the
+    // Anchoring a figure that does not index is the wrong instrument, so this
+    // is watched for CHANGE instead, in scripts/refresh/source-watch.json. A
+    // bracket restructure (e.g. the pending HB 13) still lands as the
     // reviewer's data-only step.
-    parse: parseStandardDeductions,
+    parse: refuseBecauseTheFigureIsStatutory(
+      parseStandardDeductions,
+      "Delaware's standard deduction does not index \u2014 30 Del. C. \u00a71108 has set it at " +
+        "$3,250 / $6,500 for every taxable period beginning after December 31, 1999, so there " +
+        "is no annual figure here to anchor. The section states the amounts as a history of " +
+        'periods and never uses a filing-status label ("resident spouses ... if they file a ' +
+        'joint return"), so it is a bad parse target as well as a still one. It is watched for ' +
+        "change instead: scripts/refresh/source-watch.json fingerprints the statute, and an " +
+        "amendment asks a person to read it",
+    ),
   },
   {
     id: "state-mn-income-tax-2024",

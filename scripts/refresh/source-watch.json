@@ -41,6 +41,13 @@
       "why": "The qualifying events that open a special enrollment period. The sequence ordering is editorial; this watches the list it is grounded in.",
       "fingerprint": "71bcd93cc7225fc2f49ee9d9dce988470353e0ee5e158850aac13d5575462e41",
       "checkedOn": "2026-08-29"
+    },
+    {
+      "shard": "state-de-income-tax-2024",
+      "url": "https://delcode.delaware.gov/title30/c011/sc02/index.html",
+      "why": "Delaware's standard deduction is statutory and does not index: 30 Del. C. §1108 has set it at $3,250 / $6,500 for every taxable period beginning after December 31, 1999. There is no annual figure to parse, and the section states the amounts as a history of periods without ever using a filing-status label a parser knows — it says \"resident spouses ... if they file a joint return\". A value adapter is the wrong instrument; a change here is an amendment, and an amendment must be read.",
+      "fingerprint": "6f5bf1351571fac8dc9a39c4e0836126031b0c1c58a2ec90b7befd0b743bdad9",
+      "checkedOn": "2026-08-30"
     }
   ]
 }

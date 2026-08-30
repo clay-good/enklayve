@@ -1,12 +1,16 @@
-# Source watch for the hand-authored Pillar 4 shards (SPEC-4 §10.7).
+# Source watch: shards whose sources must be READ on a change, not parsed.
 #
 # The refresh-*.yml workflows fetch a source and parse figures out of it. That
-# is right for a bracket table and wrong for these six: they carry prose
-# transcribed from statutes and government consumer pages, and auto-rewriting
-# the site's most safety-critical sentences from a scraped page is precisely the
-# failure to avoid. So this job never edits a shard. It fingerprints each source
-# and opens an issue when one moved, asking a person to go re-read it.
-name: Watch Pillar 4 sources
+# is right for a bracket table and wrong for the six hand-authored Pillar 4
+# shards (SPEC-4 §10.7), which carry prose transcribed from statutes and
+# government consumer pages: auto-rewriting the site's most safety-critical
+# sentences from a scraped page is precisely the failure to avoid. Delaware's
+# income-tax shard joined them on 2026-08-30 for the opposite reason — its
+# standard deduction is statutory and unindexed, so there is no annual figure to
+# parse and a change to it is an amendment. So this job never edits a shard. It
+# fingerprints each source and opens an issue when one moved, asking a person to
+# go re-read it.
+name: Watch source documents
 
 on:
   schedule:
