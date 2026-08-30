@@ -267,7 +267,11 @@ export function shellBreakdown(sources: readonly string[], lengths: readonly num
     let group: string;
     if (src.includes("node_modules/")) {
       group = `node_modules/${src.split("node_modules/")[1]?.split("/").slice(0, 2).join("/") ?? ""}`;
-    } else if (src.includes("/data/")) {
+    } else if (src.endsWith(".json")) {
+      // The bundled shards are the only JSON inlined here. Testing the path for
+      // "/data/" instead filed all of `src/data` — the loader, the schemas, the
+      // integrity gate — under "shards", which is how the first run of this
+      // reported no `src/data` at all and a data figure a third too large.
       group = "data/ (bundled shards)";
     } else {
       const dir = /\/(src\/[^/]+)\//.exec(src)?.[1];
@@ -367,7 +371,27 @@ function shellBreakdownFromBuild(root: string): string[] {
   }
   const sources = map.sources ?? [];
   const lengths = (map.sourcesContent ?? []).map((c) => c?.length ?? 0);
-  return shellBreakdown(sources, lengths);
+  const lines = shellBreakdown(sources, lengths);
+
+  // The shards are `?raw` imports, so the bundler inlines them as string
+  // literals in the generated code and they appear in no source map at all —
+  // the largest single thing in the chunk, invisible to the tool that exists to
+  // say what is in the chunk. They are measured off disk instead, and labelled,
+  // because a breakdown that silently omits its biggest entry is worse than
+  // none.
+  let shardBytes = 0;
+  try {
+    const dir = join(root, "data");
+    for (const name of readdirSync(dir)) {
+      if (name.endsWith(".json")) shardBytes += statSync(join(dir, name)).size;
+    }
+  } catch {
+    return lines;
+  }
+  lines.push(
+    `${(shardBytes / 1024).toFixed(1).padStart(8)} kB  data/*.json (inlined verbatim; not in the source map)`,
+  );
+  return lines;
 }
 
 // Run only as a CLI (not when imported by tests). import.meta.main is not yet

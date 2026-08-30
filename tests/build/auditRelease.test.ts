@@ -220,8 +220,9 @@ describe("where the shell's bytes come from", () => {
         "../../node_modules/decimal.js/decimal.mjs",
         "../../data/federal-income-tax-2024.json",
         "../../src/engine/money.ts",
+        "../../src/data/schemas.ts",
       ],
-      [30_000, 20_000, 40_000, 10_000, 5_000, 1_000],
+      [30_000, 20_000, 40_000, 10_000, 5_000, 1_000, 9_000],
     );
     // Ranked, so the answer to "what is in there" is the first line — and
     // src/tiles is the two tile files summed, not either one alone, which is
@@ -229,8 +230,13 @@ describe("where the shell's bytes come from", () => {
     expect(lines[0]).toContain("src/tiles");
     expect(lines[0]).toContain("48.8 kB");
     expect(lines[1]).toContain("node_modules/zod/v3");
-    expect(lines.some((l) => l.includes("data/ (bundled shards)"))).toBe(true);
     expect(lines.some((l) => l.includes("node_modules/decimal.js"))).toBe(true);
+    // Only the inlined JSON is "shards". Grouping on a "/data/" path instead
+    // filed all of `src/data` — the loader, the schemas, the integrity gate —
+    // under shards, which is how the first run of this reported no `src/data`
+    // line at all and a data figure a third too large.
+    expect(lines.some((l) => l.includes("4.9 kB  data/ (bundled shards)"))).toBe(true);
+    expect(lines.some((l) => l.includes("src/data"))).toBe(true);
   });
 
   it("does not fall over on a build with no source map to read", () => {
