@@ -1430,6 +1430,39 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     const adapter = adaptersForGroup("state-nj")[0]!;
     const current = readShard("state-nj-income-tax-2024.json");
 
+    it("reads the schedule's own layout: threshold first, rate as a decimal", () => {
+      // The Division states its brackets only in the rate-schedule PDF, and the
+      // page the adapter used to watch is a menu of PDFs by year. The schedule
+      // writes the top tier backwards from the prose form and in decimals:
+      // "$1,000,000 and over __________ .1075 = __________ – $ 32,926.25".
+      const raw =
+        "New Jersey Tax Rate Schedules 2020 FILING STATUS: Single Table A" +
+        " $ 500,000 $ 1,000,000 __________  .0897 = __________ – $ 15,126.25 = _________" +
+        " $1,000,000 and over __________  .1075 = __________ – $ 32,926.25 = _________" +
+        " FILING STATUS: Married/CU couple, filing joint return Table B" +
+        " $1,000,000 and over __________  .1075 = __________ – $ 34,842.50 = _________";
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const b = result.shard.bracketsByFilingStatus as Record<
+        string,
+        { lowerBound: number; rate: number }[]
+      >;
+      expect(b.single!.at(-1)).toEqual({ lowerBound: 1000000, rate: 0.1075 });
+      expect(b.married_jointly!.at(-1)!.rate).toBeCloseTo(0.1075, 6);
+      // The $500,000 / .0897 tier above it is never mistaken for the top one.
+      expect(b.single!.at(-2)!.lowerBound).toBe(500000);
+    });
+
+    it("refuses when the two tables state different top tiers", () => {
+      const disagreeing =
+        "Table A $1,000,000 and over __________  .1075 = _________" +
+        " Table B $2,000,000 and over __________  .1075 = _________";
+      const result = adapter.parse(disagreeing, current);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toMatch(/different top tiers/);
+    });
+
     it("anchors the top rate + $1M threshold onto every status's top bracket, ignoring $500k", () => {
       const raw =
         "New Jersey rate: 8.97% on income over $500,000; 10.75% on taxable income in excess of $1,000,000.";

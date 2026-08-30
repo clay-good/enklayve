@@ -1707,20 +1707,46 @@ function parseMassachusettsSurtax(raw: string, current: Record<string, unknown>)
  * as every other state parser.
  */
 function parseNewJerseyTopRate(raw: string, current: Record<string, unknown>): ParseOutcome {
-  const m =
+  const text = visibleText(raw);
+  // Prose: "10.75% on taxable income in excess of $1,000,000".
+  const prose =
     /([\d.]+)\s*(?:percent|%)[^$%]*?(?:in excess of|over|above|exceeding)\s*\$?(\d{1,3}(?:,\d{3}){2,}|\d{7,})/i.exec(
-      raw,
+      text,
     );
-  if (!m) {
+  // The schedule itself, which states it the other way round and in decimals —
+  // "$1,000,000 and over __________ .1075 = __________ – $ 32,926.25". Both of
+  // NJ's tables carry the same top tier, so the two matches must agree; a page
+  // where they do not is one this parser has stopped understanding.
+  let pct = prose ? Number(prose[1]) : NaN;
+  let threshold = prose ? parseAmount(prose[2] as string) : NaN;
+  if (!prose) {
+    const tiers = new Set<string>();
+    for (const row of text.matchAll(
+      /\$\s*(\d{1,3}(?:,\d{3}){2,}|\d{7,})\s+and over[^%$]{0,40}?\.(\d{3,5})\b/gi,
+    )) {
+      tiers.add(`${parseAmount(row[1] as string)}@${row[2]}`);
+    }
+    if (tiers.size > 1) {
+      return {
+        ok: false,
+        reason: `the schedule's tables state different top tiers (${[...tiers].join(", ")}); refusing to guess which`,
+      };
+    }
+    const only = [...tiers][0];
+    if (only) {
+      const [amount, decimal] = only.split("@");
+      threshold = Number(amount);
+      pct = Number(`0.${decimal}`) * 100;
+    }
+  }
+  if (!Number.isFinite(pct) || !Number.isFinite(threshold)) {
     return {
       ok: false,
       reason: "could not anchor the NJ top rate and its (>= $1,000,000) threshold",
     };
   }
-  const pct = Number(m[1]);
-  const threshold = parseAmount(m[2] as string);
   if (!(pct > 0 && pct <= 15)) {
-    return { ok: false, reason: `anchored an implausible NJ top rate (${m[1]}%)` };
+    return { ok: false, reason: `anchored an implausible NJ top rate (${pct}%)` };
   }
   if (!(threshold >= 1000000)) {
     return { ok: false, reason: "anchored a NJ top-bracket threshold below $1,000,000" };
@@ -2553,7 +2579,10 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-nj-income-tax-2024",
     group: "state-nj",
     source: "New Jersey Division of Taxation gross income tax rate schedules",
-    sourceUrl: "https://www.nj.gov/treasury/taxation/taxtables.shtml",
+    // The rate schedules themselves, not the page that links to them: that page
+    // is a menu of PDFs by year and states no bracket. This URL is NJ's stable
+    // "current" one, and the schedule has not moved since 2020.
+    sourceUrl: "https://www.nj.gov/treasury/taxation/pdf/current/njtaxratesch.pdf",
     cadence: "Annual",
     // NJ's tiers differ by filing status (the only such seeded state), so the
     // generic graduated parser can't serve it. The lower brackets are statutory
