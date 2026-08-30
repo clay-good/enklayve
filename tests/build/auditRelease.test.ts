@@ -9,6 +9,7 @@ import {
   checkHarmTier,
   type AuditTile,
   checkBundleBudget,
+  shellSummary,
   SHELL_GZIP_BUDGET_KB,
 } from "../../scripts/audit-release";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
@@ -176,6 +177,38 @@ describe("registry: every ready tile is actually mountable", () => {
  * build until it became scenery. A warning that always fires is not a warning,
  * so this is a gate.
  */
+describe("what the audit says when the budget passes", () => {
+  const kb = (n: number) => n * 1024;
+
+  it("reports the shell, its budget, and what is left", () => {
+    // The headroom here is a few kilobytes on purpose. A gate that speaks only
+    // when it fails means the first time anyone learns how close it was is the
+    // build that broke — which is how the README came to claim 180 kB against a
+    // real 241.
+    const line = shellSummary(
+      [
+        { path: "/assets/index-abc.js", gzipBytes: kb(240) },
+        { path: "/index.html", gzipBytes: kb(2) },
+      ],
+      265,
+    );
+    expect(line).toContain("242.0 of 265 kB gzipped");
+    expect(line).toContain("23.0 kB free");
+    expect(line).toContain("2 assets");
+    // Naming the biggest one is what turns the number into somewhere to look.
+    expect(line).toContain("/assets/index-abc.js");
+  });
+
+  it("says a negative headroom rather than hiding it behind a zero", () => {
+    const line = shellSummary([{ path: "/a.js", gzipBytes: kb(300) }], 265);
+    expect(line).toContain("-35.0 kB free");
+  });
+
+  it("does not fall over on an empty precache list", () => {
+    expect(() => shellSummary([], SHELL_GZIP_BUDGET_KB)).not.toThrow();
+  });
+});
+
 describe("checkBundleBudget", () => {
   const kb = (n: number): number => n * 1024;
 

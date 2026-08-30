@@ -203,6 +203,24 @@ export function checkBundleBudget(
   ];
 }
 
+/**
+ * The one line the audit prints on success: what the shell costs, what it may
+ * cost, and what is left. Pure, so the wording is testable without a build.
+ */
+export function shellSummary(
+  assets: readonly ShellAsset[],
+  budgetKb: number = SHELL_GZIP_BUDGET_KB,
+): string {
+  const totalKb = assets.reduce((sum, a) => sum + a.gzipBytes, 0) / 1024;
+  const freeKb = budgetKb - totalKb;
+  const biggest = [...assets].sort((a, b) => b.gzipBytes - a.gzipBytes)[0];
+  const largest = biggest ? `, largest ${biggest.path}` : "";
+  return (
+    `precached shell ${totalKb.toFixed(1)} of ${budgetKb} kB gzipped, ` +
+    `${freeKb.toFixed(1)} kB free across ${assets.length} assets${largest}`
+  );
+}
+
 export function checkLocalStorage(files: { path: string; content: string }[]): string[] {
   const allowed = /(^|\/)ui\/theme\.ts$/;
   const violations: string[] = [];
@@ -281,7 +299,8 @@ function runCli(): void {
   violations.push(...checkLocalStorage(tsFiles));
 
   // 5. The eager shell's byte budget — what a first visit actually costs.
-  violations.push(...checkBundleBudget(precachedAssets(root)));
+  const shell = precachedAssets(root);
+  violations.push(...checkBundleBudget(shell));
 
   if (violations.length > 0) {
     console.error("✗ Release audit failed:");
@@ -291,6 +310,11 @@ function runCli(): void {
   console.log(
     "✓ Release audit passed: CSP, no cross-origin loads, provenance, citation length, no sensitive persistence, shell size budget.",
   );
+  // Say the number even when it passes. The headroom here is deliberately a few
+  // kilobytes, and a gate that only speaks when it fails means the first time
+  // anyone learns how close it was is the build that broke — which is how the
+  // README came to claim 180 kB against a real 241.
+  console.log(`  ${shellSummary(shell)}`);
 }
 
 // Run only as a CLI (not when imported by tests). import.meta.main is not yet

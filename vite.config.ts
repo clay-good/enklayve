@@ -158,14 +158,23 @@ export default defineConfig({
     target: "es2022",
     sourcemap: true,
     // Vite's 500 kB nudge is a standing false alarm for a deliberately single-
-    // bundle app. This sits just above today's largest chunk so it still trips on
-    // a real regression — but it is only a nudge in build output, and a warning
-    // that scrolls past a green build is not a gate. The 800 kB limit had in fact
-    // been tripping on every build for some time, unnoticed, which is exactly the
-    // failure mode. The real gate is `checkBundleBudget` in the release audit,
-    // which fails on the *gzipped precached shell* — the bytes a first visit
-    // actually costs — rather than on one chunk's minified size.
-    chunkSizeWarningLimit: 900,
+    // bundle app, so this raises it. Note what has actually happened to this
+    // number: it was 800, drifted under the growing bundle and printed on every
+    // build unnoticed, was raised to 900 with a comment saying it now sat "just
+    // above today's largest chunk" — and by 2026-08-30 the largest chunk was 907
+    // and it was printing on every build again. A threshold that has to be
+    // hand-tended to stay meaningful drifts back into scenery every time, and
+    // the advice it prints ("consider dynamic import()") does not apply here:
+    // `connect-src 'none'` means the datasets are inlined at build time, so the
+    // shell cannot be split without breaking the integrity gate.
+    //
+    // The gate that matters is `checkBundleBudget` in the release audit, which
+    // fails the build on the *gzipped precached shell* — the bytes a first visit
+    // costs and offline requires — rather than on one chunk's minified size. As
+    // of 2026-08-30 that audit also PRINTS the figure and its headroom on every
+    // successful run, so the number is in front of a person each build instead
+    // of depending on someone noticing a warning scroll past a green build.
+    chunkSizeWarningLimit: 1000,
   },
   resolve: {
     alias: {
