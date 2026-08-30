@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **68** in **12 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **80**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | **2,095** unit/golden across 89 files, **+26** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | **2,097** unit/golden across 89 files, **+26** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Source audits | **all 51 jurisdictions + the federal and benefits shards** read against the agency's own document; 8 wrong figures found and fixed | [`docs/data-sources.md`](docs/data-sources.md#source-audits) |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale/theme preference touches `localStorage`, asserted end-to-end across a full session | `npm run audit` / `npm run test:e2e` |
@@ -477,6 +477,7 @@ Running that dry run across all 49 answered a question the check could not: **fi
 | The figure is stated, for someone else | New York states two single deductions and the smaller is a **dependent's** — so reaching it returns not a number that looks wrong but one that looks like a stingier state. SNAP's allotment table has a column per region, and Alaska (Rural 2) is twice the contiguous figure. |
 | The figure is stated in the schedule's own arithmetic | New Jersey states its brackets only in the rate-schedule PDF, which writes the top tier backwards from prose and in decimals: `$1,000,000 and over __________ .1075 = __________ – $ 32,926.25`. The adapter watched the page that *links* to that PDF, which is a menu and states no bracket. |
 | The figure is a cell in a schedule, not a figure | Wisconsin states no standard deduction at all — it states four phase-out schedules, and the number wanted is the maximum, the third cell of the first row. A label-then-amount pattern reaches the `$ 0` that opens the income band instead, 85 characters and a column heading later, and "Married Filing Separately" ($12,280) sits directly under "Married Filing Jointly" ($25,840). The schedules are addressed by name and the row read positionally. |
+| Two rates claiming one threshold | West Virginia's rate-cut page anchors three different things at $10,000: the SB 392 headline ("a 5% income tax cut"), the base tier ("Not over $10,000 2.11%"), and the second ("$211.00 plus 2.81% of the excess over $10,000"). First-wins used to resolve that silently, and a ladder built from a collision is wrong in the way nothing downstream can see — right shape, right thresholds, one rate off. |
 | The figure is stated backwards | California's Form 540-ES: "$5,706 single or married/RDP filing separately $11,412 married/RDP filing jointly". Every pattern here reads label-then-amount, so `single` reaches past its own figure and reads $11,412. The FTB states them the right way round elsewhere, so the adapter watches that instead. **Georgia states them backwards in both of its documents**, so it gets a parser that reads the sentence's real unit — an amount and the list of statuses it applies to — which is also the only way to learn that Georgia's deduction does *not* double for head of household. South Carolina's SCIAD is stated the same way round, so it uses the same parser. |
 | The page is right and the law moved | Iowa's DOR page still described a 3.9% flat tax that SF 2442 repealed before it took effect. **Utah's is the reverse**: SB 60 cut the rate to 4.45% and the Tax Commission's own pages still say 4.5%. The shipped figure was right; it is cited to the bill now. Both get a refusal that names the statute, because no plausibility guard can separate a real rate cut from a stale page. |
 | The source declined to serve | The BLS CPI API answers `200` with `REQUEST_NOT_PROCESSED` when its keyless daily quota is spent, and the adapter reported that the API had changed shape — sending a reader to rewrite a parser that was fine. |
@@ -604,7 +605,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**2,095 unit/golden tests across 89 files** (plus 26 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**2,097 unit/golden tests across 89 files** (plus 26 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 

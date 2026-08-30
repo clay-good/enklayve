@@ -538,6 +538,41 @@ describe("adapters: North Carolina (a table, then pages about itemizing)", () =>
   });
 });
 
+describe("adapters: West Virginia (two rates claiming one threshold)", () => {
+  const adapter = adaptersForGroup("state-wv")[0]!;
+  const current = readShard("state-wv-income-tax-2024.json");
+
+  it("refuses a ladder assembled from a collision instead of keeping the first", () => {
+    // tax.wv.gov's rate-cut page, abridged. Three different things anchor at
+    // $10,000: the SB 392 headline ("a 5% income tax cut"), the base tier ("Not
+    // over $10,000 2.11%"), and the second tier ("$211.00 plus 2.81% of the
+    // excess over $10,000"). First-wins used to resolve that silently, and a
+    // ladder built from a collision is wrong in the way nothing downstream can
+    // see: right shape, right thresholds, one rate off.
+    const raw =
+      "W. Va. Code § 11-21-4j will be codified to reflect a 5% income tax cut for all West" +
+      " Virginians retroactive to January 1, 2026. If the WV Taxable Income is: The tax is:" +
+      " Not over $10,000 2.11% of taxable income Over $10,000 but not over $25,000 $211.00" +
+      " plus 2.81% of the excess over $10,000";
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toMatch(/two rates claim the same bracket threshold/);
+  });
+
+  it("still reads a ladder where each threshold is claimed once", () => {
+    const clean =
+      "For taxable years beginning in 2026: 2.81% of the excess over $10,000;" +
+      " 3.16% of excess over $25,000; 4.22% of excess over $40,000;" +
+      " 4.58% of excess over $60,000";
+    const result = adapter.parse(clean, current);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const b = result.shard.bracketsByFilingStatus as Record<string, { rate: number }[]>;
+      expect(b.single![1]!.rate).toBeCloseTo(0.0281, 6);
+    }
+  });
+});
+
 describe("adapters: Alabama (a chart, not a figure)", () => {
   const adapter = adaptersForGroup("state-al")[0]!;
   const current = readShard("state-al-income-tax-2024.json");

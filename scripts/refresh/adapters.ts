@@ -1616,7 +1616,7 @@ function parseGraduatedBracketJurisdiction(
   }
   const tierRe =
     /([\d.]+)\s*(?:percent|%)[^%$]*?(?:in excess of|over|above|exceeding)\s*\$?([\d,]{3,})/gi;
-  const seen = new Set<number>();
+  const seen = new Map<number, number>();
   const tiers: { lowerBound: number; rate: number }[] = [];
   let match: RegExpExecArray | null;
   while ((match = tierRe.exec(scope)) !== null) {
@@ -1624,8 +1624,26 @@ function parseGraduatedBracketJurisdiction(
     const lowerBound = parseAmount(match[2] as string);
     if (!Number.isFinite(rate) || rate <= 0 || rate > 0.15) continue;
     if (!Number.isFinite(lowerBound) || lowerBound <= 0) continue;
-    if (seen.has(lowerBound)) continue;
-    seen.add(lowerBound);
+    // Two rates claiming the same threshold used to be resolved by keeping
+    // whichever the regex reached first, silently. West Virginia shows what
+    // that costs: its base tier reads "Not over $10,000 2.11% of taxable
+    // income", and the next reads "Over $10,000 but not over $25,000 $211.00
+    // plus 2.81% of the excess over $10,000" — so 2.11% and 2.81% both anchor
+    // at $10,000, and first-wins writes the base rate into the second bracket.
+    // A ladder assembled from a collision is wrong in a way nothing downstream
+    // can see: it has the right shape, the right thresholds, and one rate off.
+    const clash = seen.get(lowerBound);
+    if (clash !== undefined) {
+      if (clash === rate) continue;
+      return {
+        ok: false,
+        reason:
+          `two rates claim the same bracket threshold ($${lowerBound}: ` +
+          `${(clash * 100).toFixed(2)}% and ${(rate * 100).toFixed(2)}%); refusing — a ladder ` +
+          "assembled from a collision has the right shape and one wrong rate",
+      };
+    }
+    seen.set(lowerBound, rate);
     tiers.push({ lowerBound, rate });
   }
   if (tiers.length === 0) {
