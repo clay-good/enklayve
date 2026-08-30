@@ -537,6 +537,49 @@ describe("adapters: North Carolina (a table, then pages about itemizing)", () =>
   });
 });
 
+describe("adapters: a state that has not published the shard's year", () => {
+  // "could not anchor any standard-deduction figure by filing status" and "the
+  // state has not published this year yet" look identical in the report and
+  // mean opposite things. One says fix a parser; the other says nothing is
+  // wrong. Oregon and Vermont are both the second, and both shards say so in
+  // their own notes.
+  it("names the reason instead of reporting a broken parser", () => {
+    const or = adaptersForGroup("state-or")[0]!;
+    const menu = or.parse("Personal income tax Forms Where's my refund? Contact us", {
+      ...readShard("state-or-income-tax-2024.json"),
+    });
+    expect(menu.ok).toBe(false);
+    if (!menu.ok) expect(menu.reason).toMatch(/has not published its 2026 Form OR-40/);
+
+    const vt = adaptersForGroup("state-vt")[0]!;
+    const rates = vt.parse("2025 Vermont Rate Schedules 2025 Vermont Tax Tables", {
+      ...readShard("state-vt-income-tax-2024.json"),
+    });
+    expect(rates.ok).toBe(false);
+    if (!rates.ok) expect(rates.reason).toMatch(/has not published its 2026 annual rate schedules/);
+  });
+
+  it("clears itself the day the state does publish", () => {
+    // The real parser still runs first, so this explanation stops being printed
+    // without anyone having to remember to delete it. (Oregon's own 2025 table,
+    // read as though it were the 2026 one — the shape is what is under test.)
+    const or = adaptersForGroup("state-or")[0]!;
+    const published = or.parse(
+      "Table 5. Standard deduction Single $2,835 Married filing jointly $5,670" +
+        " Head of household $4,560 Qualifying surviving spouse $5,670",
+      readShard("state-or-income-tax-2024.json"),
+    );
+    expect(published.ok).toBe(true);
+    if (published.ok) {
+      expect(published.shard.standardDeductionByFilingStatus).toEqual({
+        single: 2835,
+        married_jointly: 5670,
+        head_of_household: 4560,
+      });
+    }
+  });
+});
+
 describe("adapters: Maine (a rate schedule that mentions the table before stating it)", () => {
   const adapter = adaptersForGroup("state-me")[0]!;
   const current = readShard("state-me-income-tax-2024.json");

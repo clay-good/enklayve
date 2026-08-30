@@ -792,6 +792,44 @@ function refuseWhileSourceIsBehind(
   };
 }
 
+/**
+ * The other reason a source cannot be read, and the one "could not anchor any
+ * standard-deduction figure by filing status" hides: **the state has not
+ * published the shard's year yet.**
+ *
+ * Those two refusals look identical in the report and mean opposite things. One
+ * says a parser is broken and someone should fix it. The other says nothing is
+ * wrong with anything — the figure does not exist yet, and the shard says so
+ * itself. Reporting the second as the first sends a reader to repair a parser
+ * that is fine, which is how a report earns being ignored.
+ *
+ * Oregon and Vermont are both in the second state today, and both shards are
+ * explicit about it in their own notes: Oregon carries the 2025 Form OR-40
+ * indexed standard deduction because the 2026 booklet is not out, Vermont
+ * carries the 2025 IN-111 schedule because the department has posted only 2026
+ * *withholding* charts. Deliberately a year behind and documented, not stale by
+ * accident.
+ *
+ * The tempting fix is to point each adapter at the document the shard cites —
+ * both parse perfectly, and Oregon's 2025 booklet returns exactly the shard's
+ * $2,835 / $5,670 / $4,560. That is the Rev. Proc. 2023-34 mistake with a
+ * different number on it: a document for a year that has already closed can
+ * never change, so it reports agreement forever and a change never, and it
+ * would go on doing that long after the state published the year the shard is
+ * actually labelled. A watch of nothing, wearing the same green as a working
+ * one.
+ *
+ * So the real parser still runs first — the day the state's page states the
+ * shard's year, it anchors and this explanation stops being printed, with
+ * nobody having to remember to delete it.
+ */
+function refuseUntilTheStatePublishes(
+  parse: (raw: string, current: Record<string, unknown>) => ParseOutcome,
+  reason: string,
+): (raw: string, current: Record<string, unknown>) => ParseOutcome {
+  return refuseWhileSourceIsBehind(parse, () => false, reason);
+}
+
 // --- Michigan (its rate is on page one of a withholding guide) ----------------
 
 /**
@@ -2058,7 +2096,18 @@ export const ADAPTERS: RefreshAdapter[] = [
     // standard deduction (the MN/RI pattern); the per-status bracket tables and
     // the exemption roll alongside it as the reviewer's data-only step on each
     // new annual rate schedule.
-    parse: parseStandardDeductions,
+    //
+    // Vermont has posted 2026 WITHHOLDING charts and no 2026 annual schedule,
+    // so there is nothing here to watch yet and the refusal says so.
+    parse: refuseUntilTheStatePublishes(
+      parseStandardDeductions,
+      "Vermont has not published its 2026 annual rate schedules — this page's newest entry is " +
+        '"2025 Vermont Rate Schedules", and the 2026 documents the department has posted are ' +
+        "the wage-bracket WITHHOLDING charts, which state no standard deduction at all. This " +
+        "shard is on 2026 and deliberately carries the 2025 IN-111 figures forward, which its " +
+        "own note records; the 2025 schedule is a closed year and would report agreement " +
+        "forever. Repoint this adapter the day a 2026 schedule is listed",
+    ),
   },
   {
     id: "state-ok-income-tax-2024",
@@ -2211,7 +2260,19 @@ export const ADAPTERS: RefreshAdapter[] = [
     // deduction (the MN/RI pattern); the per-status bracket tables, the $8,500
     // federal-subtraction cap, and the Table 4 phase-out roll alongside it as the
     // reviewer's data-only step on each new annual OR-40 rate chart.
-    parse: parseStandardDeductions,
+    //
+    // Oregon has not published a 2026 OR-40 booklet, and this shard is on 2026,
+    // so there is nothing here to watch yet and the refusal says so rather than
+    // reporting a broken parser.
+    parse: refuseUntilTheStatePublishes(
+      parseStandardDeductions,
+      "Oregon has not published its 2026 Form OR-40 instructions — the newest is 2025 " +
+        "(form-or-40-inst_101-040-1_2025.pdf, 404 for 2026), and this shard is on 2026. " +
+        "It deliberately carries the 2025 indexed standard deduction forward, which its own " +
+        "note records; pointing this adapter at the 2025 booklet would parse perfectly and " +
+        "report agreement forever, because a closed year's document can never change. " +
+        "Repoint it at the 2026 instructions the day they appear",
+    ),
   },
   {
     id: "state-ne-income-tax-2024",
