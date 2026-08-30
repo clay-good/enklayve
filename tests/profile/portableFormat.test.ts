@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { decrypt, encrypt, iterationsFor } from "../../src/profile/portable";
+import {
+  checkFormatVersion,
+  decrypt,
+  encrypt,
+  importProfile,
+  iterationsFor,
+} from "../../src/profile/portable";
+import { SituationStore } from "../../src/profile/situation";
 
 /**
  * The work factor an encrypted export is read at.
@@ -82,4 +89,50 @@ describe("round-tripping a file written at another work factor", () => {
     const absurd = JSON.stringify({ ...JSON.parse(envelope), iterations: 1_000_000_000 });
     await expect(decrypt(absurd, "pass")).rejects.toThrow(/outside the/);
   }, 30_000);
+});
+
+/**
+ * The format version a file was written at.
+ *
+ * The ledger has always checked this with `z.literal`; the profile file
+ * recorded a version and never looked at it, so a file written by a later build
+ * would have been loaded as though it were this one — its snapshot spread
+ * straight into the store, whatever shape it had. The two formats share a
+ * mechanic and should share the rule.
+ */
+describe("the format version a file was written at", () => {
+  it("reads the version this build writes", () => {
+    expect(checkFormatVersion(1)).toBe(1);
+  });
+
+  it("refuses a file from a newer build, and says that is what happened", () => {
+    // "Not a valid enklayve profile file" is the wrong sentence for a file that
+    // is perfectly valid and simply newer: it sends someone looking for a
+    // corrupted download instead of an update.
+    expect(() => checkFormatVersion(2)).toThrow(/written by a newer version/);
+    expect(() => checkFormatVersion(2)).not.toThrow(/not a valid/);
+  });
+
+  it("refuses a version that is not a version", () => {
+    expect(() => checkFormatVersion(0)).toThrow(/not one that exists/);
+    expect(() => checkFormatVersion(-1)).toThrow(/not one that exists/);
+    expect(() => checkFormatVersion(1.5)).toThrow(/whole number/);
+    expect(() => checkFormatVersion("1")).toThrow(/whole number/);
+  });
+
+  it("reads a file with no version as this one", () => {
+    expect(checkFormatVersion(undefined)).toBe(1);
+  });
+
+  it("stops a newer plaintext profile from being spread into the store", async () => {
+    const store = new SituationStore();
+    const future = JSON.stringify({
+      format: "enklayve.situation",
+      version: 99,
+      snapshot: { values: { annualIncome: 1 }, sources: {} },
+    });
+    await expect(importProfile(store, future)).rejects.toThrow(/newer version/);
+    // And nothing from it landed.
+    expect(store.snapshot().values.annualIncome).toBeUndefined();
+  });
 });

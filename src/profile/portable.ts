@@ -183,6 +183,7 @@ export async function decrypt(envelopeText: string, passphrase: string): Promise
   const envelope = JSON.parse(envelopeText) as EncryptedEnvelope;
   // Outside the try: an unsupported work factor is not a wrong passphrase, and
   // must not be reported as one.
+  checkFormatVersion(envelope.version);
   const iterations = iterationsFor(envelope);
   const key = await deriveKey(passphrase, base64ToBuffer(envelope.salt), iterations);
   try {
@@ -206,11 +207,42 @@ export async function exportProfile(store: SituationStore, passphrase?: string):
   return passphrase ? encrypt(plain, passphrase) : plain;
 }
 
+/**
+ * A file's format version, or a refusal naming why it cannot be read.
+ *
+ * The ledger has always checked this (`z.literal(LEDGER_VERSION)`); the profile
+ * file recorded a version and never looked at it, so a file written by a later
+ * build would have been loaded as though it were this one — its snapshot spread
+ * straight into the store, whatever shape it had. The two formats share a
+ * mechanic and should share the rule.
+ *
+ * A version this build does not know is refused with the reason a person can
+ * act on. "Not a valid enklayve profile file" is the wrong sentence for a file
+ * that is perfectly valid and simply newer: it sends someone looking for a
+ * corrupted download instead of an update.
+ */
+export function checkFormatVersion(version: unknown): number {
+  if (version === undefined || version === null) return FORMAT_VERSION;
+  if (typeof version !== "number" || !Number.isInteger(version)) {
+    throw new Error("this file's format version is not a whole number");
+  }
+  if (version > FORMAT_VERSION) {
+    throw new Error(
+      `this file is format version ${version} and this build reads version ${FORMAT_VERSION} — ` +
+        "it was written by a newer version of enklayve",
+    );
+  }
+  if (version < 1)
+    throw new Error(`this file's format version (${version}) is not one that exists`);
+  return version;
+}
+
 function loadPlain(store: SituationStore, text: string): void {
   const parsed = JSON.parse(text) as Partial<PlainFile>;
   if (parsed.format !== "enklayve.situation" || !parsed.snapshot) {
     throw new Error("not a valid enklayve profile file");
   }
+  checkFormatVersion(parsed.version);
   store.load(parsed.snapshot);
 }
 
