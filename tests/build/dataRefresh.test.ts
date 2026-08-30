@@ -201,7 +201,7 @@ describe("adapters: registry", () => {
       "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(52);
+    expect(ADAPTERS).toHaveLength(53);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
@@ -1661,6 +1661,124 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     const credit = result.shard.taxpayerCredit as { creditRate: number } | undefined;
     expect(credit?.creditRate).toBe(0.06);
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  describe("AMT — three tables that share a filing-status label", () => {
+    const adapter = adaptersForGroup("irs").find((a) => a.id === "amt-2024")!;
+    const current = readShard("amt-2024.json");
+    // irs.gov/pub/irs-drop/rp-25-32.pdf §4.10, verbatim through the PDF reader.
+    const raw =
+      ".10 Exemption Amounts for Alternative Minimum Tax. For taxable years beginning in 2026," +
+      " the exemption amounts under § 55(d)(1) are: Filing status Exemption amount Joint Returns" +
+      " or Surviving Spouses $140,200 Unmarried Individuals (other than Surviving Spouses)" +
+      " $90,100 Married Individuals Filing Separate Returns $70,100 Estates and Trusts $31,400" +
+      " For taxable years beginning in 2026, under § 55(b)(1), the excess taxable income above" +
+      " which the 28 percent tax rate applies is: Filing status Excess taxable income Married" +
+      " Individuals Filing Separate Returns $122,250 All Other Taxpayers $244,500 For taxable" +
+      " years beginning in 2026, the amounts used under § 55(d)(2) to determine the phaseout of" +
+      " the exemption amounts are: 17 Filing status Threshold Phaseout Amount Complete Phaseout" +
+      " Amount Joint Returns or Surviving Spouses $1,000,000 $1,280,400 Unmarried Individuals" +
+      " (other than Surviving Spouses) $500,000 $680,200 Married Individuals Filing Separate" +
+      " Returns $500,000 $640,200 Estates and Trusts $104,800 $167,600 .11 Alternative Minimum" +
+      ' Tax Exemption for a Child Subject to the "Kiddie Tax."';
+
+    it("keeps the three tables apart, though two share a row label", () => {
+      // "Married Individuals Filing Separate Returns $70,100" is the exemption
+      // and "Married Individuals Filing Separate Returns $122,250" is the 28%
+      // threshold, eighty words apart. A document-wide search writes one into
+      // the other's field and looks entirely healthy doing it.
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const ex = result.shard.exemptionByFilingStatus as Record<string, number>;
+      const r28 = result.shard.rate28ThresholdByFilingStatus as Record<string, number>;
+      const po = result.shard.phaseoutThresholdByFilingStatus as Record<string, number>;
+      expect(ex.married_separately).toBe(70_100);
+      expect(r28.married_separately).toBe(122_250);
+      expect(po.married_separately).toBe(500_000);
+    });
+
+    it("maps each printed row onto the statuses it covers", () => {
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const ex = result.shard.exemptionByFilingStatus as Record<string, number>;
+      expect(ex.married_jointly).toBe(140_200);
+      expect(ex.qualifying_surviving_spouse).toBe(140_200);
+      expect(ex.single).toBe(90_100);
+      expect(ex.head_of_household).toBe(90_100);
+      // "Estates and Trusts" is a fourth row in every table and is not a filing
+      // status this engine models. It must not become one.
+      expect(Object.values(ex)).not.toContain(31_400);
+      // Four printed rows, three modelled statuses' worth: the shard's schedule
+      // keeps exactly the statuses it had.
+      expect(Object.keys(ex).sort()).toEqual(
+        Object.keys(current.exemptionByFilingStatus as Record<string, number>).sort(),
+      );
+    });
+
+    it("takes the threshold, not the complete-phaseout amount beside it", () => {
+      // The phase-out table prints two columns: "$1,000,000 $1,280,400". The
+      // second is a different figure sitting directly next to the one wanted.
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const po = result.shard.phaseoutThresholdByFilingStatus as Record<string, number>;
+      expect(po.married_jointly).toBe(1_000_000);
+      expect(po.single).toBe(500_000);
+      expect(Object.values(po)).not.toContain(1_280_400);
+    });
+
+    it("actually reads the document rather than agreeing by construction", () => {
+      // The live dry run is a no-op, which is what it should be — and a no-op
+      // is also what a parser that writes back what it was given produces. So
+      // move the figures and check they land.
+      const moved = raw
+        .replace(
+          "Joint Returns or Surviving Spouses $140,200",
+          "Joint Returns or Surviving Spouses $141,000",
+        )
+        .replace("All Other Taxpayers $244,500", "All Other Taxpayers $245,000");
+      const result = adapter.parse(moved, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const ex = result.shard.exemptionByFilingStatus as Record<string, number>;
+      expect(ex.married_jointly).toBe(141_000);
+      expect(ex.qualifying_surviving_spouse).toBe(141_000);
+      expect((result.shard.rate28ThresholdByFilingStatus as Record<string, number>).single).toBe(
+        245_000,
+      );
+      // And the rates, which are statutory under § 55 and not adjusted by the
+      // procedure, come from the shard rather than being demanded of it.
+      expect(result.shard.rateLow).toBe(0.26);
+      expect(result.shard.phaseoutRate).toBe(0.25);
+    });
+
+    it("refuses a procedure for another year", () => {
+      const result = adapter.parse(raw, { ...current, taxYear: 2027 });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.reason).toMatch(/adjusts 2026 and the shard is 2027/);
+        expect(result.settled).toBe(true);
+      }
+    });
+
+    it("fails (-> alert) when a table is missing rather than writing the others", () => {
+      const partial = raw.replace(/under § 55\(b\)\(1\)[\s\S]*$/, "");
+      const result = adapter.parse(partial, current);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toMatch(/28% bracket table/);
+    });
+
+    it("refuses a figure that moved implausibly far", () => {
+      const moved = raw.replace(
+        "Unmarried Individuals (other than Surviving Spouses) $90,100",
+        "Unmarried Individuals (other than Surviving Spouses) $900,100",
+      );
+      const result = adapter.parse(moved, current);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toMatch(/exemptionByFilingStatus\.single 900100 is/);
+    });
   });
 
   describe("gift tax — the revenue procedure the shard has always cited", () => {

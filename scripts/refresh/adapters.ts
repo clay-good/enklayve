@@ -1993,30 +1993,193 @@ function parseGraduatedBracketJurisdiction(
  * reporting a moved source about a document that says exactly what the shard
  * carries.
  */
+/**
+ * Refuse a revenue procedure that is not about the shard's year, or `null`.
+ *
+ * A revenue procedure is a closed document at a year-stamped URL, so this is
+ * the guard that makes one safe to watch at all: read without it, `rp-25-32.pdf`
+ * reports agreement forever and can never report a change, which is exactly how
+ * the federal adapter spent three years watching Rev. Proc. 2023-34 — the 2024
+ * procedure — for a 2026 shard. Every section of a procedure states the year it
+ * adjusts, so the shard's own year is the anchor, and a procedure that states an
+ * earlier year is the IRS not having published yet rather than a broken parser.
+ */
+function refuseIfNotTheShardsProcedure(
+  text: string,
+  taxYear: number,
+): { ok: false; reason: string; settled?: boolean } | null {
+  const year = String(taxYear);
+  if (new RegExp(`(?:calendar|taxable) years? (?:beginning in )?${year}\\b`, "i").test(text)) {
+    return null;
+  }
+  const stated = [
+    ...text.matchAll(/(?:calendar|taxable) years? (?:beginning in )?((?:19|20)\d{2})\b/gi),
+  ]
+    .map((m) => Number(m[1]))
+    .sort((a, b) => b - a)[0];
+  return {
+    ok: false,
+    reason: stated
+      ? `this revenue procedure adjusts ${stated} and the shard is ${taxYear}; refusing — ` +
+        "a procedure that does not state the shard's year is a closed document that would " +
+        "report agreement forever"
+      : "this document states no adjustment year at all; refusing to read figures out of it",
+    settled: stated !== undefined && stated < taxYear,
+  };
+}
+
+/**
+ * The first dollar amount stated after each of `labels`, inside `region` only.
+ *
+ * Narrowing to the region first is not tidiness. Rev. Proc. 2025-32 prints
+ * "Married Individuals Filing Separate Returns $70,100" in the AMT exemption
+ * table and "Married Individuals Filing Separate Returns $122,250" in the 28%
+ * table, eighty words apart — the same label, two figures, and whichever a
+ * document-wide search reached first would be written into the other's field
+ * while looking perfectly healthy.
+ */
+function amountsByLabel(region: string, labels: readonly string[]): Map<string, number> {
+  const found = new Map<string, number>();
+  for (const label of labels) {
+    const m = new RegExp(`${label}[^$]{0,80}\\$([\\d,]+)`, "i").exec(region);
+    if (m?.[1]) found.set(label, parseAmount(m[1]));
+  }
+  return found;
+}
+
+/** The labels Rev. Proc. 2025-32 uses for a filing status, and who they cover. */
+const AMT_ROWS: { label: string; statuses: string[] }[] = [
+  {
+    label: "Joint Returns or Surviving Spouses",
+    statuses: ["married_jointly", "qualifying_surviving_spouse"],
+  },
+  { label: "Unmarried Individuals", statuses: ["single", "head_of_household"] },
+  { label: "Married Individuals Filing Separate Returns", statuses: ["married_separately"] },
+];
+
+/** The region a table occupies, from its lead-in up to the next one. */
+function tableRegion(text: string, leadIn: string): string | null {
+  const start = text.indexOf(leadIn);
+  if (start < 0) return null;
+  const after = text.slice(start + leadIn.length);
+  const end = /For taxable years beginning in|\.\d\d [A-Z]/.exec(after);
+  return end ? after.slice(0, end.index) : after;
+}
+
+/**
+ * The AMT exemption, its phase-out threshold, and the 28% bracket, from the
+ * revenue procedure this shard has always cited.
+ *
+ * Three tables, and they must be read as three. The procedure prints "Married
+ * Individuals Filing Separate Returns $70,100" in the exemption table and
+ * "Married Individuals Filing Separate Returns $122,250" in the 28% table
+ * eighty words later — the same label, two figures — so a document-wide search
+ * writes one into the other's field and looks entirely healthy doing it. Each
+ * table is narrowed to its own lead-in first, the Maine and Wisconsin lesson.
+ *
+ * Two rows are deliberately not read. "Estates and Trusts" is a fourth row in
+ * every table and is not a filing status this engine models, and the phase-out
+ * table's second column is the COMPLETE phase-out amount, a different figure
+ * that sits directly beside the one wanted — so only the first amount after
+ * each label is taken.
+ *
+ * The rates (26%, 28%) and the 25% phase-out rate are statutory under § 55 and
+ * the procedure does not adjust them, so they come from the shard rather than
+ * being demanded of a document that does not state them.
+ */
+function parseAmtProcedure(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const text = raw.replace(/\s+/g, " ");
+  const taxYear = Number(current.taxYear);
+  const wrongYear = refuseIfNotTheShardsProcedure(text, taxYear);
+  if (wrongYear) return wrongYear;
+
+  const regions: [string, string, string][] = [
+    [
+      "exemptionByFilingStatus",
+      "exemption amounts under § 55(d)(1) are:",
+      "the AMT exemption table",
+    ],
+    [
+      "rate28ThresholdByFilingStatus",
+      "the 28 percent tax rate applies is:",
+      "the 28% bracket table",
+    ],
+    [
+      "phaseoutThresholdByFilingStatus",
+      "to determine the phaseout of the exemption amounts are:",
+      "the exemption phase-out table",
+    ],
+  ];
+
+  const shard = clone(current);
+  for (const [field, leadIn, description] of regions) {
+    const region = tableRegion(text, leadIn);
+    if (region === null)
+      return { ok: false, reason: `could not find ${description} for ${taxYear}` };
+
+    const committed = current[field] as Record<string, number> | undefined;
+    if (!committed) return { ok: false, reason: `shard has no ${field} to overlay` };
+
+    // The 28% table names one row "All Other Taxpayers" rather than listing the
+    // statuses, so it is read separately and applied to everything the
+    // separate-return row does not cover.
+    const isRate28 = field === "rate28ThresholdByFilingStatus";
+    const labels = isRate28
+      ? ["Married Individuals Filing Separate Returns", "All Other Taxpayers"]
+      : AMT_ROWS.map((r) => r.label);
+    const found = amountsByLabel(region, labels);
+    const absent = labels.filter((l) => !found.has(l));
+    if (absent.length > 0) {
+      return { ok: false, reason: `${description} states no amount for ${absent.join(", ")}` };
+    }
+
+    const next: Record<string, number> = {};
+    if (isRate28) {
+      const separate = found.get("Married Individuals Filing Separate Returns")!;
+      const other = found.get("All Other Taxpayers")!;
+      for (const status of Object.keys(committed)) {
+        next[status] = status === "married_separately" ? separate : other;
+      }
+    } else {
+      for (const row of AMT_ROWS) {
+        for (const status of row.statuses) {
+          if (status in committed) next[status] = found.get(row.label)!;
+        }
+      }
+    }
+
+    for (const [status, value] of Object.entries(next)) {
+      if (!(value > 0)) {
+        return { ok: false, reason: `anchored a non-positive ${field}.${status} (${value})` };
+      }
+      const drift = implausibleDrift(committed[status] as number, value);
+      if (drift !== null) {
+        return {
+          ok: false,
+          reason: `${field}.${status} ${drift}; refusing — either the procedure moved or this is not the figure`,
+        };
+      }
+    }
+    // A status the procedure did not cover must keep what the shard carries
+    // rather than vanishing from the schedule.
+    if (Object.keys(next).length !== Object.keys(committed).length) {
+      return {
+        ok: false,
+        reason: `${description} covered ${Object.keys(next).length} of the shard's ${Object.keys(committed).length} filing statuses`,
+      };
+    }
+    shard[field] = next;
+  }
+  return { ok: true, shard };
+}
+
 function parseGiftTaxProcedure(raw: string, current: Record<string, unknown>): ParseOutcome {
   const text = raw.replace(/\s+/g, " ");
   const taxYear = Number(current.taxYear);
   const year = String(taxYear);
 
-  // A revenue procedure states the year it adjusts, and states it in every
-  // section. If this document is not about the shard's year, nothing in it is
-  // this shard's figure.
-  if (!new RegExp(`(?:calendar|taxable) years? (?:beginning in )?${year}\\b`, "i").test(text)) {
-    const stated = [
-      ...text.matchAll(/(?:calendar|taxable) years? (?:beginning in )?((?:19|20)\d{2})\b/gi),
-    ]
-      .map((m) => Number(m[1]))
-      .sort((a, b) => b - a)[0];
-    return {
-      ok: false,
-      reason: stated
-        ? `this revenue procedure adjusts ${stated} and the shard is ${taxYear}; refusing — ` +
-          "a procedure that does not state the shard's year is a closed document that would " +
-          "report agreement forever"
-        : "this document states no adjustment year at all; refusing to read figures out of it",
-      settled: stated !== undefined && stated < taxYear,
-    };
-  }
+  const wrongYear = refuseIfNotTheShardsProcedure(text, taxYear);
+  if (wrongYear) return wrongYear;
 
   const exclusion = new RegExp(
     `calendar year ${year}, the first \\$([\\d,]+) of gifts to any person`,
@@ -2643,6 +2806,14 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     cadence: "Annual, October-November",
     parse: parseIrsStandardDeductions,
+  },
+  {
+    id: "amt-2024",
+    group: "irs",
+    source: "IRS annual inflation-adjustment revenue procedure — AMT exemption and thresholds",
+    sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+    cadence: "Annual, autumn",
+    parse: parseAmtProcedure,
   },
   {
     id: "gift-tax-2024",
