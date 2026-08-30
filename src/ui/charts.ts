@@ -223,6 +223,35 @@ export interface ResourceCurveOptions {
 }
 
 /**
+ * Which drawn column is "you are here" — the nearest one, or none.
+ *
+ * Exact matching cannot work and quietly did not: the sweep puts its points on
+ * computed steps, so the reader's income lands between two of them, and
+ * {@link downsampleCurve} would have thinned their exact column away in any
+ * case, since it keeps only cliff columns, markers, and every stride'th point.
+ * The honest question a chart can answer is "which drawn column is nearest",
+ * and the answer is one column or, outside the plotted range, none — an
+ * income beyond the sweep highlighted at an endpoint would put the reader
+ * somewhere they are not.
+ */
+export function highlightIndex(points: readonly CurvePoint[], income: number | undefined): number {
+  if (income === undefined || !Number.isFinite(income) || points.length === 0) return -1;
+  const first = points[0]!.income;
+  const last = points[points.length - 1]!.income;
+  if (income < Math.min(first, last) || income > Math.max(first, last)) return -1;
+  let best = -1;
+  let bestGap = Infinity;
+  for (let i = 0; i < points.length; i += 1) {
+    const gap = Math.abs(points[i]!.income - income);
+    if (gap < bestGap) {
+      bestGap = gap;
+      best = i;
+    }
+  }
+  return best;
+}
+
+/**
  * Total resources plotted against gross income (SPEC-4 §A1) — the shape of the
  * benefit cliff. Columns rather than a line, matching the rest of this
  * framework-free chart layer.
@@ -240,7 +269,9 @@ export function resourceCurve(opts: ResourceCurveOptions): HTMLElement {
   const { points, locale } = opts;
   const max = points.reduce((m, p) => Math.max(m, p.resources), 0) || 1;
 
-  const cols = points.map((p) => {
+  const here = highlightIndex(points, opts.highlightIncome);
+
+  const cols = points.map((p, i) => {
     const height = Math.max(0, (p.resources / max) * 100);
     const bar = el("div", {
       class: `curve-bar${p.inCliff ? " curve-bar--cliff" : ""}`,
@@ -248,9 +279,7 @@ export function resourceCurve(opts: ResourceCurveOptions): HTMLElement {
     });
     bar.style.height = `${height}%`;
 
-    const isHere =
-      opts.highlightIncome !== undefined &&
-      Math.abs(p.income - opts.highlightIncome) < Number.EPSILON;
+    const isHere = i === here;
 
     // One wrapper per column, not two: at a couple of hundred columns the extra
     // nesting is a measurable cost in layout and in assistive-tech tree walks.
@@ -259,7 +288,10 @@ export function resourceCurve(opts: ResourceCurveOptions): HTMLElement {
       {
         class: `curve-col${isHere ? " curve-col--here" : ""}`,
         attrs: {
-          title: `${currency(locale, p.income)} earned → ${currency(locale, p.resources)} in hand${p.marker ? ` · ${p.marker}` : ""}`,
+          // The tint is a color cue and nothing else, so it says which column is
+          // the reader's here too — a hover title reaches a keyboard and a
+          // screen reader where a background colour does not.
+          title: `${isHere ? "You are about here: " : ""}${currency(locale, p.income)} earned → ${currency(locale, p.resources)} in hand${p.marker ? ` · ${p.marker}` : ""}`,
         },
       },
       bar,
@@ -278,9 +310,18 @@ export function resourceCurve(opts: ResourceCurveOptions): HTMLElement {
     el("span", { text: last ? currency(locale, last.income) : "" }),
   );
 
+  // The chart is one `role="img"`, so its label is the whole of what a screen
+  // reader gets. A tinted column it never mentions is a cue only sighted
+  // readers receive.
+  const hereLabel =
+    here >= 0 ? ` Your current income, ${currency(locale, points[here]!.income)}, is marked.` : "";
+
   return el(
     "figure",
-    { class: "chart chart--curve", attrs: { role: "img", "aria-label": opts.ariaLabel } },
+    {
+      class: "chart chart--curve",
+      attrs: { role: "img", "aria-label": `${opts.ariaLabel}${hereLabel}` },
+    },
     el("div", { class: "curve-plot" }, ...cols),
     axis,
   );

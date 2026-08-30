@@ -1645,8 +1645,23 @@ body {
   display: flex;
   align-items: flex-end;
 }
+/* "You are here." The tint alone is nearly invisible in practice: it is the
+   column's background, and the bar fills the column from the bottom, so on a
+   tall bar only a sliver of it shows. The rail is what makes it read — the same
+   idiom the status marker above uses, so the two are consistent, and solid
+   rather than dashed so a reader can tell the reader's own position from a
+   status change when both land on the same column, which they often do. */
 .curve-col--here {
   background: color-mix(in srgb, var(--enk-primary) 14%, transparent);
+}
+.curve-col--here::before {
+  content: "";
+  position: absolute;
+  top: -0.5rem;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 2px solid var(--enk-text);
 }
 .curve-bar {
   width: 100%;

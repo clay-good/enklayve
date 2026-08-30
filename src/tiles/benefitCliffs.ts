@@ -300,6 +300,10 @@ export function mountCliffExplorer(ctx: TileContext): void {
         // needs enough columns to read as a curve.
         points: downsampleCurve(curvePoints),
         locale: ctx.locale,
+        // "Here is the cliff" is half an answer; the other half is where the
+        // reader stands on it. The chart has taken this since it was written
+        // and nothing ever passed it.
+        highlightIncome: fields.income,
         ariaLabel:
           "Total household resources plotted against gross income. Bars in the warning color mark stretches where earning more leaves the household with the same or less.",
       }),
