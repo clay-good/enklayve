@@ -687,10 +687,11 @@ describe("the graduated parser's collision guard", () => {
     // A ladder assembled from a collision is wrong in the way nothing
     // downstream can see: right shape, right thresholds, one rate off, so it
     // passes the count-and-shape check that exists to catch reshapes.
-    const ms = adaptersForGroup("state-ms")[0]!;
-    const result = ms.parse(
-      "5% income tax cut ... 3% on taxable income over $10,000 and 4% on income over $10,000",
-      readShard("state-ms-income-tax-2024.json"),
+    const oh = adaptersForGroup("state-oh")[0]!;
+    const result = oh.parse(
+      "For taxable years beginning in 2026: 3% on taxable income over $26,050" +
+        " and 2.75% of the amount in excess of $26,050.",
+      readShard("state-oh-income-tax-2024.json"),
     );
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toMatch(/two rates claim the same bracket threshold/);
@@ -1302,15 +1303,14 @@ describe("adapters: graduated bracket-table state income tax (OH)", () => {
     expect(rolled.ok).toBe(false);
     if (!rolled.ok) expect(rolled.reason).toMatch(/no tax year attached to it/);
 
-    // Refusing every undated schedule would be the wrong correction: one that
-    // does not index has no year to state. Mississippi's 4% over $10,000 is
-    // statutory, and confirming the shard is always safe.
-    const ms = adaptersForGroup("state-ms")[0]!;
-    const msShard = readShard("state-ms-income-tax-2024.json");
-    const flat =
-      "Mississippi taxable income is exempt to $10,000, " +
-      "and 4% on taxable income in excess of $10,000.";
-    expect(ms.parse(flat, msShard).ok).toBe(true);
+    // Refusing every undated schedule would be the wrong correction, because
+    // confirming the shard is always safe — only changing it on an undated page
+    // is unsafe. The state that motivated the carve-out was Mississippi, whose
+    // rate had no year to state; it has since moved to a dated by-year table and
+    // its own parser, so the rule is now carried by this property rather than by
+    // any live source. An undated schedule that agrees is still accepted.
+    const confirming = "$332 + 2.75% of the amount in excess of $26,050.";
+    expect(adapter.parse(confirming, current).ok).toBe(true);
   });
 
   it("fails (-> alert) when no tier can be anchored", () => {
@@ -1663,24 +1663,105 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
   });
 
-  it("overlays the MS two-tier '0% then a flat rate over a floor' (graduated parser reused)", () => {
+  describe("MS — the rate is a by-year table, beside two rates that are not it", () => {
     const adapter = adaptersForGroup("state-ms")[0]!;
     const current = readShard("state-ms-income-tax-2024.json");
+    // dor.ms.gov/general-information, verbatim. Every *.ms.gov host serves an
+    // incomplete certificate chain, so nothing here was readable at all until
+    // the shared fetch learned to follow the leaf's AIA pointer.
     const raw =
-      "For 2026, Mississippi taxes the first $10,000 of taxable income at 0%, " +
-      "and 4% on taxable income in excess of $10,000.";
-    const result = adapter.parse(raw, current);
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    const brackets = result.shard.bracketsByFilingStatus as Record<
-      string,
-      { lowerBound: number; rate: number }[]
-    >;
-    expect(brackets.single).toEqual([
-      { lowerBound: 0, rate: 0 },
-      { lowerBound: 10000, rate: 0.04 },
-    ]);
-    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+      "Tax Rates Mississippi has a graduated tax rate. There is no tax schedule for" +
+      " Mississippi income taxes. In 2026, the graduated 2025 tax year income tax rate is:" +
+      " 0% on the first $10,000 of taxable income. 4.4% on the remaining taxable income in" +
+      " excess of $10,000. Tax Rates for Tax years 2025-2027: The 4% rate is eliminated for" +
+      " tax year 2024 and forward. Tax Year 2025 Excess of $10,000 of Taxable Income is taxed" +
+      " @ 4.4% Tax Year 2026 Excess of $10,000 of Taxable Income is taxed @ 4% Tax Year 2027" +
+      " Excess of $10,000 of Taxable Income is taxed @ 3.75% If filing a combined return" +
+      " (both spouses work), each spouse can calculate their tax liability separately and add" +
+      " the results. Example: In 2025, John is single and has taxable income of $23,000. His" +
+      " 2025 tax liability will be: $10,000 X 0% = $0 $13,000 X 4.4% = $572";
+
+    it("takes the shard's year from the table, not the rate the prose leads with", () => {
+      // The section opens "In 2026, the graduated 2025 tax year income tax rate
+      // is: ... 4.4% on the remaining taxable income in excess of $10,000" — the
+      // shard's year in the first two words and the PREVIOUS year's rate, which
+      // is DOR describing the return filed during 2026. Reading it rolls the
+      // rate back up a year, and the resulting schedule looks entirely healthy.
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const brackets = result.shard.bracketsByFilingStatus as Record<
+        string,
+        { lowerBound: number; rate: number }[]
+      >;
+      expect(brackets.single).toEqual([
+        { lowerBound: 0, rate: 0 },
+        { lowerBound: 10000, rate: 0.04 },
+      ]);
+      expect(brackets.married_jointly![1]!.rate).toBe(0.04);
+      expect(brackets.head_of_household![1]!.lowerBound).toBe(10000);
+      expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+    });
+
+    it("reads a different row for a different shard year", () => {
+      const back = adapter.parse(raw, { ...current, taxYear: 2025 });
+      expect(back.ok).toBe(true);
+      if (back.ok) {
+        const b = back.shard.bracketsByFilingStatus as Record<string, { rate: number }[]>;
+        expect(b.single![1]!.rate).toBeCloseTo(0.044, 6);
+      }
+      const forward = adapter.parse(raw, { ...current, taxYear: 2027 });
+      expect(forward.ok).toBe(true);
+      if (forward.ok) {
+        const b = forward.shard.bracketsByFilingStatus as Record<string, { rate: number }[]>;
+        expect(b.single![1]!.rate).toBeCloseTo(0.0375, 6);
+      }
+    });
+
+    it("never reads the eliminated bracket's rate as this year's", () => {
+      // "The 4% rate is eliminated for tax year 2024 and forward" names the
+      // abolished bracket BELOW $10,000 — the same characters as the 2026 rate,
+      // meaning its opposite. Only rows in the table's own shape are collected.
+      const onlyProse =
+        "In 2026, the graduated 2025 tax year income tax rate is: 0% on the first $10,000 of" +
+        " taxable income. 4.4% on the remaining taxable income in excess of $10,000." +
+        " The 4% rate is eliminated for tax year 2024 and forward.";
+      const result = adapter.parse(onlyProse, current);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.reason).toMatch(/by-year rate row/);
+        // The page is readable and states rates; it just states none of them as
+        // this figure. That is a parser's problem to solve, not a state's.
+        expect(result.settled).toBeUndefined();
+      }
+    });
+
+    it("refuses a lone row, because one is a sentence and several are a table", () => {
+      const one = "Tax Year 2026 Excess of $10,000 of Taxable Income is taxed @ 4%";
+      expect(adapter.parse(one, current).ok).toBe(false);
+    });
+
+    it("says so when the table stops before the shard's year", () => {
+      const result = adapter.parse(raw, { ...current, taxYear: 2028 });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.reason).toMatch(/runs to tax year 2027 and this shard is 2028/);
+        // Not a defect: the state has not published it.
+        expect(result.settled).toBe(true);
+      }
+    });
+
+    it("refuses a zero-band ceiling that moved implausibly far", () => {
+      const moved = adapter.parse(
+        raw.replace(
+          "Tax Year 2026 Excess of $10,000 of Taxable Income is taxed @ 4%",
+          "Tax Year 2026 Excess of $910,000 of Taxable Income is taxed @ 4%",
+        ),
+        current,
+      );
+      expect(moved.ok).toBe(false);
+      if (!moved.ok) expect(moved.reason).toMatch(/zero-band ceiling/);
+    });
   });
 
   describe("MA — 5% base rate + 4% surtax (dedicated parser)", () => {

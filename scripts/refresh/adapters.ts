@@ -1936,6 +1936,103 @@ function parseGraduatedBracketJurisdiction(
  * list whose newest year is older than the shard's is the state not having
  * published yet, and says so.
  */
+/**
+ * Mississippi's rate, from the by-year table the DOR publishes on the page the
+ * shard already cites.
+ *
+ * Mississippi is on a statutory step-down — HB 1 (2025) — so this is a rate that
+ * genuinely moves every January, and the page states the whole path at once:
+ *
+ *   Tax Year 2025 Excess of $10,000 of Taxable Income is taxed @ 4.4%
+ *   Tax Year 2026 Excess of $10,000 of Taxable Income is taxed @ 4%
+ *   Tax Year 2027 Excess of $10,000 of Taxable Income is taxed @ 3.75%
+ *
+ * Two things on that page read as this figure and are not it, which is why the
+ * generic graduated parser cannot be pointed here. The section opens "In 2026,
+ * the graduated 2025 tax year income tax rate is: 0% on the first $10,000 of
+ * taxable income. 4.4% on the remaining taxable income in excess of $10,000" —
+ * a sentence whose first two words are the shard's year and whose rate is the
+ * previous one, describing the return filed during 2026 for 2025. Reading it
+ * would roll Mississippi's rate back UP a year under a live citation, and the
+ * arithmetic would look perfectly well-formed. The other is "The 4% rate is
+ * eliminated for tax year 2024 and forward", where "4%" names the abolished
+ * bracket BELOW $10,000 — the same characters as the shard's rate, meaning its
+ * opposite.
+ *
+ * So only the by-year table is read, and the shard's own year picks the row:
+ * the anchor the federal revenue procedure, Massachusetts, Ohio and Idaho all
+ * already use. Two rows are required, because one "Tax Year … taxed @ …" is a
+ * sentence and a sequence of them is a table. A table that stops short of the
+ * shard's year is a state that has not published it, not a broken parser.
+ */
+function parseMississippiRateByYear(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const text = visibleText(raw);
+  const taxYear = Number(current.taxYear);
+
+  const rows = new Map<number, { threshold: number; pct: number }>();
+  for (const m of text.matchAll(
+    /tax\s+year\s+((?:19|20)\d{2})\s+excess\s+of\s+\$?([\d,]+)\s+of\s+taxable\s+income\s+is\s+taxed\s*@?\s*([\d.]+)\s*%/gi,
+  )) {
+    rows.set(Number(m[1]), { threshold: parseAmount(m[2] as string), pct: Number(m[3]) });
+  }
+  if (rows.size < 2) {
+    return {
+      ok: false,
+      reason:
+        `found ${rows.size} by-year rate row(s) and a table needs at least two; ` +
+        "refusing, because a lone row is a sentence and this page states two rates that are not this figure",
+    };
+  }
+  if (!rows.has(taxYear)) {
+    const newest = Math.max(...rows.keys());
+    return {
+      ok: false,
+      reason:
+        `the by-year rate table runs to tax year ${newest} and this shard is ${taxYear}, ` +
+        "so Mississippi has probably not published the shard's year yet",
+      settled: newest < taxYear,
+    };
+  }
+
+  const { threshold, pct } = rows.get(taxYear)!;
+  if (!(pct > 0 && pct <= 15)) {
+    return { ok: false, reason: `anchored an implausible rate for ${taxYear} (${pct}%)` };
+  }
+  if (!(threshold > 0)) {
+    return { ok: false, reason: "anchored a non-positive zero-band ceiling" };
+  }
+
+  const shard = clone(current);
+  const brackets = shard.bracketsByFilingStatus as
+    | Record<string, { lowerBound: number; rate: number }[]>
+    | undefined;
+  if (!brackets) return { ok: false, reason: "shard has no bracketsByFilingStatus to overlay" };
+
+  let overlaid = 0;
+  for (const status of Object.keys(brackets)) {
+    const arr = brackets[status];
+    // The 0% band is not stated by the table, only by the prose above it, so it
+    // is left as the shard carries it — and a schedule that is not the
+    // zero-band-then-one-rate shape this reads is not overlaid at all.
+    if (!Array.isArray(arr) || arr.length !== 2 || !arr[0] || !arr[1] || arr[0].rate !== 0)
+      continue;
+    const drift = implausibleDrift(arr[1].lowerBound, threshold);
+    if (drift !== null) {
+      return {
+        ok: false,
+        reason: `the zero-band ceiling ${drift}; refusing — either the page moved or this is not the figure`,
+      };
+    }
+    arr[1].lowerBound = threshold;
+    arr[1].rate = pctToRate(pct);
+    overlaid += 1;
+  }
+  if (overlaid === 0) {
+    return { ok: false, reason: "no zero-band-over-one-rate schedule to overlay" };
+  }
+  return { ok: true, shard };
+}
+
 function parseMassachusettsSurtax(raw: string, current: Record<string, unknown>): ParseOutcome {
   const text = visibleText(raw);
   const taxYear = Number(current.taxYear);
@@ -2950,10 +3047,14 @@ export const ADAPTERS: RefreshAdapter[] = [
   {
     id: "state-ms-income-tax-2024",
     group: "state-ms",
-    source: "Mississippi DOR individual income tax (flat rate over a floor)",
-    sourceUrl: "https://www.dor.ms.gov/individual/individual-income-tax-frequently-asked-questions",
+    source: "Mississippi DOR General Information — individual income tax rates by year",
+    // Watch what you cite: this is the page the shard's citation already names,
+    // and the FAQ this used to watch states the rate only inside worked
+    // examples. Every *.ms.gov host serves an incomplete certificate chain, so
+    // nothing here was reachable at all until the fetch learned to repair one.
+    sourceUrl: "https://www.dor.ms.gov/general-information",
     cadence: "Annual",
-    parse: parseGraduatedBracketJurisdiction,
+    parse: parseMississippiRateByYear,
   },
   {
     id: "state-ma-income-tax-2024",

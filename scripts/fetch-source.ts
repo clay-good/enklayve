@@ -24,7 +24,9 @@
  * is not a layout-faithful rendering and is not meant to be: a parser that needs
  * table geometry is a parser that should be a reviewer step instead.
  */
+import { request as httpsRequest } from "node:https";
 import { BROWSER_USER_AGENT } from "./user-agent.ts";
+import { repairedCaBundle } from "./chain-repair.ts";
 
 export type FetchedSource = { ok: true; raw: string } | { ok: false; reason: string };
 
@@ -97,28 +99,93 @@ export async function pdfToText(bytes: Uint8Array): Promise<string> {
   return pages.join("\n");
 }
 
+/** What a fetch returned, whichever transport carried it. */
+interface RawResponse {
+  status: number;
+  contentType: string | null;
+  bytes: () => Promise<Uint8Array>;
+  text: () => Promise<string>;
+}
+
 /* c8 ignore start -- network */
+
+/**
+ * The same request again, this time against a CA bundle carrying the
+ * intermediate the server forgot to send. `node:https` is used rather than
+ * `fetch` only because it takes a `ca`; verification is not relaxed, and this
+ * runs only after a chain failure has already been diagnosed.
+ */
+async function fetchWithRepairedChain(url: string, ca: string[]): Promise<RawResponse> {
+  const target = new URL(url);
+  return new Promise((resolve, reject) => {
+    const req = httpsRequest(
+      {
+        host: target.hostname,
+        path: `${target.pathname}${target.search}`,
+        headers: { "user-agent": BROWSER_USER_AGENT },
+        ca,
+        timeout: TIMEOUT_MS,
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on("data", (c: Buffer) => chunks.push(c));
+        res.on("end", () => {
+          const body = Buffer.concat(chunks);
+          resolve({
+            status: res.statusCode ?? 0,
+            contentType: res.headers["content-type"] ?? null,
+            bytes: async () => new Uint8Array(body),
+            text: async () => body.toString("utf8"),
+          });
+        });
+      },
+    );
+    req.on("timeout", () => req.destroy(new Error("timed out")));
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+/**
+ * Get the page, repairing an incomplete certificate chain if that is what
+ * stands in the way. Every other failure is thrown on unchanged: a repair
+ * attempt on a host that is simply down would turn one clear reason into two
+ * vague ones.
+ */
+async function fetchRaw(url: string, signal: AbortSignal): Promise<RawResponse> {
+  try {
+    const response = await fetch(url, { headers: { "user-agent": BROWSER_USER_AGENT }, signal });
+    return {
+      status: response.status,
+      contentType: response.headers.get("content-type"),
+      bytes: async () => new Uint8Array(await response.arrayBuffer()),
+      text: () => response.text(),
+    };
+  } catch (error) {
+    const reason = describeFetchError(error);
+    if (!INCOMPLETE_CERT_CHAIN.test(reason)) throw error;
+    const ca = await repairedCaBundle(new URL(url).hostname);
+    if (!ca) throw error;
+    return fetchWithRepairedChain(url, ca);
+  }
+}
 
 /** Fetch a source page as text, reading PDFs where the figures have moved. */
 export async function fetchSource(url: string): Promise<FetchedSource> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const response = await fetch(url, {
-      headers: { "user-agent": BROWSER_USER_AGENT },
-      signal: controller.signal,
-    });
-    if (!response.ok) return { ok: false, reason: `source returned HTTP ${response.status}` };
-    if (!isPdf(url, response.headers.get("content-type"))) {
-      return { ok: true, raw: await response.text() };
+    const response = await fetchRaw(url, controller.signal);
+    if (response.status < 200 || response.status >= 300) {
+      return { ok: false, reason: `source returned HTTP ${response.status}` };
     }
+    if (!isPdf(url, response.contentType)) return { ok: true, raw: await response.text() };
     try {
-      const bytes = new Uint8Array(await response.arrayBuffer());
-      return { ok: true, raw: await pdfToText(bytes) };
+      return { ok: true, raw: await pdfToText(await response.bytes()) };
     } catch (error) {
       // A PDF that cannot be read is a source problem, not a parse problem: say
       // so plainly rather than letting the adapter report "could not anchor".
-      return { ok: false, reason: `could not read the PDF: ${(error as Error).message}` };
+      return { ok: false, reason: `could not read the PDF: ${describeFetchError(error)}` };
     }
   } catch (error) {
     return { ok: false, reason: `fetch failed: ${describeFetchError(error)}` };

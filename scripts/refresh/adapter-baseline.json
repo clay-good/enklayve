@@ -1,12 +1,12 @@
 {
   "note": [
-    "The adapters known to read their source correctly, as of 2026-08-29.",
+    "The adapters known to read their source correctly, as of 2026-08-30.",
     "",
-    "This is deliberately the SHORT list rather than the long one. Forty-odd",
-    "adapters cannot anchor their figure today; reporting all of them every month",
-    "would be an alert nobody reads by the third time, which is the failure the",
-    "shell-size gate was written to escape -- a warning that always fires is not a",
-    "warning. So the check fails only when an adapter ON THIS LIST stops working.",
+    "This is deliberately the SHORT list rather than the long one. Reporting every",
+    "adapter that cannot anchor, every month, would be an alert nobody reads by the",
+    "third time -- the failure the shell-size gate was written to escape: a warning",
+    "that always fires is not a warning. So the check fails only when an adapter ON",
+    "THIS LIST stops working.",
     "",
     "Holding the healthy set rather than the broken one is also more stable: the",
     "split between 'could not parse' and 'unreachable' moves run to run as sites",
@@ -18,10 +18,13 @@
     "the parser found something shaped like its figure, never that the value is",
     "right, and on 2026-08-29 nine adapters anchored the wrong number.",
     "",
-    "Illinois, Arizona, Kentucky and Iowa joined on 2026-08-29, each dry-run to a",
-    "The list grew from five to twenty-three on 2026-08-29, each addition dry-run to a no-op against its committed figures."
+    "It went from five to thirty-two on 2026-08-29, each addition dry-run to a no-op",
+    "against its committed figures. Mississippi joined on 2026-08-30 and is the",
+    "thirty-third: every *.ms.gov host serves an incomplete certificate chain, so the",
+    "state was not unwatched but unreachable, and the shared fetch now repairs the",
+    "chain the way a browser does. Its rate steps down by statute every January."
   ],
-  "recordedOn": "2026-08-29",
+  "recordedOn": "2026-08-30",
   "knownAnchoring": [
     "federal-income-tax-2024",
     "federal-poverty-level-2024-alaska",
@@ -42,6 +45,7 @@
     "state-me-income-tax-2024",
     "state-mi-income-tax-2024",
     "state-mo-income-tax-2024",
+    "state-ms-income-tax-2024",
     "state-mt-income-tax-2024",
     "state-nc-income-tax-2024",
     "state-nd-income-tax-2024",
