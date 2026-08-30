@@ -538,6 +538,31 @@ describe("adapters: North Carolina (a table, then pages about itemizing)", () =>
   });
 });
 
+describe("adapters: Alabama (a chart, not a figure)", () => {
+  const adapter = adaptersForGroup("state-al")[0]!;
+  const current = readShard("state-al-income-tax-2024.json");
+
+  it("refuses a figure that only exists as the corner of a chart", () => {
+    // The FAQ this adapter used to watch is titled "How much is the Alabama
+    // standard deduction?" and answers it by pointing at the chart without
+    // reproducing one figure — so the parser reached into the Related FAQs
+    // block below and read Alabama's 2%/4%/5% RATE brackets as dollars.
+    const faq =
+      "How much is the Alabama standard deduction? The Alabama standard deduction is based" +
+      " on the filing status used by the taxpayer. For tax years ending 12/31/2007 and" +
+      " forward, the Standard Deduction Chart is used to determine the Standard Deduction" +
+      " allowable on your return. Related FAQs ... What is Alabama's Individual Income Tax" +
+      " Rate? For married persons filing a joint return: 2% First $1,000 of taxable income" +
+      " 4% Next $5,000 of taxable income 5% All taxable income over $6,000";
+    const result = adapter.parse(faq, current);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toMatch(/needs table geometry/);
+      expect(result.settled).toBe(true);
+    }
+  });
+});
+
 describe("adapters: Wisconsin (a deduction inside a phase-out schedule)", () => {
   const adapter = adaptersForGroup("state-wi")[0]!;
   const current = readShard("state-wi-income-tax-2024.json");

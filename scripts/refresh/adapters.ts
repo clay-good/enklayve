@@ -2761,7 +2761,12 @@ export const ADAPTERS: RefreshAdapter[] = [
     id: "state-al-income-tax-2024",
     group: "state-al",
     source: "Alabama Department of Revenue Form 40 standard-deduction chart",
-    sourceUrl: "https://www.revenue.alabama.gov/faqs/how-much-is-the-alabama-standard-deduction/",
+    // The Form 40 booklet, which contains the chart. The FAQ this used to watch —
+    // titled "How much is the Alabama standard deduction?" — answers the question
+    // by pointing at the chart without reproducing a single figure from it, so
+    // the parser reached into the "Related FAQs" block below and read Alabama's
+    // 2%/4%/5% RATE brackets as dollars.
+    sourceUrl: "https://www.revenue.alabama.gov/wp-content/uploads/2026/01/25f40bk.pdf",
     cadence: "Annual",
     // Alabama's 2%/4%/5% brackets and its $1,500/$3,000 exemption are statutory
     // and unindexed (Ala. Code §40-18-5/-19), and the federal-tax deduction is
@@ -2769,7 +2774,18 @@ export const ADAPTERS: RefreshAdapter[] = [
     // deduction maximum (last raised by Act 2022-292). Anchor the deduction
     // maximums by filing status (the change-watch); the chart's per-$500
     // reduction steps and floors stay the reviewer's data-only step.
-    parse: parseStandardDeductions,
+    parse: refuseBecauseThePageMeansSomethingElse(
+      "Alabama states no standard-deduction figure anywhere — it states a CHART, two hundred " +
+        "AGI bands deep and four statuses wide, and the shard carries the maximum of each " +
+        "column. Nothing labels those maximums: they are the first cell of a column in a wall " +
+        "of numbers, so reading them needs table geometry, and a parser that needs table " +
+        "geometry is a parser that should be a reviewer step instead. The amounts are " +
+        "statutory and unindexed (Ala. Code \u00a740-18-15, last raised by Act 2022-292), so " +
+        "there is no annual figure to chase; a change is an act of the legislature. The FAQ " +
+        'this adapter used to watch is titled "How much is the Alabama standard deduction?" ' +
+        "and answers it by pointing at the chart, which is how the parser came to read " +
+        "Alabama's 2%/4%/5% rate brackets out of the Related FAQs block as dollars",
+    ),
   },
   {
     id: "state-or-income-tax-2024",

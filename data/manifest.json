@@ -686,10 +686,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-al-income-tax-2024.json",
-      "sourceUrl": "https://www.revenue.alabama.gov/faqs/how-much-is-the-alabama-standard-deduction/",
+      "sourceUrl": "https://www.revenue.alabama.gov/wp-content/uploads/2026/01/25f40bk.pdf",
       "sourceDocument": "Alabama DOR Form 40 (2025): 2%/4%/5% brackets, sliding standard deduction, $1,500/$3,000 exemption, federal-tax deduction (Ala. Code §40-18-5/-15/-19)",
       "dateRetrieved": "2026-06-08",
-      "contentHash": "fdad917a2811f00a166a9922089d0a708dfe1124d65d5fe2caae8f4abb235f84"
+      "contentHash": "0881ccf574fbfb7656019b3ac91966441e8560504f759ec5dded8572167cdaa3"
     },
     {
       "id": "state-or-income-tax-2024",
