@@ -9,6 +9,7 @@ import {
   checkHarmTier,
   type AuditTile,
   checkBundleBudget,
+  shellBreakdown,
   shellSummary,
   SHELL_GZIP_BUDGET_KB,
 } from "../../scripts/audit-release";
@@ -206,6 +207,36 @@ describe("what the audit says when the budget passes", () => {
 
   it("does not fall over on an empty precache list", () => {
     expect(() => shellSummary([], SHELL_GZIP_BUDGET_KB)).not.toThrow();
+  });
+});
+
+describe("where the shell's bytes come from", () => {
+  it("ranks the contributors and names a dependency by package", () => {
+    const lines = shellBreakdown(
+      [
+        "../../src/tiles/takeHome.ts",
+        "../../src/tiles/eitc.ts",
+        "../../node_modules/zod/v3/types.js",
+        "../../node_modules/decimal.js/decimal.mjs",
+        "../../data/federal-income-tax-2024.json",
+        "../../src/engine/money.ts",
+      ],
+      [30_000, 20_000, 40_000, 10_000, 5_000, 1_000],
+    );
+    // Ranked, so the answer to "what is in there" is the first line — and
+    // src/tiles is the two tile files summed, not either one alone, which is
+    // what puts it above the single largest file.
+    expect(lines[0]).toContain("src/tiles");
+    expect(lines[0]).toContain("48.8 kB");
+    expect(lines[1]).toContain("node_modules/zod/v3");
+    expect(lines.some((l) => l.includes("data/ (bundled shards)"))).toBe(true);
+    expect(lines.some((l) => l.includes("node_modules/decimal.js"))).toBe(true);
+  });
+
+  it("does not fall over on a build with no source map to read", () => {
+    expect(shellBreakdown([], [])).toEqual([]);
+    // A source map with no embedded content still ranks nothing rather than NaN.
+    expect(shellBreakdown(["../../src/ui/dom.ts"], [])).toEqual(["     0.0 kB  src/ui"]);
   });
 });
 

@@ -246,6 +246,40 @@ function walk(dir: string, test: (name: string) => boolean): string[] {
   return out;
 }
 
+/**
+ * Where the precached shell's bytes come from, grouped by source directory.
+ *
+ * The budget has about three kilobytes of headroom, so the next person to hit
+ * it needs to know what is in there — and a paragraph in a comment answering
+ * that goes stale the way every hand-tended figure in this repo has. This
+ * reads it back out of the build's own source map instead, so the answer is a
+ * command rather than a claim: `npm run audit -- --breakdown`.
+ *
+ * These are *source* bytes, not shipped bytes: minification and gzip do not
+ * apply evenly across groups, so the numbers rank the contributors rather than
+ * summing to the gzipped total. Ranking is what the question needs.
+ */
+export function shellBreakdown(sources: readonly string[], lengths: readonly number[]): string[] {
+  const byGroup = new Map<string, number>();
+  for (let i = 0; i < sources.length; i += 1) {
+    const src = sources[i] ?? "";
+    const len = lengths[i] ?? 0;
+    let group: string;
+    if (src.includes("node_modules/")) {
+      group = `node_modules/${src.split("node_modules/")[1]?.split("/").slice(0, 2).join("/") ?? ""}`;
+    } else if (src.includes("/data/")) {
+      group = "data/ (bundled shards)";
+    } else {
+      const dir = /\/(src\/[^/]+)\//.exec(src)?.[1];
+      group = dir ?? src.replace(/^.*\/(src\/[^/]+)$/, "$1");
+    }
+    byGroup.set(group, (byGroup.get(group) ?? 0) + len);
+  }
+  return [...byGroup.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([group, len]) => `${(len / 1024).toFixed(1).padStart(8)} kB  ${group}`);
+}
+
 /** Every asset the built service worker precaches, with its gzipped size. */
 function precachedAssets(root: string): ShellAsset[] {
   let sw: string;
@@ -315,6 +349,25 @@ function runCli(): void {
   // anyone learns how close it was is the build that broke — which is how the
   // README came to claim 180 kB against a real 241.
   console.log(`  ${shellSummary(shell)}`);
+  if (process.argv.includes("--breakdown")) {
+    for (const line of shellBreakdownFromBuild(root)) console.log(`  ${line}`);
+  }
+}
+
+/** Read the entry chunk's source map and rank what is inside it. */
+function shellBreakdownFromBuild(root: string): string[] {
+  const dir = join(root, "dist", "assets");
+  let map: { sources?: string[]; sourcesContent?: (string | null)[] };
+  try {
+    const name = readdirSync(dir).find((n) => n.startsWith("index-") && n.endsWith(".js.map"));
+    if (!name) return ["(no entry source map; build with sourcemap enabled to see the breakdown)"];
+    map = JSON.parse(readFileSync(join(dir, name), "utf8")) as typeof map;
+  } catch {
+    return ["(no entry source map; run `npm run build` first)"];
+  }
+  const sources = map.sources ?? [];
+  const lengths = (map.sourcesContent ?? []).map((c) => c?.length ?? 0);
+  return shellBreakdown(sources, lengths);
 }
 
 // Run only as a CLI (not when imported by tests). import.meta.main is not yet
