@@ -201,7 +201,7 @@ describe("adapters: registry", () => {
       "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(55);
+    expect(ADAPTERS).toHaveLength(56);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
@@ -1661,6 +1661,120 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     const credit = result.shard.taxpayerCredit as { creditRate: number } | undefined;
     expect(credit?.creditRate).toBe(0.06);
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  describe("EITC — a table whose columns are not in the obvious order", () => {
+    const adapter = adaptersForGroup("irs").find((a) => a.id === "eitc-ctc-2024")!;
+    const current = readShard("eitc-ctc-2024.json");
+    // rp-25-32.pdf §4.06, verbatim through the PDF reader.
+    const raw =
+      ".06 Earned Income Credit. (1) In general. For taxable years beginning in 2026, the following" +
+      " amounts are used to determine the earned income credit under § 32(b)." +
+      " Number of Qualifying Children Item One Two Three or More None" +
+      " Earned Income Amount $13,020 $18,290 $18,290 $8,680" +
+      " Maximum Amount of Credit $4,427 $7,316 $8,231 $664" +
+      " Threshold Phaseout Amount (Married Filing Jointly) $31,160 $31,160 $31,160 $18,140" +
+      " Completed Phaseout Amount (Married Filing Jointly) $58,863 $65,899 $70,244 $26,820" +
+      " Threshold Phaseout Amount (All other filing statuses) $23,890 $23,890 $23,890 $10,860" +
+      " Completed Phaseout Amount (All other filing statuses) $51,593 $58,629 $62,974 $19,540";
+
+    const byChildren = (shard: Record<string, unknown>, n: number): Record<string, number> =>
+      (shard.eitc as Record<string, number>[]).find((r) => r.qualifyingChildren === n)!;
+
+    it("puts None in the row it belongs to, which is the LAST column", () => {
+      // The columns read "One Two Three or More None". Walking the amounts as
+      // 0, 1, 2, 3 — the order the shard stores them in, and the order a person
+      // says them out loud — gives a childless filer the one-child credit and a
+      // three-child filer $664. Four plausible numbers, every one in the wrong
+      // row, every field, every year.
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(byChildren(result.shard, 0).maxCredit).toBe(664);
+      expect(byChildren(result.shard, 1).maxCredit).toBe(4_427);
+      expect(byChildren(result.shard, 2).maxCredit).toBe(7_316);
+      expect(byChildren(result.shard, 3).maxCredit).toBe(8_231);
+    });
+
+    it("keeps the married and all-other threshold rows apart", () => {
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(byChildren(result.shard, 0).phaseOutThresholdMarried).toBe(18_140);
+      expect(byChildren(result.shard, 0).phaseOutThresholdSingle).toBe(10_860);
+      expect(byChildren(result.shard, 2).phaseOutThresholdMarried).toBe(31_160);
+      expect(byChildren(result.shard, 2).phaseOutThresholdSingle).toBe(23_890);
+      // The completed-phaseout rows sit directly beneath each threshold row and
+      // must not be read as one.
+      expect(byChildren(result.shard, 2).phaseOutThresholdMarried).not.toBe(65_899);
+    });
+
+    it("takes the rates from the shard, since the table states none", () => {
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(byChildren(result.shard, 0).phaseInRate).toBeCloseTo(0.0765, 6);
+      expect(byChildren(result.shard, 2).phaseOutRate).toBeCloseTo(0.2106, 6);
+    });
+
+    it("reads the document rather than agreeing by construction", () => {
+      const moved = raw.replace(
+        "Maximum Amount of Credit $4,427 $7,316 $8,231 $664",
+        "Maximum Amount of Credit $4,500 $7,400 $8,300 $670",
+      );
+      const result = adapter.parse(moved, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(byChildren(result.shard, 0).maxCredit).toBe(670);
+      expect(byChildren(result.shard, 3).maxCredit).toBe(8_300);
+    });
+
+    it("follows the header when the columns are reordered", () => {
+      // This is the whole reason the header is read rather than assumed.
+      const reordered = raw
+        .replace("Item One Two Three or More None", "Item None One Two Three or More")
+        .replace(
+          "Maximum Amount of Credit $4,427 $7,316 $8,231 $664",
+          "Maximum Amount of Credit $664 $4,427 $7,316 $8,231",
+        )
+        .replace(
+          "Threshold Phaseout Amount (Married Filing Jointly) $31,160 $31,160 $31,160 $18,140",
+          "Threshold Phaseout Amount (Married Filing Jointly) $18,140 $31,160 $31,160 $31,160",
+        )
+        .replace(
+          "Threshold Phaseout Amount (All other filing statuses) $23,890 $23,890 $23,890 $10,860",
+          "Threshold Phaseout Amount (All other filing statuses) $10,860 $23,890 $23,890 $23,890",
+        );
+      const result = adapter.parse(reordered, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(byChildren(result.shard, 0).maxCredit).toBe(664);
+      expect(byChildren(result.shard, 3).maxCredit).toBe(8_231);
+    });
+
+    it("refuses a header it does not recognise rather than reading positionally", () => {
+      const strange = raw.replace("Item One Two Three or More None", "Item A B C D");
+      const result = adapter.parse(strange, current);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toMatch(/None is the LAST column/);
+    });
+
+    it("refuses a row that does not state four amounts", () => {
+      const short = raw.replace(
+        "Maximum Amount of Credit $4,427 $7,316 $8,231 $664",
+        "Maximum Amount of Credit $4,427 $7,316",
+      );
+      const result = adapter.parse(short, current);
+      expect(result.ok).toBe(false);
+      if (!result.ok)
+        expect(result.reason).toMatch(/no four amounts for "Maximum Amount of Credit"/);
+    });
+
+    it("refuses a procedure for another year", () => {
+      const result = adapter.parse(raw, { ...current, taxYear: 2027 });
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.settled).toBe(true);
+    });
   });
 
   describe("capital gains — two amounts a row, and they are ceilings", () => {

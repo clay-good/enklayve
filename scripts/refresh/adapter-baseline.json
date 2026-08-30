@@ -33,7 +33,12 @@
     "that had none. It reads the same revenue procedure the federal bracket adapter",
     "already fetched every month -- the document its citation had named since it was",
     "written. Four more shards cite that same PDF and still have no adapter; see",
-    "scripts/refresh/watch-coverage.json."
+    "scripts/refresh/watch-coverage.json.",
+    "",
+    "All five shards that cited rp-25-32.pdf now read it: gift-tax, amt, child-tax",
+    "(the dependent standard deduction), capital-gains and eitc-ctc, added 2026-08-30",
+    "and each dry-run to a no-op. The document was already being fetched every month",
+    "for the federal brackets."
   ],
   "recordedOn": "2026-08-30",
   "knownAnchoring": [
@@ -41,6 +46,7 @@
     "capital-gains-2024",
     "child-tax-2024",
     "cpi-u-annual",
+    "eitc-ctc-2024",
     "federal-income-tax-2024",
     "federal-poverty-level-2024-alaska",
     "federal-poverty-level-2024-contiguous",

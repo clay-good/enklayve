@@ -2333,6 +2333,111 @@ function parseCapitalGainsProcedure(raw: string, current: Record<string, unknown
   return { ok: true, shard };
 }
 
+/** The column heading the procedure prints for each qualifying-child count. */
+const EITC_COLUMNS: Record<string, number> = {
+  none: 0,
+  one: 1,
+  two: 2,
+  "three or more": 3,
+};
+
+/**
+ * The EITC dollar amounts, from the revenue procedure this shard has always
+ * cited — read against the table's own header, because its columns are not in
+ * the order anybody would assume.
+ *
+ *   Number of Qualifying Children
+ *   Item                                     One      Two   Three or More    None
+ *   Maximum Amount of Credit               $4,427   $7,316        $8,231     $664
+ *
+ * **None is the last column, not the first.** A parser that walked the amounts
+ * as 0, 1, 2, 3 — the order the shard stores them in, and the order a person
+ * says them out loud — would give a childless filer the one-child credit and a
+ * three-child filer $664, every field, every year. The schedule would have the
+ * right shape and four plausible numbers in the wrong rows.
+ *
+ * So the header selects the columns, exactly as it does for Rhode Island's
+ * side-by-side advisory and the SNAP region tables: a table whose header this
+ * does not recognise is refused rather than read positionally.
+ *
+ * Only the dollar amounts are read. The phase-in and phase-out RATES are
+ * statutory under § 32(b)(1) and appear nowhere in the table, so demanding them
+ * would be the Massachusetts mistake — reporting a moved source about a document
+ * that says exactly what the shard carries.
+ */
+function parseEitcProcedure(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const text = raw.replace(/\s+/g, " ");
+  const taxYear = Number(current.taxYear);
+  const wrongYear = refuseIfNotTheShardsProcedure(text, taxYear);
+  if (wrongYear) return wrongYear;
+
+  const header = /Number of Qualifying Children Item ([\s\S]{0,80}?) Earned Income Amount/i.exec(
+    text,
+  );
+  if (!header?.[1]) {
+    return {
+      ok: false,
+      reason: `could not find the § 32(b) earned income credit table for ${taxYear}`,
+    };
+  }
+  // "One Two Three or More None" — split on the multi-word heading first so the
+  // words inside it are not read as three columns of their own.
+  const order = header[1]
+    .replace(/three or more/i, "three-or-more")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => EITC_COLUMNS[w.replace(/-/g, " ").toLowerCase()]);
+  if (order.length !== 4 || order.some((n) => n === undefined)) {
+    return {
+      ok: false,
+      reason:
+        `the credit table's header reads "${header[1].trim()}", which this does not recognise; ` +
+        "refusing to read the columns positionally — None is the LAST column in this table, not " +
+        "the first, and guessing gives a childless filer the one-child credit",
+    };
+  }
+
+  const rows: [string, string][] = [
+    ["maxCredit", "Maximum Amount of Credit"],
+    ["phaseOutThresholdMarried", "Threshold Phaseout Amount \\(Married Filing Jointly\\)"],
+    ["phaseOutThresholdSingle", "Threshold Phaseout Amount \\(All other filing statuses\\)"],
+  ];
+
+  const shard = clone(current);
+  const table = shard.eitc as { qualifyingChildren: number }[] | undefined;
+  if (!Array.isArray(table)) return { ok: false, reason: "shard has no eitc table to overlay" };
+
+  for (const [field, label] of rows) {
+    const m = new RegExp(`${label}((?:\\s*\\$[\\d,]+){4})`, "i").exec(text);
+    if (!m?.[1]) {
+      return {
+        ok: false,
+        reason: `the credit table states no four amounts for "${label.replace(/\\/g, "")}"`,
+      };
+    }
+    const amounts = [...m[1].matchAll(/\$([\d,]+)/g)].map((a) => parseAmount(a[1] as string));
+    for (const [i, children] of order.entries()) {
+      const row = table.find((r) => r.qualifyingChildren === children) as
+        | Record<string, number>
+        | undefined;
+      if (!row) continue;
+      const value = amounts[i]!;
+      if (!(value > 0)) {
+        return { ok: false, reason: `anchored a non-positive ${field} for ${children} children` };
+      }
+      const drift = implausibleDrift(row[field] as number, value);
+      if (drift !== null) {
+        return {
+          ok: false,
+          reason: `${field} for ${children} qualifying children ${drift}; refusing — either the procedure moved or the columns are not what the header said`,
+        };
+      }
+      row[field] = value;
+    }
+  }
+  return { ok: true, shard };
+}
+
 function parseGiftTaxProcedure(raw: string, current: Record<string, unknown>): ParseOutcome {
   const text = raw.replace(/\s+/g, " ");
   const taxYear = Number(current.taxYear);
@@ -2966,6 +3071,14 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     cadence: "Annual, October-November",
     parse: parseIrsStandardDeductions,
+  },
+  {
+    id: "eitc-ctc-2024",
+    group: "irs",
+    source: "IRS annual inflation-adjustment revenue procedure — earned income credit amounts",
+    sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+    cadence: "Annual, autumn",
+    parse: parseEitcProcedure,
   },
   {
     id: "capital-gains-2024",
