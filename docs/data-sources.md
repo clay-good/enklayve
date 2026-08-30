@@ -110,7 +110,7 @@ node scripts/refresh/watch-sources.ts --accept
 |---|---|
 | **Broken** | A 4xx/5xx, a DNS failure, or a refused connection. The link is dead. |
 | **Redirected** | The canonical URL moved. **Not a pass:** agencies reuse article ids, so an old link can land on a page that is authoritative, plausible, and about something else entirely. |
-| **Unreachable** | The server did not serve a complete certificate chain. Browsers repair that and Node does not, so the page is almost certainly fine — open it before replacing it. |
+| **Unreachable** | The server did not serve a complete certificate chain and the gap could not be closed. Both checks now repair the ordinary case the way a browser does — follow the leaf's AIA pointer, verify the fetched intermediate against Node's root store, retry — so this is left only for a chain no pointer repairs. The page is almost certainly fine; open it before replacing it. As of 2026-08-30 there are none. |
 
 [`check-links.yml`](../.github/workflows/check-links.yml) runs it monthly and opens an issue on broken or redirected results. It is deliberately not part of the unit CI: it needs the network, and a suite that fails when a state revenue site has a bad afternoon is a suite people learn to ignore.
 

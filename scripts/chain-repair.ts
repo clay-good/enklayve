@@ -24,6 +24,7 @@
  * included, against the repaired bundle.
  */
 import tls from "node:tls";
+import { request as httpsRequest } from "node:https";
 import { X509Certificate } from "node:crypto";
 
 /**
@@ -119,3 +120,49 @@ async function buildBundle(host: string, timeoutMs: number): Promise<string[] | 
   }
 }
 /* c8 ignore stop */
+
+/** What a repaired request came back with. Redirects are never followed. */
+export interface ChainRepairedResponse {
+  status: number;
+  headers: Record<string, string | string[] | undefined>;
+  body: Buffer;
+}
+
+/**
+ * The same request again, against a bundle carrying the intermediate the server
+ * omitted. `node:https` is used rather than `fetch` only because it takes a
+ * `ca`; verification is not relaxed anywhere, and this runs only once a chain
+ * failure has already been diagnosed.
+ */
+export function requestWithChain(
+  url: string,
+  options: { method?: string; headers?: Record<string, string>; ca: string[]; timeoutMs?: number },
+): Promise<ChainRepairedResponse> {
+  const target = new URL(url);
+  return new Promise((resolve, reject) => {
+    const req = httpsRequest(
+      {
+        host: target.hostname,
+        path: `${target.pathname}${target.search}`,
+        method: options.method ?? "GET",
+        headers: options.headers,
+        ca: options.ca,
+        timeout: options.timeoutMs ?? 30_000,
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on("data", (c: Buffer) => chunks.push(c));
+        res.on("end", () =>
+          resolve({
+            status: res.statusCode ?? 0,
+            headers: res.headers,
+            body: Buffer.concat(chunks),
+          }),
+        );
+      },
+    );
+    req.on("timeout", () => req.destroy(new Error("timed out")));
+    req.on("error", reject);
+    req.end();
+  });
+}

@@ -24,6 +24,7 @@ import { resolve, dirname, join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BROWSER_USER_AGENT } from "./user-agent.ts";
 import { INCOMPLETE_CERT_CHAIN } from "./fetch-source.ts";
+import { repairedCaBundle, requestWithChain } from "./chain-repair.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 // `scripts` is here for the refresh adapters: each one names the page it
@@ -206,7 +207,46 @@ async function check(url: string, files: string[]): Promise<LinkResult> {
       }
     }
   }
+  // A chain the server did not serve completely is not a dead link — it is the
+  // missing intermediate a browser fetches and Node does not. The refresh
+  // pipeline repairs it, so this must too, or the two checks go back to
+  // disagreeing about the same server: Mississippi's whole estate was reported
+  // here as unverifiable while the adapters were reading its pages.
+  if (CERT_ERROR.test(last)) {
+    const repaired = await checkWithRepairedChain(url, files);
+    if (repaired) return repaired;
+  }
   return { url, status: 0, detail: `${last} (after retries)`, files };
+}
+
+/** The same HEAD-then-GET, once the missing intermediate has been fetched. */
+async function checkWithRepairedChain(
+  url: string,
+  files: string[],
+): Promise<LinkResult | undefined> {
+  const ca = await repairedCaBundle(new URL(url).hostname);
+  if (!ca) return undefined;
+  for (const method of ["HEAD", "GET"] as const) {
+    try {
+      const res = await requestWithChain(url, {
+        method,
+        headers: { "user-agent": USER_AGENT },
+        ca,
+        timeoutMs: TIMEOUT_MS,
+      });
+      const location = res.headers["location"];
+      const result = {
+        url,
+        status: res.status,
+        detail: (Array.isArray(location) ? location[0] : location) ?? "",
+        files,
+      };
+      if (method === "GET" || classify(result) !== "broken") return result;
+    } catch {
+      // Fall through to the GET, then to the caller's original diagnosis.
+    }
+  }
+  return undefined;
 }
 
 async function main(): Promise<void> {

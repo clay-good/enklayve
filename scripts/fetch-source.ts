@@ -24,9 +24,8 @@
  * is not a layout-faithful rendering and is not meant to be: a parser that needs
  * table geometry is a parser that should be a reviewer step instead.
  */
-import { request as httpsRequest } from "node:https";
 import { BROWSER_USER_AGENT } from "./user-agent.ts";
-import { repairedCaBundle } from "./chain-repair.ts";
+import { repairedCaBundle, requestWithChain } from "./chain-repair.ts";
 
 export type FetchedSource = { ok: true; raw: string } | { ok: false; reason: string };
 
@@ -110,43 +109,6 @@ interface RawResponse {
 /* c8 ignore start -- network */
 
 /**
- * The same request again, this time against a CA bundle carrying the
- * intermediate the server forgot to send. `node:https` is used rather than
- * `fetch` only because it takes a `ca`; verification is not relaxed, and this
- * runs only after a chain failure has already been diagnosed.
- */
-async function fetchWithRepairedChain(url: string, ca: string[]): Promise<RawResponse> {
-  const target = new URL(url);
-  return new Promise((resolve, reject) => {
-    const req = httpsRequest(
-      {
-        host: target.hostname,
-        path: `${target.pathname}${target.search}`,
-        headers: { "user-agent": BROWSER_USER_AGENT },
-        ca,
-        timeout: TIMEOUT_MS,
-      },
-      (res) => {
-        const chunks: Buffer[] = [];
-        res.on("data", (c: Buffer) => chunks.push(c));
-        res.on("end", () => {
-          const body = Buffer.concat(chunks);
-          resolve({
-            status: res.statusCode ?? 0,
-            contentType: res.headers["content-type"] ?? null,
-            bytes: async () => new Uint8Array(body),
-            text: async () => body.toString("utf8"),
-          });
-        });
-      },
-    );
-    req.on("timeout", () => req.destroy(new Error("timed out")));
-    req.on("error", reject);
-    req.end();
-  });
-}
-
-/**
  * Get the page, repairing an incomplete certificate chain if that is what
  * stands in the way. Every other failure is thrown on unchanged: a repair
  * attempt on a host that is simply down would turn one clear reason into two
@@ -166,7 +128,18 @@ async function fetchRaw(url: string, signal: AbortSignal): Promise<RawResponse> 
     if (!INCOMPLETE_CERT_CHAIN.test(reason)) throw error;
     const ca = await repairedCaBundle(new URL(url).hostname);
     if (!ca) throw error;
-    return fetchWithRepairedChain(url, ca);
+    const repaired = await requestWithChain(url, {
+      headers: { "user-agent": BROWSER_USER_AGENT },
+      ca,
+      timeoutMs: TIMEOUT_MS,
+    });
+    const contentType = repaired.headers["content-type"];
+    return {
+      status: repaired.status,
+      contentType: Array.isArray(contentType) ? (contentType[0] ?? null) : (contentType ?? null),
+      bytes: async () => new Uint8Array(repaired.body),
+      text: async () => repaired.body.toString("utf8"),
+    };
   }
 }
 
