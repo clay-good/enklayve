@@ -71,6 +71,29 @@ describe("classifying one adapter's outcome", () => {
     });
   });
 
+  it("files a refusal that is a decision apart from one that is a defect", () => {
+    // Delaware's deduction is statutory and has not moved since 2000; six
+    // states have not published the shard's year; Connecticut has no standard
+    // deduction at all. Every one of those used to print the same sentence a
+    // genuinely broken parser prints, and a reader who opens a report and finds
+    // six entries needing nothing does not open the seventh.
+    expect(
+      classifyAnchor({ ok: true, raw: "a menu" }, () => ({
+        ok: false,
+        settled: true,
+        reason: "Delaware's standard deduction does not index",
+      })),
+    ).toEqual({ status: "settled", detail: "Delaware's standard deduction does not index" });
+
+    // Without the flag it is still the thing that wants fixing.
+    expect(
+      classifyAnchor({ ok: true, raw: "a menu" }, () => ({
+        ok: false,
+        reason: "could not anchor any standard-deduction figure by filing status",
+      })).status,
+    ).toBe("unparsed");
+  });
+
   it("does not run the parser at all when the fetch failed", () => {
     let ran = false;
     classifyAnchor({ ok: false, reason: "timeout" }, () => {
@@ -113,6 +136,7 @@ describe("the report", () => {
     // "anchor" a bracket threshold and the personal exemption instead.
     expect(report).toMatch(/never that the value is right/);
     expect(report).toMatch(/1 agree with their shard · 0 would change it · 1 could not parse/);
+    expect(report).toContain("0 settled");
     expect(report).toMatch(/## Could not anchor/);
     expect(report).toMatch(/could not anchor the rate/);
     expect(report).toMatch(/## Unreachable/);
@@ -192,6 +216,29 @@ describe("the would-change section", () => {
     expect(report).toMatch(/11412 -> 2019/);
     // A would-change is not stated as a failure: a real refresh proposes changes.
     expect(report).toMatch(/either a state that updated its figures/);
+  });
+
+  it("lists the settled refusals in their own section, away from the ones to fix", () => {
+    const report = renderAnchorReport([
+      result({
+        adapterId: "state-de-income-tax-2024",
+        status: "settled",
+        detail: "Delaware's standard deduction does not index",
+      }),
+      result({
+        adapterId: "state-mo-income-tax-2024",
+        status: "unparsed",
+        detail: "no graduated schedule matched the committed bracket structure",
+      }),
+    ]);
+    const settledAt = report.indexOf("## Settled");
+    const unparsedAt = report.indexOf("## Could not anchor");
+    expect(settledAt).toBeGreaterThan(-1);
+    expect(unparsedAt).toBeGreaterThan(settledAt);
+    expect(report).toContain("1 could not parse · 1 settled");
+    // Each section carries only its own adapters.
+    expect(report.slice(settledAt, unparsedAt)).toContain("state-de-income-tax-2024");
+    expect(report.slice(settledAt, unparsedAt)).not.toContain("state-mo-income-tax-2024");
   });
 });
 

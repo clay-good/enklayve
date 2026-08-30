@@ -66,7 +66,15 @@ const BASELINE_FILE = join(ROOT, "scripts", "refresh", "adapter-baseline.json");
  * figures or a parser reading the wrong number, and the diff is what tells them
  * apart. On 2026-08-29 that distinction found nine of the second kind.
  */
-export type AnchorStatus = "agrees" | "wouldChange" | "unparsed" | "unreachable";
+/**
+ * `settled` is a refusal that is a considered decision rather than a defect:
+ * Delaware's deduction is statutory and has not moved since 2000, six states
+ * have not published the shard's year, Connecticut has no standard deduction at
+ * all. Every one of those used to print the same sentence a genuinely broken
+ * parser prints, and a reader who opens a report and finds six entries needing
+ * nothing does not open the seventh.
+ */
+export type AnchorStatus = "agrees" | "wouldChange" | "unparsed" | "settled" | "unreachable";
 
 export interface AnchorResult {
   adapterId: string;
@@ -93,12 +101,15 @@ export interface AnchorResult {
  */
 export function classifyAnchor(
   fetched: { ok: true; raw: string } | { ok: false; reason: string },
-  parse: () => { ok: true; diff: string[] } | { ok: false; reason: string; denied?: boolean },
+  parse: () =>
+    | { ok: true; diff: string[] }
+    | { ok: false; reason: string; denied?: boolean; settled?: boolean },
 ): { status: AnchorStatus; detail?: string; diff?: string[] } {
   if (!fetched.ok) return { status: "unreachable", detail: fetched.reason };
   const parsed = parse();
   if (!parsed.ok) {
-    return { status: parsed.denied ? "unreachable" : "unparsed", detail: parsed.reason };
+    if (parsed.denied) return { status: "unreachable", detail: parsed.reason };
+    return { status: parsed.settled ? "settled" : "unparsed", detail: parsed.reason };
   }
   if (parsed.diff.length === 0) return { status: "agrees" };
   return { status: "wouldChange", diff: parsed.diff };
@@ -143,6 +154,7 @@ export function renderAnchorReport(
   const agrees = by("agrees");
   const wouldChange = by("wouldChange");
   const unparsed = by("unparsed");
+  const settled = by("settled");
   const unreachable = by("unreachable");
 
   const lines: string[] = [];
@@ -172,7 +184,8 @@ export function renderAnchorReport(
   }
   lines.push(
     `${agrees.length} agree with their shard · ${wouldChange.length} would change it · ` +
-      `${unparsed.length} could not parse · ${unreachable.length} unreachable.`,
+      `${unparsed.length} could not parse · ${settled.length} settled · ` +
+      `${unreachable.length} unreachable.`,
   );
 
   const { regressions, recovered } = againstBaseline(
@@ -206,6 +219,26 @@ export function renderAnchorReport(
       const r = results.find((x) => x.adapterId === id);
       lines.push(`- \`${id}\` — ${r?.url ?? ""}`);
       lines.push(`  - ${r?.detail ?? "not reported this run"}`);
+    }
+  }
+
+  if (settled.length > 0) {
+    lines.push("");
+    lines.push("## Settled");
+    lines.push("");
+    lines.push(
+      "These refuse on purpose, and none of them wants fixing. A figure that is statutory" +
+        " and has not moved in twenty-five years, a state that has not published the shard's" +
+        " year, a page whose numbers mean something else — each is a decision with a reason" +
+        " attached, and each clears itself when the reason stops being true. They are listed" +
+        " apart from the section below because a reader who opens a report and finds six" +
+        " entries needing nothing does not open the seventh.",
+    );
+    lines.push("");
+    for (const r of settled) {
+      lines.push(`- \`${r.adapterId}\` (${r.group})`);
+      lines.push(`  - ${r.url}`);
+      lines.push(`  - ${r.detail ?? "no reason given"}`);
     }
   }
 
@@ -261,7 +294,13 @@ async function check(adapter: RefreshAdapter): Promise<AnchorResult> {
     if (!fetched.ok) return { ok: false, reason: fetched.reason };
     try {
       const outcome = adapter.parse(fetched.raw, current);
-      if (!outcome.ok) return { ok: false, reason: outcome.reason, denied: outcome.denied };
+      if (!outcome.ok)
+        return {
+          ok: false,
+          reason: outcome.reason,
+          denied: outcome.denied,
+          settled: outcome.settled,
+        };
       return { ok: true, diff: diffShards(current, outcome.shard).lines };
     } catch (error) {
       return { ok: false, reason: `parser threw: ${(error as Error).message}` };

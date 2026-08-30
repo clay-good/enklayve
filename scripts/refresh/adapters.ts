@@ -177,7 +177,18 @@ export type ParseOutcome =
    * changed shape when the API was fine and the quota was spent. The adapter
    * check reports these as unreachable, alongside a page that never arrived.
    */
-  | { ok: false; reason: string; denied?: true };
+  /**
+   * `settled` says the refusal is a considered decision rather than a defect.
+   * Delaware's deduction is statutory and has not moved since 2000; Oregon,
+   * Vermont, Nebraska, Hawaii and Kansas are waiting on a state to publish the
+   * shard's year; Connecticut has no standard deduction at all. Every one of
+   * those used to read "could not anchor any standard-deduction figure by
+   * filing status" — the same sentence a genuinely broken parser prints. Mixing
+   * the two is how a report earns being skimmed: a reader who opens it and
+   * finds six entries needing nothing does not open the seventh. The adapter
+   * check lists these apart from the ones that want fixing.
+   */
+  | { ok: false; reason: string; denied?: true; settled?: boolean };
 
 export interface RefreshAdapter {
   /** The manifest shard id and `${id}.json` filename. */
@@ -701,6 +712,8 @@ function parseStandardDeductions(raw: string, current: Record<string, unknown>):
       reason:
         `this table states tax year ${[...new Set(stated)].join(" and ")} and this shard is ` +
         `${taxYear}; refusing — a page that names its own year has said it is not this one`,
+      // The page is fine and the parser is fine; the year has not arrived.
+      settled: Math.max(...stated) < taxYear,
     };
   }
   const shard = clone(current);
@@ -928,8 +941,8 @@ function refuseWhileSourceIsBehind(
 ): (raw: string, current: Record<string, unknown>) => ParseOutcome {
   return (raw, current) => {
     const outcome = parse(raw, current);
-    if (!outcome.ok) return { ok: false, reason };
-    return stillSuperseded(outcome.shard) ? { ok: false, reason } : outcome;
+    if (!outcome.ok) return { ok: false, reason, settled: true };
+    return stillSuperseded(outcome.shard) ? { ok: false, reason, settled: true } : outcome;
   };
 }
 
@@ -1021,7 +1034,7 @@ function refuseWhileSourceIsBehind(
 function refuseBecauseThePageMeansSomethingElse(
   reason: string,
 ): (raw: string, current: Record<string, unknown>) => ParseOutcome {
-  return () => ({ ok: false, reason });
+  return () => ({ ok: false, reason, settled: true });
 }
 
 function refuseBecauseTheFigureIsStatutory(
@@ -1413,6 +1426,9 @@ function parseFlatRateJurisdiction(raw: string, current: Record<string, unknown>
       reason:
         "the only rates on the page sit in a by-year table and none of them is this shard's" +
         ` year; refusing to guess which row is the current one.${stops}`,
+      // A table whose rows stop before the shard's year is the state not having
+      // published yet, which is a decision to wait rather than a parser to fix.
+      settled: percent.latestYear !== null && taxYear !== undefined && percent.latestYear < taxYear,
     };
   }
   if (!Number.isFinite(percent) || percent <= 0 || percent > 15) {
