@@ -2438,6 +2438,192 @@ function parseEitcProcedure(raw: string, current: Record<string, unknown>): Pars
   return { ok: true, shard };
 }
 
+/**
+ * The new value a notice states for one Code section, or `undefined`.
+ *
+ * IRS Notice 2025-67 writes every figure as a movement, in one of two shapes:
+ *
+ *   ...under section 402(g)(1) ... is increased from $23,500 to $24,500.
+ *   ...under section 414(v)(2)(E)(i) ... remains $11,250.
+ *
+ * The first is the trap. A pattern that takes the first dollar amount after the
+ * section reference gets $23,500 — LAST year's limit — and writes it into the
+ * shard as this year's, which is a number that is wrong by exactly one year and
+ * looks entirely reasonable. Both forms are matched explicitly and only the new
+ * value is taken; anything else is no answer rather than a guess.
+ */
+function limitAfterSection(text: string, section: string): number | undefined {
+  const at = text.indexOf(`section ${section}`);
+  if (at < 0) return undefined;
+  // Stop at the end of this figure's own sentence. A fixed-width window reaches
+  // into the next one, and the next one has a figure too: reading 414(v)(2)(E)(i)
+  // over 420 characters ran past "remains $11,250" into "under section
+  // 415(c)(1)(A) is increased in 2026 from $70,000 to $72,000" and anchored the
+  // defined-contribution limit as the age-60 catch-up.
+  const rest = text.slice(at, at + 600);
+  const boundary = /\. (?=[A-Z])/.exec(rest);
+  const sentence = boundary ? rest.slice(0, boundary.index) : rest;
+
+  const increased = /is increased(?: in \d{4})? from \$[\d,]+ to \$([\d,]+)/i.exec(sentence);
+  const unchanged = /remains \$([\d,]+)/i.exec(sentence);
+  // Whichever form the sentence actually uses. Preferring one over the other by
+  // order of testing is how the fixed window went wrong in the first place.
+  if (increased && (!unchanged || increased.index < unchanged.index)) {
+    return parseAmount(increased[1] as string);
+  }
+  if (unchanged?.[1]) return parseAmount(unchanged[1]);
+  return undefined;
+}
+
+/** Which Code section states each limit this shard carries. */
+const RETIREMENT_LIMIT_SECTIONS: Record<string, string> = {
+  elective_deferral_401k: "402(g)(1)",
+  catch_up_401k_50plus: "414(v)(2)(B)(i)",
+  catch_up_401k_60to63: "414(v)(2)(E)(i)",
+  ira_contribution: "219(b)(5)(A)",
+  ira_catch_up_50plus: "219(b)(5)(B)(ii)",
+  defined_contribution_415c: "415(c)(1)(A)",
+};
+
+/**
+ * The retirement contribution limits, from the notice this shard has always
+ * cited.
+ *
+ * Six of the shard's ten limits are stated here, each under the Code section
+ * that sets it. The other four are not, and the shard's own citation has always
+ * said so: the HSA figures come from Rev. Proc. 2025-19 and the health FSA
+ * limit from the inflation-adjustment procedure. They are left exactly as
+ * committed rather than being demanded of a document that does not state them —
+ * the Massachusetts rule — and a shard where six of ten are watched is six more
+ * than were watched before.
+ */
+function parseRetirementLimits(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const text = raw.replace(/\s+/g, " ");
+  const taxYear = Number(current.taxYear);
+  // This notice names its year in the enhanced-catch-up sentence ("individuals
+  // who attain age 60, 61, 62, or 63 in 2026") and in the 415(c) sentence.
+  if (!new RegExp(`\\b${taxYear}\\b`).test(text)) {
+    const years = [...text.matchAll(/\b(20[2-9]\d)\b/g)].map((m) => Number(m[1]));
+    const newest = years.length ? Math.max(...years) : undefined;
+    return {
+      ok: false,
+      reason: newest
+        ? `this notice adjusts ${newest} and the shard is ${taxYear}; refusing — a notice at a ` +
+          "year-stamped URL is a closed document that would report agreement forever"
+        : "this document names no year; refusing to read limits out of it",
+      settled: newest !== undefined && newest < taxYear,
+    };
+  }
+
+  const limits = current.limits as Record<string, number> | undefined;
+  if (!limits) return { ok: false, reason: "shard has no limits to overlay" };
+
+  const shard = clone(current);
+  const out = shard.limits as Record<string, number>;
+  const absent: string[] = [];
+  for (const [key, section] of Object.entries(RETIREMENT_LIMIT_SECTIONS)) {
+    if (!(key in limits)) continue;
+    const value = limitAfterSection(text, section);
+    if (value === undefined) {
+      absent.push(`${key} (§ ${section})`);
+      continue;
+    }
+    const drift = implausibleDrift(limits[key] as number, value);
+    if (drift !== null) {
+      return {
+        ok: false,
+        reason: `${key} ${drift}; refusing — either the notice moved or this is the previous year's figure`,
+      };
+    }
+    out[key] = value;
+  }
+  if (absent.length > 0) {
+    return {
+      ok: false,
+      reason:
+        `the notice states no new value for ${absent.join(", ")}; refusing rather than writing ` +
+        "the rest, because a limit stated as an increase and read wrong is last year's number",
+    };
+  }
+  return { ok: true, shard };
+}
+
+/**
+ * The traditional-IRA deduction phase-out ranges, from the same notice.
+ *
+ * The notice states each range as a pair of bounds in one sentence, keyed to the
+ * section that sets it — so each range is read from its own sentence rather than
+ * from a table, and the married-filing-separately range is not read at all: § 219(g)
+ * fixes it at $0–$10,000 and never indexes it, so there is nothing here to move.
+ */
+function parseIraPhaseOuts(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const text = raw.replace(/\s+/g, " ");
+  const taxYear = Number(current.taxYear);
+  if (!new RegExp(`\\b${taxYear}\\b`).test(text)) {
+    return {
+      ok: false,
+      reason: `this notice does not name ${taxYear}; refusing to read phase-out ranges out of it`,
+      settled: true,
+    };
+  }
+
+  const phaseOuts = current.phaseOuts as Record<string, { low: number; high: number }> | undefined;
+  if (!phaseOuts) return { ok: false, reason: "shard has no phaseOuts to overlay" };
+
+  // "single individuals and heads of household ... between $81,000 and $91,000"
+  const single =
+    /single individuals and heads of household[\s\S]{0,220}?between \$([\d,]+) and \$([\d,]+)/i.exec(
+      text,
+    );
+  // "For married couples filing jointly, if the spouse who makes the IRA
+  // contribution is an active participant, the income phase-out range is
+  // between $X and $Y"
+  const joint =
+    /married couples filing jointly[\s\S]{0,320}?between \$([\d,]+) and \$([\d,]+)/i.exec(text);
+  // The spouse-covered range: "an IRA contributor who is not an active
+  // participant and is married to someone who is an active participant"
+  const spouse =
+    /is not an active participant and is married to (?:someone|an individual) who is an active participant[\s\S]{0,260}?between \$([\d,]+) and \$([\d,]+)/i.exec(
+      text,
+    );
+
+  const found: [string, RegExpExecArray | null][] = [
+    ["singleCovered", single],
+    ["marriedJointlyCovered", joint],
+    ["marriedJointlySpouseCovered", spouse],
+  ];
+  const missing = found.filter(([, m]) => m === null).map(([k]) => k);
+  if (missing.length > 0) {
+    return { ok: false, reason: `could not anchor the ${missing.join(", ")} phase-out range` };
+  }
+
+  const shard = clone(current);
+  const out = shard.phaseOuts as Record<string, { low: number; high: number }>;
+  for (const [key, m] of found) {
+    const low = parseAmount(m![1] as string);
+    const high = parseAmount(m![2] as string);
+    if (!(high > low)) {
+      return { ok: false, reason: `${key} anchored ${low}–${high}, which is not a range` };
+    }
+    for (const [bound, value] of [
+      ["low", low],
+      ["high", high],
+    ] as [string, number][]) {
+      const drift = implausibleDrift((phaseOuts[key] as Record<string, number>)[bound]!, value);
+      if (drift !== null) {
+        return {
+          ok: false,
+          reason: `${key}.${bound} ${drift}; refusing — either the notice moved or this is not the range`,
+        };
+      }
+    }
+    out[key] = { low, high };
+  }
+  // § 219(g)(2)(A) fixes the married-filing-separately range at $0-$10,000 and
+  // never indexes it, so it stays as committed.
+  return { ok: true, shard };
+}
+
 function parseGiftTaxProcedure(raw: string, current: Record<string, unknown>): ParseOutcome {
   const text = raw.replace(/\s+/g, " ");
   const taxYear = Number(current.taxYear);
@@ -3071,6 +3257,22 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     cadence: "Annual, October-November",
     parse: parseIrsStandardDeductions,
+  },
+  {
+    id: "retirement-limits-2024",
+    group: "irs",
+    source: "IRS annual retirement-plan limits notice",
+    sourceUrl: "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
+    cadence: "Annual, autumn",
+    parse: parseRetirementLimits,
+  },
+  {
+    id: "ira-deduction-2024",
+    group: "irs",
+    source: "IRS annual retirement-plan limits notice — traditional IRA deduction phase-outs",
+    sourceUrl: "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
+    cadence: "Annual, autumn",
+    parse: parseIraPhaseOuts,
   },
   {
     id: "eitc-ctc-2024",

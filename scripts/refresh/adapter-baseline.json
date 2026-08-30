@@ -38,7 +38,11 @@
     "All five shards that cited rp-25-32.pdf now read it: gift-tax, amt, child-tax",
     "(the dependent standard deduction), capital-gains and eitc-ctc, added 2026-08-30",
     "and each dry-run to a no-op. The document was already being fetched every month",
-    "for the federal brackets."
+    "for the federal brackets.",
+    "",
+    "retirement-limits and ira-deduction joined on 2026-08-30, reading Notice 2025-67.",
+    "With those, no shard on watch-coverage.json is flagged THE REAL GAP any more:",
+    "every remaining entry there is a decision rather than unwritten work."
   ],
   "recordedOn": "2026-08-30",
   "knownAnchoring": [
@@ -53,6 +57,8 @@
     "federal-poverty-level-2024-hawaii",
     "fica-2024",
     "gift-tax-2024",
+    "ira-deduction-2024",
+    "retirement-limits-2024",
     "snap-fy2024-contiguous",
     "state-az-income-tax-2024",
     "state-ca-income-tax-2024",

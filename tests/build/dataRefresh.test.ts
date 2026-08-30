@@ -201,7 +201,7 @@ describe("adapters: registry", () => {
       "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(56);
+    expect(ADAPTERS).toHaveLength(58);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
@@ -1661,6 +1661,132 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     const credit = result.shard.taxpayerCredit as { creditRate: number } | undefined;
     expect(credit?.creditRate).toBe(0.06);
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  describe("retirement limits — every figure is stated as a movement", () => {
+    const limitsAdapter = adaptersForGroup("irs").find((a) => a.id === "retirement-limits-2024")!;
+    const iraAdapter = adaptersForGroup("irs").find((a) => a.id === "ira-deduction-2024")!;
+    const limits = readShard("retirement-limits-2024.json");
+    const ira = readShard("ira-deduction-2024.json");
+    // n-25-67.pdf, verbatim through the PDF reader.
+    const raw =
+      "The limitation under section 402(g)(1) on the exclusion for elective deferrals described in" +
+      " section 402(g)(3), which includes elective deferrals made to the Thrift Savings Plan, is" +
+      " increased from $23,500 to $24,500. The limitation under section 414(v)(2)(B)(i) for" +
+      " catch-up contributions to an applicable employer plan other than a plan described in" +
+      " section 401(k)(11) or section 408(p) that generally applies for individuals aged 50 or" +
+      " over is increased from $7,500 to $8,000. The limitation under section 414(v)(2)(E)(i) for" +
+      " catch-up contributions to an applicable employer plan that applies for individuals who" +
+      " attain age 60, 61, 62, or 63 in 2026 remains $11,250. The limitation for defined" +
+      " contribution plans under section 415(c)(1)(A) is increased in 2026 from $70,000 to" +
+      " $72,000. The deductible amount under section 219(b)(5)(A), which limits the amount of an" +
+      " individual's deductible qualified retirement contributions for a taxable year is increased" +
+      " from $7,000 to $7,500. The deductible amount pursuant to section 219(b)(5)(B)(ii) for" +
+      " individuals who have attained age 50 before the close of the taxable year is increased" +
+      " from $1,000 to $1,100." +
+      " In light of the changes to the applicable amounts, under section 219(g)(2)(A), the" +
+      " deduction for taxpayers making contributions to a traditional IRA is phased out for single" +
+      " individuals and heads of household who are active participants in a qualified plan and" +
+      " have adjusted gross incomes between $81,000 and $91,000, increased from between $79,000" +
+      " and $89,000. For married couples filing jointly, if the spouse who makes the IRA" +
+      " contribution is an active participant, the income phase-out range is between $129,000 and" +
+      " $149,000, increased from between $126,000 and $146,000. For an IRA contributor who is not" +
+      " an active participant and is married to someone who is an active participant, the" +
+      " deduction is phased out if the couple's income is between $242,000 and $252,000, increased" +
+      " from between $236,000 and $246,000.";
+
+    it("takes the new value, never the one it was increased FROM", () => {
+      // This is the whole trap. Every figure is written as a movement, so a
+      // pattern taking the first dollar amount after the section reference gets
+      // last year's limit and writes it in as this year's — wrong by exactly
+      // one year and entirely reasonable-looking.
+      const result = limitsAdapter.parse(raw, limits);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const l = result.shard.limits as Record<string, number>;
+      expect(l.elective_deferral_401k).toBe(24_500);
+      expect(l.elective_deferral_401k).not.toBe(23_500);
+      expect(l.catch_up_401k_50plus).toBe(8_000);
+      expect(l.ira_contribution).toBe(7_500);
+      expect(l.ira_catch_up_50plus).toBe(1_100);
+      expect(l.defined_contribution_415c).toBe(72_000);
+    });
+
+    it("reads a limit that did not move, written as 'remains'", () => {
+      const result = limitsAdapter.parse(raw, limits);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect((result.shard.limits as Record<string, number>).catch_up_401k_60to63).toBe(11_250);
+      }
+    });
+
+    it("leaves the figures this notice does not state exactly as committed", () => {
+      // The HSA limits come from Rev. Proc. 2025-19 and the health FSA limit
+      // from the inflation-adjustment procedure; the shard's citation has
+      // always said so. Demanding them of a document that does not state them
+      // would be the Massachusetts mistake.
+      const result = limitsAdapter.parse(raw, limits);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const l = result.shard.limits as Record<string, number>;
+      const committed = limits.limits as Record<string, number>;
+      expect(l.hsa_self_only).toBe(committed.hsa_self_only);
+      expect(l.hsa_family).toBe(committed.hsa_family);
+      expect(l.fsa_health).toBe(committed.fsa_health);
+    });
+
+    it("reads the document rather than agreeing by construction", () => {
+      const moved = raw.replace(
+        "is increased from $23,500 to $24,500",
+        "is increased from $23,500 to $25,000",
+      );
+      const result = limitsAdapter.parse(moved, limits);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect((result.shard.limits as Record<string, number>).elective_deferral_401k).toBe(25_000);
+      }
+    });
+
+    it("refuses rather than writing the rest when a section is absent", () => {
+      const partial = raw.replace(
+        /The limitation for defined contribution plans[\s\S]*?\$72,000\. /,
+        "",
+      );
+      const result = limitsAdapter.parse(partial, limits);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toMatch(/defined_contribution_415c/);
+    });
+
+    it("reads each IRA phase-out range from its own sentence", () => {
+      const result = iraAdapter.parse(raw, ira);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const p = result.shard.phaseOuts as Record<string, { low: number; high: number }>;
+      expect(p.singleCovered).toEqual({ low: 81_000, high: 91_000 });
+      expect(p.marriedJointlyCovered).toEqual({ low: 129_000, high: 149_000 });
+      expect(p.marriedJointlySpouseCovered).toEqual({ low: 242_000, high: 252_000 });
+      // § 219(g)(2)(A) fixes the separate-return range at $0–$10,000 and never
+      // indexes it, so it is not read and must not move.
+      expect(p.marriedSeparatelyCovered).toEqual({ low: 0, high: 10_000 });
+    });
+
+    it("does not take the 'increased from' range as this year's", () => {
+      // Every range sentence ends "increased from between $79,000 and $89,000".
+      const result = iraAdapter.parse(raw, ira);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const p = result.shard.phaseOuts as Record<string, { low: number }>;
+        expect(p.singleCovered!.low).not.toBe(79_000);
+      }
+    });
+
+    it("refuses a notice for another year", () => {
+      for (const adapter of [limitsAdapter, iraAdapter]) {
+        const result = adapter.parse(raw, { ...limits, taxYear: 2031 });
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.settled).toBe(true);
+      }
+    });
   });
 
   describe("EITC — a table whose columns are not in the obvious order", () => {
