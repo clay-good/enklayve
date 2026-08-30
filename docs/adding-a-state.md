@@ -16,6 +16,25 @@ The fifty-state tax engine is the moat, and it is built so **adding a state is a
 
 4. **Add a golden case** in `tests/` (cross-checked against a published state worked example), then run `npm test`. The take-home and federal/state tiles will now offer the new state with no further wiring — `BundledData.availableStates()` reads it straight from the manifest.
 
+5. **Write its refresh adapter** in [`scripts/refresh/adapters.ts`](../scripts/refresh/adapters.ts), so the shard is *watched* rather than left to go quietly stale behind a citation that still looks live. That is how Illinois, Michigan, Missouri and Georgia sat a year or two out of date until the August 2026 audit.
+
+## Writing the adapter
+
+An adapter fetches one page and pulls one figure out of it. The whole risk is that it pulls the wrong one, so these rules are the ones that were learned the expensive way — every line below has a state's name behind it.
+
+| Rule | Why |
+|---|---|
+| **Watch what you cite.** Point `sourceUrl` at the document the shard's `citation` names, not at the department's landing page. | A landing page is a menu. Twenty-one adapters were watching one, and a menu never states a figure, so the report said "the source moved" forever. |
+| **Dry-run before you trust it.** `node scripts/refresh/run.ts --adapter <id> --dry-run` and read the diff. | "Anchored" means the parser found something *shaped* like its figure, never that the value is right. Nine adapters anchored the wrong number the first time anyone looked — California's standard deduction read `2019`, Delaware's `2014`. |
+| **A page that does not name its year cannot be dated.** | Missouri's page prints an eight-tier ladder with no year on it, and that ladder is last year's. It parsed cleanly and would have rolled every threshold in the state back a year. An undated schedule may *confirm* the shard; it may not change it. |
+| **Read the trailing figure, not the leading one.** | Where a row states its floor twice ("Over $10,000 but not over $25,000 … 2.81% of the excess over $10,000"), only the one inside the rate's own clause is the pairing. |
+| **Check which way round the page states it.** | Georgia and South Carolina write the amount first ("$30,000 for taxpayers filing Married Filing Jointly"). Read label-first, every status lands one row down. They share [`parseAmountThenStatusDeductions`](../scripts/refresh/adapters.ts). |
+| **If the form carries a year in its URL, make the parser insist on the year.** | Form 446, Form 1-ES and the Missouri withholding formula are reissued annually, and a stale one states last year's figures *perfectly*. |
+| **When the answer is no, say which no.** Set `settled: true` on the refusal when it is a decision rather than a defect. | A figure that is statutory and does not index, a state that has not published the shard's year, a page whose numbers mean something else — these need nobody. Filed as ordinary failures they open a fail-safe pull request every month, and a pull request that always opens is not a pull request. |
+| **Do not parse a chart.** | Alabama's deduction is the corner of a 200-row grid; Delaware's statute is a history of periods. A parser that needs table geometry should be a reviewer step, or a fingerprint in [`source-watch.json`](../scripts/refresh/source-watch.json). |
+
+Then run `npm run check:adapters`, and if the adapter agrees with its shard, add its id to [`adapter-baseline.json`](../scripts/refresh/adapter-baseline.json) — that list is the gate, and an adapter falling out of it fails the check.
+
 ## The jurisdiction shape
 
 ```jsonc
