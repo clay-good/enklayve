@@ -270,6 +270,38 @@ describe("every calculator's worked example produces an answer", () => {
   }
 });
 
+describe("every calculator announces its answer", () => {
+  for (const tile of CALCULATORS) {
+    it(`${tile.id} puts its result inside a live region`, () => {
+      // axe cannot catch this, because it is an absence rather than a
+      // violation. A calculator recomputes as the reader types, replacing its
+      // result in place — and a screen-reader user who types an income and
+      // hears nothing has no way to know the page answered them.
+      //
+      // Two independent mechanisms satisfy it today. Fifty-eight tiles get it
+      // twice over, from `resultCard`'s headline `<output>` and from their own
+      // `.tile-result` container; the eight Pillar 4 screeners, which have no
+      // single headline number, get it from the container alone. This asserts
+      // the property rather than either mechanism, so a tile is free to arrive
+      // with only one of them and not free to arrive with neither.
+      const root = mount(tile, new URLSearchParams());
+      const example = [...root.querySelectorAll("button")].find((b) =>
+        /try an example/i.test(b.textContent ?? ""),
+      );
+      example?.click();
+
+      const live = [...root.querySelectorAll("[aria-live]")];
+      expect(live.length, `${tile.id} renders its result with no live region`).toBeGreaterThan(0);
+
+      // And the region has to contain something once there is an answer — a
+      // live region on an element that never holds the result announces
+      // nothing, which is the failure that looks exactly like success.
+      const announced = live.some((el) => (el.textContent ?? "").trim().length > 0);
+      expect(announced, `${tile.id}'s live region is empty after computing`).toBe(true);
+    });
+  }
+});
+
 describe("every hub in the catalog", () => {
   for (const hub of TILES.filter((t) => t.mount)) {
     it(`${hub.id} has no axe violations`, async () => {
