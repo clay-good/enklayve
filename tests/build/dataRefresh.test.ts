@@ -201,7 +201,7 @@ describe("adapters: registry", () => {
       "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(54);
+    expect(ADAPTERS).toHaveLength(55);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
@@ -1661,6 +1661,99 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     const credit = result.shard.taxpayerCredit as { creditRate: number } | undefined;
     expect(credit?.creditRate).toBe(0.06);
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  describe("capital gains — two amounts a row, and they are ceilings", () => {
+    const adapter = adaptersForGroup("irs").find((a) => a.id === "capital-gains-2024")!;
+    const current = readShard("capital-gains-2024.json");
+    // rp-25-32.pdf §4.03, verbatim through the PDF reader (the header really
+    // does read "Maximum15%" with no space).
+    const raw =
+      ".03 Maximum Capital Gains Rate (§ 1(h), § 1(j)(5)). For taxable years beginning in 2026," +
+      " the maximum zero rate amounts and maximum 15 percent rate amounts under § 1(j)(5)(B), as" +
+      " adjusted for inflation, are as follows: Filing Status Maximum Zero Rate Amount Maximum15%" +
+      " Rate Amount Married Individuals Filing Joint Returns and Surviving Spouse $98,900" +
+      " $613,700 Married Individuals Filing Separate Returns $49,450 $306,850 Heads of Household" +
+      " $66,200 $579,600 All Other Individuals $49,450 $545,500 Estates and Trusts $3,300 $16,250" +
+      " .04 Adoption Credit. (1) Adoption Credit for Children with Special needs.";
+
+    it("puts each row's two ceilings into the two tiers they bound", () => {
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const b = result.shard.longTermBracketsByFilingStatus as Record<
+        string,
+        { lowerBound: number; rate: number }[]
+      >;
+      expect(b.married_jointly!.map((t) => t.lowerBound)).toEqual([0, 98_900, 613_700]);
+      expect(b.qualifying_surviving_spouse!.map((t) => t.lowerBound)).toEqual([0, 98_900, 613_700]);
+      expect(b.married_separately!.map((t) => t.lowerBound)).toEqual([0, 49_450, 306_850]);
+      expect(b.head_of_household!.map((t) => t.lowerBound)).toEqual([0, 66_200, 579_600]);
+      expect(b.single!.map((t) => t.lowerBound)).toEqual([0, 49_450, 545_500]);
+      // The rates are statutory under § 1(h) and untouched by the procedure.
+      expect(b.single!.map((t) => t.rate)).toEqual([0, 0.15, 0.2]);
+    });
+
+    it("does not mistake a separate-return row for a joint one", () => {
+      // "Married Individuals Filing Joint Returns and Surviving Spouse" and
+      // "Married Individuals Filing Separate Returns" share eighteen characters
+      // and carry different figures, one line apart.
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const b = result.shard.longTermBracketsByFilingStatus as Record<
+          string,
+          { lowerBound: number }[]
+        >;
+        expect(b.married_separately![2]!.lowerBound).toBe(306_850);
+        expect(b.married_jointly![2]!.lowerBound).toBe(613_700);
+      }
+    });
+
+    it("reads the document rather than agreeing by construction", () => {
+      const moved = raw.replace(
+        "All Other Individuals $49,450 $545,500",
+        "All Other Individuals $50,000 $550,000",
+      );
+      const result = adapter.parse(moved, current);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const b = result.shard.longTermBracketsByFilingStatus as Record<
+          string,
+          { lowerBound: number }[]
+        >;
+        expect(b.single!.map((t) => t.lowerBound)).toEqual([0, 50_000, 550_000]);
+      }
+    });
+
+    it("refuses a row with only one amount rather than half-writing it", () => {
+      // Reading only the first would put the zero-rate ceiling into the 15%
+      // tier and leave the 20% tier at last year's figure — the right shape
+      // with one bound from the wrong column.
+      const truncated = raw.replace(
+        "Heads of Household $66,200 $579,600",
+        "Heads of Household $66,200",
+      );
+      const result = adapter.parse(truncated, current);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toMatch(/no pair of amounts for "Heads of Household"/);
+    });
+
+    it("refuses a pair that does not ascend", () => {
+      const backwards = raw.replace(
+        "All Other Individuals $49,450 $545,500",
+        "All Other Individuals $545,500 $49,450",
+      );
+      const result = adapter.parse(backwards, current);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toMatch(/not an ascending pair/);
+    });
+
+    it("refuses a procedure for another year", () => {
+      const result = adapter.parse(raw, { ...current, taxYear: 2027 });
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.settled).toBe(true);
+    });
   });
 
   describe("the dependent's standard deduction — one sentence, two figures", () => {

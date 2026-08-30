@@ -2230,6 +2230,109 @@ function parseDependentDeduction(raw: string, current: Record<string, unknown>):
   return { ok: true, shard };
 }
 
+/** How the procedure's capital-gains rows map onto the shard's statuses. */
+const CAPITAL_GAINS_ROWS: { label: string; statuses: string[] }[] = [
+  {
+    label: "Married Individuals Filing Joint Returns and Surviving Spouse",
+    statuses: ["married_jointly", "qualifying_surviving_spouse"],
+  },
+  { label: "Married Individuals Filing Separate Returns", statuses: ["married_separately"] },
+  { label: "Heads of Household", statuses: ["head_of_household"] },
+  { label: "All Other Individuals", statuses: ["single"] },
+];
+
+/**
+ * The long-term capital-gains thresholds, from the revenue procedure this shard
+ * has always cited.
+ *
+ * The procedure prints one table with two amounts per row:
+ *
+ *   Filing Status | Maximum Zero Rate Amount | Maximum 15% Rate Amount
+ *   Married Individuals Filing Joint Returns and Surviving Spouse $98,900 $613,700
+ *
+ * They are the CEILINGS of the 0% and 15% bands, which is exactly what the
+ * shard's three-tier schedule stores as the lower bounds of the 15% and 20%
+ * tiers — so both are read, in order, and a row that yields one amount is
+ * refused rather than half-written. Reading only the first would put the zero-
+ * rate ceiling into the 15% tier and leave the 20% tier at last year's figure:
+ * a schedule of the right shape with one bound from the wrong column.
+ *
+ * "Estates and Trusts" is a fifth row and not a filing status this engine
+ * models. The rates themselves (0/15/20) are statutory under § 1(h) and the
+ * procedure does not adjust them, so they stay as the shard carries them.
+ */
+function parseCapitalGainsProcedure(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const text = raw.replace(/\s+/g, " ");
+  const taxYear = Number(current.taxYear);
+  const wrongYear = refuseIfNotTheShardsProcedure(text, taxYear);
+  if (wrongYear) return wrongYear;
+
+  const region = tableRegion(text, "as adjusted for inflation, are as follows:");
+  if (region === null) {
+    return {
+      ok: false,
+      reason: `could not find the maximum capital gains rate table for ${taxYear}`,
+    };
+  }
+
+  const brackets = clone(current).longTermBracketsByFilingStatus as
+    | Record<string, { lowerBound: number; rate: number }[]>
+    | undefined;
+  if (!brackets) return { ok: false, reason: "shard has no longTermBracketsByFilingStatus" };
+
+  const shard = clone(current);
+  const out = shard.longTermBracketsByFilingStatus as Record<
+    string,
+    { lowerBound: number; rate: number }[]
+  >;
+  let written = 0;
+  for (const row of CAPITAL_GAINS_ROWS) {
+    const m = new RegExp(`${row.label}\\s*\\$([\\d,]+)\\s*\\$([\\d,]+)`, "i").exec(region);
+    if (!m) {
+      return {
+        ok: false,
+        reason:
+          `the capital gains table states no pair of amounts for "${row.label}"; refusing ` +
+          "rather than writing one bound from the wrong column",
+      };
+    }
+    const zeroCeiling = parseAmount(m[1] as string);
+    const fifteenCeiling = parseAmount(m[2] as string);
+    if (!(zeroCeiling > 0) || !(fifteenCeiling > zeroCeiling)) {
+      return {
+        ok: false,
+        reason: `"${row.label}" anchored ${zeroCeiling} then ${fifteenCeiling}, which is not an ascending pair`,
+      };
+    }
+    for (const status of row.statuses) {
+      const tiers = out[status];
+      if (!Array.isArray(tiers) || tiers.length !== 3 || !tiers[1] || !tiers[2]) continue;
+      for (const [i, value] of [
+        [1, zeroCeiling],
+        [2, fifteenCeiling],
+      ] as [number, number][]) {
+        const drift = implausibleDrift(tiers[i]!.lowerBound, value);
+        if (drift !== null) {
+          return {
+            ok: false,
+            reason: `${status} tier ${i} ${drift}; refusing — either the procedure moved or this is not the figure`,
+          };
+        }
+      }
+      tiers[1].lowerBound = zeroCeiling;
+      tiers[2].lowerBound = fifteenCeiling;
+      written += 1;
+    }
+  }
+  if (written !== Object.keys(brackets).length) {
+    return {
+      ok: false,
+      reason: `the table covered ${written} of the shard's ${Object.keys(brackets).length} filing statuses`,
+    };
+  }
+  return { ok: true, shard };
+}
+
 function parseGiftTaxProcedure(raw: string, current: Record<string, unknown>): ParseOutcome {
   const text = raw.replace(/\s+/g, " ");
   const taxYear = Number(current.taxYear);
@@ -2863,6 +2966,15 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     cadence: "Annual, October-November",
     parse: parseIrsStandardDeductions,
+  },
+  {
+    id: "capital-gains-2024",
+    group: "irs",
+    source:
+      "IRS annual inflation-adjustment revenue procedure — long-term capital gains thresholds",
+    sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+    cadence: "Annual, autumn",
+    parse: parseCapitalGainsProcedure,
   },
   {
     id: "child-tax-2024",
