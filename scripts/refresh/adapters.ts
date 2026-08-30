@@ -2644,7 +2644,14 @@ export const ADAPTERS: RefreshAdapter[] = [
     // is the rate, which a revenue trigger can cut 0.25% in future years. Anchor
     // the standard deduction (the change-watch); a trigger-based rate cut stays
     // the reviewer's data-only step.
-    parse: parseStandardDeductions,
+    parse: refuseBecauseTheFigureIsStatutory(
+      parseStandardDeductions,
+      "Oklahoma's standard deduction does not index \u2014 68 O.S. \u00a72358 froze it at the 2017 " +
+        "federal amounts ($6,350 / $12,700 / $9,350) and it has not moved since, so there is " +
+        "no annual figure here to anchor and a change would be an act of the legislature. The " +
+        "Tax Commission's individuals page is a menu, and its Legislative Update states the " +
+        "year's bills rather than the standing figures",
+    ),
   },
   {
     id: "state-sc-income-tax-2024",
@@ -2869,7 +2876,14 @@ export const ADAPTERS: RefreshAdapter[] = [
     // fixed $3,350/$6,700). The per-status bracket tables, the county local-rate
     // chart (including the Anne Arundel / Frederick income-tiered schedules), and
     // the $3,200 exemption are the reviewer's data-only step on each new memo.
-    parse: parseStandardDeductions,
+    parse: refuseBecauseTheFigureIsStatutory(
+      parseStandardDeductions,
+      "Maryland's standard deduction is a statutory CAP, not an indexed figure: the deduction " +
+        "is the lesser of 15% of Maryland AGI or $3,350 single / $6,700 joint, and the 2025 " +
+        "session set those caps. There is no annual amount for an adapter to read, and the " +
+        "Comptroller's tax-services page is a menu that states neither the cap nor the " +
+        "percentage. A change is an act of the General Assembly, which a person reads",
+    ),
   },
   {
     id: "state-ar-income-tax-2024",
@@ -2883,7 +2897,14 @@ export const ADAPTERS: RefreshAdapter[] = [
     // standard deduction (the MN/RI pattern). The graduated bracket thresholds,
     // the bracket-adjustment recapture band/amount, and the $29 personal credit
     // roll alongside it as the reviewer's data-only step on each new AR1000F.
-    parse: parseStandardDeductions,
+    parse: refuseUntilTheStatePublishes(
+      parseStandardDeductions,
+      "Arkansas has not published its 2026 individual income tax forms \u2014 DFA's newest is the " +
+        "2025 set, and this shard is on 2026. It deliberately carries the 2025 AR1000F " +
+        "figures forward, which its own note records ($2,470 / $4,940). The 2025 booklet is a " +
+        "closed year and would report agreement forever; repoint this adapter the day the " +
+        "2026 forms appear",
+    ),
   },
   {
     id: "state-ct-income-tax-2024",

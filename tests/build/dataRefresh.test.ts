@@ -577,6 +577,24 @@ describe("adapters: Alabama (a chart, not a figure)", () => {
   const adapter = adaptersForGroup("state-al")[0]!;
   const current = readShard("state-al-income-tax-2024.json");
 
+  it("says so for the other statutory figures too", () => {
+    // Oklahoma froze its deduction at the 2017 federal amounts (68 O.S. §2358);
+    // Maryland's is a statutory cap on a percentage, not an amount. Neither has
+    // an annual figure for an adapter to read, and both were reporting the same
+    // sentence a broken parser prints.
+    for (const [group, shard, pattern] of [
+      ["state-ok", "state-ok-income-tax-2024.json", /does not index/],
+      ["state-md", "state-md-income-tax-2024.json", /statutory CAP/],
+    ] as const) {
+      const outcome = adaptersForGroup(group)[0]!.parse("A menu of links.", readShard(shard));
+      expect(outcome.ok).toBe(false);
+      if (!outcome.ok) {
+        expect(outcome.reason).toMatch(pattern);
+        expect(outcome.settled).toBe(true);
+      }
+    }
+  });
+
   it("refuses a figure that only exists as the corner of a chart", () => {
     // The FAQ this adapter used to watch is titled "How much is the Alabama
     // standard deduction?" and answers it by pointing at the chart without
@@ -835,6 +853,13 @@ describe("adapters: a state that has not published the shard's year", () => {
     });
     expect(forms.ok).toBe(false);
     if (!forms.ok) expect(forms.reason).toMatch(/has not published its 2026 Tax Calculation/);
+
+    const ar = adaptersForGroup("state-ar")[0]!;
+    const arForms = ar.parse("Individual Income Tax 2025 Tax Forms Prior years", {
+      ...readShard("state-ar-income-tax-2024.json"),
+    });
+    expect(arForms.ok).toBe(false);
+    if (!arForms.ok) expect(arForms.reason).toMatch(/has not published its 2026 individual/);
 
     const vt = adaptersForGroup("state-vt")[0]!;
     const rates = vt.parse("2025 Vermont Rate Schedules 2025 Vermont Tax Tables", {

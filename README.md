@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **68** in **12 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **80**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | **2,097** unit/golden across 89 files, **+26** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | **2,098** unit/golden across 89 files, **+26** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Source audits | **all 51 jurisdictions + the federal and benefits shards** read against the agency's own document; 8 wrong figures found and fixed | [`docs/data-sources.md`](docs/data-sources.md#source-audits) |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale/theme preference touches `localStorage`, asserted end-to-end across a full session | `npm run audit` / `npm run test:e2e` |
@@ -466,7 +466,7 @@ So `npm run check:adapters` ([workflow](.github/workflows/check-adapters.yml), m
 
 One caveat the check prints on its own second line: **anchored does not mean correct**. Pointing Maine's deduction adapter at the form that genuinely does state its deduction made it "anchor" a bracket threshold and the personal exemption. Repointing an adapter means dry-running it and reading the diff.
 
-Running that dry run across all 49 answered a question the check could not: **five** were genuinely watching their shard, not 23. Getting that to 30 of 51 took a day. The other twenty-five split in two, and that split is worth as much as the count: **thirteen are settled** — a figure that is statutory and has not moved since 2000, six states that have not published the shard's year, a page whose numbers mean something else — and six genuinely want fixing. Every one of the eleven used to print the same sentence a broken parser prints, and a reader who opens a report and finds six entries needing nothing does not open the seventh, so the check lists them apart, and the useful part is not the number — it is that every failure was a different way for a parser to find a number that is not the one it was looking for.
+Running that dry run across all 49 answered a question the check could not: **five** were genuinely watching their shard, not 23. Getting that to 30 of 51 took a day. The other twenty-five split in two, and that split is worth as much as the count: **sixteen are settled** — a figure that is statutory and has not moved since 2000, six states that have not published the shard's year, a page whose numbers mean something else — and three genuinely want fixing. Every one of the eleven used to print the same sentence a broken parser prints, and a reader who opens a report and finds six entries needing nothing does not open the seventh, so the check lists them apart, and the useful part is not the number — it is that every failure was a different way for a parser to find a number that is not the one it was looking for.
 
 | The failure | Where it showed up |
 |---|---|
@@ -605,7 +605,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**2,097 unit/golden tests across 89 files** (plus 26 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**2,098 unit/golden tests across 89 files** (plus 26 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
