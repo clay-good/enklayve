@@ -192,10 +192,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-ga-income-tax-2024.json",
-      "sourceUrl": "https://dor.georgia.gov/employers-tax-guide",
+      "sourceUrl": "https://dor.georgia.gov/document/document/2026-employers-tax-guide-updated-june-2026/download",
       "sourceDocument": "Georgia DOR 2026 Employer's Withholding Tax Guide (revised June 2026) — HB 463: flat 4.99%, standard deduction $15,000 / $30,000",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "68b85a2ae05b22c9fe59a18cfb314d6ae1a8c35815d519855454f4ed1e6b4a24"
+      "contentHash": "53ef653a754ed407d8bb553ccc7f30dea76c9f6dc41afae0e0e7c4844896909b"
     },
     {
       "id": "state-nc-income-tax-2024",

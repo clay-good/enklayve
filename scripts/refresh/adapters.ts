@@ -456,26 +456,27 @@ function parseFica(raw: string, current: Record<string, unknown>): ParseOutcome 
  */
 const LABEL_TO_AMOUNT = 80;
 
-const FILING_LABELS: { key: string; pattern: RegExp }[] = [
-  {
-    key: "married_jointly",
-    pattern: new RegExp(
-      `married(?:[^.]{0,40}?)(?:filing )?jointly[^$]{0,${LABEL_TO_AMOUNT}}\\$?([\\d,]{4,})`,
-      "i",
-    ),
-  },
-  {
-    key: "head_of_household",
-    pattern: new RegExp(`heads?\\s+of\\s+household[^$]{0,${LABEL_TO_AMOUNT}}\\$?([\\d,]{4,})`, "i"),
-  },
-  {
-    key: "single",
-    pattern: new RegExp(
-      `\\bsingle(?:[^$]{0,40}?taxpayers?)?[^$]{0,${LABEL_TO_AMOUNT}}\\$?([\\d,]{4,})`,
-      "i",
-    ),
-  },
+/**
+ * How each filing status names itself, and how it reaches its amount.
+ *
+ * The label is kept separate from the bridge because two parsers want different
+ * halves of it: the table readers want "this label, then an amount", and
+ * Georgia's reader wants "an amount, then the statuses it applies to" — the same
+ * words, on the other side of the number.
+ */
+const FILING_LABEL_SOURCES: { key: string; label: string }[] = [
+  { key: "married_jointly", label: `married(?:[^.]{0,40}?)(?:filing )?jointly` },
+  { key: "head_of_household", label: `heads?\\s+of\\s+household` },
+  { key: "single", label: `\\bsingle(?:[^$]{0,40}?taxpayers?)?` },
 ];
+
+const FILING_LABELS: { key: string; label: RegExp; pattern: RegExp }[] = FILING_LABEL_SOURCES.map(
+  ({ key, label }) => ({
+    key,
+    label: new RegExp(label, "i"),
+    pattern: new RegExp(`${label}[^$]{0,${LABEL_TO_AMOUNT}}\\$?([\\d,]{4,})`, "i"),
+  }),
+);
 
 /**
  * How far an anchored figure may move from the committed one before the parser
@@ -740,6 +741,100 @@ function parseStandardDeductions(raw: string, current: Record<string, unknown>):
   // Mirror separately/surviving-spouse to single/jointly when present (federal
   // convention) only if the source did not state them and the shard already
   // pairs them that way — otherwise leave them for review.
+  shard.standardDeductionByFilingStatus = deductions;
+  return { ok: true, shard };
+}
+
+// --- Georgia (an amount, then the statuses it applies to) --------------------
+
+/**
+ * Georgia's standard deduction, from the sentence Georgia actually publishes.
+ *
+ * Every pattern above reads label-then-amount, and Georgia states it the other
+ * way round — in its Employer's Withholding Tax Guide and, in nearly the same
+ * words, on its Important Tax Updates page:
+ *
+ *   Georgia standard deductions have increased to $30,000 for taxpayers filing
+ *   Married Filing Jointly and $15,000 for Single, Head of Household, and
+ *   Married Filing Separate taxpayers.
+ *
+ * This is the California failure with no way out. There, the FTB stated the
+ * figures backwards in one document ("$5,706 single … $11,412 married/RDP
+ * filing jointly", where `single` reaches past its own figure) and the right way
+ * round in another, so the adapter was pointed at the other one. Georgia states
+ * it backwards in both of its documents, so there is nothing to repoint to.
+ *
+ * Reading it needs a different unit than "label, then the next amount". The
+ * sentence's unit is **an amount and the list of statuses it applies to**, and
+ * that list is what makes Georgia unusual anyway: the deduction does NOT double
+ * for head of household there — head of household takes the single amount, like
+ * married filing separately. A parser that assumed the federal 1.5× shape would
+ * be wrong about Georgia by $7,500 while looking perfectly healthy, so it reads
+ * the list instead of assuming it.
+ *
+ * Adding this as a general fallback was the other option and is the worse one:
+ * on a page that states things label-first, an amount-first pattern reads every
+ * figure off by one row, which is exactly how California's 540-ES turns $5,706
+ * into $11,412. The two readings disagree on Georgia's own sentence — read
+ * label-first, "Married Filing Jointly" reaches forward to $15,000 — so there is
+ * no both-must-agree rule that keeps Georgia. It is a shape, it gets a parser.
+ *
+ * The guide's own year is checked against the shard's, the Form 446 rule: it is
+ * reissued annually at a URL carrying the year, and a stale one states last
+ * year's figures perfectly.
+ */
+function parseGeorgiaDeductions(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const text = visibleText(raw);
+  const taxYear = Number(current.taxYear);
+  if (
+    Number.isInteger(taxYear) &&
+    !new RegExp(`withholding tax guide\\s+${taxYear}\\b`, "i").test(text)
+  ) {
+    return {
+      ok: false,
+      reason: `this is not the ${taxYear} Employer's Withholding Tax Guide — Georgia reissues it each year at a URL carrying the year, and a stale one states last year's deduction perfectly`,
+    };
+  }
+  const shard = clone(current);
+  const deductions = {
+    ...((shard.standardDeductionByFilingStatus as Record<string, number>) ?? {}),
+  };
+  const claimed = new Map<string, number>();
+  // "$30,000 for taxpayers filing Married Filing Jointly and " — the span runs
+  // to the next amount, which is where the next status list begins.
+  for (const match of text.matchAll(/\$([\d,]{4,})\s+for\s+([^$]{0,80})/gi)) {
+    const amount = parseAmount(match[1] as string);
+    if (!Number.isFinite(amount) || amount <= 0) continue;
+    const applies = match[2] as string;
+    for (const { key, label } of FILING_LABELS) {
+      if (!(key in deductions)) continue;
+      if (!label.test(applies)) continue;
+      const already = claimed.get(key);
+      if (already !== undefined && already !== amount) {
+        return {
+          ok: false,
+          reason: `two amounts claim the ${key} standard deduction (${already} and ${amount}); refusing to guess which`,
+        };
+      }
+      claimed.set(key, amount);
+    }
+  }
+  if (claimed.size === 0) {
+    return {
+      ok: false,
+      reason: "could not anchor an amount followed by the filing statuses it applies to",
+    };
+  }
+  for (const [key, amount] of claimed) {
+    const drift = implausibleDrift(deductions[key] as number, amount);
+    if (drift !== null) {
+      return {
+        ok: false,
+        reason: `the ${key} standard deduction ${drift}; refusing — either the page moved or this is not the figure`,
+      };
+    }
+    deductions[key] = amount;
+  }
   shard.standardDeductionByFilingStatus = deductions;
   return { ok: true, shard };
 }
@@ -1775,10 +1870,14 @@ export const ADAPTERS: RefreshAdapter[] = [
   {
     id: "state-ga-income-tax-2024",
     group: "state-ga",
-    source: "Georgia Department of Revenue individual income tax",
-    sourceUrl: "https://dor.georgia.gov/taxes/taxes-individuals",
+    source: "Georgia DOR Employer's Withholding Tax Guide (HB 463 rate and standard deduction)",
+    // The guide, not dor.georgia.gov/taxes/taxes-individuals: that is a menu.
+    // The guide states both HB 463 figures on its "what changed" page, which is
+    // what the shard's own note cites.
+    sourceUrl:
+      "https://dor.georgia.gov/document/document/2026-employers-tax-guide-updated-june-2026/download",
     cadence: "Annual",
-    parse: parseStandardDeductions,
+    parse: parseGeorgiaDeductions,
   },
   {
     id: "state-nc-income-tax-2024",

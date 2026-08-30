@@ -537,6 +537,56 @@ describe("adapters: North Carolina (a table, then pages about itemizing)", () =>
   });
 });
 
+describe("adapters: Georgia (the amount, then the statuses it applies to)", () => {
+  const adapter = adaptersForGroup("state-ga")[0]!;
+  const current = readShard("state-ga-income-tax-2024.json");
+  // Georgia DOR, "Employer's Withholding Tax Guide 2026", revised June 2026 —
+  // the sentence verbatim, under the masthead the year check reads.
+  const raw =
+    "EMPLOYER\u2019S WITHHOLDING TAX GUIDE 2026 REVISED: June 2026 ... employers may" +
+    " withhold at the rate of 5.19% before the effective date of the change and can begin" +
+    " withholding at the new rate of 4.99%, starting May 11, 2026. \u2022 Georgia standard" +
+    " deductions have increased to $30,000 for taxpayers filing Married Filing Jointly and" +
+    " $15,000 for Single, Head of Household, and Married Filing Separate taxpayers." +
+    " \u2022 The dependent deduction was raised from $4,000 to $5,000.";
+
+  it("reads a deduction stated amount-first, and does not double it for head of household", () => {
+    // Georgia states its figures backwards in BOTH of its documents, so unlike
+    // California there is nothing to repoint to. And the list is the point: the
+    // deduction does not double for head of household in Georgia — head of
+    // household takes the single amount, like married filing separately — so a
+    // parser assuming the federal 1.5x shape would be wrong by $7,500 while
+    // looking perfectly healthy.
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.shard.standardDeductionByFilingStatus).toEqual({
+      single: 15000,
+      married_jointly: 30000,
+      head_of_household: 15000,
+    });
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("refuses a guide from another year", () => {
+    // The Form 446 rule: reissued annually at a URL carrying the year, and a
+    // stale one states last year's deduction perfectly.
+    const stale = adapter.parse(raw.replace("TAX GUIDE 2026", "TAX GUIDE 2025"), current);
+    expect(stale.ok).toBe(false);
+    if (!stale.ok) expect(stale.reason).toMatch(/not the 2026 Employer's Withholding Tax Guide/);
+  });
+
+  it("refuses when two amounts claim the same status", () => {
+    const conflicting = adapter.parse(
+      raw + " Georgia standard deductions have increased to $24,000 for Married Filing Jointly.",
+      current,
+    );
+    expect(conflicting.ok).toBe(false);
+    if (!conflicting.ok)
+      expect(conflicting.reason).toMatch(/two amounts claim the married_jointly/);
+  });
+});
+
 describe("adapters: a state that has not published the shard's year", () => {
   // "could not anchor any standard-deduction figure by filing status" and "the
   // state has not published this year yet" look identical in the report and

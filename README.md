@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **68** in **12 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **80**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | **2,073** unit/golden across 89 files, **+26** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | **2,076** unit/golden across 89 files, **+26** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Source audits | **all 51 jurisdictions + the federal and benefits shards** read against the agency's own document; 8 wrong figures found and fixed | [`docs/data-sources.md`](docs/data-sources.md#source-audits) |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale/theme preference touches `localStorage`, asserted end-to-end across a full session | `npm run audit` / `npm run test:e2e` |
@@ -466,7 +466,7 @@ So `npm run check:adapters` ([workflow](.github/workflows/check-adapters.yml), m
 
 One caveat the check prints on its own second line: **anchored does not mean correct**. Pointing Maine's deduction adapter at the form that genuinely does state its deduction made it "anchor" a bracket threshold and the personal exemption. Repointing an adapter means dry-running it and reading the diff.
 
-Running that dry run across all 49 answered a question the check could not: **five** were genuinely watching their shard, not 23. Getting that to 25 of 51 took a day, and the useful part is not the number — it is that every failure was a different way for a parser to find a number that is not the one it was looking for.
+Running that dry run across all 49 answered a question the check could not: **five** were genuinely watching their shard, not 23. Getting that to 26 of 51 took a day, and the useful part is not the number — it is that every failure was a different way for a parser to find a number that is not the one it was looking for.
 
 | The failure | Where it showed up |
 |---|---|
@@ -474,7 +474,7 @@ Running that dry run across all 49 answered a question the check could not: **fi
 | The figure is stated, in a table | Illinois' rate is a table row — label cell "Individual Income Tax", value cell "4.95 percent of net income", the word "rate" only in the column heading. Eleven words apart in prose, a hundred characters of markup apart in the source. Pages are reduced to visible text before anything is matched. |
 | The figure is stated twice, one year apart | A revenue procedure carries the new year's table *and* the one it replaces, identically labelled. Colorado's guide lists a rate per year since 2019. Rhode Island's advisory prints last year beside this one under a `Filing status 2025 2026` header. The shard says which year it is, so the shard selects the table, the row, or the column — and where the document does not label them, the refusal says so and names the amounts it will not choose between. |
 | The figure is stated, for someone else | New York states two single deductions and the smaller is a **dependent's** — so reaching it returns not a number that looks wrong but one that looks like a stingier state. SNAP's allotment table has a column per region, and Alaska (Rural 2) is twice the contiguous figure. |
-| The figure is stated backwards | California's Form 540-ES: "$5,706 single or married/RDP filing separately $11,412 married/RDP filing jointly". Every pattern here reads label-then-amount, so `single` reaches past its own figure and reads $11,412. |
+| The figure is stated backwards | California's Form 540-ES: "$5,706 single or married/RDP filing separately $11,412 married/RDP filing jointly". Every pattern here reads label-then-amount, so `single` reaches past its own figure and reads $11,412. The FTB states them the right way round elsewhere, so the adapter watches that instead. **Georgia states them backwards in both of its documents**, so it gets a parser that reads the sentence's real unit — an amount and the list of statuses it applies to — which is also the only way to learn that Georgia's deduction does *not* double for head of household. |
 | The page is right and the law moved | Iowa's DOR page still described a 3.9% flat tax that SF 2442 repealed before it took effect. **Utah's is the reverse**: SB 60 cut the rate to 4.45% and the Tax Commission's own pages still say 4.5%. The shipped figure was right; it is cited to the bill now. Both get a refusal that names the statute, because no plausibility guard can separate a real rate cut from a stale page. |
 | The source declined to serve | The BLS CPI API answers `200` with `REQUEST_NOT_PROCESSED` when its keyless daily quota is spent, and the adapter reported that the API had changed shape — sending a reader to rewrite a parser that was fine. |
 | The page mentions the table before it states one | Maine's rate schedule talks about the standard deduction's inflation factor 1,500 characters above the line that states the amounts. Narrowing to the *first* lead-in narrowed to prose with no figure in it, and the adapter reported "could not anchor" about a document stating all three. The region is now the first lead-in with a table actually under it. |
@@ -596,7 +596,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**2,073 unit/golden tests across 89 files** (plus 26 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**2,076 unit/golden tests across 89 files** (plus 26 Playwright e2e tests) pass today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
