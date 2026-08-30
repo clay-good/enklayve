@@ -29,8 +29,8 @@
   "citation": {
     "sourceUrl": "https://www.bls.gov/cpi/",
     "sourceDocument": "U.S. Bureau of Labor Statistics, CPI for All Urban Consumers (CPI-U), U.S. city average, all items, annual averages (1982-84=100)",
-    "sourceNote": "The 2025 figure reflects the Jan-Sep average; the October 2025 release was delayed by the 2025 appropriations lapse.",
+    "sourceNote": "The 2025 annual average is the mean of the ELEVEN monthly index values BLS published for that year, which is what its API returns as the Annual figure: 321.943. October 2025 is absent and will stay absent \u2014 the 2025 appropriations lapse stopped collection for that month, so it was never gathered rather than merely delayed, and November and December were published normally. The distinction matters to anyone checking the figure: a Jan-Sep mean, which an earlier note described, is 321.466, and a reader computing that would conclude this shard is wrong by half a point. Verified against the BLS public API series CUUR0000SA0 on 2026-08-30, monthly and annual.",
     "effectiveYear": 2025,
-    "dateRetrieved": "2026-06-02"
+    "dateRetrieved": "2026-08-30"
   }
 }

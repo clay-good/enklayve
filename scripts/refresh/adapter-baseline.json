@@ -22,10 +22,16 @@
     "against its committed figures. Mississippi joined on 2026-08-30 and is the",
     "thirty-third: every *.ms.gov host serves an incomplete certificate chain, so the",
     "state was not unwatched but unreachable, and the shared fetch now repairs the",
-    "chain the way a browser does. Its rate steps down by statute every January."
+    "chain the way a browser does. Its rate steps down by statute every January.",
+    "",
+    "cpi-u-annual joined on 2026-08-30. It had been reported unreachable because BLS's",
+    "keyless API spends its daily quota against a shared runner IP; the quota resets, and",
+    "since an unreachable adapter no longer counts as a regression even when it is on this",
+    "list, a source that answers most days can now be watched without a monthly false alarm."
   ],
   "recordedOn": "2026-08-30",
   "knownAnchoring": [
+    "cpi-u-annual",
     "federal-income-tax-2024",
     "federal-poverty-level-2024-alaska",
     "federal-poverty-level-2024-contiguous",
