@@ -88,6 +88,45 @@ describe("classifying a checked link", () => {
     expect(classify({ status: 0, detail: "getaddrinfo ENOTFOUND nowhere.test" })).toBe("broken");
     expect(classify({ status: 0, detail: "connect ECONNREFUSED" })).toBe("broken");
   });
+
+  it("calls a certificate a browser also refuses a broken link", () => {
+    // This pattern used to be /certificate|CERT_|self[- ]signed|SSL|TLS/i, which
+    // swept up three failures that are nothing like a missing intermediate and
+    // filed them under a heading reading "the page itself is almost certainly
+    // fine — open it in a browser before replacing it". A browser shows every
+    // one of them a full-page interstitial: the reader never sees the page.
+    // DC Health Link's certificate had expired when this was found.
+    expect(classify({ status: 0, detail: "certificate has expired [CERT_HAS_EXPIRED]" })).toBe(
+      "broken",
+    );
+    expect(
+      classify({
+        status: 0,
+        detail:
+          "Hostname/IP does not match certificate's altnames: Host: a.test. is not in the cert's" +
+          " altnames: DNS:b.test [ERR_TLS_CERT_ALTNAME_INVALID]",
+      }),
+    ).toBe("broken");
+    expect(
+      classify({ status: 0, detail: "self-signed certificate [DEPTH_ZERO_SELF_SIGNED_CERT]" }),
+    ).toBe("broken");
+    expect(
+      classify({
+        status: 0,
+        detail: "self-signed certificate in certificate chain [SELF_SIGNED_CERT_IN_CHAIN]",
+      }),
+    ).toBe("broken");
+    // And the repairable one is still not a broken link.
+    expect(
+      classify({
+        status: 0,
+        detail: "unable to verify the first certificate [UNABLE_TO_VERIFY_LEAF_SIGNATURE]",
+      }),
+    ).toBe("unreachable");
+    expect(classify({ status: 0, detail: "unable to get local issuer certificate" })).toBe(
+      "unreachable",
+    );
+  });
 });
 
 describe("the report a person reads", () => {
@@ -117,10 +156,35 @@ describe("the report a person reads", () => {
 
   it("puts a certificate failure in its own section, not among the broken links", () => {
     const report = renderLinkReport([
-      result({ url: "https://badchain.test/x", status: 0, detail: "unable to verify certificate" }),
+      result({
+        url: "https://badchain.test/x",
+        status: 0,
+        detail: "unable to verify the first certificate",
+      }),
     ]);
     expect(report).toContain("## Unreachable");
     expect(report).not.toContain("## Broken");
     expect(report).toContain("open it in a browser before replacing it");
+  });
+
+  it("tells the reader a refused certificate is not a URL to replace", () => {
+    const report = renderLinkReport([
+      result({
+        url: "https://lapsed.test/x",
+        status: 0,
+        detail: "certificate has expired [CERT_HAS_EXPIRED]",
+      }),
+    ]);
+    expect(report).toContain("## Broken");
+    expect(report).not.toContain("## Unreachable");
+    expect(report).toContain("a browser refuses too");
+    // The remedy is different from a 404's, so the report has to say which.
+    expect(report).toContain("the agency's to renew");
+  });
+
+  it("does not lecture about certificates when no link has one", () => {
+    const report = renderLinkReport([result({ url: "https://gone.test/x", status: 404 })]);
+    expect(report).toContain("## Broken");
+    expect(report).not.toContain("a browser refuses too");
   });
 });

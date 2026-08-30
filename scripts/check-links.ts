@@ -23,7 +23,7 @@ import { readFileSync, readdirSync, statSync, appendFileSync } from "node:fs";
 import { resolve, dirname, join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BROWSER_USER_AGENT } from "./user-agent.ts";
-import { INCOMPLETE_CERT_CHAIN } from "./fetch-source.ts";
+import { BAD_CERTIFICATE, INCOMPLETE_CERT_CHAIN } from "./fetch-source.ts";
 import { repairedCaBundle, requestWithChain } from "./chain-repair.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -86,10 +86,14 @@ export interface LinkResult {
 export type LinkStatus = "ok" | "redirect" | "broken" | "unreachable";
 
 /**
- * A TLS chain the server did not serve completely. The page is fine, so calling
- * it "broken" would send someone to replace a link that works — it gets its own
- * category instead. Every other transport failure (DNS, refused, timeout after
- * retries) really is a broken link.
+ * A TLS chain the server did not serve completely. The page is fine in a
+ * browser, so calling it "broken" would send someone to replace a link that
+ * works — it gets its own category instead. Every other transport failure (DNS,
+ * refused, timeout after retries) really is a broken link, and so, since
+ * 2026-08-30, is a certificate that is expired, self-signed, or issued for
+ * another hostname: a browser refuses those too, so a reader following the link
+ * gets an interstitial rather than the page. They used to land here, under a
+ * sentence promising the page was almost certainly fine.
  *
  * The pattern itself lives beside the shared fetch, because the adapter check
  * needs the same fact about the same servers and the two used to disagree: this
@@ -123,6 +127,17 @@ export function renderLinkReport(results: LinkResult[]): string {
 
   if (broken.length > 0) {
     lines.push("## Broken", "");
+    if (broken.some((r) => BAD_CERTIFICATE.test(r.detail))) {
+      lines.push(
+        "One or more of these is a **certificate a browser refuses too** — expired, issued for" +
+          " another hostname, or signed by nothing anyone trusts. That is not the missing" +
+          ' intermediate under "Unreachable" below: a reader following this link gets a' +
+          " full-page security warning and never sees the page. Replacing the URL may not be the" +
+          " fix; a lapsed certificate is the agency's to renew, and a hostname mismatch usually" +
+          " means the link points at the wrong host.",
+        "",
+      );
+    }
     for (const r of broken) {
       lines.push(`- \`${r.status}\` ${r.url}${r.detail ? ` — ${r.detail}` : ""}`);
       lines.push(`  - in ${r.files.join(", ")}`);

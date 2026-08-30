@@ -32,15 +32,36 @@ export type FetchedSource = { ok: true; raw: string } | { ok: false; reason: str
 const TIMEOUT_MS = 30_000;
 
 /**
- * A TLS chain the server did not serve completely. Several state revenue sites
- * omit an intermediate certificate; a browser and curl repair that by fetching
- * the missing one, and Node's `fetch` refuses. Nothing about the page is wrong
- * and nothing about the adapter is broken — but nothing about it will change
- * either, which is the fact both checks need and neither could see while each
- * carried its own idea of what a transport failure means. It lives here, beside
- * the one fetch they share, so they cannot disagree about it.
+ * A TLS chain the server did not serve completely — and *only* that.
+ *
+ * Several state revenue sites omit the intermediate certificate that signed
+ * their leaf. GlobalSign's root is in Node's store; an intermediate never is.
+ * A browser and curl close the gap by following the leaf's AIA pointer and
+ * fetching the missing certificate, `chain-repair.ts` now does the same, and
+ * where it cannot, the page is still fine in a browser — so a reader must not
+ * be sent to replace a working link.
+ *
+ * The narrowness is the point, and it was learned the hard way: this pattern
+ * used to be `/certificate|CERT_|self[- ]signed|SSL|TLS/i`, which also matched
+ * an EXPIRED certificate, a hostname mismatch, and a self-signed one. Those
+ * three were reported under a heading reading "the page itself is almost
+ * certainly fine — open it in a browser before replacing it", and a browser
+ * shows every one of them a full-page interstitial. DC Health Link's
+ * certificate had expired when this was found. See {@link BAD_CERTIFICATE}.
  */
-export const INCOMPLETE_CERT_CHAIN = /certificate|CERT_|self[- ]signed|SSL|TLS/i;
+export const INCOMPLETE_CERT_CHAIN =
+  /UNABLE_TO_VERIFY_LEAF_SIGNATURE|unable to verify the first certificate|unable to get local issuer certificate/i;
+
+/**
+ * A certificate a browser refuses too: expired, issued for another hostname, or
+ * signed by nothing anyone trusts. A cited source behind one of these is not
+ * reachable by the reader either, which makes it a broken link rather than a
+ * quirk of Node's trust store — the opposite of {@link INCOMPLETE_CERT_CHAIN},
+ * and the distinction the report has to make so a person knows whether to wait,
+ * to replace the URL, or to tell the agency its certificate lapsed.
+ */
+export const BAD_CERTIFICATE =
+  /CERT_HAS_EXPIRED|certificate has expired|ERR_TLS_CERT_ALTNAME_INVALID|does not match certificate|SELF_SIGNED_CERT|self[- ]signed certificate/i;
 
 /**
  * Say what actually went wrong.
