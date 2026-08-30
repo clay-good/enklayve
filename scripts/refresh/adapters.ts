@@ -2624,6 +2624,101 @@ function parseIraPhaseOuts(raw: string, current: Record<string, unknown>): Parse
   return { ok: true, shard };
 }
 
+/**
+ * The saver's credit AGI caps, from the notice this shard's citation names.
+ *
+ * The notice states all nine — three tiers for each of three filing statuses —
+ * and states them in a way that punishes the obvious read. Every one of the
+ * three sentences opens with the SAME section reference:
+ *
+ *   ...under section 25B(b)(1)(A) ... for married taxpayers filing a joint
+ *   return is increased from $47,500 to $48,500; ... 25B(b)(1)(B) ... to
+ *   $52,500; and ... 25B(b)(1)(C) and 25B(b)(1)(D) ... to $80,500.
+ *   ...under section 25B(b)(1)(A) ... for taxpayers filing as head of
+ *   household is increased from $35,625 to $36,375; ...
+ *   ...under section 25B(b)(1)(A) ... for all other taxpayers is increased
+ *   from $23,750 to $24,250; ...
+ *
+ * So a lookup keyed on the section reference finds the joint figure three times
+ * and writes it into every status — a filing-status table where a single filer
+ * is told they qualify at twice the AGI they actually do, which for a cliff
+ * credit is the difference between a $1,000 credit and none. The filing-status
+ * phrase selects the sentence, and the section references only order the tiers
+ * within it.
+ *
+ * One artifact of the source is worth naming: the PDF's page number lands
+ * inside a phrase, so the text reads "filing as head of 4 household". The
+ * pattern allows for it rather than failing on a page break.
+ */
+const SAVERS_STATUS_PHRASES: [string, string][] = [
+  ["agiCapMarried", "for married taxpayers filing a joint return"],
+  ["agiCapHeadOfHousehold", "for taxpayers filing as head of(?:\\s+\\d+)?\\s+household"],
+  ["agiCapSingle", "for all other taxpayers"],
+];
+
+function parseSaversCredit(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const text = raw.replace(/\s+/g, " ");
+  const taxYear = Number(current.taxYear);
+  if (!new RegExp(`\\b${taxYear}\\b`).test(text)) {
+    return {
+      ok: false,
+      reason: `this notice does not name ${taxYear}; refusing to read the § 25B caps out of it`,
+      settled: true,
+    };
+  }
+
+  const tiers = current.tiers as Record<string, number>[] | undefined;
+  if (!Array.isArray(tiers) || tiers.length !== 3) {
+    return { ok: false, reason: "shard has no three-tier § 25B table to overlay" };
+  }
+
+  const shard = clone(current);
+  const out = shard.tiers as Record<string, number>[];
+  for (const [field, phrase] of SAVERS_STATUS_PHRASES) {
+    const at = new RegExp(phrase, "i").exec(text);
+    if (!at) {
+      return {
+        ok: false,
+        reason:
+          `the notice states no § 25B sentence for ${field}; refusing — every sentence opens with ` +
+          "the same section reference, so reading by section alone writes the joint cap into every status",
+      };
+    }
+    // The sentence runs to the next status sentence, or to the § 219 paragraph
+    // that follows the last one.
+    const rest = text.slice(at.index);
+    const end = /The (?:adjusted gross income limitation|deductible amount)/i.exec(rest.slice(1));
+    const sentence = end ? rest.slice(0, end.index + 1) : rest.slice(0, 600);
+
+    const values = [...sentence.matchAll(/is increased from \$[\d,]+ to \$([\d,]+)/gi)].map((m) =>
+      parseAmount(m[1] as string),
+    );
+    if (values.length !== 3) {
+      return {
+        ok: false,
+        reason: `the § 25B sentence for ${field} states ${values.length} new caps, not the three tiers`,
+      };
+    }
+    for (const [i, value] of values.entries()) {
+      if (!(value > 0)) return { ok: false, reason: `anchored a non-positive ${field} tier ${i}` };
+      const drift = implausibleDrift(tiers[i]![field] as number, value);
+      if (drift !== null) {
+        return {
+          ok: false,
+          reason: `${field} tier ${i} ${drift}; refusing — either the notice moved or this is another status's cap`,
+        };
+      }
+      out[i]![field] = value;
+    }
+    // The tiers are a cliff schedule and must ascend, which is also the check
+    // that they were read in order rather than shuffled.
+    if (!(values[0]! < values[1]! && values[1]! < values[2]!)) {
+      return { ok: false, reason: `${field} caps ${values.join(", ")} do not ascend` };
+    }
+  }
+  return { ok: true, shard };
+}
+
 function parseGiftTaxProcedure(raw: string, current: Record<string, unknown>): ParseOutcome {
   const text = raw.replace(/\s+/g, " ");
   const taxYear = Number(current.taxYear);
@@ -3257,6 +3352,14 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl: "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     cadence: "Annual, October-November",
     parse: parseIrsStandardDeductions,
+  },
+  {
+    id: "savers-credit-2024",
+    group: "irs",
+    source: "IRS annual retirement-plan limits notice — § 25B saver's credit AGI caps",
+    sourceUrl: "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
+    cadence: "Annual, autumn",
+    parse: parseSaversCredit,
   },
   {
     id: "retirement-limits-2024",

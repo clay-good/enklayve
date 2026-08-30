@@ -201,7 +201,7 @@ describe("adapters: registry", () => {
       "treasurydirect",
       "usda-snap",
     ]);
-    expect(ADAPTERS).toHaveLength(58);
+    expect(ADAPTERS).toHaveLength(59);
     for (const a of ADAPTERS) expect(a.sourceUrl).toMatch(/^https:\/\//);
   });
   it("maps a group to its adapters", () => {
@@ -1661,6 +1661,93 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     const credit = result.shard.taxpayerCredit as { creditRate: number } | undefined;
     expect(credit?.creditRate).toBe(0.06);
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  describe("saver's credit — one section reference, three different answers", () => {
+    const adapter = adaptersForGroup("irs").find((a) => a.id === "savers-credit-2024")!;
+    const current = readShard("savers-credit-2024.json");
+    // n-25-67.pdf, verbatim — including the page number the PDF drops into the
+    // middle of "head of household".
+    const raw =
+      "The adjusted gross income limitation under section 25B(b)(1)(A) for determining the" +
+      " retirement savings contributions credit for married taxpayers filing a joint return is" +
+      " increased from $47,500 to $48,500; the limitation under section 25B(b)(1)(B) is increased" +
+      " from $51,000 to $52,500; and the limitation under sections 25B(b)(1)(C) and 25B(b)(1)(D)" +
+      " is increased from $79,000 to $80,500. The adjusted gross income limitation under section" +
+      " 25B(b)(1)(A) for determining the retirement savings contributions credit for taxpayers" +
+      " filing as head of 4 household is increased from $35,625 to $36,375; the limitation under" +
+      " section 25B(b)(1)(B) is increased from $38,250 to $39,375; and the limitation under" +
+      " sections 25B(b)(1)(C) and 25B(b)(1)(D) is increased from $59,250 to $60,375. The adjusted" +
+      " gross income limitation under section 25B(b)(1)(A) for determining the retirement savings" +
+      " contributions credit for all other taxpayers is increased from $23,750 to $24,250; the" +
+      " limitation under section 25B(b)(1)(B) is increased from $25,500 to $26,250; and the" +
+      " limitation under sections 25B(b)(1)(C) and 25B(b)(1)(D) is increased from $39,500 to" +
+      " $40,250. The deductible amount under section 219(b)(5)(A) is increased from $7,000 to" +
+      " $7,500. In 2026 these apply.";
+
+    const tiers = (shard: Record<string, unknown>): Record<string, number>[] =>
+      shard.tiers as Record<string, number>[];
+
+    it("gives each filing status its own caps, though all three cite § 25B(b)(1)(A)", () => {
+      // A lookup keyed on the section reference finds the joint sentence three
+      // times and writes the joint cap into every status — telling a single
+      // filer they qualify at twice the AGI they actually do. For a cliff
+      // credit that is the difference between $1,000 and nothing.
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const t = tiers(result.shard);
+      expect(t.map((x) => x.agiCapMarried)).toEqual([48_500, 52_500, 80_500]);
+      expect(t.map((x) => x.agiCapHeadOfHousehold)).toEqual([36_375, 39_375, 60_375]);
+      expect(t.map((x) => x.agiCapSingle)).toEqual([24_250, 26_250, 40_250]);
+    });
+
+    it("survives the page number the PDF drops inside a phrase", () => {
+      // The source really does read "filing as head of 4 household".
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(tiers(result.shard)[0]!.agiCapHeadOfHousehold).toBe(36_375);
+      // And it still reads without the page break.
+      const clean = adapter.parse(raw.replace("head of 4 household", "head of household"), current);
+      expect(clean.ok).toBe(true);
+      if (clean.ok) expect(tiers(clean.shard)[0]!.agiCapHeadOfHousehold).toBe(36_375);
+    });
+
+    it("takes the new cap, never the one it was increased from", () => {
+      const result = adapter.parse(raw, current);
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(tiers(result.shard)[0]!.agiCapMarried).not.toBe(47_500);
+    });
+
+    it("reads the document rather than agreeing by construction", () => {
+      const moved = raw.replace(
+        "for all other taxpayers is increased from $23,750 to $24,250",
+        "for all other taxpayers is increased from $23,750 to $24,500",
+      );
+      const result = adapter.parse(moved, current);
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(tiers(result.shard)[0]!.agiCapSingle).toBe(24_500);
+    });
+
+    it("refuses a status whose sentence is absent", () => {
+      const partial = raw.replace(
+        /The adjusted gross income limitation under section 25B\(b\)\(1\)\(A\) for determining the retirement savings contributions credit for all other taxpayers[\s\S]*?\$40,250\. /,
+        "",
+      );
+      const result = adapter.parse(partial, current);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toMatch(/agiCapSingle/);
+    });
+
+    it("refuses caps that do not ascend", () => {
+      const shuffled = raw.replace(
+        "for all other taxpayers is increased from $23,750 to $24,250",
+        "for all other taxpayers is increased from $23,750 to $26,500",
+      );
+      const result = adapter.parse(shuffled, current);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toMatch(/do not ascend|agiCapSingle tier 0/);
+    });
   });
 
   describe("retirement limits — every figure is stated as a movement", () => {
