@@ -26,6 +26,7 @@
     "check:links": "node scripts/check-links.ts",
     "check:adapters": "node scripts/check-adapters.ts",
     "check:boundaries": "node scripts/check-boundaries.ts",
+    "check:boundaries:classify": "node scripts/check-boundaries.ts --classify",
     "data:manifest": "node scripts/build-manifest.ts",
     "golden:regen": "REGEN_GOLDEN=1 vitest run tests/golden/snapshot.test.ts",
     "og:image": "node scripts/og-image.ts",

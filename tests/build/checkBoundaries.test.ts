@@ -85,6 +85,15 @@ describe("the baseline", () => {
     expect(note).toMatch(/should SHRINK/);
     expect(note).toMatch(/400% FPL/);
     expect(note).toMatch(/defensive guards/);
+    // Since the classifier landed, the note must do more than mix the two kinds
+    // together and say so: every survivor carries a verdict, and the note has to
+    // state which verdict and on what evidence. A list of line numbers with no
+    // verdicts is the report people stop reading, which is what this whole
+    // check exists to avoid.
+    expect(note).toMatch(/no observed difference|no-observed-difference/i);
+    expect(note).toMatch(/calibrat/i);
+    // The verdict is evidence, not proof, and the note must not overclaim it.
+    expect(note).toMatch(/evidence, not proof/i);
   });
 
   it("holds ids in the shape the checker produces", () => {
