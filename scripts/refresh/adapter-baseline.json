@@ -42,7 +42,30 @@
     "",
     "retirement-limits and ira-deduction joined on 2026-08-30, reading Notice 2025-67.",
     "With those, no shard on watch-coverage.json is flagged THE REAL GAP any more:",
-    "every remaining entry there is a decision rather than unwritten work."
+    "every remaining entry there is a decision rather than unwritten work.",
+    "",
+    "The seventeen adapters NOT on this list are now written down too, in",
+    "`unanchored` below, for the reason the watch-coverage list exists: a short",
+    "healthy list with nothing beside it reads as seventeen pieces of unwritten",
+    "work, and on 2026-08-31 not one of them was. Every one already refuses to",
+    "parse for a stated reason -- the refusals are careful, and several are the",
+    "most interesting sentences in the pipeline -- but they were only ever spoken",
+    "into a dry-run's output, which is not a place anybody looks.",
+    "",
+    "Each carries one of two verdicts.",
+    "",
+    "WAITING ON THE SOURCE is a date, not a decision: the state has not published",
+    "the shard's year yet, and the adapter is right to refuse rather than parse a",
+    "closed year that would report agreement forever. Eleven of the seventeen, and",
+    "every one of them becomes work the day its state posts 2026.",
+    "",
+    "WILL NOT ANCHOR is a decision: there is no annual figure on the page to read,",
+    "or the page states a DIFFERENT figure that would be right by accident. Six of",
+    "the seventeen. These do not become work when a year turns.",
+    "",
+    "The distinction is the whole point. Without it a reader cannot tell Oregon,",
+    "which needs one URL changed in a few months, from Delaware, whose deduction",
+    "has not moved since 1999 and is fingerprinted for amendment instead."
   ],
   "recordedOn": "2026-08-30",
   "knownAnchoring": [
@@ -88,5 +111,24 @@
     "state-wi-income-tax-2024",
     "state-wv-income-tax-2024",
     "treasury-bonds-2024"
-  ]
+  ],
+  "unanchored": {
+    "state-ar-income-tax-2024": "WAITING ON THE SOURCE. Arkansas DFA's newest individual income tax forms are the 2025 set and this shard is on 2026, so it deliberately carries the 2025 AR1000F figures forward ($2,470 / $4,940), which its own note records. The 2025 booklet is a closed year and would report agreement forever. Repoint this adapter the day the 2026 forms appear.",
+    "state-co-income-tax-2024": "WAITING ON THE SOURCE. The only rates on Colorado's page sit in a by-year table whose rows stop at 2025, and this shard is on 2026, so the adapter refuses to guess which row is the current one rather than anchoring a superseded year. It becomes work the day the 2026 row appears.",
+    "state-hi-income-tax-2024": "WAITING ON THE SOURCE. Hawaii's table names its own tax years -- 2025 and 2024 -- and this shard is on 2026. A page that states which year it is has said it is not this one, so the adapter refuses. It becomes work the day the 2026 table is posted.",
+    "state-id-income-tax-2024": "WAITING ON THE SOURCE. Idaho's rates sit in a by-year table whose rows stop at 2025 against a shard on 2026, so the adapter refuses to guess the current row. It becomes work the day the 2026 row appears.",
+    "state-ks-income-tax-2024": "WAITING ON THE SOURCE. The Kansas table states tax year 2025 and this shard is on 2026; a page that names its own year has said it is not this one. It becomes work the day the 2026 table is posted.",
+    "state-mn-income-tax-2024": "WAITING ON THE SOURCE. Minnesota's standard-deduction page still states the 2025 amounts ($14,950 single, $29,900 married jointly) while the DOR's own 2025-12-16 announcement gives the 2026 figures this shard already carries ($15,300 / $30,600 / $23,000 head of household). Parsing the page as it stands would roll Minnesota back a year, so the adapter refuses. It becomes work the day the page catches up with the announcement.",
+    "state-ne-income-tax-2024": "WAITING ON THE SOURCE. Nebraska has not published its 2026 Tax Calculation Schedule -- the 2026 URL 404s and the 2026 final-forms page lists only the payment voucher and 1040N-EB -- and the 2026 Circular EN states withholding tables with no standard deduction at all. The shard deliberately carries the 2025 indexed figures forward. Repoint this adapter the day the 2026 schedule appears.",
+    "state-oh-income-tax-2024": "WAITING ON THE SOURCE. Ohio's page states a schedule per year and the schedules stop at 2025, against a shard on 2026, so the state has probably not published the shard's year yet and the adapter refuses to anchor a closed one. It becomes work the day the 2026 schedule appears.",
+    "state-or-income-tax-2024": "WAITING ON THE SOURCE. Oregon has not published its 2026 Form OR-40 instructions (the 2025 booklet is the newest; the 2026 path 404s), and the shard deliberately carries the 2025 indexed standard deduction forward. Pointing the adapter at the 2025 booklet would parse perfectly and report agreement forever, because a closed year's document can never change. Repoint it at the 2026 instructions the day they appear.",
+    "state-ut-income-tax-2024": "WAITING ON THE SOURCE. Utah's own rate pages still state 4.5% -- the schedule's newest row reads 'January 1, 2025 - current' -- while SB 60, signed 2026-03-23, cut the individual rate to 4.45% for tax years beginning on or after 2026-01-01, which is what this shard carries. Parsing the page as it stands would roll Utah back to a superseded rate, so the adapter refuses until the Commission updates it. It becomes work the day a Utah page states 4.45%.",
+    "state-vt-income-tax-2024": "WAITING ON THE SOURCE. Vermont's newest listed entry is the 2025 rate schedules, and the 2026 documents the department has posted are wage-bracket withholding charts that state no standard deduction at all. The shard is on 2026 and deliberately carries the 2025 IN-111 figures forward. Repoint this adapter the day a 2026 schedule is listed.",
+    "medicaid-2024": "WILL NOT ANCHOR. The page states 133% of the poverty line where the shard carries 138% -- the statutory figure against the effective one. Section 1902(a)(10)(A)(i)(VIII) says 133%, section 1902(e)(14)(I) adds a five-percentage-point income disregard, and 138% is what decides eligibility: two correct statements of one rule, which no pattern can choose between. The threshold is also not what moves here. The per-state expansion map is, and it is fingerprinted in source-watch.json against the CMS eligibility-levels table, so a state changing position reaches a person.",
+    "state-al-income-tax-2024": "WILL NOT ANCHOR. Alabama states no standard-deduction figure anywhere; it states a chart two hundred AGI bands deep and four statuses wide, and the shard carries the maximum of each column. Nothing labels those maximums -- they are the first cell of a column in a wall of numbers -- so reading them needs table geometry, and a parser that needs table geometry should be a reviewer step instead. The amounts are statutory and unindexed (Ala. Code 40-18-15, last raised by Act 2022-292), so a change is an act of the legislature rather than an annual figure to chase.",
+    "state-ct-income-tax-2024": "WILL NOT ANCHOR. Connecticut has no standard deduction: this shard's standardDeductionByFilingStatus carries the CT-1040 Table A personal exemption, and the watched page states neither phrase. The $15,000 / $19,000 / $24,000 on it are the gross-income FILING THRESHOLDS, which equal the exemption amounts today and are a different figure -- anchoring them would be right by accident and would diverge silently the first year Connecticut moved one and not the other. Table A lives in Form CT-1040 TCS, whose URL carries the year, so the exemption stays the reviewer's transcription alongside Tables B-E.",
+    "state-de-income-tax-2024": "WILL NOT ANCHOR. Delaware's standard deduction does not index: 30 Del. C. 1108 has set it at $3,250 / $6,500 for every taxable period beginning after December 31, 1999, so there is no annual figure to read. The section states the amounts as a history of periods and never uses a filing-status label ('resident spouses ... if they file a joint return'), which makes it a bad parse target as well as a still one. It is watched for change instead: source-watch.json fingerprints the statute, and an amendment asks a person to read it.",
+    "state-md-income-tax-2024": "WILL NOT ANCHOR. Maryland's standard deduction is a statutory CAP rather than an indexed figure -- the lesser of 15% of Maryland AGI or $3,350 single / $6,700 joint, with the caps set by the 2025 session -- so there is no annual amount for an adapter to read, and the Comptroller's tax-services page is a menu stating neither the cap nor the percentage. A change is an act of the General Assembly, which a person reads.",
+    "state-ok-income-tax-2024": "WILL NOT ANCHOR. Oklahoma's standard deduction does not index: 68 O.S. 2358 froze it at the 2017 federal amounts ($6,350 / $12,700 / $9,350) and it has not moved since, so there is no annual figure to anchor and a change would be an act of the legislature. The Tax Commission's individuals page is a menu, and its Legislative Update states the year's bills rather than the standing figures."
+  }
 }
