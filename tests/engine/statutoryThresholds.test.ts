@@ -9,6 +9,7 @@ import { socialSecurityBenefitTaxation } from "../../src/engine/socialSecurityTa
 import { iraDeductibility } from "../../src/engine/iraDeduction";
 import { garnishmentCeiling } from "../../src/engine/garnishment";
 import { educationCredits } from "../../src/engine/educationCredits";
+import { estimatedTaxDueDates } from "../../src/engine/dueDates";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import type { AcaData, FilingStatus } from "../../src/data/schemas";
 
@@ -386,5 +387,52 @@ describe("the education-credit phase-out endpoints", () => {
     const r = educationCredits({ ...single, aotcEligible: false }, data.educationCredits()!);
     expect(r.better).toBe("llc");
     expect(r.recommendedCredit.toNumber()).toBe(800);
+  });
+});
+
+describe("the Q4 estimated-tax deadline when January 15 is Martin Luther King Jr. Day", () => {
+  /**
+   * The fourth 1040-ES installment is due January 15 of the following year, and
+   * Martin Luther King Jr. Day is the third Monday of January. Whenever January
+   * 15 falls on a Monday it *is* the third Monday — January 1 is a Monday too —
+   * so the two collide, and the payment moves to the 16th. January 15, 2024 was
+   * such a day.
+   *
+   * The holiday is recognized by `date >= 15 && date <= 21`. The lower half of
+   * that range decides this case: flipped to `>`, January 15 stops being a
+   * holiday and the engine tells someone their payment is due on a day the IRS
+   * is closed — a late payment, and a penalty, produced by a single character.
+   */
+  const q4 = (taxYear: number) => estimatedTaxDueDates(taxYear)[3]!;
+
+  it("moves the payment to January 16 when the 15th is the holiday", () => {
+    const r = q4(2023);
+    expect(r.quarter).toBe(4);
+    expect(r.statutory.toISOString().slice(0, 10)).toBe("2024-01-15");
+    expect(r.due.toISOString().slice(0, 10)).toBe("2024-01-16");
+    expect(r.adjusted).toBe(true);
+  });
+
+  it("does the same in every other year the collision happens", () => {
+    // January 15 is a Monday in 2018, 2024, 2029 and 2035. The rule is the
+    // calendar, not a list, so a year no fixture anticipated behaves the same.
+    expect(q4(2017).due.toISOString().slice(0, 10)).toBe("2018-01-16");
+    expect(q4(2028).due.toISOString().slice(0, 10)).toBe("2029-01-16");
+    expect(q4(2034).due.toISOString().slice(0, 10)).toBe("2035-01-16");
+  });
+
+  it("leaves January 15 alone when it is an ordinary weekday", () => {
+    // 2026-01-15 is a Thursday: no weekend, no holiday, no adjustment.
+    const r = q4(2025);
+    expect(r.due.toISOString().slice(0, 10)).toBe("2026-01-15");
+    expect(r.adjusted).toBe(false);
+  });
+
+  it("still moves the April deadline for Emancipation Day and weekends", () => {
+    // The other half of the same rule, kept beside it because the two share
+    // `nextBusinessDay` and a change to one reaches the other.
+    const apr = estimatedTaxDueDates(2027)[0]!;
+    expect(apr.statutory.toISOString().slice(0, 10)).toBe("2027-04-15");
+    expect(apr.due.getTime()).toBeGreaterThanOrEqual(apr.statutory.getTime());
   });
 });
