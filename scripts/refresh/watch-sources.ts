@@ -73,19 +73,44 @@ export type WatchResult =
   | { shard: string; url: string; status: "unreachable"; reason: string };
 
 /**
+ * Chrome a site prints about itself, which changes when the rule does not.
+ *
+ * Every entry here must be a phrase that is *definitionally* not the rule, and
+ * must say which site prints it and why it moves. The bar is high on purpose:
+ * a pattern that is too generous hides the change this watch exists to catch,
+ * and "strip anything that looks like a date" would hide an effective date,
+ * which is part of a rule rather than furniture around it.
+ *
+ * eCFR is the standing case, and it took out the two highest-harm regulation
+ * watches on the site at once. Every eCFR page carries "Displaying title 45, up
+ * to date as of 8/28/2026. Title 45 was last amended 8/28/2026." — a statement
+ * about the whole CFR *title*, which for titles 26 and 45 is amended more or
+ * less continuously. So §155.420 and §1.401(a)(9)-9 both reported "this source
+ * changed, a person must read it" on 2026-09-01 when neither had. eCFR's own
+ * versioner API says §155.420 was last amended 2026-07-20 and §1.401(a)(9)-9
+ * has no version at all in 2026, both before the fingerprints were taken. An
+ * alert that fires when nothing happened is the one people learn to close
+ * unread, and these two are the ACA special-enrollment window and the RMD
+ * Uniform Lifetime Table.
+ */
+const SOURCE_CHROME: RegExp[] = [
+  /Displaying title \d+, up to date as of \d{1,2}\/\d{1,2}\/\d{4}\.\s*Title \d+ was last amended \d{1,2}\/\d{1,2}\/\d{4}\./gi,
+];
+
+/**
  * Reduce an HTML page to the visible text a reader would see, so a fingerprint
  * tracks *content* rather than markup. Scripts, styles, and chrome are dropped;
  * whitespace is collapsed. A CMS template tweak should not read as a rule
  * change, and a rule change should not hide behind one.
  */
 export function normalizeSourceText(html: string): string {
-  return html
+  let text = html
     .replace(/<(script|style|svg|nav|footer|header)\b[^>]*>[\s\S]*?<\/\1>/gi, " ")
     .replace(/<!--[\s\S]*?-->/g, " ")
     .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(/&nbsp;/gi, " ");
+  for (const pattern of SOURCE_CHROME) text = text.replace(pattern, " ");
+  return text.replace(/\s+/g, " ").trim();
 }
 
 export function fingerprint(html: string): string {

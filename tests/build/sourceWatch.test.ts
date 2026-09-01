@@ -291,3 +291,55 @@ describe("refusing to fingerprint an interstitial", () => {
     expect(looksLikeInterstitial(real)).toBeNull();
   });
 });
+
+/**
+ * Chrome a site prints about itself.
+ *
+ * On 2026-09-01 the two eCFR watches — the ACA special-enrollment window and
+ * the RMD Uniform Lifetime Table, the two highest-harm regulation watches on
+ * the site — both reported that their source had changed. Neither had. eCFR's
+ * versioner API puts §155.420's last amendment at 2026-07-20 and gives
+ * §1.401(a)(9)-9 no version at all in 2026, both before the fingerprints were
+ * taken; the Uniform Lifetime Table matched the shard row for row, all 49 of
+ * them, and §155.420(c)(1) still reads "60 days from the date of a triggering
+ * event to select a QHP" exactly as the shard's note says.
+ *
+ * What moved was the banner every eCFR page carries about the whole CFR title.
+ * An alert that fires when nothing happened is the one people learn to close
+ * unread, which is the failure this whole watch is built to avoid.
+ */
+describe("not fingerprinting what a site says about itself", () => {
+  const page = (banner: string, body: string): string =>
+    `<html><body><p>${banner}</p><div>${body}</div></body></html>`;
+  const BANNER_A =
+    "Displaying title 45, up to date as of 8/28/2026. Title 45 was last amended 8/28/2026.";
+  const BANNER_B =
+    "Displaying title 45, up to date as of 9/30/2026. Title 45 was last amended 9/30/2026.";
+  const RULE = "has 60 days from the date of a triggering event to select a QHP.";
+
+  it("ignores the eCFR currency banner moving", () => {
+    expect(fingerprint(page(BANNER_A, RULE))).toBe(fingerprint(page(BANNER_B, RULE)));
+  });
+
+  it("drops the banner rather than the sentence beside it", () => {
+    expect(normalizeSourceText(page(BANNER_A, RULE))).toBe(RULE);
+  });
+
+  it("still sees the rule change under an unmoved banner", () => {
+    // The half that matters. A normalization that quietly swallowed the body
+    // would pass the test above and hide exactly what this watch is for.
+    const moved = "has 30 days from the date of a triggering event to select a QHP.";
+    expect(fingerprint(page(BANNER_A, RULE))).not.toBe(fingerprint(page(BANNER_A, moved)));
+  });
+
+  it("leaves an effective date in the rule alone", () => {
+    // "Strip anything that looks like a date" would have been the easy rule and
+    // the wrong one: an effective date is part of a regulation, not furniture
+    // around it.
+    const a =
+      "This section applies to distribution calendar years beginning on or after January 1, 2022.";
+    const b =
+      "This section applies to distribution calendar years beginning on or after January 1, 2027.";
+    expect(fingerprint(page(BANNER_A, a))).not.toBe(fingerprint(page(BANNER_A, b)));
+  });
+});

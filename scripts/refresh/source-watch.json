@@ -18,8 +18,8 @@
       "shard": "enrollment-windows-2026",
       "url": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-E/section-155.420",
       "why": "Eleven clocks across four titles of the CFR, each cited to its own section. A missed enrollment window costs a household its coverage, so a human reads every change.",
-      "fingerprint": "41a3fa019d6b7c9ee7abe4239c40c7b7f51a75a44790be5afa4a1c134e0c5eec",
-      "checkedOn": "2026-08-29"
+      "fingerprint": "0d7adafa5f848d6795990b2f3ce0f8e7f62a73a415ca704f6345215a180dff57",
+      "checkedOn": "2026-09-01"
     },
     {
       "shard": "free-filing-2026",
@@ -74,8 +74,8 @@
       "shard": "rmd-uniform-lifetime-2024",
       "url": "https://www.ecfr.gov/current/title-26/chapter-I/subchapter-A/part-1/subject-group-ECFR6f8c3724b50e44d/section-1.401(a)(9)-9",
       "why": "The Uniform Lifetime Table is a regulation, not an indexed figure. Treasury last reissued it effective 2022, on revised mortality assumptions, and it moves only when they are revised again — a rulemaking, which is exactly the kind of change that must be read rather than parsed. Watched at the regulation that contains the table rather than at Pub 590-B, which restates it and is reissued every year.",
-      "fingerprint": "b41e5cbed2d07acb2750021cc6ec6caa384e6266bf8acccba43706dd7f631358",
-      "checkedOn": "2026-08-30"
+      "fingerprint": "1894fb4214cfa0decbed544778c2b2527cc6069de9e0f98d25f4fe212380739d",
+      "checkedOn": "2026-09-01"
     },
     {
       "shard": "social-security-2024",
