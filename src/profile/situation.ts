@@ -39,6 +39,20 @@ export interface SituationValues {
   ages: number[];
   /** Gross annual income. */
   annualIncome: number;
+  /**
+   * Cash tips reported to the employer for the year — W-2 box 12, code TP.
+   *
+   * Named for what the box holds rather than for the deduction it feeds, because
+   * the two are not the same number: IRC §224 counts only tips received in an
+   * occupation the Treasury lists, and box 14b carries the occupation code that
+   * says whether they were (with "000" meaning at least some were not). So this
+   * is a ceiling on the qualified figure, and the tile that spends it says so.
+   */
+  qualifiedTipsAnnual: number;
+  /** Qualified overtime compensation for the year — W-2 box 12, code TT. The
+   *  premium half of time-and-a-half required by FLSA §7, which is exactly what
+   *  IRC §225 deducts, so this box needs no such caveat. */
+  qualifiedOvertimeAnnual: number;
   /** Annual pre-tax contributions (401k/HSA/etc.). */
   preTaxContributions: number;
   /** Annual contributions to tax-advantaged retirement accounts (401k/IRA). */
@@ -95,6 +109,8 @@ export const SituationValuesSchema = z
     householdSize: num,
     ages: z.array(z.number().finite()).optional().catch(undefined),
     annualIncome: num,
+    qualifiedTipsAnnual: num,
+    qualifiedOvertimeAnnual: num,
     preTaxContributions: num,
     retirementContributionsAnnual: num,
     employerMatchAnnual: num,

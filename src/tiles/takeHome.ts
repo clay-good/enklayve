@@ -94,8 +94,15 @@ function readFields(
     // Clamped where it is read: a hostile deep link can say anything, and the
     // select has no option for "7".
     seniors: Math.min(2, Math.max(0, Math.round(parseNonNegative(params.get("age65"), 0)))),
-    tips: parseNonNegative(params.get("tips"), 0),
-    overtime: parseNonNegative(params.get("ot"), 0),
+    // The Readout writes these from W-2 box 12 codes TP and TT, so a reader who
+    // dropped their W-2 in finds the two fields already filled. Same precedence
+    // as every other shared field: the link wins, then the profile, then zero.
+    tips: params.has("tips")
+      ? parseNonNegative(params.get("tips"), 0)
+      : (profile.get("qualifiedTipsAnnual") ?? 0),
+    overtime: params.has("ot")
+      ? parseNonNegative(params.get("ot"), 0)
+      : (profile.get("qualifiedOvertimeAnnual") ?? 0),
     dm: dmRaw && isDeductionMode(dmRaw) ? dmRaw : "auto",
     local: (params.get("loc") ?? "").split(",").filter((s) => s.length > 0),
   };
@@ -375,6 +382,8 @@ export function mountTakeHome(ctx: TileContext): void {
       filingStatus: fields.fs,
       stateCode: fields.st,
       annualIncome: fields.wages,
+      qualifiedTipsAnnual: fields.tips,
+      qualifiedOvertimeAnnual: fields.overtime,
     });
     compute();
   }

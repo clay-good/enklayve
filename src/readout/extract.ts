@@ -14,7 +14,8 @@ import type { DocKind, ExtractedField, ExtractionResult, FieldConfidence } from 
 
 /**
  * Form revisions (tax years) each extractor is validated against. The IRS box
- * numbering and labels these extractors anchor on (W-2 boxes 1/2/12/16/17, the
+ * numbering and labels these extractors anchor on (W-2 boxes 1/2/12/16/17 —
+ * including the codes TP and TT that tax year 2026 added to box 12 — the
  * 1040 line numbers, the 1099 series, 1095-A, 1098) are stable across these
  * years, so the same anchors read every one. We carry the two most recent filing
  * years plus the prior two: in 2026 a user reconciling a prior year still drops a
@@ -268,6 +269,36 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
           "401(k) elective deferral (box 12, code D)",
           amountAfter(text, /12[a-d]?\s*D\b/i),
           "retirementContributionsAnnual",
+        ),
+        // Box 12 codes TP and TT are new for tax year 2026 (IRS General
+        // Instructions for Forms W-2 and W-3, Rev. 1-2026), and they exist
+        // because of the One Big Beautiful Bill Act: an employer must now report
+        // the figures IRC §§224 and 225 deduct. A W-2 from an earlier year has
+        // neither code, and `field` drops what it cannot read, so nothing here
+        // needs to know which year it is looking at.
+        //
+        // The anchors demand the code as a WORD (\b...\b) after a box-12
+        // subscript. "TP" and "TT" are two letters that occur inside ordinary
+        // words, and reading a dollar amount that follows a stray "tt" would be
+        // exactly the inference this module refuses to make.
+        field(
+          "w2-box12tp",
+          "Cash tips reported to employer (box 12, code TP)",
+          amountAfter(text, /12[a-d]?\s*\bTP\b/i),
+          "qualifiedTipsAnnual",
+          "Box 12 code TP is the total cash tips you reported to your employer. The deduction" +
+            " under IRC §224 counts only tips received in an occupation the Treasury lists —" +
+            ' box 14b carries that occupation code, and a "000" there means at least some of' +
+            " these tips do not qualify. Treat this as a ceiling.",
+        ),
+        field(
+          "w2-box12tt",
+          "Qualified overtime compensation (box 12, code TT)",
+          amountAfter(text, /12[a-d]?\s*\bTT\b/i),
+          "qualifiedOvertimeAnnual",
+          "Box 12 code TT is the premium half of overtime required by section 7 of the Fair" +
+            " Labor Standards Act — which is what IRC §225 deducts, so this box needs no" +
+            " further narrowing.",
         ),
         field(
           "w2-box17",

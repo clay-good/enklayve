@@ -88,6 +88,57 @@ describe("Readout, W-2 extraction", () => {
     expect(r.citation?.effectiveYear).toBe(2025);
     expect(r.warnings.join(" ")).not.toMatch(/revision/i);
   });
+
+  it("reads the 2026 box 12 codes TP and TT, and calls TP a ceiling", () => {
+    // New for tax year 2026 (IRS General Instructions for Forms W-2 and W-3,
+    // Rev. 1-2026): the employer reports the figures IRC §§224 and 225 deduct.
+    // TP is "total amount of cash tips reported to the employer" — NOT the
+    // qualified figure, since §224 counts only Treasury-listed occupations and
+    // box 14b carries the code that says whether this was one. TT is already
+    // narrow: "only the 'half' portion of 'time-and-a-half'".
+    const w2_2026 = typed(
+      "Form W-2 Wage and Tax Statement 2026 Employer Diner Inc " +
+        "1 Wages, tips, other compensation 48000.00 " +
+        "2 Federal income tax withheld 3100.00 " +
+        "12a D 2000.00 12b TP 14000.00 12c TT 3200.00 " +
+        "14b 101 " +
+        "16 State wages 48000.00 17 State income tax 1400.00",
+    );
+    const r = extractDocument(w2_2026);
+    expect(r.revision).toBe("2026");
+    expect(value(r, "w2-box12tp")).toBe(14000);
+    expect(value(r, "w2-box12tt")).toBe(3200);
+    expect(r.fields.find((f) => f.id === "w2-box12tp")?.target).toBe("qualifiedTipsAnnual");
+    expect(r.fields.find((f) => f.id === "w2-box12tt")?.target).toBe("qualifiedOvertimeAnnual");
+    expect(r.fields.find((f) => f.id === "w2-box12tp")?.note).toMatch(/ceiling/i);
+    // The 401(k) deferral beside them still reads as itself.
+    expect(value(r, "w2-box12d")).toBe(2000);
+  });
+
+  it("drops the new codes on a W-2 that has none, rather than guessing a zero", () => {
+    // A 2024 or 2025 W-2 has no TP or TT box at all, and `field` omits what it
+    // cannot read — so a prior-year document does not arrive claiming the
+    // reader had no tips.
+    expect(value(result, "w2-box12tp")).toBeUndefined();
+    expect(value(result, "w2-box12tt")).toBeUndefined();
+  });
+
+  it("does not read TP or TT out of an ordinary word", () => {
+    // Two letters that occur inside English words, next to dollar amounts, on a
+    // document this module refuses to read by inference. The anchors require a
+    // box-12 subscript and a word boundary.
+    const decoy = typed(
+      "Form W-2 Wage and Tax Statement 2026 Employer ABC Inc " +
+        "1 Wages, tips, other compensation 75000.00 " +
+        "2 Federal income tax withheld 9200.00 " +
+        "12a D 8000.00 " +
+        "Attn: Ttip Support 4400.00 " +
+        "16 State wages 75000.00 17 State income tax 3100.00",
+    );
+    const r = extractDocument(decoy);
+    expect(value(r, "w2-box12tp")).toBeUndefined();
+    expect(value(r, "w2-box12tt")).toBeUndefined();
+  });
 });
 
 describe("Readout, Form 1040 extraction", () => {

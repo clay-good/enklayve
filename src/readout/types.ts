@@ -35,7 +35,12 @@ export type DocKind =
 
 /** The My Situation fields the Readout can populate on confirmation. Kept
  * narrow (not all of {@link SituationKey}) so the mapping stays type-safe. */
-export type ReadoutTarget = "annualIncome" | "retirementContributionsAnnual" | "filingStatus";
+export type ReadoutTarget =
+  | "annualIncome"
+  | "retirementContributionsAnnual"
+  | "filingStatus"
+  | "qualifiedTipsAnnual"
+  | "qualifiedOvertimeAnnual";
 
 /** How sure we are about an extracted value. */
 export type FieldConfidence = "high" | "needs-review" | "low";

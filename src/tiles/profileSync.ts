@@ -11,6 +11,10 @@ export interface SharedFields {
   filingStatus?: FilingStatus;
   stateCode?: string;
   annualIncome?: number;
+  /** W-2 box 12 code TP; see SituationValues for why it is not "qualified tips". */
+  qualifiedTipsAnnual?: number;
+  /** W-2 box 12 code TT. */
+  qualifiedOvertimeAnnual?: number;
 }
 
 /** Write the shared fields back to the profile, marked as typed by the user. */
@@ -18,4 +22,10 @@ export function rememberShared(profile: SituationStore, fields: SharedFields): v
   if (fields.filingStatus !== undefined) profile.set("filingStatus", fields.filingStatus);
   if (fields.stateCode) profile.set("stateCode", fields.stateCode);
   if (fields.annualIncome !== undefined) profile.set("annualIncome", fields.annualIncome);
+  if (fields.qualifiedTipsAnnual !== undefined) {
+    profile.set("qualifiedTipsAnnual", fields.qualifiedTipsAnnual);
+  }
+  if (fields.qualifiedOvertimeAnnual !== undefined) {
+    profile.set("qualifiedOvertimeAnnual", fields.qualifiedOvertimeAnnual);
+  }
 }
