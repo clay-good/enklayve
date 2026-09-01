@@ -38,7 +38,22 @@ export interface TaxInput {
 
 export interface DeductionResult {
   kind: "standard" | "itemized";
+  /**
+   * The standard or itemized deduction alone. Deliberately NOT the total
+   * subtracted from AGI: §170(p) rides alongside it under §63(b)(4) and is
+   * reported separately, so that everything already reading this field — the
+   * result labels, and Utah's taxpayer credit, which is a percentage of *the
+   * federal deduction* under Utah Code §59-10-1018 — keeps meaning what it
+   * meant. Whether Utah conforms to §170(p) is a question for Utah, and
+   * silently answering it by widening this number is not the way to ask.
+   */
   amount: Money;
+  /**
+   * IRC §170(p): cash giving a non-itemizer deducts on top of the standard
+   * deduction. Zero when the filer itemizes, when they gave nothing, or for a
+   * tax year whose shard carries no such rule.
+   */
+  nonItemizedCharitable: Money;
 }
 
 export interface JurisdictionTaxResult {

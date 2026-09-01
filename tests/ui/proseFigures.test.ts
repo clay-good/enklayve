@@ -158,6 +158,17 @@ const BOUND: Bound[] = [
   },
   { file: "federalIncomeTax.ts", shard: "federal-income-tax-2024", path: ".saltLimitation.floor" },
 
+  {
+    file: "deductionCopy.ts",
+    shard: "federal-income-tax-2024",
+    path: ".nonItemizerCharitable.cap",
+  },
+  {
+    file: "deductionCopy.ts",
+    shard: "federal-income-tax-2024",
+    path: ".nonItemizerCharitable.capJointReturn",
+  },
+
   { file: "saversCredit.ts", shard: "savers-credit-2024", path: ".maxContributionPerPerson" },
   {
     file: "saversCredit.ts",
@@ -186,16 +197,8 @@ const BOUND_TO_CODE: { file: string; figure: string; from: string }[] = [
  */
 const NOT_A_FIGURE: Record<string, Record<string, string>> = {
   "childTaxCredit.ts": { "$1,000": "the per-$1,000 step the phase-out is quoted in" },
-  "federalIncomeTax.ts": {
-    "$1,000": "an illustrative next-dollar amount, and §170(p)'s deferred deduction",
-    "$2,000": "§170(p) joint, a deferred deduction named with its own cite",
-    "$6,000": "§151(d)(5)(C), a deferred deduction named with its own cite",
-    "$12,500": "§225, a deferred deduction named with its own cite",
-    "$25,000": "§224 and §225 joint, deferred deductions named with their own cites",
-  },
-  "takeHome.ts": {
-    "$1,000": "§170(p), a deferred deduction named with its own cite",
-    "$2,000": "§170(p) joint, a deferred deduction named with its own cite",
+  "federalIncomeTax.ts": { "$1,000": "an illustrative next-dollar amount" },
+  "deductionCopy.ts": {
     "$6,000": "§151(d)(5)(C), a deferred deduction named with its own cite",
     "$12,500": "§225, a deferred deduction named with its own cite",
     "$25,000": "§224 and §225 joint, deferred deductions named with their own cites",

@@ -14,6 +14,7 @@ import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
+import { OBBBA_DEDUCTIONS_HOW } from "./deductionCopy";
 
 const FILING_STATUSES: { value: FilingStatus; label: string }[] = [
   { value: "single", label: "Single" },
@@ -224,6 +225,18 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
         value: fmt(f.deduction.amount),
         citation: f.citation,
       },
+      // §63(b)(4) subtracts this alongside the standard deduction rather than
+      // as part of it, and the reader can see AGI and taxable income on the
+      // same card — so leaving it out would show arithmetic that does not add up.
+      ...(f.deduction.nonItemizedCharitable.isZero()
+        ? []
+        : [
+            {
+              label: "Charitable giving (no itemizing)",
+              value: fmt(f.deduction.nonItemizedCharitable),
+              citation: f.citation,
+            },
+          ]),
       { label: "Taxable income", value: fmt(f.taxableIncome) },
       {
         label: "Federal income tax",
@@ -295,7 +308,9 @@ export const federalIncomeTaxTile: TileDefinition = {
   description: "Marginal and effective breakdown, standard vs itemized.",
   keywords: ["federal", "tax", "marginal", "effective", "deduction", "itemized"],
   status: "ready",
-  how: "We start from your income and subtract the larger of the standard deduction or your itemized 'big four', state and local taxes (capped at $40,400 for 2026, sliding down above $505,000 of income to a $10,000 floor, and halved if you file separately), mortgage interest, charitable gifts, and medical expenses above 7.5% of your income. Then we apply the IRS marginal brackets for your filing status.\n\nYour effective rate is total tax ÷ income. Your marginal rate is the bracket your next dollar of income lands in, handy for weighing a raise or a pre-tax contribution.\n\nFour 2026 deductions are not modeled here, so if any applies to you your real tax is lower than this: the $6,000-per-person deduction at 65 (IRC \u00a7151(d)(5)(C)), up to $25,000 of tips (\u00a7224), up to $12,500 of overtime \u2014 $25,000 filing jointly \u2014 (\u00a7225), and $1,000 of charitable giving without itemizing, $2,000 jointly (\u00a7170(p)). Each needs a figure this calculator does not ask you for.",
+  how:
+    "We start from your income and subtract the larger of the standard deduction or your itemized 'big four', state and local taxes (capped at $40,400 for 2026, sliding down above $505,000 of income to a $10,000 floor, and halved if you file separately), mortgage interest, charitable gifts, and medical expenses above 7.5% of your income. Then we apply the IRS marginal brackets for your filing status.\n\nYour effective rate is total tax ÷ income. Your marginal rate is the bracket your next dollar of income lands in, handy for weighing a raise or a pre-tax contribution.\n\n" +
+    OBBBA_DEDUCTIONS_HOW,
   resources: [
     {
       label: "IRS, tax brackets & rates",

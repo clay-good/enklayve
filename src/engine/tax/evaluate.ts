@@ -11,7 +11,7 @@ import {
   standardDeductionPhaseOutFor,
   taxpayerCreditBaseFor,
 } from "./brackets";
-import { chooseFederalDeduction, saltCapFor } from "./deductions";
+import { chooseFederalDeduction, nonItemizerCharitableFor, saltCapFor } from "./deductions";
 import { computeFica } from "./fica";
 import type {
   DeductionResult,
@@ -60,8 +60,16 @@ function computeFederal(
     input.itemized ?? {},
     agi,
     saltCapFor(federal.saltLimitation, input.filingStatus, agi),
+    nonItemizerCharitableFor(
+      federal.nonItemizerCharitable,
+      input.filingStatus,
+      input.itemized ?? {},
+    ),
   );
-  const taxableIncome = clampZero(agi.subtract(deduction.amount));
+  // §63(b)(4): a non-itemizer subtracts the standard deduction AND §170(p).
+  const taxableIncome = clampZero(
+    agi.subtract(deduction.amount).subtract(deduction.nonItemizedCharitable),
+  );
   const incomeTax = bracketTax(taxableIncome, bracketsFor(federal, input.filingStatus));
   return { taxableIncome, deduction, incomeTax };
 }
@@ -77,7 +85,7 @@ function computeState(
     return {
       computation: {
         taxableIncome: Money.zero(),
-        deduction: { kind: "standard", amount: Money.zero() },
+        deduction: { kind: "standard", amount: Money.zero(), nonItemizedCharitable: Money.zero() },
         incomeTax: Money.zero(),
       },
       localLines: [],
@@ -195,7 +203,13 @@ function computeState(
   return {
     computation: {
       taxableIncome,
-      deduction: { kind: "standard", amount: standard.add(exemption).add(fedTaxDeduction) },
+      deduction: {
+        kind: "standard",
+        amount: standard.add(exemption).add(fedTaxDeduction),
+        // §170(p) is federal. No state carries a rule, so this is always zero
+        // on a state computation.
+        nonItemizedCharitable: Money.zero(),
+      },
       incomeTax,
     },
     localLines,

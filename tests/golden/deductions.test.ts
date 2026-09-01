@@ -78,6 +78,12 @@ describe("auto deduction picks the larger", () => {
       { federal: ds.federal, fica: ds.fica },
     );
     expect(r.federal.deduction.kind).toBe("standard");
-    expect(cents(r.federal.incomeTax)).toBe("36734"); // taxable 183,900
+    // Standard $16,100, and $1,000 of the $5,000 of giving under IRC §170(p),
+    // which §63(b)(4) subtracts alongside the standard deduction rather than as
+    // part of it. Taxable 182,900. This case read $36,734 before §170(p) was
+    // modelled on 2026-09-01.
+    expect(cents(r.federal.deduction.amount)).toBe("16100");
+    expect(cents(r.federal.deduction.nonItemizedCharitable)).toBe("1000");
+    expect(cents(r.federal.incomeTax)).toBe("36494");
   });
 });

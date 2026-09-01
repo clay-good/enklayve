@@ -17,6 +17,7 @@ export {
   chooseFederalDeduction,
   itemizedTotal,
   saltCapFor,
+  nonItemizerCharitableFor,
   MEDICAL_AGI_FLOOR_RATE,
 } from "./deductions";
 export type {

@@ -259,6 +259,30 @@ export type StandardDeductionPhaseOutData = z.infer<typeof StandardDeductionPhas
 /** The federal jurisdiction's shard id, the one shard that must carry a SALT limitation. */
 export const FEDERAL_JURISDICTION_ID = "US";
 
+/**
+ * IRC §170(p): cash giving a filer may deduct WITHOUT itemizing.
+ *
+ * Added by the One Big Beautiful Bill Act (Pub. L. 119-21 §70424) for taxable
+ * years beginning after December 31, 2025, and mechanically it is not part of
+ * the standard deduction at all — §63(b)(4) subtracts it from adjusted gross
+ * income separately, alongside the standard deduction, for a filer who does not
+ * itemize.
+ *
+ * Optional rather than required, and the difference from the SALT limitation is
+ * worth stating because the two look alike. A federal shard with no SALT
+ * limitation is a shard that cannot answer a question the engine must answer, so
+ * it fails validation. A federal shard with no §170(p) rule is answering: before
+ * 2026 there was no such deduction, and zero is the right number. Absence means
+ * something here, so absence is allowed.
+ */
+export const NonItemizerCharitableSchema = z.object({
+  /** §170(p): the cap on a return that is not a joint return. */
+  cap: z.number().gte(0),
+  /** §170(p): the cap "in the case of a joint return". */
+  capJointReturn: z.number().gte(0),
+});
+export type NonItemizerCharitableData = z.infer<typeof NonItemizerCharitableSchema>;
+
 export const SaltLimitationSchema = z.object({
   applicableLimitationAmount: z.number().gt(0),
   thresholdAmount: z.number().gt(0),
@@ -406,6 +430,8 @@ export const JurisdictionSchema = z.object({
    * years stale in the first place.
    */
   saltLimitation: SaltLimitationSchema.optional(),
+  /** IRC §170(p), cash giving deductible without itemizing (federal only). */
+  nonItemizerCharitable: NonItemizerCharitableSchema.optional(),
   citation: CitationSchema,
   effectiveDateRange: z.object({
     start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
