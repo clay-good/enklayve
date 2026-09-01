@@ -171,8 +171,36 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  *
  * The headroom left is deliberately small (~4 kB). The point of the gate is that
  * the next drift trips it too.
+ *
+ * **Raised 265 -> 275 on 2026-09-01, and this time the gate was doing its job.**
+ * It tripped after a day of correctness work — the SALT limitation moving from a
+ * constant to a cited shard field, IRC §170(p) being modelled, and both federal
+ * tax tiles gaining a paragraph naming the three One Big Beautiful Bill Act
+ * deductions they still do not model. The headroom went 2.0 kB -> 0.7 kB, which
+ * is a build away from failing.
+ *
+ * Every alternative was measured before the number was touched, and the figures
+ * are written down in the launch checklist rather than left as a claim:
+ *
+ *   - the entry chunk is 94% of the shell (248 kB gzipped of 264)
+ *   - the inlined shards are 76 kB of that; minifying the committed JSON saves
+ *     2.8 kB and costs the line-by-line diff readability of the files this
+ *     project's entire claim rests on. A bad trade at that price.
+ *   - zod and decimal.js are the two large dependencies and both are
+ *     load-bearing. `Money` is exact-decimal arithmetic over decimal.js, and the
+ *     zod schemas are the fail-safe itself: the SALT limitation is *required* on
+ *     the federal shard precisely so a shard that cannot answer fails validation
+ *     and raises the verify-before-relying banner.
+ *   - /tools.html is 4.8 kB and is the one precached asset with a real argument
+ *     against it, being a crawl surface the in-app All Tools view mirrors.
+ *     Dropping it would have bought eight times the headroom and narrowed the
+ *     offline promise, which is a worse thing to spend than 10 kB.
+ *
+ * So the ten kilobytes are the honest cost of the prose and provenance that were
+ * added, and they buy roughly 11 kB of headroom rather than a fresh margin: the
+ * gate is still meant to trip.
  */
-export const SHELL_GZIP_BUDGET_KB = 265;
+export const SHELL_GZIP_BUDGET_KB = 275;
 
 /** A precached asset and its gzipped size. */
 export interface ShellAsset {
