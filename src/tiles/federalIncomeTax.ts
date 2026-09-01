@@ -48,6 +48,10 @@ interface Fields {
   medical: number;
   /** How many on the return are 65 or over (IRC §151(d)(5)(C)). */
   seniors: number;
+  /** Qualified car loan interest (IRC §163(h)(4)). Not one of the big four:
+   *  §63(b)(7) reaches it whether or not the filer itemizes, so it sits
+   *  outside the itemized group and stays visible when that group is hidden. */
+  carLoanInterest: number;
 }
 
 const EXAMPLE: Fields = {
@@ -60,6 +64,7 @@ const EXAMPLE: Fields = {
   charitable: 3000,
   medical: 0,
   seniors: 0,
+  carLoanInterest: 0,
 };
 
 /**
@@ -95,6 +100,7 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
     charitable: parseNonNegative(p.get("char"), 0),
     medical: parseNonNegative(p.get("med"), 0),
     seniors: clampSeniors(parseNonNegative(p.get("age65"), 0)),
+    carLoanInterest: parseNonNegative(p.get("carint"), 0),
   };
 }
 
@@ -109,6 +115,7 @@ function writeFields(f: Fields): URLSearchParams {
   if (f.charitable > 0) p.set("char", String(f.charitable));
   if (f.medical > 0) p.set("med", String(f.medical));
   if (f.seniors > 0) p.set("age65", String(f.seniors));
+  if (f.carLoanInterest > 0) p.set("carint", String(f.carLoanInterest));
   return p;
 }
 
@@ -130,6 +137,7 @@ function federalTaxAt(income: number, f: Fields, fed: Jurisdiction, fica: FicaDa
     deductionMode: f.dm,
     itemized: itemizedOf(f),
     seniorsAge65Plus: f.seniors,
+    vehicleLoanInterest: f.carLoanInterest,
   };
   return evaluateTaxes(input, { federal: fed, fica }).federal.incomeTax;
 }
@@ -198,6 +206,7 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
   const mortInput = mkMoney("mort", fields.mortgage, "Mortgage interest");
   const charInput = mkMoney("char", fields.charitable, "Charitable contributions");
   const medInput = mkMoney("med", fields.medical, "Medical expenses");
+  const carIntInput = mkMoney("carint", fields.carLoanInterest, "Car loan interest paid");
 
   const itemizedGroup = el(
     "div",
@@ -226,6 +235,7 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
       charitable: parseNonNegative(charInput.value, 0),
       medical: parseNonNegative(medInput.value, 0),
       seniors: clampSeniors(parseNonNegative(seniorSelect.value, 0)),
+      carLoanInterest: parseNonNegative(carIntInput.value, 0),
     };
   }
 
@@ -238,6 +248,7 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
         deductionMode: fields.dm,
         itemized: itemizedOf(fields),
         seniorsAge65Plus: fields.seniors,
+        vehicleLoanInterest: fields.carLoanInterest,
       },
       { federal: fed!, fica: fica! },
     );
@@ -279,6 +290,15 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
               citation: f.citation,
             },
           ]),
+      ...(f.deduction.vehicleLoanInterest.isZero()
+        ? []
+        : [
+            {
+              label: "Car loan interest",
+              value: fmt(f.deduction.vehicleLoanInterest),
+              citation: f.citation,
+            },
+          ]),
       { label: "Taxable income", value: fmt(f.taxableIncome) },
       {
         label: "Federal income tax",
@@ -310,7 +330,7 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
   }
 
   for (const c of [fsSelect, dmSelect, seniorSelect]) c.addEventListener("change", recompute);
-  for (const i of [incInput, adjInput, saltInput, mortInput, charInput, medInput]) {
+  for (const i of [incInput, adjInput, saltInput, mortInput, charInput, medInput, carIntInput]) {
     i.addEventListener("input", recompute);
   }
 
@@ -325,6 +345,7 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
     charInput.value = String(fields.charitable);
     medInput.value = String(fields.medical);
     seniorSelect.value = String(fields.seniors);
+    carIntInput.value = String(fields.carLoanInterest);
     recompute();
   });
 
@@ -336,6 +357,7 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
     field("Pre-tax adjustments", adjInput),
     field("Deduction method", dmSelect),
     field("Aged 65 or older", seniorSelect),
+    field("Car loan interest paid", carIntInput),
     itemizedGroup,
     el("div", { class: "tile-form-actions" }, tryExample),
   );
@@ -364,6 +386,10 @@ export const federalIncomeTaxTile: TileDefinition = {
     {
       label: "26 U.S.C. §164(b), the SALT limitation",
       url: "https://www.law.cornell.edu/uscode/text/26/164",
+    },
+    {
+      label: "26 U.S.C. §163(h), car loan interest",
+      url: "https://www.law.cornell.edu/uscode/text/26/163",
     },
   ],
   related: [

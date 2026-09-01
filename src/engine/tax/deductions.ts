@@ -130,6 +130,7 @@ export function chooseFederalDeduction(
     senior: Money.zero(),
     qualifiedTips: Money.zero(),
     qualifiedOvertime: Money.zero(),
+    vehicleLoanInterest: Money.zero(),
   });
   const takeItemized = (): DeductionResult => ({
     kind: "itemized",
@@ -138,6 +139,7 @@ export function chooseFederalDeduction(
     senior: Money.zero(),
     qualifiedTips: Money.zero(),
     qualifiedOvertime: Money.zero(),
+    vehicleLoanInterest: Money.zero(),
   });
   if (mode === "standard") return takeStandard();
   if (mode === "itemized") return takeItemized();
@@ -188,24 +190,36 @@ export function seniorDeductionFor(
 }
 
 /**
- * IRC §224 (qualified tips) and §225 (qualified overtime).
+ * IRC §224 (qualified tips), §225 (qualified overtime), and §163(h)(4)
+ * (qualified passenger vehicle loan interest).
  *
- * One function for two sections, because the statutes are the same shape: a cap,
- * a step-down of $100 for each $1,000 of modified AGI over a threshold, and a
- * married filer who qualifies only on a joint return.
+ * One function for three sections, because the statutes are the same shape: a
+ * cap, a step-down of a fixed number of dollars for each $1,000 of modified AGI
+ * over a threshold, and an amount the reader has to characterise for us.
  *
- * The step is the part worth being careful about. "$100 for each $1,000 by which
- * ... exceeds $150,000" counts COMPLETED thousands — neither section says "or
- * fraction thereof", which §24(b)(2) does say about the child credit twelve
- * hundred lines away in the same engine. So a filer $1,999 over the threshold
- * loses $100 and not $200, and the arithmetic floors rather than rounding up.
+ * The step is the part worth being careful about, and it is not the same step
+ * twice. "$100 for each $1,000 by which ... exceeds $150,000" counts COMPLETED
+ * thousands — neither §224 nor §225 says "or fraction thereof", which §24(b)(2)
+ * does say about the child credit twelve hundred lines away in the same engine.
+ * So a tips filer $1,999 over the threshold loses $100 and not $200.
+ * §163(h)(4)(C)(ii) says "$200 for each $1,000 (or portion thereof)", so the
+ * same filer $1,001 over loses the whole second $200. Whether a part-step counts
+ * is `partialStepCounts` on the rule, read from the shard rather than assumed,
+ * because the two readings are one clause apart and produce different tax.
  *
- * `amount` is what the reader says was qualified tips or qualified overtime.
- * The engine cannot check that: §224(d) counts only cash tips in an occupation
- * that customarily received them before 2025, as the Secretary lists, and §225
- * only the premium half of FLSA-required overtime. Both also need a Social
- * Security number on the return. The tile says so; this computes the ceiling
- * that follows from the number it is given.
+ * Who may claim it splits the same way. §224(f) and §225(e) deny the deduction
+ * to a married individual except on a joint return; §163(h)(4) says nothing of
+ * the kind, so a separate filer gets it at the single threshold. That is
+ * `jointReturnOnly`.
+ *
+ * `amount` is what the reader says was qualified tips, qualified overtime, or
+ * qualified vehicle loan interest. The engine cannot check any of it: §224(d)
+ * counts only cash tips in an occupation that customarily received them before
+ * 2025, as the Secretary lists; §225 only the premium half of FLSA-required
+ * overtime; §163(h)(4)(B) and (D) only interest on a first-lien loan taken out
+ * after 2024 for a new, personally used vehicle assembled in the United States,
+ * with its VIN on the return. The tiles say so; this computes the ceiling that
+ * follows from the number it is given.
  */
 export function steppedIncomeDeductionFor(
   rule: SteppedIncomeDeductionData | undefined,
@@ -214,12 +228,12 @@ export function steppedIncomeDeductionFor(
   magi: Money,
 ): Money {
   if (!rule) return Money.zero();
-  // §224(f) and §225(e): a married filer gets it only on a joint return.
-  if (status === "married_separately") return Money.zero();
+  if (rule.jointReturnOnly && status === "married_separately") return Money.zero();
   const joint = status === "married_jointly";
   const capped = Math.min(Math.max(0, amount), joint ? rule.capJointReturn : rule.cap);
   if (capped === 0) return Money.zero();
   const threshold = joint ? rule.thresholdJointReturn : rule.thresholdSingle;
-  const steps = Math.floor(Math.max(0, magi.toNumber() - threshold) / rule.phaseOutStep);
+  const over = Math.max(0, magi.toNumber() - threshold) / rule.phaseOutStep;
+  const steps = rule.partialStepCounts ? Math.ceil(over) : Math.floor(over);
   return Money.from(Math.max(0, capped - steps * rule.phaseOutPerStep));
 }

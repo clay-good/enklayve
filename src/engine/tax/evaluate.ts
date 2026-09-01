@@ -95,18 +95,28 @@ function computeFederal(
     input.qualifiedOvertime ?? 0,
     agi,
   );
+  // §163(h)(4)(A) takes qualified car loan interest out of the personal interest
+  // §163(h)(1) disallows, so an itemizer deducts it under §163(a); §63(b)(7)
+  // reaches it for a filer who does not itemize. Either way, outside the choice.
+  const vehicleLoanInterest = steppedIncomeDeductionFor(
+    federal.vehicleLoanInterestDeduction,
+    input.filingStatus,
+    input.vehicleLoanInterest ?? 0,
+    agi,
+  );
   const taxableIncome = clampZero(
     agi
       .subtract(deduction.amount)
       .subtract(deduction.nonItemizedCharitable)
       .subtract(senior)
       .subtract(qualifiedTips)
-      .subtract(qualifiedOvertime),
+      .subtract(qualifiedOvertime)
+      .subtract(vehicleLoanInterest),
   );
   const incomeTax = bracketTax(taxableIncome, bracketsFor(federal, input.filingStatus));
   return {
     taxableIncome,
-    deduction: { ...deduction, senior, qualifiedTips, qualifiedOvertime },
+    deduction: { ...deduction, senior, qualifiedTips, qualifiedOvertime, vehicleLoanInterest },
     incomeTax,
   };
 }
@@ -129,6 +139,7 @@ function computeState(
           senior: Money.zero(),
           qualifiedTips: Money.zero(),
           qualifiedOvertime: Money.zero(),
+          vehicleLoanInterest: Money.zero(),
         },
         incomeTax: Money.zero(),
       },
@@ -250,12 +261,13 @@ function computeState(
       deduction: {
         kind: "standard",
         amount: standard.add(exemption).add(fedTaxDeduction),
-        // §170(p) and §151(d)(5)(C) are federal. No state carries either rule,
-        // so both are always zero on a state computation.
+        // §170(p), §151(d)(5)(C), §§224/225 and §163(h)(4) are federal. No
+        // state carries any of these rules, so all are zero on a state line.
         nonItemizedCharitable: Money.zero(),
         senior: Money.zero(),
         qualifiedTips: Money.zero(),
         qualifiedOvertime: Money.zero(),
+        vehicleLoanInterest: Money.zero(),
       },
       incomeTax,
     },

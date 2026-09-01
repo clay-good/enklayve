@@ -141,15 +141,27 @@ export const autoLoanTile: TileDefinition = {
   description: "APR to nominal rate and the real cost of borrowing.",
   keywords: ["auto loan", "car", "apr", "credit", "interest", "true cost"],
   status: "ready",
-  how: "We amortize the amount you finance (the price plus any fees and taxes you roll in) at your APR over the term, the same exact month-by-month schedule a lender uses. That gives your monthly payment, the total of all payments, and the true cost of credit, every dollar of interest you'll pay on top of what you borrowed.\n\nThe APR is a yearly rate that's charged monthly, so it quietly compounds to a slightly higher effective annual rate, which we show too. These are your own loan terms, so there's no rule to cite, just the arithmetic.",
+  how: "We amortize the amount you finance (the price plus any fees and taxes you roll in) at your APR over the term, the same exact month-by-month schedule a lender uses. That gives your monthly payment, the total of all payments, and the true cost of credit, every dollar of interest you'll pay on top of what you borrowed.\n\nThe APR is a yearly rate that's charged monthly, so it quietly compounds to a slightly higher effective annual rate, which we show too. These are your own loan terms, so there's no rule to cite, just the arithmetic.\n\nThe interest may be deductible. IRC §163(h)(4), new for 2025 through 2028, lets you deduct up to $10,000 of car loan interest a year without itemizing, phasing out above $100,000 of income, or $200,000 on a joint return. It reaches only a first-lien loan taken out after 2024 on a new vehicle assembled in the United States that you drive yourself, with the VIN on your return. Take the interest figure below to Federal Income Tax, which asks for it and applies the rule.",
   resources: [
     {
       label: "CFPB, auto loans",
       url: "https://www.consumerfinance.gov/consumer-tools/auto-loans/",
     },
     {
+      label: "26 U.S.C. §163(h), car loan interest",
+      url: "https://www.law.cornell.edu/uscode/text/26/163",
+    },
+    {
       label: "CFPB, what is APR?",
       url: "https://www.consumerfinance.gov/ask-cfpb/what-is-the-difference-between-a-mortgage-interest-rate-and-an-apr-en-135/",
+    },
+  ],
+  related: [
+    {
+      hubId: "paycheck-taxes",
+      tool: "federal-income-tax",
+      label: "Federal Income Tax",
+      note: "deduct this interest under §163(h)(4)",
     },
   ],
   mount: mountAutoLoan,

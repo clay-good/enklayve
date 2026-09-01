@@ -327,16 +327,37 @@ export type SeniorDeductionData = z.infer<typeof SeniorDeductionSchema>;
  * fraction thereof" and rounds a part-thousand up, and unlike the SALT and
  * senior phase-outs, which are percentages of the excess and so are continuous.
  * Three phase-outs in one engine, three different shapes, one Act.
+ *
+ * IRC §163(h)(4) — qualified passenger vehicle loan interest, the Act's fifth
+ * new deduction (§70203) — is the same shape again and reuses this schema, but
+ * it disagrees with §§224 and 225 on both of the things that are easiest to
+ * assume rather than read. It says "$200 for each $1,000 (or portion thereof)",
+ * so a part-thousand counts, and it carries no joint-return restriction at all,
+ * so a married individual filing separately gets it. Two sections that look
+ * alike and are not, again — which is why both are FIELDS here and not a
+ * convention the engine applies to every rule of this shape.
  */
 export const SteppedIncomeDeductionSchema = z.object({
   cap: z.number().gte(0),
   capJointReturn: z.number().gte(0),
-  /** Dollars of deduction lost per completed step of income over the threshold. */
+  /** Dollars of deduction lost per step of income over the threshold. */
   phaseOutPerStep: z.number().gte(0),
-  /** The step, in dollars of income. Whole steps only — no fraction thereof. */
+  /** The step, in dollars of income. */
   phaseOutStep: z.number().gt(0),
   thresholdSingle: z.number().gt(0),
   thresholdJointReturn: z.number().gt(0),
+  /**
+   * True where the statute says "or portion thereof" (§163(h)(4)(C)(ii)), so a
+   * part-step counts as a whole one. False where it does not (§§224(b)(2),
+   * 225(b)(2)), so only completed steps count and $1,999 over costs one step.
+   */
+  partialStepCounts: z.boolean(),
+  /**
+   * True where a married individual gets the deduction only on a joint return
+   * (§224(f), §225(e)). False where the statute says no such thing, as
+   * §163(h)(4) does not — separate filers get it, at the single threshold.
+   */
+  jointReturnOnly: z.boolean(),
 });
 export type SteppedIncomeDeductionData = z.infer<typeof SteppedIncomeDeductionSchema>;
 
@@ -495,6 +516,8 @@ export const JurisdictionSchema = z.object({
   qualifiedTipsDeduction: SteppedIncomeDeductionSchema.optional(),
   /** IRC §225, the deduction for qualified overtime (federal only). */
   qualifiedOvertimeDeduction: SteppedIncomeDeductionSchema.optional(),
+  /** IRC §163(h)(4), qualified passenger vehicle loan interest (federal only). */
+  vehicleLoanInterestDeduction: SteppedIncomeDeductionSchema.optional(),
   citation: CitationSchema,
   effectiveDateRange: z.object({
     start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

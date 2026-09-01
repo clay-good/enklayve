@@ -235,6 +235,45 @@ const BOUND: Bound[] = [
     shard: "federal-income-tax-2024",
     path: ".qualifiedTipsDeduction.thresholdJointReturn",
   },
+  {
+    file: "deductionCopy.ts",
+    shard: "federal-income-tax-2024",
+    path: ".vehicleLoanInterestDeduction.cap",
+  },
+  // The Auto Loan tile names §163(h)(4) too, because it is the tile that
+  // computes the interest the deduction is measured on. A second file quoting
+  // the same three figures is a second place for them to go stale, so it joins
+  // the check rather than being trusted.
+  {
+    file: "autoLoan.ts",
+    shard: "federal-income-tax-2024",
+    path: ".vehicleLoanInterestDeduction.cap",
+  },
+  {
+    file: "autoLoan.ts",
+    shard: "federal-income-tax-2024",
+    path: ".vehicleLoanInterestDeduction.thresholdSingle",
+  },
+  {
+    file: "autoLoan.ts",
+    shard: "federal-income-tax-2024",
+    path: ".vehicleLoanInterestDeduction.thresholdJointReturn",
+  },
+  {
+    file: "deductionCopy.ts",
+    shard: "federal-income-tax-2024",
+    path: ".vehicleLoanInterestDeduction.phaseOutPerStep",
+  },
+  {
+    file: "deductionCopy.ts",
+    shard: "federal-income-tax-2024",
+    path: ".vehicleLoanInterestDeduction.thresholdSingle",
+  },
+  {
+    file: "deductionCopy.ts",
+    shard: "federal-income-tax-2024",
+    path: ".vehicleLoanInterestDeduction.thresholdJointReturn",
+  },
 
   { file: "saversCredit.ts", shard: "savers-credit-2024", path: ".maxContributionPerPerson" },
   {
@@ -263,6 +302,13 @@ const BOUND_TO_CODE: { file: string; figure: string; from: string }[] = [
  * that a figure which IS statutory cannot arrive unnoticed.
  */
 const NOT_A_FIGURE: Record<string, Record<string, string>> = {
+  "deductionCopy.ts": {
+    // Where §163(h)(4)'s joint phase-out lands, which is the threshold plus the
+    // cap divided by the step: $200,000 + $10,000 ÷ $200 × $1,000. Every term is
+    // bound above, so the sentence cannot drift without one of them moving; the
+    // arithmetic is stated for the reader rather than being a fifth field.
+    "$250,000": "where the joint phase-out ends, derived from four bound fields",
+  },
   "childTaxCredit.ts": { "$1,000": "the per-$1,000 step the phase-out is quoted in" },
   "federalIncomeTax.ts": { "$1,000": "an illustrative next-dollar amount" },
   "socialSecurityTax.ts": {

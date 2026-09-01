@@ -23,6 +23,11 @@ const TIPS: SteppedIncomeDeductionData = {
   phaseOutStep: 1000,
   thresholdSingle: 150_000,
   thresholdJointReturn: 300_000,
+  // §224(b)(2) and §225(b)(2) say "for each $1,000" and NOT "or portion
+  // thereof"; §224(f) and §225(e) deny both to a separate filer. §163(h)(4)
+  // answers each the other way, which is why they are fields.
+  partialStepCounts: false,
+  jointReturnOnly: true,
 };
 const OVERTIME: SteppedIncomeDeductionData = { ...TIPS, cap: 12_500, capJointReturn: 25_000 };
 

@@ -34,6 +34,13 @@ export interface TaxInput {
   qualifiedTips?: number;
   /** Qualified overtime premium within `wages`, for IRC §225. */
   qualifiedOvertime?: number;
+  /**
+   * Interest paid on a car loan that meets IRC §163(h)(4): a first lien taken
+   * out after 2024 on a new, personally used vehicle assembled in the United
+   * States. Unlike tips and overtime this is not part of `wages` — it is money
+   * paid out, not earned — so it is its own input rather than a share of one.
+   */
+  vehicleLoanInterest?: number;
   /** W-2 wages: subject to both income tax and FICA. */
   wages: number;
   /** Additional ordinary income (interest, etc.): income tax only, no FICA. */
@@ -74,6 +81,12 @@ export interface DeductionResult {
   qualifiedTips: Money;
   /** IRC §225, the deduction for qualified overtime. */
   qualifiedOvertime: Money;
+  /**
+   * IRC §163(h)(4), qualified passenger vehicle loan interest. Reached by
+   * §63(b)(7) for a filer who does not itemize and by §163(a) for one who does,
+   * so like §151 and unlike §170(p) it does not depend on the choice.
+   */
+  vehicleLoanInterest: Money;
 }
 
 export interface JurisdictionTaxResult {

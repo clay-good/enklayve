@@ -10,7 +10,17 @@ import { defineConfig } from "@playwright/test";
  * The server is `vite preview` over the built dist, so the test exercises the
  * exact bytes that ship (minified, code-split, with the service worker), on
  * localhost — a secure context, so the SW activates.
+ *
+ * The port is 4173 unless `E2E_PORT` says otherwise. Locally the run reuses
+ * whatever is already listening, which is a time-saver when it is our own
+ * preview and a silent wrong answer when it is not: another project's dev
+ * server on 4173 gets tested instead, and every assertion here is about pages
+ * it does not serve. Overriding the port is the way out that does not involve
+ * killing a process belonging to someone else.
  */
+const PORT = Number(process.env.E2E_PORT ?? 4173);
+const ORIGIN = `http://localhost:${PORT}`;
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -18,13 +28,13 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
   use: {
-    baseURL: "http://localhost:4173",
+    baseURL: ORIGIN,
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { browserName: "chromium" } }],
   webServer: {
-    command: "npm run build && npm run preview -- --port 4173 --strictPort",
-    url: "http://localhost:4173/",
+    command: `npm run build && npm run preview -- --port ${PORT} --strictPort`,
+    url: `${ORIGIN}/`,
     timeout: 180_000,
     reuseExistingServer: !process.env.CI,
   },
