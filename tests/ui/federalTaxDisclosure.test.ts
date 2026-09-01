@@ -17,8 +17,37 @@ import { resolve } from "node:path";
  * So the rule is: compute federal tax, and either ask for the deductions or
  * say you did not. This fails when the seventh tile calls the engine.
  */
-const TILES = resolve(__dirname, "..", "..", "src", "tiles");
-const SHELL = resolve(__dirname, "..", "..", "src", "ui", "shell.ts");
+const SRC = resolve(__dirname, "..", "..", "src");
+const TILES = resolve(SRC, "tiles");
+
+/**
+ * Every file outside `src/engine` that calls the tax evaluator.
+ *
+ * Scanning `src/tiles` was the first version of this and it had the site's
+ * most-visited caller on the wrong side of the boundary — the home anti-budget
+ * lives in the shell. A scope that stops at a directory is a coincidence, so
+ * this walks the whole of `src` and exempts only the engine, which renders
+ * nothing to anybody and has no reader to disclose to.
+ */
+function callersOutsideTheEngine(): { file: string; source: string }[] {
+  const found: { file: string; source: string }[] = [];
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = resolve(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name !== "engine") walk(full);
+        continue;
+      }
+      if (!entry.name.endsWith(".ts")) continue;
+      const source = readFileSync(full, "utf8");
+      if (source.includes("evaluateTaxes(")) {
+        found.push({ file: full.slice(SRC.length + 1), source });
+      }
+    }
+  };
+  walk(SRC);
+  return found;
+}
 
 /** Names the shared explainers; a tile satisfies the rule by using one. */
 const DISCLOSURES = [
@@ -58,17 +87,34 @@ describe("every tile that computes federal income tax", () => {
     ).toEqual([]);
   });
 
-  it("covers the home budget too, which is not a tile and computes the same tax", () => {
-    // The scope hole this test shipped with. `src/tiles` is where calculators
-    // live, and the anti-budget on the home page is not one of them — it runs
-    // the same `evaluateTaxes` from the shell, from an income, a filing status
-    // and a state, and it is the first thing most readers see. It was showing a
-    // tax slice larger than a tipped or hourly worker owes, and saying nothing,
-    // which is the omission this whole test exists to catch.
-    const shell = readFileSync(SHELL, "utf8");
-    expect(shell).toContain("evaluateTaxes(");
-    expect(shell).toMatch(/tips, overtime, car loan interest/);
-    expect(shell).toMatch(/Take-Home and Federal Income Tax/);
+  it("holds every caller outside the engine to the same rule, not just the tiles", () => {
+    // Two callers were outside `src/tiles` and both showed a reader a federal
+    // tax figure with none of the five deductions in it: the home anti-budget
+    // in the shell, which is the first screen anyone sees, and the Readout
+    // Report, which is a document people save and re-read. Neither said so.
+    const callers = callersOutsideTheEngine();
+    expect(callers.map((c) => c.file).sort()).toEqual([
+      "readout/report.ts",
+      "tiles/federalIncomeTax.ts",
+      "tiles/marginalExplorer.ts",
+      "tiles/paycheckOptimizer.ts",
+      "tiles/quarterlyTaxes.ts",
+      "tiles/takeHome.ts",
+      "tiles/w4Withholding.ts",
+      "ui/shell.ts",
+    ]);
+    const silent = callers
+      .filter(
+        ({ source }) =>
+          !DISCLOSURES.some((d) => source.includes(d)) &&
+          !/tips, overtime, car loan interest/.test(source),
+      )
+      .map((c) => c.file);
+    expect(
+      silent,
+      "these show a reader a federal tax figure computed without the five 2026 deductions and" +
+        " say nothing about it — apply them, or name what is missing and which tool applies it",
+    ).toEqual([]);
   });
 
   it("does not let a tile that asks for nothing claim it applies them", () => {

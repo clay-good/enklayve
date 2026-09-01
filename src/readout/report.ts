@@ -174,6 +174,16 @@ export function buildReport(
           label: "Cost of your next $1,000 of income",
           value: `${usd(marginalCost)} (${pct(marginalCost.toNumber() / 1000)})`,
         },
+        // This report is a document somebody saves and reads again months
+        // later, computed from an income and a filing status alone — so every
+        // figure above is high for a reader any of the Act's five new
+        // deductions reaches. A document that will outlive the session has to
+        // carry its own caveat; there is no tile beside it to explain.
+        {
+          label: "What this does not include",
+          value:
+            "Five deductions new for 2026 — tips, overtime, car loan interest, being 65, and giving without itemizing — are not in these figures, so your real tax may be lower. Take-Home and Federal Income Tax ask for them and apply them.",
+        },
       ],
     });
   } else {
