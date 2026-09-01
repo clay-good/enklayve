@@ -47,8 +47,21 @@ export interface PlanInput {
   retirementContributionsAnnual: number;
   /** The cited annual tax-advantaged contribution limit (e.g. the 401(k)
    * elective-deferral limit). Carries the IRS citation so the step is sourced. */
-  retirementLimitAnnual: number;
-  retirementLimitCitation: CitationData;
+  /**
+   * The annual elective-deferral limit, or null when the retirement-limits
+   * shard is unavailable — a hash mismatch, a schema failure, a lapsed year.
+   *
+   * Null rather than a literal. The Readout Report used to substitute the
+   * public 2026 figure here with a frozen citation to Notice 2025-67, which is
+   * the §A4 magic-number anti-pattern in the one place the three hardening
+   * passes did not look: they swept the tiles, then the engine, and this lives
+   * in `src/readout`. The number was right for 2026 and would have gone on
+   * being stated, under a citation that still looked live, for every year
+   * after — while the shard sitting beside it was marked invalid precisely so
+   * the reader would be told something was wrong.
+   */
+  retirementLimitAnnual: number | null;
+  retirementLimitCitation: CitationData | null;
   sinkingGoals: SinkingGoal[];
   /** Total net worth counted toward My Enough Number; defaults to liquidSavings. */
   netWorth?: number;
@@ -293,6 +306,20 @@ export const PLAN_STEPS: StepDef[] = [
     evaluate(input) {
       const limit = input.retirementLimitAnnual;
       const contributing = input.retirementContributionsAnnual;
+      if (limit === null) {
+        // Say the limit is unavailable rather than name one. A step reading
+        // "move toward the $24,500 annual limit" is a specific instruction, and
+        // giving it from a frozen literal is worse than giving nothing.
+        return {
+          satisfied: false,
+          action:
+            "The IRS contribution limits could not be verified, so this step cannot be sized. Check the current limit before acting on it.",
+          amount: null,
+          math: [{ label: "Annual contribution limit", value: "unavailable" }],
+          citation: null,
+          needsInfo: "retirementLimitAnnual",
+        };
+      }
       const gap = positiveGap(limit, contributing);
       return {
         satisfied: contributing >= limit,

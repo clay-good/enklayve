@@ -123,3 +123,40 @@ describe("a war chest with no expenses to measure it against", () => {
     expect(s.satisfied).toBe(false);
   });
 });
+
+/**
+ * The plan does not name a contribution limit it could not verify.
+ *
+ * The Readout Report used to hand the plan `?? 24500` with a frozen citation
+ * to Notice 2025-67 when the retirement-limits shard was unavailable — the §A4
+ * magic-number anti-pattern in `src/readout`, the one directory the three
+ * hardening passes did not sweep. The figure was right for 2026 and would have
+ * gone on being stated for every year after, under a citation that still looked
+ * live, while the shard beside it was marked invalid precisely so the reader
+ * would be told something was wrong.
+ *
+ * A step reading "move toward the $24,500 annual limit" is a specific
+ * instruction. Giving it from a literal is worse than giving nothing.
+ */
+describe("a contribution limit that could not be verified", () => {
+  it("says so instead of naming one", () => {
+    const s = step({ retirementLimitAnnual: null, retirementLimitCitation: null }, "retirement");
+    expect(s.satisfied).toBe(false);
+    expect(s.needsInfo).toBe("retirementLimitAnnual");
+    expect(s.action).toMatch(/could not be verified/i);
+    expect(s.amount).toBeNull();
+  });
+
+  it("carries no citation, since there is no figure to cite", () => {
+    const s = step({ retirementLimitAnnual: null, retirementLimitCitation: null }, "retirement");
+    expect(s.citation).toBeNull();
+    expect(JSON.stringify(s)).not.toContain("24,500");
+    expect(JSON.stringify(s)).not.toContain("24500");
+  });
+
+  it("still sizes the step when the shard is there", () => {
+    const s = step({ retirementContributionsAnnual: 4_500 }, "retirement");
+    expect(s.needsInfo).toBeUndefined();
+    expect(s.action).toContain("$20,000");
+  });
+});

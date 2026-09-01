@@ -26,15 +26,6 @@ function regionFromState(code: string | undefined): FplRegion {
   return "contiguous";
 }
 
-/** Same public IRS figure the plan cites when the bundled limits are unavailable. */
-const FALLBACK_LIMIT = 24500;
-const FALLBACK_CITATION: CitationData = {
-  sourceUrl: "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
-  sourceDocument: "IRS Notice 2025-67 (2026 retirement plan limits)",
-  effectiveYear: 2026,
-  dateRetrieved: "2026-06-02",
-};
-
 export interface ReportLine {
   label: string;
   value: string;
@@ -80,8 +71,10 @@ function planInputFrom(profile: SituationStore, data: BundledData | null): PlanI
     employerMatchCaptured: profile.get("employerMatchCaptured") ?? 0,
     debts: profile.get("debts") ?? [],
     retirementContributionsAnnual: profile.get("retirementContributionsAnnual") ?? 0,
-    retirementLimitAnnual: limits?.limits.elective_deferral_401k ?? FALLBACK_LIMIT,
-    retirementLimitCitation: limits?.citation ?? FALLBACK_CITATION,
+    // No fallback figure. When the shard is unavailable the plan says so; see
+    // PlanInput.retirementLimitAnnual.
+    retirementLimitAnnual: limits?.limits.elective_deferral_401k ?? null,
+    retirementLimitCitation: limits?.citation ?? null,
     sinkingGoals: [],
   };
 }
