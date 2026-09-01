@@ -168,6 +168,30 @@ async function fetchRaw(url: string, signal: AbortSignal): Promise<RawResponse> 
   }
 }
 
+/**
+ * Does this document exist yet?
+ *
+ * For an adapter parked on a state's unpublished form, the whole signal is
+ * whether a year-carrying URL has started answering. Reading the document is
+ * the wrong question and an expensive one — Oregon's OR-40 booklet is 120 kB of
+ * PDF that would be text-extracted every month to learn one bit — so this
+ * checks the status and never touches the body.
+ */
+export async function sourceExists(url: string): Promise<boolean> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const response = await fetchRaw(url, controller.signal);
+    return response.status >= 200 && response.status < 300;
+  } catch {
+    // Unreachable is not "published". A host having a bad afternoon must not
+    // read as a state releasing a form.
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Fetch a source page as text, reading PDFs where the figures have moved. */
 export async function fetchSource(url: string): Promise<FetchedSource> {
   const controller = new AbortController();

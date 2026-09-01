@@ -207,6 +207,56 @@ export interface RefreshAdapter {
    * preserved. Returns a reason on failure (anchors missing) for the alert path.
    */
   parse(raw: string, current: Record<string, unknown>): ParseOutcome;
+  /**
+   * For an adapter parked on a document the state has not published yet: how to
+   * tell that it has.
+   *
+   * Most `settled` refusals clear themselves, because the parser runs against
+   * the watched page first and starts anchoring the day that page states the
+   * figure. Four do not. Oregon, Nebraska, Arkansas and Vermont are waiting on a
+   * *different document at a different URL* — a booklet, a schedule, a year's
+   * forms index — and the page the adapter watches will never state the
+   * deduction no matter what the state publishes. Their notes all end "repoint
+   * this adapter the day the 2026 forms appear", which is a task assigned to
+   * whoever happens to remember, and the cost of forgetting is a shard sitting a
+   * year behind a citation that still points at a live .gov page. That is the
+   * exact failure that left Illinois, Michigan, Missouri and Georgia stale.
+   *
+   * So the wait is watched instead of remembered. Nothing here is ever parsed —
+   * the arrival of a document is not permission to scrape it, and repointing an
+   * adapter still means dry-running it and reading the diff. All this says is
+   * that the wait is over and there is work.
+   */
+  awaiting?: AwaitedSource;
+}
+
+/**
+ * A document that does not exist yet, and the two questions worth asking about
+ * it every month.
+ *
+ * `arrived` is the signal. `calibration` is what makes the signal believable: a
+ * probe that cannot see the year the state HAS published is a probe that would
+ * report "still waiting" forever, and would do it in exactly the same words as a
+ * probe that is working. The boundary check learned this the expensive way —
+ * its own report refuses to be trusted when a known-visible case is invisible —
+ * and the same reasoning applies to a pattern aimed at a URL a state may rename
+ * at any time.
+ */
+export interface AwaitedSource {
+  /** What is being waited for, in a sentence someone can act on. */
+  what: string;
+  /**
+   * Where to look, and what the awaited year's document looks like when it is
+   * there. With no `match`, the URL answering at all is the whole signal, which
+   * is right when the URL itself carries the year.
+   */
+  arrived: { url: string; match?: RegExp };
+  /**
+   * The same probe aimed at the year that IS published. This must hit. When it
+   * does not, the state has moved or renamed something and the probe is blind
+   * rather than patient.
+   */
+  calibration: { url: string; match?: RegExp };
 }
 
 /** Parse a US dollar/integer string like "176,100" or "$176,100" to a number. */
@@ -3806,6 +3856,20 @@ export const ADAPTERS: RefreshAdapter[] = [
         "own note records; the 2025 schedule is a closed year and would report agreement " +
         "forever. Repoint this adapter the day a 2026 schedule is listed",
     ),
+    awaiting: {
+      what: "Vermont's 2026 annual rate schedules (the indexed IN-111 standard deduction and the per-status bracket tables)",
+      // The rates page already carries "2026" in other contexts — the
+      // withholding charts — so the probe matches the schedule's own title
+      // rather than the year.
+      arrived: {
+        url: "https://tax.vermont.gov/individuals/personal-income-tax/rates",
+        match: /2026\s+Vermont\s+Rate\s+Schedules/i,
+      },
+      calibration: {
+        url: "https://tax.vermont.gov/individuals/personal-income-tax/rates",
+        match: /2025\s+Vermont\s+Rate\s+Schedules/i,
+      },
+    },
   },
   {
     id: "state-ok-income-tax-2024",
@@ -4014,6 +4078,21 @@ export const ADAPTERS: RefreshAdapter[] = [
         "report agreement forever, because a closed year's document can never change. " +
         "Repoint it at the 2026 instructions the day they appear",
     ),
+    awaiting: {
+      what: "Oregon's 2026 Form OR-40 instructions (the indexed standard deduction, the per-status rate charts, and the Table 4 federal-subtraction phase-out)",
+      // The booklet's URL carries the tax year, so its answering at all is the
+      // whole signal. Nothing is read: arrival means a person repoints the
+      // adapter and reads the diff.
+      arrived: {
+        url: "https://www.oregon.gov/dor/forms/FormsPubs/form-or-40-inst_101-040-1_2026.pdf",
+      },
+      // The 2025 booklet at the same pattern. If Oregon renames the scheme, the
+      // 2026 URL would 404 forever and this probe would say "still waiting" in
+      // the same words it uses when the wait is real.
+      calibration: {
+        url: "https://www.oregon.gov/dor/forms/FormsPubs/form-or-40-inst_101-040-1_2025.pdf",
+      },
+    },
   },
   {
     id: "state-ne-income-tax-2024",
@@ -4039,6 +4118,17 @@ export const ADAPTERS: RefreshAdapter[] = [
         "figures forward, which its own note records; the 2025 schedule is a closed year and " +
         "would report agreement forever. Repoint this adapter the day the 2026 schedule appears",
     ),
+    awaiting: {
+      what: "Nebraska's 2026 Tax Calculation Schedule (the indexed standard deduction and the LB 754 bracket thresholds)",
+      arrived: {
+        url: "https://revenue.nebraska.gov/about/forms/individual-income-tax-forms",
+        match: /2026[^<]{0,60}Tax Calculation Schedule/i,
+      },
+      calibration: {
+        url: "https://revenue.nebraska.gov/about/forms/individual-income-tax-forms",
+        match: /2025[^<]{0,60}Tax Calculation Schedule/i,
+      },
+    },
   },
   {
     id: "state-md-income-tax-2024",
@@ -4083,6 +4173,17 @@ export const ADAPTERS: RefreshAdapter[] = [
         "closed year and would report agreement forever; repoint this adapter the day the " +
         "2026 forms appear",
     ),
+    awaiting: {
+      what: "Arkansas DFA's 2026 individual income tax forms (the indexed AR1000F standard deduction and the bracket-adjustment recapture band)",
+      arrived: {
+        url: "https://www.dfa.arkansas.gov/office/taxes/income-tax-administration/individual-income-tax/",
+        match: /2026 Tax Forms/i,
+      },
+      calibration: {
+        url: "https://www.dfa.arkansas.gov/office/taxes/income-tax-administration/individual-income-tax/",
+        match: /2025 Tax Forms/i,
+      },
+    },
   },
   {
     id: "state-ct-income-tax-2024",

@@ -47,7 +47,7 @@ import {
   type RefreshAdapter,
   type RefreshGroup,
 } from "./refresh/adapters.ts";
-import { fetchSource, INCOMPLETE_CERT_CHAIN } from "./fetch-source.ts";
+import { fetchSource, sourceExists, INCOMPLETE_CERT_CHAIN } from "./fetch-source.ts";
 import { diffShards } from "./refresh/contract.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -183,6 +183,96 @@ export function againstBaseline(
 }
 
 /** Group results into the report the workflow posts and a human reads. */
+/**
+ * Whether an adapter's wait is over.
+ *
+ * Eleven adapters refuse because a state has not published the shard's year.
+ * Seven of those clear themselves: the parser runs against the watched page
+ * first, so the day the page states the figure, it anchors and the refusal stops
+ * being printed with nobody having to remember. Four cannot, because the
+ * document they are waiting for lives at a *different URL* — Oregon's OR-40
+ * booklet, Nebraska's Tax Calculation Schedule, Arkansas's year of forms,
+ * Vermont's rate schedules — and the menu page each adapter watches will never
+ * state a deduction no matter what the state releases. Their notes all end
+ * "repoint this adapter the day the 2026 forms appear", and until now the only
+ * thing standing behind that sentence was somebody's memory.
+ *
+ * `blind` is the verdict that makes the other two worth reading. A probe aimed
+ * at a URL pattern a state can rename at will would go on reporting "still
+ * waiting" forever, in exactly the words it uses when the wait is real, so each
+ * probe is also aimed at the year that IS published and has to hit.
+ *
+ * Note the asymmetry: a hit on the awaited document is believed even when the
+ * calibration misses. Calibration exists to catch a false NEGATIVE — a wait that
+ * has quietly become permanent — and a probe that has found the thing it was
+ * looking for has no false negative to catch.
+ */
+export type WaitVerdict = "waiting" | "arrived" | "blind";
+
+export interface WaitResult {
+  adapterId: string;
+  /** What is being waited for, in a sentence someone can act on. */
+  what: string;
+  verdict: WaitVerdict;
+  /** Where the awaited document would be. */
+  url: string;
+}
+
+export function classifyWait(arrived: boolean, calibrated: boolean): WaitVerdict {
+  if (arrived) return "arrived";
+  return calibrated ? "waiting" : "blind";
+}
+
+/**
+ * Render the waits. Anything other than "still waiting" is work, so it is
+ * separated from the Settled list rather than filed inside it: a settled
+ * refusal is a decision needing nothing, and these two are the moments a
+ * decision stops being true.
+ */
+export function renderWaitReport(waits: readonly WaitResult[]): string {
+  if (waits.length === 0) return "";
+  const arrived = waits.filter((w) => w.verdict === "arrived");
+  const blind = waits.filter((w) => w.verdict === "blind");
+  const waiting = waits.filter((w) => w.verdict === "waiting");
+  const lines: string[] = [];
+
+  if (arrived.length > 0) {
+    lines.push("", "## The wait is over", "");
+    lines.push(
+      "The document these adapters were parked on has been published. Each shard is now" +
+        " knowably a year behind its source, behind a citation that still points at a live" +
+        " .gov page. Repoint the adapter, dry-run it, and read the diff — an arrival is not" +
+        " permission to scrape, and anchoring the wrong figure is worse than anchoring none." +
+        " This fails the check.",
+    );
+    lines.push("");
+    for (const w of arrived) lines.push(`- \`${w.adapterId}\` — ${w.what}`, `  - ${w.url}`);
+  }
+
+  if (blind.length > 0) {
+    lines.push("", "## A wait nobody is watching", "");
+    lines.push(
+      "These probes cannot see the year the state HAS published, so they cannot be trusted" +
+        " to notice the year it has not. The state has renamed or moved something and the" +
+        " probe now reports patience it has not earned — which is the same failure as an" +
+        " adapter that has stopped anchoring, one level up. This fails the check.",
+    );
+    lines.push("");
+    for (const w of blind) lines.push(`- \`${w.adapterId}\` — ${w.what}`, `  - ${w.url}`);
+  }
+
+  if (waiting.length > 0) {
+    lines.push("", "## Still waiting", "");
+    lines.push(
+      "Parked on a document the state has not published, and the probe proved this run that" +
+        " it can see the year that is published. Nothing to do.",
+    );
+    lines.push("");
+    for (const w of waiting) lines.push(`- \`${w.adapterId}\` — ${w.what}`);
+  }
+  return lines.join("\n");
+}
+
 export function renderAnchorReport(
   results: readonly AnchorResult[],
   baseline: readonly string[] = [],
@@ -409,6 +499,29 @@ async function check(adapter: RefreshAdapter): Promise<AnchorResult> {
   };
 }
 
+/** One half of a wait probe: is the document there, and does it look like itself? */
+async function probe(target: { url: string; match?: RegExp }): Promise<boolean> {
+  if (!target.match) return sourceExists(target.url);
+  const fetched = await fetchSource(target.url);
+  return fetched.ok && target.match.test(fetched.raw);
+}
+
+async function checkWait(adapter: RefreshAdapter): Promise<WaitResult | null> {
+  const awaiting = adapter.awaiting;
+  if (!awaiting) return null;
+  const arrived = await probe(awaiting.arrived);
+  // Skipped when the document is already there: the calibration only guards the
+  // "still waiting" answer, and a second fetch to confirm a hit costs a request
+  // against an agency for nothing.
+  const calibrated = arrived || (await probe(awaiting.calibration));
+  return {
+    adapterId: adapter.id,
+    what: awaiting.what,
+    verdict: classifyWait(arrived, calibrated),
+    url: awaiting.arrived.url,
+  };
+}
+
 async function main(): Promise<void> {
   const groupIdx = process.argv.indexOf("--group");
   const adapters =
@@ -433,7 +546,11 @@ async function main(): Promise<void> {
   const baseline = (
     JSON.parse(readFileSync(BASELINE_FILE, "utf8")) as { knownAnchoring: string[] }
   ).knownAnchoring.filter((id) => checked.has(id));
-  const report = renderAnchorReport(results, baseline);
+  const waits = (await Promise.all(adapters.map(checkWait))).filter(
+    (w): w is WaitResult => w !== null,
+  );
+  waits.sort((a, b) => a.adapterId.localeCompare(b.adapterId));
+  const report = `${renderAnchorReport(results, baseline)}\n${renderWaitReport(waits)}`;
   process.stdout.write(`${report}\n`);
 
   const out = process.env.GITHUB_OUTPUT;
@@ -449,7 +566,9 @@ async function main(): Promise<void> {
     const unreachable = results.filter((r) => r.status === "unreachable").length;
     appendFileSync(
       out,
-      `regressions=${regressions.length}\nwouldChange=${wouldChange}\nunreachable=${unreachable}\n`,
+      `regressions=${regressions.length}\nwouldChange=${wouldChange}\nunreachable=${unreachable}\n` +
+        `waitsOver=${waits.filter((w) => w.verdict === "arrived").length}\n` +
+        `blindWaits=${waits.filter((w) => w.verdict === "blind").length}\n`,
     );
     appendFileSync(out, `report<<EOF\n${report}\nEOF\n`);
   }
@@ -466,7 +585,11 @@ async function main(): Promise<void> {
     baseline,
     results.filter((r) => r.status === "unreachable").map((r) => r.adapterId),
   );
-  if (regressions.length > 0) process.exitCode = 1;
+  // A wait that is over, or a probe that has gone blind, is work in exactly the
+  // way a regression is: a shard that has stopped being watched and does not
+  // look it. Both fail; "still waiting" does not.
+  const openWaits = waits.filter((w) => w.verdict !== "waiting");
+  if (regressions.length > 0 || openWaits.length > 0) process.exitCode = 1;
 }
 
 if (process.argv[1] && process.argv[1].endsWith("check-adapters.ts")) {

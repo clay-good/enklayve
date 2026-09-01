@@ -87,6 +87,53 @@ describe("anchoring coverage over the refresh adapters", () => {
     }
   });
 
+  it("watches the wait, wherever the entry tells a person to repoint the adapter", () => {
+    // The eleven WAITING entries split again, and the split is the difference
+    // between a refusal that ends by itself and one that does not. Seven watch
+    // a page that will eventually state the figure: the parser runs first, so
+    // the day it does, the adapter anchors and nobody has to notice. Four are
+    // parked on a document at a DIFFERENT url — a booklet, a schedule, a year's
+    // forms index — and the menu page they watch will never state a deduction
+    // however much the state publishes. Those entries say "repoint this
+    // adapter", which is a task with no owner and no trigger, and the cost of
+    // forgetting is a shard a year behind a citation that still looks live.
+    //
+    // So the marker in the prose is the rule: an entry that asks a person to
+    // repoint must carry a probe that tells them when.
+    const repoint = Object.entries(baseline.unanchored).filter(
+      ([, r]) => r.startsWith("WAITING ON THE SOURCE") && /\brepoint (this adapter|it)\b/i.test(r),
+    );
+    expect(repoint.length).toBeGreaterThan(0);
+    for (const [id] of repoint) {
+      const adapter = ADAPTERS.find((a) => a.id === id);
+      expect(
+        adapter?.awaiting,
+        `${id} says to repoint it and nothing watches for the day`,
+      ).toBeTruthy();
+    }
+  });
+
+  it("aims each wait probe at the awaited year and at the published one", () => {
+    // A probe with no calibration is a probe that reports patience forever in
+    // the same words it uses when the wait is real. And a probe whose two
+    // halves are identical is not calibrated at all — it would answer both
+    // questions the same way by construction.
+    for (const adapter of ADAPTERS) {
+      const awaiting = adapter.awaiting;
+      if (!awaiting) continue;
+      expect(
+        awaiting.what.length,
+        `${adapter.id} does not say what it is waiting for`,
+      ).toBeGreaterThan(20);
+      const arrived = `${awaiting.arrived.url} ${awaiting.arrived.match?.source ?? ""}`;
+      const published = `${awaiting.calibration.url} ${awaiting.calibration.match?.source ?? ""}`;
+      expect(arrived, `${adapter.id}'s probe cannot tell the two years apart`).not.toBe(published);
+      // Same shape on both sides: one half matching text while the other only
+      // asks whether a url answers compares two different questions.
+      expect(Boolean(awaiting.arrived.match)).toBe(Boolean(awaiting.calibration.match));
+    }
+  });
+
   it("keeps the note explaining why a short healthy list needs a long explained one", () => {
     const note = baseline.note.join(" ");
     expect(note).toMatch(/should GROW/);

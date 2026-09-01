@@ -1,8 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
   classifyAnchor,
+  classifyWait,
   renderAnchorReport,
+  renderWaitReport,
   type AnchorResult,
+  type WaitResult,
 } from "../../scripts/check-adapters";
 import { ADAPTERS } from "../../scripts/refresh/adapters";
 import { extractUrls, sourceFiles } from "../../scripts/check-links";
@@ -393,5 +396,74 @@ describe("the known-anchoring baseline", () => {
     const ids = new Set(ADAPTERS.map((a) => a.id));
     expect(file.knownAnchoring.filter((id) => !ids.has(id))).toEqual([]);
     expect(file.knownAnchoring.length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * The wait probes.
+ *
+ * Four adapters are parked on a document a state has not published, at a URL
+ * that is not the one they watch, and their notes end "repoint this adapter the
+ * day the 2026 forms appear". Until 2026-09-01 the only thing behind that
+ * sentence was somebody's memory, and the cost of forgetting is the failure
+ * this whole check exists to catch: a shard sitting a year behind a citation
+ * that still points at a live .gov page.
+ */
+describe("deciding whether a wait is over", () => {
+  it("says the wait is over when the document is there", () => {
+    expect(classifyWait(true, true)).toBe("arrived");
+  });
+
+  it("calls a probe blind when it cannot see the year that IS published", () => {
+    // The failure mode worth naming: a state renames its URL scheme, the
+    // awaited path 404s forever, and the report says "still waiting" in exactly
+    // the words it uses when the wait is real.
+    expect(classifyWait(false, false)).toBe("blind");
+  });
+
+  it("believes a hit even when the calibration missed", () => {
+    // Calibration guards a false NEGATIVE. A probe that has found the thing it
+    // was looking for has no false negative left to guard against, and refusing
+    // its own answer would be the report arguing with itself.
+    expect(classifyWait(true, false)).toBe("arrived");
+  });
+
+  it("is patient only when it has earned it", () => {
+    expect(classifyWait(false, true)).toBe("waiting");
+  });
+});
+
+describe("the wait report", () => {
+  const wait = (verdict: WaitResult["verdict"]): WaitResult => ({
+    adapterId: "state-or-income-tax-2024",
+    what: "Oregon's 2026 Form OR-40 instructions",
+    verdict,
+    url: "https://www.oregon.gov/dor/forms/FormsPubs/form-or-40-inst_101-040-1_2026.pdf",
+  });
+
+  it("says nothing at all when no adapter is waiting", () => {
+    expect(renderWaitReport([])).toBe("");
+  });
+
+  it("puts an arrival somewhere other than the settled list, and says it is work", () => {
+    const report = renderWaitReport([wait("arrived")]);
+    expect(report).toContain("## The wait is over");
+    expect(report).toContain("This fails the check.");
+    // An arrival is not permission to scrape: repointing still means dry-running
+    // the adapter and reading the diff, and the report has to say so, because
+    // anchoring the wrong figure is worse than anchoring none.
+    expect(report).toMatch(/read the diff/);
+  });
+
+  it("reports a blind probe as a failure rather than as patience", () => {
+    const report = renderWaitReport([wait("blind")]);
+    expect(report).toContain("## A wait nobody is watching");
+    expect(report).toContain("This fails the check.");
+  });
+
+  it("keeps a live wait quiet", () => {
+    const report = renderWaitReport([wait("waiting")]);
+    expect(report).toContain("## Still waiting");
+    expect(report).not.toContain("fails the check");
   });
 });
