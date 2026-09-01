@@ -21,6 +21,7 @@ import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
+import { OBBBA_DEDUCTIONS_NOT_MODELED } from "./deductionCopy";
 
 const FILING_STATUSES: { value: FilingStatus; label: string }[] = [
   { value: "single", label: "Single" },
@@ -277,7 +278,9 @@ export const w4WithholdingTile: TileDefinition = {
     "paycheck",
   ],
   status: "ready",
-  how: "Most people aim for a big tax refund, but a refund is not free money: it is an interest-free loan you made to the government. You overpaid your taxes a little out of every paycheck all year, and the refund is simply that overpayment handed back, with no interest. The ideal is a refund near zero: you keep your own money as you earn it (in a savings account, paying down debt, or invested) instead of lending it out for free.\n\nThis tool projects your federal income tax for the year from your wages and filing status using the same engine as the take-home tile, then compares it to what your current W-4 withholds (your per-paycheck federal withholding times your number of pay periods, plus any extra). If you are over-withholding it shows the refund, what that refund is really costing you in forgone interest, and how much less to withhold per paycheck. If you are under-withholding it shows the likely bill and how much more to withhold.\n\nThe W-4 controls federal income tax withholding only, so that is all this covers. Social Security and Medicare (FICA) are fixed and not on the W-4, and state withholding uses a separate state form. Adjust your real W-4 with your employer or in the IRS Tax Withholding Estimator; these figures point you in the right direction.",
+  how:
+    "Most people aim for a big tax refund, but a refund is not free money: it is an interest-free loan you made to the government. You overpaid your taxes a little out of every paycheck all year, and the refund is simply that overpayment handed back, with no interest. The ideal is a refund near zero: you keep your own money as you earn it (in a savings account, paying down debt, or invested) instead of lending it out for free.\n\nThis tool projects your federal income tax for the year from your wages and filing status using the same engine as the take-home tile, then compares it to what your current W-4 withholds (your per-paycheck federal withholding times your number of pay periods, plus any extra). If you are over-withholding it shows the refund, what that refund is really costing you in forgone interest, and how much less to withhold per paycheck. If you are under-withholding it shows the likely bill and how much more to withhold.\n\nThe W-4 controls federal income tax withholding only, so that is all this covers. Social Security and Medicare (FICA) are fixed and not on the W-4, and state withholding uses a separate state form. Adjust your real W-4 with your employer or in the IRS Tax Withholding Estimator; these figures point you in the right direction.\n\n" +
+    OBBBA_DEDUCTIONS_NOT_MODELED,
   resources: [
     {
       label: "IRS Tax Withholding Estimator",

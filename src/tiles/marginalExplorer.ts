@@ -13,6 +13,7 @@ import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
+import { OBBBA_DEDUCTIONS_NOT_MODELED } from "./deductionCopy";
 
 const FILING_STATUSES: { value: FilingStatus; label: string }[] = [
   { value: "single", label: "Single" },
@@ -212,7 +213,9 @@ export const marginalExplorerTile: TileDefinition = {
   description: "What does my next $1,000 of income actually cost?",
   keywords: ["marginal", "next dollar", "bracket", "raise", "rate"],
   status: "ready",
-  how: "We run the tax engine twice, at your current income, and again at your income plus the step you choose, then attribute the extra tax to each layer: federal income tax, FICA, and your state. That difference is what your next dollars actually cost you, which is often higher than your bracket alone because several taxes stack.",
+  how:
+    "We run the tax engine twice, at your current income, and again at your income plus the step you choose, then attribute the extra tax to each layer: federal income tax, FICA, and your state. That difference is what your next dollars actually cost you, which is often higher than your bracket alone because several taxes stack.\n\n" +
+    OBBBA_DEDUCTIONS_NOT_MODELED,
   resources: [
     {
       label: "IRS, tax brackets & rates",

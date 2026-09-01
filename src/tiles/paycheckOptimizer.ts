@@ -15,6 +15,7 @@ import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
+import { OBBBA_DEDUCTIONS_NOT_MODELED } from "./deductionCopy";
 
 const FILING_STATUSES: { value: FilingStatus; label: string }[] = [
   { value: "single", label: "Single" },
@@ -216,7 +217,9 @@ export const paycheckOptimizerTile: TileDefinition = {
   description: "See how 401(k) and HSA contributions move your take-home.",
   keywords: ["paycheck", "optimizer", "401k", "hsa", "pre-tax", "take home", "tax savings"],
   status: "ready",
-  how: "Pre-tax contributions lower your tax bill, but not all of them the same way. A traditional 401(k) deferral cuts your income tax. An HSA contribution through payroll cuts your income tax too, and it also skips Social Security and Medicare (FICA) tax, so each dollar saves a little more. This shows your take-home now and the tax saved by the next $1,000 into each, using the same federal + FICA + state engine as the take-home tile.\n\nThe figures are exact for the numbers you enter. HSA money is meant for medical costs and needs an HSA-eligible health plan, so it isn't a free lunch, but if you have one, it's the most tax-efficient dollar on your paycheck. Filing status, state, and income flow to and from My Situation. To tune the W-4 itself against your actual paycheck withholding, use the W-4 Withholding & Refund Check.",
+  how:
+    "Pre-tax contributions lower your tax bill, but not all of them the same way. A traditional 401(k) deferral cuts your income tax. An HSA contribution through payroll cuts your income tax too, and it also skips Social Security and Medicare (FICA) tax, so each dollar saves a little more. This shows your take-home now and the tax saved by the next $1,000 into each, using the same federal + FICA + state engine as the take-home tile.\n\nThe figures are exact for the numbers you enter. HSA money is meant for medical costs and needs an HSA-eligible health plan, so it isn't a free lunch, but if you have one, it's the most tax-efficient dollar on your paycheck. Filing status, state, and income flow to and from My Situation. To tune the W-4 itself against your actual paycheck withholding, use the W-4 Withholding & Refund Check.\n\n" +
+    OBBBA_DEDUCTIONS_NOT_MODELED,
   resources: [
     {
       label: "IRS, retirement topics: contributions",

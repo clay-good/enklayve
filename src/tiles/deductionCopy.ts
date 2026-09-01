@@ -28,6 +28,26 @@ const CAR_LOAN =
 const TIPS_OVERTIME =
   "Tell us how much of your pay was tips or an overtime premium and we apply §224 and §225: up to $25,000 of tips and $12,500 of overtime — $25,000 on a joint return — each falling by $100 for every whole $1,000 of income over $150,000, or $300,000 jointly, and neither available to a married filer except on a joint return. These reduce income tax only: Social Security and Medicare are still owed on every one of those dollars. What counts is narrower than it sounds — cash tips in an occupation the Treasury lists, and the premium half of overtime the Fair Labor Standards Act requires — so treat the figure as a ceiling.";
 
+/**
+ * For the four tiles that run the same federal engine and ask for none of it.
+ *
+ * The W-4 check, the paycheck optimizer, quarterly taxes and the marginal
+ * explorer all compute federal income tax from wages and a filing status, which
+ * means each one is high for a tipped worker, an hourly worker paid overtime,
+ * anyone 65, anyone giving without itemizing, and anyone paying a car loan. The
+ * fix is not five more fields on four more tiles — those tools are about
+ * withholding, deferral, set-aside and rates, not about composing a return — it
+ * is saying so, and naming the two tools that do ask.
+ *
+ * Deliberately carries no dollar figures. Every amount in these deductions is a
+ * shard field that phases out on its own schedule, and a figure repeated in six
+ * files is five more places for it to go stale; the two tiles that actually
+ * compute them quote the numbers, and those quotes are bound to the shard by
+ * `proseFigures.test.ts`.
+ */
+export const OBBBA_DEDUCTIONS_NOT_MODELED =
+  "Five deductions new for 2026 are not modeled here: tips (§224), overtime (§225), car loan interest (§163(h)(4)), the deduction at 65 (§151(d)(5)(C)), and giving without itemizing (§170(p)). If any of them applies to you, your real federal tax is lower than the figure above. Take-Home and Federal Income Tax ask for them and apply them.";
+
 /** The federal income tax tile: giving is an input, wage composition is not. */
 export const OBBBA_DEDUCTIONS_HOW = `${SENIOR}\n\n${CHARITY}\n\n${CAR_LOAN}\n\nTwo other 2026 deductions are not modeled here, so if one applies to you your real tax is lower than this: up to $25,000 of tips (§224), and up to $12,500 of overtime — $25,000 filing jointly — (§225). Take-Home asks for those and applies them.`;
 
