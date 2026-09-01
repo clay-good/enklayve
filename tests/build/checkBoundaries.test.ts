@@ -80,6 +80,25 @@ describe("the baseline", () => {
     expect(againstBaseline([...known, "c.ts:3:<=:0"], known).fresh).toEqual(["c.ts:3:<=:0"]);
   });
 
+  it("says nothing about files a scoped run did not look at", () => {
+    // `--file` checks one file. Reporting every other file's baseline entries
+    // as "held now — remove them from it" is an instruction to empty the
+    // baseline of lines nothing re-examined, after which the next full run
+    // fails on all of them as newly unheld. A run that looked at one file can
+    // say nothing about the others, and saying nothing is the right output.
+    const baseline = ["src/engine/a.ts:1:<=:0", "src/engine/b.ts:2:>=:0"];
+    const scoped = againstBaseline([], baseline, ["src/engine/a.ts"]);
+    expect(scoped.recovered).toEqual(["src/engine/a.ts:1:<=:0"]);
+    // With no scope — the full run — both are genuinely held now.
+    expect(againstBaseline([], baseline).recovered).toEqual(baseline);
+  });
+
+  it("still fails on something newly unheld inside the scope it did check", () => {
+    // Scoping narrows what the run may CLAIM, not what it may catch.
+    const fresh = againstBaseline(["src/engine/a.ts:9:<=:0"], [], ["src/engine/a.ts"]).fresh;
+    expect(fresh).toEqual(["src/engine/a.ts:9:<=:0"]);
+  });
+
   it("notices a boundary that is now held, so the list can shrink", () => {
     expect(againstBaseline(["a.ts:1:<=:0"], ["a.ts:1:<=:0", "b.ts:2:>=:0"]).recovered).toEqual([
       "b.ts:2:>=:0",

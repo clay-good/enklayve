@@ -142,16 +142,31 @@ export function boundariesIn(relPath: string, text: string): Boundary[] {
   return found;
 }
 
-/** Split the unheld boundaries into the known backlog and the ones that just appeared. */
+/**
+ * Split the unheld boundaries into the known backlog and the ones that just
+ * appeared.
+ *
+ * `scope`, when given, is the set of files this run actually checked. Without
+ * it a `--file` run reported every baseline entry from every OTHER file as
+ * "held now — remove them from it": twenty-one lines of instruction that would
+ * have emptied the baseline of entries nothing had re-examined, and the next
+ * full run would then have failed on all of them as newly unheld. A run that
+ * looked at one file can say nothing about the other sixteen, and saying
+ * nothing is the correct output.
+ */
 export function againstBaseline(
   unheld: readonly string[],
   baseline: readonly string[],
+  scope?: readonly string[],
 ): { fresh: string[]; recovered: string[] } {
   const known = new Set(baseline);
   const now = new Set(unheld);
+  const checked = scope ? new Set(scope) : null;
+  const inScope = (id: string): boolean =>
+    checked === null || checked.has(id.slice(0, id.lastIndexOf(".ts:") + 3));
   return {
     fresh: unheld.filter((id) => !known.has(id)).sort(),
-    recovered: baseline.filter((id) => !now.has(id)).sort(),
+    recovered: baseline.filter((id) => inScope(id) && !now.has(id)).sort(),
   };
 }
 
@@ -185,6 +200,8 @@ export function renderReport(
   baseline: readonly string[],
   verdicts: ReadonlyMap<string, Verdict> = new Map(),
   miscalibrated: readonly Boundary[] = [],
+  /** The files this run examined; omitted for a full run over the engine. */
+  scope?: readonly string[],
 ): string {
   const lines = [
     `Flipped ${checked} inclusive/exclusive comparisons in the engine.`,
@@ -198,6 +215,7 @@ export function renderReport(
   const { fresh, recovered } = againstBaseline(
     unheld.map((b) => b.id),
     baseline,
+    scope,
   );
   if (fresh.length > 0) {
     lines.push("", "## Newly unheld", "");
@@ -510,7 +528,10 @@ async function main(): Promise<void> {
     unheld: Record<string, string>;
   };
   const baseline = Object.keys(file.unheld);
-  const report = renderReport(checked, unheld, baseline, verdicts, miscalibrated);
+  // A `--file` run examined one file, so it may only speak about that file. The
+  // full run passes no scope and speaks about everything.
+  const scope = only === -1 ? undefined : files;
+  const report = renderReport(checked, unheld, baseline, verdicts, miscalibrated, scope);
   process.stdout.write(`${report}\n`);
 
   // `--accept` records what this run found, the way the source watch does.
@@ -536,6 +557,7 @@ async function main(): Promise<void> {
   const { fresh } = againstBaseline(
     unheld.map((b) => b.id),
     baseline,
+    scope,
   );
   if (fresh.length > 0) process.exitCode = 1;
 }
