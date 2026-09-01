@@ -255,5 +255,13 @@ export const collegeCostTile: TileDefinition = {
       url: "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/introduction-529-plans-investor-bulletin",
     },
   ],
+  related: [
+    {
+      hubId: "investing",
+      tool: "trump-account",
+      label: "Trump Account (child savings)",
+      note: "the 2026 account for a child under 18, and what it costs in tax at 18",
+    },
+  ],
   mount: mountCollegeCost,
 };

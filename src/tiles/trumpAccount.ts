@@ -221,5 +221,19 @@ export const trumpAccountTile: TileDefinition = {
       url: "https://www.irs.gov/newsroom/treasury-irs-issue-guidance-on-trump-accounts-established-under-the-working-families-tax-cuts-notice-announces-upcoming-regulations",
     },
   ],
+  related: [
+    {
+      hubId: "home-purchases",
+      tool: "college-cost",
+      label: "College Cost & 529 Planner",
+      note: "the other account with a child's name on it, and a different tax deal",
+    },
+    {
+      hubId: "investing",
+      tool: "compound-growth",
+      label: "Compound Growth",
+      note: "the same arithmetic without §530A's cap or its distribution age",
+    },
+  ],
   mount: mountTrumpAccount,
 };
