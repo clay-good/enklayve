@@ -22,7 +22,7 @@ const CHARITY =
 
 /** §163(h)(4), which needs a car loan interest figure and so reaches one tile. */
 const CAR_LOAN =
-  "Tell us the interest you paid on a car loan and we apply §163(h)(4): up to $10,000 a year, falling by $200 for every $1,000 of income — or part of one — over $100,000, or $200,000 on a joint return, so it is gone by $150,000 and $250,000. Unlike the tips and overtime deductions this one is open to a married filer filing separately. It reaches only a loan taken out after 2024, secured by a first lien on a new vehicle assembled in the United States that you drive yourself, and the VIN goes on your return.";
+  "Tell us the interest you paid on a car loan and we apply §163(h)(4): up to $10,000 a year, falling by $200 for every $1,000 of income — or part of one — over $100,000, or $200,000 on a joint return, so it is gone by $150,000 and $250,000. Unlike the tips and overtime deductions this one is open to a married filer filing separately. Because a part of a thousand counts as a whole one, crossing a thousand-dollar line costs the whole $200 — so if you are just above $100,000 the marginal rate here can look startling for the next hundred dollars, and it is real. It reaches only a loan taken out after 2024, secured by a first lien on a new vehicle assembled in the United States that you drive yourself, and the VIN goes on your return.";
 
 /** §224 and §225, which need a breakdown of wages and so reach only take-home. */
 const TIPS_OVERTIME =

@@ -167,6 +167,28 @@ describe("through the whole engine", () => {
     );
   });
 
+  it("makes a $100 raise cost $200 of deduction, and says so in the marginal rate", () => {
+    // The "(or portion thereof)" step is a cliff, not a slope: a filer at
+    // exactly $100,000 who earns one more dollar crosses into the next thousand
+    // and loses the whole $200. The engine measures the marginal rate with a
+    // $100 wage probe, so at that point it reports 73.65% — 29.65% of ordinary
+    // tax and FICA, plus 44% from $200 of deduction lost on $100 of income.
+    //
+    // That number is correct and it is startling, which is the reason for a test
+    // rather than a surprise: it is the shape of the statute, and a reader who
+    // sees it on the Federal Income Tax tile is being told something true about
+    // the next raise. A hundred dollars later the rate is back to 29.65%.
+    const ctx = { federal: ds.federal, fica: ds.fica };
+    const at = (wages: number): number =>
+      evaluateTaxes({ filingStatus: "single", wages, vehicleLoanInterest: 5000 }, ctx).totals
+        .marginalRate;
+    expect(at(100_000)).toBeCloseTo(0.7365, 4);
+    expect(at(100_100)).toBeCloseTo(0.2965, 4);
+    expect(at(101_000)).toBeCloseTo(0.7365, 4);
+    // And below the threshold there is no step at all.
+    expect(at(99_900)).toBeCloseTo(0.2965, 4);
+  });
+
   it("changes nothing for a caller that does not mention it", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 48_000 },
