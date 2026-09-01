@@ -38,6 +38,21 @@ A tile is a self-contained module in [`src/tiles/`](../src/tiles) implementing t
 
 Register it in [`src/tiles/registry.ts`](../src/tiles/registry.ts). The static `/tools.html` index, the per-tile crawlable shells, and the sitemap are generated from the registry at build time, and drift tests assert they list exactly the registry's tiles — so a new tile is picked up automatically once registered.
 
+### What the gates will ask you for
+
+Registering the tile is one line; the suite will then stop you six more times, each with a message naming the file to edit. This is the order they fire in, written down after adding the 69th calculator, so the next person can do the work up front instead of discovering it one red test at a time.
+
+| The gate | What it wants | Where |
+|---|---|---|
+| `readmeCounts` | The calculator count, in **every** phrasing the README uses — a table row, a headline, a mermaid label, the layout table, the bundle note, and the axe line in the launch checklist. It reads them out of the prose and compares against the registry. | `README.md`, `docs/launch-checklist.md` |
+| `watchCoverage` | If you added a **shard**: an adapter, a change-watch entry, or a written reason it needs neither. Nothing may be unwatched silently. | `scripts/refresh/source-watch.json` or `watch-coverage.json` |
+| `observeEngine` | If you added a file under `src/engine`: a probe that exercises it at and around the values its comparisons test. A boundary in an unprobed file cannot be classified. | `scripts/observe-engine.ts` |
+| `numericConstants` | A verdict for every new named numeric constant — a **bound** the code owns, a **figure** somebody legislates, or an **assumption** this site chose. | `tests/build/numericConstants.test.ts` |
+| `toolsIndex` | A `related` link must name a hub that exists and a tool that hub actually holds. A calculator is not a route: it lives at `#/<hub>?tool=<id>`. | your tile's `related` |
+| `audit` | The gzipped precached shell, still inside its budget. A tile with a long explainer and a shard with a long `sourceNote` both cost real bytes. | `npm run audit` |
+
+A new shard is its own short chain, in this order: the JSON in `data/`, a schema in [`src/data/schemas.ts`](../src/data/schemas.ts) **and** an entry in the `SHARD_SCHEMAS` map beside it, a row in [`scripts/build-manifest.ts`](../scripts/build-manifest.ts), then `npm run data:manifest` to write the hash and the manifest, and finally an accessor on [`src/data/browser.ts`](../src/data/browser.ts) so a tile can read it. Miss the accessor and the tile compiles and shows its verify-before-relying banner forever.
+
 ## Adding or refreshing data
 
 See [`adding-a-state.md`](adding-a-state.md) for a jurisdiction and [`data-sources.md`](data-sources.md) for the source list and the fail-safe refresh contract. The rule of thumb: **never ship a number you cannot cite to a public source.** When a figure is too large or too local to bundle, have the user supply that one local number rather than guess — that is why the per-county ACA benchmark (second-lowest-cost silver) premium and the Social Security PIA are user-supplied, not bundled. (The FAFSA SAI + Pell tables *are* now bundled and cited from the ED SAI Formula Guide; only the independent-student variant and per-state aid stay out of scope.)
