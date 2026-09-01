@@ -722,7 +722,7 @@ export function claimPatientResponsibility(input: ClaimShareInput): ClaimShareRe
 /**
  * Remaining loan balance after `monthsPaid` scheduled payments. Closed form:
  * balance = P·(1+i)^k − PMT·((1+i)^k − 1)/i, with a zero-rate branch. Internal
- * helper for {@link rentVsBuy}.
+ * helper for {@link rentVsBuy} and {@link interestPaidOverMonths}.
  */
 function remainingLoanBalance(
   loan: number,
@@ -739,6 +739,41 @@ function remainingLoanBalance(
   const pmt = P.times(r).div(new Decimal(1).minus(r.plus(1).pow(-n)));
   const g = r.plus(1).pow(k);
   return P.times(g).minus(pmt.times(g.minus(1).div(r)));
+}
+
+/**
+ * Interest paid over the first `months` scheduled payments of a loan.
+ *
+ * Every dollar paid that did not reduce the balance: `months × payment` minus
+ * the principal retired. Computed from the same closed-form balance the rest of
+ * this module uses, so it agrees with the amortization schedule rather than
+ * approximating it.
+ *
+ * The reason this exists as its own figure is IRC §163(h)(4), which deducts car
+ * loan interest **paid during the taxable year** — a year of a loan, not the
+ * life of one. The total cost of credit is the number that makes a borrower
+ * think twice; the first twelve months' interest is the number that goes on a
+ * return, and it is the largest year, so it is also the one that says whether
+ * the $10,000 ceiling is anywhere near.
+ *
+ * `months` is clamped to the term: asking for two years of a one-year loan
+ * gets one year of interest, not an invented second.
+ */
+export function interestPaidOverMonths(
+  loan: number,
+  annualRatePct: number,
+  termYears: number,
+  months: number,
+): Money {
+  const n = clampMonths(termYears * 12);
+  const k = Math.min(Math.max(0, Math.round(months)), n);
+  const P = Math.max(0, loan);
+  if (k === 0 || P === 0) return Money.zero();
+  const payment = monthlyMortgagePayment(P, annualRatePct, termYears).roundToCents();
+  const balance = remainingLoanBalance(P, annualRatePct, termYears, k);
+  const principalRetired = new Decimal(P).minus(balance);
+  const interest = payment.multiply(k).subtract(Money.from(principalRetired.toNumber()));
+  return interest.isNegative() ? Money.zero() : interest;
 }
 
 export interface RentVsBuyInput {

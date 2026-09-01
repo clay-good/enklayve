@@ -5,7 +5,7 @@
  * compounds monthly. The rate is the loan's own terms, so nothing to cite.
  */
 import { Money } from "../engine/money";
-import { amortizationSummary } from "../engine/finance";
+import { amortizationSummary, interestPaidOverMonths } from "../engine/finance";
 import { el } from "../ui/dom";
 import { field, parseNonNegative, parseNumber, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
@@ -64,6 +64,8 @@ export function mountAutoLoan(ctx: TileContext): void {
   const fInput = num("f", fields.fees, "Fees and taxes financed", 100);
 
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
+  /** The first twelve months' interest, which is what §163(h)(4) deducts. */
+  let firstYearInterest = Money.zero();
 
   function compute(): void {
     const principal = fields.amount + fields.fees;
@@ -74,12 +76,22 @@ export function mountAutoLoan(ctx: TileContext): void {
       extraMonthly: 0,
     });
     const fmt = (m: Money): string => m.format(ctx.locale);
+    firstYearInterest = interestPaidOverMonths(
+      principal,
+      fields.aprPct,
+      fields.termYears,
+      12,
+    ).roundToCents();
 
     const lines: BreakdownLine[] = [
       { label: "Amount financed", value: fmt(Money.from(principal)) },
       { label: "Monthly payment", value: fmt(r.scheduledPayment), emphasis: true },
       { label: "Total of payments", value: fmt(r.totalPaid) },
       { label: "True cost of credit (interest)", value: fmt(r.totalInterest) },
+      // The deductible figure is a YEAR of interest, not the life of the loan,
+      // and the first year is the largest — so it is both the number that goes
+      // on a return and the one that says whether the $10,000 ceiling is near.
+      { label: "Interest in the first 12 months", value: fmt(firstYearInterest) },
       { label: "Effective annual rate", value: pct(effectiveAnnualRate(fields.aprPct)) },
     ];
 
@@ -127,7 +139,26 @@ export function mountAutoLoan(ctx: TileContext): void {
     field("APR (%)", aprInput),
     field("Term (years)", yInput),
     field("Fees & taxes financed", fInput),
-    el("div", { class: "tile-form-actions" }, tryExample),
+    el(
+      "div",
+      { class: "tile-form-actions" },
+      // The handoff §163(h)(4) needs, carrying the figure rather than asking the
+      // reader to copy it: the deduction is measured on interest paid in the
+      // year, and this tile is the one that knows what that is.
+      el("button", {
+        type: "button",
+        class: "btn-secondary",
+        text: "Deduct this interest",
+        on: {
+          click: () =>
+            ctx.navigate(
+              "federal-income-tax",
+              new URLSearchParams({ carint: String(Math.round(firstYearInterest.toNumber())) }),
+            ),
+        },
+      }),
+      tryExample,
+    ),
   );
 
   root.append(form, resultContainer);
@@ -141,7 +172,7 @@ export const autoLoanTile: TileDefinition = {
   description: "APR to nominal rate and the real cost of borrowing.",
   keywords: ["auto loan", "car", "apr", "credit", "interest", "true cost"],
   status: "ready",
-  how: "We amortize the amount you finance (the price plus any fees and taxes you roll in) at your APR over the term, the same exact month-by-month schedule a lender uses. That gives your monthly payment, the total of all payments, and the true cost of credit, every dollar of interest you'll pay on top of what you borrowed.\n\nThe APR is a yearly rate that's charged monthly, so it quietly compounds to a slightly higher effective annual rate, which we show too. These are your own loan terms, so there's no rule to cite, just the arithmetic.\n\nThe interest may be deductible. IRC §163(h)(4), new for 2025 through 2028, lets you deduct up to $10,000 of car loan interest a year without itemizing, phasing out above $100,000 of income, or $200,000 on a joint return. It reaches only a first-lien loan taken out after 2024 on a new vehicle assembled in the United States that you drive yourself, with the VIN on your return. Take the interest figure below to Federal Income Tax, which asks for it and applies the rule.",
+  how: "We amortize the amount you finance (the price plus any fees and taxes you roll in) at your APR over the term, the same exact month-by-month schedule a lender uses. That gives your monthly payment, the total of all payments, and the true cost of credit, every dollar of interest you'll pay on top of what you borrowed.\n\nThe APR is a yearly rate that's charged monthly, so it quietly compounds to a slightly higher effective annual rate, which we show too. These are your own loan terms, so there's no rule to cite, just the arithmetic.\n\nThe interest may be deductible. IRC §163(h)(4), new for 2025 through 2028, lets you deduct up to $10,000 of car loan interest a year without itemizing, phasing out above $100,000 of income, or $200,000 on a joint return. It reaches only a first-lien loan taken out after 2024 on a new vehicle assembled in the United States that you drive yourself, with the VIN on your return. We show the first twelve months' interest for that reason: the deduction is measured on interest paid **in the tax year**, not over the life of the loan, and the first year is the largest. \"Deduct this interest\" carries that figure to Federal Income Tax, which applies the rule. If your loan did not start in January, the interest inside a single calendar year is smaller than the figure shown.",
   resources: [
     {
       label: "CFPB, auto loans",
