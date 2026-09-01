@@ -231,6 +231,32 @@ function field(
   return { id, label, value, confidence: "high", needsReview: false, target, note };
 }
 
+/**
+ * W-2 box 14b, the Treasury Tipped Occupation Code(s), as written.
+ *
+ * Up to two three-digit codes. Returned as the raw text rather than parsed into
+ * a meaning, because the meaning lives in a Treasury list this repo does not
+ * bundle (IRS.gov/TippedOccupations) — all that can be read here is which codes
+ * the employer wrote, and the one code whose significance is stated in the
+ * instructions themselves is "000".
+ */
+function occupationCodes(text: string): ExtractedField | null {
+  const m = /14b[^0-9]{0,20}(\d{3}(?:[^0-9]{1,10}\d{3})?)/i.exec(text);
+  if (!m?.[1]) return null;
+  const codes: string[] = m[1].match(/\d{3}/g) ?? [];
+  if (codes.length === 0) return null;
+  return {
+    id: "w2-box14b",
+    label: "Treasury Tipped Occupation Code(s) (box 14b)",
+    value: codes.join(", "),
+    confidence: "high",
+    needsReview: false,
+    note: codes.includes("000")
+      ? 'A "000" here means at least some of these tips were received in an occupation that does not qualify for the tips deduction.'
+      : undefined,
+  };
+}
+
 /** Citation for one 1099 variant (INT/DIV/NEC/B), pinned to the revision. */
 function f1099Citation(variant: string): (rev: string) => CitationData {
   return (rev) =>
@@ -306,6 +332,15 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
           amountAfter(text, /17\s*state income tax/i),
           undefined,
         ),
+        // Box 14b — Treasury Tipped Occupation Code(s), also new for 2026 and
+        // the other half of code TP. The instructions: enter up to two codes,
+        // "and if any tips were received in a nonqualifying occupation, then
+        // '000' must be input as one of the occupation code(s)". So this box is
+        // the document's own statement about whether the tips beside it qualify,
+        // which is a thing no amount can say. Read as text, targeting nothing:
+        // it is not a figure the profile has a home for, it is evidence for the
+        // check that reads it.
+        occupationCodes(text),
       ].filter((f): f is ExtractedField => f !== null);
     },
   },

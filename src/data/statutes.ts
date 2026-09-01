@@ -24,3 +24,28 @@ export const HOSPITAL_FAP_CITATION: CitationData = {
   effectiveYear: 2026,
   dateRetrieved: "2026-08-28",
 };
+
+/**
+ * The IRS instruction that gives W-2 box 14b its meaning.
+ *
+ * Cited rather than restated because the rule is one sentence and the whole
+ * weight of the Readout check that uses it rests on that sentence: "If any tips
+ * were received in a nonqualifying occupation, then '000' must be input as one
+ * of the occupation code(s)." That is the document telling us, in the
+ * employer's own hand, that some of the tips beside it fall outside IRC §224 —
+ * the one thing about a tips figure that no amount can say.
+ *
+ * The occupation list itself (IRS.gov/TippedOccupations) is deliberately NOT
+ * bundled: it is a Treasury list that changes by notice, and a stale copy would
+ * let this site tell someone their occupation does not qualify when it does.
+ * The check reads only the code the employer wrote, and only the one code whose
+ * meaning the instructions state.
+ */
+export const TIPPED_OCCUPATION_CITATION: CitationData = {
+  sourceUrl: "https://www.irs.gov/pub/irs-pdf/iw2w3.pdf",
+  sourceDocument: "IRS, General Instructions for Forms W-2 and W-3 (Rev. 1-2026), box 14b",
+  sourceNote:
+    "Box 14b, new for tax year 2026, carries the Treasury Tipped Occupation Code(s) when cash tips are reported in box 12 with code TP. Up to two codes are entered, based on the occupations the tips were received in, and the instructions require that \"if any tips were received in a nonqualifying occupation, then '000' must be input as one of the occupation code(s).\" The deduction itself is IRC §224, which reaches only tips received in an occupation that customarily and regularly received tips before 2025, as published by the Secretary.",
+  effectiveYear: 2026,
+  dateRetrieved: "2026-09-01",
+};

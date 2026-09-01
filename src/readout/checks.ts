@@ -19,6 +19,7 @@
  */
 import type { CitationData, NoSurprisesData } from "../data/schemas";
 import { Money } from "../engine/money";
+import { TIPPED_OCCUPATION_CITATION } from "../data/statutes";
 import type { CheckKind, CheckOutcome, DocKind, ExtractionResult } from "./types";
 
 /**
@@ -122,6 +123,36 @@ function billLines(d: ExtractionResult | null): { label: string; value: number }
  * against fixtures in the meantime, so a rule check cannot land uncited.
  */
 export const CHECKS: CheckDefinition[] = [
+  {
+    // The tips deduction is the one figure on a 2026 W-2 that the form itself
+    // qualifies. Box 12 code TP is "total cash tips reported to the employer";
+    // box 14b says which occupations they were received in, and a "000" there
+    // means at least some of them are outside IRC §224. Without this the
+    // Readout would hand the reader a tips figure their own W-2 says is too
+    // high, and pre-fill a calculator with it.
+    id: "w2-tips-nonqualifying-occupation",
+    kind: "rule",
+    appliesTo: ["w2"],
+    citation: TIPPED_OCCUPATION_CITATION,
+    falsePositive:
+      "An employer who enters 000 alongside a qualifying code may have received only a small share of the tips in the nonqualifying occupation, so most of the figure can still be deductible.",
+    // An OCR misread of three digits must never become a "your tips do not
+    // qualify" claim — and a scan is exactly what turns 008 into 000.
+    suppressOnOcr: true,
+    run: (ctx) => {
+      const d = doc(ctx, "w2");
+      const tips = amount(d, "w2-box12tp");
+      const codes = d?.fields.find((f) => f.id === "w2-box14b")?.value;
+      if (tips === null || typeof codes !== "string") return null;
+      if (!codes.split(/[^0-9]+/).includes("000")) return null;
+      return {
+        question: "Do all of these tips qualify for the deduction?",
+        detail: `Box 12 code TP reports ${usd(tips)} of cash tips, and box 14b includes the code 000 — which the IRS instructions require when any of the tips were received in an occupation that does not qualify. The deductible figure may be smaller than ${usd(tips)}.`,
+        askWho:
+          "Your employer's payroll department, who entered the occupation codes and can say which tips they cover.",
+      };
+    },
+  },
   {
     id: "eob-allowed-splits",
     kind: "arithmetic",

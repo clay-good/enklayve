@@ -246,6 +246,72 @@ describe("Readout v2, what the checks do and do not say", () => {
   });
 });
 
+describe("Readout v2, the W-2 tips occupation check", () => {
+  /** A 2026 W-2 with tips, and the box 14b codes an employer entered. */
+  const w2WithTips = (codes: string): string =>
+    "Form W-2 Wage and Tax Statement 2026 Employer Diner Inc " +
+    "1 Wages, tips, other compensation 48000.00 " +
+    "2 Federal income tax withheld 3100.00 " +
+    "12b TP 14000.00 12c TT 3200.00 " +
+    `14b ${codes} ` +
+    "16 State wages 48000.00 17 State income tax 1400.00";
+
+  const runOn = (text: string, source: "typed" | "ocr" = "typed") => {
+    const d = extractDocument(source === "typed" ? typed(text) : scanned(text));
+    return { d, outcomes: runChecks({ primary: d, documents: [d] }, CHECKS) };
+  };
+
+  it("asks about the tips when box 14b carries the 000 code", () => {
+    // The instructions require 000 when ANY of the tips were received in a
+    // nonqualifying occupation, so the W-2 is telling us the §224 figure is
+    // smaller than box 12 code TP — the one thing an amount cannot say.
+    const { outcomes } = runOn(w2WithTips("000 101"));
+    const fired = outcomes.filter((o) => o.checkId === "w2-tips-nonqualifying-occupation");
+    expect(fired).toHaveLength(1);
+    expect(fired[0]?.question).toMatch(/\?$/);
+    expect(fired[0]?.detail).toContain("$14,000");
+    // A rule check renders only with a citation, and this one's is the IRS
+    // instruction that gives the box its meaning.
+    expect(fired[0]?.citation?.sourceDocument).toMatch(/Forms W-2 and W-3/);
+  });
+
+  it("stays quiet when every occupation code qualifies", () => {
+    const { outcomes } = runOn(w2WithTips("101 102"));
+    expect(outcomes.filter((o) => o.checkId === "w2-tips-nonqualifying-occupation")).toHaveLength(
+      0,
+    );
+  });
+
+  it("stays quiet on a W-2 with no tips at all", () => {
+    const noTips =
+      "Form W-2 Wage and Tax Statement 2026 Employer ABC Inc " +
+      "1 Wages, tips, other compensation 75000.00 2 Federal income tax withheld 9200.00 " +
+      "17 State income tax 3100.00";
+    expect(runOn(noTips).outcomes).toHaveLength(0);
+  });
+
+  it("says nothing about a scanned W-2, where 008 reads as 000", () => {
+    // The whole reason rule checks are suppressed on OCR: three digits are
+    // exactly what a scan gets wrong, and the claim here is about a person's
+    // occupation.
+    const { d, outcomes } = runOn(w2WithTips("000 101"), "ocr");
+    expect(d.source).toBe("ocr");
+    expect(outcomes.filter((o) => o.checkId === "w2-tips-nonqualifying-occupation")).toHaveLength(
+      0,
+    );
+  });
+
+  it("reads the codes as written, and notes the 000", () => {
+    const { d } = runOn(w2WithTips("000 101"));
+    const box14b = d.fields.find((f) => f.id === "w2-box14b");
+    expect(box14b?.value).toBe("000, 101");
+    expect(box14b?.note).toMatch(/do not qualify|does not qualify/);
+    // Not a profile field: there is nowhere for an occupation code to go, and
+    // it exists here as evidence for the check rather than as a value.
+    expect(box14b?.target).toBeUndefined();
+  });
+});
+
 describe("Readout v2, the EOB × medical-bill cross-check (§5)", () => {
   const eob = extractDocument(typed(EOB_CLEAN));
   const bill = extractDocument(typed(BILL_CLEAN));
