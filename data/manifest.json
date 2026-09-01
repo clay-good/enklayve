@@ -351,7 +351,7 @@
       "sourceUrl": "https://tax.colorado.gov/sites/tax/files/documents/Individual_Income_Tax_Guide_January_2026.pdf",
       "sourceDocument": "Colorado DOR Individual Income Tax Guide (revised January 2026) — 4.4% flat rate on federal taxable income",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "2eb3b690d3ac241b6bc13919255d83f8206094027d207b29fb7eef8db744d283"
+      "contentHash": "aad0a6ce3b26ecbccebe317d7fd986c9b37aacfe9a6ac1d9a2ef01174a709544"
     },
     {
       "id": "state-in-income-tax-2024",
@@ -416,7 +416,7 @@
       "sourceUrl": "https://tax.idaho.gov/taxes/income-tax/individual-income/individual-income-tax-rate-schedule/",
       "sourceDocument": "Idaho State Tax Commission Individual Income Tax Rate Schedule — 0% to $4,811 / $9,622, then 5.3% of the excess (HB 40, 2025)",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "14d8c44b754f3ee6ed20869b6bfc2b629dd1116eff0bcd21b7c4c286282214f9"
+      "contentHash": "7f83425504e5600ea1302655bc6ce1c1eeaa33035aefd4cb922b33d0f1482a14"
     },
     {
       "id": "state-ut-income-tax-2024",
@@ -637,7 +637,7 @@
       "sourceUrl": "https://revenue.mt.gov/taxes/individual-income-tax/",
       "sourceDocument": "Montana DOR 2026 rate schedule (HB 337, 2025; MCA §15-30-2103): 4.70% / 5.65% over federal taxable income; conforms to the federal standard deduction",
       "dateRetrieved": "2026-06-06",
-      "contentHash": "1647bd73f7e537983c901b29c1af2544ff5a04a57b6198d4fcf1bcf13b810528"
+      "contentHash": "05d074e088dd6024c01fb40c815b46ed9a3c4030cd8eab1fa110806f89707730"
     },
     {
       "id": "state-me-income-tax-2024",
@@ -663,7 +663,7 @@
       "sourceUrl": "https://www.tax.nd.gov/individual-income-tax",
       "sourceDocument": "North Dakota Tax Commissioner, 2026 ND-1/ND-EZ Tax Rate Schedules (SB 2034): 0% / 1.95% / 2.50% over federal taxable income",
       "dateRetrieved": "2026-06-06",
-      "contentHash": "1532b6481bfe90a8ff7edd0fd028ca414d90a83acf9d0e7ec4267fadfebabc60"
+      "contentHash": "6988b22d0105e47d816e5151427d0d249ec4067c46d45dce507d434d0987be39"
     },
     {
       "id": "state-vt-income-tax-2024",

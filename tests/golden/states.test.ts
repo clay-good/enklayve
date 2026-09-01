@@ -18,6 +18,45 @@ beforeAll(async () => {
 const cents = (m: { roundToCents(): { toString(): string } }): string =>
   m.roundToCents().toString();
 
+describe("states that start from federal taxable income", () => {
+  it("Montana single $60k with $8,000 of tips → $1,687.30, the tips deducted twice", () => {
+    // MCA §15-30-2120(1) starts Montana at federal taxable income, so IRC §224
+    // reaches the state return without Montana legislating anything. Federal:
+    // 60,000 − 16,100 standard − 8,000 tips = 35,900. Montana taxable is the
+    // same 35,900, taxed at 4.70% (the band runs to $47,500) = 1,687.30.
+    // Without the conformity the state would tax 43,900 and charge 2,063.30 —
+    // $376.00 of Montana tax on income Montana does not tax.
+    const ctx = { federal: ds.federal, state: ds.state("mt"), fica: ds.fica };
+    const r = evaluateTaxes({ filingStatus: "single", wages: 60000, qualifiedTips: 8000 }, ctx);
+    expect(cents(r.federal.taxableIncome)).toBe("35900");
+    expect(cents(r.state!.taxableIncome)).toBe("35900");
+    expect(cents(r.state!.incomeTax)).toBe("1687.3");
+    // Federal 10%·12,400 + 12%·23,500 = 4,060; FICA 7.65%·60,000 = 4,590.
+    expect(cents(r.federal.incomeTax)).toBe("4060");
+    expect(cents(r.totals.totalTax)).toBe("10337.3");
+    expect(cents(r.totals.takeHome)).toBe("49662.7");
+  });
+
+  it("the same worker in Colorado keeps the tips and loses the overtime", () => {
+    // C.R.S. §39-22-104(3) as HB25-1296 wrote it: the overtime deduction is
+    // added back for 2026 and later, and the Department's guide says in the
+    // next sentence that tips are not. Colorado is a 4.40% flat rate, so the
+    // add-back is worth exactly 4.40% of the overtime.
+    const ctx = { federal: ds.federal, state: ds.state("co"), fica: ds.fica };
+    const withTips = evaluateTaxes(
+      { filingStatus: "single", wages: 60000, qualifiedTips: 8000 },
+      ctx,
+    );
+    const withOvertime = evaluateTaxes(
+      { filingStatus: "single", wages: 60000, qualifiedOvertime: 8000 },
+      ctx,
+    );
+    expect(cents(withTips.state!.taxableIncome)).toBe("35900");
+    expect(cents(withOvertime.state!.taxableIncome)).toBe("43900");
+    expect(cents(withOvertime.state!.incomeTax.subtract(withTips.state!.incomeTax))).toBe("352");
+  });
+});
+
 describe("graduated states", () => {
   it("California single $50k → $1,192.53 (2025 Schedule X, std deduction $5,706)", () => {
     const r = evaluateTaxes(

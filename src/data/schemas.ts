@@ -361,6 +361,44 @@ export const SteppedIncomeDeductionSchema = z.object({
 });
 export type SteppedIncomeDeductionData = z.infer<typeof SteppedIncomeDeductionSchema>;
 
+/**
+ * Which federal deductions a state inherits because its income tax starts from
+ * FEDERAL TAXABLE INCOME rather than from federal adjusted gross income.
+ *
+ * §63(b) subtracts seven things from AGI to reach taxable income, and five of
+ * them are the One Big Beautiful Bill Act's new deductions. A state whose
+ * starting point is that figure has already given them, without legislating
+ * anything, unless it adds them back — so for a tipped worker in North Dakota
+ * the federal deduction is a state deduction too, and an engine that stops at
+ * the standard deduction charges them state tax they do not owe.
+ *
+ * Five booleans rather than one, because the answer is not uniform even within
+ * one state: Colorado adds back the overtime deduction (C.R.S. §39-22-104(3),
+ * HB25-1296) and its own guide says in the same paragraph that no addback is
+ * required for tips. And required rather than optional, because a state that
+ * carries this block has to answer for each — the next new §63(b) paragraph
+ * should break the build rather than be silently inherited.
+ *
+ * Absence is the answer for every other state, and it is a different answer
+ * from "all false": New Mexico starts from federal ADJUSTED GROSS income and
+ * subtracts "an amount equal to the standard deduction allowed ... by Section
+ * 63" (NMSA 1978 §7-2-2(N)), which is §63(c) alone. Nothing in §63(b) reaches
+ * it, so there is no conformity question to answer there.
+ */
+export const FederalDeductionConformitySchema = z.object({
+  /** §63(b)(4), IRC §170(p): giving deducted without itemizing. */
+  nonItemizerCharitable: z.boolean(),
+  /** §63(b)(2), IRC §151(d)(5)(C): the deduction at 65. */
+  senior: z.boolean(),
+  /** §63(b)(5), IRC §224: qualified tips. */
+  qualifiedTips: z.boolean(),
+  /** §63(b)(6), IRC §225: qualified overtime. */
+  qualifiedOvertime: z.boolean(),
+  /** §63(b)(7), IRC §163(h)(4): qualified car loan interest. */
+  vehicleLoanInterest: z.boolean(),
+});
+export type FederalDeductionConformityData = z.infer<typeof FederalDeductionConformitySchema>;
+
 export const SaltLimitationSchema = z.object({
   applicableLimitationAmount: z.number().gt(0),
   thresholdAmount: z.number().gt(0),
@@ -518,6 +556,12 @@ export const JurisdictionSchema = z.object({
   qualifiedOvertimeDeduction: SteppedIncomeDeductionSchema.optional(),
   /** IRC §163(h)(4), qualified passenger vehicle loan interest (federal only). */
   vehicleLoanInterestDeduction: SteppedIncomeDeductionSchema.optional(),
+  /**
+   * Present only on a state whose taxable income starts from FEDERAL TAXABLE
+   * INCOME, which is what makes the federal §63(b) deductions its deductions
+   * too. Absent everywhere else, including the federal shard.
+   */
+  federalDeductionConformity: FederalDeductionConformitySchema.optional(),
   citation: CitationSchema,
   effectiveDateRange: z.object({
     start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

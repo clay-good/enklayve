@@ -121,13 +121,42 @@ function computeFederal(
   };
 }
 
+/**
+ * The federal deductions a state inherits because it starts from federal
+ * taxable income (see FederalDeductionConformitySchema). Zero for every state
+ * that starts from AGI, which is the answer for all but a handful.
+ *
+ * The amounts are the FEDERAL ones, unchanged: the state is not applying the
+ * rule, it is starting from a figure the rule has already been applied to.
+ */
+function conformedFederalDeductions(
+  state: Jurisdiction,
+  federal: DeductionResult,
+): Pick<
+  DeductionResult,
+  "nonItemizedCharitable" | "senior" | "qualifiedTips" | "qualifiedOvertime" | "vehicleLoanInterest"
+> {
+  const c = state.federalDeductionConformity;
+  const take = (allowed: boolean | undefined, amount: Money): Money =>
+    allowed ? amount : Money.zero();
+  return {
+    nonItemizedCharitable: take(c?.nonItemizerCharitable, federal.nonItemizedCharitable),
+    senior: take(c?.senior, federal.senior),
+    qualifiedTips: take(c?.qualifiedTips, federal.qualifiedTips),
+    qualifiedOvertime: take(c?.qualifiedOvertime, federal.qualifiedOvertime),
+    vehicleLoanInterest: take(c?.vehicleLoanInterest, federal.vehicleLoanInterest),
+  };
+}
+
 function computeState(
   input: TaxInput,
   agi: Money,
   state: Jurisdiction,
-  federalDeduction: Money,
+  federalDeductionResult: DeductionResult,
   federalIncomeTax: Money,
 ): { computation: JurisdictionComputation; localLines: LocalTaxLine[] } {
+  const federalDeduction = federalDeductionResult.amount;
+  const conformed = conformedFederalDeductions(state, federalDeductionResult);
   if (!state.hasIncomeTax) {
     return {
       computation: {
@@ -193,8 +222,15 @@ function computeState(
   // AGI-phased (Oregon, ORS §316.680/§316.695). Zero where the state has no such
   // deduction. Subtracted before the brackets, like the standard deduction.
   const fedTaxDeduction = federalTaxDeductionFor(state, input.filingStatus, federalIncomeTax, agi);
+  // A federal-taxable-income state starts below the federal §63(b) deductions,
+  // so they come off here too — as the federal figures, not recomputed.
+  const conformedTotal = conformed.nonItemizedCharitable
+    .add(conformed.senior)
+    .add(conformed.qualifiedTips)
+    .add(conformed.qualifiedOvertime)
+    .add(conformed.vehicleLoanInterest);
   const taxableIncome = clampZero(
-    agi.subtract(standard).subtract(exemption).subtract(fedTaxDeduction),
+    agi.subtract(standard).subtract(exemption).subtract(fedTaxDeduction).subtract(conformedTotal),
   );
 
   let incomeTax = bracketTax(taxableIncome, bracketsFor(state, input.filingStatus));
@@ -261,13 +297,10 @@ function computeState(
       deduction: {
         kind: "standard",
         amount: standard.add(exemption).add(fedTaxDeduction),
-        // §170(p), §151(d)(5)(C), §§224/225 and §163(h)(4) are federal. No
-        // state carries any of these rules, so all are zero on a state line.
-        nonItemizedCharitable: Money.zero(),
-        senior: Money.zero(),
-        qualifiedTips: Money.zero(),
-        qualifiedOvertime: Money.zero(),
-        vehicleLoanInterest: Money.zero(),
+        // No state legislates §170(p), §151(d)(5)(C), §§224/225 or §163(h)(4).
+        // A state that starts from federal taxable income inherits them anyway,
+        // and reports the inherited amounts here; every other state reports zero.
+        ...conformed,
       },
       incomeTax,
     },
@@ -298,7 +331,7 @@ function computeBreakdown(input: TaxInput, ctx: TaxContext): Breakdown {
   let state: JurisdictionComputation | null = null;
   let localLines: LocalTaxLine[] = [];
   if (ctx.state) {
-    const s = computeState(input, agi, ctx.state, federal.deduction.amount, federal.incomeTax);
+    const s = computeState(input, agi, ctx.state, federal.deduction, federal.incomeTax);
     state = s.computation;
     localLines = s.localLines;
   }
