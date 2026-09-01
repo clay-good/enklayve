@@ -1,10 +1,15 @@
 /**
  * The source watch: shards whose sources must be READ on a change, not parsed.
  *
- * Six hand-authored Pillar 4 shards (SPEC-4 §10.7) and, since 2026-08-30, one
- * tax shard — Delaware, whose standard deduction is statutory and unindexed, so
- * there is no annual figure for an adapter to anchor and a change to it is an
- * amendment somebody has to read.
+ * Six hand-authored Pillar 4 shards (SPEC-4 §10.7) and, since 2026-08-30, a
+ * growing set of tax shards. Delaware was the first — its standard deduction is
+ * statutory and unindexed, so there is no annual figure for an adapter to anchor
+ * and a change to it is an amendment somebody has to read — and the same shape
+ * has since taken in the federal statutes (§164's SALT limitation, §163(h)(4)'s
+ * car loan deduction, and §63(b)'s list of what a filer subtracts without
+ * itemizing) and the six states whose income tax starts at federal taxable
+ * income, where the question watched is not a figure at all but whether the
+ * state still inherits the federal deduction.
  *
  * The existing data-refresh pipeline fetches a source, *parses figures out of
  * it*, and opens a PR with the new numbers. That is exactly right for a bracket
@@ -223,12 +228,29 @@ export function renderWatchReport(results: WatchResult[], today: string): string
   return lines.join("\n");
 }
 
+/**
+ * The identity of a watch entry: a shard AND a url, not a shard.
+ *
+ * One shard can be watched at more than one source, and the federal income tax
+ * shard is watched at three — §164 for the SALT limitation, §163 for the car
+ * loan deduction, §63 for the list of deductions a filer takes without
+ * itemizing, which is also the list six states inherit. Keying the accept step
+ * by shard alone wrote whichever result came last onto every entry for that
+ * shard, so accepting a real change to one statute silently stamped its
+ * fingerprint onto another statute nobody had read. The entry that lost then
+ * reports "changed" against text that never moved, which is the failure mode
+ * this watch exists to be trusted against.
+ */
+function entryKey(e: { shard: string; url: string }): string {
+  return `${e.shard}\n${e.url}`;
+}
+
 /** Apply new fingerprints to the watch file (the `--accept` path). */
 export function acceptChanges(file: WatchFile, results: WatchResult[], today: string): WatchFile {
-  const byShard = new Map(results.map((r) => [r.shard, r]));
+  const byEntry = new Map(results.map((r) => [entryKey(r), r]));
   return {
     entries: file.entries.map((entry) => {
-      const r = byShard.get(entry.shard);
+      const r = byEntry.get(entryKey(entry));
       return r?.status === "changed"
         ? { ...entry, fingerprint: r.fingerprint, checkedOn: today }
         : entry;

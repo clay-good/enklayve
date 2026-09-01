@@ -178,6 +178,43 @@ describe("accepting a reviewed change", () => {
     expect(next.entries[0]?.checkedOn).toBe("2026-10-08");
     expect(next.entries[1]).toEqual(FIXTURE.entries[1]);
   });
+
+  it("keeps two watches on one shard apart", () => {
+    // The federal income tax shard is watched at three statutes. Accepting by
+    // shard alone stamped the last result onto every entry for that shard, so a
+    // change read in one statute silently marked another as reviewed — and the
+    // entry that lost then reported "changed" against text nobody had touched.
+    const twice: WatchFile = {
+      entries: [
+        {
+          shard: "federal-income-tax-2024",
+          url: "https://example.gov/salt",
+          why: "the SALT limitation is statutory",
+          fingerprint: fingerprint(page("The applicable limitation amount is $40,400.")),
+          checkedOn: "2026-09-01",
+        },
+        {
+          shard: "federal-income-tax-2024",
+          url: "https://example.gov/car",
+          why: "the car loan deduction is statutory",
+          fingerprint: fingerprint(page("Qualified passenger vehicle loan interest.")),
+          checkedOn: "2026-09-01",
+        },
+      ],
+    };
+    const results = planWatch(
+      twice,
+      fetched(
+        ["https://example.gov/salt", page("The applicable limitation amount is $40,400.")],
+        ["https://example.gov/car", page("The limitation is now $12,000.")],
+      ),
+    );
+    const next = acceptChanges(twice, results, "2026-10-08");
+    // The statute that did not move keeps its fingerprint AND its review date.
+    expect(next.entries[0]).toEqual(twice.entries[0]);
+    expect(next.entries[1]?.fingerprint).not.toBe(twice.entries[1]?.fingerprint);
+    expect(next.entries[1]?.checkedOn).toBe("2026-10-08");
+  });
 });
 
 describe("the committed watch list", () => {

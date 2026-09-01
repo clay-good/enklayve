@@ -104,6 +104,62 @@
       "why": "The SAI tables are reissued each award year in the ED SAI Formula Guide, a PDF at a new path, and the Knowledge Center pages that would list it render client-side and return less visible text than the watch's own interstitial floor — so there is nothing there for a fingerprint to hold, and the annual tables stay a reviewer's transcription. This watches the formula instead: HEA §475, 20 U.S.C. §1087oo, which defines the student aid index and its allowances against income — the payroll-tax allowance, the income protection allowance, the employment expense allowance. An amendment there changes what the estimate MEANS, not just its numbers, and this shard's own note already warns the reader to check against the official guide.",
       "fingerprint": "5ae85a3bdac6f6efc42df75ef8b3f39f32d7a3c5c075b9e1669a6b800a09dff6",
       "checkedOn": "2026-09-01"
+    },
+    {
+      "shard": "federal-income-tax-2024",
+      "url": "https://www.law.cornell.edu/uscode/text/26/163",
+      "why": "IRC §163(h)(4), the deduction for qualified passenger vehicle loan interest, is statutory and unindexed like the SALT limitation beside it: $10,000, reduced by $200 for each $1,000 (or portion thereof) of modified AGI over $100,000 or $200,000 joint, for taxable years beginning after December 31, 2024 and before January 1, 2029. There is no annual figure for an adapter to chase and the section carries its own sunset, so what a person needs to be told is that the text moved — including the day it expires and the shard should stop carrying the rule at all. Second watch on this shard, at a different statute from §164.",
+      "fingerprint": "f7a03a18be8fb77f4f9095a137819878925b58a6324d350baf963813b4770713",
+      "checkedOn": "2026-09-01"
+    },
+    {
+      "shard": "federal-income-tax-2024",
+      "url": "https://www.law.cornell.edu/uscode/text/26/63",
+      "why": "§63(b) is the list, and the list is load-bearing twice over. It names what a filer who does not itemize subtracts from adjusted gross income — paragraphs (4) through (7) are §170(p), §224, §225 and §163(h)(4), the four of the Act's five new deductions that reach a non-itemizer — and because it defines federal TAXABLE income it is also the list that six states inherit by starting there. A new paragraph in §63(b) is therefore a change to Colorado, Idaho, Iowa, Montana, North Dakota and Oregon that none of those states legislated, and nothing else in this repo would see it. Third watch on this shard: §164 for the cap, §163 for the car loan, §63 for the list itself.",
+      "fingerprint": "111f2dcdfdae5aff431676b1c6c3d916dc8aed9697e691cb2260b0ead61573c5",
+      "checkedOn": "2026-09-01"
+    },
+    {
+      "shard": "state-co-income-tax-2024",
+      "url": "https://tax.colorado.gov/individual-income-tax-guide",
+      "why": "The Department's own guide is where Colorado states both halves of the conformity answer this shard encodes: that \"Colorado income tax is based generally on federal taxable income\", and which federal deductions must be added back — overtime for 2026 and later under HB25-1296, and, in the next sentence, that no addback is required for qualified tips. That is prose, not a table: an addback added or repealed is a sentence somebody has to read, and it changes the state tax of every tipped or hourly filer in Colorado. The bracket figures this shard also carries are the flat rate, which the state adapter handles; this watches the part no parser should touch.",
+      "fingerprint": "390e45c54def44eea94da85588921d33ed42db4d0bebbafea216097b2af01791",
+      "checkedOn": "2026-09-01"
+    },
+    {
+      "shard": "state-ia-income-tax-2024",
+      "url": "https://revenue.iowa.gov/taxes/tax-guidance/withholding-tax/impact-one-big-beautiful-bill-act-employee-withholding",
+      "why": "The page where Iowa says, in its own words, that \"the starting point for Iowa taxable income is federal taxable income\", that it has adopted rolling conformity, and that it will conform with tips, overtime, car loan interest and the senior deduction. Rolling conformity is the thing to watch precisely because it needs no Iowa bill to change what Iowa taxes — the exception list does, and this is the page that carries it.",
+      "fingerprint": "3bfd23bb358a04da065377604abdfe7b280dcbb5996016de8ff47ee2b63e756a",
+      "checkedOn": "2026-09-01"
+    },
+    {
+      "shard": "state-id-income-tax-2024",
+      "url": "https://legislature.idaho.gov/statutesrules/idstat/Title63/T63CH30/SECT63-3004/",
+      "why": "Idaho conforms STATICALLY, so §63-3004 is a date that moves by bill: today it adopts the Code \"as amended and in effect on the first day of January 2026\", which is what carries the One Big Beautiful Bill Act's deductions into Idaho. The same section is where a decoupling would be written — it already carves out §85 and the research expensing in §70302 of Pub. L. 119-21. A state whose conformity is a date is the one state where nothing changing federally still changes the answer, and the other way round.",
+      "fingerprint": "fd0ed7dbd9f9d04877a0c89312a015ac8070fd94f20a9e8e52fc60d4df496c1a",
+      "checkedOn": "2026-09-01"
+    },
+    {
+      "shard": "state-mt-income-tax-2024",
+      "url": "https://mca.legmt.gov/bills/mca/title_0150/chapter_0300/part_0210/section_0200/0150-0300-0210-0200.html",
+      "why": "MCA §15-30-2120 is both halves of Montana's answer in one section: subsection (1) starts Montana at federal taxable income, and subsection (2) lists the additions — today §199A and the §164(a)(3) state income tax deduction, neither of which reaches the Act's new deductions. A new subparagraph in (2) is how Montana would take one of them back, and it is a sentence rather than a figure.",
+      "fingerprint": "bb7b9291926d3cf3dd065e486d7352e3820581fe123320e70a341c929011d629",
+      "checkedOn": "2026-09-01"
+    },
+    {
+      "shard": "state-nd-income-tax-2024",
+      "url": "https://ndlegis.gov/cencode/t57c38.pdf",
+      "why": "N.D.C.C. §57-38-30.3(2) defines North Dakota taxable income as \"the federal taxable income ... as computed under the Internal Revenue Code of 1986, as amended\", adjusted by nine subdivisions — rolling conformity stated inside the rate section itself, which is what makes the federal deductions North Dakota's. The state publishes its Century Code as a chapter PDF, so this watch is chapter-wide and will fire for any amendment anywhere in 57-38, not only this subsection. That is the honest trade: the narrower page does not exist, and a chapter that changes rarely is worth re-reading when it does.",
+      "fingerprint": "5c1e1ee220ef8f8297c74993e32994f26e653fd02e0fc6b8489310e052f16366",
+      "checkedOn": "2026-09-01"
+    },
+    {
+      "shard": "state-or-income-tax-2024",
+      "url": "https://www.oregonlegislature.gov/bills_laws/ors/ors316.html",
+      "why": "Oregon starts at federal taxable income (ORS 316.048) and takes exactly one of the Act's deductions back: enrolled SB 1507 (2026, ch. 142) §2 adds qualified passenger vehicle loan interest under §163(h)(4) back to federal taxable income for tax years beginning on or after January 1, 2026. That section is not yet codified in the chapter, which is the reason to watch the chapter rather than a section: the next addback, and this one's codification, both land here. Chapter-wide, so it will fire for unrelated amendments — accepted for the same reason as North Dakota, that the narrow page does not exist.",
+      "fingerprint": "b9d768f8b9394005325709db9d2414ae34f4778000f2e0c5d6ab39ebb9e45b8b",
+      "checkedOn": "2026-09-01"
     }
   ]
 }
