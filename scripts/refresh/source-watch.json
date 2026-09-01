@@ -83,6 +83,13 @@
       "why": "The full-retirement-age schedule is statutory (42 U.S.C. 416(l)) and keyed to year of birth, so it does not index and has not moved since the 1983 amendments — Delaware's shape again, where a change is an amendment somebody reads. The figures that DO move annually, the wage base and the COLA, live in fica-2024 and the SSA adapter watches those; this shard holds only the part that does not move, which is exactly why nothing was watching it.",
       "fingerprint": "a317bf5faf07547d66e7e0c84841c3eb724c6d50b9dcc4a41b284b03f0076ccd",
       "checkedOn": "2026-08-30"
+    },
+    {
+      "shard": "federal-income-tax-2024",
+      "url": "https://www.law.cornell.edu/uscode/text/26/164",
+      "why": "The SALT limitation is statutory, not indexed, and it is on a written schedule: IRC §164(b)(7)(A) sets $40,000 for 2025 and $40,400 for 2026, then 101 percent of the prior year through 2029, then back to $10,000. So there is no annual figure for an adapter to chase and every step is a transcription somebody makes deliberately — Delaware's shape, at the statute rather than at a revenue procedure. It is watched at all because the last version of this figure was a constant in the engine with nothing behind it, which is how it stayed at $10,000 for two years after the One Big Beautiful Bill Act replaced it, understating the deduction for anyone itemizing more than $10,000 of state and local tax.",
+      "fingerprint": "e8cd43a37c6c38bd54e22f14396428ba02911ac6c3528576b1d0d2b081a58352",
+      "checkedOn": "2026-09-01"
     }
   ]
 }

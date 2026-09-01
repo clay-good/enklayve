@@ -234,6 +234,41 @@ export type StandardDeductionPhaseOutData = z.infer<typeof StandardDeductionPhas
  * interaction automatically). The federal tax used is pre-credit, matching the
  * launch-fidelity convention elsewhere in the engine.
  */
+/**
+ * The federal cap on the state-and-local-tax itemized deduction, IRC §164(b)(6)
+ * and (b)(7).
+ *
+ * This was a constant in the engine — `SALT_CAP = 10000` — with no citation and
+ * no shard behind it, which is the §A4 magic-number anti-pattern in its most
+ * expensive form: the figure moved and the constant did not. The One Big
+ * Beautiful Bill Act rewrote §164(b)(6) to cap SALT at an "applicable limitation
+ * amount" of $40,000 for 2025 and $40,400 for 2026, rising 1% a year through
+ * 2029 and reverting to $10,000 after. The federal shard had already been
+ * refreshed to Rev. Proc. 2025-32 "reflecting the One Big Beautiful Bill Act";
+ * the constant beside it still said $10,000, so a 2026 filer itemizing $30,000
+ * of state and local tax was shown $20,000 less deduction than the law allows.
+ *
+ * Every field is a separate sentence of the statute, so a future amendment
+ * changes data rather than code:
+ *   (b)(7)(A)     the applicable limitation amount for this tax year
+ *   (b)(7)(B)(i)  reduced by 30% of MAGI over the threshold
+ *   (b)(7)(B)(ii) the threshold amount for this tax year
+ *   (b)(7)(B)(iii) and never reduced below $10,000
+ *   (b)(6)(B)     half of everything for a married individual filing separately
+ */
+/** The federal jurisdiction's shard id, the one shard that must carry a SALT limitation. */
+export const FEDERAL_JURISDICTION_ID = "US";
+
+export const SaltLimitationSchema = z.object({
+  applicableLimitationAmount: z.number().gt(0),
+  thresholdAmount: z.number().gt(0),
+  phasedownRate: z.number().gte(0).lte(1),
+  floor: z.number().gte(0),
+  /** The share a married-filing-separately return gets of the cap and threshold. */
+  marriedSeparatelyShare: z.number().gt(0).lte(1),
+});
+export type SaltLimitationData = z.infer<typeof SaltLimitationSchema>;
+
 export const FederalTaxDeductionSchema = z
   .object({
     /** Cap on the deductible federal tax, by filing status. Omit → uncapped (Alabama). */
@@ -361,12 +396,34 @@ export const JurisdictionSchema = z.object({
   incomeRecapture: IncomeRecaptureSchema.optional(),
   /** A percent-of-tax personal credit that slides down with AGI (Connecticut's Table E). */
   personalCreditRate: PersonalCreditRateSchema.optional(),
+  /**
+   * The federal SALT cap (IRC §164(b)(6)-(7)). Optional on the shared schema
+   * because it is a federal figure and no state carries one — but REQUIRED on
+   * the federal shard, enforced below. That is the A6/A7 remedy: a federal
+   * shard without it fails validation, the loader marks it invalid, and the
+   * tiles show their verify-before-relying banner. The alternative is an engine
+   * that substitutes a plausible literal, which is how the figure went two
+   * years stale in the first place.
+   */
+  saltLimitation: SaltLimitationSchema.optional(),
   citation: CitationSchema,
   effectiveDateRange: z.object({
     start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   }),
-});
+})
+  .superRefine((j, ctx) => {
+    // The federal shard must state its SALT limitation. See the note on the
+    // field: the engine has no literal to fall back on any more, and a shard
+    // that cannot answer must fail loudly rather than be answered for.
+    if (j.id === FEDERAL_JURISDICTION_ID && !j.saltLimitation) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["saltLimitation"],
+        message: "the federal shard must state its SALT limitation (IRC §164(b)(6)-(7))",
+      });
+    }
+  });
 export type Jurisdiction = z.infer<typeof JurisdictionSchema>;
 
 // --- The remaining §7.2 dataset kinds. These are deliberately concise; each is

@@ -371,8 +371,8 @@ describe("§D coverage gaps (correct today, now pinned against future edits)", (
   it("itemizedTotal never lets the medical deduction exceed actual expenses at negative AGI", () => {
     // A large above-the-line adjustment can push AGI negative; the 7.5% floor must
     // not turn into a negative number that *inflates* the deduction.
-    const withNegAgi = itemizedTotal({ medicalExpenses: 5_000 }, Money.from(-40_000));
-    const withZeroAgi = itemizedTotal({ medicalExpenses: 5_000 }, Money.zero());
+    const withNegAgi = itemizedTotal({ medicalExpenses: 5_000 }, Money.from(-40_000), Infinity);
+    const withZeroAgi = itemizedTotal({ medicalExpenses: 5_000 }, Money.zero(), Infinity);
     expect(withNegAgi.toNumber()).toBe(5_000); // whole expense, no more
     expect(withZeroAgi.toNumber()).toBe(5_000);
   });

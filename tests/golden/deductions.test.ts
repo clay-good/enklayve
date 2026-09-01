@@ -14,9 +14,9 @@ const cents = (m: { roundToCents(): { toString(): string } }): string =>
   m.roundToCents().toString();
 
 describe("itemizedTotal (big four)", () => {
-  it("caps SALT at $10,000 and applies the 7.5% medical floor", () => {
-    // SALT 20,000 → 10,000; mortgage 18,000; charitable 5,000; medical 5,000 with
-    // AGI 200,000 floor 15,000 → 0. Total 33,000.
+  it("caps SALT at the cap it is given and applies the 7.5% medical floor", () => {
+    // SALT 20,000 against a 10,000 cap → 10,000; mortgage 18,000; charitable
+    // 5,000; medical 5,000 with AGI 200,000 floor 15,000 → 0. Total 33,000.
     const total = itemizedTotal(
       {
         stateAndLocalTaxes: 20000,
@@ -25,13 +25,14 @@ describe("itemizedTotal (big four)", () => {
         medicalExpenses: 5000,
       },
       Money.from(200000),
+      10000,
     );
     expect(cents(total)).toBe("33000");
   });
 
   it("counts medical above the floor", () => {
     // AGI 100,000 floor 7,500; medical 30,000 → 22,500 deductible.
-    const total = itemizedTotal({ medicalExpenses: 30000 }, Money.from(100000));
+    const total = itemizedTotal({ medicalExpenses: 30000 }, Money.from(100000), Infinity);
     expect(cents(total)).toBe("22500");
   });
 });
@@ -47,9 +48,14 @@ describe("auto deduction picks the larger", () => {
       { federal: ds.federal, fica: ds.fica },
     );
     expect(r.federal.deduction.kind).toBe("itemized");
-    expect(cents(r.federal.deduction.amount)).toBe("33000");
-    // taxable 167,000 → $32,678.00.
-    expect(cents(r.federal.incomeTax)).toBe("32678");
+    // SALT 20,000 counts in full: the 2026 cap is $40,400, not $10,000. This
+    // case read 33,000 and $32,678 until 2026-09-01, because the engine held a
+    // flat `SALT_CAP = 10000` that the One Big Beautiful Bill Act had replaced —
+    // $2,400 of federal tax this filer does not owe, on a worked example the
+    // corpus had been checking for months.
+    expect(cents(r.federal.deduction.amount)).toBe("43000");
+    // taxable 157,000 → $30,278.00.
+    expect(cents(r.federal.incomeTax)).toBe("30278");
   });
 
   it("falls back to the standard deduction when itemized is smaller", () => {

@@ -16,7 +16,7 @@ export { computeFica, selfEmploymentTax, type SelfEmploymentTaxResult } from "./
 export {
   chooseFederalDeduction,
   itemizedTotal,
-  SALT_CAP,
+  saltCapFor,
   MEDICAL_AGI_FLOOR_RATE,
 } from "./deductions";
 export type {

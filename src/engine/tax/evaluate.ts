@@ -11,7 +11,7 @@ import {
   standardDeductionPhaseOutFor,
   taxpayerCreditBaseFor,
 } from "./brackets";
-import { chooseFederalDeduction } from "./deductions";
+import { chooseFederalDeduction, saltCapFor } from "./deductions";
 import { computeFica } from "./fica";
 import type {
   DeductionResult,
@@ -59,6 +59,7 @@ function computeFederal(
     standard,
     input.itemized ?? {},
     agi,
+    saltCapFor(federal.saltLimitation, input.filingStatus, agi),
   );
   const taxableIncome = clampZero(agi.subtract(deduction.amount));
   const incomeTax = bracketTax(taxableIncome, bracketsFor(federal, input.filingStatus));
