@@ -508,6 +508,15 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
     el("span", { class: "home-budget__row-name", text: "Taxes (estimated for you)" }),
     taxesValue,
   );
+  // This budget asks for four things on purpose, so it cannot know about tips,
+  // overtime, a car loan, giving, or who on the return is 65 — and every one of
+  // those makes the tax slice above smaller than the one a reader actually owes.
+  // The four calculators that run this same engine say so; the surface most
+  // people see first said nothing, which is the wrong way round.
+  const taxesNote = el("p", {
+    class: "home-budget__hint",
+    text: "This estimate is from your income, filing status and state alone. Five deductions new for 2026 — tips, overtime, car loan interest, being 65, and giving without itemizing — would make it smaller. Take-Home and Federal Income Tax ask for them.",
+  });
 
   const groupLabel = (text: string): HTMLElement => el("p", { class: "home-budget__group", text });
 
@@ -523,6 +532,7 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
       stateCode = v;
     }),
     taxesRow,
+    taxesNote,
     groupLabel("Living expenses"),
     ...BUDGET_SPEND_ROWS.map((r) =>
       numRow(r.label, spend[r.key]!, color[r.key]!, 50, (n) => {

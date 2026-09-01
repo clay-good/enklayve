@@ -18,6 +18,7 @@ import { resolve } from "node:path";
  * say you did not. This fails when the seventh tile calls the engine.
  */
 const TILES = resolve(__dirname, "..", "..", "src", "tiles");
+const SHELL = resolve(__dirname, "..", "..", "src", "ui", "shell.ts");
 
 /** Names the shared explainers; a tile satisfies the rule by using one. */
 const DISCLOSURES = [
@@ -55,6 +56,19 @@ describe("every tile that computes federal income tax", () => {
         " nobody: import OBBBA_DEDUCTIONS_NOT_MODELED from ./deductionCopy into the `how`," +
         " or ask for the inputs and apply them",
     ).toEqual([]);
+  });
+
+  it("covers the home budget too, which is not a tile and computes the same tax", () => {
+    // The scope hole this test shipped with. `src/tiles` is where calculators
+    // live, and the anti-budget on the home page is not one of them — it runs
+    // the same `evaluateTaxes` from the shell, from an income, a filing status
+    // and a state, and it is the first thing most readers see. It was showing a
+    // tax slice larger than a tipped or hourly worker owes, and saying nothing,
+    // which is the omission this whole test exists to catch.
+    const shell = readFileSync(SHELL, "utf8");
+    expect(shell).toContain("evaluateTaxes(");
+    expect(shell).toMatch(/tips, overtime, car loan interest/);
+    expect(shell).toMatch(/Take-Home and Federal Income Tax/);
   });
 
   it("does not let a tile that asks for nothing claim it applies them", () => {
