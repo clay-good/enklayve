@@ -174,7 +174,25 @@ describe("recovering from a run that was killed mid-rewrite", () => {
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), "boundary-journal-"));
     journal = join(dir, "journal.json");
-    const git = (...args: string[]) => execFileSync("git", args, { cwd: dir, stdio: "ignore" });
+    // The fixture repo must not inherit the developer's git config. This one
+    // failed intermittently on a machine with `commit.gpgsign = true` set
+    // globally: `git commit` in the throwaway repo tried to reach a signing
+    // key, and under concurrency the agent sometimes did not answer — a test
+    // about restoring a file, failing because of somebody's GPG setup, and
+    // passing in CI where no key is configured. Pointing the global and system
+    // config at /dev/null makes the fixture depend on nothing but git itself,
+    // which also settles hooks paths, commit templates and autocrlf.
+    const git = (...args: string[]) =>
+      execFileSync("git", args, {
+        cwd: dir,
+        stdio: "ignore",
+        env: {
+          ...process.env,
+          GIT_CONFIG_GLOBAL: "/dev/null",
+          GIT_CONFIG_SYSTEM: "/dev/null",
+          GIT_TERMINAL_PROMPT: "0",
+        },
+      });
     git("init", "-q");
     git("config", "user.email", "t@example.com");
     git("config", "user.name", "t");
