@@ -205,6 +205,36 @@ const BOUND: Bound[] = [
     shard: "federal-income-tax-2024",
     path: ".seniorDeduction.thresholdJointReturn",
   },
+  {
+    file: "deductionCopy.ts",
+    shard: "federal-income-tax-2024",
+    path: ".qualifiedTipsDeduction.cap",
+  },
+  {
+    file: "deductionCopy.ts",
+    shard: "federal-income-tax-2024",
+    path: ".qualifiedOvertimeDeduction.cap",
+  },
+  {
+    file: "deductionCopy.ts",
+    shard: "federal-income-tax-2024",
+    path: ".qualifiedOvertimeDeduction.capJointReturn",
+  },
+  {
+    file: "deductionCopy.ts",
+    shard: "federal-income-tax-2024",
+    path: ".qualifiedTipsDeduction.phaseOutPerStep",
+  },
+  {
+    file: "deductionCopy.ts",
+    shard: "federal-income-tax-2024",
+    path: ".qualifiedTipsDeduction.phaseOutStep",
+  },
+  {
+    file: "deductionCopy.ts",
+    shard: "federal-income-tax-2024",
+    path: ".qualifiedTipsDeduction.thresholdJointReturn",
+  },
 
   { file: "saversCredit.ts", shard: "savers-credit-2024", path: ".maxContributionPerPerson" },
   {
@@ -235,10 +265,6 @@ const BOUND_TO_CODE: { file: string; figure: string; from: string }[] = [
 const NOT_A_FIGURE: Record<string, Record<string, string>> = {
   "childTaxCredit.ts": { "$1,000": "the per-$1,000 step the phase-out is quoted in" },
   "federalIncomeTax.ts": { "$1,000": "an illustrative next-dollar amount" },
-  "deductionCopy.ts": {
-    "$12,500": "§225, a deduction that is not modeled, named with its own cite",
-    "$25,000": "§224 and §225 joint, not modeled, named with their own cites",
-  },
   "socialSecurityTax.ts": {
     $0: "the married-filing-separately special case, called out as omitted",
     $25: "the same base in $k shorthand in a code comment",

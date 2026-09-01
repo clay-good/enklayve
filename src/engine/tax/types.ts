@@ -30,6 +30,10 @@ export interface TaxInput {
    * changes nothing for a caller written before the deduction existed.
    */
   seniorsAge65Plus?: number;
+  /** Qualified tips within `wages`, for IRC §224. */
+  qualifiedTips?: number;
+  /** Qualified overtime premium within `wages`, for IRC §225. */
+  qualifiedOvertime?: number;
   /** W-2 wages: subject to both income tax and FICA. */
   wages: number;
   /** Additional ordinary income (interest, etc.): income tax only, no FICA. */
@@ -66,6 +70,10 @@ export interface DeductionResult {
    * on taking the standard deduction, so it can be non-zero either way.
    */
   senior: Money;
+  /** IRC §224, the deduction for qualified tips. Also independent of the choice. */
+  qualifiedTips: Money;
+  /** IRC §225, the deduction for qualified overtime. */
+  qualifiedOvertime: Money;
 }
 
 export interface JurisdictionTaxResult {

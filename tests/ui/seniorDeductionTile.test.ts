@@ -65,3 +65,35 @@ describe("the deduction at 65 reaches the page", () => {
     expect(root.querySelector('select[name="age65"]')).not.toBeNull();
   });
 });
+
+/**
+ * Qualified tips and overtime on the take-home tile (IRC §224, §225).
+ *
+ * Take-home is where wage composition belongs, and it is the tile a server or an
+ * hourly worker actually opens. The card shows taxes rather than deductions, so
+ * what a test can hold is that the tax moves — and that FICA does not, because
+ * these are income-tax deductions and Social Security and Medicare are still
+ * owed on every one of those dollars.
+ */
+describe("tips and overtime on take-home", () => {
+  const takeHomeText = (params: Record<string, string>): string =>
+    mount(mountTakeHome, new URLSearchParams({ st: "", ...params })).textContent ?? "";
+
+  it("offers both inputs", () => {
+    const root = mount(mountTakeHome, new URLSearchParams({ st: "", w: "48000" }));
+    expect(root.querySelector('input[name="tips"]')).not.toBeNull();
+    expect(root.querySelector('input[name="ot"]')).not.toBeNull();
+  });
+
+  it("restores a deep-linked amount into the field", () => {
+    const root = mount(mountTakeHome, new URLSearchParams({ st: "", w: "48000", tips: "9000" }));
+    expect(root.querySelector<HTMLInputElement>('input[name="tips"]')?.value).toBe("9000");
+  });
+
+  it("raises take-home once tips are declared", () => {
+    // A number input restores reliably in happy-dom; only <select> does not.
+    const plain = takeHomeText({ w: "48000" });
+    const tipped = takeHomeText({ w: "48000", tips: "14000" });
+    expect(tipped).not.toBe(plain);
+  });
+});

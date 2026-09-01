@@ -16,6 +16,7 @@ import {
   nonItemizerCharitableFor,
   saltCapFor,
   seniorDeductionFor,
+  steppedIncomeDeductionFor,
 } from "./deductions";
 import { computeFica } from "./fica";
 import type {
@@ -80,11 +81,34 @@ function computeFederal(
     input.seniorsAge65Plus ?? 0,
     agi,
   );
+  // §63(b)(5)-(6) list §224 and §225 for a filer who does not itemize, and
+  // §63(a) reaches them for one who does, so like §151 they come off either way.
+  const qualifiedTips = steppedIncomeDeductionFor(
+    federal.qualifiedTipsDeduction,
+    input.filingStatus,
+    input.qualifiedTips ?? 0,
+    agi,
+  );
+  const qualifiedOvertime = steppedIncomeDeductionFor(
+    federal.qualifiedOvertimeDeduction,
+    input.filingStatus,
+    input.qualifiedOvertime ?? 0,
+    agi,
+  );
   const taxableIncome = clampZero(
-    agi.subtract(deduction.amount).subtract(deduction.nonItemizedCharitable).subtract(senior),
+    agi
+      .subtract(deduction.amount)
+      .subtract(deduction.nonItemizedCharitable)
+      .subtract(senior)
+      .subtract(qualifiedTips)
+      .subtract(qualifiedOvertime),
   );
   const incomeTax = bracketTax(taxableIncome, bracketsFor(federal, input.filingStatus));
-  return { taxableIncome, deduction: { ...deduction, senior }, incomeTax };
+  return {
+    taxableIncome,
+    deduction: { ...deduction, senior, qualifiedTips, qualifiedOvertime },
+    incomeTax,
+  };
 }
 
 function computeState(
@@ -103,6 +127,8 @@ function computeState(
           amount: Money.zero(),
           nonItemizedCharitable: Money.zero(),
           senior: Money.zero(),
+          qualifiedTips: Money.zero(),
+          qualifiedOvertime: Money.zero(),
         },
         incomeTax: Money.zero(),
       },
@@ -228,6 +254,8 @@ function computeState(
         // so both are always zero on a state computation.
         nonItemizedCharitable: Money.zero(),
         senior: Money.zero(),
+        qualifiedTips: Money.zero(),
+        qualifiedOvertime: Money.zero(),
       },
       incomeTax,
     },

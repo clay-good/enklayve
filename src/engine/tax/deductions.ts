@@ -4,6 +4,7 @@ import type {
   NonItemizerCharitableData,
   SaltLimitationData,
   SeniorDeductionData,
+  SteppedIncomeDeductionData,
 } from "../../data/schemas";
 import type { DeductionMode, DeductionResult, ItemizedInput } from "./types";
 
@@ -127,12 +128,16 @@ export function chooseFederalDeduction(
     amount: standardDeduction,
     nonItemizedCharitable,
     senior: Money.zero(),
+    qualifiedTips: Money.zero(),
+    qualifiedOvertime: Money.zero(),
   });
   const takeItemized = (): DeductionResult => ({
     kind: "itemized",
     amount: itemizedAmount,
     nonItemizedCharitable: Money.zero(),
     senior: Money.zero(),
+    qualifiedTips: Money.zero(),
+    qualifiedOvertime: Money.zero(),
   });
   if (mode === "standard") return takeStandard();
   if (mode === "itemized") return takeItemized();
@@ -180,4 +185,41 @@ export function seniorDeductionFor(
   const over = Math.max(0, magi.toNumber() - threshold);
   const perPerson = Math.max(0, rule.perQualifiedIndividual - rule.phaseOutRate * over);
   return Money.from(perPerson * qualifying);
+}
+
+/**
+ * IRC §224 (qualified tips) and §225 (qualified overtime).
+ *
+ * One function for two sections, because the statutes are the same shape: a cap,
+ * a step-down of $100 for each $1,000 of modified AGI over a threshold, and a
+ * married filer who qualifies only on a joint return.
+ *
+ * The step is the part worth being careful about. "$100 for each $1,000 by which
+ * ... exceeds $150,000" counts COMPLETED thousands — neither section says "or
+ * fraction thereof", which §24(b)(2) does say about the child credit twelve
+ * hundred lines away in the same engine. So a filer $1,999 over the threshold
+ * loses $100 and not $200, and the arithmetic floors rather than rounding up.
+ *
+ * `amount` is what the reader says was qualified tips or qualified overtime.
+ * The engine cannot check that: §224(d) counts only cash tips in an occupation
+ * that customarily received them before 2025, as the Secretary lists, and §225
+ * only the premium half of FLSA-required overtime. Both also need a Social
+ * Security number on the return. The tile says so; this computes the ceiling
+ * that follows from the number it is given.
+ */
+export function steppedIncomeDeductionFor(
+  rule: SteppedIncomeDeductionData | undefined,
+  status: FilingStatus,
+  amount: number,
+  magi: Money,
+): Money {
+  if (!rule) return Money.zero();
+  // §224(f) and §225(e): a married filer gets it only on a joint return.
+  if (status === "married_separately") return Money.zero();
+  const joint = status === "married_jointly";
+  const capped = Math.min(Math.max(0, amount), joint ? rule.capJointReturn : rule.cap);
+  if (capped === 0) return Money.zero();
+  const threshold = joint ? rule.thresholdJointReturn : rule.thresholdSingle;
+  const steps = Math.floor(Math.max(0, magi.toNumber() - threshold) / rule.phaseOutStep);
+  return Money.from(Math.max(0, capped - steps * rule.phaseOutPerStep));
 }

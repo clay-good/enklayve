@@ -47,6 +47,10 @@ interface Fields {
   dm: DeductionMode;
   /** How many on the return are 65 or over (IRC §151(d)(5)(C)). */
   seniors: number;
+  /** Qualified tips inside `wages` (IRC §224). */
+  tips: number;
+  /** Qualified overtime premium inside `wages` (IRC §225). */
+  overtime: number;
   local: string[]; // selected local add-on ids
 }
 
@@ -58,6 +62,8 @@ const EXAMPLE: Fields = {
   adjustments: 0,
   dm: "auto",
   seniors: 0,
+  tips: 0,
+  overtime: 0,
   local: [],
 };
 
@@ -88,6 +94,8 @@ function readFields(
     // Clamped where it is read: a hostile deep link can say anything, and the
     // select has no option for "7".
     seniors: Math.min(2, Math.max(0, Math.round(parseNonNegative(params.get("age65"), 0)))),
+    tips: parseNonNegative(params.get("tips"), 0),
+    overtime: parseNonNegative(params.get("ot"), 0),
     dm: dmRaw && isDeductionMode(dmRaw) ? dmRaw : "auto",
     local: (params.get("loc") ?? "").split(",").filter((s) => s.length > 0),
   };
@@ -102,6 +110,8 @@ function writeFields(f: Fields): URLSearchParams {
   if (f.adjustments > 0) p.set("adj", String(f.adjustments));
   if (f.dm !== "auto") p.set("dm", f.dm);
   if (f.seniors > 0) p.set("age65", String(f.seniors));
+  if (f.tips > 0) p.set("tips", String(f.tips));
+  if (f.overtime > 0) p.set("ot", String(f.overtime));
   if (f.local.length > 0) p.set("loc", f.local.join(","));
   return p;
 }
@@ -236,6 +246,22 @@ export function mountTakeHome(ctx: TileContext): void {
     ...SENIOR_COUNTS.map((c) => option(c.value, c.label, Number(c.value) === fields.seniors)),
   );
 
+  const mkWagePart = (name: string, value: number, label: string): HTMLInputElement =>
+    el("input", {
+      type: "number",
+      name,
+      min: 0,
+      step: 500,
+      value,
+      attrs: { "aria-label": label, inputmode: "decimal" },
+    });
+  const tipsInput = mkWagePart("tips", fields.tips, "Qualified tips included in your wages");
+  const otInput = mkWagePart(
+    "ot",
+    fields.overtime,
+    "Qualified overtime premium included in your wages",
+  );
+
   const localContainer = el("div", { class: "local-addons" });
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
@@ -308,6 +334,8 @@ export function mountTakeHome(ctx: TileContext): void {
       adjustments: parseNonNegative(adjInput.value, 0),
       dm: isDeductionMode(dmSelect.value) ? dmSelect.value : "auto",
       seniors: Math.min(2, Math.max(0, Math.round(parseNonNegative(seniorSelect.value, 0)))),
+      tips: parseNonNegative(tipsInput.value, 0),
+      overtime: parseNonNegative(otInput.value, 0),
       local,
     };
     resolveLocal();
@@ -321,6 +349,8 @@ export function mountTakeHome(ctx: TileContext): void {
       adjustments: fields.adjustments,
       deductionMode: fields.dm,
       seniorsAge65Plus: fields.seniors,
+      qualifiedTips: fields.tips,
+      qualifiedOvertime: fields.overtime,
       localJurisdictionIds: fields.local,
     };
     const state = fields.st ? (bundled.state(fields.st) ?? undefined) : undefined;
@@ -352,7 +382,7 @@ export function mountTakeHome(ctx: TileContext): void {
   for (const control of [fsSelect, stSelect, dmSelect, seniorSelect]) {
     control.addEventListener("change", recompute);
   }
-  for (const input of [wagesInput, otherInput, adjInput]) {
+  for (const input of [wagesInput, otherInput, adjInput, tipsInput, otInput]) {
     input.addEventListener("input", recompute);
   }
 
@@ -360,6 +390,8 @@ export function mountTakeHome(ctx: TileContext): void {
     fields = { ...EXAMPLE };
     fsSelect.value = fields.fs;
     seniorSelect.value = String(fields.seniors);
+    tipsInput.value = String(fields.tips);
+    otInput.value = String(fields.overtime);
     stSelect.value = fields.st;
     wagesInput.value = String(fields.wages);
     otherInput.value = String(fields.other);
@@ -381,6 +413,8 @@ export function mountTakeHome(ctx: TileContext): void {
     field("Pre-tax adjustments", adjInput),
     field("Deduction method", dmSelect),
     field("Aged 65 or older", seniorSelect),
+    field("Of that, qualified tips", tipsInput),
+    field("Of that, qualified overtime premium", otInput),
     localContainer,
     el("div", { class: "tile-form-actions" }, tryExample),
   );

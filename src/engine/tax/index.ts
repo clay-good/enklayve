@@ -18,6 +18,7 @@ export {
   itemizedTotal,
   saltCapFor,
   seniorDeductionFor,
+  steppedIncomeDeductionFor,
   nonItemizerCharitableFor,
   MEDICAL_AGI_FLOOR_RATE,
 } from "./deductions";

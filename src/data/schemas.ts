@@ -312,6 +312,34 @@ export const SeniorDeductionSchema = z.object({
 });
 export type SeniorDeductionData = z.infer<typeof SeniorDeductionSchema>;
 
+/**
+ * IRC §224 (qualified tips) and §225 (qualified overtime): two deductions with
+ * one shape.
+ *
+ * Both added by the One Big Beautiful Bill Act (§§70201, 70202) for taxable
+ * years beginning after 2025 and terminating after 2028. Both cap the deduction,
+ * both reduce it by $100 for each $1,000 of modified AGI over a threshold, and
+ * both apply to a married filer only on a joint return (§224(f), §225(e)).
+ *
+ * The phase-down is a STEP, not a rate, and that is the detail worth carrying in
+ * data rather than assuming. "$100 for each $1,000 by which ... exceeds" counts
+ * whole thousands: unlike §24(b)(2)'s child-credit phase-out, which says "or
+ * fraction thereof" and rounds a part-thousand up, and unlike the SALT and
+ * senior phase-outs, which are percentages of the excess and so are continuous.
+ * Three phase-outs in one engine, three different shapes, one Act.
+ */
+export const SteppedIncomeDeductionSchema = z.object({
+  cap: z.number().gte(0),
+  capJointReturn: z.number().gte(0),
+  /** Dollars of deduction lost per completed step of income over the threshold. */
+  phaseOutPerStep: z.number().gte(0),
+  /** The step, in dollars of income. Whole steps only — no fraction thereof. */
+  phaseOutStep: z.number().gt(0),
+  thresholdSingle: z.number().gt(0),
+  thresholdJointReturn: z.number().gt(0),
+});
+export type SteppedIncomeDeductionData = z.infer<typeof SteppedIncomeDeductionSchema>;
+
 export const SaltLimitationSchema = z.object({
   applicableLimitationAmount: z.number().gt(0),
   thresholdAmount: z.number().gt(0),
@@ -463,6 +491,10 @@ export const JurisdictionSchema = z.object({
   nonItemizerCharitable: NonItemizerCharitableSchema.optional(),
   /** IRC §151(d)(5)(C), the deduction at 65 (federal only). */
   seniorDeduction: SeniorDeductionSchema.optional(),
+  /** IRC §224, the deduction for qualified tips (federal only). */
+  qualifiedTipsDeduction: SteppedIncomeDeductionSchema.optional(),
+  /** IRC §225, the deduction for qualified overtime (federal only). */
+  qualifiedOvertimeDeduction: SteppedIncomeDeductionSchema.optional(),
   citation: CitationSchema,
   effectiveDateRange: z.object({
     start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
