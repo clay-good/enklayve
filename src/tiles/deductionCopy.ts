@@ -39,7 +39,7 @@ export const OBBBA_DEDUCTIONS_HOW = `${SENIOR}\n\n${CHARITY}\n\n${CAR_LOAN}\n\nT
  * than a footnote, since it adds the overtime back and leaves the tips alone.
  */
 const CONFORMITY =
-  "In Idaho, Montana, and North Dakota these federal deductions lower your state tax as well, because those states start from your federal taxable income — the deduction is already inside the number they begin with. Colorado starts there too but adds the overtime deduction back, while leaving tips, the deduction at 65, and car loan interest alone. Everywhere else your state begins from adjusted gross income, so these change your federal tax only.";
+  "In Idaho, Iowa, Montana, and North Dakota these federal deductions lower your state tax as well, because those states start from your federal taxable income — the deduction is already inside the number they begin with. Two more start there and add back exactly one deduction each: Colorado the overtime deduction, Oregon the car loan interest. Everywhere else your state begins from adjusted gross income, so these change your federal tax only.";
 
 /** Take-home: wage composition is an input, charitable giving is not. */
 export const OBBBA_DEDUCTIONS_HOW_NO_GIVING = `${SENIOR}\n\n${TIPS_OVERTIME}\n\nTwo other 2026 deductions are not modeled here, so if one applies to you your real tax is lower than this: $1,000 of cash giving without itemizing, $2,000 jointly (§170(p)), and up to $10,000 of car loan interest (§163(h)(4)). The Federal Income Tax tool asks for both and applies them.\n\n${CONFORMITY}`;

@@ -15,23 +15,28 @@ import { loadDatasets } from "../helpers/datasets";
  * deduction, so a tipped worker in North Dakota was being shown state tax on
  * income North Dakota does not tax.
  *
- * Four states carry the block, each read from its own law:
+ * Six states carry the block, each read from its own law, and two of the six
+ * add exactly one deduction back — different ones:
  *
  *   CO  C.R.S. §39-22-104, and the Department of Revenue's own guide: overtime
  *       is added back for 2026 and later (HB25-1296), tips explicitly are not.
+ *   IA  The Department of Revenue, in its own words: "The starting point for
+ *       Iowa taxable income is federal taxable income ... Iowa will conform".
  *   ID  Idaho Code §63-3004, the IRC "as amended and in effect on the first day
  *       of January 2026" — static conformity that has caught up to the Act.
  *   MT  MCA §15-30-2120(1), federal taxable income, adding back only §199A and
  *       the §164(a)(3) state income tax deduction.
  *   ND  N.D.C.C. §57-38-30.3(2), federal taxable income "as amended", with nine
  *       adjustments that touch none of this.
+ *   OR  Enrolled SB 1507 (2026, ch. 142) §2 adds back qualified passenger
+ *       vehicle loan interest, and only that.
  *
  * New Mexico is the case that makes the block's ABSENCE mean something: it
  * starts from federal adjusted gross income and subtracts "an amount equal to
  * the standard deduction allowed ... by Section 63" (NMSA 1978 §7-2-2), which is
  * §63(c) alone. It looks like a conformity state and is not one.
  */
-const CONFORMING = ["co", "id", "mt", "nd"] as const;
+const CONFORMING = ["co", "ia", "id", "mt", "nd", "or"] as const;
 
 /** A wage earner with one of each deduction, over no phase-out threshold. */
 const FILER = {
@@ -66,8 +71,8 @@ describe("states that start from federal taxable income", () => {
     expect(ds.federal.federalDeductionConformity).toBeUndefined();
   });
 
-  it("deducts all five in North Dakota, Montana, and Idaho", () => {
-    for (const code of ["nd", "mt", "id"]) {
+  it("deducts all five in North Dakota, Montana, Idaho, and Iowa", () => {
+    for (const code of ["nd", "mt", "id", "ia"]) {
       const r = evaluateTaxes(FILER, { federal: ds.federal, state: state(code), fica: ds.fica });
       const d = r.state!.deduction;
       expect([
@@ -79,6 +84,20 @@ describe("states that start from federal taxable income", () => {
       ]).toEqual([1000, 6000, 4000, 2000, 1500]);
       expect(r.federal.deduction.qualifiedTips.toNumber()).toBe(4000);
     }
+  });
+
+  it("adds Oregon's car loan interest back and leaves the other four alone", () => {
+    // SB 1507 §2, the one addback Oregon legislated: "There shall be added to
+    // federal taxable income an amount equal to qualified passenger vehicle loan
+    // interest ... as provided in section 163(h)(4)". Colorado adds back a
+    // different single deduction, which is why one boolean would not do.
+    const r = evaluateTaxes(FILER, { federal: ds.federal, state: state("or"), fica: ds.fica });
+    const d = r.state!.deduction;
+    expect(d.vehicleLoanInterest.toNumber()).toBe(0);
+    expect(d.qualifiedTips.toNumber()).toBe(4000);
+    expect(d.qualifiedOvertime.toNumber()).toBe(2000);
+    expect(d.senior.toNumber()).toBe(6000);
+    expect(d.nonItemizedCharitable.toNumber()).toBe(1000);
   });
 
   it("adds Colorado's overtime back and leaves its tips alone", () => {

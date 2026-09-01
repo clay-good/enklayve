@@ -3,21 +3,47 @@
   "name": "Iowa",
   "taxYear": 2026,
   "hasIncomeTax": true,
-  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "supportedFilingStatuses": [
+    "single",
+    "married_jointly",
+    "head_of_household"
+  ],
   "bracketsByFilingStatus": {
-    "single": [{ "lowerBound": 0, "rate": 0.038 }],
-    "married_jointly": [{ "lowerBound": 0, "rate": 0.038 }],
-    "head_of_household": [{ "lowerBound": 0, "rate": 0.038 }]
+    "single": [
+      {
+        "lowerBound": 0,
+        "rate": 0.038
+      }
+    ],
+    "married_jointly": [
+      {
+        "lowerBound": 0,
+        "rate": 0.038
+      }
+    ],
+    "head_of_household": [
+      {
+        "lowerBound": 0,
+        "rate": 0.038
+      }
+    ]
   },
   "standardDeductionByFilingStatus": {
     "single": 16100,
     "married_jointly": 32200,
     "head_of_household": 24150
   },
+  "federalDeductionConformity": {
+    "nonItemizerCharitable": true,
+    "senior": true,
+    "qualifiedTips": true,
+    "qualifiedOvertime": true,
+    "vehicleLoanInterest": true
+  },
   "citation": {
     "sourceUrl": "https://revenue.iowa.gov/press-release/2025-10-21/idr-announces-2026-individual-income-tax-and-interest-rates",
     "sourceDocument": "Iowa Department of Revenue, flat 3.8% individual income tax for tax years 2025 and after (Senate File 2442, 2024)",
-    "sourceNote": "Replaces the prior graduated schedule. Iowa conforms to the federal standard deduction (the Idaho/Colorado pattern), $16,100/$32,200/$24,150 for 2026. Cross-checked against the Tax Foundation 2026 state table. Iowa's $40 single / $80 married personal-exemption credit (a small flat nonrefundable credit) and the opt-in local school-district surtaxes are omitted at launch fidelity, like every state's credits and county/municipal add-ons, so the figure errs slightly high (by at most $40/$80) — the conservative side for setting money aside.",
+    "sourceNote": "Replaces the prior graduated schedule. Iowa conforms to the federal standard deduction (the Idaho/Colorado pattern), $16,100/$32,200/$24,150 for 2026. Cross-checked against the Tax Foundation 2026 state table. Iowa's $40 single / $80 married personal-exemption credit (a small flat nonrefundable credit) and the opt-in local school-district surtaxes are omitted at launch fidelity, like every state's credits and county/municipal add-ons, so the figure errs slightly high (by at most $40/$80) — the conservative side for setting money aside. Iowa starts from FEDERAL TAXABLE INCOME and conforms on a ROLLING basis, stated by the Department of Revenue in its own words: \"The starting point for Iowa taxable income is federal taxable income. Iowa has also adopted rolling conformity, meaning the state will automatically conform with any changes made to the Internal Revenue Code, except as specified by law. Iowa will conform with the federal tax provisions related to no tax on tips, no tax on overtime, no tax on car loan interest, and the new enhanced deduction for senior citizens\" (IDR, \"Impact of One, Big, Beautiful Bill Act on Employee Withholding\"). The 2026 IA 1040 instructions add a line for the enhanced senior deduction and say it \"does not directly affect the calculation of Iowa taxable income as the deduction is already included in your federal taxable income\" — which is the mechanism, written by the state. IRC §170(p) is not in the Department's list of four because it was not the newsworthy one; it reduces federal taxable income through the same §63(b) door and no Iowa provision excepts it, so it is carried as conforming too. Iowa's separate treatment of the senior deduction as a personal exemption to be added back when computing the low-income exemption, the alternate tax, the tax reduction and the health-insurance deduction is omitted at launch fidelity, like Iowa's other credits. Verified against the IDR pages on 2026-09-01.",
     "effectiveYear": 2026,
     "dateRetrieved": "2026-06-05"
   },

@@ -455,7 +455,7 @@
       "sourceUrl": "https://revenue.iowa.gov/press-release/2025-10-21/idr-announces-2026-individual-income-tax-and-interest-rates",
       "sourceDocument": "Iowa Department of Revenue, flat 3.8% individual income tax for tax years 2025 and after (Senate File 2442, 2024)",
       "dateRetrieved": "2026-06-05",
-      "contentHash": "f65f845154d6887b4948b713024d2955a62334ee7e2d3320528ae40bef8a77a2"
+      "contentHash": "a3ef1cf81894db1dde98c2e7802e519bf484a80e04755d105e5bfc3e40262a06"
     },
     {
       "id": "state-va-income-tax-2024",
@@ -702,7 +702,7 @@
       "sourceUrl": "https://www.oregon.gov/dor/forms/FormsPubs/form-or-40-inst_101-040-1_2025.pdf",
       "sourceDocument": "Oregon DOR Form OR-40 (2025): 4.75%–9.9% rate charts, federal-tax subtraction (cap $8,500, AGI-phased), standard deduction (ORS §316.037/.680/.695)",
       "dateRetrieved": "2026-06-08",
-      "contentHash": "80e4ef8a64db11eb4efde0ce3e223c952bb1a3da53ac19ab31d7aa0ac945cca2"
+      "contentHash": "f4d2cf56fc6cf5777a58274a5cc7fe6ee58203583920a6a50bcd38a5b1db1411"
     },
     {
       "id": "state-ne-income-tax-2024",
