@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **68** in **12 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **80**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | unit/golden across **116** files, **+40** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | unit/golden across **117** files, **+40** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Source audits | **all 51 jurisdictions + the federal and benefits shards** read against the agency's own document; 8 wrong figures found and fixed | [`docs/data-sources.md`](docs/data-sources.md#source-audits) |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale/theme preference touches `localStorage`, asserted end-to-end across a full session | `npm run audit` / `npm run test:e2e` |
@@ -612,7 +612,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**The unit and golden suite across 116 files** (plus 40 Playwright e2e tests) passes today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**The unit and golden suite across 117 files** (plus 40 Playwright e2e tests) passes today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -651,6 +651,13 @@ All phases from both specs are complete or at a deliberately-deferred boundary. 
 | 14 | ✅ | The Readout — every document family has an anchored, revision-pinned extractor; reads typed PDF (pdf.js), Word `.docx` (mammoth), and scans (on-device OCR, tesseract.js) on-device — a scan is read whether it arrives as an image or **inside a PDF**, since a PDF is a container and a phone photo saved as one has no text layer at all |
 | 15–16 | ✅ | The guidance engine (`plan.ts`, now surfaced as the home anti-budget); My Readout Report |
 | 17 | ✅ | The §6 expansion catalog — budgeting, debt, home, open enrollment, tax moves, protection, long-horizon |
+| 18 | ✅ | Pillar 4 foundations — the harm-tier admission bar and the deadline rule, made enforceable by the release audit *before* the first Pillar 4 tool shipped |
+| 19 | ✅ | The Benefit Cliff Explorer and the Marginal Reality Rate, with hand-computed golden cases on the ACA, Medicaid, and SNAP edges |
+| 20 | ✅ | The sequencers — **20a** Bill Triage (the CFPB's own ordering framing), **20b** Life-Event Sequences, dated by the Phase 23b clocks rather than by literals |
+| 21 | ✅ | Free filing and free help. Sourcing found that **IRS Direct File is not running for filing season 2026**, so the tile says so rather than sending people to a door that is shut |
+| 22 | ✅ | Readout v2 — **22a** the four-part answer and the check registry, **22b** the three new document kinds, the EOB × bill cross-check, and OCR that degrades instead of failing |
+| 23 | ✅ | The rights-adjacent screeners — **23a** Wage Garnishment Limits (tier 3), **23b** Enrollment & Appeal Windows (tier 2), which is what unblocked 20b |
+| 24 | ✅ | The Standing Ledger, Path 1 — the recompute diff on the carried-file path. Device-local storage is **deferred, not adopted**: widening the privacy gate needs evidence, not convenience |
 
 See the spec files for the full per-wave history.
 
