@@ -90,6 +90,20 @@
       "why": "The SALT limitation is statutory, not indexed, and it is on a written schedule: IRC §164(b)(7)(A) sets $40,000 for 2025 and $40,400 for 2026, then 101 percent of the prior year through 2029, then back to $10,000. So there is no annual figure for an adapter to chase and every step is a transcription somebody makes deliberately — Delaware's shape, at the statute rather than at a revenue procedure. It is watched at all because the last version of this figure was a constant in the engine with nothing behind it, which is how it stayed at $10,000 for two years after the One Big Beautiful Bill Act replaced it, understating the deduction for anyone itemizing more than $10,000 of state and local tax.",
       "fingerprint": "e8cd43a37c6c38bd54e22f14396428ba02911ac6c3528576b1d0d2b081a58352",
       "checkedOn": "2026-09-01"
+    },
+    {
+      "shard": "aca-2024",
+      "url": "https://www.law.cornell.edu/uscode/text/26/36B",
+      "why": "The applicable-percentage table is reissued each year in its own revenue procedure at a URL nothing predicts, so there is no listing page to watch and the annual indexing stays a reviewer's transcription. What this watches instead is the RULE, which is where the harm lives: §36B(c)(1)(A) is the 100%-to-400% eligibility band, and §36B(c)(1)(B) — the ARPA/IRA suspension of the 400% cliff — was repealed by Pub. L. 119-21 §71302(a) on 2025-07-04, which is why the cliff is back for plan year 2026 and why a household one dollar over 400% of the poverty line loses every dollar of subsidy. A change of that kind makes the shard wrong in kind rather than slightly stale, and it is exactly the change a person must read. Same shape as the §86 and Delaware watches: at the statute, because the annual document is a closed one.",
+      "fingerprint": "3e69f4fe8668e883ce693863db307e7e04d597a6fb0d086f277bb7e0b3bca2b1",
+      "checkedOn": "2026-09-01"
+    },
+    {
+      "shard": "fafsa-2024-2025",
+      "url": "https://www.law.cornell.edu/uscode/text/20/1087oo",
+      "why": "The SAI tables are reissued each award year in the ED SAI Formula Guide, a PDF at a new path, and the Knowledge Center pages that would list it render client-side and return less visible text than the watch's own interstitial floor — so there is nothing there for a fingerprint to hold, and the annual tables stay a reviewer's transcription. This watches the formula instead: HEA §475, 20 U.S.C. §1087oo, which defines the student aid index and its allowances against income — the payroll-tax allowance, the income protection allowance, the employment expense allowance. An amendment there changes what the estimate MEANS, not just its numbers, and this shard's own note already warns the reader to check against the official guide.",
+      "fingerprint": "5ae85a3bdac6f6efc42df75ef8b3f39f32d7a3c5c075b9e1669a6b800a09dff6",
+      "checkedOn": "2026-09-01"
     }
   ]
 }
