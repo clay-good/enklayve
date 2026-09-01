@@ -47,15 +47,32 @@ jobs:
       # either a state updating its figures or a parser reading the wrong
       # number, and only a person reading the diff can tell. Unreachable is
       # usually the agency having an afternoon and appears in the body only.
-      - name: Open an issue when an adapter stopped anchoring or would change a shard
-        if: steps.adapters.outputs.regressions != '0' || steps.adapters.outputs.wouldChange != '0'
+      #
+      # WAITS_OVER and BLIND_WAITS are the two states of an adapter parked on a
+      # document a state has not published. An arrival means that shard is now
+      # knowably a year behind, and a blind probe means nothing is watching for
+      # the arrival any more — both are work, and both are silent unless
+      # somebody is told. This job is the only thing that runs those probes, so
+      # a count it does not read is a count nobody ever sees.
+      - name: Open an issue when an adapter stopped anchoring, would change a shard, or its wait is over
+        if: >-
+          steps.adapters.outputs.regressions != '0' ||
+          steps.adapters.outputs.wouldChange != '0' ||
+          steps.adapters.outputs.waitsOver != '0' ||
+          steps.adapters.outputs.blindWaits != '0'
         uses: actions/github-script@v7
         with:
           script: |
+            const parts = [
+              `${process.env.REGRESSIONS} stopped anchoring`,
+              `${process.env.WOULD_CHANGE} would change a shard`,
+            ];
+            if (process.env.WAITS_OVER !== "0") parts.push(`${process.env.WAITS_OVER} wait(s) over`);
+            if (process.env.BLIND_WAITS !== "0") parts.push(`${process.env.BLIND_WAITS} blind probe(s)`);
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `Adapter check: ${process.env.REGRESSIONS} stopped anchoring, ${process.env.WOULD_CHANGE} would change a shard`,
+              title: `Adapter check: ${parts.join(", ")}`,
               body: process.env.REPORT,
               labels: ["data-review"],
             });
@@ -63,3 +80,5 @@ jobs:
           REPORT: ${{ steps.adapters.outputs.report }}
           REGRESSIONS: ${{ steps.adapters.outputs.regressions }}
           WOULD_CHANGE: ${{ steps.adapters.outputs.wouldChange }}
+          WAITS_OVER: ${{ steps.adapters.outputs.waitsOver }}
+          BLIND_WAITS: ${{ steps.adapters.outputs.blindWaits }}
