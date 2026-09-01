@@ -72,7 +72,7 @@
     },
     {
       "shard": "rmd-uniform-lifetime-2024",
-      "url": "https://www.ecfr.gov/current/title-26/chapter-I/subchapter-A/part-1/section-1.401(a)(9)-9",
+      "url": "https://www.ecfr.gov/current/title-26/chapter-I/subchapter-A/part-1/subject-group-ECFR6f8c3724b50e44d/section-1.401(a)(9)-9",
       "why": "The Uniform Lifetime Table is a regulation, not an indexed figure. Treasury last reissued it effective 2022, on revised mortality assumptions, and it moves only when they are revised again — a rulemaking, which is exactly the kind of change that must be read rather than parsed. Watched at the regulation that contains the table rather than at Pub 590-B, which restates it and is reissued every year.",
       "fingerprint": "b41e5cbed2d07acb2750021cc6ec6caa384e6266bf8acccba43706dd7f631358",
       "checkedOn": "2026-08-30"

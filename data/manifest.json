@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-30",
+  "generatedAt": "2026-09-01",
   "datasets": [
     {
       "id": "federal-income-tax-2024",
@@ -309,10 +309,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-wa-income-tax-2024.json",
-      "sourceUrl": "https://dor.wa.gov/taxes-rates/income-tax",
+      "sourceUrl": "https://dor.wa.gov/income-tax",
       "sourceDocument": "Washington Department of Revenue, no personal income tax on wages (a separate 7% capital-gains excise tax applies to certain high earners)",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "e6c582e4691c291593bbe516e233210baf08f41889820f04367b007e5cdc1942"
+      "contentHash": "864641e91ce9616ff49c0ff988e434eb15633d51e8cc37978bb89d967994de08"
     },
     {
       "id": "state-wy-income-tax-2024",

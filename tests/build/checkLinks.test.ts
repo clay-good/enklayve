@@ -1,11 +1,13 @@
 import { describe, it, expect } from "vitest";
 import {
   classify,
+  awaitedUrls,
   extractUrls,
   renderLinkReport,
   sourceFiles,
   type LinkResult,
 } from "../../scripts/check-links";
+import { ADAPTERS } from "../../scripts/refresh/adapters";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -51,7 +53,46 @@ describe("finding the links the site ships", () => {
   });
 
   it("skips fixture hosts and our own site", () => {
-    expect(extractUrls("https://example.gov/a https://enklayve.com/b")).toEqual([]);
+    // `.invalid` is the reserved TLD, used by the boundary-classify probe for a
+    // source URL that must never resolve. It was reported as a broken link every
+    // run, which is a monthly red on a check whose whole value is that red means
+    // something.
+    expect(
+      extractUrls("https://example.gov/a https://enklayve.com/b https://example.invalid/probe"),
+    ).toEqual([]);
+  });
+
+  it("keeps the parentheses a federal citation puts in its path", () => {
+    // The eCFR states a Treasury regulation as `.../section-1.401(a)(9)-9`. The
+    // pattern used to stop at the `(`, so the truncated `.../section-1.401` was
+    // checked and reported broken every month — a reader sent to repair a URL
+    // that works, while the URL actually shipped went unchecked.
+    expect(
+      extractUrls(
+        '"url": "https://www.ecfr.gov/current/title-26/chapter-I/subchapter-A/part-1/section-1.401(a)(9)-9",',
+      ),
+    ).toEqual([
+      "https://www.ecfr.gov/current/title-26/chapter-I/subchapter-A/part-1/section-1.401(a)(9)-9",
+    ]);
+  });
+
+  it("still drops the bracket that wraps a URL rather than belonging to it", () => {
+    expect(extractUrls("(see https://www.irs.gov/pub/a.pdf)")).toEqual([
+      "https://www.irs.gov/pub/a.pdf",
+    ]);
+    expect(extractUrls("[the form](https://www.irs.gov/pub/b.pdf)")).toEqual([
+      "https://www.irs.gov/pub/b.pdf",
+    ]);
+  });
+
+  it("does not check a URL an adapter has declared does not exist yet", () => {
+    // Oregon's adapter names the year-carrying booklet URL it is waiting for.
+    // That URL 404ing is the signal, not a defect, and the adapter check is what
+    // watches it. Derived from the adapters so it cannot drift out of date.
+    const url = "https://www.oregon.gov/dor/forms/FormsPubs/form-or-40-inst_101-040-1_2026.pdf";
+    expect(awaitedUrls([{ awaiting: { arrived: { url } } }]).has(url)).toBe(true);
+    expect(awaitedUrls([{}]).size).toBe(0);
+    expect(awaitedUrls(ADAPTERS).size).toBeGreaterThan(0);
   });
 
   it("walks the real source tree and finds the links actually shipped", () => {

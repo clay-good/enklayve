@@ -25,6 +25,7 @@ import { fileURLToPath } from "node:url";
 import { BROWSER_USER_AGENT } from "./user-agent.ts";
 import { BAD_CERTIFICATE, INCOMPLETE_CERT_CHAIN } from "./fetch-source.ts";
 import { repairedCaBundle, requestWithChain } from "./chain-repair.ts";
+import { ADAPTERS } from "./refresh/adapters.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 // `scripts` is here for the refresh adapters: each one names the page it
@@ -35,9 +36,16 @@ const SEARCH_ROOTS = ["src", "data", "docs", "scripts"];
 const EXTENSIONS = new Set([".ts", ".json", ".md", ".css", ".html"]);
 
 /** A URL that is a fixture or our own site, not a source link the site ships. */
-const NOT_SHIPPED = /(example\.(gov|com|org)|enklayve\.com)/;
+const NOT_SHIPPED = /(example\.(gov|com|org|invalid)|enklayve\.com)/;
 
-const URL_PATTERN = /https:\/\/[A-Za-z0-9._~:/?#[\]@!$&*+;=%-]+/g;
+// Parentheses are in the character class because federal citations put them in
+// the path: the eCFR states a Treasury regulation as `.../section-1.401(a)(9)-9`.
+// Without them the pattern stopped at the `(`, and the truncated `.../section-1.401`
+// was checked instead — reported as a broken link every month, sending a reader
+// to repair a URL that works, while the URL actually shipped was never checked at
+// all. The trailing-punctuation trim below is what keeps a URL wrapped in
+// brackets, in prose or in markdown, from swallowing the closing one.
+const URL_PATTERN = /https:\/\/[A-Za-z0-9._~:/?#[\]@!$&*+;=%()-]+/g;
 
 /** Every `.ts`/`.json`/`.md`/`.css`/`.html` file under the search roots. */
 export function sourceFiles(root = ROOT, roots: string[] = SEARCH_ROOTS): string[] {
@@ -71,6 +79,25 @@ export function extractUrls(text: string): string[] {
     out.push(url);
   }
   return out;
+}
+
+/**
+ * URLs an adapter has declared do not exist yet.
+ *
+ * Four adapters are parked on a document a state has not published, and one of
+ * them — Oregon's OR-40 booklet — names the year-carrying URL it is waiting for.
+ * That URL 404ing is not a broken link; it is the entire signal, and the adapter
+ * check is what watches it. Reported here it would be a permanent red on a
+ * monthly check, which is how a check stops being read.
+ *
+ * Derived from the adapters rather than listed, so it cannot drift: an awaited
+ * URL that starts answering leaves this set at the same moment the adapter check
+ * says the wait is over.
+ */
+export function awaitedUrls(
+  adapters: readonly { awaiting?: { arrived: { url: string } } }[],
+): Set<string> {
+  return new Set(adapters.flatMap((a) => (a.awaiting ? [a.awaiting.arrived.url] : [])));
 }
 
 export interface LinkResult {
@@ -266,9 +293,11 @@ async function checkWithRepairedChain(
 
 async function main(): Promise<void> {
   const byUrl = new Map<string, Set<string>>();
+  const awaited = awaitedUrls(ADAPTERS);
   for (const file of sourceFiles()) {
     const rel = file.slice(ROOT.length + 1);
     for (const url of extractUrls(readFileSync(file, "utf8"))) {
+      if (awaited.has(url)) continue;
       if (!byUrl.has(url)) byUrl.set(url, new Set());
       byUrl.get(url)!.add(rel);
     }
