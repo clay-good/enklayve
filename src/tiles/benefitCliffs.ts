@@ -556,7 +556,7 @@ export function mountMarginalReality(ctx: TileContext): void {
 }
 
 const SHARED_HOW_TAIL =
-  "\n\nWhat this leaves out is listed under every result, and it matters: housing assistance, childcare subsidies, WIC, LIHEAP, TANF, and state-only programs are not modeled here, and several of them have steeper cliffs than anything that is. Losing Medicaid is shown as a change in eligibility, never as a dollar amount, because we cannot price your coverage from public data and a made-up number would be worse than none.\n\nThis is an estimate from public data and the figures you enter, not an eligibility determination. Only the agency that runs a program decides who qualifies.";
+  "\n\nThe tax half of every figure here comes from your income and household alone, so five deductions new for 2026 — tips, overtime, car loan interest, being 65, and giving without itemizing — are not in it. A household any of them reaches keeps a little more at every income on the chart, though the cliffs themselves sit where the benefit rules put them rather than where the tax does.\n\nWhat this leaves out is listed under every result, and it matters: housing assistance, childcare subsidies, WIC, LIHEAP, TANF, and state-only programs are not modeled here, and several of them have steeper cliffs than anything that is. Losing Medicaid is shown as a change in eligibility, never as a dollar amount, because we cannot price your coverage from public data and a made-up number would be worse than none.\n\nThis is an estimate from public data and the figures you enter, not an eligibility determination. Only the agency that runs a program decides who qualifies.";
 
 export const cliffExplorerTile: TileDefinition = {
   id: "cliff-explorer",

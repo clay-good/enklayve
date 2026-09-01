@@ -40,7 +40,11 @@ function callersOutsideTheEngine(): { file: string; source: string }[] {
       }
       if (!entry.name.endsWith(".ts")) continue;
       const source = readFileSync(full, "utf8");
-      if (source.includes("evaluateTaxes(")) {
+      // `sweepResources` and `marginalReality` compose the tax engine inside
+      // `engine/cliffs.ts`, so a tile that shows their output is showing a
+      // federal tax figure at one remove. The rule is about what a reader is
+      // shown, not about which import happens to be in the file.
+      if (/evaluateTaxes\(|sweepResources\(|marginalReality\(/.test(source)) {
         found.push({ file: full.slice(SRC.length + 1), source });
       }
     }
@@ -95,6 +99,7 @@ describe("every tile that computes federal income tax", () => {
     const callers = callersOutsideTheEngine();
     expect(callers.map((c) => c.file).sort()).toEqual([
       "readout/report.ts",
+      "tiles/benefitCliffs.ts",
       "tiles/federalIncomeTax.ts",
       "tiles/marginalExplorer.ts",
       "tiles/paycheckOptimizer.ts",
