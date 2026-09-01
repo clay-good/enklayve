@@ -69,7 +69,7 @@ describe("finding the comparisons worth flipping", () => {
 describe("the baseline", () => {
   const baseline = JSON.parse(
     readFileSync(resolve(ROOT, "scripts", "boundary-baseline.json"), "utf8"),
-  ) as { unheld: string[]; note: string[] };
+  ) as { unheld: Record<string, string>; note: string[] };
 
   it("fails only on a boundary that was not already known to be unheld", () => {
     // The backlog is a backlog, not a monthly alarm. Only something newly
@@ -106,8 +106,24 @@ describe("the baseline", () => {
     expect(note).toMatch(/evidence, not proof/i);
   });
 
+  it("gives every unheld boundary a written reason, not just a verdict", () => {
+    // "No observed difference" is the classifier's evidence; it is not an
+    // explanation, and a reader who wants to shrink this list needs to know
+    // whether a line is unholdable because the other arm computes the same
+    // value, because the branch cannot be entered, or because nothing this
+    // engine exposes can reach it. Same rule watch-coverage.json applies to an
+    // unwatched dataset: a reason is a decision someone can argue with later.
+    const missing = Object.entries(baseline.unheld)
+      .filter(([, reason]) => reason.trim().length < 40)
+      .map(([id]) => id);
+    expect(
+      missing,
+      `these boundaries are recorded with no reason (or too short a one) for going unheld: ${missing.join(", ")}`,
+    ).toEqual([]);
+  });
+
   it("holds ids in the shape the checker produces", () => {
-    for (const id of baseline.unheld) {
+    for (const id of Object.keys(baseline.unheld)) {
       expect(id, `${id} is not file:line:operator:column`).toMatch(
         /^src\/engine\/[\w/.]+\.ts:\d+:(<=|>=|lessThanOrEqual\(|greaterThanOrEqual\():\d+$/,
       );

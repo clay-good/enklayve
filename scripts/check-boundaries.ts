@@ -500,9 +500,16 @@ async function main(): Promise<void> {
   const file = JSON.parse(readFileSync(BASELINE_FILE, "utf8")) as {
     note: string[];
     recordedOn: string;
-    unheld: string[];
+    /**
+     * id → why no test holds it. An object rather than a list, because every
+     * survivor now carries a verdict and a bare list of line numbers is the
+     * report people stop reading. Same shape, and the same rule, as
+     * `watch-coverage.json`: a reason is a decision someone can argue with
+     * later, not a shrug.
+     */
+    unheld: Record<string, string>;
   };
-  const baseline = file.unheld;
+  const baseline = Object.keys(file.unheld);
   const report = renderReport(checked, unheld, baseline, verdicts, miscalibrated);
   process.stdout.write(`${report}\n`);
 
@@ -510,11 +517,20 @@ async function main(): Promise<void> {
   // Recording is the deliberate act: an id written here is a boundary somebody
   // has decided not to hold yet, and the list is meant to shrink.
   if (process.argv.includes("--accept")) {
-    writeFileSync(
-      BASELINE_FILE,
-      `${JSON.stringify({ ...file, unheld: unheld.map((b) => b.id).sort() }, null, 2)}\n`,
+    // A reason already written survives; a newly recorded boundary arrives with
+    // an empty one, which the baseline's own test rejects until a person writes
+    // it. Recording is meant to cost a sentence.
+    const recorded: Record<string, string> = Object.fromEntries(
+      unheld
+        .map((b): [string, string] => [b.id, file.unheld[b.id] ?? ""])
+        .sort((x, y) => x[0].localeCompare(y[0])),
     );
-    process.stderr.write(`recorded ${unheld.length} unheld boundaries\n`);
+    writeFileSync(BASELINE_FILE, `${JSON.stringify({ ...file, unheld: recorded }, null, 2)}\n`);
+    const blank = Object.values(recorded).filter((r) => r.trim() === "").length;
+    process.stderr.write(
+      `recorded ${unheld.length} unheld boundaries` +
+        (blank > 0 ? `, ${blank} of them still needing a written reason\n` : "\n"),
+    );
     return;
   }
   const { fresh } = againstBaseline(
