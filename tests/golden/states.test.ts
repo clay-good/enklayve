@@ -37,6 +37,63 @@ describe("states that start from federal taxable income", () => {
     expect(cents(r.totals.takeHome)).toBe("49662.7");
   });
 
+  it("Idaho single $60k with $8,000 of tips → $1,647.72, and Iowa → $1,364.20", () => {
+    // Both start at federal taxable income — Idaho statically (§63-3004 adopts
+    // the Code as of January 1, 2026), Iowa on rolling conformity — so the same
+    // 60,000 − 16,100 − 8,000 = 35,900 flows through to each state's schedule.
+    // Idaho: 0% to $4,811, then 5.3% on 31,089 = 1,647.72. Iowa: a flat 3.8%.
+    const ctx = (code: string) => ({ federal: ds.federal, state: ds.state(code), fica: ds.fica });
+    const filer = { filingStatus: "single" as const, wages: 60000, qualifiedTips: 8000 };
+    const idaho = evaluateTaxes(filer, ctx("id"));
+    expect(cents(idaho.state!.taxableIncome)).toBe("35900");
+    expect(cents(idaho.state!.incomeTax)).toBe("1647.72");
+    const iowa = evaluateTaxes(filer, ctx("ia"));
+    expect(cents(iowa.state!.incomeTax)).toBe("1364.2");
+  });
+
+  it("North Dakota single $95k with $10,000 of tips → $376.84, $195.00 less", () => {
+    // 95,000 − 16,100 − 10,000 = 68,900, which clears the 0% band that runs to
+    // $49,575: 19,325 × 1.95% = 376.84. Without the conformity North Dakota
+    // would tax 78,900 and charge 571.84 — the $195.00 in between is 1.95% of
+    // the tips, and it is state tax North Dakota does not levy.
+    const ctx = { federal: ds.federal, state: ds.state("nd"), fica: ds.fica };
+    const base = { filingStatus: "single" as const, wages: 95000 };
+    const withTips = evaluateTaxes({ ...base, qualifiedTips: 10000 }, ctx);
+    expect(cents(withTips.state!.incomeTax)).toBe("376.84");
+    expect(cents(evaluateTaxes(base, ctx).state!.incomeTax)).toBe("571.84");
+  });
+
+  it("Oregon's car loan addback RAISES its tax, because Oregon subtracts federal tax", () => {
+    // The most tangled of the six, and the reason it gets a worked example.
+    // Oregon starts at federal taxable income and adds back exactly one of the
+    // Act's deductions — qualified passenger vehicle loan interest, enrolled
+    // SB 1507 (2026, ch. 142) §2 — while subtracting the filer's federal income
+    // tax (ORS 316.680, capped at $8,500). So the car loan deduction cuts the
+    // federal tax by $240, which SHRINKS Oregon's subtraction by $240, which
+    // raises Oregon taxable income by $240 and Oregon's tax by 8.75% of it.
+    //
+    // Single, $60,000, $8,000 of tips. Without the car loan: federal taxable
+    // 35,900, federal tax 4,060, Oregon taxable 60,000 − 2,835 − 4,060 − 8,000
+    // = 45,105 → 3,636.69. With $2,000 of car loan interest: federal taxable
+    // 33,900, federal tax 3,820, Oregon taxable 45,345 → 3,657.69. Twenty-one
+    // dollars more in Oregon against two hundred and forty less federally.
+    const ctx = { federal: ds.federal, state: ds.state("or"), fica: ds.fica };
+    const base = { filingStatus: "single" as const, wages: 60000, qualifiedTips: 8000 };
+    const without = evaluateTaxes(base, ctx);
+    const withLoan = evaluateTaxes({ ...base, vehicleLoanInterest: 2000 }, ctx);
+
+    expect(cents(without.federal.incomeTax)).toBe("4060");
+    expect(cents(without.state!.taxableIncome)).toBe("45105");
+    expect(cents(without.state!.incomeTax)).toBe("3636.69");
+
+    expect(cents(withLoan.federal.incomeTax)).toBe("3820");
+    // The tips came through; the car loan interest did not.
+    expect(cents(withLoan.state!.deduction.qualifiedTips)).toBe("8000");
+    expect(cents(withLoan.state!.deduction.vehicleLoanInterest)).toBe("0");
+    expect(cents(withLoan.state!.taxableIncome)).toBe("45345");
+    expect(cents(withLoan.state!.incomeTax)).toBe("3657.69");
+  });
+
   it("the same worker in Colorado keeps the tips and loses the overtime", () => {
     // C.R.S. §39-22-104(3) as HB25-1296 wrote it: the overtime deduction is
     // added back for 2026 and later, and the Department's guide says in the
