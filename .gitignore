@@ -10,6 +10,10 @@ coverage/
 test-results/
 playwright-report/
 
+# In-flight note from `npm run check:boundaries`, which rewrites src/engine in
+# place. Present only while a run is mid-mutation; the next run clears it.
+scripts/.boundary-mutation.json
+
 # Editor / OS
 .DS_Store
 *.log

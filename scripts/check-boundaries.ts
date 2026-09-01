@@ -45,13 +45,23 @@
  *   npm run check:boundaries -- --file src/engine/benefits.ts
  *   npm run check:boundaries -- --classify
  */
-import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
-import { execFileSync } from "node:child_process";
+import {
+  readFileSync,
+  writeFileSync,
+  readdirSync,
+  statSync,
+  existsSync,
+  rmSync,
+  mkdirSync,
+} from "node:fs";
+import { execFileSync, spawn } from "node:child_process";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const BASELINE_FILE = join(ROOT, "scripts", "boundary-baseline.json");
+/** Where an in-flight rewrite is recorded, so a run that is killed is recoverable. */
+const JOURNAL_FILE = join(ROOT, "scripts", ".boundary-mutation.json");
 /** The suites a boundary can plausibly be held by, and no more — this runs once per mutation. */
 const SUITES = ["tests/engine", "tests/golden"];
 /** The probe runner, for `--classify`. One file, so it starts in ~1.5s. */
@@ -257,36 +267,129 @@ export function renderReport(
   return lines.join("\n");
 }
 
-/* c8 ignore start -- mutates files on disk and shells out to the test runner */
+/**
+ * The mutation journal.
+ *
+ * This check rewrites `src/engine` in place and puts it back in a `finally`,
+ * which covers a throw and nothing else. A signal does not run `finally`: press
+ * Ctrl-C, or let CI time the job out, and the tree is left holding a single
+ * flipped comparison in a file nobody edited. It type-checks, it builds, and
+ * the suite is green apart from one failure that reads like a real regression
+ * somewhere unrelated — which is precisely the class of silent wrong answer the
+ * check exists to hunt, planted by the hunter.
+ *
+ * So the path being rewritten is written down before the rewrite and erased
+ * after the restore. A later run finds the note and puts the file back. That
+ * covers what a handler cannot: SIGKILL, an OOM, a laptop lid.
+ *
+ * Recovery is `git checkout -- <the one path>`, which is safe here rather than
+ * merely convenient: the run refuses to start unless `src/engine` is clean, so
+ * HEAD *is* the pristine content of the only file the journal can ever name.
+ */
+export interface MutationJournal {
+  /** Repo-relative path of the file currently rewritten. */
+  file: string;
+  /** The boundary id being flipped, so recovery can say what was interrupted. */
+  boundary: string;
+}
 
-/** True when the suite still passes with the file mutated — i.e. the boundary is NOT held. */
-function survives(): boolean {
+export function readJournal(path: string = JOURNAL_FILE): MutationJournal | null {
+  if (!existsSync(path)) return null;
   try {
-    execFileSync("npx", ["vitest", "run", ...SUITES], {
-      cwd: ROOT,
-      stdio: "ignore",
-      timeout: 10 * 60_000,
-    });
-    return true;
+    const parsed = JSON.parse(readFileSync(path, "utf8")) as Partial<MutationJournal>;
+    if (typeof parsed.file !== "string" || typeof parsed.boundary !== "string") return null;
+    return { file: parsed.file, boundary: parsed.boundary };
   } catch {
-    return false;
+    // A half-written note is still evidence a run died mid-rewrite, but it does
+    // not say which file. Better to report nothing than to guess at a path and
+    // hand it to `git checkout`.
+    return null;
   }
 }
 
+export function writeJournal(entry: MutationJournal, path: string = JOURNAL_FILE): void {
+  writeFileSync(path, `${JSON.stringify(entry)}\n`);
+}
+
+export function clearJournal(path: string = JOURNAL_FILE): void {
+  rmSync(path, { force: true });
+}
+
+/**
+ * Put back a file an interrupted run left rewritten, if there is one.
+ * Returns what it restored, so the caller can say so out loud — a repair that
+ * happens silently teaches nobody that the hazard exists.
+ */
+export function recoverAbandonedMutation(
+  root: string = ROOT,
+  path: string = JOURNAL_FILE,
+): MutationJournal | null {
+  const entry = readJournal(path);
+  if (!entry) {
+    // A note that could not be read is still cleared: it names no file, so
+    // leaving it would block every future run for nothing.
+    clearJournal(path);
+    return null;
+  }
+  execFileSync("git", ["checkout", "--", entry.file], { cwd: root });
+  clearJournal(path);
+  return entry;
+}
+
+/* c8 ignore start -- mutates files on disk and shells out to the test runner */
+
+/**
+ * Run a test command to completion and say whether it passed.
+ *
+ * Deliberately async rather than `execFileSync`. A synchronous child blocks the
+ * event loop for the whole run, so a signal arriving mid-mutation sits in the
+ * queue for the eight minutes the suite takes before the restore handler gets
+ * to run — the file stays flipped on disk for as long as anyone is watching,
+ * and if the shell gives up first it stays flipped for good. Awaiting keeps the
+ * loop live, so the handler fires at once and takes the child with it.
+ */
+function run(args: string[], env: NodeJS.ProcessEnv, timeoutMs: number): Promise<boolean> {
+  return new Promise((settle) => {
+    const child = spawn("npx", args, { cwd: ROOT, stdio: "ignore", env });
+    running.add(child);
+    const timer = setTimeout(() => child.kill("SIGKILL"), timeoutMs);
+    const done = (ok: boolean): void => {
+      clearTimeout(timer);
+      running.delete(child);
+      settle(ok);
+    };
+    child.on("error", () => done(false));
+    child.on("close", (code) => done(code === 0));
+  });
+}
+
+/** Children to take down when a signal arrives, so the restore is not queued behind one. */
+const running = new Set<ReturnType<typeof spawn>>();
+
+/** True when the suite still passes with the file mutated — i.e. the boundary is NOT held. */
+function survives(): Promise<boolean> {
+  return run(["vitest", "run", ...SUITES], process.env, 10 * 60_000);
+}
+
 /** The digest of everything the probe observes, with the tree as it stands. */
-function observe(): string | null {
-  const out = join(ROOT, "node_modules", ".cache", "boundary-observation.json");
+async function observe(): Promise<string | null> {
+  // `.cache` is not created by every install, and a probe whose digest cannot
+  // be written reports as a failed probe — which reads as "the probe fails on
+  // unmutated source" and refuses the whole classify run.
+  const cache = join(ROOT, "node_modules", ".cache");
+  mkdirSync(cache, { recursive: true });
+  const out = join(cache, "boundary-observation.json");
+  const ok = await run(
+    ["vitest", "run", OBSERVE_SPEC],
+    { ...process.env, OBSERVE_OUT: out },
+    5 * 60_000,
+  );
+  // A mutation can make the probe itself throw. That is a difference too --
+  // the loudest kind -- so it is reported as observable rather than swallowed.
+  if (!ok) return null;
   try {
-    execFileSync("npx", ["vitest", "run", OBSERVE_SPEC], {
-      cwd: ROOT,
-      stdio: "ignore",
-      env: { ...process.env, OBSERVE_OUT: out },
-      timeout: 5 * 60_000,
-    });
     return readFileSync(out, "utf8");
   } catch {
-    // A mutation can make the probe itself throw. That is a difference too --
-    // the loudest kind -- so it is reported as observable rather than swallowed.
     return null;
   }
 }
@@ -298,6 +401,16 @@ async function main(): Promise<void> {
     .flatMap(sourceFiles)
     .map((p) => p.slice(ROOT.length + 1).replace(/\\/g, "/"))
     .filter((p) => (only === -1 ? true : p === process.argv[only + 1]));
+
+  // Clean up after a previous run that was killed mid-rewrite, before deciding
+  // whether the tree is dirty — otherwise this check's own wreckage reads as
+  // somebody's uncommitted work and refuses every run until a person notices.
+  const recovered = recoverAbandonedMutation();
+  if (recovered) {
+    process.stderr.write(
+      `recovered ${recovered.file}: an earlier run was killed while ${recovered.boundary} was flipped\n`,
+    );
+  }
 
   // Refuse to run against uncommitted work: this rewrites source files, and a
   // crash between mutate and restore would take an edit with it.
@@ -313,8 +426,25 @@ async function main(): Promise<void> {
     return;
   }
 
+  // `finally` does not run on a signal. Ctrl-C, or a CI job hitting its limit,
+  // would otherwise leave the flipped comparison on disk.
+  let inFlight: { abs: string; original: string } | null = null;
+  const putBack = (): void => {
+    if (inFlight) writeFileSync(inFlight.abs, inFlight.original);
+    inFlight = null;
+    clearJournal();
+  };
+  for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const) {
+    process.on(signal, () => {
+      for (const child of running) child.kill("SIGKILL");
+      putBack();
+      process.stderr.write(`\n${signal}: restored the mutated file before exiting\n`);
+      process.exit(signal === "SIGINT" ? 130 : 143);
+    });
+  }
+
   const classify = process.argv.includes("--classify");
-  const clean = classify ? observe() : null;
+  const clean = classify ? await observe() : null;
   if (classify && clean === null) {
     process.stderr.write("refusing to classify: the probe fails on unmutated source\n");
     process.exitCode = 1;
@@ -336,15 +466,17 @@ async function main(): Promise<void> {
       const line = lines[b.line - 1]!;
       lines[b.line - 1] = line.slice(0, col) + b.to + line.slice(col + b.from.length);
       try {
+        writeJournal({ file: rel, boundary: b.id });
+        inFlight = { abs, original };
         writeFileSync(abs, lines.join("\n"));
         checked += 1;
-        const notHeld = survives();
+        const notHeld = await survives();
         if (notHeld) unheld.push(b);
         let verdict = "";
         if (classify) {
           // A mutation that makes the probe throw has changed behaviour in the
           // loudest way there is, so a null digest counts as observable.
-          const moved = observe() !== clean;
+          const moved = (await observe()) !== clean;
           verdict = moved ? " observable" : " no-observed-difference";
           if (notHeld) verdicts.set(b.id, moved ? "observable" : "no-observed-difference");
           // Calibration: a held boundary MUST be observable, because a test
@@ -356,6 +488,8 @@ async function main(): Promise<void> {
         );
       } finally {
         writeFileSync(abs, original);
+        inFlight = null;
+        clearJournal();
       }
     }
     if (readFileSync(abs, "utf8") !== original) {

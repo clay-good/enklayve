@@ -1,7 +1,17 @@
-import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { againstBaseline, boundariesIn, renderReport } from "../../scripts/check-boundaries";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { readFileSync, writeFileSync, existsSync, mkdtempSync, mkdirSync, rmSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import { resolve, join } from "node:path";
+import {
+  againstBaseline,
+  boundariesIn,
+  renderReport,
+  readJournal,
+  writeJournal,
+  clearJournal,
+  recoverAbandonedMutation,
+} from "../../scripts/check-boundaries";
 
 /**
  * The boundary check.
@@ -125,5 +135,80 @@ describe("the report", () => {
     const fresh = renderReport(2, [boundary], []);
     expect(fresh).toContain("## Newly unheld");
     expect(renderReport(2, [boundary], [boundary.id])).not.toContain("## Newly unheld");
+  });
+});
+
+/**
+ * The mutation journal.
+ *
+ * The check rewrites `src/engine` in place and restores it in a `finally`,
+ * which a signal does not run. Killing a run — Ctrl-C, a CI timeout — used to
+ * leave one flipped comparison sitting in a file nobody edited: it type-checks,
+ * it builds, and the suite shows a single failure that reads like a regression
+ * somewhere else entirely. That happened on 2026-09-01, and the symptom was a
+ * goal-plan test failing over a mutation left behind in `socialSecurity.ts`.
+ *
+ * These exercise recovery against a scratch git repo rather than this one, so a
+ * bug here can never call `git checkout` on real work.
+ */
+describe("recovering from a run that was killed mid-rewrite", () => {
+  let dir: string;
+  let journal: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "boundary-journal-"));
+    journal = join(dir, "journal.json");
+    const git = (...args: string[]) => execFileSync("git", args, { cwd: dir, stdio: "ignore" });
+    git("init", "-q");
+    git("config", "user.email", "t@example.com");
+    git("config", "user.name", "t");
+    mkdirSync(join(dir, "src", "engine"), { recursive: true });
+    writeFileSync(join(dir, "src", "engine", "b.ts"), "if (a <= b) return 0;\n");
+    git("add", "-A");
+    git("commit", "-qm", "seed");
+  });
+
+  afterEach(() => rmSync(dir, { recursive: true, force: true }));
+
+  it("puts the file back exactly as HEAD has it", () => {
+    // The state a killed run leaves behind: the flip on disk, the note beside it.
+    writeFileSync(join(dir, "src", "engine", "b.ts"), "if (a < b) return 0;\n");
+    writeJournal({ file: "src/engine/b.ts", boundary: "src/engine/b.ts:1:<=:6" }, journal);
+
+    const recovered = recoverAbandonedMutation(dir, journal);
+
+    expect(recovered?.boundary).toBe("src/engine/b.ts:1:<=:6");
+    expect(readFileSync(join(dir, "src", "engine", "b.ts"), "utf8")).toBe(
+      "if (a <= b) return 0;\n",
+    );
+    expect(existsSync(journal)).toBe(false);
+  });
+
+  it("does nothing at all when no run was interrupted", () => {
+    expect(recoverAbandonedMutation(dir, journal)).toBeNull();
+    expect(readFileSync(join(dir, "src", "engine", "b.ts"), "utf8")).toBe(
+      "if (a <= b) return 0;\n",
+    );
+  });
+
+  it("does not hand a guessed path to git when the note is half-written", () => {
+    // A process killed between opening the note and finishing it. The note
+    // names no file, so there is nothing to restore and nothing to guess at —
+    // but it must still be cleared, or it blocks every later run for nothing.
+    writeFileSync(journal, '{"file":"src/eng');
+    expect(recoverAbandonedMutation(dir, journal)).toBeNull();
+    expect(existsSync(journal)).toBe(false);
+  });
+
+  it("round-trips the note, so recovery reads what the run wrote", () => {
+    const entry = { file: "src/engine/benefits.ts", boundary: "src/engine/benefits.ts:10:<=:4" };
+    writeJournal(entry, journal);
+    expect(readJournal(journal)).toEqual(entry);
+    clearJournal(journal);
+    expect(readJournal(journal)).toBeNull();
+  });
+
+  it("clearing a note that is not there is not an error", () => {
+    expect(() => clearJournal(journal)).not.toThrow();
   });
 });
