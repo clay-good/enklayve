@@ -759,7 +759,7 @@ function renderAllTools(container: HTMLElement, navigate: NavigateFn): void {
   // One section per topic hub (the unit the app actually navigates to); each
   // heading opens the hub, and every calculator it hosts is listed beneath,
   // deep-linking into the hub already switched to that tool — so the browse
-  // path reaches all the calculators by name, not just the 10 hubs.
+  // path reaches all the calculators by name, not just the hubs.
   const sections = el("div", { class: "all-tools" });
   for (const hub of TILES) {
     const subs = SUB_TOOLS.filter((s) => s.hubId === hub.id).map((s) => s.tile);

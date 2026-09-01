@@ -16,7 +16,7 @@ import { SituationStore } from "../../src/profile/situation";
  * router calls for every `#/<tile>` route) must always emit `.explainer-promise`
  * carrying all three required clauses.
  *
- * `TILES` is the complete set of routable tiles — the 10 hubs — since every
+ * `TILES` is the complete set of routable tiles — the hubs — since every
  * calculator is hosted inside a hub at `?tool=` (sub-tools are never top-level
  * routes). Iterating it means a newly added hub is covered automatically.
  */

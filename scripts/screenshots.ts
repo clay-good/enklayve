@@ -11,7 +11,7 @@
  * It serves the production build over `vite preview` (the exact bytes that ship)
  * and drives a headless Chromium at a 2x device scale for crisp captures:
  *   - home.png        the home / anti-budget at a desktop width
- *   - all-tools.png   the crawlable All Tools index (the 59-calculator catalog)
+ *   - all-tools.png   the crawlable All Tools index (every calculator, by hub)
  *   - cited-result.png  a calculator's answer + the cited "show the math" table
  *                       (the differentiator: every statutory line links its source)
  *   - mobile.png      the same computed result at a 390px phone width, evidencing
@@ -95,7 +95,7 @@ async function main(): Promise<void> {
       await page.close();
     }
 
-    // 2) All Tools index (the catalog of 59 calculators in 10 hubs).
+    // 2) All Tools index (the catalog: every calculator, grouped by hub).
     {
       const page = await browser.newPage({
         viewport: { width: 1280, height: 880 },

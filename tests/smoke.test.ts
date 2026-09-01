@@ -254,7 +254,7 @@ describe("All Tools index view", () => {
     expect(hubs).toContain("Benefits & Aid");
     expect(hubs).not.toContain("My Plan");
     // Individual calculators are now listed by name under their hub, so the
-    // browse path reaches every tool, not just the 10 hubs.
+    // browse path reaches every tool, not just the hubs.
     const tools = Array.from(root.querySelectorAll(".tile-link-title")).map((n) => n.textContent);
     expect(tools).toContain("Take-Home Pay");
     expect(tools).toContain("Earned Income Tax Credit");
