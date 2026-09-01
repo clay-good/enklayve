@@ -34,6 +34,7 @@ import {
   type FafsaData,
   type IraDeductionData,
   type GiftTaxData,
+  type TrumpAccountData,
   type AmtData,
   type ChildTaxData,
   type EducationCreditsData,
@@ -118,6 +119,8 @@ export interface BundledData {
   iraDeduction(): IraDeductionData | null;
   /** Annual gift-tax exclusion and lifetime gift/estate exemption (SPEC-3 §4.4). */
   giftTax(): GiftTaxData | null;
+  /** IRC §530A accounts and the §6434 pilot contribution. */
+  trumpAccounts(): TrumpAccountData | null;
   /** AMT exemption, phase-out, and rate breakpoint (SPEC-3 §4.7). */
   amt(): AmtData | null;
   /** Child-tax dependent shelter and earned-income add-on (SPEC-3 §4.5). */
@@ -198,6 +201,7 @@ async function build(): Promise<BundledData> {
     fafsa: () => dataOf("fafsa-2024-2025") as FafsaData | null,
     iraDeduction: () => dataOf("ira-deduction-2024") as IraDeductionData | null,
     giftTax: () => dataOf("gift-tax-2024") as GiftTaxData | null,
+    trumpAccounts: () => dataOf("trump-accounts-2026") as TrumpAccountData | null,
     amt: () => dataOf("amt-2024") as AmtData | null,
     childTax: () => dataOf("child-tax-2024") as ChildTaxData | null,
     educationCredits: () => dataOf("education-credits-2024") as EducationCreditsData | null,

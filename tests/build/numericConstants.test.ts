@@ -111,6 +111,8 @@ const VERDICTS: Record<string, string> = {
   MAX_ROWS: "bound — a cap so a crafted deep link cannot allocate a runaway editor",
   MAX_CURVE_COLUMNS: "bound — the widest curve drawn before thinning, to keep the DOM small",
   MAX_AGE: "bound — a ceiling on a user-entered age",
+  DEFAULT_RETURN_PCT:
+    "assumption — the long-run return a §530A projection starts from. Nobody legislates it, the reader can edit it, and the tile calls the result a projection rather than a promise.",
   DURATION_MS: "bound — an animation length",
   HOURS_PER_DAY: "bound — a unit conversion for an hourly rate",
   STEP: "bound — the $1,000 lever the optimizer measures a saving against",

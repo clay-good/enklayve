@@ -960,6 +960,36 @@ export type IraDeductionData = z.infer<typeof IraDeductionSchema>;
  * draw down the `lifetimeExemption` (no tax until it is exhausted); beyond it the
  * `topRate` (the 40% top gift-tax rate) applies.
  */
+/**
+ * IRC §530A "Trump accounts" and the §6434 pilot contribution.
+ *
+ * A savings account for a child under 18, added by the One Big Beautiful Bill
+ * Act for taxable years after 2025. The figures are statutory rather than
+ * indexed for now — §530A(c)(2)(C) starts the inflation adjustment only after
+ * 2027 — so this shard is a transcription of the Code and changes by amendment.
+ *
+ * The dates are here as data because they are the two rules that decide whether
+ * this tool applies to a reader at all: nothing could be contributed before
+ * July 4, 2026 (§530A(b)(1)(C)(i), twelve months after enactment) and nothing
+ * can be taken out before the calendar year the beneficiary turns 18.
+ */
+export const TrumpAccountSchema = z.object({
+  taxYear: z.number().int(),
+  /** §530A(c)(2)(A): the calendar-year cap on non-exempt contributions. */
+  annualContributionLimit: z.number().gt(0),
+  /** §6434: what the Secretary pays into an eligible child's account. */
+  pilotContribution: z.number().gte(0),
+  /** §6434's birth window, inclusive: born after 2024 and before 2029. */
+  pilotBirthYearFirst: z.number().int(),
+  pilotBirthYearLast: z.number().int(),
+  /** §530A(b)(1)(C)(i): the first date any contribution could be accepted. */
+  contributionsOpenFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  /** §530A(b)(1)(C)(ii): no distribution before the year the child turns this. */
+  distributionAge: z.number().int().gt(0),
+  citation: CitationSchema,
+});
+export type TrumpAccountData = z.infer<typeof TrumpAccountSchema>;
+
 export const GiftTaxSchema = z.object({
   taxYear: z.number().int(),
   annualExclusion: z.number().gte(0),
@@ -1333,6 +1363,7 @@ export const DATASET_SCHEMAS = {
   "social-security-taxation": SocialSecurityTaxationSchema,
   "ira-deduction": IraDeductionSchema,
   "gift-tax": GiftTaxSchema,
+  "trump-accounts": TrumpAccountSchema,
   amt: AmtSchema,
   "child-tax": ChildTaxSchema,
   "education-credits": EducationCreditsSchema,

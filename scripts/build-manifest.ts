@@ -197,6 +197,14 @@ const SHARDS: ShardSource[] = [
     ...ANNUAL,
   },
   { id: "gift-tax-2024", kind: "gift-tax", shard: "gift-tax-2024.json", ...ANNUAL },
+  // Statutory figures, not indexed until after 2027 — the Delaware shape, so it
+  // is watched at the Code rather than chased by an adapter.
+  {
+    id: "trump-accounts-2026",
+    kind: "trump-accounts",
+    shard: "trump-accounts-2026.json",
+    ...ANNUAL,
+  },
   { id: "amt-2024", kind: "amt", shard: "amt-2024.json", ...ANNUAL },
   { id: "child-tax-2024", kind: "child-tax", shard: "child-tax-2024.json", ...ANNUAL },
   {

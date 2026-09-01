@@ -926,6 +926,19 @@
       "contentHash": "90628fd1b09c7a3e0c6439503e60b3d1df22f5722ec5e535c76a775a7c9658fa"
     },
     {
+      "id": "trump-accounts-2026",
+      "kind": "trump-accounts",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 2,
+      "shard": "trump-accounts-2026.json",
+      "sourceUrl": "https://www.law.cornell.edu/uscode/text/26/530A",
+      "sourceDocument": "26 U.S.C. §530A (Trump accounts) and §6434 (pilot contribution); IRS Notice 2025-68",
+      "dateRetrieved": "2026-09-01",
+      "contentHash": "e8ac479862d6072a97838a2099c205529c0cc3af7932bb620f735b0a1429c305"
+    },
+    {
       "id": "amt-2024",
       "kind": "amt",
       "version": "2026.0",

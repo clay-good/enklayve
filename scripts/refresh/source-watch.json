@@ -160,6 +160,20 @@
       "why": "Oregon starts at federal taxable income (ORS 316.048) and takes exactly one of the Act's deductions back: enrolled SB 1507 (2026, ch. 142) §2 adds qualified passenger vehicle loan interest under §163(h)(4) back to federal taxable income for tax years beginning on or after January 1, 2026. That section is not yet codified in the chapter, which is the reason to watch the chapter rather than a section: the next addback, and this one's codification, both land here. Chapter-wide, so it will fire for unrelated amendments — accepted for the same reason as North Dakota, that the narrow page does not exist.",
       "fingerprint": "b9d768f8b9394005325709db9d2414ae34f4778000f2e0c5d6ab39ebb9e45b8b",
       "checkedOn": "2026-09-01"
+    },
+    {
+      "shard": "trump-accounts-2026",
+      "url": "https://www.law.cornell.edu/uscode/text/26/530A",
+      "why": "Every figure on this shard is statutory and none of it indexes yet — §530A(c)(2)(C) starts the inflation adjustment only for taxable years after 2027, so the $5,000 limit is $5,000 in 2026 and in 2027 and there is no annual document for an adapter to chase. Delaware's shape. What the watch is really for here is the part that is not a figure: §530A(a) treats the account as an individual retirement account under §408(a), and (b)(1)(C) sets the two dates the tile turns on — the July 4, 2026 opening and the no-distributions-before-18 rule. Treasury and the IRS are still writing regulations under this section (Notice 2025-68, the March 2026 proposed rules, the August 2026 guidance on eligible investments), which is exactly the condition where a change is a thing a person must read.",
+      "fingerprint": "0e902c3e350219d3ac3c00d0539d06d649a9ca9b0528d4c4f0182b3af9d5dd0e",
+      "checkedOn": "2026-09-01"
+    },
+    {
+      "shard": "trump-accounts-2026",
+      "url": "https://www.law.cornell.edu/uscode/text/26/6434",
+      "why": "The $1,000 pilot contribution and, more importantly, the birth window that decides who gets it: 'born after December 31, 2024, and before January 1, 2029'. A window with an end date in it is a rule that expires rather than drifts, and when it does the shard should stop offering the money rather than quietly keep adding it to a projection. Second watch on this shard, at the other statute it rests on.",
+      "fingerprint": "fc3713c6defb58d6ed016081832795b0d5d1b9758852dd060129baefe9509ad5",
+      "checkedOn": "2026-09-01"
     }
   ]
 }

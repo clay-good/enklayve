@@ -1,0 +1,16 @@
+{
+  "taxYear": 2026,
+  "annualContributionLimit": 5000,
+  "pilotContribution": 1000,
+  "pilotBirthYearFirst": 2025,
+  "pilotBirthYearLast": 2028,
+  "contributionsOpenFrom": "2026-07-04",
+  "distributionAge": 18,
+  "citation": {
+    "sourceUrl": "https://www.law.cornell.edu/uscode/text/26/530A",
+    "sourceDocument": "26 U.S.C. §530A (Trump accounts) and §6434 (pilot contribution); IRS Notice 2025-68",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-09-01",
+    "sourceNote": "The One Big Beautiful Bill Act's savings account for children under 18, added as IRC §530A for taxable years beginning after December 31, 2025. Four figures, each from the Code. The contribution limit is $5,000 a calendar year — §530A(c)(2)(A), 'the aggregate amount of contributions (other than exempt contributions) for such calendar year shall not exceed $5,000' — indexed for taxable years after 2027 under (c)(2)(C), so 2026 and 2027 are both $5,000. §6434 pays $1,000 into the account of an eligible child, defined there as one 'born after December 31, 2024, and before January 1, 2029' who is a United States citizen and for whom no prior election has been made; it is claimed by election and paid by the Secretary directly to the account, not to the family. No contribution of any kind could be accepted before July 4, 2026 — §530A(b)(1)(C)(i), twelve months after enactment — and no distribution is allowed before the first day of the calendar year in which the beneficiary turns 18. What this shard deliberately does NOT carry is the growth assumption or the employer exclusion: the §128 exclusion for employer contributions is a separate section with its own limit, and eligible investments are restricted to funds tracking a qualified index (Treasury and IRS guidance of August 2026), which is a rule about what you may hold rather than a figure to compute with. The tax treatment is the thing most likely to be misread and it is not a number at all: §530A(a) treats the account 'in the same manner as an individual retirement account under section 408(a)', so growth is deferred and withdrawals are ordinary income — and §530A(d)(2) excludes the §6434 payment, qualified general contributions and §128 employer money from the investment in the contract, meaning that seed money has no basis and is taxed in full when it comes out."
+  }
+}

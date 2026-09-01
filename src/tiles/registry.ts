@@ -25,6 +25,7 @@ import { autoLoanTile } from "./autoLoan";
 import { compoundGrowthTile } from "./compoundGrowth";
 import { retirementOptimizerTile } from "./retirementOptimizer";
 import { capitalGainsTile } from "./capitalGains";
+import { trumpAccountTile } from "./trumpAccount";
 import { savingsBondTile } from "./savingsBond";
 import { inflationTile } from "./inflation";
 import { rmdTile } from "./rmd";
@@ -126,6 +127,7 @@ const HUB_CONFIGS: HubConfig[] = [
       taxLossHarvestingTile,
       childTaxTile,
       compoundGrowthTile,
+      trumpAccountTile,
       savingsBondTile,
       inflationTile,
     ],

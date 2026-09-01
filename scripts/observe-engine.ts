@@ -83,6 +83,7 @@ import {
   standardDeductionPhaseOutFor,
 } from "../src/engine/tax/brackets";
 import { taxLossHarvest } from "../src/engine/taxMoves";
+import { projectTrumpAccount } from "../src/engine/trumpAccount";
 import type { BundledData } from "../src/data/browser";
 import type { CitationData, FilingStatus, Jurisdiction } from "../src/data/schemas";
 
@@ -106,6 +107,7 @@ export const PROBED_FILES = [
   "src/engine/socialSecurityTax.ts",
   "src/engine/tax/brackets.ts",
   "src/engine/taxMoves.ts",
+  "src/engine/trumpAccount.ts",
 ];
 
 const citation: CitationData = {
@@ -476,6 +478,42 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
       sales.map((s) => `${s.lot.costPerShare}x${s.sharesSold}`),
     );
     put(`basis(${sell})`, costBasisGain(250, sales).totalGain.toNumber());
+  }
+  // §530A: the contribution cap, the §6434 birth window at both of its edges,
+  // and the ages either side of the distribution age — the values that section's
+  // comparisons actually test.
+  const trumpData = {
+    taxYear: 2026,
+    annualContributionLimit: 5_000,
+    pilotContribution: 1_000,
+    pilotBirthYearFirst: 2025,
+    pilotBirthYearLast: 2028,
+    contributionsOpenFrom: "2026-07-04",
+    distributionAge: 18,
+    citation,
+  };
+  for (const birthYear of [2024, 2025, 2028, 2029]) {
+    for (const age of [0, 17, 18, 19]) {
+      for (const contribution of [4_999, 5_000, 5_001]) {
+        const r = projectTrumpAccount(
+          {
+            currentAge: age,
+            birthYear,
+            annualContribution: contribution,
+            currentBalance: 0,
+            annualReturnRate: 0.07,
+          },
+          trumpData,
+        );
+        put(`trump(${birthYear},${age},${contribution})`, {
+          years: r.yearsToDistribution,
+          pilot: r.pilotContribution.toNumber(),
+          applied: r.contributionApplied.toNumber(),
+          balance: Math.round(r.balanceAtDistribution.toNumber()),
+          taxable: Math.round(r.taxableAtDistribution.toNumber()),
+        });
+      }
+    }
   }
   for (const loss of [2_999, 3_000, 3_001]) {
     const r = taxLossHarvest({
