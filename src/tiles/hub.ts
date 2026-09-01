@@ -17,6 +17,7 @@
 import { el, clear } from "../ui/dom";
 import { tileHowResources } from "../ui/explainer";
 import type { Pillar, TileContext, TileDefinition } from "./types";
+import { hubIdForTool } from "./registry";
 
 export interface HubConfig {
   id: string;
@@ -115,8 +116,27 @@ function mountHub(ctx: TileContext, config: HubConfig, fallback: string): void {
         return ctx.permalink(merged);
       },
       navigate: (tileId, params) => {
-        if (tileId && tools.some((t) => t.id === tileId)) {
-          ctx.navigate(id, new URLSearchParams({ [HUB_TOOL_KEY]: tileId }));
+        // A sub-tool is not a route. Resolve the hub that owns the target —
+        // this one or another — and hand the router the hub plus `?tool=`.
+        // Two things were wrong here before a cross-hub handoff needed them.
+        // The remap only recognized siblings of THIS hub, so navigating to a
+        // calculator in another one fell through to a tile id the router
+        // cannot resolve and dropped the reader on the home page. And the
+        // remap threw the caller's params away, so a link carrying a value —
+        // Auto Loan handing its first year of interest to the car loan
+        // deduction — arrived empty even when it arrived.
+        // This hub's own tools first, so a hub built outside the registry (a
+        // test fixture) still remaps its siblings; then the registry, which is
+        // what makes a cross-hub target resolvable at all.
+        const targetHub = !tileId
+          ? undefined
+          : tools.some((t) => t.id === tileId)
+            ? id
+            : hubIdForTool(tileId);
+        if (tileId && targetHub) {
+          const merged = new URLSearchParams(params ?? undefined);
+          merged.set(HUB_TOOL_KEY, tileId);
+          ctx.navigate(targetHub, merged);
         } else {
           ctx.navigate(tileId, params);
         }

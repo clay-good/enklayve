@@ -4,6 +4,7 @@ import { mountFederalIncomeTax } from "../../src/tiles/federalIncomeTax";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
+import { getTile, hubIdForTool } from "../../src/tiles/registry";
 
 /**
  * Auto Loan hands its interest figure to the deduction that spends it.
@@ -75,5 +76,47 @@ describe("the Auto Loan → Federal Income Tax handoff", () => {
     const text = root.textContent ?? "";
     expect(text).toContain("True cost of credit");
     expect(text).toContain("Interest in the first 12 months");
+  });
+});
+
+describe("navigating between calculators in different hubs", () => {
+  it("resolves a sub-tool to the hub that owns it, and keeps the params", () => {
+    // A calculator is not a route: `federal-income-tax` lives at
+    // `#/paycheck-taxes?tool=federal-income-tax`. The hub used to remap only
+    // its OWN tools, so a cross-hub target fell through as a tile id the router
+    // cannot resolve and dropped the reader on the home page — and the remap it
+    // did perform threw the caller's params away, so a link carrying a value
+    // arrived empty even when it arrived. Both are why this is tested at the
+    // hub rather than only at the button.
+    expect(hubIdForTool("federal-income-tax")).toBe("paycheck-taxes");
+    expect(hubIdForTool("auto-loan")).toBe("debt");
+    // A hub is a route in its own right and is not a sub-tool of anything.
+    expect(hubIdForTool("paycheck-taxes")).toBeUndefined();
+  });
+
+  it("carries the interest through the hub to the field, not just to the router", () => {
+    const calls: { tile: string | null; params?: URLSearchParams }[] = [];
+    const root = document.createElement("div");
+    // Mounted as the reader reaches it: the debt hub, switched to Auto Loan.
+    const debtHub = getTile("debt");
+    expect(debtHub?.mount).toBeDefined();
+    debtHub!.mount!({
+      root,
+      params: new URLSearchParams({ tool: "auto-loan", a: "32000", apr: "7.5", y: "6" }),
+      setParams: () => {},
+      permalink: () => "https://enklayve.com/#/x",
+      navigate: (tile, params) => calls.push({ tile, params }),
+      locale: "en-US",
+      data,
+      profile: new SituationStore(),
+    });
+    const button = [...root.querySelectorAll("button")].find(
+      (b) => b.textContent === "Deduct this interest",
+    );
+    button!.dispatchEvent(new Event("click"));
+
+    expect(calls[0]?.tile).toBe("paycheck-taxes");
+    expect(calls[0]?.params?.get("tool")).toBe("federal-income-tax");
+    expect(Number(calls[0]?.params?.get("carint"))).toBeGreaterThan(2000);
   });
 });

@@ -198,3 +198,42 @@ test("a deep link beats the profile, and the control shows it", async ({ page })
   await expect(page.locator('select[name="fs"]').first()).toHaveValue("single");
   await expect(page.locator('select[name="st"]').first()).toHaveValue("tx");
 });
+
+test("a Montana tipped worker sees the deduction reach the state line", async ({ page }) => {
+  // The federal-taxable-income conformity, end to end in a real browser: MCA
+  // §15-30-2120(1) starts Montana at federal taxable income, so IRC §224 lands
+  // on the state return without Montana legislating anything. Worth an e2e
+  // rather than only a golden case, because the value has to survive the deep
+  // link, the tile's fields, and the engine — and the number a Montanan reads
+  // is the one that was wrong.
+  const url = "/#/paycheck-taxes?tool=take-home&fs=single&st=mt&w=60000";
+  await page.goto(`${url}&tips=8000`);
+  await page.waitForSelector(".tile-form");
+  await expect(page.locator('input[name="tips"]').first()).toHaveValue("8000");
+  const withTips = await page.locator(".result-card").first().innerText();
+
+  await page.goto(url);
+  await page.waitForSelector(".tile-form");
+  const withoutTips = await page.locator(".result-card").first().innerText();
+
+  // $8,000 of tips at Montana's 4.70% band is $376 of state tax that a reader
+  // was being shown before the conformity landed.
+  expect(withTips).not.toEqual(withoutTips);
+  expect(withTips).toContain("Montana");
+});
+
+test("the car loan interest a reader deducts is one year of it", async ({ page }) => {
+  // The Auto Loan tile knows the schedule; the deduction is measured on the
+  // interest paid in the tax year. The button carries the first twelve months'
+  // figure, not the life-of-loan total, which on this example differ by more
+  // than three times.
+  await page.goto("/#/debt?tool=auto-loan&a=32000&apr=7.5&y=6&f=1500");
+  await page.waitForSelector(".tile-form");
+  await expect(page.getByText("Interest in the first 12 months")).toBeVisible();
+
+  await page.getByRole("button", { name: "Deduct this interest" }).click();
+  await page.waitForSelector('input[name="carint"]');
+  const carint = Number(await page.locator('input[name="carint"]').first().inputValue());
+  expect(carint).toBeGreaterThan(2200);
+  expect(carint).toBeLessThan(2400);
+});

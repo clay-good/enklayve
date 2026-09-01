@@ -261,6 +261,22 @@ export function getTile(id: string): TileDefinition | undefined {
   return BY_ID.get(id);
 }
 
+const HUB_BY_TOOL = new Map(SUB_TOOLS.map(({ tile, hubId }) => [tile.id, hubId]));
+
+/**
+ * The hub that owns a sub-tool, or undefined for a top-level route.
+ *
+ * A calculator is not a route: `federal-income-tax` is reached at
+ * `#/paycheck-taxes?tool=federal-income-tax`, and `getTile` — which only knows
+ * the routable tiles — returns nothing for it. So a `navigate("federal-income-tax")`
+ * from anywhere outside that hub resolved to no tile and sent the reader home,
+ * silently, which is how the Auto Loan tile's brand-new "Deduct this interest"
+ * button behaved in a browser while its unit test passed.
+ */
+export function hubIdForTool(tileId: string): string | undefined {
+  return HUB_BY_TOOL.get(tileId);
+}
+
 /**
  * A searchable entry for the home search and command palette. Hubs and every
  * sub-tool both appear, so searching "EITC"/"refinance" surfaces the familiar
