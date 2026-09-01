@@ -408,18 +408,63 @@ function shellBreakdownFromBuild(root: string): string[] {
   // because a breakdown that silently omits its biggest entry is worse than
   // none.
   let shardBytes = 0;
+  let noteBytes = 0;
   try {
     const dir = join(root, "data");
     for (const name of readdirSync(dir)) {
-      if (name.endsWith(".json")) shardBytes += statSync(join(dir, name)).size;
+      if (!name.endsWith(".json")) continue;
+      const raw = readFileSync(join(dir, name), "utf8");
+      shardBytes += Buffer.byteLength(raw);
+      noteBytes += sourceNoteBytes(raw);
     }
   } catch {
     return lines;
   }
   lines.push(
     `${(shardBytes / 1024).toFixed(1).padStart(8)} kB  data/*.json (inlined verbatim; not in the source map)`,
+    `${(noteBytes / 1024).toFixed(1).padStart(8)} kB    ...of which sourceNote prose` +
+      ` (${Math.round((noteBytes / Math.max(1, shardBytes)) * 100)}% of the shards)`,
   );
   return lines;
+}
+
+/**
+ * How many bytes of a shard are `sourceNote` prose.
+ *
+ * Split out because the shards are the largest thing in the shell and half of
+ * that is sentences rather than figures — 124.6 kB of 323 raw on 2026-09-01,
+ * which compresses to about 41.6 of the 78.6 kB gzipped the datasets cost, or
+ * roughly 15% of the whole precached shell. Nobody had that number, and the
+ * budget paragraph that ranked the candidates for trimming did not include it.
+ *
+ * It is measured rather than trimmed, and the reason is the integrity gate: the
+ * loader recomputes each shard's sha256 over its exact bytes (BUILD-SPEC.md
+ * §7.1), so the notes have to be inside the bytes that are hashed. Moving them
+ * to a lazily imported chunk would mean hashing something other than the file
+ * that is committed, which trades the guarantee this site is built on for
+ * kilobytes. `connect-src 'none'` also forbids fetching them later.
+ *
+ * So the number's use is honesty about where the budget goes, and about what
+ * the next raise is buying: citations a reader can read offline.
+ */
+export function sourceNoteBytes(raw: string): number {
+  let total = 0;
+  const walk = (value: unknown): void => {
+    if (Array.isArray(value)) {
+      for (const v of value) walk(v);
+    } else if (value && typeof value === "object") {
+      for (const [k, v] of Object.entries(value)) {
+        if (k === "sourceNote" && typeof v === "string") total += Buffer.byteLength(v);
+        else walk(v);
+      }
+    }
+  };
+  try {
+    walk(JSON.parse(raw));
+  } catch {
+    return 0;
+  }
+  return total;
 }
 
 // Run only as a CLI (not when imported by tests). import.meta.main is not yet

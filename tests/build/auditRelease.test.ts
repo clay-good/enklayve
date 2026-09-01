@@ -10,6 +10,7 @@ import {
   type AuditTile,
   checkBundleBudget,
   shellBreakdown,
+  sourceNoteBytes,
   shellSummary,
   SHELL_GZIP_BUDGET_KB,
 } from "../../scripts/audit-release";
@@ -243,6 +244,27 @@ describe("where the shell's bytes come from", () => {
     expect(shellBreakdown([], [])).toEqual([]);
     // A source map with no embedded content still ranks nothing rather than NaN.
     expect(shellBreakdown(["../../src/ui/dom.ts"], [])).toEqual(["     0.0 kB  src/ui"]);
+  });
+
+  it("measures the sourceNote prose inside a shard, at any depth", () => {
+    // Half the dataset weight is sentences rather than figures, and nobody had
+    // that number until the breakdown printed it. Notes nest — a citation on a
+    // jurisdiction, and another inside a local add-on — so the walk is
+    // recursive rather than a top-level lookup.
+    const shard = JSON.stringify({
+      id: "US-XX",
+      standardDeduction: 16100,
+      citation: { sourceUrl: "https://example.gov", sourceNote: "abcde" },
+      localAddOns: [{ id: "city", citation: { sourceNote: "fg" } }],
+    });
+    expect(sourceNoteBytes(shard)).toBe(7);
+  });
+
+  it("counts nothing for a shard with no notes, and survives one it cannot parse", () => {
+    expect(sourceNoteBytes(JSON.stringify({ id: "US-XX", brackets: [] }))).toBe(0);
+    // A shard that does not parse is the integrity gate's problem, not the
+    // breakdown's — a report should not be the thing that fails the build.
+    expect(sourceNoteBytes("{ not json")).toBe(0);
   });
 });
 
