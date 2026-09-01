@@ -169,6 +169,17 @@ const BOUND: Bound[] = [
 ];
 
 /**
+ * A statutory figure that is a constant in code rather than a shard field, and
+ * so is bound to the constant instead. Only §1211(b)'s offset limit qualifies:
+ * $3,000 since the Revenue Act of 1978, never indexed, with the reasoning for
+ * leaving it in code recorded in the numeric-constant sweep.
+ */
+const BOUND_TO_CODE: { file: string; figure: string; from: string }[] = [
+  { file: "taxLossHarvesting.ts", figure: "$3,000", from: "LOSS_OFFSET_LIMIT" },
+  { file: "taxLossHarvesting.ts", figure: "$1,500", from: "LOSS_OFFSET_LIMIT_SEPARATE" },
+];
+
+/**
  * Dollar figures in these same files that are not statutory amounts: an
  * illustrative sum, a step size, a rounding unit, a UI default. Each is here so
  * that a figure which IS statutory cannot arrive unnoticed.
@@ -200,7 +211,13 @@ const NOT_A_FIGURE: Record<string, Record<string, string>> = {
 };
 
 describe("a figure in the prose is the figure in the shard", () => {
-  const files = [...new Set([...BOUND.map((b) => b.file), ...Object.keys(NOT_A_FIGURE)])];
+  const files = [
+    ...new Set([
+      ...BOUND.map((b) => b.file),
+      ...BOUND_TO_CODE.map((b) => b.file),
+      ...Object.keys(NOT_A_FIGURE),
+    ]),
+  ];
   const source = new Map(
     files.map((f) => [f, readFileSync(resolve(ROOT, "src", "tiles", f), "utf8")] as const),
   );
@@ -217,6 +234,16 @@ describe("a figure in the prose is the figure in the shard", () => {
     });
   }
 
+  for (const b of BOUND_TO_CODE) {
+    it(`${b.file} states ${b.figure}, the value of ${b.from}`, () => {
+      const text = source.get(b.file)!;
+      const declared = new RegExp(`const ${b.from} = (\\d+);`).exec(text);
+      expect(declared, `${b.from} is not declared in ${b.file}`).not.toBeNull();
+      expect(asProse(Number(declared![1]))).toBe(b.figure);
+      expect(statesFigure(text, b.figure), `${b.file} does not state ${b.figure}`).toBe(true);
+    });
+  }
+
   it("accounts for every dollar figure in those files", () => {
     const unaccounted: string[] = [];
     for (const [file, text] of source) {
@@ -225,6 +252,7 @@ describe("a figure in the prose is the figure in the shard", () => {
           asProse(b.derive ? b.derive(at(b.shard, b.path)) : at(b.shard, b.path)),
         ),
       );
+      for (const b of BOUND_TO_CODE.filter((x) => x.file === file)) bound.add(b.figure);
       const allowed = NOT_A_FIGURE[file] ?? {};
       for (const m of new Set(text.match(/\$[0-9][0-9,]*(?:\.[0-9]+)?/g) ?? [])) {
         if (!bound.has(m) && !(m in allowed)) unaccounted.push(`${file} ${m}`);

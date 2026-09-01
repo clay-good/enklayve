@@ -133,6 +133,10 @@ const VERDICTS: Record<string, string> = {
   TOTAL_DEBT_RATIO: "assumption — the 36 half of the same convention",
   EMPLOYER_SHARE_RATE:
     "figure — the employer-side share both plans allow, 25% of net-after-contribution earnings restated as 20% of net. Arithmetic on a statutory rate rather than an indexed amount, so there is no annual value to chase.",
+  LOSS_OFFSET_LIMIT:
+    "figure — IRC §1211(b)(1), the net-capital-loss offset against ordinary income. $3,000 since the Revenue Act of 1978 and never indexed, so there is no annual value to chase.",
+  LOSS_OFFSET_LIMIT_SEPARATE:
+    "figure — half of it, for a married individual filing separately (§1211(b)(1) again)",
   SAFE_HARBOR_HIGH_AGI:
     "figure — IRC §6654(d)(1)(C)(i). Above $150,000 of prior-year AGI the estimated-tax safe harbor rises from 100% to 110% of last year's tax. Statutory and never indexed; it has not moved since 1993, and a change would be an act of Congress rather than an annual adjustment.",
   SEASONING_YEARS:

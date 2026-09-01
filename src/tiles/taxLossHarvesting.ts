@@ -16,6 +16,20 @@ import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
 
+/**
+ * The net-capital-loss ordinary-income offset limit, IRC §1211(b)(1).
+ *
+ * Named rather than inline so the numeric-constant sweep can see it. It was
+ * `fields.mfs ? 1500 : 3000` in the middle of a handler, which is the one shape
+ * that sweep cannot find — and the week it was written, two other statutory
+ * figures in this codebase turned out to be stale literals. This one is not:
+ * §1211(b) has said $3,000 since the Revenue Act of 1978 and has never been
+ * indexed, so there is no annual value to chase and a change would be an act of
+ * Congress. Half for a separate return, in the statute's own words.
+ */
+const LOSS_OFFSET_LIMIT = 3000;
+const LOSS_OFFSET_LIMIT_SEPARATE = 1500;
+
 /** The net-capital-loss ordinary-income offset limit (IRC §1211(b)). */
 const LOSS_LIMIT_CITATION: CitationData = {
   sourceUrl: "https://www.irs.gov/taxtopics/tc409",
@@ -106,7 +120,7 @@ export function mountTaxLossHarvesting(ctx: TileContext): void {
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
   function compute(): void {
-    const limit = fields.mfs ? 1500 : 3000;
+    const limit = fields.mfs ? LOSS_OFFSET_LIMIT_SEPARATE : LOSS_OFFSET_LIMIT;
     const r = taxLossHarvest({
       shortTermGain: fields.stGain,
       shortTermLoss: fields.stLoss,
