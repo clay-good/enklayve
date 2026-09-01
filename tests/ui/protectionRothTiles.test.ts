@@ -181,3 +181,44 @@ describe("fifth-wave tiles accessibility", () => {
     }, 30000);
   }
 });
+
+/**
+ * The mega-backdoor deferral field opens on the shard's figure.
+ *
+ * This tile's header has always said both limits "read from (and cite) the
+ * bundled IRS retirement-limits dataset", and the computation did. The number
+ * sitting in the input box when the tile opened was a hardcoded 24500 — correct
+ * for 2026 and silently a year behind from 2027 on. It is a default rather than
+ * an asserted figure, which makes it milder than the SALT constant or the
+ * readout's frozen fallback, and it is the same mistake in the same week.
+ *
+ * Named-constant sweeps cannot see this one: it was an inline literal in three
+ * places, so a test is what holds it.
+ */
+describe("the mega-backdoor deferral default", () => {
+  const deferral = (): number => data.retirementLimits()!.limits.elective_deferral_401k;
+
+  it("is the shard's elective-deferral limit, not a literal", () => {
+    const { root } = mount(mountBackdoorRoth, new URLSearchParams({ m: "mega" }));
+    const input = root.querySelector<HTMLInputElement>('input[name="ed"]');
+    expect(input, "the mega mode has an elective-deferral field").not.toBeNull();
+    expect(Number(input!.value)).toBe(deferral());
+  });
+
+  it("a deep link still wins over the default", () => {
+    const { root } = mount(mountBackdoorRoth, new URLSearchParams({ m: "mega", ed: "12000" }));
+    const input = root.querySelector<HTMLInputElement>('input[name="ed"]');
+    expect(Number(input!.value)).toBe(12000);
+  });
+
+  it("the worked example uses the shard figure too", () => {
+    const { root } = mount(mountBackdoorRoth, new URLSearchParams({ m: "mega" }));
+    const example = [...root.querySelectorAll("button")].find((b) =>
+      /example/i.test(b.textContent ?? ""),
+    );
+    expect(example, "the tile offers a worked example").toBeTruthy();
+    example!.click();
+    const input = root.querySelector<HTMLInputElement>('input[name="ed"]');
+    expect(Number(input!.value)).toBe(deferral());
+  });
+});

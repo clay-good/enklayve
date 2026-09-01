@@ -44,17 +44,30 @@ function iraLimitFor(age: number, l: RetirementLimitsData["limits"]): number {
   return (l.ira_contribution ?? 0) + (age >= 50 ? (l.ira_catch_up_50plus ?? 0) : 0);
 }
 
-const EXAMPLE: Fields = {
-  mode: "backdoor",
-  age: 35,
-  contribution: 7500,
-  pretaxIra: 0,
-  ordinaryRatePct: 24,
-  electiveDeferral: 24500,
-  employerContributions: 8000,
-};
+/**
+ * The elective-deferral default comes off the shard, never from a literal.
+ *
+ * This file's own header says both limits "read from (and cite) the bundled IRS
+ * retirement-limits dataset", and the computation did — but the number sitting
+ * in the input box when the tile opened was a hardcoded 24500, correct for 2026
+ * and silently a year behind from 2027 on. It is a default rather than an
+ * asserted figure, which is why it is lower harm than the two cases that
+ * produced the constant sweep, and it is the same mistake. The mount already
+ * refuses to render without the shard, so there is always one to read.
+ */
+function exampleFor(deferral: number): Fields {
+  return {
+    mode: "backdoor",
+    age: 35,
+    contribution: 7500,
+    pretaxIra: 0,
+    ordinaryRatePct: 24,
+    electiveDeferral: deferral,
+    employerContributions: 8000,
+  };
+}
 
-function readFields(p: URLSearchParams): Fields {
+function readFields(p: URLSearchParams, deferral: number): Fields {
   const mode = p.get("m") === "mega" ? "mega" : "backdoor";
   return {
     mode,
@@ -62,7 +75,7 @@ function readFields(p: URLSearchParams): Fields {
     contribution: p.has("c") ? parseNonNegative(p.get("c"), 0) : 7500,
     pretaxIra: parseNonNegative(p.get("pt"), 0),
     ordinaryRatePct: parseNonNegative(p.get("ord"), 24),
-    electiveDeferral: parseNonNegative(p.get("ed"), 24500),
+    electiveDeferral: parseNonNegative(p.get("ed"), deferral),
     employerContributions: parseNonNegative(p.get("er"), 0),
   };
 }
@@ -97,7 +110,8 @@ export function mountBackdoorRoth(ctx: TileContext): void {
     return;
   }
 
-  let fields = readFields(ctx.params);
+  const shardDeferral = limits.limits.elective_deferral_401k;
+  let fields = readFields(ctx.params, shardDeferral);
 
   const modeSelect = el(
     "select",
@@ -233,7 +247,7 @@ export function mountBackdoorRoth(ctx: TileContext): void {
       contribution: parseNonNegative(contribInput.value, 0),
       pretaxIra: parseNonNegative(pretaxInput.value, 0),
       ordinaryRatePct: parseNonNegative(ordInput.value, 24),
-      electiveDeferral: parseNonNegative(edInput.value, 24500),
+      electiveDeferral: parseNonNegative(edInput.value, shardDeferral),
       employerContributions: parseNonNegative(erInput.value, 0),
     };
     syncGroups();
@@ -246,7 +260,7 @@ export function mountBackdoorRoth(ctx: TileContext): void {
     i.addEventListener("input", recompute);
 
   const tryExample = tryExampleButton(() => {
-    fields = { ...EXAMPLE };
+    fields = exampleFor(shardDeferral);
     modeSelect.value = fields.mode;
     ageInput.value = String(fields.age);
     contribInput.value = String(fields.contribution);
