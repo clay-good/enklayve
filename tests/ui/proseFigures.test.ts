@@ -58,12 +58,34 @@ export function asProse(value: number): string {
 }
 
 /**
+ * Every dollar figure a READER could see: the strings, not the comments.
+ *
+ * The scan read whole files, so the sentence in this module's own header
+ * explaining that the Child Tax Credit explainer once said $2,000 while the
+ * tile computed $2,200 registered as two unbound statutory figures. A number in
+ * a comment is not on anyone's screen.
+ *
+ * The money pattern also has to end on a digit. `[0-9,]*` is greedy and ate the
+ * comma after "over $75,000, or", producing "$75,000," — which matches no shard
+ * value and would have been silenced by writing it into the not-a-figure list,
+ * the wrong fix for a broken pattern.
+ */
+export function proseFigures(source: string): string[] {
+  const withoutComments = source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
+  return [...new Set(withoutComments.match(/\$\d{1,3}(?:,\d{3})*(?:\.\d+)?/g) ?? [])];
+}
+
+/**
  * `$25,000` must not be found inside `$25,000,000`, and `$217.5` must not be
  * found inside `$217.50`. A containment test on money is a containment test on
  * a prefix unless the next character is ruled out.
  */
 export function statesFigure(text: string, prose: string): boolean {
-  return new RegExp(`${prose.replace(/[$.]/g, "\\$&")}(?![\\d,.])`).test(text);
+  // Ruling out a following comma outright was too much: prose writes "over
+  // $75,000, or $150,000 on a joint return", and a comma that ends a clause is
+  // not a thousands separator. What disqualifies a match is a digit after it, a
+  // decimal point, or a comma with three digits behind it.
+  return new RegExp(`${prose.replace(/[$.]/g, "\\$&")}(?![\\d.]|,\\d)`).test(text);
 }
 
 interface Bound {
@@ -168,6 +190,21 @@ const BOUND: Bound[] = [
     shard: "federal-income-tax-2024",
     path: ".nonItemizerCharitable.capJointReturn",
   },
+  {
+    file: "deductionCopy.ts",
+    shard: "federal-income-tax-2024",
+    path: ".seniorDeduction.perQualifiedIndividual",
+  },
+  {
+    file: "deductionCopy.ts",
+    shard: "federal-income-tax-2024",
+    path: ".seniorDeduction.thresholdSingle",
+  },
+  {
+    file: "deductionCopy.ts",
+    shard: "federal-income-tax-2024",
+    path: ".seniorDeduction.thresholdJointReturn",
+  },
 
   { file: "saversCredit.ts", shard: "savers-credit-2024", path: ".maxContributionPerPerson" },
   {
@@ -199,9 +236,8 @@ const NOT_A_FIGURE: Record<string, Record<string, string>> = {
   "childTaxCredit.ts": { "$1,000": "the per-$1,000 step the phase-out is quoted in" },
   "federalIncomeTax.ts": { "$1,000": "an illustrative next-dollar amount" },
   "deductionCopy.ts": {
-    "$6,000": "§151(d)(5)(C), a deferred deduction named with its own cite",
-    "$12,500": "§225, a deferred deduction named with its own cite",
-    "$25,000": "§224 and §225 joint, deferred deductions named with their own cites",
+    "$12,500": "§225, a deduction that is not modeled, named with its own cite",
+    "$25,000": "§224 and §225 joint, not modeled, named with their own cites",
   },
   "socialSecurityTax.ts": {
     $0: "the married-filing-separately special case, called out as omitted",
@@ -257,7 +293,7 @@ describe("a figure in the prose is the figure in the shard", () => {
       );
       for (const b of BOUND_TO_CODE.filter((x) => x.file === file)) bound.add(b.figure);
       const allowed = NOT_A_FIGURE[file] ?? {};
-      for (const m of new Set(text.match(/\$[0-9][0-9,]*(?:\.[0-9]+)?/g) ?? [])) {
+      for (const m of proseFigures(text)) {
         if (!bound.has(m) && !(m in allowed)) unaccounted.push(`${file} ${m}`);
       }
     }
@@ -273,6 +309,18 @@ describe("a figure in the prose is the figure in the shard", () => {
     expect(source.get("childTaxCredit.ts")).not.toContain("$2,000");
   });
 
+  it("reads the strings and not the comments", () => {
+    expect(proseFigures('/** was $2,000 */\nconst a = "pay $1,500 now";')).toEqual(["$1,500"]);
+    expect(proseFigures('// $9,000\nconst b = "$25";')).toEqual(["$25"]);
+  });
+
+  it("ends a figure on a digit, not on the comma after it", () => {
+    expect(proseFigures('"over $75,000, or $150,000 on a joint return"')).toEqual([
+      "$75,000",
+      "$150,000",
+    ]);
+  });
+
   it("writes a figure the way the prose does", () => {
     expect(asProse(1350)).toBe("$1,350");
     expect(asProse(7.25)).toBe("$7.25");
@@ -285,5 +333,7 @@ describe("a figure in the prose is the figure in the shard", () => {
     expect(statesFigure("the $217.50 floor", "$217.5")).toBe(false);
     expect(statesFigure("the $217.50 floor", "$217.50")).toBe(true);
     expect(statesFigure("capped at $40,400 for 2026", "$40,400")).toBe(true);
+    // A comma that ends a clause is not a thousands separator.
+    expect(statesFigure("over $75,000, or $150,000 jointly", "$75,000")).toBe(true);
   });
 });

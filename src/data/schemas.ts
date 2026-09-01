@@ -283,6 +283,35 @@ export const NonItemizerCharitableSchema = z.object({
 });
 export type NonItemizerCharitableData = z.infer<typeof NonItemizerCharitableSchema>;
 
+/**
+ * IRC §151(d)(5)(C): the deduction for filers aged 65 and over.
+ *
+ * Added by the One Big Beautiful Bill Act for taxable years beginning before
+ * January 1, 2029 — $6,000 for each qualified individual, reduced by 6% of
+ * modified adjusted gross income over $75,000, or $150,000 on a joint return,
+ * and never below zero. So it runs out at $175,000 single and $250,000 joint.
+ *
+ * Two rules in the statute that a reasonable implementation gets wrong:
+ *
+ *   (C)(v)  a married filer gets it ONLY on a joint return, so married filing
+ *           separately is zero rather than half.
+ *   (C)(i)  the $6,000 *per individual* is what the phase-out reduces, so a
+ *           couple both over 65 lose twice as many dollars per dollar of income
+ *           as a single filer does.
+ *
+ * Like §170(p) and unlike the SALT limitation, absence is an answer: a tax year
+ * with no such deduction carries no rule and the engine deducts nothing, which
+ * is what 2029 will need.
+ */
+export const SeniorDeductionSchema = z.object({
+  perQualifiedIndividual: z.number().gte(0),
+  /** Reduction per dollar of MAGI over the threshold (§151(d)(5)(C)(iii)(I)). */
+  phaseOutRate: z.number().gte(0).lte(1),
+  thresholdSingle: z.number().gt(0),
+  thresholdJointReturn: z.number().gt(0),
+});
+export type SeniorDeductionData = z.infer<typeof SeniorDeductionSchema>;
+
 export const SaltLimitationSchema = z.object({
   applicableLimitationAmount: z.number().gt(0),
   thresholdAmount: z.number().gt(0),
@@ -432,6 +461,8 @@ export const JurisdictionSchema = z.object({
   saltLimitation: SaltLimitationSchema.optional(),
   /** IRC §170(p), cash giving deductible without itemizing (federal only). */
   nonItemizerCharitable: NonItemizerCharitableSchema.optional(),
+  /** IRC §151(d)(5)(C), the deduction at 65 (federal only). */
+  seniorDeduction: SeniorDeductionSchema.optional(),
   citation: CitationSchema,
   effectiveDateRange: z.object({
     start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

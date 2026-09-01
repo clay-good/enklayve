@@ -168,6 +168,24 @@ test("a value entered in one tool prefills the next", async ({ page }) => {
   await expect(page.locator('select[name="st"]').first()).toHaveValue("ny");
 });
 
+/**
+ * The deduction at 65 (IRC §151(d)(5)(C)), in the browser that has to show it.
+ *
+ * Same reason as the test above: the control is a `<select>` built with
+ * `selected` set before insertion, so happy-dom reports the wrong option and a
+ * unit assertion would report a bug that is not there. What a reader needs is
+ * that the number on the card and the control beneath it agree.
+ */
+test("a deep-linked age-65 count shows on the control and in the answer", async ({ page }) => {
+  await page.goto(
+    "/#/paycheck-taxes?tool=federal-income-tax&fs=married_jointly&inc=100000&age65=2",
+  );
+  await page.waitForSelector(".tile-form");
+  await expect(page.locator('select[name="age65"]').first()).toHaveValue("2");
+  await expect(page.getByText("Deduction at 65")).toBeVisible();
+  await expect(page.getByText("$12,000")).toBeVisible();
+});
+
 test("a deep link beats the profile, and the control shows it", async ({ page }) => {
   await page.goto("/#/paycheck-taxes?tool=take-home");
   await page.waitForSelector(".tile-form");

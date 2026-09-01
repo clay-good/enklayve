@@ -15,7 +15,7 @@ import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
-import { OBBBA_DEDUCTIONS_HOW } from "./deductionCopy";
+import { OBBBA_DEDUCTIONS_HOW_NO_GIVING } from "./deductionCopy";
 
 const FILING_STATUSES: { value: FilingStatus; label: string }[] = [
   { value: "single", label: "Single" },
@@ -23,6 +23,13 @@ const FILING_STATUSES: { value: FilingStatus; label: string }[] = [
   { value: "married_separately", label: "Married filing separately" },
   { value: "head_of_household", label: "Head of household" },
   { value: "qualifying_surviving_spouse", label: "Qualifying surviving spouse" },
+];
+
+/** IRC §151(d)(5)(C) reaches the taxpayer and, on a joint return, the spouse. */
+const SENIOR_COUNTS = [
+  { value: "0", label: "Neither of us" },
+  { value: "1", label: "One of us" },
+  { value: "2", label: "Both of us (joint return)" },
 ];
 
 const DEDUCTION_MODES: { value: DeductionMode; label: string }[] = [
@@ -38,6 +45,8 @@ interface Fields {
   other: number;
   adjustments: number;
   dm: DeductionMode;
+  /** How many on the return are 65 or over (IRC §151(d)(5)(C)). */
+  seniors: number;
   local: string[]; // selected local add-on ids
 }
 
@@ -48,6 +57,7 @@ const EXAMPLE: Fields = {
   other: 0,
   adjustments: 0,
   dm: "auto",
+  seniors: 0,
   local: [],
 };
 
@@ -75,6 +85,9 @@ function readFields(
       : (profile.get("annualIncome") ?? 0),
     other: parseNonNegative(params.get("oi"), 0),
     adjustments: parseNonNegative(params.get("adj"), 0),
+    // Clamped where it is read: a hostile deep link can say anything, and the
+    // select has no option for "7".
+    seniors: Math.min(2, Math.max(0, Math.round(parseNonNegative(params.get("age65"), 0)))),
     dm: dmRaw && isDeductionMode(dmRaw) ? dmRaw : "auto",
     local: (params.get("loc") ?? "").split(",").filter((s) => s.length > 0),
   };
@@ -88,6 +101,7 @@ function writeFields(f: Fields): URLSearchParams {
   if (f.other > 0) p.set("oi", String(f.other));
   if (f.adjustments > 0) p.set("adj", String(f.adjustments));
   if (f.dm !== "auto") p.set("dm", f.dm);
+  if (f.seniors > 0) p.set("age65", String(f.seniors));
   if (f.local.length > 0) p.set("loc", f.local.join(","));
   return p;
 }
@@ -216,6 +230,12 @@ export function mountTakeHome(ctx: TileContext): void {
     ...DEDUCTION_MODES.map((d) => option(d.value, d.label, d.value === fields.dm)),
   );
 
+  const seniorSelect = el(
+    "select",
+    { name: "age65", attrs: { "aria-label": "How many of you are 65 or older" } },
+    ...SENIOR_COUNTS.map((c) => option(c.value, c.label, Number(c.value) === fields.seniors)),
+  );
+
   const localContainer = el("div", { class: "local-addons" });
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
@@ -287,6 +307,7 @@ export function mountTakeHome(ctx: TileContext): void {
       other: parseNonNegative(otherInput.value, 0),
       adjustments: parseNonNegative(adjInput.value, 0),
       dm: isDeductionMode(dmSelect.value) ? dmSelect.value : "auto",
+      seniors: Math.min(2, Math.max(0, Math.round(parseNonNegative(seniorSelect.value, 0)))),
       local,
     };
     resolveLocal();
@@ -299,6 +320,7 @@ export function mountTakeHome(ctx: TileContext): void {
       otherIncome: fields.other,
       adjustments: fields.adjustments,
       deductionMode: fields.dm,
+      seniorsAge65Plus: fields.seniors,
       localJurisdictionIds: fields.local,
     };
     const state = fields.st ? (bundled.state(fields.st) ?? undefined) : undefined;
@@ -327,7 +349,7 @@ export function mountTakeHome(ctx: TileContext): void {
     compute();
   }
 
-  for (const control of [fsSelect, stSelect, dmSelect]) {
+  for (const control of [fsSelect, stSelect, dmSelect, seniorSelect]) {
     control.addEventListener("change", recompute);
   }
   for (const input of [wagesInput, otherInput, adjInput]) {
@@ -337,6 +359,7 @@ export function mountTakeHome(ctx: TileContext): void {
   const tryExample = tryExampleButton(() => {
     fields = { ...EXAMPLE };
     fsSelect.value = fields.fs;
+    seniorSelect.value = String(fields.seniors);
     stSelect.value = fields.st;
     wagesInput.value = String(fields.wages);
     otherInput.value = String(fields.other);
@@ -357,6 +380,7 @@ export function mountTakeHome(ctx: TileContext): void {
     field("Other income", otherInput),
     field("Pre-tax adjustments", adjInput),
     field("Deduction method", dmSelect),
+    field("Aged 65 or older", seniorSelect),
     localContainer,
     el("div", { class: "tile-form-actions" }, tryExample),
   );
@@ -376,7 +400,7 @@ export const takeHomeTile: TileDefinition = {
   status: "ready",
   how:
     "Your take-home is your gross pay minus four things: federal income tax (the larger of your standard or itemized deduction, then the IRS bracket schedule), FICA (Social Security at 6.2% up to the annual wage base, plus Medicare at 1.45%, and a 0.9% Additional Medicare surtax on high earners), your state income tax, and any local tax that applies.\n\nThe effective rate is your total tax divided by gross income; the marginal rate is the bracket your next dollar lands in. Every line links the IRS or state source it came from.\n\n" +
-    OBBBA_DEDUCTIONS_HOW,
+    OBBBA_DEDUCTIONS_HOW_NO_GIVING,
   resources: [
     {
       label: "IRS, federal income tax rates",

@@ -11,7 +11,12 @@ import {
   standardDeductionPhaseOutFor,
   taxpayerCreditBaseFor,
 } from "./brackets";
-import { chooseFederalDeduction, nonItemizerCharitableFor, saltCapFor } from "./deductions";
+import {
+  chooseFederalDeduction,
+  nonItemizerCharitableFor,
+  saltCapFor,
+  seniorDeductionFor,
+} from "./deductions";
 import { computeFica } from "./fica";
 import type {
   DeductionResult,
@@ -67,11 +72,19 @@ function computeFederal(
     ),
   );
   // §63(b)(4): a non-itemizer subtracts the standard deduction AND §170(p).
+  // §151(d)(5)(C) comes off either way — §63(a) for an itemizer, §63(b)(2) for
+  // one who is not — so it is subtracted outside that choice.
+  const senior = seniorDeductionFor(
+    federal.seniorDeduction,
+    input.filingStatus,
+    input.seniorsAge65Plus ?? 0,
+    agi,
+  );
   const taxableIncome = clampZero(
-    agi.subtract(deduction.amount).subtract(deduction.nonItemizedCharitable),
+    agi.subtract(deduction.amount).subtract(deduction.nonItemizedCharitable).subtract(senior),
   );
   const incomeTax = bracketTax(taxableIncome, bracketsFor(federal, input.filingStatus));
-  return { taxableIncome, deduction, incomeTax };
+  return { taxableIncome, deduction: { ...deduction, senior }, incomeTax };
 }
 
 function computeState(
@@ -85,7 +98,12 @@ function computeState(
     return {
       computation: {
         taxableIncome: Money.zero(),
-        deduction: { kind: "standard", amount: Money.zero(), nonItemizedCharitable: Money.zero() },
+        deduction: {
+          kind: "standard",
+          amount: Money.zero(),
+          nonItemizedCharitable: Money.zero(),
+          senior: Money.zero(),
+        },
         incomeTax: Money.zero(),
       },
       localLines: [],
@@ -206,9 +224,10 @@ function computeState(
       deduction: {
         kind: "standard",
         amount: standard.add(exemption).add(fedTaxDeduction),
-        // §170(p) is federal. No state carries a rule, so this is always zero
-        // on a state computation.
+        // §170(p) and §151(d)(5)(C) are federal. No state carries either rule,
+        // so both are always zero on a state computation.
         nonItemizedCharitable: Money.zero(),
+        senior: Money.zero(),
       },
       incomeTax,
     },

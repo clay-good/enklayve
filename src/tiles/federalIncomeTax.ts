@@ -24,6 +24,13 @@ const FILING_STATUSES: { value: FilingStatus; label: string }[] = [
   { value: "qualifying_surviving_spouse", label: "Qualifying surviving spouse" },
 ];
 
+/** IRC §151(d)(5)(C) reaches the taxpayer and, on a joint return, the spouse. */
+const SENIOR_COUNTS = [
+  { value: "0", label: "Neither of us" },
+  { value: "1", label: "One of us" },
+  { value: "2", label: "Both of us (joint return)" },
+];
+
 const DEDUCTION_MODES: { value: DeductionMode; label: string }[] = [
   { value: "auto", label: "Larger of standard / itemized" },
   { value: "standard", label: "Standard deduction" },
@@ -39,6 +46,8 @@ interface Fields {
   mortgage: number;
   charitable: number;
   medical: number;
+  /** How many on the return are 65 or over (IRC §151(d)(5)(C)). */
+  seniors: number;
 }
 
 const EXAMPLE: Fields = {
@@ -50,7 +59,20 @@ const EXAMPLE: Fields = {
   mortgage: 8000,
   charitable: 3000,
   medical: 0,
+  seniors: 0,
 };
+
+/**
+ * At most two people can be 65 on one return, and only on a joint one — but a
+ * hostile deep link can say anything, so the value is clamped where it is read
+ * rather than trusted. The engine clamps again by filing status; this keeps the
+ * SELECT from being handed a value it has no option for, which is what the
+ * catalog sweep means by "every enum param falls back to a value the reader can
+ * see".
+ */
+function clampSeniors(n: number): number {
+  return Math.min(2, Math.max(0, Math.round(n)));
+}
 
 function isFilingStatus(v: string): v is FilingStatus {
   return FILING_STATUSES.some((f) => f.value === v);
@@ -72,6 +94,7 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
     mortgage: parseNonNegative(p.get("mort"), 0),
     charitable: parseNonNegative(p.get("char"), 0),
     medical: parseNonNegative(p.get("med"), 0),
+    seniors: clampSeniors(parseNonNegative(p.get("age65"), 0)),
   };
 }
 
@@ -85,6 +108,7 @@ function writeFields(f: Fields): URLSearchParams {
   if (f.mortgage > 0) p.set("mort", String(f.mortgage));
   if (f.charitable > 0) p.set("char", String(f.charitable));
   if (f.medical > 0) p.set("med", String(f.medical));
+  if (f.seniors > 0) p.set("age65", String(f.seniors));
   return p;
 }
 
@@ -105,6 +129,7 @@ function federalTaxAt(income: number, f: Fields, fed: Jurisdiction, fica: FicaDa
     adjustments: f.adjustments,
     deductionMode: f.dm,
     itemized: itemizedOf(f),
+    seniorsAge65Plus: f.seniors,
   };
   return evaluateTaxes(input, { federal: fed, fica }).federal.incomeTax;
 }
@@ -154,6 +179,12 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
     ...DEDUCTION_MODES.map((d) => option(d.value, d.label, d.value === fields.dm)),
   );
 
+  const seniorSelect = el(
+    "select",
+    { name: "age65", attrs: { "aria-label": "How many of you are 65 or older" } },
+    ...SENIOR_COUNTS.map((c) => option(c.value, c.label, Number(c.value) === fields.seniors)),
+  );
+
   const mkMoney = (name: string, value: number, label: string): HTMLInputElement =>
     el("input", {
       type: "number",
@@ -194,6 +225,7 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
       mortgage: parseNonNegative(mortInput.value, 0),
       charitable: parseNonNegative(charInput.value, 0),
       medical: parseNonNegative(medInput.value, 0),
+      seniors: clampSeniors(parseNonNegative(seniorSelect.value, 0)),
     };
   }
 
@@ -205,6 +237,7 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
         adjustments: fields.adjustments,
         deductionMode: fields.dm,
         itemized: itemizedOf(fields),
+        seniorsAge65Plus: fields.seniors,
       },
       { federal: fed!, fica: fica! },
     );
@@ -234,6 +267,15 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
             {
               label: "Charitable giving (no itemizing)",
               value: fmt(f.deduction.nonItemizedCharitable),
+              citation: f.citation,
+            },
+          ]),
+      ...(f.deduction.senior.isZero()
+        ? []
+        : [
+            {
+              label: "Deduction at 65",
+              value: fmt(f.deduction.senior),
               citation: f.citation,
             },
           ]),
@@ -267,7 +309,7 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
     compute();
   }
 
-  for (const c of [fsSelect, dmSelect]) c.addEventListener("change", recompute);
+  for (const c of [fsSelect, dmSelect, seniorSelect]) c.addEventListener("change", recompute);
   for (const i of [incInput, adjInput, saltInput, mortInput, charInput, medInput]) {
     i.addEventListener("input", recompute);
   }
@@ -282,6 +324,7 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
     mortInput.value = String(fields.mortgage);
     charInput.value = String(fields.charitable);
     medInput.value = String(fields.medical);
+    seniorSelect.value = String(fields.seniors);
     recompute();
   });
 
@@ -292,6 +335,7 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
     field("Wages and income", incInput),
     field("Pre-tax adjustments", adjInput),
     field("Deduction method", dmSelect),
+    field("Aged 65 or older", seniorSelect),
     itemizedGroup,
     el("div", { class: "tile-form-actions" }, tryExample),
   );

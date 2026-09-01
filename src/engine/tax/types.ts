@@ -23,6 +23,13 @@ export interface ItemizedInput {
 
 export interface TaxInput {
   filingStatus: FilingStatus;
+  /**
+   * How many people on the return had turned 65 by the close of the year: the
+   * taxpayer, and on a joint return the spouse. Drives IRC §151(d)(5)(C).
+   * Absent means none, which is the answer for most returns and the one that
+   * changes nothing for a caller written before the deduction existed.
+   */
+  seniorsAge65Plus?: number;
   /** W-2 wages: subject to both income tax and FICA. */
   wages: number;
   /** Additional ordinary income (interest, etc.): income tax only, no FICA. */
@@ -54,6 +61,11 @@ export interface DeductionResult {
    * tax year whose shard carries no such rule.
    */
   nonItemizedCharitable: Money;
+  /**
+   * IRC §151(d)(5)(C): the deduction at 65. Unlike §170(p) it does not depend
+   * on taking the standard deduction, so it can be non-zero either way.
+   */
+  senior: Money;
 }
 
 export interface JurisdictionTaxResult {

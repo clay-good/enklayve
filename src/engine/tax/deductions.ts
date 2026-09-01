@@ -3,6 +3,7 @@ import type {
   FilingStatus,
   NonItemizerCharitableData,
   SaltLimitationData,
+  SeniorDeductionData,
 } from "../../data/schemas";
 import type { DeductionMode, DeductionResult, ItemizedInput } from "./types";
 
@@ -119,19 +120,64 @@ export function chooseFederalDeduction(
   nonItemizedCharitable: Money = Money.zero(),
 ): DeductionResult {
   const itemizedAmount = itemizedTotal(itemized, agi, saltCap);
+  // `senior` is filled in by the caller: §151(d)(5)(C) does not depend on this
+  // choice, so it has no business influencing it.
   const takeStandard = (): DeductionResult => ({
     kind: "standard",
     amount: standardDeduction,
     nonItemizedCharitable,
+    senior: Money.zero(),
   });
   const takeItemized = (): DeductionResult => ({
     kind: "itemized",
     amount: itemizedAmount,
     nonItemizedCharitable: Money.zero(),
+    senior: Money.zero(),
   });
   if (mode === "standard") return takeStandard();
   if (mode === "itemized") return takeItemized();
   return itemizedAmount.greaterThan(standardDeduction.add(nonItemizedCharitable))
     ? takeItemized()
     : takeStandard();
+}
+
+/**
+ * IRC §151(d)(5)(C): the deduction for filers aged 65 and over.
+ *
+ * `seniorsAge65Plus` is how many of the people on the return had turned 65 by
+ * the close of the year — the taxpayer, and on a joint return the spouse. A
+ * count rather than an age, because a count is what the statute needs and it is
+ * the smaller thing to ask a reader for.
+ *
+ * Three readings worth stating, each held by a test:
+ *
+ *   - §151(d)(5)(C)(v): a married filer gets this ONLY on a joint return, so
+ *     married filing separately is zero rather than half.
+ *   - §151(d)(5)(C)(iii)(I) reduces "the $6,000 amount in clause (i)", which is
+ *     per individual — so a couple both over 65 lose twelve cents of deduction
+ *     per dollar of income over the threshold, not six.
+ *   - a qualifying surviving spouse files at joint rates and does not file a
+ *     joint return, so clause (ii)(II) does not reach their late spouse: one
+ *     individual, and the single threshold.
+ *
+ * Unlike §170(p) this is not conditioned on taking the standard deduction.
+ * §63(a) subtracts every allowable deduction other than the standard one for a
+ * filer who itemizes, and §63(b)(2) names §151 for one who does not, so it
+ * applies either way.
+ */
+export function seniorDeductionFor(
+  rule: SeniorDeductionData | undefined,
+  status: FilingStatus,
+  seniorsAge65Plus: number,
+  magi: Money,
+): Money {
+  if (!rule) return Money.zero();
+  if (status === "married_separately") return Money.zero();
+  const joint = status === "married_jointly";
+  const qualifying = Math.min(Math.max(0, Math.floor(seniorsAge65Plus)), joint ? 2 : 1);
+  if (qualifying === 0) return Money.zero();
+  const threshold = joint ? rule.thresholdJointReturn : rule.thresholdSingle;
+  const over = Math.max(0, magi.toNumber() - threshold);
+  const perPerson = Math.max(0, rule.perQualifiedIndividual - rule.phaseOutRate * over);
+  return Money.from(perPerson * qualifying);
 }
