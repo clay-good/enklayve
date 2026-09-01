@@ -108,12 +108,21 @@ function offlinePwa(): Plugin {
     apply: "build",
     generateBundle(_options, bundle) {
       const fileNames = Object.keys(bundle);
-      // Core shell: the entry chunks and top-level CSS, plus the static pages,
+      // Core shell: the entry chunks and top-level CSS, plus the app shell,
       // manifest, and icons. Lazy chunks (pdf.js, etc.) are runtime-cached.
+      //
+      // `/tools.html` is deliberately NOT here, since 2026-09-01. It is a crawl
+      // surface — a static list of every calculator for search engines and
+      // no-JS readers — and the sixty-eight per-tile crawl shells beside it were
+      // never precached either, so precaching this one was the odd case rather
+      // than the rule. It cost 4.8 kB gzipped of a 275 kB budget, about a fifth
+      // of what was left, to make a page available offline that the in-app All
+      // Tools view already mirrors from the shell that IS precached. It is still
+      // built, still served, still in the sitemap, and the fetch handler
+      // runtime-caches it the moment anyone opens it.
       const core = new Set<string>([
         "/",
         "/index.html",
-        "/tools.html",
         "/manifest.webmanifest",
         "/favicon.svg",
         "/icon.svg",

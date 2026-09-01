@@ -9,6 +9,7 @@ import {
   checkHarmTier,
   type AuditTile,
   checkBundleBudget,
+  checkPrecacheContents,
   shellBreakdown,
   sourceNoteBytes,
   shellSummary,
@@ -244,6 +245,19 @@ describe("where the shell's bytes come from", () => {
     expect(shellBreakdown([], [])).toEqual([]);
     // A source map with no embedded content still ranks nothing rather than NaN.
     expect(shellBreakdown(["../../src/ui/dom.ts"], [])).toEqual(["     0.0 kB  src/ui"]);
+  });
+
+  it("keeps static crawl pages out of the precache, and the app shell in", () => {
+    // /tools.html cost 4.8 kB gzipped of a 275 kB budget to be available
+    // offline, for a page the in-app All Tools view mirrors out of the shell
+    // that is precached — and the sixty-eight per-tile crawl shells beside it
+    // were never precached, so it was the odd one rather than the rule.
+    expect(
+      checkPrecacheContents(["/", "/index.html", "/assets/index-abc.js", "/manifest.webmanifest"]),
+    ).toEqual([]);
+    const violations = checkPrecacheContents(["/", "/index.html", "/tools.html"]);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]).toContain("/tools.html");
   });
 
   it("measures the sourceNote prose inside a shard, at any depth", () => {

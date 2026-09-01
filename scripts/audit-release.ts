@@ -209,6 +209,31 @@ export interface ShellAsset {
 }
 
 /**
+ * 8. The precache holds the app, not the crawl surfaces.
+ *
+ * `/tools.html` sat in the precached shell until 2026-09-01 and cost 4.8 kB
+ * gzipped — about a fifth of the budget's remaining headroom — to make a page
+ * available offline that the in-app All Tools view already mirrors out of the
+ * shell that is precached. The sixty-eight per-tile crawl shells beside it were
+ * never precached, so it was the odd case rather than the rule.
+ *
+ * This keeps it out. A static page is for a crawler and a reader with no
+ * JavaScript; both are online by definition, and the fetch handler
+ * runtime-caches the page the moment anyone opens it. `/index.html` is the
+ * exception because it IS the app, and the fetch handler falls back to it for
+ * every navigation.
+ */
+export function checkPrecacheContents(paths: readonly string[]): string[] {
+  const crawlPages = paths.filter((p) => p.endsWith(".html") && p !== "/index.html");
+  if (crawlPages.length === 0) return [];
+  return [
+    `the precache holds static crawl pages (${crawlPages.join(", ")}). They are for crawlers and ` +
+      "no-JS readers, who are online; the fetch handler caches them on first use. Keep the " +
+      "precache to the app shell, or change this rule deliberately and say why.",
+  ];
+}
+
+/**
  * 7. The eager shell stays inside its budget. Reported with the breakdown, so a
  * failure names the chunk that grew rather than only the total.
  */
@@ -364,8 +389,10 @@ function runCli(): void {
   }));
   violations.push(...checkLocalStorage(tsFiles));
 
-  // 5. The eager shell's byte budget — what a first visit actually costs.
+  // 5. The eager shell's byte budget — what a first visit actually costs, and
+  // what is allowed to be in it at all.
   const shell = precachedAssets(root);
+  violations.push(...checkPrecacheContents(shell.map((a) => a.path)));
   violations.push(...checkBundleBudget(shell));
 
   if (violations.length > 0) {
