@@ -161,6 +161,38 @@ describe("states that start from federal taxable income", () => {
     expect(r.state!.deduction.qualifiedTips.toNumber()).toBe(22_500);
   });
 
+  it("models a conformity state's filer as taking the standard deduction", () => {
+    // The simplification these shards' notes already state — "North Dakota
+    // taxable income = federal AGI minus the federal standard deduction" — made
+    // explicit, because it is the thing most likely to be reported as a bug
+    // later. A state that truly starts from federal taxable income follows an
+    // ITEMIZED federal return too, and this engine does not: it applies the
+    // state's own (federal-conformity) standard deduction whatever the filer
+    // did federally.
+    //
+    // That also means §68 and the §170(b)(1)(I) charitable floor, which reach
+    // only itemizers, never touch a state figure — consistent, since the state
+    // side is modeled on the standard deduction throughout.
+    const ctx = { federal: ds.federal, state: state("nd"), fica: ds.fica };
+    const base = { filingStatus: "single" as const, wages: 200_000 };
+    const itemizing = evaluateTaxes(
+      {
+        ...base,
+        deductionMode: "itemized",
+        itemized: { mortgageInterest: 40_000, stateAndLocalTaxes: 10_000 },
+      },
+      ctx,
+    );
+    const standard = evaluateTaxes({ ...base, deductionMode: "standard" }, ctx);
+    expect(itemizing.federal.taxableIncome.toNumber()).not.toBe(
+      standard.federal.taxableIncome.toNumber(),
+    );
+    expect(itemizing.state!.taxableIncome.toNumber()).toBe(
+      standard.state!.taxableIncome.toNumber(),
+    );
+    expect(itemizing.state!.deduction.itemizedLimitation.toNumber()).toBe(0);
+  });
+
   it("does not let a conformed deduction push state taxable income below zero", () => {
     const ctx = { federal: ds.federal, state: state("nd"), fica: ds.fica };
     const r = evaluateTaxes(
