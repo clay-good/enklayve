@@ -18,6 +18,7 @@ import { el, option } from "../ui/dom";
 import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { donutChart, paletteVar } from "../ui/charts";
+import { rememberableCounty, residenceLocalField, seedResidenceLocal } from "../ui/residenceLocal";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
@@ -47,9 +48,24 @@ interface Fields {
   profit: number;
   other: number;
   lastYearTax: number;
+  /**
+   * The mandatory residence-based county tax (Maryland, Indiana). It belongs in
+   * an ESTIMATED-tax figure more than anywhere else on the site: the number this
+   * tile produces is one somebody sends to a taxing authority four times a year,
+   * and an estimate short by a county's 3% is an underpayment with a penalty on
+   * it, not a display rounding.
+   */
+  local: string[];
 }
 
-const EXAMPLE: Fields = { fs: "single", state: "ca", profit: 90000, other: 0, lastYearTax: 0 };
+const EXAMPLE: Fields = {
+  fs: "single",
+  state: "ca",
+  profit: 90000,
+  other: 0,
+  lastYearTax: 0,
+  local: [],
+};
 
 function isFilingStatus(v: string): v is FilingStatus {
   return FILING_STATUSES.some((f) => f.value === v);
@@ -64,6 +80,7 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
     profit: p.has("np") ? parseNonNegative(p.get("np"), 0) : (profile.get("annualIncome") ?? 0),
     other: parseNonNegative(p.get("oth"), 0),
     lastYearTax: parseNonNegative(p.get("ly"), 0),
+    local: p.getAll("loc"),
   };
 }
 
@@ -74,6 +91,7 @@ function writeFields(f: Fields): URLSearchParams {
   p.set("np", String(f.profit));
   if (f.other > 0) p.set("oth", String(f.other));
   if (f.lastYearTax > 0) p.set("ly", String(f.lastYearTax));
+  for (const id of f.local) p.append("loc", id);
   return p;
 }
 
@@ -135,10 +153,13 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
       otherIncome: fields.profit + fields.other, // income-tax-only
       adjustments: se.deductibleHalf.toNumber(), // half of SE tax is above-the-line
     };
-    const r = evaluateTaxes(input, { federal: fed!, fica: fica!, state: stateJur });
+    const r = evaluateTaxes(
+      { ...input, localJurisdictionIds: fields.local },
+      { federal: fed!, fica: fica!, state: stateJur },
+    );
     const fedIncome = r.federal.incomeTax;
     const stateIncome = r.state?.incomeTax ?? Money.zero();
-    const incomeTax = fedIncome.add(stateIncome);
+    const incomeTax = fedIncome.add(stateIncome).add(r.local.total);
     const totalTax = incomeTax.add(se.total);
 
     const totalIncome = fields.profit + fields.other;
@@ -157,6 +178,16 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
         label: `State income tax (${fields.state.toUpperCase()})`,
         value: fmt(stateIncome),
         citation: r.state?.citation ?? null,
+      });
+    }
+    // Its own line, never folded into the state's: the county tax is a separate
+    // figure on a separate authority's schedule, and someone reconciling this
+    // against their own return needs to see the two apart.
+    for (const local of r.local.lines) {
+      lines.push({
+        label: `${local.name} local tax`,
+        value: fmt(local.tax),
+        citation: r.local.citation ?? null,
       });
     }
     lines.push(
@@ -226,18 +257,38 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
     );
   }
 
+  const localContainer = el("div", { class: "local-addons" });
+
+  /** The county whose tax the quarterly estimate must include. */
+  function renderLocal(): void {
+    const state = fields.state ? (data?.state(fields.state) ?? null) : null;
+    fields.local = seedResidenceLocal(state, fields.local, profile);
+    localContainer.replaceChildren();
+    const county = residenceLocalField(state, fields.local[0], recompute);
+    if (county) localContainer.append(county);
+  }
+
   function recompute(): void {
+    const countySelect = localContainer.querySelector<HTMLSelectElement>(
+      "select[name='loc-select']",
+    );
     fields = {
       fs: isFilingStatus(fsSelect.value) ? fsSelect.value : "single",
       state: stateSelect.value,
       profit: parseNonNegative(npInput.value, 0),
       other: parseNonNegative(othInput.value, 0),
       lastYearTax: parseNonNegative(lyInput.value, 0),
+      local: countySelect && countySelect.value ? [countySelect.value] : [],
     };
+    renderLocal();
     ctx.setParams(writeFields(fields));
     rememberShared(profile, {
       filingStatus: fields.fs,
       stateCode: fields.state || undefined,
+      county: rememberableCounty(
+        fields.state ? (data?.state(fields.state) ?? null) : null,
+        fields.local,
+      ),
       annualIncome: fields.profit,
     });
     compute();
@@ -264,10 +315,12 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
     field("Net business profit", npInput),
     field("Other taxable household income", othInput),
     field("Last year's total tax (optional)", lyInput),
+    localContainer,
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
   root.append(form, chartContainer, resultContainer);
+  renderLocal();
   compute();
 }
 

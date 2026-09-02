@@ -33,6 +33,16 @@ export interface SituationValues {
   filingStatus: FilingStatus;
   /** Two-letter state code, e.g. "ca". */
   stateCode: string;
+  /**
+   * The id of the mandatory residence-based local tax the household pays — a
+   * `localAddOns` id such as `md-montgomery` or `in-marion`, not a place name.
+   *
+   * The field sat here unread from the day it was declared until 2026-09-02,
+   * when Maryland's and Indiana's county taxes reached the tiles that need
+   * them: an id is state-scoped and unambiguous, where "Washington" is a county
+   * in Maryland, a county in Indiana, and a state. Empty for a household in
+   * neither, since nowhere else levies a local tax you cannot opt out of.
+   */
   county: string;
   householdSize: number;
   /** Ages of household members. */

@@ -22,6 +22,7 @@
  * only the Take-Home tile asks it.
  */
 import type { Jurisdiction } from "../data/schemas";
+import type { SituationStore } from "../profile/situation";
 import { el, option } from "./dom";
 import { field } from "./form";
 
@@ -68,4 +69,42 @@ export function residenceLocalField(
   select.value = selected;
   select.addEventListener("change", onChange);
   return field(residence.label, select);
+}
+
+/**
+ * The county a tile should start on: the deep link if it named one, otherwise
+ * the county already in My Situation, otherwise the shard's default.
+ *
+ * The precedence is the same one every other shared field uses (URL fragment >
+ * session profile > built-in default), and it matters more here than elsewhere:
+ * a household does not move counties between tiles, so being asked again in the
+ * Paycheck Optimizer after answering in Take-Home is the tool forgetting
+ * something it was told.
+ */
+export function seedResidenceLocal(
+  state: Jurisdiction | null | undefined,
+  fromUrl: readonly string[],
+  profile: SituationStore,
+): string[] {
+  if (fromUrl.length > 0) return resolveResidenceLocal(state, fromUrl);
+  const remembered = profile.get("county");
+  return resolveResidenceLocal(state, remembered ? [remembered] : []);
+}
+
+/**
+ * The id to remember as the household's county, or `""` — which clears it.
+ *
+ * Only a MANDATORY local is a fact about where someone lives, so only that is
+ * remembered. Take-Home's selection can also hold opt-in ids (New York City,
+ * Detroit, Columbus), and storing one of those as "county" would carry a
+ * choice the reader made about *themselves* into four other tiles that never
+ * asked, and charge them for it.
+ */
+export function rememberableCounty(
+  state: Jurisdiction | null | undefined,
+  selected: readonly string[],
+): string {
+  if (!state?.residenceLocalTax) return "";
+  const valid = new Set((state.localAddOns ?? []).map((a) => a.id));
+  return selected.find((id) => valid.has(id)) ?? "";
 }

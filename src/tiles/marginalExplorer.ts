@@ -10,7 +10,7 @@ import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
-import { residenceLocalField, resolveResidenceLocal } from "../ui/residenceLocal";
+import { rememberableCounty, residenceLocalField, seedResidenceLocal } from "../ui/residenceLocal";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
@@ -182,7 +182,7 @@ export function mountMarginalExplorer(ctx: TileContext): void {
    */
   function renderLocal(): void {
     const state = fields.st ? (data!.state(fields.st) ?? null) : null;
-    fields.local = resolveResidenceLocal(state, fields.local);
+    fields.local = seedResidenceLocal(state, fields.local, ctx.profile);
     localContainer.replaceChildren();
     const county = residenceLocalField(state, fields.local[0], recompute);
     if (county) localContainer.append(county);
@@ -208,6 +208,7 @@ export function mountMarginalExplorer(ctx: TileContext): void {
     rememberShared(ctx.profile, {
       filingStatus: fields.fs,
       stateCode: fields.st,
+      county: rememberableCounty(fields.st ? (data!.state(fields.st) ?? null) : null, fields.local),
       annualIncome: fields.income,
     });
     compute();

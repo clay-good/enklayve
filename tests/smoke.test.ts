@@ -75,6 +75,40 @@ describe("home budget — the one and only budget (consolidated 2026-06-02)", ()
     expect(labels).toContain("District of Columbia");
   });
 
+  it("charges the mandatory county tax, and offers the county to change it", () => {
+    // The budget asks four questions on purpose. In Maryland and Indiana a
+    // fifth is unavoidable: the county income tax is up to 3.3% of income —
+    // larger than several rows in the budget below it — and it is not optional,
+    // so leaving it out was not asking one question fewer, it was answering a
+    // different household's.
+    const root = document.createElement("main");
+    renderHome(root, () => {}, data);
+    const state = root.querySelector<HTMLSelectElement>('[aria-label="State"]')!;
+    const taxesOf = (): string =>
+      root.querySelector(".home-budget__derived-value")?.textContent ?? "";
+
+    state.value = "ca";
+    state.dispatchEvent(new Event("change"));
+    expect(root.querySelector('[aria-label="County of residence"]')).toBeNull();
+
+    state.value = "md";
+    state.dispatchEvent(new Event("change"));
+    const county = root.querySelector<HTMLSelectElement>('[aria-label="County of residence"]');
+    expect(county, "Maryland must offer the county it is going to charge").not.toBeNull();
+    // Defaulted, not blank: "no county" is not a state a resident can be in.
+    expect(county!.value).toBe("md-montgomery");
+
+    const montgomery = taxesOf();
+    county!.value = "md-worcester";
+    county!.dispatchEvent(new Event("change"));
+    expect(taxesOf(), "a cheaper county must show a smaller tax slice").not.toBe(montgomery);
+
+    // Leaving for a state without one takes the control and the charge with it.
+    state.value = "tx";
+    state.dispatchEvent(new Event("change"));
+    expect(root.querySelector('[aria-label="County of residence"]')).toBeNull();
+  });
+
   it("models every U.S. state's income tax — each selection computes a real state tax", () => {
     const root = document.createElement("main");
     renderHome(root, () => {}, data);

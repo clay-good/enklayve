@@ -262,6 +262,15 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
   let freq = "monthly";
   let fs: FilingStatus = "single";
   let stateCode = "";
+  /**
+   * The county whose income tax this household also pays, in the two states
+   * where that is not optional. The budget asks for four things on purpose, and
+   * this is a fifth — but a Maryland resident's county tax is up to 3.3% of
+   * income, which is larger than several of the spending rows below it, and a
+   * budget that leaves it out is not asking one question fewer, it is answering
+   * a different household's.
+   */
+  let localIds: string[] = [];
   const spend: Record<string, number> = { ...DEFAULT_BUDGET.spend };
   const invest: Record<string, number> = { ...DEFAULT_BUDGET.invest };
 
@@ -294,7 +303,11 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
     if (!fed || !fica) return 0;
     const annualWages = income * periodsFor(freq);
     const stateJ = isModeled(stateCode) ? (data!.state(stateCode) ?? undefined) : undefined;
-    const input: TaxInput = { filingStatus: fs, wages: annualWages };
+    const input: TaxInput = {
+      filingStatus: fs,
+      wages: annualWages,
+      localJurisdictionIds: localIds,
+    };
     return evaluateTaxes(input, { federal: fed, fica, state: stateJ }).totals.totalTax.toNumber();
   };
 
@@ -528,6 +541,37 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
     text: "This estimate is from your income, filing status and state alone. Five deductions new for 2026 — tips, overtime, car loan interest, being 65, and giving without itemizing — would make it smaller. Take-Home and Federal Income Tax ask for them.",
   });
 
+  const countyRow = el("div");
+
+  /**
+   * The county select, present only where a state makes the local tax
+   * mandatory. It resolves to the shard's default rather than starting blank:
+   * "no county" is not a state a Maryland resident can be in, and a blank one
+   * would quietly hand back a budget with three per cent too much in it.
+   */
+  function renderCounty(): void {
+    const state = isModeled(stateCode) ? (data!.state(stateCode) ?? null) : null;
+    const residence = state?.residenceLocalTax;
+    const addOns = state?.localAddOns ?? [];
+    countyRow.replaceChildren();
+    if (!residence || addOns.length === 0) {
+      localIds = [];
+      return;
+    }
+    const valid = new Set(addOns.map((a) => a.id));
+    localIds = [localIds.find((id) => valid.has(id)) ?? residence.defaultId];
+    countyRow.append(
+      selectRow(
+        residence.label,
+        addOns.map((a) => ({ value: a.id, label: a.name })),
+        localIds[0]!,
+        (v) => {
+          localIds = [v];
+        },
+      ),
+    );
+  }
+
   const groupLabel = (text: string): HTMLElement => el("p", { class: "home-budget__group", text });
 
   const controls = el(
@@ -540,7 +584,9 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
     }),
     selectRow("State", stateOptions, stateCode, (v) => {
       stateCode = v;
+      renderCounty();
     }),
+    countyRow,
     taxesRow,
     taxesNote,
     groupLabel("Living expenses"),
@@ -568,6 +614,7 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
     el("div", { class: "home-budget__grid" }, controls, viz),
   );
 
+  renderCounty();
   render();
   return section;
 }

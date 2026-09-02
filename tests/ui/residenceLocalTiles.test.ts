@@ -4,6 +4,8 @@ import { SituationStore } from "../../src/profile/situation";
 import { marginalExplorerTile } from "../../src/tiles/marginalExplorer";
 import { paycheckOptimizerTile } from "../../src/tiles/paycheckOptimizer";
 import { cliffExplorerTile, marginalRealityTile } from "../../src/tiles/benefitCliffs";
+import { quarterlyTaxesTile } from "../../src/tiles/quarterlyTaxes";
+import { rememberableCounty } from "../../src/ui/residenceLocal";
 import { resourcesAt } from "../../src/engine/cliffs";
 import { resolveResidenceLocal, residenceLocalField } from "../../src/ui/residenceLocal";
 import type { TileContext, TileDefinition } from "../../src/tiles/types";
@@ -28,6 +30,7 @@ function mountTile(
   tile: TileDefinition,
   data: BundledData,
   query: Record<string, string>,
+  profile = new SituationStore(),
 ): { root: HTMLElement; lastParams: () => URLSearchParams | null } {
   const root = document.createElement("div");
   const params = new URLSearchParams(query);
@@ -42,7 +45,7 @@ function mountTile(
     navigate: () => {},
     locale: "en-US",
     data,
-    profile: new SituationStore(),
+    profile,
   };
   // Both tiles are "ready", so `mount` is defined — assert it rather than
   // silently rendering nothing if a tile is ever demoted to coming-soon.
@@ -223,5 +226,75 @@ describe("the benefit-cliff engine and its two tiles", () => {
       prem: "0",
     });
     expect(root.querySelector("select[name='loc-select']")).toBeNull();
+  });
+});
+
+describe("Quarterly Taxes", () => {
+  it("puts the county tax in the estimate somebody actually sends in", () => {
+    // Of every figure on this site, this is the one a person transcribes onto a
+    // payment four times a year. An estimate short by a county's 3% is an
+    // underpayment with a penalty attached, not a display rounding.
+    const { root } = mountTile(quarterlyTaxesTile, bundled, {
+      fs: "single",
+      st: "md",
+      np: "90000",
+    });
+    const sel = root.querySelector<HTMLSelectElement>("select[name='loc-select']");
+    expect(sel).not.toBeNull();
+    expect(sel!.value).toBe("md-montgomery");
+    const labels = Array.from(root.querySelectorAll(".bd-label")).map((n) => n.textContent);
+    expect(labels).toContain("Montgomery County local tax");
+    // Its own line, never folded into the state's: two authorities, two figures.
+    expect(labels).toContain("State income tax (MD)");
+  });
+
+  it("shows no county control for a state without a mandatory local", () => {
+    const { root } = mountTile(quarterlyTaxesTile, bundled, {
+      fs: "single",
+      st: "ca",
+      np: "90000",
+    });
+    expect(root.querySelector("select[name='loc-select']")).toBeNull();
+  });
+});
+
+describe("remembering the county across tiles", () => {
+  it("remembers only a MANDATORY local, never an opt-in one", () => {
+    // Take-Home's selection can hold New York City or Detroit. Storing one of
+    // those as "the county you live in" would carry a choice the reader made
+    // about themselves into four tiles that never asked, and charge them.
+    expect(rememberableCounty(bundled.state("md"), ["md-worcester"])).toBe("md-worcester");
+    expect(rememberableCounty(bundled.state("in"), ["in-porter"])).toBe("in-porter");
+    expect(rememberableCounty(bundled.state("ny"), ["nyc"])).toBe("");
+    expect(rememberableCounty(bundled.state("mi"), ["mi-detroit"])).toBe("");
+    expect(rememberableCounty(bundled.state("ca"), [])).toBe("");
+  });
+
+  it("a county chosen in one tile pre-fills the next, and a deep link still wins", () => {
+    const profile = new SituationStore();
+    profile.set("county", "in-porter");
+    const seeded = mountTile(marginalExplorerTile, bundled, { fs: "single", st: "in" }, profile);
+    expect(seeded.root.querySelector<HTMLSelectElement>("select[name='loc-select']")!.value).toBe(
+      "in-porter",
+    );
+
+    const linked = mountTile(
+      marginalExplorerTile,
+      bundled,
+      { fs: "single", st: "in", loc: "in-cass" },
+      profile,
+    );
+    expect(linked.root.querySelector<HTMLSelectElement>("select[name='loc-select']")!.value).toBe(
+      "in-cass",
+    );
+  });
+
+  it("a remembered county from another state falls back to the new state's default", () => {
+    const profile = new SituationStore();
+    profile.set("county", "md-worcester");
+    const { root } = mountTile(marginalExplorerTile, bundled, { fs: "single", st: "in" }, profile);
+    expect(root.querySelector<HTMLSelectElement>("select[name='loc-select']")!.value).toBe(
+      "in-marion",
+    );
   });
 });
