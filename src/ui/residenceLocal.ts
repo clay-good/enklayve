@@ -29,21 +29,30 @@ import { field } from "./form";
 /**
  * The local ids that apply to a resident, given what is already selected.
  *
- * For a state with a mandatory residence local this is exactly one id — the
- * selected county if it is still a real one, otherwise the shard's default —
- * because "no county" is not a state a Maryland resident can be in. For every
- * other state it is the selection unchanged, which for these two tiles is
- * nothing at all.
+ * Two rules, and the second was learned the same day this module was written.
+ *
+ * **A selection may only hold ids the current state actually offers.** Changing
+ * state used to leave the previous one's id in place: pick Indiana, then
+ * California, and `loc=in-marion` stayed in California's deep link. It charged
+ * nothing — the evaluator matches by id and California has no such add-on —
+ * which is exactly what made it quiet, and it still put a county of another
+ * state into a URL somebody might share.
+ *
+ * **A state with a mandatory residence local always resolves to exactly one.**
+ * The selected county if it is still a real one, otherwise the shard's default,
+ * because "no county" is not a state a Maryland resident can be in. Everywhere
+ * else the (now valid) selection stands, which for the opt-in locals is
+ * whatever the reader ticked, and for most states is nothing at all.
  */
 export function resolveResidenceLocal(
   state: Jurisdiction | null | undefined,
   selected: readonly string[],
 ): string[] {
-  const residence = state?.residenceLocalTax;
-  if (!residence) return [...selected];
   const valid = new Set((state?.localAddOns ?? []).map((a) => a.id));
-  const current = selected.find((id) => valid.has(id));
-  return [current ?? residence.defaultId];
+  const kept = selected.filter((id) => valid.has(id));
+  const residence = state?.residenceLocalTax;
+  if (!residence) return kept;
+  return [kept[0] ?? residence.defaultId];
 }
 
 /**
@@ -87,6 +96,14 @@ export function seedResidenceLocal(
   profile: SituationStore,
 ): string[] {
   if (fromUrl.length > 0) return resolveResidenceLocal(state, fromUrl);
+  // Only a state that HAS a mandatory local may read the remembered county.
+  // Without this guard the id survives into a state that has none — where
+  // `resolveResidenceLocal` passes any selection through untouched, so a
+  // Maryland county rode into Michigan, charged nothing (the evaluator matches
+  // by id and Michigan has no such add-on) and still landed in the deep link
+  // and the shared permalink: a URL saying the reader lives somewhere they do
+  // not. Charging nothing is what made it quiet.
+  if (!state?.residenceLocalTax) return [];
   const remembered = profile.get("county");
   return resolveResidenceLocal(state, remembered ? [remembered] : []);
 }
