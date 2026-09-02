@@ -21,6 +21,7 @@ import { el, option } from "../ui/dom";
 import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { downsampleCurve, resourceCurve, type CurvePoint } from "../ui/charts";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { residenceLocalField, resolveResidenceLocal } from "../ui/residenceLocal";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
@@ -47,6 +48,8 @@ interface Fields {
   /** Only used by the Marginal Reality tile. */
   income: number;
   step: number;
+  /** The mandatory residence-based county tax (Maryland, Indiana), when there is one. */
+  local: string[];
 }
 
 /**
@@ -62,6 +65,7 @@ const EXAMPLE: Fields = {
   premium: 1200,
   income: 38000,
   step: 1000,
+  local: [],
 };
 
 function readFields(p: URLSearchParams, defaultState: string, profile: SituationStore): Fields {
@@ -80,6 +84,7 @@ function readFields(p: URLSearchParams, defaultState: string, profile: Situation
       ? parseNonNegative(p.get("inc"), 0)
       : (profile.get("annualIncome") ?? 38000),
     step: Math.max(1, parseNonNegative(p.get("step"), 1000)),
+    local: p.getAll("loc"),
   };
 }
 
@@ -94,6 +99,7 @@ function writeFields(f: Fields, includeIncome: boolean): URLSearchParams {
     p.set("inc", String(f.income));
     p.set("step", String(f.step));
   }
+  for (const id of f.local) p.append("loc", id);
   return p;
 }
 
@@ -128,6 +134,7 @@ function toCliffInput(f: Fields): CliffInput {
     qualifyingChildren: f.kids,
     stateCode: f.st,
     benchmarkMonthlyPremium: f.premium,
+    localJurisdictionIds: f.local,
   };
 }
 
@@ -201,6 +208,16 @@ function commonControls(fields: Fields, data: BundledData) {
   return { fsSelect, stSelect, sizeInput, kidsInput, premInput };
 }
 
+/**
+ * The county currently chosen, or nothing. Read from the DOM rather than kept
+ * in a variable so that a county belonging to the state you just navigated away
+ * from cannot survive into the new state's sweep.
+ */
+function countyOf(container: HTMLElement): string[] {
+  const select = container.querySelector<HTMLSelectElement>("select[name='loc-select']");
+  return select && select.value ? [select.value] : [];
+}
+
 // --- Tile 1: the Benefit Cliff Explorer -------------------------------------
 
 export function mountCliffExplorer(ctx: TileContext): void {
@@ -216,6 +233,21 @@ export function mountCliffExplorer(ctx: TileContext): void {
 
   const { fsSelect, stSelect, sizeInput, kidsInput, premInput } = commonControls(fields, data);
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
+  const localContainer = el("div", { class: "local-addons" });
+
+  /**
+   * A Maryland or Indiana county tax comes straight off what the household has
+   * at every income on the chart, so it is resolved to the shard's default
+   * rather than left empty — a blank selection would draw the whole curve above
+   * where the household actually sits.
+   */
+  function renderLocal(): void {
+    const state = fields.st ? (data!.state(fields.st) ?? null) : null;
+    fields.local = resolveResidenceLocal(state, fields.local);
+    localContainer.replaceChildren();
+    const county = residenceLocalField(state, fields.local[0], recompute);
+    if (county) localContainer.append(county);
+  }
 
   function compute(): void {
     const cliffData = buildCliffData(data!, fields);
@@ -320,11 +352,13 @@ export function mountCliffExplorer(ctx: TileContext): void {
       size: Math.max(1, Math.round(parseNonNegative(sizeInput.value, 3))),
       kids: Math.max(0, Math.round(parseNonNegative(kidsInput.value, 0))),
       premium: parseNonNegative(premInput.value, 0),
+      local: countyOf(localContainer),
     };
   }
 
   function recompute(): void {
     collect();
+    renderLocal();
     ctx.setParams(writeFields(fields, false));
     rememberShared(ctx.profile, { filingStatus: fields.fs, stateCode: fields.st });
     ctx.profile.set("householdSize", fields.size);
@@ -353,10 +387,12 @@ export function mountCliffExplorer(ctx: TileContext): void {
       field("People in household", sizeInput),
       field("Children who qualify for credits", kidsInput),
       field("Benchmark silver premium (monthly)", premInput),
+      localContainer,
       el("div", { class: "tile-form-actions" }, tryExample),
     ),
     resultContainer,
   );
+  renderLocal();
   compute();
 }
 
@@ -425,6 +461,17 @@ export function mountMarginalReality(ctx: TileContext): void {
   let fields = readFields(ctx.params, defaultState, ctx.profile);
 
   const { fsSelect, stSelect, sizeInput, kidsInput, premInput } = commonControls(fields, data);
+
+  const localContainer = el("div", { class: "local-addons" });
+
+  /** The same mandatory county tax the Explorer charges — see its `renderLocal`. */
+  function renderLocal(): void {
+    const state = fields.st ? (data!.state(fields.st) ?? null) : null;
+    fields.local = resolveResidenceLocal(state, fields.local);
+    localContainer.replaceChildren();
+    const county = residenceLocalField(state, fields.local[0], recompute);
+    if (county) localContainer.append(county);
+  }
   const incInput = el("input", {
     type: "number",
     name: "inc",
@@ -505,11 +552,13 @@ export function mountMarginalReality(ctx: TileContext): void {
       premium: parseNonNegative(premInput.value, 0),
       income: parseNonNegative(incInput.value, 0),
       step: Math.max(1, parseNonNegative(stepInput.value, 1000)),
+      local: countyOf(localContainer),
     };
   }
 
   function recompute(): void {
     collect();
+    renderLocal();
     ctx.setParams(writeFields(fields, true));
     rememberShared(ctx.profile, {
       filingStatus: fields.fs,
@@ -548,10 +597,12 @@ export function mountMarginalReality(ctx: TileContext): void {
       field("Benchmark silver premium (monthly)", premInput),
       field("Current income", incInput),
       field("Raise amount", stepInput),
+      localContainer,
       el("div", { class: "tile-form-actions" }, tryExample),
     ),
     resultContainer,
   );
+  renderLocal();
   compute();
 }
 

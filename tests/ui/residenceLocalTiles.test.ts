@@ -3,6 +3,8 @@ import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import { marginalExplorerTile } from "../../src/tiles/marginalExplorer";
 import { paycheckOptimizerTile } from "../../src/tiles/paycheckOptimizer";
+import { cliffExplorerTile, marginalRealityTile } from "../../src/tiles/benefitCliffs";
+import { resourcesAt } from "../../src/engine/cliffs";
 import { resolveResidenceLocal, residenceLocalField } from "../../src/ui/residenceLocal";
 import type { TileContext, TileDefinition } from "../../src/tiles/types";
 
@@ -132,6 +134,93 @@ describe("the Paycheck Optimizer", () => {
       fs: "single",
       st: "ca",
       w: "95000",
+    });
+    expect(root.querySelector("select[name='loc-select']")).toBeNull();
+  });
+});
+
+describe("the benefit-cliff engine and its two tiles", () => {
+  const base = {
+    filingStatus: "head_of_household" as const,
+    householdSize: 3,
+    qualifyingChildren: 2,
+    stateCode: "in",
+    benchmarkMonthlyPremium: 0,
+  };
+
+  it("takes the county tax off what an Indiana household actually has", () => {
+    // The whole point of this engine is "what does the household actually
+    // have", so a tax every resident pays belongs in it. Marion County's 2.02%
+    // on $50,000 of income is real money at an income where these curves bend.
+    const data = {
+      tax: { federal: bundled.federal()!, fica: bundled.fica()!, state: bundled.state("in")! },
+      fpl: bundled.fpl("contiguous"),
+      eitcCtc: bundled.eitcCtc(),
+      aca: bundled.aca(),
+      snap: bundled.snap(),
+      medicaid: bundled.medicaid(),
+      snapRegionSupported: true,
+    };
+    const without = resourcesAt(50000, base, data);
+    const with_ = resourcesAt(50000, { ...base, localJurisdictionIds: ["in-marion"] }, data);
+    expect(with_.totalResources).toBeLessThan(without.totalResources);
+    // 2.02% of (50,000 − 1,000) = $989.80, and nothing else moves.
+    expect(without.totalResources - with_.totalResources).toBeCloseTo(989.8, 2);
+  });
+
+  it("changes nothing for a state with no mandatory local", () => {
+    const data = {
+      tax: { federal: bundled.federal()!, fica: bundled.fica()!, state: bundled.state("ca")! },
+      fpl: bundled.fpl("contiguous"),
+      eitcCtc: bundled.eitcCtc(),
+      aca: bundled.aca(),
+      snap: bundled.snap(),
+      medicaid: bundled.medicaid(),
+      snapRegionSupported: true,
+    };
+    const ca = { ...base, stateCode: "ca" };
+    expect(resourcesAt(50000, { ...ca, localJurisdictionIds: [] }, data).totalResources).toBe(
+      resourcesAt(50000, ca, data).totalResources,
+    );
+  });
+
+  it("offers the county on the Cliff Explorer, defaulted rather than blank", () => {
+    const { root } = mountTile(cliffExplorerTile, bundled, {
+      fs: "head_of_household",
+      st: "md",
+      size: "3",
+      kids: "2",
+      prem: "0",
+    });
+    const sel = root.querySelector<HTMLSelectElement>("select[name='loc-select']");
+    expect(sel).not.toBeNull();
+    expect(sel!.value).toBe("md-montgomery");
+  });
+
+  it("offers it on the Marginal Reality tile too, and puts it in the permalink", () => {
+    const { root, lastParams } = mountTile(marginalRealityTile, bundled, {
+      fs: "head_of_household",
+      st: "in",
+      size: "3",
+      kids: "2",
+      prem: "0",
+      inc: "35000",
+      step: "1000",
+    });
+    const sel = root.querySelector<HTMLSelectElement>("select[name='loc-select']")!;
+    expect(sel.value).toBe("in-marion");
+    sel.value = "in-porter";
+    sel.dispatchEvent(new Event("change"));
+    expect(lastParams()?.getAll("loc")).toEqual(["in-porter"]);
+  });
+
+  it("shows no county control for a state without one", () => {
+    const { root } = mountTile(cliffExplorerTile, bundled, {
+      fs: "head_of_household",
+      st: "ca",
+      size: "3",
+      kids: "2",
+      prem: "0",
     });
     expect(root.querySelector("select[name='loc-select']")).toBeNull();
   });

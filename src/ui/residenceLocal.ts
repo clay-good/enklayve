@@ -47,7 +47,7 @@ export function resolveResidenceLocal(
 
 /**
  * The county dropdown, or `null` when this state has no mandatory local — which
- * is the case for 49 of the 51 jurisdictions, so the caller renders nothing.
+ * is the case everywhere but Maryland and Indiana, so the caller renders nothing.
  */
 export function residenceLocalField(
   state: Jurisdiction | null | undefined,

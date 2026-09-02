@@ -77,6 +77,16 @@ export interface CliffInput {
   /** Two-letter state code; "" when no state income tax is modeled. */
   stateCode: string;
   /**
+   * Mandatory residence-based local taxes that apply to this household — the
+   * Maryland and Indiana county taxes, which every resident pays and which come
+   * straight off "what a household actually has". Up to 3.3 points of income in
+   * Maryland and 3.0 in Indiana, so leaving them out shifted the whole resource
+   * curve down by more than a thousand dollars a year at ordinary incomes.
+   * Empty for every jurisdiction without one, and for opt-in locals, which the reader
+   * chooses in the Take-Home tile rather than declaring here.
+   */
+  localJurisdictionIds?: string[];
+  /**
    * The household's benchmark (second-lowest-cost silver) monthly premium, from
    * HealthCare.gov. Per-county, so the user supplies it; 0 opts the ACA term out.
    */
@@ -237,7 +247,14 @@ export function resourcesAt(income: number, input: CliffInput, data: CliffData):
     input.filingStatus === "married_jointly" ||
     input.filingStatus === "qualifying_surviving_spouse";
 
-  const tax = evaluateTaxes({ filingStatus: input.filingStatus, wages: gross }, data.tax);
+  const tax = evaluateTaxes(
+    {
+      filingStatus: input.filingStatus,
+      wages: gross,
+      localJurisdictionIds: input.localJurisdictionIds,
+    },
+    data.tax,
+  );
   const netAfterTax = finite(tax.totals.takeHome.toNumber());
 
   let credits = 0;
