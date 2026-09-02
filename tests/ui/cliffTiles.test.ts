@@ -74,6 +74,32 @@ describe("Benefit Cliff Explorer", () => {
     expect(text).toContain("not a benefit");
   });
 
+  it("says what a widened step costs, not just that it widened", () => {
+    // The sweep is bounded at MAX_POINTS and widens the step rather than
+    // truncating the range. That is the right trade and it has a price nobody
+    // stated: the sweep compares consecutive points, so a cliff narrower than
+    // one step hides inside it — Ohio's $332 at $26,050 is invisible once the
+    // raise that crosses it is $500, because the ordinary gain outruns the
+    // loss. Reporting only "income step used: $559" states the fact and not
+    // what it means, which is how a reader comes away with "no cliff here" from
+    // a sweep that could not have seen one.
+    const { root } = mount(
+      mountCliffExplorer,
+      new URLSearchParams({ fs: "head_of_household", st: "oh", size: "8", kids: "7", prem: "0" }),
+    );
+    const note = root.querySelector(".sweep-resolution")?.textContent ?? "";
+    expect(note).toContain("hide inside it");
+    expect(note).toContain("Marginal Reality Rate");
+  });
+
+  it("does not explain a widened step to a reader whose step was not widened", () => {
+    const { root } = mount(
+      mountCliffExplorer,
+      new URLSearchParams({ fs: "single", st: "oh", size: "1", kids: "0", prem: "0" }),
+    );
+    expect(root.querySelector(".sweep-resolution")).toBeNull();
+  });
+
   it("says nothing about a tax step in a state that has none", () => {
     const { root } = mount(mountCliffExplorer, FAMILY);
     expect(root.textContent ?? "").not.toContain("tax step at");

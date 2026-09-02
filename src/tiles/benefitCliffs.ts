@@ -359,6 +359,27 @@ export function mountCliffExplorer(ctx: TileContext): void {
           "Total household resources plotted against gross income. Bars in the warning color mark stretches where earning more leaves the household with the same or less.",
       }),
       resourceTable(sweep.points, ctx.locale),
+      // What a widened step COSTS, not just that it happened. A cliff narrower
+      // than one step hides inside it: the sweep compares consecutive points,
+      // so a $332 charge is invisible when the raise that crosses it is $559
+      // and the ordinary gain outruns the loss. Ohio's $26,050 step is exactly
+      // that shape, and this range is wide enough to step over it. Saying only
+      // "income step used: $559" states the fact and not what it means, which
+      // is how a reader comes away with "no cliff here" from a sweep that could
+      // not have seen one.
+      ...(sweep.stepWidened
+        ? [
+            el("p", {
+              class: "sweep-resolution",
+              text:
+                `This income range is wide enough that the sweep moves ${fmt(sweep.step)} at a ` +
+                "time, and a cliff narrower than one step can hide inside it — a loss is only " +
+                "visible here when it outweighs the raise that crosses it. For a specific " +
+                "income, the Marginal Reality Rate beside this tool asks the question a dollar " +
+                "at a time.",
+            }),
+          ]
+        : []),
       unmodeledBlock(sweep.unmodeled),
     );
   }

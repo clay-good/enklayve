@@ -916,6 +916,10 @@ body {
    this is information, not a warning. */
 .clamp-note,
 .assumption-hint,
+/* What a widened cliff-sweep step costs: a cliff narrower than one step hides
+   inside it, so "no cliff found" is a claim about the resolution as much as
+   about the household. */
+.sweep-resolution,
 /* A point where a state's own schedule charges a flat amount for crossing a
    line — Ohio's $332 at $26,050. Same quiet treatment: it is the printed rule,
    not a warning about the reader's situation. */
