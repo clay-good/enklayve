@@ -14,7 +14,13 @@
 import { Money } from "../engine/money";
 import { evaluateTaxes, type TaxInput, type TaxResult } from "../engine/tax";
 import { evaluatePlan, DEFAULT_CONFIG, type PlanConfig, type PlanInput } from "../engine/plan";
-import { fplPercent, estimateEitc, estimateCtc } from "../engine/benefits";
+import {
+  acaCovered,
+  estimateCtc,
+  estimateEitc,
+  fplPercent,
+  medicaidEligibility,
+} from "../engine/benefits";
 import { pct } from "../ui/form";
 import type { CitationData } from "../data/schemas";
 import type { BundledData, FplRegion } from "../data/browser";
@@ -206,6 +212,8 @@ export function buildReport(
   const married = filingStatus === "married_jointly";
   const fplData = data?.fpl(regionFromState(stateCode)) ?? null;
   const eitcCtc = data?.eitcCtc() ?? null;
+  const medicaidData = data?.medicaid() ?? null;
+  const acaData = data?.aca() ?? null;
 
   if (income > 0 && householdSize && fplData) {
     const p = fplPercent(income, householdSize, fplData);
@@ -214,16 +222,29 @@ export function buildReport(
       value: `${p.toFixed(0)}% of FPL`,
     });
     citations.push(fplData.citation);
-    if (p <= 138) {
+    // The Report used to test `p <= 138` and `p >= 100` against literals it
+    // held itself. Both are figures somebody legislates and both live on
+    // hashed, cited shards — the Medicaid expansion threshold with PER-STATE
+    // overrides the Report was ignoring outright, and the ACA's eligibility
+    // band, whose 400% ceiling came back for 2026 when §71302(a) repealed the
+    // suspension. A document a household saves must not disagree with the tile
+    // it was generated beside, so both questions are asked of the engine that
+    // answers them everywhere else.
+    const medicaid = medicaidData
+      ? medicaidEligibility({ stateCode, income, householdSize }, medicaidData, fplData)
+      : null;
+    if (medicaid?.eligible) {
       owedLines.push({
         label: "Medicaid",
-        value: "Likely eligible where the state expanded it",
+        value: `Likely eligible — at or under ${medicaid.thresholdPctFpl}% of the poverty line in ${stateCode.toUpperCase()}`,
       });
-    } else if (p >= 100) {
+      citations.push(medicaidData!.citation);
+    } else if (acaData && acaCovered(p, acaData)) {
       owedLines.push({
         label: "ACA premium tax credit",
         value: "Likely eligible; size it in the ACA tool",
       });
+      citations.push(acaData.citation);
     }
   }
   if (income > 0 && eitcCtc) {

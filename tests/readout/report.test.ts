@@ -25,6 +25,52 @@ function fundedProfile(): SituationStore {
   return p;
 }
 
+describe("the Report asks the engine, not a number it remembers", () => {
+  /** A household under DC's expansion threshold and over the federal one. */
+  function inDc(income: number): SituationStore {
+    const p = new SituationStore();
+    p.set("annualIncome", income);
+    p.set("filingStatus", "single");
+    p.set("stateCode", "dc");
+    p.set("householdSize", 1);
+    return p;
+  }
+
+  it("uses DC's 215% threshold, which the hardcoded 138 could not see", () => {
+    // The Report tested `p <= 138` against a literal it held itself, and the
+    // Medicaid shard carries a per-state override the literal ignored: DC
+    // expands to 215% of the poverty line. A single DC resident earning
+    // $28,000 is around 170% of it — eligible in DC, and told otherwise by a
+    // document generated beside a Medicaid tile that says the opposite.
+    const owed = buildReport(inDc(28_000), data).sections.find(
+      (s) => s.title === "What you may be owed",
+    );
+    const medicaid = owed?.lines.find((l) => l.label === "Medicaid");
+    expect(medicaid, "a DC resident at ~170% FPL should be flagged eligible").toBeDefined();
+    expect(medicaid?.value).toContain("215%");
+  });
+
+  it("still points a household above the threshold at the premium tax credit", () => {
+    // ~320% of the poverty line for one person: over DC's 215% and under the
+    // 400% ceiling that came back for 2026.
+    const owed = buildReport(inDc(50_000), data).sections.find(
+      (s) => s.title === "What you may be owed",
+    );
+    expect(owed?.lines.find((l) => l.label === "Medicaid")).toBeUndefined();
+    expect(owed?.lines.find((l) => l.label === "ACA premium tax credit")).toBeDefined();
+  });
+
+  it("says nothing about either above the restored 400% cliff", () => {
+    // §36B(c)(1)(B)'s suspension was repealed by Pub. L. 119-21 §71302(a), so
+    // there is no credit above 400% of the poverty line for 2026. The Report's
+    // old `p >= 100` had no upper bound at all and would have offered one.
+    const owed = buildReport(inDc(300_000), data).sections.find(
+      (s) => s.title === "What you may be owed",
+    );
+    expect(owed?.lines.find((l) => l.label === "ACA premium tax credit")).toBeUndefined();
+  });
+});
+
 describe("Readout Report, model", () => {
   it("composes a snapshot, tax picture, plan, and appendix from Your Situation", () => {
     const model = buildReport(fundedProfile(), data);
