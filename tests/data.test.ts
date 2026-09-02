@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadDataset, loadManifest, needsVerifyBanner } from "../src/data/loader";
@@ -229,5 +230,49 @@ describe("the year the manifest pins is the year the shard states", () => {
     }
     expect(disagreements).toEqual([]);
     expect(manifest.datasets.length).toBeGreaterThan(80);
+  });
+});
+
+/**
+ * The sibling `.sha256` files are a published claim, and nothing checked them.
+ *
+ * Each shard ships beside a `data/<shard>.json.sha256`, and the README says so.
+ * They exist for a reader who does not trust us: `shasum -a 256 -c` on a file
+ * they downloaded, against a digest in the same repository, without running any
+ * of our code. The runtime integrity gate does not use them — the loader
+ * recomputes each shard's hash against the MANIFEST — so a sibling could drift
+ * from the bytes beside it and every test here would stay green while the one
+ * artifact a skeptic reaches for told them the file had been altered.
+ *
+ * Written by `npm run data:manifest` together with the manifest, so drift takes
+ * a hand edit. The annual roll is exactly when hand edits happen, across all 81
+ * at once. All three agreed when this was written.
+ */
+describe("every shard's published digest matches the bytes and the manifest", () => {
+  it("agrees three ways: the file, its .sha256 sibling, and the manifest entry", () => {
+    const problems: string[] = [];
+    for (const entry of manifest.datasets) {
+      const bytes = readFileSync(resolve(DATA_DIR, entry.shard));
+      const actual = createHash("sha256").update(bytes).digest("hex");
+      // `contentHash` is optional in the schema — a shard cannot contain its
+      // own hash — but every entry the repo ships carries one, and an entry
+      // that lost it would lose the runtime integrity gate silently.
+      if (entry.contentHash === undefined) {
+        problems.push(`${entry.id}: manifest entry pins no contentHash`);
+      } else if (actual !== entry.contentHash) {
+        problems.push(`${entry.id}: bytes hash ${actual}, manifest pins ${entry.contentHash}`);
+      }
+      let sibling: string;
+      try {
+        sibling = readFileSync(resolve(DATA_DIR, `${entry.shard}.sha256`), "utf8").trim();
+      } catch {
+        problems.push(`${entry.id}: no ${entry.shard}.sha256 beside the shard`);
+        continue;
+      }
+      if (sibling !== actual) {
+        problems.push(`${entry.id}: ${entry.shard}.sha256 says ${sibling}, bytes hash ${actual}`);
+      }
+    }
+    expect(problems).toEqual([]);
   });
 });

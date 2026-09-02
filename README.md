@@ -25,7 +25,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 |---|---|---|
 | Deterministic calculators | **69** in **12 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
-| Cited dataset shards | **81**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
+| Cited dataset shards | **81**, each with a sibling `.sha256` + manifest entry — the file, its sibling, and the manifest are checked to agree three ways; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
 | Tests | unit/golden across **129** files, **+48** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Source audits | **all 51 jurisdictions + the federal and benefits shards** read against the agency's own document; 8 wrong figures found and fixed. Every one also has a hand-verified golden case, and that is now a **gate** rather than somebody's diligence | [`docs/data-sources.md`](docs/data-sources.md#source-audits) |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
