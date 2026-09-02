@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join, resolve } from "node:path";
 import {
   SituationStore,
   SituationValuesSchema,
@@ -36,6 +38,50 @@ const EVERY_FIELD: Required<SituationValues> = {
   totalMonthlyExpenses: 4800,
   liquidSavings: 11_000,
 };
+
+/**
+ * Every declared field is read by something.
+ *
+ * `Required<SituationValues>` above makes the compiler demand a *value* for a
+ * new field; nothing demanded a *reader*. `preTaxContributions` was declared,
+ * documented, carried through the portable file format and the Standing
+ * Ledger, and read by no line of application code for as long as it existed —
+ * so a household's 401(k) was asked for again by every tile that wanted it.
+ * `county` was in the same state until the day the county taxes shipped.
+ *
+ * A profile field nobody reads is either dead weight in a file format people
+ * carry between sessions, or a feature somebody stopped halfway. Both are worth
+ * failing a build over, and neither is visible from the type.
+ */
+describe("every field in the profile is read by something", () => {
+  const SRC = resolve(__dirname, "..", "..", "src");
+
+  function readersOf(field: string): number {
+    let count = 0;
+    const walk = (dir: string): void => {
+      for (const name of readdirSync(dir)) {
+        const p = join(dir, name);
+        if (statSync(p).isDirectory()) walk(p);
+        else if (p.endsWith(".ts") && !p.endsWith("situation.ts")) {
+          count += readFileSync(p, "utf8").split(`get("${field}")`).length - 1;
+        }
+      }
+    };
+    walk(SRC);
+    return count;
+  }
+
+  for (const field of Object.keys(EVERY_FIELD)) {
+    it(`${field} is read somewhere in src/`, () => {
+      expect(
+        readersOf(field),
+        `${field} is declared on the profile and nothing calls profile.get("${field}") — ` +
+          "either wire it to the tile that should use it, or take it out of a file format " +
+          "people carry between sessions",
+      ).toBeGreaterThan(0);
+    });
+  }
+});
 
 describe("SituationStore", () => {
   it("stores values with provenance, defaulting to typed", () => {

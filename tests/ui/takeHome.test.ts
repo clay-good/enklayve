@@ -150,6 +150,32 @@ describe("take-home tile", () => {
     expect(hasWorcester).toBe(true);
   });
 
+  it("shares pre-tax adjustments with My Situation, in both directions", () => {
+    // "Pre-tax adjustments" here and `preTaxContributions` in the profile are
+    // one number under two names, and the profile field was declared,
+    // documented, and read by nothing until 2026-09-02 — so someone who typed
+    // their 401(k) into this tile was asked for it again by the next one.
+    const profile = new SituationStore();
+    profile.set("preTaxContributions", 9000);
+    const seeded = mount(new URLSearchParams({ fs: "single", st: "ca", w: "90000" }), profile);
+    expect(seeded.root.querySelector<HTMLInputElement>('input[name="adj"]')!.value).toBe("9000");
+
+    // The deep link still wins over the profile, like every other shared field.
+    const linked = mount(
+      new URLSearchParams({ fs: "single", st: "ca", w: "90000", adj: "3000" }),
+      profile,
+    );
+    expect(linked.root.querySelector<HTMLInputElement>('input[name="adj"]')!.value).toBe("3000");
+
+    // And typing here writes it back for the next tile to find.
+    const fresh = new SituationStore();
+    const { root } = mount(new URLSearchParams({ fs: "single", st: "ca", w: "90000" }), fresh);
+    const adj = root.querySelector<HTMLInputElement>('input[name="adj"]')!;
+    adj.value = "12000";
+    adj.dispatchEvent(new Event("input"));
+    expect(fresh.get("preTaxContributions")).toBe(12000);
+  });
+
   it("renders Detroit as an OPT-IN checkbox, because most of Michigan does not pay it", () => {
     // The contrast with Indiana below is the whole distinction: an Indiana
     // resident pays a county tax wherever they live, so the county is a required

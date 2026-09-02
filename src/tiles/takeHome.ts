@@ -95,7 +95,13 @@ function readFields(
       ? parseNonNegative(params.get("w"), 0)
       : (profile.get("annualIncome") ?? 0),
     other: parseNonNegative(params.get("oi"), 0),
-    adjustments: parseNonNegative(params.get("adj"), 0),
+    // "Pre-tax adjustments" on screen, `preTaxContributions` in My Situation —
+    // the same number under two names, and until 2026-09-02 the profile field
+    // was declared, documented, and read by nothing. Same precedence as every
+    // other shared field: the link wins, then the profile, then zero.
+    adjustments: params.has("adj")
+      ? parseNonNegative(params.get("adj"), 0)
+      : (profile.get("preTaxContributions") ?? 0),
     // Clamped where it is read: a hostile deep link can say anything, and the
     // select has no option for "7".
     seniors: Math.min(2, Math.max(0, Math.round(parseNonNegative(params.get("age65"), 0)))),
@@ -368,6 +374,7 @@ export function mountTakeHome(ctx: TileContext): void {
       stateCode: fields.st,
       county: rememberableCounty(fields.st ? bundled.state(fields.st) : null, fields.local),
       annualIncome: fields.wages,
+      preTaxContributions: fields.adjustments,
       qualifiedTipsAnnual: fields.tips,
       qualifiedOvertimeAnnual: fields.overtime,
     });

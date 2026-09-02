@@ -19,6 +19,18 @@ export interface SharedFields {
    */
   county?: string;
   annualIncome?: number;
+  /**
+   * Annual pre-tax contributions (401(k), HSA, and the rest) — the number
+   * Take-Home asks for as "Pre-tax adjustments".
+   *
+   * Deliberately NOT written by the Paycheck Optimizer, which asks for the
+   * 401(k) and the HSA separately and is right to: an HSA dollar taken through
+   * payroll leaves the FICA wage base as well as taxable income, and a 401(k)
+   * dollar does not. Summing them into one figure here would hand Take-Home an
+   * adjustment that is correct for income tax and too small for FICA, which is
+   * a wrong take-home number arriving through a convenience.
+   */
+  preTaxContributions?: number;
   /** W-2 box 12 code TP; see SituationValues for why it is not "qualified tips". */
   qualifiedTipsAnnual?: number;
   /** W-2 box 12 code TT. */
@@ -33,6 +45,9 @@ export function rememberShared(profile: SituationStore, fields: SharedFields): v
   // clear the county, not leave Montgomery behind for the next tile to charge.
   if (fields.county !== undefined) profile.set("county", fields.county);
   if (fields.annualIncome !== undefined) profile.set("annualIncome", fields.annualIncome);
+  if (fields.preTaxContributions !== undefined) {
+    profile.set("preTaxContributions", fields.preTaxContributions);
+  }
   if (fields.qualifiedTipsAnnual !== undefined) {
     profile.set("qualifiedTipsAnnual", fields.qualifiedTipsAnnual);
   }
