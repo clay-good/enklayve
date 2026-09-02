@@ -48,6 +48,18 @@ export interface SelfEmploymentTaxResult {
 }
 
 /**
+ * The share of net earnings that is the SE-tax base: IRC §1402(a)(12) subtracts
+ * the employer-equivalent half, leaving 92.35% (IRS Schedule SE). Statutory and
+ * never indexed — it is 100% − 7.65%, the arithmetic of the FICA rates rather
+ * than an amount anybody sets each year.
+ *
+ * It was an inline `0.9235` for as long as this function has existed, invisible
+ * to the sweep that names statutory figures because that one only fires on a
+ * bare number of 100 or more, and a rate is never that.
+ */
+export const SE_TAX_BASE_RATE = 0.9235;
+
+/**
  * Self-employment tax (BUILD-SPEC.md §3.2), built on the same FICA dataset as
  * the employee-side computation. A self-employed person pays both halves of
  * Social Security and Medicare, so the rates are doubled: SE tax is the 15.3%
@@ -64,8 +76,7 @@ export function selfEmploymentTax(
   fica: FicaData,
 ): SelfEmploymentTaxResult {
   const net = netEarnings.greaterThan(0) ? netEarnings : Money.zero();
-  // 92.35% of net earnings is the SE-tax base (IRS Schedule SE).
-  const taxableBase = net.multiply(0.9235);
+  const taxableBase = net.multiply(SE_TAX_BASE_RATE);
 
   const wageBase = Money.from(fica.socialSecurityWageBase);
   const ssBase = taxableBase.greaterThan(wageBase) ? wageBase : taxableBase;

@@ -189,6 +189,12 @@ const VERDICTS: Record<string, string> = {
     "floor apply to all taxable years, so it has no annual value to chase and a change would " +
     "be an act of Congress. Left in code deliberately, and named here so the next reader can " +
     "argue with the decision rather than rediscover it.",
+  SE_TAX_BASE_RATE:
+    "figure — IRC §1402(a)(12), the 92.35% of net earnings that is the self-employment " +
+    "tax base once the employer-equivalent half is subtracted. Statutory, never indexed, " +
+    "and arithmetic on the FICA rates rather than an amount anybody sets each year. It was " +
+    "an inline 0.9235 until the rate sweep found it: this file only fires on a bare number " +
+    "of 100 or more, and a rate is never that, so every rate in the codebase was outside it.",
 };
 
 /**
