@@ -13,6 +13,7 @@
  */
 import { Money } from "../engine/money";
 import { evaluateTaxes, type TaxInput, type TaxResult } from "../engine/tax";
+import { resolveResidenceLocal } from "../ui/residenceLocal";
 import { evaluatePlan, DEFAULT_CONFIG, type PlanConfig, type PlanInput } from "../engine/plan";
 import {
   acaCovered,
@@ -126,6 +127,14 @@ export function buildReport(
   const fica = data?.fica() ?? null;
   const stateCode = profile.get("stateCode") ?? "";
   const state = stateCode ? (data?.state(stateCode) ?? undefined) : undefined;
+  // The mandatory county income tax (Maryland, Indiana), remembered by whichever
+  // tile last asked. The report is the document a household keeps and comes back
+  // to, so a tax every resident pays belongs in its effective rate, its marginal
+  // rate and its take-home — not only in the tile where it was chosen.
+  const county = resolveResidenceLocal(
+    state ?? null,
+    [profile.get("county") ?? ""].filter(Boolean),
+  );
   const filingStatus = profile.get("filingStatus") ?? "single";
   const effectiveYear = federal?.taxYear ?? 2026;
 
@@ -137,13 +146,19 @@ export function buildReport(
   // --- Snapshot + tax picture (only when we can run the tax engine) ---
   if (hasIncomeData && federal && fica) {
     const ctx = { federal, fica, state };
-    const input: TaxInput = { filingStatus, wages: income, deductionMode: "auto" };
+    const input: TaxInput = {
+      filingStatus,
+      wages: income,
+      deductionMode: "auto",
+      localJurisdictionIds: county,
+    };
     const result: TaxResult = evaluateTaxes(input, ctx);
     const plus = evaluateTaxes({ ...input, wages: income + 1000 }, ctx);
     const marginalCost = plus.totals.totalTax.subtract(result.totals.totalTax);
 
     citations.push(result.federal.citation, result.fica.citation);
     if (result.state) citations.push(result.state.citation);
+    if (result.local.citation) citations.push(result.local.citation);
 
     const rainyMonths = essential > 0 ? savings / essential : null;
     sections.push({

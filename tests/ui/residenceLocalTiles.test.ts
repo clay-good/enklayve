@@ -5,6 +5,7 @@ import { marginalExplorerTile } from "../../src/tiles/marginalExplorer";
 import { paycheckOptimizerTile } from "../../src/tiles/paycheckOptimizer";
 import { cliffExplorerTile, marginalRealityTile } from "../../src/tiles/benefitCliffs";
 import { quarterlyTaxesTile } from "../../src/tiles/quarterlyTaxes";
+import { buildReport } from "../../src/readout/report";
 import { rememberableCounty } from "../../src/ui/residenceLocal";
 import { resourcesAt } from "../../src/engine/cliffs";
 import { resolveResidenceLocal, residenceLocalField } from "../../src/ui/residenceLocal";
@@ -296,5 +297,47 @@ describe("remembering the county across tiles", () => {
     expect(root.querySelector<HTMLSelectElement>("select[name='loc-select']")!.value).toBe(
       "in-marion",
     );
+  });
+});
+
+describe("the Readout Report", () => {
+  /** A profile with enough in it for the report to run the tax engine. */
+  const withIncome = (stateCode: string, county?: string): SituationStore => {
+    const p = new SituationStore();
+    p.set("filingStatus", "single");
+    p.set("stateCode", stateCode);
+    p.set("annualIncome", 60000);
+    if (county) p.set("county", county);
+    return p;
+  };
+
+  const rateOf = (model: {
+    sections: { title: string; lines: { label: string; value: string }[] }[];
+  }): string =>
+    model.sections
+      .find((s) => s.title === "Snapshot")!
+      .lines.find((l) => l.label === "Effective tax rate")!.value;
+
+  it("charges the remembered county, so the kept document agrees with the tiles", () => {
+    // The report is the thing a household saves and comes back to. If its
+    // effective rate disagrees with the tile that produced it, one of them is
+    // lying and the reader cannot tell which.
+    const cheap = buildReport(withIncome("in", "in-porter"), bundled);
+    const dear = buildReport(withIncome("in", "in-randolph"), bundled);
+    expect(rateOf(cheap)).not.toBe(rateOf(dear));
+  });
+
+  it("falls back to the state's default rather than skipping a mandatory tax", () => {
+    // A profile that never passed through a tile carrying the county control
+    // still belongs to someone who owes one.
+    const none = buildReport(withIncome("md"), bundled);
+    const chosen = buildReport(withIncome("md", "md-montgomery"), bundled);
+    expect(rateOf(none)).toBe(rateOf(chosen));
+  });
+
+  it("ignores a county belonging to a state the household does not live in", () => {
+    const stray = buildReport(withIncome("ca", "md-montgomery"), bundled);
+    const clean = buildReport(withIncome("ca"), bundled);
+    expect(rateOf(stray)).toBe(rateOf(clean));
   });
 });
