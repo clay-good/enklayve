@@ -165,7 +165,7 @@ describe("§2.9 boundary sweep: no public function throws or returns a non-finit
   // the point of this test — narrowing the grid to fit a default would weaken
   // the invariant — so it gets an explicit budget instead.
   it(
-    "evaluateTaxes over every jurisdiction × filing status: finite, non-negative, never above 100%",
+    "evaluateTaxes over every jurisdiction × filing status: finite, non-negative, effective rate in [0,1]",
     { timeout: 30_000 },
     () => {
       const federal = data.federal()!;
@@ -195,12 +195,19 @@ describe("§2.9 boundary sweep: no public function throws or returns a non-finit
               expect(totals.totalTax.isNegative(), label).toBe(false);
               expect(r.local.total.isNegative(), label).toBe(false);
               expect(totals.takeHome.toNumber(), label).toBeGreaterThanOrEqual(-0.01);
-              // Rates stay in a sane band: effective in [0,1]; marginal in [0,1]
-              // (no welfare cliff drives a $1 raise to cost more than $1 in tax).
+              // Effective rate stays in [0,1]: tax never exceeds gross.
               expect(totals.effectiveRate, label).toBeGreaterThanOrEqual(0);
               expect(totals.effectiveRate, label).toBeLessThanOrEqual(1);
+              // Marginal is never negative. It is NOT capped at 1, and the
+              // comment here used to say it was — "no welfare cliff drives a $1
+              // raise to cost more than $1 in tax" — which is false of this
+              // engine and was passing only because the income grid above never
+              // lands in the hundred dollars below Ohio's $26,050. It does:
+              // §5747.02(A)(3)(c) charges $332 at once there, the rate is
+              // measured over a $100 probe, and an Ohio filer at $26,000 has a
+              // combined marginal rate of 351%. The ceiling that IS true is
+              // asserted below, against the schedule rather than against 1.
               expect(totals.marginalRate, label).toBeGreaterThanOrEqual(-1e-9);
-              expect(totals.marginalRate, label).toBeLessThanOrEqual(1);
             }
           }
         }

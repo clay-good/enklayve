@@ -39,7 +39,16 @@ export interface TaxContext {
 }
 
 /** Probe amount (in wages) used to measure the combined marginal rate. */
-const MARGINAL_PROBE = 100;
+/**
+ * The wage bump the combined marginal rate is measured over.
+ *
+ * Exported because it is the denominator of a number the site prints, and a
+ * reader owed an explanation of a 351% marginal rate is owed the width it was
+ * measured across. Ohio charges $332 the instant taxable income passes $26,050
+ * (§5747.02(A)(3)(c)), so any probe that straddles that line reports a rate far
+ * above 100% — correctly, and only for the hundred dollars below it.
+ */
+export const MARGINAL_PROBE = 100;
 
 function clampZero(m: Money): Money {
   return m.isNegative() ? Money.zero() : m;

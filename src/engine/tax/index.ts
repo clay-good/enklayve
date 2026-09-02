@@ -3,7 +3,7 @@
  * typed jurisdiction data files into a fully cited result. Adding a jurisdiction
  * is data, not code.
  */
-export { evaluateTaxes, type TaxContext } from "./evaluate";
+export { evaluateTaxes, MARGINAL_PROBE, type TaxContext } from "./evaluate";
 export {
   bracketTax,
   marginalBracketRate,

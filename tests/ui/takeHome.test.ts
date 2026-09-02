@@ -219,3 +219,41 @@ describe("take-home tile", () => {
     expect(hasPorter).toBe(true);
   });
 });
+
+describe("a marginal rate over 100%", () => {
+  /**
+   * The most alarming number this site can print, and it is correct. The rate
+   * is measured over a $100 wage probe, so an Ohio filer just under $26,050 of
+   * taxable income reads 351%: Ohio Rev. Code §5747.02(A)(3)(c) owes nothing at
+   * or below that line and $332.00 plus 2.75% above it, over 0% bands, so the
+   * $332 lands whole on the first dollar over. Printing "351%" beside "next
+   * dollar" with no explanation is worse than printing nothing — it reads as a
+   * broken calculator, and a reader who believes it takes away a rate that is
+   * true of a hundred dollars and of no dollar after them.
+   */
+  it("explains itself rather than reading as a broken calculator", () => {
+    const { root } = mount(new URLSearchParams({ fs: "single", st: "oh", w: "26000" }));
+    const rows = Array.from(root.querySelectorAll(".bd-row")).map((r) => r.textContent ?? "");
+    const marginal = rows.find((t) => t.includes("Marginal rate"));
+    expect(marginal).toBeDefined();
+    const note = root.querySelector(".statute-step")?.textContent ?? "";
+    expect(note).toContain("over 100%");
+    expect(note).toContain("Ohio");
+    expect(note).toContain("$26,050");
+    expect(note).toContain("$332.00");
+  });
+
+  it("says nothing to an Ohio filer whose next $100 is ordinary", () => {
+    // A warning attached to every Ohio paycheck is furniture. Both sides of the
+    // line are ordinary: below the probe's reach, and above the step.
+    for (const w of ["18000", "60000"]) {
+      const { root } = mount(new URLSearchParams({ fs: "single", st: "oh", w }));
+      expect(root.querySelector(".statute-step"), `wages ${w}`).toBeNull();
+    }
+  });
+
+  it("says nothing in a state whose schedule has no such line", () => {
+    const { root } = mount(new URLSearchParams({ fs: "single", st: "ca", w: "26000" }));
+    expect(root.querySelector(".statute-step")).toBeNull();
+  });
+});

@@ -6,9 +6,10 @@
  * this exact pattern.
  */
 import { Money } from "../engine/money";
-import { evaluateTaxes, type TaxInput, type TaxResult } from "../engine/tax";
+import { evaluateTaxes, MARGINAL_PROBE, type TaxInput, type TaxResult } from "../engine/tax";
+import { bracketsFor, statutoryNotches } from "../engine/tax/brackets";
 import type { DeductionMode } from "../engine/tax/types";
-import type { FilingStatus } from "../data/schemas";
+import type { FilingStatus, Jurisdiction } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
@@ -173,6 +174,54 @@ function buildBreakdown(result: TaxResult, locale: string): BreakdownLine[] {
   lines.push({ label: "Effective rate", value: pct(result.totals.effectiveRate) });
   lines.push({ label: "Marginal rate (next dollar)", value: pct(result.totals.marginalRate) });
   return lines;
+}
+
+/**
+ * A combined marginal rate above 100%, explained.
+ *
+ * The rate is measured over a $100 wage probe, so a filer sitting just under a
+ * point where a state's schedule charges a flat amount reads a rate like 351% —
+ * arithmetic rather than a defect, and the most alarming number this site can
+ * print. Ohio is the only jurisdiction in the repo with such a point:
+ * §5747.02(A)(3)(c) owes nothing at or below $26,050 of nonbusiness taxable
+ * income and $332.00 plus 2.75% above it, over 0% bands, so the $332 lands whole
+ * on the first dollar over.
+ *
+ * Printing "351%" beside "next dollar" with no explanation is worse than
+ * printing nothing: it reads as a broken calculator, and the reader who believes
+ * it takes a rate away that is true of a hundred dollars and of no dollar after
+ * them. Named only when the number is actually strange, since a warning attached
+ * to every Ohio paycheck is furniture.
+ */
+function marginalRateNote(
+  result: TaxResult,
+  state: Jurisdiction | undefined,
+  locale: string,
+): HTMLElement | null {
+  if (result.totals.marginalRate <= 1 || !state || !result.state) return null;
+  const crossed = statutoryNotches(bracketsFor(state, result.filingStatus)).find(
+    (n) =>
+      result.state!.taxableIncome.lessThanOrEqual(n.taxableIncome) &&
+      result.state!.taxableIncome.add(MARGINAL_PROBE).greaterThan(n.taxableIncome),
+  );
+  if (!crossed) return null;
+  const whole = (n: number): string =>
+    new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(n);
+  return el("p", {
+    class: "statute-step",
+    text:
+      `That marginal rate is over 100% because you are just under a line the ` +
+      `${result.state.jurisdictionName} schedule charges a flat amount to cross. ` +
+      `${result.state.jurisdictionName} owes nothing at or below ${whole(crossed.taxableIncome)} of ` +
+      `taxable income and ${Money.from(crossed.amount).format(locale)} plus its ordinary rate above ` +
+      `it, so that ${Money.from(crossed.amount).format(locale)} arrives on the first dollar over. ` +
+      `The rate here is measured across ${whole(MARGINAL_PROBE)}; past the line the ordinary rate ` +
+      `returns.`,
+  });
 }
 
 export function mountTakeHome(ctx: TileContext): void {
@@ -354,6 +403,7 @@ export function mountTakeHome(ctx: TileContext): void {
     const state = fields.st ? (bundled.state(fields.st) ?? undefined) : undefined;
     const result = evaluateTaxes(input, { federal: fed, fica: ficaData, state });
 
+    const rateNote = marginalRateNote(result, state, ctx.locale);
     resultContainer.replaceChildren(
       resultCard({
         label: "Annual take-home pay",
@@ -362,6 +412,7 @@ export function mountTakeHome(ctx: TileContext): void {
         breakdown: buildBreakdown(result, ctx.locale),
         permalink: () => ctx.permalink(writeFields(fields)),
       }),
+      ...(rateNote ? [rateNote] : []),
     );
   }
 

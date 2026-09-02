@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { readdirSync } from "node:fs";
-import { evaluateTaxes, type TaxContext } from "../../src/engine/tax";
+import { evaluateTaxes, MARGINAL_PROBE, type TaxContext } from "../../src/engine/tax";
 import { statutoryNotches } from "../../src/engine/tax/brackets";
 import type { FilingStatus, Jurisdiction } from "../../src/data/schemas";
 import { loadDatasets, type Datasets } from "../helpers/datasets";
@@ -230,5 +230,78 @@ describe("the notch is derived from the schedule, not written down", () => {
         { lowerBound: 10_000, rate: 0.04 },
       ]),
     ).toEqual([]);
+  });
+});
+
+/**
+ * The ceiling on the combined marginal rate that is actually true.
+ *
+ * `propertyInvariants.test.ts` asserted the rate never exceeds 100%, with a
+ * comment saying "no welfare cliff drives a $1 raise to cost more than $1 in
+ * tax". That is false of this engine, and it passed only because its income
+ * grid never lands in the hundred dollars below Ohio's $26,050. An Ohio filer at
+ * $26,000 has a combined marginal rate of **351%** — measured over a $100 probe
+ * that straddles a $332 charge, which is arithmetic rather than a defect.
+ *
+ * A number the site prints deserves a real bound rather than a comfortable one.
+ * The rate can exceed 1 only where the probe crosses a statutory step, and by
+ * no more than that step spread over the probe. Everywhere else it is an
+ * ordinary combined rate.
+ */
+describe("the combined marginal rate has a ceiling, and it is not 100%", () => {
+  it("exceeds 100% only where a probe crosses a statutory step, and by no more than the step", () => {
+    const overOne: string[] = [];
+    for (const code of STATE_CODES) {
+      const state = ds.state(code);
+      const ctx: TaxContext = { federal: ds.federal, state, fica: ds.fica };
+      for (const status of STATUSES) {
+        if (!state.supportedFilingStatuses.includes(status)) continue;
+        const notches = statutoryNotches(state.bracketsByFilingStatus[status] ?? []);
+        const sd = standardDeductionFor(state, status);
+        // Walk the hundred dollars either side of each step, plus a control
+        // range well away from one.
+        const probes = [
+          ...notches.flatMap((n) =>
+            Array.from({ length: 9 }, (_, i) => n.taxableIncome + sd - 120 + i * 30),
+          ),
+          40_000,
+          90_000,
+        ].filter((w) => w > 0);
+        for (const wages of probes) {
+          const rate = evaluateTaxes({ filingStatus: status, wages }, ctx).totals.marginalRate;
+          if (rate <= 1) continue;
+          const crossed = notches.find(
+            (n) => wages - sd <= n.taxableIncome && wages + MARGINAL_PROBE - sd > n.taxableIncome,
+          );
+          if (!crossed) {
+            overOne.push(`${code} ${status} $${wages}: ${rate} with no step in the probe`);
+            continue;
+          }
+          // The step, spread over the probe, plus at most one dollar of
+          // ordinary tax per dollar probed.
+          const ceiling = crossed.amount / MARGINAL_PROBE + 1;
+          if (rate > ceiling) {
+            overOne.push(`${code} ${status} $${wages}: ${rate} exceeds ${ceiling}`);
+          }
+        }
+      }
+    }
+    expect(overOne).toEqual([]);
+  }, 60_000);
+
+  it("really does report 351% for an Ohio filer $50 below the line", () => {
+    // The counterexample itself, pinned. If this stops being true the engine
+    // changed, and the disclosure the tiles carry has to change with it.
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 26_000 },
+      { federal: ds.federal, state: ds.state("oh"), fica: ds.fica },
+    );
+    expect(r.totals.marginalRate).toBeGreaterThan(3);
+    // And an ordinary income in the same state is an ordinary rate.
+    const ordinary = evaluateTaxes(
+      { filingStatus: "single", wages: 60_000 },
+      { federal: ds.federal, state: ds.state("oh"), fica: ds.fica },
+    );
+    expect(ordinary.totals.marginalRate).toBeLessThan(0.5);
   });
 });
