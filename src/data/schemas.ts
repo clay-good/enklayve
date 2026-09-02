@@ -94,7 +94,27 @@ export const LocalAddOnSchema = z.object({
   /** Either a flat rate or its own ascending brackets. */
   flatRate: z.number().gte(0).lte(1).optional(),
   brackets: z.array(TaxBracketSchema).optional(),
+  /**
+   * A local exemption the locality subtracts for itself, when its taxable
+   * income is **not** the state's.
+   *
+   * Every local modeled before Detroit rode on the state's base: Maryland's and
+   * Indiana's counties are levied on state taxable income by statute (Schedule
+   * CT-40 line 1 is literally "the amount from IT-40, line 7"), and New York
+   * City's brackets are applied to New York taxable income. Detroit is not:
+   * the City of Detroit return starts from AGI and subtracts **$600 per
+   * exemption** (Form 5123, TY2026), where Michigan subtracts $5,900. Running
+   * Detroit's 2.4% over the state's base would understate the city tax by
+   * 2.4% × $5,300 = $127.20 — small, and on the wrong side, since every other
+   * launch-fidelity omission in this engine errs slightly HIGH.
+   *
+   * When present, the add-on's base is AGI less this amount (floored at zero)
+   * instead of state taxable income. Resolved through the same filing-status
+   * fallback as everything else, so MFS → single and QSS → married jointly.
+   */
+  personalExemptionByFilingStatus: amountByStatus.optional(),
 });
+export type LocalAddOnData = z.infer<typeof LocalAddOnSchema>;
 
 /**
  * A residence-based local income tax (the Maryland county pattern). Unlike the

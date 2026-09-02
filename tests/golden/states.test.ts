@@ -2049,3 +2049,92 @@ describe("Indiana (flat state rate + a MANDATORY residence-based county tax in a
     expect(addOns.some((a) => a.id === ds.state("in")!.residenceLocalTax!.defaultId)).toBe(true);
   });
 });
+
+describe("Michigan + Detroit (the first local computed on a base that is not the state's)", () => {
+  // MI is a 4.25% flat rate (MCL 206.51) on AGI less a $5,900-per-taxpayer
+  // exemption. Detroit levies 2.4% on residents — but on the CITY's base, which
+  // starts from AGI and subtracts $600 per exemption, not $5,900. Every local
+  // modeled before this one rode on the state's taxable income by statute, so
+  // Detroit is what the add-on's own exemption exists for.
+  it("single $60k with no city selected → state $2,299.25 and no local line", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("mi"), fica: ds.fica },
+    );
+    // 4.25%·(60,000 − 5,900).
+    expect(cents(r.state!.incomeTax)).toBe("2299.25");
+    expect(r.local.lines).toHaveLength(0);
+  });
+
+  it("a Detroit resident adds $1,425.60 — 2.4% of AGI less the CITY's $600", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000, localJurisdictionIds: ["mi-detroit"] },
+      { federal: ds.federal, state: ds.state("mi"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("2299.25"); // the state figure is untouched
+    expect(cents(r.local.total)).toBe("1425.6"); // 2.4%·59,400
+    expect(r.local.lines[0]!.name).toBe("City of Detroit");
+  });
+
+  it("is $127.20 more than running the city rate over the state's base — the whole point", () => {
+    // The state base is 60,000 − 5,900 = 54,100; the city base is 59,400. Before
+    // the add-on could carry its own exemption, Detroit would have been modeled
+    // at 2.4%·54,100 = $1,298.40, understating by exactly 2.4%·5,300. Small, and
+    // on the wrong side: every other launch-fidelity omission here errs HIGH.
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000, localJurisdictionIds: ["mi-detroit"] },
+      { federal: ds.federal, state: ds.state("mi"), fica: ds.fica },
+    );
+    expect(cents(r.local.total.subtract(1298.4))).toBe("127.2");
+  });
+
+  it("a joint filer takes Detroit's doubled $1,200 while the state doubles to $11,800", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000, localJurisdictionIds: ["mi-detroit"] },
+      { federal: ds.federal, state: ds.state("mi"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("2048.5"); // 4.25%·(60,000 − 11,800)
+    expect(cents(r.local.total)).toBe("1411.2"); // 2.4%·(60,000 − 1,200)
+  });
+
+  it("married filing separately takes single's city exemption, a surviving spouse joint's", () => {
+    const mfs = evaluateTaxes(
+      { filingStatus: "married_separately", wages: 60000, localJurisdictionIds: ["mi-detroit"] },
+      { federal: ds.federal, state: ds.state("mi"), fica: ds.fica },
+    );
+    const qss = evaluateTaxes(
+      {
+        filingStatus: "qualifying_surviving_spouse",
+        wages: 60000,
+        localJurisdictionIds: ["mi-detroit"],
+      },
+      { federal: ds.federal, state: ds.state("mi"), fica: ds.fica },
+    );
+    expect(cents(mfs.local.total)).toBe("1425.6"); // single's $600
+    expect(cents(qss.local.total)).toBe("1411.2"); // joint's $1,200, not single's
+  });
+
+  it("a local with NO exemption still uses the state's base, unchanged", () => {
+    // The capability is additive: New York City's brackets are applied to New
+    // York taxable income and must keep being.
+    const nyc = evaluateTaxes(
+      { filingStatus: "single", wages: 100000, localJurisdictionIds: ["nyc"] },
+      { federal: ds.federal, state: ds.state("ny"), fica: ds.fica },
+    );
+    const bare = evaluateTaxes(
+      { filingStatus: "single", wages: 100000 },
+      { federal: ds.federal, state: ds.state("ny"), fica: ds.fica },
+    );
+    expect(nyc.local.lines).toHaveLength(1);
+    expect(nyc.local.total.greaterThan(Money.zero())).toBe(true);
+    expect(cents(nyc.state!.incomeTax)).toBe(cents(bare.state!.incomeTax));
+  });
+
+  it("a city exemption larger than income floors the local tax at zero", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 400, localJurisdictionIds: ["mi-detroit"] },
+      { federal: ds.federal, state: ds.state("mi"), fica: ds.fica },
+    );
+    expect(cents(r.local.total)).toBe("0");
+  });
+});

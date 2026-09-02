@@ -38,12 +38,24 @@
     "married_jointly": 11800,
     "head_of_household": 5900
   },
+  "localAddOns": [
+    {
+      "id": "mi-detroit",
+      "name": "City of Detroit",
+      "flatRate": 0.024,
+      "personalExemptionByFilingStatus": {
+        "single": 600,
+        "married_jointly": 1200,
+        "head_of_household": 600
+      }
+    }
+  ],
   "citation": {
     "sourceUrl": "https://www.michigan.gov/taxes/-/media/Project/Websites/taxes/Forms/SUW/TY2026/446_Withholding-Guide_2026.pdf",
-    "sourceDocument": "Michigan Department of Treasury Form 446 (Rev. 02-26), 2026 Michigan Income Tax Withholding Guide — \"Withholding Rate: 4.25% Personal Exemption Amount: $5,900\"",
+    "sourceDocument": "Michigan Treasury Form 446 (Rev. 02-26) 2026 Withholding Guide (4.25%, $5,900) + Form 5123 (Rev. 03-25) 2026 City Estimated Tax (Detroit 2.4%, $600)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-08-29",
-    "sourceNote": "Michigan levies a single flat rate of 4.25% on Michigan taxable income (MCL 206.51). The rate carries a statutory trigger that cuts it for one year whenever general-fund revenue grows faster than inflation; that trigger fired once, for tax year 2023 (4.05%), and the rate returned to 4.25% for 2024 and has stayed there. There is no Michigan standard deduction. Instead each filer claims a PERSONAL EXEMPTION, indexed annually: Form 446, the 2026 Withholding Guide, states the 2026 figures on its first line — \"Withholding Rate: 4.25% Personal Exemption Amount: $5,900\" (up from $5,800 for 2025). This shard carries $5,900 single and head of household, $11,800 married filing jointly for two exemptions. Worked example, single $60,000: taxable = 60,000 − 5,900 = $54,100; tax = 4.25%·54,100 = $2,299.25. Omitted at launch fidelity: the $5,900-per-dependent exemption and the additional special exemptions (age 65+, blind, disabled, certain veterans); the retirement and pension subtraction, which the 2023 phase-in has grown large — for 2026, recipients born after 1945 may generally subtract up to $67,610 single or $135,220 joint; the Homestead Property Tax Credit and Home Heating Credit; and MICHIGAN CITY INCOME TAXES, which 24 cities levy on residents (Detroit at 2.4%, most others at 1%) and which this engine does not model — a Detroit resident therefore owes materially more than the figure shown here. Verified against Michigan Department of Treasury Form 446 (Rev. 02-26), the 2026 Michigan Income Tax Withholding Guide, on 2026-08-29."
+    "dateRetrieved": "2026-09-02",
+    "sourceNote": "Michigan levies a single flat rate of 4.25% on Michigan taxable income (MCL 206.51). The rate carries a statutory trigger that cuts it for one year whenever general-fund revenue grows faster than inflation; that trigger fired once, for tax year 2023 (4.05%), and the rate returned to 4.25% for 2024 and has stayed there. There is no Michigan standard deduction. Instead each filer claims a PERSONAL EXEMPTION, indexed annually: Form 446, the 2026 Withholding Guide, states the 2026 figures on its first line \u2014 \"Withholding Rate: 4.25% Personal Exemption Amount: $5,900\" (up from $5,800 for 2025). This shard carries $5,900 single and head of household, $11,800 married filing jointly for two exemptions. Worked example, single $60,000: taxable = 60,000 \u2212 5,900 = $54,100; tax = 4.25%\u00b754,100 = $2,299.25. Omitted at launch fidelity: the $5,900-per-dependent exemption and the additional special exemptions (age 65+, blind, disabled, certain veterans); the retirement and pension subtraction, which the 2023 phase-in has grown large \u2014 for 2026, recipients born after 1945 may generally subtract up to $67,610 single or $135,220 joint; the Homestead Property Tax Credit and Home Heating Credit; and the OTHER 23 MICHIGAN CITY INCOME TAXES. Twenty-four cities levy one; DETROIT, by far the largest, now ships as an opt-in local add-on at its official 2.4% resident rate over the city's own $600-per-exemption allowance ($1,200 joint), both read from Michigan Treasury Form 5123 (Rev. 03-25), the 2026 City Estimated Income Tax for Individuals: \"Multiply line 3 by the city tax rate. 2.4% (0.024) for city residents. 1.2% (0.012) for city nonresidents\" and \"Multiply number of exemptions by $600.\" Detroit is the first local this engine models on a base that is NOT the state's taxable income \u2014 the city return starts from AGI and subtracts $600 where Michigan subtracts $5,900 \u2014 so it uses the local add-on's own personalExemptionByFilingStatus rather than riding on the state base, which would have understated the city tax by $127.20. Worked example, single $60,000 in Detroit: state = 4.25%\u00b7(60,000 \u2212 5,900) = $2,299.25, city = 2.4%\u00b7(60,000 \u2212 600) = $1,425.60. The 1.2% NONRESIDENT rate is omitted: the tile models where you live, and the resident rate is the higher of the two, so the figure errs high for someone who only works in the city. The other 23 cities (Grand Rapids, Lansing, Flint, Saginaw and the rest \u2014 generally 1% resident) administer their own income taxes and publish their own rates, so each needs its own citation and none is modeled yet; a resident of one of them still owes more than the figure shown. Verified against Michigan Department of Treasury Form 446 (Rev. 02-26), the 2026 Michigan Income Tax Withholding Guide, on 2026-08-29."
   },
   "effectiveDateRange": {
     "start": "2026-01-01",

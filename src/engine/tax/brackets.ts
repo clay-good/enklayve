@@ -1,5 +1,5 @@
 import { Money } from "../money";
-import type { FilingStatus, Jurisdiction } from "../../data/schemas";
+import type { FilingStatus, Jurisdiction, LocalAddOnData } from "../../data/schemas";
 
 /** A single marginal bracket (matches TaxBracketSchema). */
 export interface Bracket {
@@ -118,6 +118,23 @@ export function personalExemptionFor(jurisdiction: Jurisdiction, status: FilingS
     if (amount !== undefined) return amount;
   }
   return 0;
+}
+
+/**
+ * A LOCAL add-on's own personal exemption for a status (via {@link fallbackChain}),
+ * or `undefined` when the locality has none — which is the common case, and the
+ * signal that its base is the state's taxable income rather than one of its own.
+ * Distinguishing "no exemption" from "an exemption of zero" matters here: they
+ * select different bases, and a locality really could publish a $0 exemption.
+ */
+export function localExemptionFor(addOn: LocalAddOnData, status: FilingStatus): number | undefined {
+  const table = addOn.personalExemptionByFilingStatus;
+  if (!table) return undefined;
+  for (const candidate of fallbackChain(status)) {
+    const amount = table[candidate];
+    if (amount !== undefined) return amount;
+  }
+  return undefined;
 }
 
 /**

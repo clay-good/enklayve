@@ -150,6 +150,26 @@ describe("take-home tile", () => {
     expect(hasWorcester).toBe(true);
   });
 
+  it("renders Detroit as an OPT-IN checkbox, because most of Michigan does not pay it", () => {
+    // The contrast with Indiana below is the whole distinction: an Indiana
+    // resident pays a county tax wherever they live, so the county is a required
+    // choice; a Michigan resident pays a city tax only in 24 of them, so the
+    // city is a box you tick. Rendering Detroit as a default-selected dropdown
+    // would charge 2.4% to everyone in Michigan.
+    const { root, lastParams } = mount(new URLSearchParams({ fs: "single", st: "mi", w: "60000" }));
+    expect(root.querySelector(".local-addons select[name='loc-select']")).toBeNull();
+    const cb = root.querySelector<HTMLInputElement>('.local-addons input[type="checkbox"]');
+    expect(cb).not.toBeNull();
+    expect(cb!.checked).toBe(false);
+    cb!.checked = true;
+    cb!.dispatchEvent(new Event("change"));
+    expect(lastParams()?.get("loc")).toBe("mi-detroit");
+    const hasDetroit = Array.from(root.querySelectorAll(".bd-label")).some(
+      (n) => n.textContent === "City of Detroit local tax",
+    );
+    expect(hasDetroit).toBe(true);
+  });
+
   it("renders Indiana's county tax the same way, defaulting to Marion, with all 92 counties", () => {
     // Indiana is the second mandatory residence-based local, and it arrived
     // without an engine or a UI change — which is only true if the tile treats it

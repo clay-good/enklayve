@@ -6,6 +6,7 @@ import {
   bracketsFor,
   federalTaxDeductionFor,
   incomeRecaptureFor,
+  localExemptionFor,
   personalCreditRateFor,
   personalExemptionFor,
   standardDeductionFor,
@@ -326,16 +327,28 @@ function computeState(
     incomeTax = clampZero(incomeTax.subtract(reduced));
   }
 
-  // Local add-ons apply only when the caller opts in by id (a NYC resident, say).
+  // Local add-ons apply only when the caller opts in by id (a NYC resident, say)
+  // — except where the state makes one mandatory by residence, which the tile
+  // turns into a required single-select (Maryland's 24 counties, Indiana's 92).
   const selected = new Set(input.localJurisdictionIds ?? []);
   const localLines: LocalTaxLine[] = [];
   for (const addOn of state.localAddOns ?? []) {
     if (!selected.has(addOn.id)) continue;
+    // Most localities are levied on the STATE's taxable income, by statute:
+    // Indiana's Schedule CT-40 line 1 is "the amount from IT-40, line 7", and
+    // Maryland's county tax and New York City's brackets work the same way. A
+    // locality that computes its own base says so by carrying an exemption —
+    // Detroit starts from AGI and subtracts $600 per exemption where Michigan
+    // subtracts $5,900, so using the state's base would understate the city tax
+    // by $127.20 and err LOW, the one direction this engine does not.
+    const localExemption = localExemptionFor(addOn, input.filingStatus);
+    const base =
+      localExemption === undefined ? taxableIncome : clampZero(agi.subtract(localExemption));
     let tax = Money.zero();
     if (addOn.brackets && addOn.brackets.length > 0) {
-      tax = bracketTax(taxableIncome, addOn.brackets);
+      tax = bracketTax(base, addOn.brackets);
     } else if (addOn.flatRate !== undefined) {
-      tax = taxableIncome.multiply(addOn.flatRate);
+      tax = base.multiply(addOn.flatRate);
     }
     localLines.push({ id: addOn.id, name: addOn.name, tax });
   }
