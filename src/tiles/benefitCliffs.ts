@@ -18,7 +18,7 @@ import { fplRegionFor } from "../data/usStates";
 import type { FilingStatus } from "../data/schemas";
 import type { BundledData } from "../data/browser";
 import { el, option } from "../ui/dom";
-import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
+import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { downsampleCurve, resourceCurve, type CurvePoint } from "../ui/charts";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { rememberShared } from "./profileSync";
@@ -168,7 +168,7 @@ function commonControls(fields: Fields, data: BundledData) {
   const stSelect = el(
     "select",
     { name: "st", attrs: { "aria-label": "State" } },
-    option("", "No state tax modeled", fields.st === ""),
+    option("", NO_STATE_OPTION_LABEL, fields.st === ""),
     ...codes.map((code) => {
       const j = data.state(code);
       return option(code, j ? j.name : code.toUpperCase(), code === fields.st);

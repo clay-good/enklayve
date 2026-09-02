@@ -10,7 +10,7 @@ import { Money } from "../engine/money";
 import { evaluateTaxes, type TaxInput } from "../engine/tax";
 import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
-import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
+import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
@@ -90,7 +90,7 @@ export function mountPaycheckOptimizer(ctx: TileContext): void {
   const stateSelect = el(
     "select",
     { name: "st", attrs: { "aria-label": "State" } },
-    option("", "No state income tax", fields.state === ""),
+    option("", NO_STATE_OPTION_LABEL, fields.state === ""),
     ...stateCodes.map((c) => option(c, c.toUpperCase(), c === fields.state)),
   );
   // Ensure the control reflects the resolved state even if it isn't a seeded

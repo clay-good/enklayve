@@ -10,7 +10,7 @@ import { evaluateTaxes, type TaxInput, type TaxResult } from "../engine/tax";
 import type { DeductionMode } from "../engine/tax/types";
 import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
-import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
+import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
@@ -208,7 +208,7 @@ export function mountTakeHome(ctx: TileContext): void {
   const stSelect = el(
     "select",
     { name: "st", attrs: { "aria-label": "State" } },
-    option("", "No state tax modeled", fields.st === ""),
+    option("", NO_STATE_OPTION_LABEL, fields.st === ""),
     ...codes.map((code) => {
       const j = bundled.state(code);
       return option(code, j ? j.name : code.toUpperCase(), code === fields.st);

@@ -186,3 +186,24 @@ describe("a tile does not offer a choice it cannot honour", () => {
     );
   });
 });
+
+describe("the blank entry in a state dropdown", () => {
+  it("says the same true thing on every tile that offers it", () => {
+    // Five tiles offered this choice and described it two ways, both wrong.
+    // "No state tax modeled" reads as a claim about coverage — and every state
+    // and DC has been modeled since before that label was written, which the
+    // README says in the same breath. "No state income tax" reads as a fact
+    // about a place, but the nine states that levy none are in the same
+    // dropdown by name, showing $0. The blank entry means neither: federal and
+    // FICA only.
+    const offenders = readdirSync(TILES)
+      .filter((f) => f.endsWith(".ts"))
+      .map((f) => [f, readFileSync(resolve(TILES, f), "utf8")] as const)
+      .filter(([, src]) => /No state tax modeled|No state income tax/.test(src))
+      .map(([f]) => f);
+    expect(
+      offenders,
+      "use NO_STATE_OPTION_LABEL from ui/form: one label, in one place, that describes the choice",
+    ).toEqual([]);
+  });
+});

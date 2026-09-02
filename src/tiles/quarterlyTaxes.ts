@@ -15,7 +15,7 @@ import { evaluateTaxes, selfEmploymentTax, type TaxInput } from "../engine/tax";
 import { estimatedTaxDueDates, formatDueDate } from "../engine/dueDates";
 import type { CitationData, FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
-import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
+import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { donutChart, paletteVar } from "../ui/charts";
 import { rememberShared } from "./profileSync";
@@ -104,7 +104,7 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
   const stateSelect = el(
     "select",
     { name: "st", attrs: { "aria-label": "State" } },
-    option("", "No state income tax", fields.state === ""),
+    option("", NO_STATE_OPTION_LABEL, fields.state === ""),
     ...stateCodes.map((c) => option(c, c.toUpperCase(), c === fields.state)),
   );
   fsSelect.value = fields.fs;

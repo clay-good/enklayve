@@ -44,6 +44,22 @@ export function field(labelText: string, control: HTMLElement): HTMLElement {
  * every tile reads its URL params through these two helpers, so one guard
  * covers the catalog and covers tiles that do not exist yet.
  */
+/**
+ * The label for the blank entry in a state dropdown, in one place.
+ *
+ * Five tiles offered this choice and described it two different ways, and both
+ * were wrong about what it does. "No state tax modeled" reads as a claim about
+ * coverage — a reader who could not immediately find their state could take it
+ * as the option for people this site does not serve — and every one of the 50
+ * states and DC has been modeled since before that label was written. "No state
+ * income tax" reads as a fact about a place, but the nine states that levy none
+ * are first-class records in the same dropdown, by name, showing $0.
+ *
+ * What the blank entry actually means is neither: compute the federal and FICA
+ * halves and leave the state out. So that is what it says now, once.
+ */
+export const NO_STATE_OPTION_LABEL = "Federal and FICA only (no state)";
+
 export const MAX_INPUT_MAGNITUDE = 1e15;
 
 /** Clamp a parsed number to the bounded range. */
