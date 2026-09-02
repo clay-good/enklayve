@@ -1026,8 +1026,8 @@
       "shard": "garnishment-limits-2026.json",
       "sourceUrl": "https://www.law.cornell.edu/uscode/text/15/1673",
       "sourceDocument": "Consumer Credit Protection Act Title III — 15 U.S.C. §§1673, 1674, 1677; 29 U.S.C. §206(a)(1)",
-      "dateRetrieved": "2026-08-29",
-      "contentHash": "2423c81932c9e8417bff552a1ad647f7ec7ae7d9699d57a9672a5f19e5736ad1"
+      "dateRetrieved": "2026-09-01",
+      "contentHash": "c80506f6352466c3cb11320e0257ca33fd74b1480eeffb1612cd2a4e67aa3d8d"
     },
     {
       "id": "enrollment-windows-2026",
