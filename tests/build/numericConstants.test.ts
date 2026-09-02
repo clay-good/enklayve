@@ -48,11 +48,31 @@ const ROOT = resolve(__dirname, "..", "..");
  * as much a constant as `86_400_000`, and a figure written `40 * 1000` would
  * otherwise slip past. The character class admits no letters, so anything
  * referring to another name is not one of these.
+ *
+ * An OBJECT of numbers counts too. `const DEFAULT_BUDGET = { income: 5000, ...
+ * }` is a set of figures under one name, and a sweep that only understood
+ * `NAME = 5000` would let a dozen of them through the moment somebody grouped
+ * them — which is exactly what happened on 2026-09-01, when the home budget's
+ * starting values were named and the check said nothing. One name, one verdict:
+ * a group of figures chosen for the same reason is one decision.
  */
 export function numericConstants(source: string): string[] {
-  return [...source.matchAll(/^(?:export )?const ([A-Z][A-Z0-9_]*) = ([-\d_.\s*/+()]+);/gm)]
+  const scalars = [
+    ...source.matchAll(/^(?:export )?const ([A-Z][A-Z0-9_]*) = ([-\d_.\s*/+()]+);/gm),
+  ]
     .filter((m) => /\d/.test(m[2]!))
     .map((m) => m[1]!);
+  const objects = [
+    ...source.matchAll(/^(?:export )?const ([A-Z][A-Z0-9_]*)(?::[^=]+)? = \{([\s\S]*?)^\};/gm),
+  ]
+    .filter((m) => /:\s*-?\d/.test(m[2]!))
+    // A hand-authored citation is a record, not a figure the code knows by
+    // heart: its `effectiveYear` is reviewed when the source it cites moves,
+    // which is what the change-watch is for. Verdicting them here would be a
+    // second, weaker place to make the same promise.
+    .filter((m) => !m[1]!.endsWith("_CITATION"))
+    .map((m) => m[1]!);
+  return [...new Set([...scalars, ...objects])];
 }
 
 function sourceFiles(dir: string): string[] {
@@ -111,6 +131,18 @@ const VERDICTS: Record<string, string> = {
   MAX_ROWS: "bound — a cap so a crafted deep link cannot allocate a runaway editor",
   MAX_CURVE_COLUMNS: "bound — the widest curve drawn before thinning, to keep the DOM small",
   MAX_AGE: "bound — a ceiling on a user-entered age",
+  DEFAULT_BUDGET:
+    "assumption — what the home budget starts filled in with, so the donut shows something on load rather than zeros. Chosen, and on the most-visited surface here.",
+  DEFAULT_CONFIG:
+    "assumption — the guidance engine's own settings (the order of operations' thresholds). This site's modelling choices, not anybody's law.",
+  EXAMPLE:
+    "assumption — a tile's 'Try an example' values. Deliberately plausible rather than typical, and never presented as a figure about the reader.",
+  RETURN_BAND:
+    "bound — the range of annual returns an input accepts before the tile calls it out. A guard on a user-entered rate, not a forecast.",
+  INFLATION_BAND: "bound — the same guard on a user-entered inflation rate",
+  FEE_BAND: "bound — the same guard on a user-entered balance-transfer fee",
+  APPR_BAND: "bound — the same guard on a user-entered appreciation rate",
+  WEEKS_PER_PERIOD: "bound — a unit conversion from a pay frequency to weeks",
   IRA_PARTIAL_ROUNDING:
     "figure — IRC §219(g)(2)(B) rounds a partial IRA deduction up to the next $10. Statutory and unindexed since the phase-out was written.",
   IRA_PARTIAL_MINIMUM:

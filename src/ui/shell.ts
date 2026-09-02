@@ -226,6 +226,22 @@ const US_STATES: { code: string; name: string }[] = [
  * zero. It reports your total expenses, total investments, honest net income, and
  * your investment rate against both gross and net. US dollars, US defaults.
  */
+/**
+ * What the home budget starts filled in with, before the reader touches it.
+ *
+ * An assumption this site chose, not a figure anyone legislates: a $5,000
+ * monthly income with a plausible split, so the donut is showing something the
+ * moment the page loads rather than a set of zeros. It is named because it is
+ * an assumption on the most-visited surface here, and the rule this repo
+ * follows is that a number nobody can look up is a number nobody can argue
+ * with — the same reason the engine's bounds carry verdicts.
+ */
+const DEFAULT_BUDGET = {
+  income: 5000,
+  spend: { housing: 1500, transport: 400, food: 600, debt: 300, other: 500 },
+  invest: { retirement: 500, brokerage: 200 },
+};
+
 function homeBudgetWidget(data: BundledData | null): HTMLElement {
   const fmt0 = (n: number): string =>
     new Intl.NumberFormat("en-US", {
@@ -242,18 +258,12 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
   const fed = data?.federal() ?? null;
   const fica = data?.fica() ?? null;
 
-  let income = 5000;
+  let income = DEFAULT_BUDGET.income;
   let freq = "monthly";
   let fs: FilingStatus = "single";
   let stateCode = "";
-  const spend: Record<string, number> = {
-    housing: 1500,
-    transport: 400,
-    food: 600,
-    debt: 300,
-    other: 500,
-  };
-  const invest: Record<string, number> = { retirement: 500, brokerage: 200 };
+  const spend: Record<string, number> = { ...DEFAULT_BUDGET.spend };
+  const invest: Record<string, number> = { ...DEFAULT_BUDGET.invest };
 
   // Fixed colors so each donut slice matches its row dot. Taxes read as a muted,
   // "unavoidable" slate rather than a bright discretionary color.
