@@ -26,6 +26,17 @@ npm run deploy:dry     # wrangler dry-run
 
 Before opening a PR, make the whole gate green locally: `format:check`, `lint`, `typecheck`, `test`, `build`, and `audit`. CI runs exactly these on Node 24; Cloudflare's Git integration deploys on merge to `main`.
 
+Four more checks run on a **schedule** rather than per-commit, because each needs the network and a government site having a bad afternoon must not fail a build — a suite that fails for reasons outside the change is one people learn to ignore. You can run any of them on demand, and you should run the relevant one when your change touches what it watches:
+
+```sh
+npm run check:links          # every external link the repo ships, monthly
+npm run check:adapters       # every refresh adapter still finds its figure, monthly
+npm run check:advisories     # every npm advisory has a reviewed reason, monthly
+npm run check:boundaries     # which inclusive/exclusive comparisons a test actually holds
+```
+
+`check:advisories` is the one most likely to surprise you: it does **not** fail on an advisory, it fails on an advisory nobody has looked at. If it stops you, the fix is a triage entry in [`scripts/advisory-triage.json`](../scripts/advisory-triage.json) naming the vulnerable entry point and what calls it — or an upgrade, if one exists and works.
+
 ## Adding a tile (calculator)
 
 A tile is a self-contained module in [`src/tiles/`](../src/tiles) implementing the `TileDefinition` contract ([`src/tiles/types.ts`](../src/tiles/types.ts)). The shell knows tiles only through that interface, so adding one is registering data + a mount function — never editing the shell. Each tile must:
