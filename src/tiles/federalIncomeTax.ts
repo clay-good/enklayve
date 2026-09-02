@@ -264,6 +264,24 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
 
     const lines: BreakdownLine[] = [
       { label: "Adjusted gross income", value: fmt(result.agi) },
+      // §68 only bites above the 37% bracket, so these two lines are absent for
+      // almost every reader. When they are present they run gross, reduction,
+      // net — in that order — because the deduction figure is already net, and a
+      // reduction shown AFTER it reads as a second subtraction the reader is
+      // meant to make themselves.
+      ...(f.deduction.itemizedLimitation.isZero()
+        ? []
+        : [
+            {
+              label: "Itemized deductions before the §68 cap",
+              value: fmt(f.deduction.amount.add(f.deduction.itemizedLimitation)),
+            },
+            {
+              label: "Less §68 cap on their value (35¢ on the dollar)",
+              value: `−${fmt(f.deduction.itemizedLimitation)}`,
+              citation: f.citation,
+            },
+          ]),
       {
         label: `${f.deduction.kind === "itemized" ? "Itemized" : "Standard"} deduction`,
         value: fmt(f.deduction.amount),
@@ -287,18 +305,6 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
             {
               label: "Deduction at 65",
               value: fmt(f.deduction.senior),
-              citation: f.citation,
-            },
-          ]),
-      // §68 only ever bites above the 37% bracket, so this line is absent for
-      // almost every reader — and present for the one who would otherwise see a
-      // deduction smaller than the figures they typed, with nothing saying why.
-      ...(f.deduction.itemizedLimitation.isZero()
-        ? []
-        : [
-            {
-              label: "Less §68 cap on itemized value (35¢ on the dollar)",
-              value: `−${fmt(f.deduction.itemizedLimitation)}`,
               citation: f.citation,
             },
           ]),
