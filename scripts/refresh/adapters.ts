@@ -1780,6 +1780,85 @@ function parseFlatRateJurisdiction(raw: string, current: Record<string, unknown>
   return { ok: true, shard };
 }
 
+// --- Indiana: the flat state rate plus the 92-county chart -------------------
+
+/** The heading that opens Departmental Notice #1's county rate chart. */
+const IN_COUNTY_CHART_HEADING = "Indiana County Tax Rates";
+
+/**
+ * Overlay Indiana's flat state rate AND every one of its 92 county rates, both
+ * read from the one document that states both: DOR Departmental Notice #1.
+ *
+ * Indiana's county tax is not a garnish. It is mandatory, set by the county you
+ * lived in on Jan. 1, levied on the same base as the state rate (Schedule CT-40
+ * line 1 is "the amount from IT-40, line 7"), and it runs from Porter's 0.50% to
+ * Randolph's 3.00% — a $1,180 spread on a $60,000 wage. Ninety-two figures that
+ * move on their own schedule, watched by nothing, is exactly the drift the
+ * adapter check exists to catch, so they are watched here rather than left to
+ * "the reviewer's data-only step" the way Maryland's 24 counties are. Indiana
+ * earns the difference by publishing all 92 in one machine-readable chart on a
+ * stable URL; Maryland's are spread across a payroll memo's prose.
+ *
+ * The parse is keyed on the shard's OWN county names, never on whatever the
+ * chart happens to contain, so it can only ever confirm or update a county this
+ * project already ships — it cannot invent one. Two guards make a partial read
+ * fail loudly instead of quietly:
+ *
+ *   - **All or nothing.** If even one of the 92 is unreadable, the whole overlay
+ *     is refused. Half a chart written over a whole one is a shard where some
+ *     counties are current and some are a year stale, with nothing on screen to
+ *     say which — worse than a refusal, because a refusal opens an alert PR.
+ *   - **Anchored, never bridged.** A county's rate must follow its name (with at
+ *     most the two-digit county code between), so a row whose rate went missing
+ *     cannot silently borrow the next row's. That is not hypothetical: pdf.js
+ *     drops the code column on two rows of the 2026 notice, which is why the
+ *     code is optional and the NAME is what the reader keys on.
+ */
+function parseIndianaCountyChart(raw: string, counties: string[]): Map<string, number> | string {
+  const text = visibleText(raw);
+  const at = text.indexOf(IN_COUNTY_CHART_HEADING);
+  if (at < 0) return `the source states no "${IN_COUNTY_CHART_HEADING}" chart`;
+  // Only the chart, so a county named in the notice's prose (Perry, and the
+  // Kentucky localities beside it) can never be read as a rate row.
+  const chart = text.slice(at);
+  const rates = new Map<string, number>();
+  for (const county of counties) {
+    const escaped = county.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const match = new RegExp(`\\b${escaped}\\s+(?:\\d{2}\\s+)?(0\\.\\d+)`).exec(chart);
+    if (!match) continue;
+    const rate = Number(match[1]);
+    // Indiana's statutory ceiling is well under 5%; anything above it is a
+    // number that is not a county rate, read out of a row that is not a row.
+    if (!Number.isFinite(rate) || rate <= 0 || rate > 0.05) continue;
+    rates.set(county, rate);
+  }
+  return rates;
+}
+
+function parseIndianaStateAndCounties(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const outcome = parseFlatRateJurisdiction(raw, current);
+  if (!outcome.ok) return outcome;
+  const shard = outcome.shard;
+  const addOns = shard.localAddOns as { name: string; flatRate: number }[] | undefined;
+  if (!Array.isArray(addOns) || addOns.length === 0) {
+    return { ok: false, reason: "shard carries no county chart to overlay" };
+  }
+  const names = addOns.map((a) => a.name.replace(/ County$/, ""));
+  const rates = parseIndianaCountyChart(raw, names);
+  if (typeof rates === "string") return { ok: false, reason: rates };
+  const missing = names.filter((n) => !rates.has(n));
+  if (missing.length > 0) {
+    return {
+      ok: false,
+      reason:
+        `read ${rates.size} of the shard's ${names.length} county rates; refusing to overlay a ` +
+        `partial chart (missing ${missing.slice(0, 3).join(", ")}${missing.length > 3 ? ", …" : ""})`,
+    };
+  }
+  for (const addOn of addOns) addOn.flatRate = rates.get(addOn.name.replace(/ County$/, ""))!;
+  return { ok: true, shard };
+}
+
 // --- Graduated bracket-table state income tax (anchored prose) ---------------
 
 /**
@@ -3618,10 +3697,15 @@ export const ADAPTERS: RefreshAdapter[] = [
   {
     id: "state-in-income-tax-2024",
     group: "state-in",
-    source: "Indiana DOR individual income tax (flat rate + personal exemption)",
-    sourceUrl: "https://www.in.gov/dor/resources/tax-rates-and-reports/rates-fees-and-penalties/",
+    source: "Indiana DOR Departmental Notice #1 (flat state rate + the 92-county tax chart)",
+    // Repointed off the DOR's rates page, which states the state rate and not one
+    // county. Departmental Notice #1 states both, so the document being watched
+    // is the document that changes: it is reissued when a county moves (twice for
+    // 2026 — Oct. 1, 2025 and the Jan. 1 revision, which marks the five counties
+    // that changed with an asterisk), and the whole chart is now diffed.
+    sourceUrl: "https://www.in.gov/dor/files/dn01.pdf",
     cadence: "Annual",
-    parse: parseFlatRateJurisdiction,
+    parse: parseIndianaStateAndCounties,
   },
   {
     id: "state-ky-income-tax-2024",

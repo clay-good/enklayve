@@ -1360,11 +1360,39 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
   });
 
-  it("overlays the IN flat rate and its personal exemption (like IL)", () => {
+  // Indiana reads TWO things out of Departmental Notice #1: the flat state rate
+  // and the mandatory county tax for all 92 counties. The county chart is the
+  // reason the adapter watches the notice rather than the DOR's rates page —
+  // the rates page states the state rate and not one county. These fixtures are
+  // shaped like the real notice (a heading, then `Name Code Rate` rows) with
+  // deliberately synthetic rates, so an overlay that did nothing would fail.
+  const inCounties = (): string[] =>
+    (readShard("state-in-income-tax-2024.json").localAddOns as { name: string }[]).map((a) =>
+      a.name.replace(/ County$/, ""),
+    );
+
+  /** A notice whose Nth county row is rendered by `damage` (default: intact). */
+  const inNotice = (damage: (name: string, i: number) => string | null = () => null): string => {
+    const rows = inCounties().map((name, i) => {
+      const custom = damage(name, i);
+      // 0.011, 0.012, … — distinct per county and inside the plausible band, so
+      // every row is provably read from ITS OWN row and not a neighbour's.
+      return (
+        custom ?? `${name} ${String(i + 1).padStart(2, "0")} ${(0.011 + i / 10000).toFixed(4)}`
+      );
+    });
+    return [
+      "The Indiana income tax rate is 2.95%. The personal exemption is $1,000.",
+      "Indiana County Tax Rates: Effective Jan. 1, 2026",
+      "County Name County Code County Tax Rate",
+      ...rows,
+    ].join("\n");
+  };
+
+  it("overlays the IN flat rate, its personal exemption, and all 92 county rates", () => {
     const adapter = adaptersForGroup("state-in")[0]!;
     const current = readShard("state-in-income-tax-2024.json");
-    const raw = "The Indiana income tax rate is 2.95%. The personal exemption is $1,000.";
-    const result = adapter.parse(raw, current);
+    const result = adapter.parse(inNotice(), current);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const brackets = result.shard.bracketsByFilingStatus as Record<
@@ -1374,7 +1402,84 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     expect(brackets.single![0]!.rate).toBe(0.0295);
     const exemptions = result.shard.personalExemptionByFilingStatus as Record<string, number>;
     expect(exemptions.single).toBe(1000);
+    const addOns = result.shard.localAddOns as { name: string; flatRate: number }[];
+    expect(addOns).toHaveLength(92);
+    expect(addOns[0]!.flatRate).toBe(0.011);
+    expect(addOns[91]!.flatRate).toBe(0.0201);
     expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("refuses the whole overlay when one county is unreadable, rather than half a chart", () => {
+    // Half a chart written over a whole one leaves some counties current and some
+    // a year stale with nothing on screen saying which. A refusal opens an alert
+    // PR and keeps every last-good rate; a partial overlay ships a quiet mix.
+    const adapter = adaptersForGroup("state-in")[0]!;
+    const current = readShard("state-in-income-tax-2024.json");
+    const result = adapter.parse(
+      inNotice((name) => (name === "Marion" ? "Marion 49 (see reverse)" : null)),
+      current,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("Marion");
+    expect(result.reason).toContain("partial chart");
+  });
+
+  it("a row that lost its rate does not borrow the next row's", () => {
+    // pdf.js really does drop cells out of this chart — the 2026 notice loses the
+    // county CODE on two rows, which is why the code is optional. Optional cells
+    // are how a parser starts bridging, so the rate must follow its own name.
+    const adapter = adaptersForGroup("state-in")[0]!;
+    const current = readShard("state-in-income-tax-2024.json");
+    const result = adapter.parse(
+      inNotice((name) => (name === "Porter" ? "Porter" : null)),
+      current,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("Porter");
+  });
+
+  it("still reads a row whose county code is missing, keying on the name", () => {
+    const adapter = adaptersForGroup("state-in")[0]!;
+    const current = readShard("state-in-income-tax-2024.json");
+    const result = adapter.parse(
+      inNotice((name) => (name === "Marshall" ? "Marshall 0.0125" : null)),
+      current,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const addOns = result.shard.localAddOns as { name: string; flatRate: number }[];
+    expect(addOns.find((a) => a.name === "Marshall County")!.flatRate).toBe(0.0125);
+  });
+
+  it("refuses when the notice states the state rate but carries no county chart", () => {
+    // The old source — the DOR's rates page — is exactly this document, which is
+    // why repointing at the notice was the change and not an embellishment.
+    const adapter = adaptersForGroup("state-in")[0]!;
+    const current = readShard("state-in-income-tax-2024.json");
+    const result = adapter.parse(
+      "The Indiana income tax rate is 2.95%. The personal exemption is $1,000.",
+      current,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("Indiana County Tax Rates");
+  });
+
+  it("never reads a county named in the notice's prose as a rate row", () => {
+    // Departmental Notice #1 discusses Perry County and three Kentucky counties
+    // above the chart, next to numbers. Only the chart is parsed.
+    const adapter = adaptersForGroup("state-in")[0]!;
+    const current = readShard("state-in-income-tax-2024.json");
+    const prose =
+      "Perry 0.9999 County residents who worked in Breckinridge, Hancock or Meade may claim a credit. ";
+    const result = adapter.parse(prose + inNotice(), current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const addOns = result.shard.localAddOns as { name: string; flatRate: number }[];
+    const perry = addOns.find((a) => a.name === "Perry County")!;
+    expect(perry.flatRate).toBeLessThan(0.05);
   });
 
   it("anchors a flat rate out of real agency prose, not a lab sentence", () => {

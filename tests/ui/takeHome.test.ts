@@ -149,4 +149,27 @@ describe("take-home tile", () => {
     );
     expect(hasWorcester).toBe(true);
   });
+
+  it("renders Indiana's county tax the same way, defaulting to Marion, with all 92 counties", () => {
+    // Indiana is the second mandatory residence-based local, and it arrived
+    // without an engine or a UI change — which is only true if the tile treats it
+    // exactly like Maryland. That is the claim this test holds.
+    const { root, lastParams } = mount(new URLSearchParams({ fs: "single", st: "in", w: "60000" }));
+    const sel = root.querySelector<HTMLSelectElement>(".local-addons select[name='loc-select']");
+    expect(sel).not.toBeNull();
+    expect(root.querySelector('.local-addons input[type="checkbox"]')).toBeNull();
+    expect(sel!.value).toBe("in-marion");
+    expect(sel!.options).toHaveLength(92);
+    const hasMarion = Array.from(root.querySelectorAll(".bd-label")).some(
+      (n) => n.textContent === "Marion County local tax",
+    );
+    expect(hasMarion).toBe(true);
+    sel!.value = "in-porter";
+    sel!.dispatchEvent(new Event("change"));
+    expect(lastParams()?.get("loc")).toBe("in-porter");
+    const hasPorter = Array.from(root.querySelectorAll(".bd-label")).some(
+      (n) => n.textContent === "Porter County local tax",
+    );
+    expect(hasPorter).toBe(true);
+  });
 });

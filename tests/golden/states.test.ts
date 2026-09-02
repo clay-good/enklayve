@@ -1950,3 +1950,102 @@ describe("California behavioral-health-services surtax (special rule)", () => {
     expect(r.state!.incomeTax.greaterThan(noSurtax.state!.incomeTax)).toBe(true);
   });
 });
+
+describe("Indiana (flat state rate + a MANDATORY residence-based county tax in all 92 counties)", () => {
+  // IN levies a 2.95% flat state rate for 2026 (HEA 1001, 2023's glide path) on
+  // Indiana taxable income = AGI − a $1,000-per-taxpayer exemption (IC 6-3-1-3.5;
+  // there is no Indiana standard deduction), PLUS a county tax on the SAME base:
+  // Schedule CT-40 line 1 is "the amount from IT-40, line 7" times the rate for
+  // the county you lived in on Jan. 1. All 92 rates are Departmental Notice #1
+  // (R46 / 01-26). The county is not a rounding error — 0.50% to 3.00%.
+  it("single $60k in Marion County → state $1,740.50, county $1,191.80 (2.02%)", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000, localJurisdictionIds: ["in-marion"] },
+      { federal: ds.federal, state: ds.state("in"), fica: ds.fica },
+    );
+    // taxable 60,000 − 1,000 = 59,000: state 2.95%·59,000, county 2.02%·59,000.
+    expect(cents(r.state!.incomeTax)).toBe("1740.5");
+    expect(cents(r.local.total)).toBe("1191.8");
+    expect(r.local.lines[0]!.name).toBe("Marion County");
+  });
+
+  it("the county changes only the local line: Porter's 0.50% floor → $295.00", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000, localJurisdictionIds: ["in-porter"] },
+      { federal: ds.federal, state: ds.state("in"), fica: ds.fica },
+    );
+    expect(cents(r.state!.incomeTax)).toBe("1740.5"); // state unchanged
+    expect(cents(r.local.total)).toBe("295"); // 0.50%·59,000
+  });
+
+  it("Randolph's 3.00% ceiling costs $1,475 — a $1,180 spread over Porter on the same wage", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000, localJurisdictionIds: ["in-randolph"] },
+      { federal: ds.federal, state: ds.state("in"), fica: ds.fica },
+    );
+    expect(cents(r.local.total)).toBe("1770"); // 3.00%·59,000
+  });
+
+  it("Cass County's 2.95% matches the state rate outright: county tax = state tax", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 60000, localJurisdictionIds: ["in-cass"] },
+      { federal: ds.federal, state: ds.state("in"), fica: ds.fica },
+    );
+    expect(cents(r.local.total)).toBe(cents(r.state!.incomeTax));
+  });
+
+  it("married jointly $60k doubles the exemption → state $1,711.00, county $1,171.60", () => {
+    const r = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000, localJurisdictionIds: ["in-marion"] },
+      { federal: ds.federal, state: ds.state("in"), fica: ds.fica },
+    );
+    // taxable 60,000 − 2,000 = 58,000.
+    expect(cents(r.state!.incomeTax)).toBe("1711");
+    expect(cents(r.local.total)).toBe("1171.6");
+  });
+
+  it("head of household takes single's $1,000 exemption, not joint's $2,000", () => {
+    const hoh = evaluateTaxes(
+      { filingStatus: "head_of_household", wages: 60000 },
+      { federal: ds.federal, state: ds.state("in"), fica: ds.fica },
+    );
+    const single = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("in"), fica: ds.fica },
+    );
+    expect(cents(hoh.state!.incomeTax)).toBe(cents(single.state!.incomeTax));
+  });
+
+  it("married filing separately maps to single; a surviving spouse falls back to joint", () => {
+    const mfs = evaluateTaxes(
+      { filingStatus: "married_separately", wages: 60000 },
+      { federal: ds.federal, state: ds.state("in"), fica: ds.fica },
+    );
+    const single = evaluateTaxes(
+      { filingStatus: "single", wages: 60000 },
+      { federal: ds.federal, state: ds.state("in"), fica: ds.fica },
+    );
+    const qss = evaluateTaxes(
+      { filingStatus: "qualifying_surviving_spouse", wages: 60000 },
+      { federal: ds.federal, state: ds.state("in"), fica: ds.fica },
+    );
+    const joint = evaluateTaxes(
+      { filingStatus: "married_jointly", wages: 60000 },
+      { federal: ds.federal, state: ds.state("in"), fica: ds.fica },
+    );
+    expect(cents(mfs.state!.incomeTax)).toBe(cents(single.state!.incomeTax));
+    expect(cents(qss.state!.incomeTax)).toBe(cents(joint.state!.incomeTax));
+  });
+
+  it("carries all 92 counties, every rate inside the notice's 0.50%–3.00% range", () => {
+    const addOns = ds.state("in")!.localAddOns ?? [];
+    expect(addOns).toHaveLength(92);
+    expect(new Set(addOns.map((a) => a.id)).size).toBe(92);
+    for (const a of addOns) {
+      expect(a.flatRate).toBeGreaterThanOrEqual(0.005);
+      expect(a.flatRate).toBeLessThanOrEqual(0.03);
+    }
+    // The default is a real county, so the tile can never show a stale id.
+    expect(addOns.some((a) => a.id === ds.state("in")!.residenceLocalTax!.defaultId)).toBe(true);
+  });
+});

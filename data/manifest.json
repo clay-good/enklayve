@@ -361,10 +361,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-in-income-tax-2024.json",
-      "sourceUrl": "https://www.in.gov/dor/resources/tax-rates-and-reports/rates-fees-and-penalties/",
-      "sourceDocument": "Indiana DOR Rates, Fees & Penalties — 2.95% adjusted gross income tax for 2026 (2.90% in 2027); $1,000 personal exemption",
-      "dateRetrieved": "2026-08-29",
-      "contentHash": "760f3470e175ca8e8f762c6b4d0ddf7a2835c39a6803c092ba0c6aec03c6a805"
+      "sourceUrl": "https://www.in.gov/dor/files/dn01.pdf",
+      "sourceDocument": "Indiana DOR Departmental Notice #1 (R46 / 01-26), effective Jan. 1, 2026 — 2.95% state rate, $1,000 exemption, and the 92-county tax rate chart",
+      "dateRetrieved": "2026-09-02",
+      "contentHash": "6c6d34707029cb62e3cc5c92209a9af27c1bfa0be5f61282afaa78b42cf8342c"
     },
     {
       "id": "state-ky-income-tax-2024",

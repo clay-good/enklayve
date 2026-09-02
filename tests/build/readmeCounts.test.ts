@@ -299,9 +299,16 @@ describe("the cheat sheet's rates are the shards' rates", () => {
     return Number((sorted[sorted.length - 1]! - sorted[sorted.length - 2]!).toFixed(4));
   }
 
-  /** Maryland's county tax, which is 24 entries on `localAddOns` rather than a bracket. */
+  /**
+   * A local income tax — Maryland's 24 counties, Indiana's 92, the opt-in NYC /
+   * Yonkers / Columbus add-ons — which lives on `localAddOns` rather than in the
+   * bracket schedule. Read off whatever shard has one rather than off a list of
+   * state codes: the list said `MD` until Indiana's counties shipped, and a check
+   * that has to be edited to keep covering the thing it covers is a check that
+   * silently stops covering it.
+   */
   function localAddOnRates(code: string): number[] {
-    const addOns = shardOf(code).localAddOns as {
+    const addOns = (shardOf(code).localAddOns ?? []) as {
       flatRate?: number;
       brackets?: { rate: number }[];
     }[];
@@ -336,7 +343,7 @@ describe("the cheat sheet's rates are the shards' rates", () => {
   for (const { code, rates } of claims) {
     it(`${code} states ${rates.map((r) => `${r}%`).join(", ")}, and the shard agrees`, () => {
       const onShard = bracketRates(code);
-      const local = code === "MD" ? localAddOnRates(code) : [];
+      const local = localAddOnRates(code);
       const increment = topTierIncrement(code);
       const allowed = NOT_A_BRACKET_RATE[code] ?? {};
       const unmatched = rates.filter(
