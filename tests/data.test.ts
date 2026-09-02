@@ -176,56 +176,66 @@ describe("staleness fail-safe", () => {
 });
 
 /**
- * The manifest's `effectiveYear` and the shard's own citation must name the
- * same year.
+ * What the manifest says about a shard, the shard's own citations must say too.
  *
- * The year lives in two places, and only one of them is the number a reader
- * ever sees. A shard states its year inside its citation — "Ohio Rev. Code
- * §5747.02(A)(3)(c) … for taxable years beginning in 2026" — while the manifest
- * entry that pins that shard states it again, from a separate table in
- * `scripts/build-manifest.ts`. Nothing compared them.
+ * Provenance is stated twice. A shard carries its citations inside itself — the
+ * document, the URL, the effective year, the date somebody read it — and the
+ * manifest entry that pins that shard states the same four again, from a
+ * separate table in `scripts/build-manifest.ts`. Nothing compared them.
  *
- * The manifest's copy is what drives the **staleness gate**: `staleAfterYears`
- * is measured from it, so it decides whether a figure degrades loudly or keeps
- * rendering as current. Bump the table without rolling the shard and the site
- * reports last year's numbers as fresh — a silent wrong-figure failure, which is
- * the one class this repo is built to prevent. Roll the shard without the table
- * and a current figure lapses for no reason, which teaches people to ignore the
- * banner. Both are one-line mistakes, and the annual roll is the one recurring
- * maintenance task that touches every shard in the repo.
+ * The manifest's copy is not a duplicate for convenience. `effectiveYear` drives
+ * the **staleness gate**, so it decides whether a figure degrades loudly or keeps
+ * rendering as current; `sourceUrl` and `sourceDocument` are what the provenance
+ * audit and [docs/data-sources.md](../docs/data-sources.md) publish as the place
+ * the figure came from. Correct a shard's citation without the table and the
+ * published provenance points at the document the figure is no longer from —
+ * which is a citation that does not match its number, the one thing this repo's
+ * whole claim rests on not happening. Bump the table's year without rolling the
+ * shard and the site reports last year's figures as fresh. Both are one-line
+ * mistakes, and the annual roll is the one recurring task that touches every
+ * shard at once, so both are mistakes somebody will make.
  *
- * They agreed across all 81 when this was written. Nothing had made them.
+ * A shard may cite several documents — a state's brackets and its standard
+ * deduction are often published separately — so the manifest's value has to be
+ * ONE OF the shard's, not the only one.
+ *
+ * All four agreed across all 81 when this was written. Nothing had made them.
  */
-describe("the year the manifest pins is the year the shard states", () => {
-  /** Every `effectiveYear` that sits beside a `sourceUrl` — a real citation. */
-  function citedYears(value: unknown, into = new Set<number>()): Set<number> {
+describe("the manifest's provenance is provenance the shard itself states", () => {
+  /** Every citation in a shard: an object carrying both a URL and a year. */
+  function citations(value: unknown, into: Record<string, unknown>[] = []) {
     if (Array.isArray(value)) {
-      for (const v of value) citedYears(v, into);
+      for (const v of value) citations(v, into);
     } else if (value && typeof value === "object") {
       const record = value as Record<string, unknown>;
-      if (typeof record.effectiveYear === "number" && typeof record.sourceUrl === "string") {
-        into.add(record.effectiveYear);
+      if (typeof record.sourceUrl === "string" && typeof record.effectiveYear === "number") {
+        into.push(record);
       }
-      for (const v of Object.values(record)) citedYears(v, into);
+      for (const v of Object.values(record)) citations(v, into);
     }
     return into;
   }
 
-  it("agrees for every shard the manifest pins", () => {
+  const FIELDS = ["effectiveYear", "sourceUrl", "sourceDocument", "dateRetrieved"] as const;
+
+  it("agrees on the year, the URL, the document, and the date read", () => {
     const disagreements: string[] = [];
     for (const entry of manifest.datasets) {
-      const years = citedYears(JSON.parse(shards[entry.id]!));
-      if (years.size === 0) {
-        disagreements.push(`${entry.id}: no cited effectiveYear anywhere in the shard`);
+      const cited = citations(JSON.parse(shards[entry.id]!));
+      if (cited.length === 0) {
+        disagreements.push(`${entry.id}: no citation anywhere in the shard`);
         continue;
       }
-      // A shard may cite several documents — a state's brackets and its
-      // standard deduction can be published separately — so the manifest's year
-      // has to be one of them, not the only one.
-      if (!years.has(entry.effectiveYear)) {
-        disagreements.push(
-          `${entry.id}: manifest says ${entry.effectiveYear}, shard cites ${[...years].sort().join(", ")}`,
-        );
+      for (const field of FIELDS) {
+        const stated = new Set(cited.map((c) => c[field]));
+        const pinned = (entry as unknown as Record<string, unknown>)[field];
+        if (!stated.has(pinned)) {
+          disagreements.push(
+            `${entry.id}.${field}: manifest pins ${String(pinned)}, shard states ${[...stated]
+              .map(String)
+              .join(" | ")}`,
+          );
+        }
       }
     }
     expect(disagreements).toEqual([]);
