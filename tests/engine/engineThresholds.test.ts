@@ -106,6 +106,7 @@ describe("what counts as a cliff rather than rounding noise", () => {
     acaPremiumCredit: 0,
     snapAllotment: 0,
     totalResources,
+    stateTaxableIncome: null,
     medicaidEligible: null,
   });
 

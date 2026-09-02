@@ -57,6 +57,28 @@ describe("Benefit Cliff Explorer", () => {
     expect(root.querySelectorAll(".curve-bar--cliff").length).toBeGreaterThan(0);
   });
 
+  it("tells an Ohio household that one of its drops is not a benefit", () => {
+    // Ohio Rev. Code §5747.02(A)(3)(c) charges $332 the moment nonbusiness
+    // taxable income passes $26,050, over 0% bands below. A single Ohio filer
+    // sweeping past it sees resources fall with no benefit involved, and the
+    // chart drew that drop exactly like the ones a benefit causes. An
+    // unexplained drop on a chart whose purpose is explaining drops is the
+    // failure that matters here — and the remedy is different, because nothing
+    // ended, nothing was lost, and there is nothing to appeal.
+    const { root } = mount(
+      mountCliffExplorer,
+      new URLSearchParams({ fs: "single", st: "oh", size: "1", kids: "0", prem: "0" }),
+    );
+    const text = root.textContent ?? "";
+    expect(text).toContain("Ohio's tax step at");
+    expect(text).toContain("not a benefit");
+  });
+
+  it("says nothing about a tax step in a state that has none", () => {
+    const { root } = mount(mountCliffExplorer, FAMILY);
+    expect(root.textContent ?? "").not.toContain("tax step at");
+  });
+
   it("always shows what it leaves out, never behind a closed disclosure", () => {
     const { root } = mount(mountCliffExplorer, FAMILY);
     const block = root.querySelector<HTMLDetailsElement>(".cliff-unmodeled");

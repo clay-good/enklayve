@@ -268,9 +268,18 @@ export function mountCliffExplorer(ctx: TileContext): void {
         }
       }
     }
-    const markers = new Map(
-      sweep.statusChanges.map((s) => [s.atIncome, "Medicaid eligibility ends"]),
-    );
+    const markers = new Map<number, string>([
+      ...sweep.statusChanges.map((s): [number, string] => [
+        s.atIncome,
+        "Medicaid eligibility ends",
+      ]),
+      // A step in the state's own rate schedule is not a benefit cliff, and the
+      // chart could not tell the reader that. It draws the same drop.
+      ...sweep.taxSteps.map((t): [number, string] => [
+        t.atIncome,
+        `${t.jurisdictionName} tax step`,
+      ]),
+    ]);
     const curvePoints: CurvePoint[] = sweep.points.map((p) => ({
       income: p.grossIncome,
       resources: p.totalResources,
@@ -303,6 +312,16 @@ export function mountCliffExplorer(ctx: TileContext): void {
         // Never a dollar figure: we cannot price a household's coverage.
         value: "Coverage change, not priced",
         citation: data!.medicaid()?.citation ?? null,
+      });
+    }
+    for (const t of sweep.taxSteps) {
+      // Named apart from the benefit cliffs above, because the remedy is
+      // different: no benefit ended, nothing was applied for or lost, and there
+      // is nothing to appeal. The state's schedule charges it.
+      lines.push({
+        label: `${t.jurisdictionName}'s tax step at ${fmt(t.atIncome)} — not a benefit`,
+        value: `−${fmt(t.amount)}`,
+        citation: data!.state(fields.st)?.citation ?? null,
       });
     }
     const plateaus = sweep.cliffs.filter((c) => c.kind === "plateau");

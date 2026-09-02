@@ -244,6 +244,7 @@ describe("findCliffs", () => {
     acaPremiumCredit: 0,
     snapAllotment: 0,
     totalResources,
+    stateTaxableIncome: null,
     medicaidEligible: null,
   });
 
@@ -316,5 +317,67 @@ describe("marginalReality: what the next $1,000 actually costs", () => {
     const result = marginalReality(edge - 200, 1_000, family, cliffData());
     expect(result.medicaidFlip).not.toBeNull();
     expect(result.medicaidFlip!.to).toBe(false);
+  });
+});
+
+describe("a step in the state's own schedule is not a benefit cliff", () => {
+  /**
+   * A single Ohio filer sweeping past $26,050 sees resources fall about $130,
+   * and no benefit is involved: Ohio Rev. Code §5747.02(A)(3)(c) owes nothing at
+   * or below $26,050 of taxable income and "$332.00 plus 2.75% of the amount in
+   * excess" above it, over 0% bands. The chart drew that drop like every other
+   * one and could not say what it was — an unexplained drop on a chart whose
+   * whole purpose is explaining drops.
+   */
+  const ohioSingle: CliffInput = {
+    filingStatus: "single",
+    householdSize: 1,
+    qualifyingChildren: 0,
+    stateCode: "oh",
+    benchmarkMonthlyPremium: 0,
+  };
+  const withOhio = (): CliffData =>
+    cliffData({
+      tax: { federal: data.federal()!, fica: data.fica()!, state: data.state("oh") ?? undefined },
+    });
+
+  it("names Ohio's $332 step, at the income the sweep crosses it", () => {
+    const result = sweepResources(ohioSingle, withOhio(), { from: 24_000, to: 30_000, step: 250 });
+    expect(result.taxSteps).toEqual([
+      {
+        jurisdictionName: "Ohio",
+        atIncome: 26_250,
+        atTaxableIncome: 26_050,
+        amount: 332,
+      },
+    ]);
+    // And the drop it causes is still reported as a drop — the annotation
+    // explains the cliff, it does not replace it.
+    expect(result.cliffs.some((c) => c.kind === "drop" && c.startIncome === 26_000)).toBe(true);
+  });
+
+  it("says nothing about a range that does not reach the step", () => {
+    const result = sweepResources(ohioSingle, withOhio(), { from: 5_000, to: 20_000, step: 250 });
+    expect(result.taxSteps).toEqual([]);
+  });
+
+  it("says nothing in a state whose schedule has no step", () => {
+    const result = sweepResources(
+      { ...ohioSingle, stateCode: "ca" },
+      cliffData({
+        tax: { federal: data.federal()!, fica: data.fica()!, state: data.state("ca") ?? undefined },
+      }),
+      { from: 24_000, to: 30_000, step: 250 },
+    );
+    expect(result.taxSteps).toEqual([]);
+  });
+
+  it("says nothing when no state is modeled at all", () => {
+    const result = sweepResources({ ...ohioSingle, stateCode: "" }, cliffData(), {
+      from: 24_000,
+      to: 30_000,
+      step: 250,
+    });
+    expect(result.taxSteps).toEqual([]);
   });
 });

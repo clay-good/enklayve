@@ -166,6 +166,7 @@ const point = (grossIncome: number, totalResources: number): ResourcePoint => ({
   acaPremiumCredit: 0,
   snapAllotment: 0,
   totalResources,
+  stateTaxableIncome: null,
   medicaidEligible: null,
 });
 

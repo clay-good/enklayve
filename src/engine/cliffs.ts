@@ -45,6 +45,7 @@ import {
   povertyLine,
 } from "./benefits";
 import { evaluateTaxes, type TaxContext } from "./tax";
+import { bracketsFor, statutoryNotches, type StatutoryNotch } from "./tax/brackets";
 import type { FilingStatus } from "../data/schemas";
 import type {
   AcaData,
@@ -124,6 +125,38 @@ export interface ResourcePoint {
   totalResources: number;
   /** True/false in an expansion state; null where it can't be determined. */
   medicaidEligible: boolean | null;
+  /**
+   * State taxable income at this point, or null where no state is modeled.
+   *
+   * Carried because a statutory tax step is stated against TAXABLE income while
+   * this sweep runs on gross, and the gap between them is the state's own
+   * deduction. Deriving it here keeps {@link findTaxSteps} a pure function of
+   * the points, the way {@link findCliffs} and {@link findStatusChanges} are.
+   */
+  stateTaxableIncome: number | null;
+}
+
+/**
+ * A point where the state's own rate schedule charges a flat amount for crossing
+ * a line — not an eligibility cliff at all, and the chart could not tell the
+ * reader that.
+ *
+ * Ohio is the only one in the repo: Ohio Rev. Code §5747.02(A)(3)(c) owes
+ * nothing at or below $26,050 of nonbusiness taxable income and states the band
+ * above as "$332.00 plus 2.75% of the amount in excess", with 0% bands below for
+ * that $332 to not be a restatement of. A single Ohio filer sweeping past it
+ * sees resources fall by about $130 with no benefit involved, and every other
+ * drop on this chart is a benefit. An unexplained drop on a chart whose whole
+ * purpose is explaining drops is the failure mode that matters here.
+ */
+export interface TaxStep {
+  jurisdictionName: string;
+  /** The first swept income at which the step has been charged. */
+  atIncome: number;
+  /** The taxable income the statute names. */
+  atTaxableIncome: number;
+  /** The flat amount the schedule adds. */
+  amount: number;
 }
 
 /** A stretch of income where earning more does not leave you better off. */
@@ -162,6 +195,8 @@ export interface SweepResult {
   points: ResourcePoint[];
   cliffs: Cliff[];
   statusChanges: StatusChange[];
+  /** Steps in a state's own rate schedule that this range crosses. */
+  taxSteps: TaxStep[];
   /** The step actually used — may be wider than requested (see §7.4). */
   step: number;
   /** True when the step was widened to stay inside {@link MAX_POINTS}. */
@@ -318,6 +353,7 @@ export function resourcesAt(income: number, input: CliffInput, data: CliffData):
     snapAllotment,
     totalResources,
     medicaidEligible,
+    stateTaxableIncome: tax.state ? finite(tax.state.taxableIncome.toNumber()) : null,
   };
 }
 
@@ -377,6 +413,38 @@ export function findStatusChanges(points: ResourcePoint[]): StatusChange[] {
   return changes;
 }
 
+/**
+ * Where the swept income crosses a step in the state's own schedule.
+ *
+ * Reported the way a Medicaid flip is: annotated at the income where it lands,
+ * never folded into the cliff it causes. A reader looking at a $130 drop is owed
+ * the difference between "a benefit ended" and "the state charges $332 here".
+ */
+export function findTaxSteps(
+  points: ResourcePoint[],
+  jurisdictionName: string,
+  notches: readonly StatutoryNotch[],
+): TaxStep[] {
+  const steps: TaxStep[] = [];
+  for (const notch of notches) {
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1]!.stateTaxableIncome;
+      const now = points[i]!.stateTaxableIncome;
+      if (prev === null || now === null) continue;
+      if (prev <= notch.taxableIncome && now > notch.taxableIncome) {
+        steps.push({
+          jurisdictionName,
+          atIncome: points[i]!.grossIncome,
+          atTaxableIncome: notch.taxableIncome,
+          amount: notch.amount,
+        });
+        break;
+      }
+    }
+  }
+  return steps;
+}
+
 /** Sweep income and report the cliffs, the status flips, and what was left out. */
 export function sweepResources(
   input: CliffInput,
@@ -406,6 +474,13 @@ export function sweepResources(
     points,
     cliffs: findCliffs(points),
     statusChanges: findStatusChanges(points),
+    taxSteps: data.tax.state
+      ? findTaxSteps(
+          points,
+          data.tax.state.name,
+          statutoryNotches(bracketsFor(data.tax.state, input.filingStatus)),
+        )
+      : [],
     step,
     stepWidened,
     unmodeled,
