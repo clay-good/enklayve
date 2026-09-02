@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 /**
@@ -69,10 +69,24 @@ export function asProse(value: number): string {
  * comma after "over $75,000, or", producing "$75,000," — which matches no shard
  * value and would have been silenced by writing it into the not-a-figure list,
  * the wrong fix for a broken pattern.
+ *
+ * And `$1M` is not `$1`. The umbrella tile rounds up to "the $1M layer umbrella
+ * is sold in" and the scan reported a one-dollar figure, the same shape as
+ * `$217.5` inside `$217.50`: a prefix read as an amount. A magnitude suffix
+ * disqualifies the match rather than being written down as not-a-figure, for
+ * the same reason as the greedy comma — the pattern is wrong, not the prose.
  */
 export function proseFigures(source: string): string[] {
-  const withoutComments = source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^[ \t]*\/\/.*$/gm, " ");
-  return [...new Set(withoutComments.match(/\$\d{1,3}(?:,\d{3})*(?:\.\d+)?/g) ?? [])];
+  const withoutComments = source
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/^[ \t]*\/\/.*$/gm, " ")
+    // A comment that TRAILS code is not on anyone's screen either, and only
+    // whole-line ones were being dropped: `w4Withholding.ts` was carrying a
+    // `$100` from `// within ~$100 for the year`. The `//` has to be preceded
+    // by whitespace, a bracket or a semicolon so that the one in `https://`,
+    // which follows a colon, is left alone.
+    .replace(/(^|[\s;{}()[\]])\/\/[^\n]*/g, "$1 ");
+  return [...new Set(withoutComments.match(/\$\d{1,3}(?:,\d{3})*(?:\.\d+)?(?![\dMBk])/g) ?? [])];
 }
 
 /**
@@ -336,19 +350,44 @@ const BOUND: Bound[] = [
 
 /**
  * A statutory figure that is a constant in code rather than a shard field, and
- * so is bound to the constant instead. Only §1211(b)'s offset limit qualifies:
- * $3,000 since the Revenue Act of 1978, never indexed, with the reasoning for
- * leaving it in code recorded in the numeric-constant sweep.
+ * so is bound to the constant instead. Each is a period or an unindexed amount
+ * left in code deliberately, with the reasoning recorded in the numeric-constant
+ * sweep — §1211(b)'s offset limit, $3,000 since the Revenue Act of 1978, and
+ * §219(g)(2)(B)'s partial-deduction arithmetic, unmoved since 1976.
+ *
+ * `declaredIn` is where the constant lives when that is not the file quoting it:
+ * the IRA Deduction tile's explainer describes the round-up and the floor, and
+ * both constants are in the engine module that applies them.
  */
-const BOUND_TO_CODE: { file: string; figure: string; from: string }[] = [
+const BOUND_TO_CODE: { file: string; figure: string; from: string; declaredIn?: string }[] = [
   { file: "taxLossHarvesting.ts", figure: "$3,000", from: "LOSS_OFFSET_LIMIT" },
   { file: "taxLossHarvesting.ts", figure: "$1,500", from: "LOSS_OFFSET_LIMIT_SEPARATE" },
+  {
+    file: "iraDeduction.ts",
+    figure: "$10",
+    from: "IRA_PARTIAL_ROUNDING",
+    declaredIn: "engine/iraDeduction.ts",
+  },
+  {
+    file: "iraDeduction.ts",
+    figure: "$200",
+    from: "IRA_PARTIAL_MINIMUM",
+    declaredIn: "engine/iraDeduction.ts",
+  },
 ];
 
 /**
- * Dollar figures in these same files that are not statutory amounts: an
+ * Dollar figures anywhere in `src/tiles` that are not statutory amounts: an
  * illustrative sum, a step size, a rounding unit, a UI default. Each is here so
  * that a figure which IS statutory cannot arrive unnoticed.
+ *
+ * An entry has to match a figure the sweep actually finds, or it is deleted —
+ * see "every entry here is a figure that is really there". Six were dead: five
+ * describing `socialSecurityTax.ts` numbers written in a whole-line comment,
+ * which the scan had stopped reading long before, and one `"$2,000,"` left from
+ * the greedy-comma pattern that no longer produces it. A stale allowlist is the
+ * quiet kind of hole — it grants a pass to a figure nobody has looked at, and
+ * a real `$25` arriving in that tile's prose would have been waved through.
  */
 const NOT_A_FIGURE: Record<string, Record<string, string>> = {
   "deductionCopy.ts": {
@@ -365,24 +404,24 @@ const NOT_A_FIGURE: Record<string, Record<string, string>> = {
   },
   "childTaxCredit.ts": { "$1,000": "the per-$1,000 step the phase-out is quoted in" },
   "federalIncomeTax.ts": { "$1,000": "an illustrative next-dollar amount" },
-  "socialSecurityTax.ts": {
-    $0: "the married-filing-separately special case, called out as omitted",
-    $25: "the same base in $k shorthand in a code comment",
-    $32: "the same base in $k shorthand in a code comment",
-    $34: "the same base in $k shorthand in a code comment",
-    $44: "the same base in $k shorthand in a code comment",
+  // The same illustrative next-$1,000 sentence, in each tile that asks what a
+  // raise or a dollar of income actually costs. It is the unit the answer is
+  // quoted in, not an amount anyone legislates.
+  "benefitCliffs.ts": { "$1,000": "the illustrative next dollars a cliff is quoted against" },
+  "capitalGains.ts": { "$1,000": "an illustrative next-dollar amount, in a link's note" },
+  "marginalExplorer.ts": {
+    "$1,000": "the illustrative next-dollar amount the whole tile is about",
   },
-  "educationCredits.ts": { "$2,000,": "the LLC cap again, with a trailing comma" },
+  "paycheckOptimizer.ts": { "$1,000": "the illustrative next dollars into each account" },
 };
 
 describe("a figure in the prose is the figure in the shard", () => {
-  const files = [
-    ...new Set([
-      ...BOUND.map((b) => b.file),
-      ...BOUND_TO_CODE.map((b) => b.file),
-      ...Object.keys(NOT_A_FIGURE),
-    ]),
-  ];
+  // Every tile, not the ones already listed here. Scoping the sweep to the
+  // files that had a binding meant a tile could quote a statutory amount and
+  // never be looked at — the completeness half was complete only about itself.
+  // Reading the directory found the IRA Deduction Checker's explainer, which
+  // states §219(g)(2)(B)'s round-up and floor and was in nobody's scope.
+  const files = readdirSync(resolve(ROOT, "src", "tiles")).filter((f) => f.endsWith(".ts"));
   const source = new Map(
     files.map((f) => [f, readFileSync(resolve(ROOT, "src", "tiles", f), "utf8")] as const),
   );
@@ -402,8 +441,10 @@ describe("a figure in the prose is the figure in the shard", () => {
   for (const b of BOUND_TO_CODE) {
     it(`${b.file} states ${b.figure}, the value of ${b.from}`, () => {
       const text = source.get(b.file)!;
-      const declared = new RegExp(`const ${b.from} = (\\d+);`).exec(text);
-      expect(declared, `${b.from} is not declared in ${b.file}`).not.toBeNull();
+      const where = b.declaredIn ?? `tiles/${b.file}`;
+      const declaredIn = readFileSync(resolve(ROOT, "src", where), "utf8");
+      const declared = new RegExp(`const ${b.from} = (\\d+);`).exec(declaredIn);
+      expect(declared, `${b.from} is not declared in ${where}`).not.toBeNull();
       expect(asProse(Number(declared![1]))).toBe(b.figure);
       expect(statesFigure(text, b.figure), `${b.file} does not state ${b.figure}`).toBe(true);
     });
@@ -429,6 +470,25 @@ describe("a figure in the prose is the figure in the shard", () => {
     ).toEqual([]);
   });
 
+  it("every entry here is a figure that is really there", () => {
+    // An allowlist entry that matches nothing is not harmless. It reads as a
+    // decision somebody made about a figure on the page, and it silently
+    // permits that figure to appear later without anyone looking at it.
+    const dead: string[] = [];
+    for (const [file, allowed] of Object.entries(NOT_A_FIGURE)) {
+      const text = source.get(file);
+      if (!text) {
+        dead.push(`${file} (no such tile)`);
+        continue;
+      }
+      const found = new Set(proseFigures(text));
+      for (const figure of Object.keys(allowed)) {
+        if (!found.has(figure)) dead.push(`${file} ${figure}`);
+      }
+    }
+    expect(dead.sort(), "delete the entry, or fix the figure it was written for").toEqual([]);
+  });
+
   it("no longer says the Child Tax Credit is $2,000", () => {
     // The live case. The shard has carried $2,200 since the One Big Beautiful
     // Bill Act, so the tile computed $2,200 under a paragraph saying $2,000.
@@ -438,6 +498,18 @@ describe("a figure in the prose is the figure in the shard", () => {
   it("reads the strings and not the comments", () => {
     expect(proseFigures('/** was $2,000 */\nconst a = "pay $1,500 now";')).toEqual(["$1,500"]);
     expect(proseFigures('// $9,000\nconst b = "$25";')).toEqual(["$25"]);
+  });
+
+  it("does not read a comment that trails code", () => {
+    expect(proseFigures('const c = "$25"; // within ~$100 for the year')).toEqual(["$25"]);
+    // The `//` in a URL follows a colon, and a URL is prose the reader can see.
+    expect(proseFigures('const d = "https://x/$1,200";')).toEqual(["$1,200"]);
+  });
+
+  it("does not read $1M as one dollar", () => {
+    expect(proseFigures('const e = "the $1M layer umbrella is sold in";')).toEqual([]);
+    expect(proseFigures('const f = "$250k of coverage";')).toEqual([]);
+    expect(proseFigures('const g = "$1,000,000 of coverage";')).toEqual(["$1,000,000"]);
   });
 
   it("ends a figure on a digit, not on the comma after it", () => {
