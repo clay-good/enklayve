@@ -19,7 +19,7 @@
  * network, and a test that fails when a government site has a bad afternoon
  * teaches people to ignore failing tests.
  */
-import { existsSync, readFileSync, readdirSync, statSync, appendFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync, appendFileSync } from "node:fs";
 import { resolve, dirname, join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BROWSER_USER_AGENT } from "./user-agent.ts";
@@ -45,7 +45,16 @@ const SEARCH_ROOTS = ["src", "data", "docs", "scripts"];
 // where the most-read links in the project live. The README alone carries the
 // state-by-state sources: a Wisconsin form, a Rhode Island advisory, a Nebraska
 // schedule. Same bug as `scripts/` a month ago, one directory further out.
-const ROOT_FILES = ["README.md", "SECURITY.md", "CLAUDE.md"];
+// Named individually until 2026-09-02, which put the bug back one level: adding
+// CODE_OF_CONDUCT.md to the root added five external links that this list did
+// not name, so the sweep went on reporting the same 240 and the new file was
+// checked by nothing. A list of files is a promise someone has to remember to
+// keep. Every markdown file in the root is read instead — the root is still not
+// walked, because walking it descends into node_modules and dist.
+const rootMarkdown = (root: string): string[] =>
+  readdirSync(root)
+    .filter((name) => extname(name) === ".md")
+    .sort();
 const EXTENSIONS = new Set([".ts", ".json", ".md", ".css", ".html"]);
 
 /** A URL that is a fixture or our own site, not a source link the site ships. */
@@ -71,10 +80,7 @@ export function sourceFiles(root = ROOT, roots: string[] = SEARCH_ROOTS): string
     }
   };
   for (const r of roots) walk(join(root, r));
-  for (const f of ROOT_FILES) {
-    const p = join(root, f);
-    if (existsSync(p)) out.push(p);
-  }
+  for (const f of rootMarkdown(root)) out.push(join(root, f));
   return out;
 }
 

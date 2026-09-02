@@ -9,8 +9,8 @@ import {
   type LinkResult,
 } from "../../scripts/check-links";
 import { ADAPTERS } from "../../scripts/refresh/adapters";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readFileSync, readdirSync } from "node:fs";
+import { resolve, relative } from "node:path";
 
 /**
  * The external-link check (SPEC §2 principle 5, SPEC-3 §3).
@@ -129,6 +129,20 @@ describe("finding the links the site ships", () => {
     const urls = new Set(files.flatMap((f) => extractUrls(readFileSync(f, "utf8"))));
     expect(urls.size).toBeGreaterThan(100);
     for (const u of urls) expect(u.startsWith("https://")).toBe(true);
+  });
+
+  it("sweeps EVERY markdown file in the repository root, not a list of three", () => {
+    // The root is not walked, because walking it descends into node_modules and
+    // dist — so it was three filenames, and a list is a promise someone has to
+    // remember to keep. CODE_OF_CONDUCT.md arrived on 2026-09-02 carrying five
+    // external links, the sweep went on reporting the same 240, and four of
+    // those five turned out to be redirects the moment it could see them.
+    const swept = new Set(sourceFiles(ROOT).map((f) => relative(ROOT, f)));
+    const rootMarkdown = readdirSync(ROOT).filter((n) => n.endsWith(".md"));
+    expect(rootMarkdown.length).toBeGreaterThan(3);
+    for (const name of rootMarkdown) {
+      expect(swept, `${name} sits in the root and nothing checks its links`).toContain(name);
+    }
   });
 });
 
