@@ -78,9 +78,16 @@ function writeConfig(c: Config): URLSearchParams {
   if (c.withdrawalRatePct !== 4) p.set("wr", String(c.withdrawalRatePct));
   if (c.otherAssets > 0) p.set("assets", String(c.otherAssets));
   if (c.monthlySavings > 0) p.set("sav", String(c.monthlySavings));
-  if (c.essential > 0) p.set("ess", String(c.essential));
-  if (c.total !== undefined && c.total > 0) p.set("tot", String(c.total));
-  if (c.savings > 0) p.set("s", String(c.savings));
+  // Written whether or not they are zero, unlike the assumptions above. An
+  // assumption left at its default is restored by the default; these three are
+  // restored by My Situation, and a profile is not silent. Omitting a zero here
+  // means a reader who clears their savings to 0 gets a link — and a reload —
+  // that answers with the $12,000 another tile put in the profile earlier in
+  // the session. `tot` is the exception, because `undefined` is a real value it
+  // carries: "same as essentials", which is what it falls back to.
+  p.set("ess", String(c.essential));
+  if (c.total !== undefined) p.set("tot", String(c.total));
+  p.set("s", String(c.savings));
   return p;
 }
 

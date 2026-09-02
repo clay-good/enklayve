@@ -90,6 +90,24 @@ describe("Peace of Mind dashboard", () => {
     expect(netWorthSub).toContain("$12,000");
   });
 
+  it("keeps a figure the reader cleared to zero, rather than letting the profile answer", () => {
+    // The assumptions above omit themselves from the link when they sit at
+    // their default, and are restored by that default. These three are restored
+    // by My Situation instead, and a profile is not silent: omitting a zero
+    // hands a reader who cleared their savings a link — and a reload — showing
+    // whatever another tile put in the profile earlier in the session.
+    const profile = fundedProfile();
+    const { root, lastParams } = mount(mountPeaceOfMind, new URLSearchParams(), profile);
+    const savings = root.querySelector<HTMLInputElement>('input[name="s"]')!;
+    savings.value = "0";
+    savings.dispatchEvent(new Event("input"));
+    expect(lastParams()?.get("s")).toBe("0");
+
+    const reopened = mount(mountPeaceOfMind, new URLSearchParams(lastParams()!), fundedProfile());
+    const netWorthSub = texts(reopened.root, ".ph-reading-sub").find((t) => t.includes("debts"));
+    expect(netWorthSub).toContain("Savings $0");
+  });
+
   it("lets the link override a profile that says something else", () => {
     // Param first, profile second — the order matters when both speak. A
     // recipient who has used the site in this session must see the SENDER's
