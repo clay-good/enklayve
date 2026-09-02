@@ -32,11 +32,22 @@ const SENIOR_COUNTS = [
   { value: "2", label: "Both of us (joint return)" },
 ];
 
-const DEDUCTION_MODES: { value: DeductionMode; label: string }[] = [
-  { value: "auto", label: "Larger of standard / itemized" },
-  { value: "standard", label: "Standard deduction" },
-  { value: "itemized", label: "Itemized (big four)" },
-];
+/**
+ * This tile computes on the STANDARD deduction, and no longer offers a choice.
+ *
+ * It used to offer three: "Larger of standard / itemized", "Standard
+ * deduction", and "Itemized (big four)" — while asking for none of the big
+ * four. So two of the options did the same thing and the third computed an
+ * itemized total of zero. A single filer earning $85,000 in California who
+ * picked "Itemized", which is exactly what an itemizer would pick, was told
+ * their take-home was $61,272.52 when it is $64,814.52: $3,542 of tax they do
+ * not owe, from one visible dropdown.
+ *
+ * The rule this tile already followed for deductions — never claim one you have
+ * no input for — applies to a CHOICE the same way. The Federal Income Tax tile
+ * asks for the big four and makes the comparison honestly; this one says so.
+ */
+const DEDUCTION_MODE: DeductionMode = "standard";
 
 interface Fields {
   fs: FilingStatus;
@@ -44,7 +55,6 @@ interface Fields {
   wages: number;
   other: number;
   adjustments: number;
-  dm: DeductionMode;
   /** How many on the return are 65 or over (IRC §151(d)(5)(C)). */
   seniors: number;
   /** Qualified tips inside `wages` (IRC §224). */
@@ -60,7 +70,6 @@ const EXAMPLE: Fields = {
   wages: 85000,
   other: 0,
   adjustments: 0,
-  dm: "auto",
   seniors: 0,
   tips: 0,
   overtime: 0,
@@ -70,17 +79,12 @@ const EXAMPLE: Fields = {
 function isFilingStatus(v: string): v is FilingStatus {
   return FILING_STATUSES.some((f) => f.value === v);
 }
-function isDeductionMode(v: string): v is DeductionMode {
-  return DEDUCTION_MODES.some((d) => d.value === v);
-}
-
 function readFields(
   params: URLSearchParams,
   defaultState: string,
   profile: SituationStore,
 ): Fields {
   const fsRaw = params.get("fs");
-  const dmRaw = params.get("dm");
   const stRaw = params.get("st");
   return {
     // Precedence: URL fragment > session profile > built-in default.
@@ -103,7 +107,6 @@ function readFields(
     overtime: params.has("ot")
       ? parseNonNegative(params.get("ot"), 0)
       : (profile.get("qualifiedOvertimeAnnual") ?? 0),
-    dm: dmRaw && isDeductionMode(dmRaw) ? dmRaw : "auto",
     local: (params.get("loc") ?? "").split(",").filter((s) => s.length > 0),
   };
 }
@@ -115,7 +118,6 @@ function writeFields(f: Fields): URLSearchParams {
   p.set("w", String(f.wages));
   if (f.other > 0) p.set("oi", String(f.other));
   if (f.adjustments > 0) p.set("adj", String(f.adjustments));
-  if (f.dm !== "auto") p.set("dm", f.dm);
   if (f.seniors > 0) p.set("age65", String(f.seniors));
   if (f.tips > 0) p.set("tips", String(f.tips));
   if (f.overtime > 0) p.set("ot", String(f.overtime));
@@ -241,12 +243,6 @@ export function mountTakeHome(ctx: TileContext): void {
     value: fields.adjustments,
     attrs: { "aria-label": "Pre-tax adjustments", inputmode: "decimal" },
   });
-  const dmSelect = el(
-    "select",
-    { name: "dm", attrs: { "aria-label": "Deduction method" } },
-    ...DEDUCTION_MODES.map((d) => option(d.value, d.label, d.value === fields.dm)),
-  );
-
   const seniorSelect = el(
     "select",
     { name: "age65", attrs: { "aria-label": "How many of you are 65 or older" } },
@@ -339,7 +335,6 @@ export function mountTakeHome(ctx: TileContext): void {
       wages: parseNonNegative(wagesInput.value, 0),
       other: parseNonNegative(otherInput.value, 0),
       adjustments: parseNonNegative(adjInput.value, 0),
-      dm: isDeductionMode(dmSelect.value) ? dmSelect.value : "auto",
       seniors: Math.min(2, Math.max(0, Math.round(parseNonNegative(seniorSelect.value, 0)))),
       tips: parseNonNegative(tipsInput.value, 0),
       overtime: parseNonNegative(otInput.value, 0),
@@ -354,7 +349,7 @@ export function mountTakeHome(ctx: TileContext): void {
       wages: fields.wages,
       otherIncome: fields.other,
       adjustments: fields.adjustments,
-      deductionMode: fields.dm,
+      deductionMode: DEDUCTION_MODE,
       seniorsAge65Plus: fields.seniors,
       qualifiedTips: fields.tips,
       qualifiedOvertime: fields.overtime,
@@ -388,7 +383,7 @@ export function mountTakeHome(ctx: TileContext): void {
     compute();
   }
 
-  for (const control of [fsSelect, stSelect, dmSelect, seniorSelect]) {
+  for (const control of [fsSelect, stSelect, seniorSelect]) {
     control.addEventListener("change", recompute);
   }
   for (const input of [wagesInput, otherInput, adjInput, tipsInput, otInput]) {
@@ -405,7 +400,6 @@ export function mountTakeHome(ctx: TileContext): void {
     wagesInput.value = String(fields.wages);
     otherInput.value = String(fields.other);
     adjInput.value = String(fields.adjustments);
-    dmSelect.value = fields.dm;
     recompute();
   });
 
@@ -420,7 +414,6 @@ export function mountTakeHome(ctx: TileContext): void {
     field("Annual wages", wagesInput),
     field("Other income", otherInput),
     field("Pre-tax adjustments", adjInput),
-    field("Deduction method", dmSelect),
     field("Aged 65 or older", seniorSelect),
     field("Of that, qualified tips", tipsInput),
     field("Of that, qualified overtime premium", otInput),
@@ -442,7 +435,7 @@ export const takeHomeTile: TileDefinition = {
   keywords: ["paycheck", "net pay", "salary", "withholding", "fica", "state tax"],
   status: "ready",
   how:
-    "Your take-home is your gross pay minus four things: federal income tax (the larger of your standard or itemized deduction, then the IRS bracket schedule), FICA (Social Security at 6.2% up to the annual wage base, plus Medicare at 1.45%, and a 0.9% Additional Medicare surtax on high earners), your state income tax, and any local tax that applies.\n\nThe effective rate is your total tax divided by gross income; the marginal rate is the bracket your next dollar lands in. Every line links the IRS or state source it came from.\n\n" +
+    "Your take-home is your gross pay minus four things: federal income tax (the standard deduction, then the IRS bracket schedule), FICA (Social Security at 6.2% up to the annual wage base, plus Medicare at 1.45%, and a 0.9% Additional Medicare surtax on high earners), your state income tax, and any local tax that applies.\n\nThe effective rate is your total tax divided by gross income; the marginal rate is the bracket your next dollar lands in. Every line links the IRS or state source it came from.\n\nWe compute on the standard deduction, which is what about nine in ten filers take. If you itemize, the Federal Income Tax tool asks for the 'big four' and makes the comparison properly — this one does not ask for them, so it does not pretend to.\n\n" +
     OBBBA_DEDUCTIONS_HOW_NO_GIVING,
   resources: [
     {

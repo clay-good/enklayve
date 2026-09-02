@@ -132,3 +132,33 @@ describe("every tile that computes federal income tax", () => {
     }
   });
 });
+
+describe("a tile does not offer a choice it cannot honour", () => {
+  it("Take-Home has no deduction-method control, because it has no big four", () => {
+    // It used to offer three options while asking for none of the four inputs
+    // that make two of them mean anything: "Larger of standard / itemized" and
+    // "Standard deduction" did the same thing, and "Itemized (big four)"
+    // computed an itemized total of zero. A single filer earning $85,000 in
+    // California who picked the option an itemizer would pick was shown
+    // $61,272.52 of take-home against a real $64,814.52 — $3,542 of tax they do
+    // not owe, from one dropdown.
+    //
+    // "Never claim a deduction you have no input for" is the rule this tile
+    // already followed. A CHOICE is the same promise.
+    const source = readFileSync(resolve(TILES, "takeHome.ts"), "utf8");
+    expect(source).not.toContain('name: "dm"');
+    // The label may still appear in the comment recording why it went; what
+    // must not exist is the list the select was built from.
+    expect(source).not.toContain("DEDUCTION_MODES");
+    // And it says which tool does ask.
+    expect(source).toMatch(/Federal Income Tax tool asks for the 'big four'/);
+  });
+
+  it("computes on the standard deduction, so the deduction is never zero", () => {
+    // The failure mode in one assertion: whatever a deep link says, a filer
+    // with wages gets a deduction.
+    expect(readFileSync(resolve(TILES, "takeHome.ts"), "utf8")).toContain(
+      'const DEDUCTION_MODE: DeductionMode = "standard"',
+    );
+  });
+});
