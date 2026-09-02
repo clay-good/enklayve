@@ -237,8 +237,18 @@ function finite(value: number, fallback = 0): number {
 /**
  * Choose the swept range and a step that keeps the point count at or under
  * {@link MAX_POINTS}. The range is preserved and the step widened, never the
- * reverse: a truncated range would silently hide the very cliff being looked
- * for, while a coarser step only blurs it.
+ * reverse: a truncated range would silently hide every cliff above the cut,
+ * while a coarser step costs resolution rather than reach.
+ *
+ * "A coarser step only blurs it" is what this said, and that was wrong. Cliffs
+ * are found by comparing CONSECUTIVE points, so a cliff narrower than one step
+ * does not blur — it disappears. Ohio's $332 charge at $26,050 is plainly
+ * visible at a $250 step and gone at $500, because the ordinary gain over the
+ * wider raise outruns the loss, and a large household's range widens the step
+ * past $500 on its own. Widening is still the right trade, since the alternative
+ * loses whole ranges rather than narrow cliffs inside them — but the caller is
+ * told when it happened AND what it costs (`stepWidened`), rather than being
+ * left with "no cliff found" from a sweep that could not have seen one.
  */
 /**
  * How far up the income axis the sweep plots when the caller does not say.

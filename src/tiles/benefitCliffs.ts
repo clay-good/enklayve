@@ -347,8 +347,10 @@ export function mountCliffExplorer(ctx: TileContext): void {
         permalink: () => ctx.permalink(writeFields(fields, false)),
       }),
       resourceCurve({
-        // The sweep is fine-grained so narrow cliffs are found; the chart only
-        // needs enough columns to read as a curve.
+        // The sweep is finer than the chart, so downsampling here loses no
+        // cliff the sweep found; the chart only needs enough columns to read as
+        // a curve. What the SWEEP can see is a separate question, answered by
+        // the resolution note below when its step was widened.
         points: downsampleCurve(curvePoints),
         locale: ctx.locale,
         // "Here is the cliff" is half an answer; the other half is where the
