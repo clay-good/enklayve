@@ -41,6 +41,43 @@ export function bracketTax(taxable: Money, brackets: readonly Bracket[]): Money 
   return tax;
 }
 
+/**
+ * A point where the schedule itself charges more for one more dollar.
+ *
+ * `baseTax` is a flat amount the band carries on top of its marginal rate, and
+ * when the bands below it do not carry one, that amount arrives WHOLE on the
+ * first dollar over the boundary. Ohio is the case it was written for and the
+ * only one in the repo today: Ohio Rev. Code §5747.02(A)(3)(c) owes nothing at
+ * or below $26,050 of nonbusiness taxable income and states the band above as
+ * "$332.00 plus 2.75% of the amount in excess of $26,050". Those lower bands are
+ * 0%, so the $332 is not accumulated tax being restated — a filer at $26,050 who
+ * earns one more dollar owes $332.03 instead of nothing.
+ *
+ * That is a real, printed feature of a state's schedule, and it lands on the
+ * lowest income Ohio taxes at all. It is derived here rather than written down,
+ * so a state that gains or loses one is described by its shard rather than by a
+ * constant somebody has to remember.
+ */
+export interface StatutoryNotch {
+  /** The taxable income at which one more dollar triggers the amount. */
+  taxableIncome: number;
+  /** What that dollar costs, before its own marginal rate. */
+  amount: number;
+}
+
+export function statutoryNotches(brackets: readonly Bracket[]): StatutoryNotch[] {
+  const sorted = [...brackets].sort((a, b) => a.lowerBound - b.lowerBound);
+  const out: StatutoryNotch[] = [];
+  for (let i = 1; i < sorted.length; i++) {
+    // At exactly the boundary the band BELOW is still the one the income lands
+    // in, so its own base is what the step is measured against — a schedule
+    // where every band restates the accumulated tax has no notch anywhere.
+    const step = (sorted[i]!.baseTax ?? 0) - (sorted[i - 1]!.baseTax ?? 0);
+    if (step > 0) out.push({ taxableIncome: sorted[i]!.lowerBound, amount: step });
+  }
+  return out;
+}
+
 /** The statutory marginal rate of the band containing `taxable`. */
 export function marginalBracketRate(taxable: Money, brackets: readonly Bracket[]): number {
   if (brackets.length === 0) return 0;

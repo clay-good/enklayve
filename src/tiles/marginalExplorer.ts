@@ -6,6 +6,7 @@
  */
 import { Money } from "../engine/money";
 import { evaluateTaxes, type TaxInput, type TaxResult } from "../engine/tax";
+import { bracketsFor, statutoryNotches } from "../engine/tax/brackets";
 import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
@@ -158,6 +159,42 @@ export function mountMarginalExplorer(ctx: TileContext): void {
     if (base.local.lines.length > 0 && base.local.citation) {
       lines.push({ label: "Local tax", value: fmt(localDelta), citation: base.local.citation });
     }
+    // A step that crosses a point where the SCHEDULE charges a flat amount is
+    // the one case where "your marginal rate" is a misleading answer on its own:
+    // the number is real, and it is a step rather than a rate, so it does not
+    // apply to the next dollar or the one after. Ohio is the only jurisdiction
+    // in the repo with one — nothing is owed at or below $26,050 of taxable
+    // income and the band above is "$332.00 plus 2.75% of the excess", with the
+    // 0% bands below contributing nothing for that $332 to be a restatement of.
+    // A filer one dollar over that line owes $332.03 instead of nothing.
+    const stateShard = fields.st ? (data!.state(fields.st) ?? null) : null;
+    const crossed =
+      stateShard && base.state && bumped.state
+        ? statutoryNotches(bracketsFor(stateShard, fields.fs)).filter(
+            (n) =>
+              base.state!.taxableIncome.lessThanOrEqual(n.taxableIncome) &&
+              bumped.state!.taxableIncome.greaterThan(n.taxableIncome),
+          )
+        : [];
+    // The threshold is a round statutory figure — "$26,050", the way the Code
+    // and the reader both write it. The AMOUNT keeps its cents, because Ohio
+    // prints it as "$332.00" and a citation the reader can check against the
+    // page should read the way the page does.
+    const wholeDollars = (n: number): string =>
+      new Intl.NumberFormat(ctx.locale, {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(n);
+
+    for (const notch of crossed) {
+      lines.push({
+        label: `${base.state!.jurisdictionName}'s ${wholeDollars(notch.taxableIncome)} step`,
+        value: fmt(Money.from(notch.amount)),
+        citation: base.state!.citation,
+      });
+    }
+
     lines.push({ label: "Total cost of the next dollars", value: fmt(totalDelta), emphasis: true });
     lines.push({ label: "You keep", value: fmt(kept) });
     lines.push({ label: "Combined marginal rate", value: pct(Math.max(0, marginalRate)) });
@@ -170,6 +207,17 @@ export function mountMarginalExplorer(ctx: TileContext): void {
         breakdown: lines,
         permalink: () => ctx.permalink(writeFields(fields)),
       }),
+      ...crossed.map((notch) =>
+        el("p", {
+          class: "statute-step",
+          text:
+            `Part of that is a step, not a rate. ${base.state!.jurisdictionName} charges ` +
+            `${Money.from(notch.amount).format(ctx.locale)} the moment taxable income passes ` +
+            `${wholeDollars(notch.taxableIncome)}, so one dollar either side of ` +
+            `that line is ${Money.from(notch.amount).format(ctx.locale)} apart — and the dollars ` +
+            `after it cost the ordinary rate again. It is the printed schedule, not a phase-out.`,
+        }),
+      ),
     );
   }
 

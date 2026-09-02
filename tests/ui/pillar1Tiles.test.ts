@@ -109,6 +109,48 @@ describe("Marginal Rate Explorer tile", () => {
     expect(root.querySelectorAll("a.cite-link").length).toBeGreaterThanOrEqual(3);
   });
 
+  it("names Ohio's $26,050 step when the next dollars cross it", () => {
+    // Ohio Rev. Code §5747.02(A)(3)(c) owes nothing at or below $26,050 of
+    // taxable income and "$332.00 plus 2.75% of the amount in excess" above it,
+    // and the bands below are 0%, so the $332 is not accumulated tax being
+    // restated. It arrives whole on the first dollar over. Reporting only a
+    // "combined marginal rate" for a step that crosses it is a true number and
+    // a misleading answer: the reader would read a rate off it and apply it to
+    // the next dollar, which costs 2.75%.
+    const { root } = mount(
+      mountMarginalExplorer,
+      new URLSearchParams({ fs: "single", st: "oh", inc: "26000", step: "1000" }),
+    );
+    const ls = labels(root);
+    expect(ls.some((l) => l.includes("$26,050 step"))).toBe(true);
+    const note = root.querySelector(".statute-step")?.textContent ?? "";
+    expect(note).toContain("$332.00");
+    expect(note).toContain("step, not a rate");
+    // And it is cited to the state's own schedule, like every other line here.
+    expect(root.querySelectorAll("a.cite-link").length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("says nothing about a step the next dollars do not reach", () => {
+    // An Ohio filer well past the line is not crossing anything, and one well
+    // below it is not either. A note that fires on the state rather than on the
+    // crossing would be furniture within a week.
+    for (const inc of ["10000", "80000"]) {
+      const { root } = mount(
+        mountMarginalExplorer,
+        new URLSearchParams({ fs: "single", st: "oh", inc, step: "1000" }),
+      );
+      expect(root.querySelector(".statute-step"), `income ${inc}`).toBeNull();
+    }
+  });
+
+  it("says nothing in a state whose schedule has no such step", () => {
+    const { root } = mount(
+      mountMarginalExplorer,
+      new URLSearchParams({ fs: "single", st: "ca", inc: "26000", step: "1000" }),
+    );
+    expect(root.querySelector(".statute-step")).toBeNull();
+  });
+
   it("the cost of the next $1,000 is between $0 and $1,000", () => {
     const { root } = mount(
       mountMarginalExplorer,

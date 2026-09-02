@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { readdirSync } from "node:fs";
 import { evaluateTaxes, type TaxContext } from "../../src/engine/tax";
+import { statutoryNotches } from "../../src/engine/tax/brackets";
 import type { FilingStatus, Jurisdiction } from "../../src/data/schemas";
 import { loadDatasets, type Datasets } from "../helpers/datasets";
 
@@ -180,4 +181,54 @@ describe("no threshold in any jurisdiction costs a filer money to cross", () => 
     ]);
     for (const n of ohio) expect(n.drop).toBeGreaterThan(325);
   }, 120_000);
+});
+
+describe("the notch is derived from the schedule, not written down", () => {
+  it("finds Ohio's $332 step, and only it, across every jurisdiction", () => {
+    const found = STATE_CODES.flatMap((code) =>
+      STATUSES.filter((s) => ds.state(code).supportedFilingStatuses.includes(s)).flatMap((s) =>
+        statutoryNotches(ds.state(code).bracketsByFilingStatus[s] ?? []).map(
+          (n) => `${code} ${s} $${n.taxableIncome} → $${n.amount}`,
+        ),
+      ),
+    );
+    expect([...new Set(found)].sort()).toEqual([
+      "oh head_of_household $26050 → $332",
+      "oh married_jointly $26050 → $332",
+      "oh single $26050 → $332",
+    ]);
+  });
+
+  it("reports the step between fixed amounts, not the amounts themselves", () => {
+    // A band carries its fixed amount INSTEAD of the one below, not on top of
+    // it, so a schedule that repeats the same figure notches once — where the
+    // figure first appears — and not again where it merely continues.
+    expect(
+      statutoryNotches([
+        { lowerBound: 0, rate: 0.02 },
+        { lowerBound: 10_000, rate: 0.04, baseTax: 200 },
+        { lowerBound: 20_000, rate: 0.05, baseTax: 200 },
+      ]),
+    ).toEqual([{ taxableIncome: 10_000, amount: 200 }]);
+  });
+
+  it("reports nothing where a higher band's fixed amount is no larger", () => {
+    // Falling or equal amounts are not a cliff: nothing extra is charged for
+    // the dollar that crosses.
+    expect(
+      statutoryNotches([
+        { lowerBound: 0, rate: 0.02, baseTax: 300 },
+        { lowerBound: 10_000, rate: 0.04, baseTax: 100 },
+      ]),
+    ).toEqual([]);
+  });
+
+  it("reports nothing for a schedule with no fixed amounts at all", () => {
+    expect(
+      statutoryNotches([
+        { lowerBound: 0, rate: 0.02 },
+        { lowerBound: 10_000, rate: 0.04 },
+      ]),
+    ).toEqual([]);
+  });
 });

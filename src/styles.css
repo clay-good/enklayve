@@ -915,7 +915,11 @@ body {
    a pasted link was raised to a valid minimum. Calmer than the verify banner —
    this is information, not a warning. */
 .clamp-note,
-.assumption-hint {
+.assumption-hint,
+/* A point where a state's own schedule charges a flat amount for crossing a
+   line — Ohio's $332 at $26,050. Same quiet treatment: it is the printed rule,
+   not a warning about the reader's situation. */
+.statute-step {
   color: var(--enk-text-muted);
   background: var(--enk-surface-2);
   border-left: 3px solid var(--enk-accent);
