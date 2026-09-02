@@ -467,3 +467,77 @@ describe("the wait report", () => {
     expect(report).not.toContain("fails the check");
   });
 });
+
+/**
+ * An adapter that says it is waiting must be watching for the thing it waits on.
+ *
+ * The wait probes exist because "repoint this adapter the day the 2026 forms
+ * appear" is a task assigned to whoever happens to remember, and forgetting it
+ * is what left Illinois, Michigan, Missouri and Georgia a year stale behind
+ * citations that still pointed at live .gov pages.
+ *
+ * California is why this is a test rather than a habit. Its note said plainly
+ * that the shard carries the FTB's 2025 rate schedule because the 2026 one is
+ * not published — and it had no probe, so nothing would have said the day it
+ * appeared. Its adapter anchors the standard deduction, which is already on
+ * 2026, so the monthly run would have kept reporting agreement forever about a
+ * shard whose brackets were a year behind. It is the largest of the fifty-one
+ * jurisdictions: the most people this repo can be slightly wrong about at once.
+ */
+describe("adapters that are waiting on a document", () => {
+  /** Phrases an adapter uses when it is parked on something unpublished. */
+  const WAITING =
+    /not published|has not posted|newest is 20\d\d|carries the 20\d\d|repoint this adapter|carry the 20\d\d|refuseUntilTheStatePublishes/i;
+
+  it("gives every one of them a probe for the document's arrival", () => {
+    const source = readFileSync(
+      resolve(__dirname, "..", "..", "scripts", "refresh", "adapters.ts"),
+      "utf8",
+    );
+    // Each adapter object, from its id to the next one's.
+    const blocks: { id: string; body: string }[] = [];
+    const starts = [...source.matchAll(/\{\s*\n\s*id: "([^"]+)"/g)];
+    starts.forEach((m, i) => {
+      const end = i + 1 < starts.length ? starts[i + 1]!.index! : source.length;
+      blocks.push({ id: m[1]!, body: source.slice(m.index!, end) });
+    });
+    expect(blocks.length).toBeGreaterThan(40);
+
+    const unwatched = blocks
+      .filter((b) => WAITING.test(b.body) && !b.body.includes("awaiting: {"))
+      .map((b) => b.id);
+    expect(
+      unwatched,
+      "these say they are waiting on a document nobody is watching for: give each an" +
+        " `awaiting` probe, with a calibration aimed at the year that IS published",
+    ).toEqual([]);
+  });
+
+  it("calibrates every probe, so 'still waiting' cannot mean 'blind'", () => {
+    // A probe aimed at a URL the state has renamed reports the wait as ongoing
+    // in exactly the words it uses when the wait is real. The calibration is
+    // what makes the signal believable, so it is not optional.
+    for (const adapter of ADAPTERS) {
+      if (!adapter.awaiting) continue;
+      expect(adapter.awaiting.calibration?.url, `${adapter.id} has no calibration`).toBeTruthy();
+      expect(
+        adapter.awaiting.what.length,
+        `${adapter.id} does not say what it waits for`,
+      ).toBeGreaterThan(20);
+      // The two may share a URL — a page that lists every year is watched by
+      // matching for the awaited year and calibrated by matching for the one
+      // that is there, which is Vermont's shape. What they may not be is
+      // identical, since a probe that asks the same question twice proves
+      // nothing about itself.
+      const a = adapter.awaiting.arrived;
+      const c = adapter.awaiting.calibration;
+      expect(
+        a.url !== c.url || String(a.match) !== String(c.match),
+        `${adapter.id}'s probe and its calibration ask the same question`,
+      ).toBe(true);
+      if (a.url === c.url) {
+        expect(a.match, `${adapter.id} shares a URL and must distinguish by match`).toBeTruthy();
+      }
+    }
+  });
+});
