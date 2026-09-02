@@ -703,6 +703,8 @@ npm run deploy:dry     # wrangler dry-run deploy
 
 Node 20+ for the app (Node 24 in CI runs the TypeScript build scripts directly). New to the codebase? [docs/contributing.md](docs/contributing.md) covers the tile contract and the non-negotiable principles; [docs/adding-a-state.md](docs/adding-a-state.md) is a data-only walkthrough.
 
+**Found a wrong number?** That is the most useful report this project gets, and there is a [form for it](.github/ISSUE_TEMPLATE/wrong-figure.yml) that asks for the one thing a fix needs: a deep link to the agency that publishes the figure. A security problem goes the other way — privately, through [SECURITY.md](SECURITY.md) — and a wrong figure is explicitly *not* one, because it belongs where it can be cited and argued with.
+
 ---
 
 ## CI/CD and deploy

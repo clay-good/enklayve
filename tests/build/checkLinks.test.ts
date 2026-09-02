@@ -38,6 +38,33 @@ describe("finding the links the site ships", () => {
     ]);
   });
 
+  it("stops a URL where a markdown link closes and the next one opens", () => {
+    // The CI badge: `[![CI](…/badge.svg)](…/ci.yml)`. Both `)` and `[` are legal
+    // in a path, so the match ran through `)](` into the second URL and checked
+    // neither of them. The README was outside the sweep when this was written,
+    // which is why nobody had seen it.
+    expect(
+      extractUrls(
+        "[![CI](https://github.com/o/r/actions/workflows/ci.yml/badge.svg)](https://github.com/o/r/actions/workflows/ci.yml)",
+      ),
+    ).toEqual(["https://github.com/o/r/actions/workflows/ci.yml/badge.svg"]);
+  });
+
+  it("trims markdown emphasis the way it trims a sentence's period", () => {
+    expect(extractUrls("**[Report](https://github.com/o/r/security/advisories/new)**")).toEqual([
+      "https://github.com/o/r/security/advisories/new",
+    ]);
+    expect(extractUrls("**see https://www.irs.gov/pub/a.pdf**")).toEqual([
+      "https://www.irs.gov/pub/a.pdf",
+    ]);
+  });
+
+  it("still keeps the parentheses a federal citation puts in a path", () => {
+    expect(extractUrls('"https://www.ecfr.gov/current/title-26/section-1.401(a)(9)-9"')).toEqual([
+      "https://www.ecfr.gov/current/title-26/section-1.401(a)(9)-9",
+    ]);
+  });
+
   it("trims the punctuation a URL picks up at the end of a sentence", () => {
     expect(extractUrls("See https://www.cms.gov/medical-bill-rights.")).toEqual([
       "https://www.cms.gov/medical-bill-rights",

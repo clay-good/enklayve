@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/clay-good/enklayve/security/advisories/new
+    about: Private reporting, so it stays private until there is a fix. See SECURITY.md for what counts.
+  - name: How to contribute
+    url: https://github.com/clay-good/enklayve/blob/main/docs/contributing.md
+    about: The non-negotiables, the local gate, and how to add a calculator or a state.

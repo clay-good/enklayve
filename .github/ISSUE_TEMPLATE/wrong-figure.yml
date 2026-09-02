@@ -1,0 +1,56 @@
+name: A figure is wrong
+description: A number this site shows disagrees with the agency that publishes it.
+labels: ["data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The most useful report this project gets. Every bundled figure carries a source
+        URL, an effective year and a content hash, so a wrong one can be traced and
+        fixed — but only with the source that proves it.
+  - type: input
+    id: where
+    attributes:
+      label: Where you saw it
+      description: The calculator, and the deep link if you have one.
+      placeholder: Federal Income Tax — https://enklayve.com/#/federal-income-tax?fs=single&w=85000
+    validations:
+      required: true
+  - type: input
+    id: shown
+    attributes:
+      label: The figure shown
+      placeholder: "SALT capped at $10,000"
+    validations:
+      required: true
+  - type: input
+    id: correct
+    attributes:
+      label: What it should be
+      placeholder: "$40,400 for 2026"
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: The source that proves it
+      description: >
+        A deep link to the issuing authority — the IRS, the SSA, a state department of
+        revenue. Not a search result, not an aggregator, not a news article.
+      placeholder: https://www.irs.gov/pub/irs-drop/rp-25-32.pdf
+    validations:
+      required: true
+  - type: input
+    id: year
+    attributes:
+      label: The tax or benefit year it applies to
+      placeholder: "2026"
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: >
+        Page or section number in the source, whether the figure indexes annually, or
+        anything that would help someone verify it in one sitting.

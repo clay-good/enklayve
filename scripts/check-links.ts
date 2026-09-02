@@ -19,7 +19,7 @@
  * network, and a test that fails when a government site has a bad afternoon
  * teaches people to ignore failing tests.
  */
-import { readFileSync, readdirSync, statSync, appendFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync, appendFileSync } from "node:fs";
 import { resolve, dirname, join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BROWSER_USER_AGENT } from "./user-agent.ts";
@@ -33,6 +33,12 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 // could point at a 404 for a year with nothing to notice — which is exactly
 // what happened to California's, North Carolina's, Utah's and Ohio's.
 const SEARCH_ROOTS = ["src", "data", "docs", "scripts"];
+// The repository root is not a search root -- walking it would descend into
+// node_modules and dist -- so its markdown was swept by nothing, and that is
+// where the most-read links in the project live. The README alone carries the
+// state-by-state sources: a Wisconsin form, a Rhode Island advisory, a Nebraska
+// schedule. Same bug as `scripts/` a month ago, one directory further out.
+const ROOT_FILES = ["README.md", "SECURITY.md", "CLAUDE.md"];
 const EXTENSIONS = new Set([".ts", ".json", ".md", ".css", ".html"]);
 
 /** A URL that is a fixture or our own site, not a source link the site ships. */
@@ -58,6 +64,10 @@ export function sourceFiles(root = ROOT, roots: string[] = SEARCH_ROOTS): string
     }
   };
   for (const r of roots) walk(join(root, r));
+  for (const f of ROOT_FILES) {
+    const p = join(root, f);
+    if (existsSync(p)) out.push(p);
+  }
   return out;
 }
 
@@ -74,7 +84,15 @@ export function extractUrls(text: string): string[] {
     // `$` and would be checked as a truncated URL that 404s forever. The `{`
     // that follows is what identifies it, since `$` itself is legal in a URL.
     if (text[(m.index ?? 0) + m[0].length] === "{") continue;
-    const url = m[0].replace(/[.,;)\\"']+$/, "");
+    // A markdown link inside a badge closes one URL and opens another:
+    // `[![CI](…/badge.svg)](…/ci.yml)`. `)` and `[` are both legal in a path
+    // (the eCFR states a regulation as `…/section-1.401(a)(9)-9`), so the match
+    // ran straight through `)](` into the second URL and checked neither. No
+    // real URL contains `](`.
+    const linked = m[0].split("](")[0]!;
+    // Markdown emphasis rides along the same way a sentence's period does:
+    // `**[Report a vulnerability](…/new)**` left a trailing `)**`.
+    const url = linked.replace(/[.,;)*_\\"']+$/, "");
     if (NOT_SHIPPED.test(url)) continue;
     out.push(url);
   }
