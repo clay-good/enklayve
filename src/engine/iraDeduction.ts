@@ -80,12 +80,26 @@ function applicableRange(input: IraDeductionInput, data: IraDeductionData): Rang
   return null;
 }
 
+/**
+ * IRC §219(g)(2)(B): "if the amount is not a multiple of $10, round up to the
+ * next $10; and if the amount is less than $200, the deduction is $200."
+ *
+ * Both figures are statutory and neither indexes — they have read $10 and $200
+ * since the phase-out was written — so they are named here rather than left
+ * inline. Not a stylistic preference: an inline literal is invisible to every
+ * gate in this repo, which is how §1211(b)'s $3,000 capital-loss offset sat in
+ * the middle of a handler for months, and these two were the last of that shape
+ * left in the engine.
+ */
+const IRA_PARTIAL_ROUNDING = 10;
+const IRA_PARTIAL_MINIMUM = 200;
+
 /** Pub 590-A partial-deduction rule: round the result up to the next $10, and if
  *  it is positive but under $200, raise it to the $200 minimum. */
 function roundPartial(amount: number): number {
   if (amount <= 0) return 0;
-  const roundedUp = Math.ceil(amount / 10) * 10;
-  return Math.max(200, roundedUp);
+  const roundedUp = Math.ceil(amount / IRA_PARTIAL_ROUNDING) * IRA_PARTIAL_ROUNDING;
+  return Math.max(IRA_PARTIAL_MINIMUM, roundedUp);
 }
 
 export function iraDeductibility(

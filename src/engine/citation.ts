@@ -43,12 +43,15 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
  * citation is complete. Used by both {@link assertCited} and the build-time
  * provenance audit (BUILD-SPEC.md §9).
  */
+/** The earliest year a citation may claim: a sanity floor on a typed number. */
+const EARLIEST_YEAR = 1900;
+
 export function citationProblems(citation: Citation | undefined | null): string[] {
   const problems: string[] = [];
   if (!citation) return ["citation is missing"];
   if (!citation.sourceUrl.trim()) problems.push("sourceUrl is empty");
   if (!citation.sourceDocument.trim()) problems.push("sourceDocument is empty");
-  if (!Number.isInteger(citation.effectiveYear) || citation.effectiveYear < 1900) {
+  if (!Number.isInteger(citation.effectiveYear) || citation.effectiveYear < EARLIEST_YEAR) {
     problems.push(`effectiveYear is invalid: ${citation.effectiveYear}`);
   }
   if (!ISO_DATE.test(citation.dateRetrieved)) {

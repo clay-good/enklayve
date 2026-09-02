@@ -111,6 +111,14 @@ const VERDICTS: Record<string, string> = {
   MAX_ROWS: "bound — a cap so a crafted deep link cannot allocate a runaway editor",
   MAX_CURVE_COLUMNS: "bound — the widest curve drawn before thinning, to keep the DOM small",
   MAX_AGE: "bound — a ceiling on a user-entered age",
+  IRA_PARTIAL_ROUNDING:
+    "figure — IRC §219(g)(2)(B) rounds a partial IRA deduction up to the next $10. Statutory and unindexed since the phase-out was written.",
+  IRA_PARTIAL_MINIMUM:
+    "figure — IRC §219(g)(2)(B) floors a positive partial IRA deduction at $200. Statutory and unindexed; it was an inline literal until 2026-09-01.",
+  SWEEP_FLOOR_TO:
+    "bound — how far up the income axis the cliff sweep plots for a small household. A choice about a chart, not a figure anyone legislates.",
+  SWEEP_DEFAULT_TO: "bound — the same ceiling with no poverty-line data to scale against",
+  EARLIEST_YEAR: "bound — a sanity floor on a citation's typed effective year",
   DEFAULT_RETURN_PCT:
     "assumption — the long-run return a §530A projection starts from. Nobody legislates it, the reader can edit it, and the tile calls the result a projection rather than a promise.",
   DURATION_MS: "bound — an animation length",
@@ -150,6 +158,76 @@ const VERDICTS: Record<string, string> = {
     "be an act of Congress. Left in code deliberately, and named here so the next reader can " +
     "argue with the decision rather than rediscover it.",
 };
+
+/**
+ * The sweep this file could not do, closed on 2026-09-01.
+ *
+ * Everything above finds NAMED constants. The checklist has said for weeks that
+ * "an inline literal is a harder sweep", and it was right about why it matters:
+ * §1211(b)'s $3,000 capital-loss offset spent months as `fields.mfs ? 1500 :
+ * 3000` in the middle of a handler, invisible to every gate here, and was found
+ * by a person reading rather than by a check.
+ *
+ * Running the sweep by hand over `src/engine` on 2026-09-01 turned up four
+ * literals in real code — and one of them was statutory: IRC §219(g)(2)(B)'s
+ * $200 minimum partial IRA deduction, sitting as `Math.max(200, roundedUp)`.
+ * All four are named now, so the rule can be enforced instead of repeated.
+ *
+ * The threshold is 100. Below it live array indices, percentages, month counts
+ * and the arithmetic of dates, and a check that fires on `12` is one people
+ * learn to silence.
+ */
+describe("numbers the engine writes inline", () => {
+  const ENGINE = resolve(ROOT, "src", "engine");
+  /** Literals that are structural rather than quantitative. */
+  const STRUCTURAL = new Set([100, 1000, 1200, 10000, 365, 1e15]);
+
+  function codeLines(file: string): { line: string; number: number }[] {
+    const out: { line: string; number: number }[] = [];
+    let inBlock = false;
+    readFileSync(file, "utf8")
+      .split("\n")
+      .forEach((raw, i) => {
+        const line = raw.trim();
+        if (line.startsWith("/*")) inBlock = true;
+        if (inBlock) {
+          if (line.includes("*/")) inBlock = false;
+          return;
+        }
+        if (line.startsWith("*") || line.startsWith("//")) return;
+        out.push({ line: raw.split("//")[0]!, number: i + 1 });
+      });
+    return out;
+  }
+
+  function walk(dir: string): string[] {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+      const full = resolve(dir, e.name);
+      return e.isDirectory() ? walk(full) : e.name.endsWith(".ts") ? [full] : [];
+    });
+  }
+
+  it("writes no bare number of its own, so every figure has a name to look up", () => {
+    const offenders: string[] = [];
+    for (const file of walk(ENGINE)) {
+      const rel = file.slice(ROOT.length + 1);
+      for (const { line, number } of codeLines(file)) {
+        // A named constant's own declaration is where the number belongs.
+        if (/\bconst [A-Z_][A-Z0-9_]* *=/.test(line)) continue;
+        for (const m of line.matchAll(/(?<![\w.$])(\d[\d_]{2,}(?:\.\d+)?)(?![\w.])/g)) {
+          const value = Number(m[1]!.replace(/_/g, ""));
+          if (value < 100 || STRUCTURAL.has(value)) continue;
+          offenders.push(`${rel}:${number} — ${m[1]} in \`${line.trim().slice(0, 70)}\``);
+        }
+      }
+    }
+    expect(
+      offenders,
+      "give it a name and a verdict in VERDICTS above. A bare number in an expression is" +
+        " invisible to every gate in this repo, which is how §1211(b)'s $3,000 hid in a handler",
+    ).toEqual([]);
+  });
+});
 
 describe("what the code is allowed to know by heart", () => {
   const found = ["engine", "readout", "profile", "tiles", "ui"]

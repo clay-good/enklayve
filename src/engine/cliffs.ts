@@ -196,6 +196,19 @@ function finite(value: number, fallback = 0): number {
  * reverse: a truncated range would silently hide the very cliff being looked
  * for, while a coarser step only blurs it.
  */
+/**
+ * How far up the income axis the sweep plots when the caller does not say.
+ *
+ * Four times the poverty line covers the benefit cliffs for the household size,
+ * and the floor keeps a one-person household's chart from stopping below the
+ * incomes people actually ask about. Both are choices this site made about a
+ * chart, not figures anybody legislates — which is exactly why they are named:
+ * a bound and a statutory figure look identical as inline literals.
+ */
+const SWEEP_FLOOR_TO = 60_000;
+/** The same ceiling with no poverty-line data to scale against. */
+const SWEEP_DEFAULT_TO = 100_000;
+
 export function planSweep(
   input: CliffInput,
   data: CliffData,
@@ -203,8 +216,8 @@ export function planSweep(
 ): { from: number; to: number; step: number; stepWidened: boolean } {
   const from = clamp(finite(opts.from ?? 0), 0, MAX_INCOME);
   const defaultTo = data.fpl
-    ? Math.max(4 * finite(povertyLine(input.householdSize, data.fpl).toNumber()), 60_000)
-    : 100_000;
+    ? Math.max(4 * finite(povertyLine(input.householdSize, data.fpl).toNumber()), SWEEP_FLOOR_TO)
+    : SWEEP_DEFAULT_TO;
   const to = clamp(finite(opts.to ?? defaultTo, defaultTo), from + MIN_STEP, MAX_INCOME);
 
   const requested = clamp(finite(opts.step ?? DEFAULT_STEP, DEFAULT_STEP), MIN_STEP, MAX_STEP);
