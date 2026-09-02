@@ -448,7 +448,55 @@ async function observe(): Promise<string | null> {
   }
 }
 
+/** Flags this script understands. Anything else is a typo, and typos are costly here. */
+const FLAGS = new Set(["--file", "--classify", "--accept", "--help", "-h"]);
+
+const USAGE = `check-boundaries — which inclusive/exclusive comparisons a test actually holds.
+
+It flips every <= and >= in src/engine to its strict form, one at a time, and
+re-runs the suite. A mutation that still passes is a line no test holds.
+
+  npm run check:boundaries                     the full sweep (~25 minutes)
+  npm run check:boundaries -- --file <path>    one file, e.g. src/engine/amt.ts
+  npm run check:boundaries:classify            re-run the ENGINE, not the suite,
+                                               over the values each survivor
+                                               tests: ~1.5s a comparison
+  npm run check:boundaries -- --accept         record the current survivors as
+                                               the baseline (each needs a reason)
+
+It REWRITES FILES IN src/engine while it runs, so it refuses to start unless
+that tree is clean, journals the path it is about to change, and repairs
+whatever an earlier killed run left behind. Recovery by hand is a git checkout
+on the one path scripts/.boundary-mutation.json names.
+`;
+
+/**
+ * Refuse a flag this script does not know.
+ *
+ * Everything here used to be `argv.includes(...)`, so an unrecognized flag was
+ * simply absent and the run started anyway. `--help` was the worst of them: a
+ * contributor asking a 25-minute job that rewrites source files what its
+ * options are got the job instead, and killing it left a flipped comparison on
+ * disk in a file they had not edited. The journal makes that recoverable; not
+ * starting makes it moot.
+ */
+export function unknownFlags(argv: string[]): string[] {
+  return argv.filter((a) => a.startsWith("-") && !FLAGS.has(a));
+}
+
 async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+  if (args.includes("--help") || args.includes("-h")) {
+    process.stdout.write(USAGE);
+    return;
+  }
+  const unknown = unknownFlags(args);
+  if (unknown.length > 0) {
+    process.stderr.write(`check-boundaries: unknown option ${unknown.join(", ")}\n\n${USAGE}`);
+    process.exitCode = 2;
+    return;
+  }
+
   const only = process.argv.indexOf("--file");
   const roots = [join(ROOT, "src", "engine")];
   const files = roots

@@ -11,6 +11,7 @@ import {
   writeJournal,
   clearJournal,
   recoverAbandonedMutation,
+  unknownFlags,
 } from "../../scripts/check-boundaries";
 
 /**
@@ -305,5 +306,29 @@ describe("recovering from a run that was killed mid-rewrite", () => {
 
   it("clearing a note that is not there is not an error", () => {
     expect(() => clearJournal(journal)).not.toThrow();
+  });
+});
+
+describe("the flags this check accepts", () => {
+  /**
+   * Every option used to be read with `argv.includes(...)`, so an unrecognized
+   * one was simply absent and the run started regardless. `--help` was the
+   * expensive case: asking a 25-minute job that rewrites files in `src/engine`
+   * what its options are got the job, and killing it left a flipped comparison
+   * on disk in a file nobody had edited. The journal makes that recoverable.
+   * Refusing to start makes it moot, which is better — this happened.
+   */
+  it("names an unknown option instead of starting a 25-minute rewrite", () => {
+    expect(unknownFlags(["--help"])).toEqual([]);
+    expect(unknownFlags(["--file", "src/engine/amt.ts"])).toEqual([]);
+    expect(unknownFlags(["--classify"])).toEqual([]);
+    expect(unknownFlags(["--accept"])).toEqual([]);
+    expect(unknownFlags(["--halp"])).toEqual(["--halp"]);
+    expect(unknownFlags(["--file", "x.ts", "--clasify"])).toEqual(["--clasify"]);
+  });
+
+  it("does not mistake a --file argument for a flag", () => {
+    // The path is a bare value, and a path never starts with a dash here.
+    expect(unknownFlags(["--file", "src/engine/dueDates.ts"])).toEqual([]);
   });
 });

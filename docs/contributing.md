@@ -33,6 +33,7 @@ npm run check:links          # every external link the repo ships, monthly
 npm run check:adapters       # every refresh adapter still finds its figure, monthly
 npm run check:advisories     # every npm advisory has a reviewed reason, monthly
 npm run check:boundaries     # which inclusive/exclusive comparisons a test actually holds
+npm run check:boundaries -- --help   # it rewrites src/engine in place; read this first
 ```
 
 `check:advisories` is the one most likely to surprise you: it does **not** fail on an advisory, it fails on an advisory nobody has looked at. If it stops you, the fix is a triage entry in [`scripts/advisory-triage.json`](../scripts/advisory-triage.json) naming the vulnerable entry point and what calls it — or an upgrade, if one exists and works.
