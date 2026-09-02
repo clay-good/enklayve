@@ -195,6 +195,7 @@ export function chooseFederalDeduction(
     qualifiedTips: Money.zero(),
     qualifiedOvertime: Money.zero(),
     vehicleLoanInterest: Money.zero(),
+    itemizedLimitation: Money.zero(),
   });
   const takeItemized = (): DeductionResult => ({
     kind: "itemized",
@@ -204,6 +205,7 @@ export function chooseFederalDeduction(
     qualifiedTips: Money.zero(),
     qualifiedOvertime: Money.zero(),
     vehicleLoanInterest: Money.zero(),
+    itemizedLimitation: Money.zero(),
   });
   if (mode === "standard") return takeStandard();
   if (mode === "itemized") return takeItemized();

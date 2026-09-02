@@ -155,8 +155,11 @@ function computeFederal(
       ...deduction,
       // The reported deduction is what actually came off, so the result card's
       // arithmetic adds up: AGI minus these lines is the taxable income beside
-      // them. §68's reduction is not a separate line the reader can act on.
+      // them. What §68 took back is reported alongside it, because otherwise a
+      // filer who entered $60,000 of mortgage interest sees $56,756.76 with
+      // nothing on screen accounting for the difference.
       amount: deductionAfterLimitation,
+      itemizedLimitation,
       senior,
       qualifiedTips,
       qualifiedOvertime,
@@ -209,6 +212,7 @@ function computeState(
         deduction: {
           kind: "standard",
           amount: Money.zero(),
+          itemizedLimitation: Money.zero(),
           nonItemizedCharitable: Money.zero(),
           senior: Money.zero(),
           qualifiedTips: Money.zero(),
@@ -342,6 +346,8 @@ function computeState(
       deduction: {
         kind: "standard",
         amount: standard.add(exemption).add(fedTaxDeduction),
+        // §68 is federal: no state applies its own cap on itemized value here.
+        itemizedLimitation: Money.zero(),
         // No state legislates §170(p), §151(d)(5)(C), §§224/225 or §163(h)(4).
         // A state that starts from federal taxable income inherits them anyway,
         // and reports the inherited amounts here; every other state reports zero.

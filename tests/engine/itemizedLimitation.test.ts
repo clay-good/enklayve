@@ -98,6 +98,30 @@ describe("the 35% cap on what an itemized deduction is worth", () => {
     ).toBeLessThan(60_000);
   });
 
+  it("reports what it took back, so the arithmetic on screen adds up", () => {
+    // `amount` is the deduction AFTER the reduction, because AGI minus the
+    // lines shown has to equal the taxable income beside them. That leaves a
+    // reader who entered $60,000 of mortgage interest looking at a $56,756.76
+    // deduction, so the amount taken back is reported as its own figure and the
+    // tile renders it as a line — but only when it is not zero, which is almost
+    // always.
+    const r = evaluateTaxes(filer(900_000, 60_000), ctx());
+    expect(r.federal.deduction.itemizedLimitation.toNumber()).toBeCloseTo((60_000 * 2) / 37, 2);
+    expect(
+      r.federal.deduction.amount.add(r.federal.deduction.itemizedLimitation).toNumber(),
+    ).toBeCloseTo(60_000, 2);
+    // Nothing to report for an ordinary filer, or for one taking the standard.
+    expect(
+      evaluateTaxes(filer(120_000, 20_000), ctx()).federal.deduction.itemizedLimitation.toNumber(),
+    ).toBe(0);
+    expect(
+      evaluateTaxes(
+        { filingStatus: "single", wages: 900_000, deductionMode: "standard" },
+        ctx(),
+      ).federal.deduction.itemizedLimitation.toNumber(),
+    ).toBe(0);
+  });
+
   it("carries the fraction as the statute writes it, not as a decimal", () => {
     // 2/37 does not terminate. A rounded copy would be a figure nobody could
     // reproduce from the Code, so the shard holds the two integers.

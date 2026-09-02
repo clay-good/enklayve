@@ -82,6 +82,17 @@ export interface DeductionResult {
   /** IRC §225, the deduction for qualified overtime. */
   qualifiedOvertime: Money;
   /**
+   * IRC §68: how much of the itemized deduction was taken back by the 35% value
+   * cap. Zero for a filer taking the standard deduction, and for any itemizer
+   * whose income does not reach the 37% bracket — which is almost all of them.
+   *
+   * Reported rather than folded away silently because `amount` above is the
+   * figure AFTER the reduction, and a reader who entered $60,000 of mortgage
+   * interest and is shown a $56,756.76 deduction is owed the sentence in
+   * between. Showing the work is the whole promise.
+   */
+  itemizedLimitation: Money;
+  /**
    * IRC §163(h)(4), qualified passenger vehicle loan interest. Reached by
    * §63(b)(7) for a filer who does not itemize and by §163(a) for one who does,
    * so like §151 and unlike §170(p) it does not depend on the choice.

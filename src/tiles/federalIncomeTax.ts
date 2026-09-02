@@ -290,6 +290,18 @@ export function mountFederalIncomeTax(ctx: TileContext): void {
               citation: f.citation,
             },
           ]),
+      // §68 only ever bites above the 37% bracket, so this line is absent for
+      // almost every reader — and present for the one who would otherwise see a
+      // deduction smaller than the figures they typed, with nothing saying why.
+      ...(f.deduction.itemizedLimitation.isZero()
+        ? []
+        : [
+            {
+              label: "Less §68 cap on itemized value (35¢ on the dollar)",
+              value: `−${fmt(f.deduction.itemizedLimitation)}`,
+              citation: f.citation,
+            },
+          ]),
       ...(f.deduction.vehicleLoanInterest.isZero()
         ? []
         : [
