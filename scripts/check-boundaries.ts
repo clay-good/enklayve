@@ -54,6 +54,7 @@ import {
   rmSync,
   mkdirSync,
 } from "node:fs";
+import { createHash } from "node:crypto";
 import { execFileSync, spawn } from "node:child_process";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -67,12 +68,46 @@ const SUITES = ["tests/engine", "tests/golden"];
 /** The probe runner, for `--classify`. One file, so it starts in ~1.5s. */
 const OBSERVE_SPEC = "tests/build/observeEngine.test.ts";
 
+/**
+ * A boundary's identity: file, operator, column, and a hash of the line itself.
+ *
+ * The line NUMBER used to be in here, and it made the baseline fragile in a way
+ * that had nothing to do with what the baseline is for. Adding a function above
+ * a comparison moved it, so every shifted boundary read as "newly unheld" — the
+ * failure that means somebody added a threshold with no case on it — while its
+ * twin read as "held now, remove it". On 2026-09-01 three entries did exactly
+ * that after two unrelated functions were added, and accepting the report would
+ * have thrown away the written reason each of them carried.
+ *
+ * Hashing the line instead means an edit ELSEWHERE in the file leaves the id
+ * alone, and an edit to the comparison's own line changes it — which is the
+ * moment a human should look again anyway. The column stays because two
+ * comparisons can share one line.
+ */
+export function boundaryId(file: string, operator: string, column: number, line: string): string {
+  const hash = createHash("sha256").update(line.trim()).digest("hex").slice(0, 8);
+  return `${file}:${operator}:${column}:${hash}`;
+}
+
 /** One comparison that can be flipped, and what to flip it to. */
 export interface Boundary {
   file: string;
   line: number;
-  /** A stable id: file:line:from, so the baseline survives reformatting of other lines. */
+  /** A stable id: see {@link boundaryId} — no line number, so it survives edits elsewhere. */
   id: string;
+  /**
+   * Where the operator starts on the line.
+   *
+   * A field rather than something parsed back out of the id. It WAS parsed out
+   * — `Number(id.split(":").pop())` — which was true of the old id shape and
+   * became a hash the moment the id changed, so every mutation wrote its
+   * operator at column NaN, mangled the line, failed to compile, and made the
+   * suite fail for a reason that had nothing to do with the flip. Every
+   * boundary then reported as "held by a test", which is the most reassuring
+   * answer this check can give and was completely false. An id is an identity;
+   * it is not a place to keep data the code needs.
+   */
+  column: number;
   from: string;
   to: string;
   /** The source line, for a report someone can act on. */
@@ -129,7 +164,8 @@ export function boundariesIn(relPath: string, text: string): Boundary[] {
           found.push({
             file: relPath,
             line: i + 1,
-            id: `${relPath}:${i + 1}:${from}:${line.slice(0, at).length}`,
+            column: at,
+            id: boundaryId(relPath, from, at, line),
             from,
             to,
             context: line.trim().slice(0, 120),
@@ -480,7 +516,7 @@ async function main(): Promise<void> {
     const boundaries = boundariesIn(rel, original);
     for (const b of boundaries) {
       const lines = original.split("\n");
-      const col = Number(b.id.split(":").pop());
+      const col = b.column;
       const line = lines[b.line - 1]!;
       lines[b.line - 1] = line.slice(0, col) + b.to + line.slice(col + b.from.length);
       try {

@@ -57,8 +57,31 @@ describe("finding the comparisons worth flipping", () => {
   });
 
   it("gives each comparison an id that survives an edit elsewhere in the file", () => {
+    // This test's NAME was true and its assertion was not: it pinned
+    // "x.ts:1:<=:6", a line number, and so asserted precisely the fragility the
+    // name promised was absent. That is why nobody noticed until an edit above
+    // a comparison broke the baseline. The id is file, operator, column, and a
+    // hash of the line's own text now.
     const [a] = boundariesIn("x.ts", "if (a <= b && c <= d) return 0;");
-    expect(a?.id).toBe("x.ts:1:<=:6");
+    expect(a?.id).toMatch(/^x\.ts:<=:6:[0-9a-f]{8}$/);
+  });
+
+  it("reports a column that actually indexes to the operator", () => {
+    // The mutation writes `to` at this column. It used to read the column back
+    // out of the id's last segment, which was true of the old id shape and
+    // became a hash the moment the id changed — so every flip was written at
+    // column NaN, mangling the line, breaking the build, and failing the suite
+    // for a reason that had nothing to do with the comparison. Every boundary
+    // then reported as "held by a test": the most reassuring answer this check
+    // can give, and entirely false. Caught by flipping one line by hand and
+    // finding the suite green where the report said it should be red.
+    const source = "if (a <= b && c >= d) return x <= y;\n  if (m.lessThanOrEqual(n)) return 0;";
+    const lines = source.split("\n");
+    const found = boundariesIn("x.ts", source);
+    expect(found.length).toBeGreaterThan(3);
+    for (const b of found) {
+      expect(lines[b.line - 1]!.slice(b.column, b.column + b.from.length)).toBe(b.from);
+    }
   });
 
   it("finds every comparison on a line, not just the first", () => {
@@ -78,6 +101,24 @@ describe("the baseline", () => {
     const known = ["a.ts:1:<=:0", "b.ts:2:>=:0"];
     expect(againstBaseline(known, known).fresh).toEqual([]);
     expect(againstBaseline([...known, "c.ts:3:<=:0"], known).fresh).toEqual(["c.ts:3:<=:0"]);
+  });
+
+  it("survives an edit somewhere else in the same file", () => {
+    // The line NUMBER used to be part of the id, so adding a function above a
+    // comparison moved it: the shifted boundary read as "newly unheld" — which
+    // means somebody added a threshold with no case on it — and its twin read
+    // as "held now, remove it". Accepting that report would have deleted the
+    // written reason each entry carries. Three entries did exactly this on
+    // 2026-09-01 after two unrelated functions were added to the engine.
+    const line = "  if (a <= b) return 0;";
+    const before = boundariesIn("src/engine/x.ts", `${line}\n`);
+    const after = boundariesIn("src/engine/x.ts", `// a new comment\nfunction f() {}\n${line}\n`);
+    expect(after[0]?.id).toBe(before[0]?.id);
+    expect(after[0]?.line).not.toBe(before[0]?.line);
+    // And an edit to the comparison's own line DOES change it, which is the
+    // moment a person should look at it again.
+    const edited = boundariesIn("src/engine/x.ts", "  if (a <= c) return 0;\n");
+    expect(edited[0]?.id).not.toBe(before[0]?.id);
   });
 
   it("says nothing about files a scoped run did not look at", () => {
@@ -143,8 +184,8 @@ describe("the baseline", () => {
 
   it("holds ids in the shape the checker produces", () => {
     for (const id of Object.keys(baseline.unheld)) {
-      expect(id, `${id} is not file:line:operator:column`).toMatch(
-        /^src\/engine\/[\w/.]+\.ts:\d+:(<=|>=|lessThanOrEqual\(|greaterThanOrEqual\():\d+$/,
+      expect(id, `${id} is not file:operator:column:hash`).toMatch(
+        /^src\/engine\/[\w/.]+\.ts:(<=|>=|lessThanOrEqual\(|greaterThanOrEqual\():\d+:[0-9a-f]{8}$/,
       );
     }
   });
@@ -155,6 +196,7 @@ describe("the report", () => {
     file: "src/engine/benefits.ts",
     line: 10,
     id: "src/engine/benefits.ts:10:<=:4",
+    column: 4,
     from: "<=",
     to: "<",
     context: "if (pct <= threshold) return true;",
