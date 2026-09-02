@@ -39,14 +39,36 @@ interface Config {
   otherAssets: number;
   /** Monthly amount saved toward the Enough Number (a labeled assumption). */
   monthlySavings: number;
+  /** Essential monthly expenses — the link when it carries one, My Situation otherwise. */
+  essential: number;
+  /** Total monthly spending. `undefined` means "same as essentials", which is what it falls back to. */
+  total: number | undefined;
+  /** Liquid savings. */
+  savings: number;
 }
 
-function readConfig(p: URLSearchParams): Config {
+/**
+ * The link wins where it says something; My Situation answers where it does not.
+ *
+ * That is the rule every other Safe Harbor tile already followed — Sabbatical,
+ * Downshift and Life Insurance all read `p.has("s") ? … : profile.get(…)` — and
+ * this one, the pillar's front door, did not. Its three shared figures came from
+ * the profile alone, which is session-only by design, so the URL it wrote was
+ * shareable in form and empty in fact: a reader following the link that produced
+ * "$12,000 covers 3.8 months" saw "Add your essential monthly expenses below."
+ * A reload of the sender's own tab did the same thing.
+ */
+function readConfig(p: URLSearchParams, profile: SituationStore): Config {
   return {
     targetMonths: Math.max(1, parseNonNegative(p.get("m"), 3)),
     withdrawalRatePct: Math.max(0.1, parseNumber(p.get("wr"), 4)),
     otherAssets: parseNonNegative(p.get("assets"), 0),
     monthlySavings: parseNonNegative(p.get("sav"), 0),
+    essential: p.has("ess")
+      ? parseNonNegative(p.get("ess"), 0)
+      : (profile.get("essentialMonthlyExpenses") ?? 0),
+    total: p.has("tot") ? parseNonNegative(p.get("tot"), 0) : profile.get("totalMonthlyExpenses"),
+    savings: p.has("s") ? parseNonNegative(p.get("s"), 0) : (profile.get("liquidSavings") ?? 0),
   };
 }
 
@@ -56,6 +78,9 @@ function writeConfig(c: Config): URLSearchParams {
   if (c.withdrawalRatePct !== 4) p.set("wr", String(c.withdrawalRatePct));
   if (c.otherAssets > 0) p.set("assets", String(c.otherAssets));
   if (c.monthlySavings > 0) p.set("sav", String(c.monthlySavings));
+  if (c.essential > 0) p.set("ess", String(c.essential));
+  if (c.total !== undefined && c.total > 0) p.set("tot", String(c.total));
+  if (c.savings > 0) p.set("s", String(c.savings));
   return p;
 }
 
@@ -79,9 +104,9 @@ interface Readings {
 }
 
 function compute(profile: SituationStore, config: Config): Readings {
-  const essential = profile.get("essentialMonthlyExpenses") ?? 0;
-  const total = profile.get("totalMonthlyExpenses") ?? essential;
-  const savings = profile.get("liquidSavings") ?? 0;
+  const essential = config.essential;
+  const total = config.total ?? essential;
+  const savings = config.savings;
   const debts = (profile.get("debts") ?? []).reduce((sum, d) => sum + d.balance, 0);
   const netWorth = savings + config.otherAssets - debts;
   const annualEssentials = essential * 12;
@@ -180,7 +205,7 @@ function reading(opts: {
 export function mountPeaceOfMind(ctx: TileContext): void {
   const { root, profile } = ctx;
   root.replaceChildren();
-  let config = readConfig(ctx.params);
+  let config = readConfig(ctx.params, profile);
 
   const intro = el("p", {
     class: "ph-intro",
@@ -305,23 +330,33 @@ export function mountPeaceOfMind(ctx: TileContext): void {
     return field(label, input);
   }
 
+  // Each of these still fills My Situation, so the other Safe Harbor tiles pick
+  // it up without re-typing — and now also the URL, so the reading survives a
+  // reload and travels with the link.
   const essentialField = numberField(
-    "essential",
+    "ess",
     "Essential monthly expenses",
-    profile.get("essentialMonthlyExpenses"),
-    (v) => profile.set("essentialMonthlyExpenses", v),
+    config.essential || undefined,
+    (v) => {
+      profile.set("essentialMonthlyExpenses", v);
+      config = { ...config, essential: v };
+      ctx.setParams(writeConfig(config));
+    },
   );
-  const totalField = numberField(
-    "total",
-    "Total monthly spending",
-    profile.get("totalMonthlyExpenses"),
-    (v) => profile.set("totalMonthlyExpenses", v),
-  );
+  const totalField = numberField("tot", "Total monthly spending", config.total, (v) => {
+    profile.set("totalMonthlyExpenses", v);
+    config = { ...config, total: v };
+    ctx.setParams(writeConfig(config));
+  });
   const savingsField = numberField(
-    "savings",
+    "s",
     "Liquid savings",
-    profile.get("liquidSavings"),
-    (v) => profile.set("liquidSavings", v),
+    config.savings || undefined,
+    (v) => {
+      profile.set("liquidSavings", v);
+      config = { ...config, savings: v };
+      ctx.setParams(writeConfig(config));
+    },
     500,
   );
 
@@ -388,7 +423,15 @@ export function mountPeaceOfMind(ctx: TileContext): void {
     profile.set("essentialMonthlyExpenses", 3200);
     profile.set("totalMonthlyExpenses", 4500);
     profile.set("liquidSavings", 12000);
-    config = { targetMonths: 3, withdrawalRatePct: 4, otherAssets: 60000, monthlySavings: 1500 };
+    config = {
+      targetMonths: 3,
+      withdrawalRatePct: 4,
+      otherAssets: 60000,
+      monthlySavings: 1500,
+      essential: 3200,
+      total: 4500,
+      savings: 12000,
+    };
     essentialField.querySelector("input")!.value = "3200";
     totalField.querySelector("input")!.value = "4500";
     savingsField.querySelector("input")!.value = "12000";

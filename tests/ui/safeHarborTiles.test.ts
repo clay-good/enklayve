@@ -72,6 +72,37 @@ describe("Peace of Mind dashboard", () => {
     expect(netWorthSub).toContain("$4,000");
   });
 
+  it("reads its shared figures from the link, for a reader with no profile", () => {
+    // The link is the only thing a recipient has: My Situation is session-only
+    // and theirs is empty. Peace of Mind used to read essentials, total
+    // spending and liquid savings from the profile ALONE, so its own shared
+    // link reopened on "Add your essential monthly expenses below" — and so did
+    // the sender's reload. Every other Safe Harbor tile already read the param
+    // first and fell back to the profile; this is that rule, here.
+    const { root } = mount(
+      mountPeaceOfMind,
+      new URLSearchParams({ ess: "3200", tot: "4500", s: "12000" }),
+      new SituationStore(),
+    );
+    expect(root.querySelector(".ph-empty")).toBeNull();
+    expect(root.querySelectorAll(".ph-reading")).toHaveLength(5);
+    const netWorthSub = texts(root, ".ph-reading-sub").find((t) => t.includes("debts"));
+    expect(netWorthSub).toContain("$12,000");
+  });
+
+  it("lets the link override a profile that says something else", () => {
+    // Param first, profile second — the order matters when both speak. A
+    // recipient who has used the site in this session must see the SENDER's
+    // numbers, not their own under the sender's headline.
+    const { root } = mount(
+      mountPeaceOfMind,
+      new URLSearchParams({ ess: "1000", s: "50000" }),
+      fundedProfile(),
+    );
+    const netWorthSub = texts(root, ".ph-reading-sub").find((t) => t.includes("debts"));
+    expect(netWorthSub).toContain("$50,000");
+  });
+
   it("prompts for essentials before guessing when the profile is empty", () => {
     const { root } = mount(mountPeaceOfMind, new URLSearchParams());
     expect(root.querySelector(".ph-empty")).not.toBeNull();
@@ -88,7 +119,7 @@ describe("Peace of Mind dashboard", () => {
   it("writes shared inputs back to Your Situation", () => {
     const profile = new SituationStore();
     const { root } = mount(mountPeaceOfMind, new URLSearchParams(), profile);
-    const essential = root.querySelector<HTMLInputElement>('input[name="essential"]')!;
+    const essential = root.querySelector<HTMLInputElement>('input[name="ess"]')!;
     essential.value = "3000";
     essential.dispatchEvent(new Event("input"));
     expect(profile.get("essentialMonthlyExpenses")).toBe(3000);
@@ -97,7 +128,7 @@ describe("Peace of Mind dashboard", () => {
   it("prefills a worked example", () => {
     const { root } = mount(mountPeaceOfMind, new URLSearchParams());
     clickExample(root);
-    expect(root.querySelector<HTMLInputElement>('input[name="essential"]')?.value).toBe("3200");
+    expect(root.querySelector<HTMLInputElement>('input[name="ess"]')?.value).toBe("3200");
     expect(root.querySelectorAll(".ph-reading")).toHaveLength(5);
   });
 
@@ -113,7 +144,7 @@ describe("Peace of Mind dashboard", () => {
     expect(note).not.toBeNull();
     expect(note?.textContent).toContain("withdrawal rate");
     expect(note?.textContent).toContain("rainy-day target");
-    const essential = root.querySelector<HTMLInputElement>('input[name="essential"]')!;
+    const essential = root.querySelector<HTMLInputElement>('input[name="ess"]')!;
     essential.dispatchEvent(new Event("input", { bubbles: true }));
     expect(root.querySelector(".clamp-note")).toBeNull();
   });

@@ -209,6 +209,58 @@ describe("every calculator meets the tile bar", () => {
         ).toBe(true);
       });
 
+      it("writes a link that comes back to the same answer", () => {
+        // The test above proves `setParams` was CALLED. It cannot tell a link
+        // that carries the reading from one that carries half of it, and half a
+        // link is the worse failure of the two: it opens, it looks like the
+        // tool, and it shows the reader something other than what the sender
+        // saw. Peace of Mind shipped exactly that — it kept its essentials,
+        // total spending and liquid savings in the session profile alone, so
+        // the URL it wrote next to "$12,000 covers 3.8 months" reopened on
+        // "Add your essential monthly expenses below", and the sender's own
+        // reload did the same. Every other Safe Harbor tile already read the
+        // param first and fell back to the profile; nothing held that.
+        //
+        // So: press the example, take the link the tile wrote, and open it in a
+        // fresh mount with an EMPTY profile — which is what a recipient has.
+        const first = document.createElement("div");
+        let written = new URLSearchParams();
+        const ctx = (root: HTMLElement, params: URLSearchParams): TileContext =>
+          ({
+            root,
+            params,
+            setParams: (p: URLSearchParams) => {
+              written = new URLSearchParams(p);
+            },
+            permalink: () => "https://enklayve.com/#/x",
+            navigate: () => {},
+            locale: "en-US",
+            data,
+            profile: new SituationStore(),
+          }) as TileContext;
+
+        tile.mount!(ctx(first, new URLSearchParams()));
+        [...first.querySelectorAll("button")]
+          .find((b) => /try an example/i.test(b.textContent ?? ""))
+          ?.click();
+
+        const second = document.createElement("div");
+        tile.mount!(ctx(second, new URLSearchParams(written)));
+
+        // Compare the ANSWER, not the form: the inputs are what the link is
+        // supposed to restore, and reading them back would let a tile pass by
+        // restoring the boxes while computing from something else.
+        const shown = (host: HTMLElement): string => {
+          const clone = host.cloneNode(true) as HTMLElement;
+          for (const form of clone.querySelectorAll("form")) form.remove();
+          return (clone.textContent ?? "").replace(/\s+/g, " ").trim();
+        };
+        expect(
+          shown(second),
+          `${tile.id}: its own link (?${written.toString()}) reopens on a different answer`,
+        ).toBe(shown(first));
+      });
+
       it("writes its state to the URL, so a result is shareable", () => {
         // Deep-linkability is the property that makes every answer reproducible
         // (SPEC §2 principle 1). A tile that never calls `setParams` produces a
