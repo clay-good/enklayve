@@ -181,6 +181,13 @@
       "why": "The two halves of the Act's charitable rewrite, which pull in opposite directions and are both statutory rather than indexed: §170(p)'s $1,000 and $2,000 for a filer who does not itemize, and §170(b)(1)(I)'s 0.5% floor on one who does. Neither has an annual document to chase. This is also the section that settles how they interact — §170(p) is computed \"without regard to ... (b)(1)(I)\" — and that cross-reference is exactly the kind of thing an amendment could remove without changing a single dollar figure, which is why the watch is at the section rather than at either paragraph. Fourth watch on this shard, after §164, §163 and §63.",
       "fingerprint": "03a6c6b6eacd267b21a7f7c90864e4248e0ab88e554a3fdf7c1488812db1e30d",
       "checkedOn": "2026-09-01"
+    },
+    {
+      "shard": "federal-income-tax-2024",
+      "url": "https://www.law.cornell.edu/uscode/text/26/68",
+      "why": "§68 is the reason a $1 itemized deduction is worth 35 cents rather than 37 to a top-bracket filer, and it is a FRACTION rather than an indexed amount — 2/37 of the lesser of the deductions or the income above where the 37% bracket starts. Nothing about it moves annually, and the one figure that does move, the threshold, is this shard's own bracket schedule rather than a field. Watched because this section has a history of being switched off and on: the pre-Act version applied to no taxable year from 2018 through 2025, and the Act rewrote it generally with effect from 2026. A section that has been dormant for eight years is exactly the one nobody notices changing again. Fifth watch on this shard.",
+      "fingerprint": "519bcbd6afb80c400b70236b8ba89a96f47784a1104f19d350a1f7073735d908",
+      "checkedOn": "2026-09-01"
     }
   ]
 }

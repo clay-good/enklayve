@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **69** in **12 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **81**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | unit/golden across **122** files, **+42** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | unit/golden across **123** files, **+42** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Source audits | **all 51 jurisdictions + the federal and benefits shards** read against the agency's own document; 8 wrong figures found and fixed | [`docs/data-sources.md`](docs/data-sources.md#source-audits) |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale/theme preference touches `localStorage`, asserted end-to-end across a full session | `npm run audit` / `npm run test:e2e` |
@@ -612,7 +612,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**The unit and golden suite across 122 files** (plus 42 Playwright e2e tests) passes today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**The unit and golden suite across 123 files** (plus 42 Playwright e2e tests) passes today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -738,7 +738,7 @@ The [launch checklist](docs/launch-checklist.md) walks every acceptance criterio
 
 ### The One Big Beautiful Bill Act, modeled end to end
 
-The Act rewrote enough of the individual code that it is worth stating what this site does with it in one place. **All five new deductions** are computed — $1,000 of giving without itemizing (§170(p)), $6,000 a person at 65 (§151(d)(5)(C)), $25,000 of tips (§224), $12,500 of overtime (§225), $10,000 of car loan interest (§163(h)(4)) — each with its own phase-out shape, of which the Act wrote four for five deductions. The **SALT limitation** is the post-Act $40,400 with its 30% phase-down. Six states inherit the deductions because their income tax starts at *federal taxable income*, and two of the six add back a different one each. The **2026 W-2's new box 12 codes** TP and TT are read by the Readout and pre-fill the calculator that spends them, with box 14b's occupation code asking whether the tips qualify. The **§530A account** for a child under 18 has its own tile, including the $1,000 the Treasury pays under §6434 and the fact that the account is tax-deferred rather than tax-free. Charitable giving is modeled in **both** directions the Act moved it: §170(p)'s deduction without itemizing, and §170(b)(1)(I)'s **0.5% floor** on an itemizer's giving — which the Code exempts §170(p) from by name, so the same $1,000 can be worth more to a filer who does not itemize. And the ACA's **400% subsidy cliff** is back, because §71302(a) repealed the suspension.
+The Act rewrote enough of the individual code that it is worth stating what this site does with it in one place. **All five new deductions** are computed — $1,000 of giving without itemizing (§170(p)), $6,000 a person at 65 (§151(d)(5)(C)), $25,000 of tips (§224), $12,500 of overtime (§225), $10,000 of car loan interest (§163(h)(4)) — each with its own phase-out shape, of which the Act wrote four for five deductions. The **SALT limitation** is the post-Act $40,400 with its 30% phase-down. Six states inherit the deductions because their income tax starts at *federal taxable income*, and two of the six add back a different one each. The **2026 W-2's new box 12 codes** TP and TT are read by the Readout and pre-fill the calculator that spends them, with box 14b's occupation code asking whether the tips qualify. The **§530A account** for a child under 18 has its own tile, including the $1,000 the Treasury pays under §6434 and the fact that the account is tax-deferred rather than tax-free. **IRC §68 is applied too** — dormant since 2017, rewritten by the Act, and capping what an itemized deduction is worth at 35 cents on the dollar above the 37% bracket. Charitable giving is modeled in **both** directions the Act moved it: §170(p)'s deduction without itemizing, and §170(b)(1)(I)'s **0.5% floor** on an itemizer's giving — which the Code exempts §170(p) from by name, so the same $1,000 can be worth more to a filer who does not itemize. And the ACA's **400% subsidy cliff** is back, because §71302(a) repealed the suspension.
 
 ## Roadmap & deliberately deferred
 

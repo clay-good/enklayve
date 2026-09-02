@@ -1,6 +1,7 @@
 import { Money } from "../money";
 import type { FicaData, Jurisdiction } from "../../data/schemas";
 import {
+  bracketStartForRate,
   bracketTax,
   bracketsFor,
   federalTaxDeductionFor,
@@ -13,6 +14,7 @@ import {
 } from "./brackets";
 import {
   chooseFederalDeduction,
+  itemizedLimitationFor,
   nonItemizerCharitableFor,
   saltCapFor,
   seniorDeductionFor,
@@ -108,9 +110,38 @@ function computeFederal(
     input.vehicleLoanInterest ?? 0,
     agi,
   );
+  // §68, applied last because §68(b) says so: "after the application of any
+  // other limitation on the allowance of any itemized deduction". Clause (2)'s
+  // subject is taxable income without this section and with the deductions added
+  // back, which is the income remaining after everything §63(b) takes off OTHER
+  // than the itemized total itself. A filer taking the standard deduction has no
+  // itemized deductions for it to reduce.
+  const itemizedLimitation =
+    deduction.kind === "itemized"
+      ? itemizedLimitationFor(
+          federal.itemizedLimitation,
+          federal.itemizedLimitation
+            ? bracketStartForRate(
+                federal,
+                input.filingStatus,
+                federal.itemizedLimitation.thresholdRate,
+              )
+            : undefined,
+          deduction.amount,
+          clampZero(
+            agi
+              .subtract(senior)
+              .subtract(qualifiedTips)
+              .subtract(qualifiedOvertime)
+              .subtract(vehicleLoanInterest),
+          ),
+        )
+      : Money.zero();
+  const deductionAfterLimitation = clampZero(deduction.amount.subtract(itemizedLimitation));
+
   const taxableIncome = clampZero(
     agi
-      .subtract(deduction.amount)
+      .subtract(deductionAfterLimitation)
       .subtract(deduction.nonItemizedCharitable)
       .subtract(senior)
       .subtract(qualifiedTips)
@@ -120,7 +151,17 @@ function computeFederal(
   const incomeTax = bracketTax(taxableIncome, bracketsFor(federal, input.filingStatus));
   return {
     taxableIncome,
-    deduction: { ...deduction, senior, qualifiedTips, qualifiedOvertime, vehicleLoanInterest },
+    deduction: {
+      ...deduction,
+      // The reported deduction is what actually came off, so the result card's
+      // arithmetic adds up: AGI minus these lines is the taxable income beside
+      // them. §68's reduction is not a separate line the reader can act on.
+      amount: deductionAfterLimitation,
+      senior,
+      qualifiedTips,
+      qualifiedOvertime,
+      vehicleLoanInterest,
+    },
     incomeTax,
   };
 }

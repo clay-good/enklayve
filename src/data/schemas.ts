@@ -423,6 +423,39 @@ export const CharitableFloorSchema = z.object({
 });
 export type CharitableFloorData = z.infer<typeof CharitableFloorSchema>;
 
+/**
+ * IRC §68, the overall limitation on itemized deductions — rewritten by the One
+ * Big Beautiful Bill Act (§70111) and biting again for the first time since
+ * 2017, for taxable years beginning after December 31, 2025.
+ *
+ * The old §68 was a phase-out of the deductions themselves. The new one is a
+ * cap on their VALUE: "the amount of the itemized deductions otherwise allowable
+ * ... shall be reduced by 2/37 of the lesser of (1) such amount of itemized
+ * deductions, or (2) so much of the taxable income ... as exceeds the dollar
+ * amount at which the 37 percent rate bracket under section 1 begins". Two
+ * thirty-sevenths of thirty-seven percent is two percent, so a dollar of
+ * deduction is worth 35 cents to a top-bracket filer instead of 37.
+ *
+ * Carried as the statute writes it — a numerator and a denominator, not a
+ * decimal — because 2/37 does not terminate and a rounded copy of it would be a
+ * figure this repo could not reproduce from the Code. The threshold is not
+ * carried at all: it is "the dollar amount at which the 37 percent rate bracket
+ * begins", which the shard already states in its own bracket schedule, so
+ * `thresholdRate` names the rate to look it up by rather than duplicating a
+ * number that would then have two places to drift.
+ *
+ * §68(b): applied AFTER every other limitation, which is why the engine reaches
+ * it last — after the SALT cap, after the §170(b)(1)(I) charitable floor, and
+ * after the medical floor.
+ */
+export const ItemizedLimitationSchema = z.object({
+  reductionNumerator: z.number().int().gt(0),
+  reductionDenominator: z.number().int().gt(0),
+  /** The bracket rate whose lower bound is the threshold (0.37 today). */
+  thresholdRate: z.number().gt(0).lte(1),
+});
+export type ItemizedLimitationData = z.infer<typeof ItemizedLimitationSchema>;
+
 export const SaltLimitationSchema = z.object({
   applicableLimitationAmount: z.number().gt(0),
   thresholdAmount: z.number().gt(0),
@@ -574,6 +607,8 @@ export const JurisdictionSchema = z.object({
   nonItemizerCharitable: NonItemizerCharitableSchema.optional(),
   /** IRC §170(b)(1)(I), the floor on an itemizer's giving (federal only). */
   charitableFloor: CharitableFloorSchema.optional(),
+  /** IRC §68, the 35% value cap on itemized deductions (federal only). */
+  itemizedLimitation: ItemizedLimitationSchema.optional(),
   /** IRC §151(d)(5)(C), the deduction at 65 (federal only). */
   seniorDeduction: SeniorDeductionSchema.optional(),
   /** IRC §224, the deduction for qualified tips (federal only). */

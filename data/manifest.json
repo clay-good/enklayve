@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-01",
+  "generatedAt": "2026-09-02",
   "datasets": [
     {
       "id": "federal-income-tax-2024",
@@ -13,7 +13,7 @@
       "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
       "sourceDocument": "IRS Revenue Procedure 2025-32 (2026 inflation adjustments, reflecting the One Big Beautiful Bill Act)",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "2f81cd42235ff5990034fb7ca63497ce4b1faee4f93d320f1f871135fb9a42f2"
+      "contentHash": "4e9cfb1edee2bc19ced366b6c836639488b1ba051875bc8a882e40bd40899d3b"
     },
     {
       "id": "fica-2024",

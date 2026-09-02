@@ -82,6 +82,23 @@ export function bracketsFor(jurisdiction: Jurisdiction, status: FilingStatus): B
   throw new Error(`${jurisdiction.id} defines no brackets for ${status} and no fallback`);
 }
 
+/**
+ * Where a given rate's bracket starts, for this filing status.
+ *
+ * IRC §68 names its threshold rather than stating it — "the dollar amount at
+ * which the 37 percent rate bracket under section 1 begins" — so the figure is
+ * read out of the schedule the shard already carries instead of being copied
+ * into a second field that could then disagree with the first. Undefined when
+ * no bracket has that rate, which is every jurisdiction but the federal one.
+ */
+export function bracketStartForRate(
+  jurisdiction: Jurisdiction,
+  status: FilingStatus,
+  rate: number,
+): number | undefined {
+  return bracketsFor(jurisdiction, status).find((b) => b.rate === rate)?.lowerBound;
+}
+
 /** Standard deduction for a status (via {@link fallbackChain}), 0 if none. */
 export function standardDeductionFor(jurisdiction: Jurisdiction, status: FilingStatus): number {
   const table = jurisdiction.standardDeductionByFilingStatus;

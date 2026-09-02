@@ -1,6 +1,7 @@
 import { Money } from "../money";
 import type {
   FilingStatus,
+  ItemizedLimitationData,
   NonItemizerCharitableData,
   SaltLimitationData,
   SeniorDeductionData,
@@ -95,6 +96,48 @@ export function itemizedTotal(
     : Money.zero();
 
   return salt.add(mortgage).add(charitable).add(medical);
+}
+
+/**
+ * IRC §68: the cap on what an itemized deduction is WORTH.
+ *
+ * Rewritten by the One Big Beautiful Bill Act and biting again in 2026 for the
+ * first time since 2017 — the old version, a phase-out of the deductions
+ * themselves, was switched off for every year from 2018 through 2025.
+ *
+ * The new one reduces the deduction by "2/37 of the lesser of (1) such amount of
+ * itemized deductions, or (2) so much of the taxable income of the taxpayer for
+ * the taxable year (determined without regard to this section and increased by
+ * such amount of itemized deductions) as exceeds the dollar amount at which the
+ * 37 percent rate bracket under section 1 begins".
+ *
+ * Two thirty-sevenths of thirty-seven percent is two percent, which is the whole
+ * design: a dollar of deduction saves a top-bracket filer 35 cents instead of
+ * 37. The two arms of the `lesser of` are what makes it a cap on value rather
+ * than a haircut — a filer only just inside the 37% bracket has little income up
+ * there for the deduction to be worth 37 cents against, so only that much is
+ * reduced.
+ *
+ * `incomeAboveDeductions` is clause (2)'s subject: taxable income computed
+ * without this section and then increased by the deductions again, which is the
+ * income left after everything §63(b) subtracts OTHER than the itemized total.
+ *
+ * §68(b) says this is applied "after the application of any other limitation on
+ * the allowance of any itemized deduction", so it is the last thing to touch the
+ * figure — after the SALT cap, the §170(b)(1)(I) charitable floor, and the
+ * medical floor.
+ */
+export function itemizedLimitationFor(
+  rule: ItemizedLimitationData | undefined,
+  bracketThreshold: number | undefined,
+  itemizedAmount: Money,
+  incomeAboveDeductions: Money,
+): Money {
+  if (!rule || bracketThreshold === undefined) return Money.zero();
+  const over = incomeAboveDeductions.subtract(bracketThreshold);
+  if (!over.greaterThan(0) || !itemizedAmount.greaterThan(0)) return Money.zero();
+  const lesser = over.lessThan(itemizedAmount) ? over : itemizedAmount;
+  return lesser.multiply(rule.reductionNumerator).divide(rule.reductionDenominator);
 }
 
 /**
