@@ -41,6 +41,23 @@ export function proseYears(source: string): string[] {
   return [...new Set(strings.join(" ").match(/(?<![\d-])(?:19|20)\d{2}(?![\d-])/g) ?? [])];
 }
 
+/**
+ * The spans the single-year scan skips: `2026-27`, and the revenue procedures
+ * and notices that look exactly like one — `Rev. Proc. 2025-32`,
+ * `Notice 2025-67`. Both are claims worth checking rather than noise. An award
+ * year is the year of the figures under it; a document number is the source the
+ * shard cites, so a shard rolled to a new revenue procedure leaves the tile
+ * naming the old one.
+ *
+ * An ISO date is excluded by the trailing guard: `2026-07-04` would otherwise
+ * read as the span `2026-07`.
+ */
+export function proseSpans(source: string): string[] {
+  const strings =
+    readerText(source).match(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`/g) ?? [];
+  return [...new Set(strings.join(" ").match(/(?<!\d)(?:19|20)\d{2}-\d{2}(?![\d-])/g) ?? [])];
+}
+
 /** `2026` must not be found inside `12026` or `2026-27`, and may follow `FY`. */
 export function statesYear(text: string, year: string): boolean {
   return new RegExp(`(?<![\\d-])${year}(?![\\d-])`).test(text);
@@ -143,6 +160,64 @@ const NOT_A_TAX_YEAR: Record<string, Record<string, string>> = {
   },
 };
 
+/**
+ * A span in prose, and what it has to agree with.
+ *
+ * `award` is the award year of the figures, written `2026-2027` on the shard and
+ * `2026-27` in the sentence. `document` is the revenue procedure or notice the
+ * shard cites: the number is read back out of `citation.sourceDocument`, so a
+ * shard rolled to next year's Rev. Proc. leaves the tile naming the old one and
+ * fails here.
+ */
+const SPAN_BOUND: { file: string; shard: string; kind: "award" | "document"; why: string }[] = [
+  {
+    file: "tiles/pell.ts",
+    shard: "fafsa-2024-2025",
+    kind: "award",
+    why: "the award year of the Pell figures",
+  },
+  {
+    file: "tiles/fafsaSai.ts",
+    shard: "fafsa-2024-2025",
+    kind: "award",
+    why: "the award year of the SAI methodology and tables",
+  },
+  {
+    file: "tiles/amtScreener.ts",
+    shard: "amt-2024",
+    kind: "document",
+    why: "the revenue procedure its shard cites",
+  },
+  {
+    file: "tiles/giftTax.ts",
+    shard: "gift-tax-2024",
+    kind: "document",
+    why: "the revenue procedure its shard cites",
+  },
+  {
+    file: "tiles/iraDeduction.ts",
+    shard: "ira-deduction-2024",
+    kind: "document",
+    why: "the notice its shard cites",
+  },
+];
+
+/** The span a binding expects, read out of the shard. */
+function spanOf(b: { shard: string; kind: "award" | "document" }): string {
+  if (b.kind === "award") {
+    const award = shardValue(b.shard, "awardYear");
+    if (typeof award !== "string") throw new Error(`${b.shard}.awardYear is not a string`);
+    // The shard writes both years in full; the sentence writes the second short.
+    const [first, second] = award.split("-");
+    return `${first}-${second!.slice(-2)}`;
+  }
+  const cited = shardValue(b.shard, "citation.sourceDocument");
+  const span =
+    typeof cited === "string" ? /(?<!\d)(?:19|20)\d{2}-\d{2}(?![\d-])/.exec(cited) : null;
+  if (!span) throw new Error(`${b.shard} cites no document number`);
+  return span[0];
+}
+
 describe("a year in the prose is the year in the shard", () => {
   const source = new Map(srcModules().map((f) => [f, readerSource(f)] as const));
 
@@ -185,6 +260,28 @@ describe("a year in the prose is the year in the shard", () => {
       for (const year of Object.keys(allowed)) if (!found.has(year)) dead.push(`${file} ${year}`);
     }
     expect(dead.sort(), "delete the entry, or fix the year it was written for").toEqual([]);
+  });
+
+  for (const b of SPAN_BOUND) {
+    const span = spanOf(b);
+    it(`${b.file} states ${span} — ${b.why}`, () => {
+      expect(
+        proseSpans(source.get(b.file)!).includes(span),
+        `${b.file} does not state ${span}`,
+      ).toBe(true);
+    });
+  }
+
+  it("accounts for every span a reader can see", () => {
+    const unaccounted: string[] = [];
+    for (const [file, text] of source) {
+      const bound = new Set(SPAN_BOUND.filter((b) => b.file === file).map(spanOf));
+      for (const span of proseSpans(text))
+        if (!bound.has(span)) unaccounted.push(`${file} ${span}`);
+    }
+    expect(unaccounted.sort(), "bind it to the award year or the cited document it names").toEqual(
+      [],
+    );
   });
 
   it("reads years a reader sees and not years the code counts with", () => {
