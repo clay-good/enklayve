@@ -154,6 +154,30 @@ describe("a tile does not offer a choice it cannot honour", () => {
     expect(source).toMatch(/Federal Income Tax tool asks for the 'big four'/);
   });
 
+  it("lets no tile choose to itemize without asking for something to itemize", () => {
+    // The general form of what Take-Home got wrong. A tile that hands the
+    // engine a deduction mode of "auto" or "itemized" is asking it to compare
+    // against an itemized total, and a tile with no itemized inputs is asking
+    // it to compare against zero — which produces a confident, specific, much
+    // larger tax bill. Passing the literal "standard" is the honest way to
+    // compute without the big four.
+    const offenders = readdirSync(TILES)
+      .filter((f) => f.endsWith(".ts"))
+      .map((f) => [f, readFileSync(resolve(TILES, f), "utf8")] as const)
+      .filter(([, src]) => src.includes("deductionMode"))
+      .filter(
+        ([, src]) =>
+          !src.includes("itemized:") &&
+          !/deductionMode: DEDUCTION_MODE|deductionMode: "standard"/.test(src),
+      )
+      .map(([f]) => f);
+    expect(
+      offenders,
+      "these choose a deduction mode without any itemized input to choose with:" +
+        ' pass "standard", or ask the reader for the big four',
+    ).toEqual([]);
+  });
+
   it("computes on the standard deduction, so the deduction is never zero", () => {
     // The failure mode in one assertion: whatever a deep link says, a filer
     // with wages gets a deduction.
