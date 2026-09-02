@@ -199,8 +199,32 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * So the ten kilobytes are the honest cost of the prose and provenance that were
  * added, and they buy roughly 11 kB of headroom rather than a fresh margin: the
  * gate is still meant to trip.
+ *
+ * **Raised 275 -> 280 on 2026-09-02, and it is the cheapest raise yet.** The
+ * headroom went 1.8 kB -> 0.7 kB across a day that shipped all 92 Indiana county
+ * tax rates, Detroit's city tax on a new engine capability, and the county tax
+ * reaching the two tiles that answer "what does my next dollar cost". That is
+ * **1.1 kB gzipped** for two mandatory local taxes covering roughly 13M people
+ * and a marginal rate that had been understated by up to 3.3 points.
+ *
+ * Ninety-two counties cost almost nothing because they gzip almost perfectly:
+ * the shard grows 10 kB on disk and the entry chunk barely moves, since every
+ * row is the same four keys. That is worth knowing before the next local-tax
+ * wave — Ohio's municipalities and Pennsylvania's local EIT are thousands of
+ * rows, not ninety-two, and the compressor's help does not scale that far.
+ *
+ * The levers were re-measured rather than re-quoted, and the 2026-09-01 finding
+ * stands: the entry chunk is 264 kB gzipped of the 274, the inlined shards are
+ * most of it, and they cannot leave — `connect-src 'none'` inlines them at build
+ * time and the manifest hash is computed over the exact shard bytes, so a lazily
+ * imported copy would be hashing a shard that is not the shard. Splitting the 69
+ * tiles out of the entry chunk moves bytes between chunks without moving them
+ * out of the *precached* set, which is what this number measures: what the
+ * service worker must hold for the site to work offline.
+ *
+ * Five, not ten. The gate is still meant to trip.
  */
-export const SHELL_GZIP_BUDGET_KB = 275;
+export const SHELL_GZIP_BUDGET_KB = 280;
 
 /** A precached asset and its gzipped size. */
 export interface ShellAsset {

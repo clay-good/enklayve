@@ -12,6 +12,7 @@ import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { residenceLocalField, resolveResidenceLocal } from "../ui/residenceLocal";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
@@ -33,9 +34,18 @@ interface Fields {
   wages: number;
   k401: number;
   hsa: number;
+  /** The mandatory residence-based county tax (Maryland, Indiana), when there is one. */
+  local: string[];
 }
 
-const EXAMPLE: Fields = { fs: "single", state: "ca", wages: 95000, k401: 8000, hsa: 2000 };
+const EXAMPLE: Fields = {
+  fs: "single",
+  state: "ca",
+  wages: 95000,
+  k401: 8000,
+  hsa: 2000,
+  local: [],
+};
 
 function isFilingStatus(v: string): v is FilingStatus {
   return FILING_STATUSES.some((f) => f.value === v);
@@ -50,6 +60,7 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
     wages: p.has("w") ? parseNonNegative(p.get("w"), 0) : (profile.get("annualIncome") ?? 0),
     k401: parseNonNegative(p.get("k"), 0),
     hsa: parseNonNegative(p.get("hsa"), 0),
+    local: p.getAll("loc"),
   };
 }
 
@@ -60,6 +71,7 @@ function writeFields(f: Fields): URLSearchParams {
   p.set("w", String(f.wages));
   if (f.k401 > 0) p.set("k", String(f.k401));
   if (f.hsa > 0) p.set("hsa", String(f.hsa));
+  for (const id of f.local) p.append("loc", id);
   return p;
 }
 
@@ -119,7 +131,10 @@ export function mountPaycheckOptimizer(ctx: TileContext): void {
       adjustments: k401, // 401(k) reduces AGI (income tax) but not the FICA base
     };
     const state = fields.state ? (data?.state(fields.state) ?? undefined) : undefined;
-    const r = evaluateTaxes(input, { federal: fed!, fica: fica!, state });
+    const r = evaluateTaxes(
+      { ...input, localJurisdictionIds: fields.local },
+      { federal: fed!, fica: fica!, state },
+    );
     return { tax: r.totals.totalTax, takeHome: r.totals.takeHome, rate: r.totals.effectiveRate };
   }
 
@@ -165,14 +180,35 @@ export function mountPaycheckOptimizer(ctx: TileContext): void {
     );
   }
 
+  const localContainer = el("div", { class: "local-addons" });
+
+  /**
+   * A mandatory county tax is a fact about where you live, not a question, so it
+   * resolves to the shard's default rather than staying empty — and it changes
+   * the answer this tile gives, since a dollar moved into the 401(k) escapes the
+   * county tax too.
+   */
+  function renderLocal(): void {
+    const state = fields.state ? (data?.state(fields.state) ?? null) : null;
+    fields.local = resolveResidenceLocal(state, fields.local);
+    localContainer.replaceChildren();
+    const county = residenceLocalField(state, fields.local[0], recompute);
+    if (county) localContainer.append(county);
+  }
+
   function recompute(): void {
+    const county = localContainer.querySelector<HTMLSelectElement>("select[name='loc-select']");
     fields = {
       fs: isFilingStatus(fsSelect.value) ? fsSelect.value : "single",
       state: stateSelect.value,
       wages: parseNonNegative(wInput.value, 0),
       k401: parseNonNegative(kInput.value, 0),
       hsa: parseNonNegative(hsaInput.value, 0),
+      // A select that is gone because the state changed must not carry the old
+      // state's county into the new state's evaluation.
+      local: county && county.value ? [county.value] : [],
     };
+    renderLocal();
     ctx.setParams(writeFields(fields));
     rememberShared(profile, {
       filingStatus: fields.fs,
@@ -203,10 +239,12 @@ export function mountPaycheckOptimizer(ctx: TileContext): void {
     field("Gross annual wages", wInput),
     field("401(k) contribution", kInput),
     field("HSA contribution", hsaInput),
+    localContainer,
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
   root.append(form, resultContainer);
+  renderLocal();
   compute();
 }
 
@@ -218,7 +256,7 @@ export const paycheckOptimizerTile: TileDefinition = {
   keywords: ["paycheck", "optimizer", "401k", "hsa", "pre-tax", "take home", "tax savings"],
   status: "ready",
   how:
-    "Pre-tax contributions lower your tax bill, but not all of them the same way. A traditional 401(k) deferral cuts your income tax. An HSA contribution through payroll cuts your income tax too, and it also skips Social Security and Medicare (FICA) tax, so each dollar saves a little more. This shows your take-home now and the tax saved by the next $1,000 into each, using the same federal + FICA + state engine as the take-home tile.\n\nThe figures are exact for the numbers you enter. HSA money is meant for medical costs and needs an HSA-eligible health plan, so it isn't a free lunch, but if you have one, it's the most tax-efficient dollar on your paycheck. Filing status, state, and income flow to and from My Situation. To tune the W-4 itself against your actual paycheck withholding, use the W-4 Withholding & Refund Check.\n\n" +
+    "Pre-tax contributions lower your tax bill, but not all of them the same way. A traditional 401(k) deferral cuts your income tax. An HSA contribution through payroll cuts your income tax too, and it also skips Social Security and Medicare (FICA) tax, so each dollar saves a little more. This shows your take-home now and the tax saved by the next $1,000 into each, using the same federal + FICA + state engine as the take-home tile — including, in Maryland and Indiana, the county income tax every resident pays, since a dollar moved into the 401(k) escapes that too. Optional local taxes you would have to opt into (New York City, Yonkers, Columbus, Detroit) are not included here.\n\nThe figures are exact for the numbers you enter. HSA money is meant for medical costs and needs an HSA-eligible health plan, so it isn't a free lunch, but if you have one, it's the most tax-efficient dollar on your paycheck. Filing status, state, and income flow to and from My Situation. To tune the W-4 itself against your actual paycheck withholding, use the W-4 Withholding & Refund Check.\n\n" +
     OBBBA_DEDUCTIONS_NOT_MODELED,
   resources: [
     {

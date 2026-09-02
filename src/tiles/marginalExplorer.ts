@@ -10,6 +10,7 @@ import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { residenceLocalField, resolveResidenceLocal } from "../ui/residenceLocal";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
@@ -28,9 +29,15 @@ interface Fields {
   st: string;
   income: number;
   step: number;
+  /**
+   * The mandatory residence-based local, when the state has one. Maryland's and
+   * Indiana's county taxes are up to 3.3 and 3.0 points of a resident's real
+   * marginal rate, and this tile answered without them until 2026-09-02.
+   */
+  local: string[];
 }
 
-const EXAMPLE: Fields = { fs: "single", st: "ca", income: 120000, step: 1000 };
+const EXAMPLE: Fields = { fs: "single", st: "ca", income: 120000, step: 1000, local: [] };
 
 function isFilingStatus(v: string): v is FilingStatus {
   return FILING_STATUSES.some((f) => f.value === v);
@@ -45,6 +52,7 @@ function readFields(p: URLSearchParams, defaultState: string, profile: Situation
     st: st !== null ? st : (profile.get("stateCode") ?? defaultState),
     income: p.has("inc") ? parseNonNegative(p.get("inc"), 0) : (profile.get("annualIncome") ?? 0),
     step: Math.max(1, parseNonNegative(p.get("step"), 1000)),
+    local: p.getAll("loc"),
   };
 }
 
@@ -54,6 +62,7 @@ function writeFields(f: Fields): URLSearchParams {
   p.set("st", f.st);
   p.set("inc", String(f.income));
   p.set("step", String(f.step));
+  for (const id of f.local) p.append("loc", id);
   return p;
 }
 
@@ -111,8 +120,12 @@ export function mountMarginalExplorer(ctx: TileContext): void {
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
   function evalAt(income: number): TaxResult {
-    const input: TaxInput = { filingStatus: fields.fs, wages: income };
     const state = fields.st ? (data!.state(fields.st) ?? undefined) : undefined;
+    const input: TaxInput = {
+      filingStatus: fields.fs,
+      wages: income,
+      localJurisdictionIds: fields.local,
+    };
     return evaluateTaxes(input, { federal: fed!, fica: fica!, state });
   }
 
@@ -160,17 +173,37 @@ export function mountMarginalExplorer(ctx: TileContext): void {
     );
   }
 
+  const localContainer = el("div", { class: "local-addons" });
+
+  /**
+   * A mandatory county tax is a fact about where you live, not a question, so it
+   * is resolved to the shard's default rather than left empty — an empty
+   * selection would silently answer a Maryland resident with 3.2 points missing.
+   */
+  function renderLocal(): void {
+    const state = fields.st ? (data!.state(fields.st) ?? null) : null;
+    fields.local = resolveResidenceLocal(state, fields.local);
+    localContainer.replaceChildren();
+    const county = residenceLocalField(state, fields.local[0], recompute);
+    if (county) localContainer.append(county);
+  }
+
   function collect(): void {
+    const county = localContainer.querySelector<HTMLSelectElement>("select[name='loc-select']");
     fields = {
       fs: isFilingStatus(fsSelect.value) ? fsSelect.value : "single",
       st: stSelect.value,
       income: parseNonNegative(incInput.value, 0),
       step: Math.max(1, parseNonNegative(stepInput.value, 1000)),
+      // A county select that is gone because the state changed must not carry
+      // the old state's county into the new state's evaluation.
+      local: county && county.value ? [county.value] : [],
     };
   }
 
   function recompute(): void {
     collect();
+    renderLocal();
     ctx.setParams(writeFields(fields));
     rememberShared(ctx.profile, {
       filingStatus: fields.fs,
@@ -199,10 +232,12 @@ export function mountMarginalExplorer(ctx: TileContext): void {
     field("State", stSelect),
     field("Current income", incInput),
     field("Next amount", stepInput),
+    localContainer,
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
   root.append(form, resultContainer);
+  renderLocal();
   compute();
 }
 
@@ -214,7 +249,7 @@ export const marginalExplorerTile: TileDefinition = {
   keywords: ["marginal", "next dollar", "bracket", "raise", "rate"],
   status: "ready",
   how:
-    "We run the tax engine twice, at your current income, and again at your income plus the step you choose, then attribute the extra tax to each layer: federal income tax, FICA, and your state. That difference is what your next dollars actually cost you, which is often higher than your bracket alone because several taxes stack.\n\n" +
+    "We run the tax engine twice, at your current income, and again at your income plus the step you choose, then attribute the extra tax to each layer: federal income tax, FICA, your state, and — in Maryland and Indiana, where a county income tax is mandatory rather than optional — the county you live in. That difference is what your next dollars actually cost you, which is often higher than your bracket alone because several taxes stack. Optional local taxes you would have to opt into (New York City, Yonkers, Columbus, Detroit) are not included here; the Take-Home tile is where you choose those.\n\n" +
     OBBBA_DEDUCTIONS_NOT_MODELED,
   resources: [
     {

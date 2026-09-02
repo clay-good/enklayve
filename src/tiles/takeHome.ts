@@ -12,6 +12,7 @@ import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { residenceLocalField, resolveResidenceLocal } from "../ui/residenceLocal";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
@@ -274,12 +275,7 @@ export function mountTakeHome(ctx: TileContext): void {
   // displayed Maryland tax always includes the county portion (never a stale or
   // missing one). Opt-in locals (NYC, Columbus) keep their multi-checkbox set.
   function resolveLocal(): void {
-    const state = fields.st ? bundled.state(fields.st) : null;
-    const residence = state?.residenceLocalTax;
-    if (!residence) return;
-    const valid = new Set((state?.localAddOns ?? []).map((a) => a.id));
-    const current = fields.local.find((id) => valid.has(id));
-    fields.local = [current ?? residence.defaultId];
+    fields.local = resolveResidenceLocal(fields.st ? bundled.state(fields.st) : null, fields.local);
   }
 
   function renderLocalAddOns(): void {
@@ -287,19 +283,9 @@ export function mountTakeHome(ctx: TileContext): void {
     const state = fields.st ? bundled.state(fields.st) : null;
     const addOns = state?.localAddOns ?? [];
     if (addOns.length === 0) return;
-    const residence = state?.residenceLocalTax;
-    if (residence) {
-      const selected = fields.local[0] ?? residence.defaultId;
-      const countySelect = el(
-        "select",
-        { name: "loc-select", attrs: { "aria-label": residence.label } },
-        ...addOns.map((a) => option(a.id, a.name, a.id === selected)),
-      );
-      // Set the value explicitly so the right county is selected regardless of
-      // option-attribute timing (a pre-set `selected` on a detached option).
-      countySelect.value = selected;
-      countySelect.addEventListener("change", recompute);
-      localContainer.append(field(residence.label, countySelect));
+    const county = residenceLocalField(state, fields.local[0], recompute);
+    if (county) {
+      localContainer.append(county);
       return;
     }
     localContainer.append(el("p", { class: "field-group-label", text: "Local taxes" }));
