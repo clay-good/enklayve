@@ -20,6 +20,7 @@ import { loadBundledData, type BundledData } from "../data/browser";
 import { type TileContext, type TileDefinition } from "../tiles/types";
 import { getTile, TILES, SUB_TOOLS } from "../tiles/registry";
 import { SituationStore } from "../profile/situation";
+import { resolveResidenceLocal } from "./residenceLocal";
 
 /** Navigate to a tile/home, optionally deep-linking into a hub sub-tool. */
 type NavigateFn = (id: string | null, params?: URLSearchParams) => void;
@@ -551,15 +552,16 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
    */
   function renderCounty(): void {
     const state = isModeled(stateCode) ? (data!.state(stateCode) ?? null) : null;
+    // The RULE comes from the shared module, so the budget cannot drift from
+    // the five tiles that charge the same tax — it had its own copy for an
+    // afternoon, and a fix to the shared one (dropping a county belonging to a
+    // state you have left) would not have reached here. The PRESENTATION stays
+    // local: this is the home budget's own row, not a tile's labeled field.
+    localIds = resolveResidenceLocal(state, localIds);
     const residence = state?.residenceLocalTax;
     const addOns = state?.localAddOns ?? [];
     countyRow.replaceChildren();
-    if (!residence || addOns.length === 0) {
-      localIds = [];
-      return;
-    }
-    const valid = new Set(addOns.map((a) => a.id));
-    localIds = [localIds.find((id) => valid.has(id)) ?? residence.defaultId];
+    if (!residence || addOns.length === 0) return;
     countyRow.append(
       selectRow(
         residence.label,
