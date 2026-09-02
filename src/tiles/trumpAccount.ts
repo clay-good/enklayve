@@ -137,7 +137,11 @@ export function mountTrumpAccount(ctx: TileContext): void {
       {
         label: "Note",
         value:
-          "A projection at the return you entered, not a promise. The account is treated as a traditional IRA, so nothing comes out before the year they turn 18 and what does is ordinary income — the $1,000 seed and every dollar of growth included.",
+          // No figure in this sentence: it renders for a child outside the
+          // §6434 birth window too, where there is no seed at all, and a
+          // hardcoded amount would be wrong for them and stale for everyone
+          // else the day the statute moves.
+          "A projection at the return you entered, not a promise. The account is treated as a traditional IRA, so nothing comes out before the year they turn 18 and what does is ordinary income — the government contribution and every dollar of growth included.",
       },
     ];
 

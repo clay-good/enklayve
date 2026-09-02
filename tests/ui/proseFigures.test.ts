@@ -249,6 +249,19 @@ const BOUND: Bound[] = [
     shard: "federal-income-tax-2024",
     path: ".vehicleLoanInterestDeduction.cap",
   },
+  // The §530A tile quotes both of its shard's figures in the explainer, which
+  // is exactly what this check exists for — and it shipped this morning without
+  // being bound, by the person who had spent the day binding everything else.
+  {
+    file: "trumpAccount.ts",
+    shard: "trump-accounts-2026",
+    path: ".annualContributionLimit",
+  },
+  {
+    file: "trumpAccount.ts",
+    shard: "trump-accounts-2026",
+    path: ".pilotContribution",
+  },
   {
     file: "autoLoan.ts",
     shard: "federal-income-tax-2024",
