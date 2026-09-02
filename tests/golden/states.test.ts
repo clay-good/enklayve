@@ -2,7 +2,12 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { evaluateTaxes } from "../../src/engine/tax";
 import { bracketTax } from "../../src/engine/tax/brackets";
 import { Money } from "../../src/engine/money";
-import { loadDatasets, type Datasets } from "../helpers/datasets";
+import {
+  jurisdictionsRequested,
+  loadDatasets,
+  shippedStateCodes,
+  type Datasets,
+} from "../helpers/datasets";
 
 /**
  * Hand-verified state and local cases (BUILD-SPEC.md §8, §9). Covers a graduated
@@ -2136,5 +2141,30 @@ describe("Michigan + Detroit (the first local computed on a base that is not the
       { federal: ds.federal, state: ds.state("mi"), fica: ds.fica },
     );
     expect(cents(r.local.total)).toBe("0");
+  });
+});
+
+/**
+ * The suite above covers all 51 jurisdictions, and nothing said so until now.
+ *
+ * "Every state is hand-verified" was true because somebody kept it true. A 52nd
+ * shard arriving with no case, or a refactor dropping the only case a state had,
+ * would leave every test green while the README went on claiming the fifty-state
+ * moat is golden-tested — and the state computed by nobody would be indisting-
+ * uishable from the fifty that are.
+ *
+ * It reads which jurisdictions the cases above actually ASKED the loader for,
+ * rather than scanning this file for two-letter strings: a state named in a
+ * comment is not a state anybody checked, and `"or"`, `"in"`, `"it"` and `"ma"`
+ * are all ordinary English inside a test file. Declared last on purpose, since
+ * tests in a file run in order — and filtered out along with everything else
+ * when somebody runs a single case by name, so it cannot fire spuriously.
+ */
+describe("the hand-verified cases cover every jurisdiction the repo ships", () => {
+  it("leaves no state shard without a case that evaluates it", () => {
+    const shipped = shippedStateCodes();
+    expect(shipped).toHaveLength(51);
+    const uncovered = shipped.filter((code) => !jurisdictionsRequested.has(code));
+    expect(uncovered, `no hand-verified case evaluates: ${uncovered.join(", ")}`).toEqual([]);
   });
 });
