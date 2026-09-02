@@ -1457,7 +1457,6 @@ export const DATASET_SCHEMAS = {
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;
-export const DATASET_KINDS = Object.keys(DATASET_SCHEMAS) as DatasetKind[];
 
 /** Schema for a single manifest entry pinning one shard. */
 export const ManifestEntrySchema = z.object({

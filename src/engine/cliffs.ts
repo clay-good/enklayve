@@ -35,7 +35,6 @@
  *      several have steeper cliffs than anything that is. The caller renders
  *      {@link SweepResult.unmodeled} so the chart never reads as complete.
  */
-import { Money } from "./money";
 import {
   estimateCtc,
   estimateEitc,
@@ -554,7 +553,3 @@ export function marginalReality(
   };
 }
 
-/** Convenience for callers formatting money from the raw numbers above. */
-export function asMoney(value: number): Money {
-  return Money.from(finite(value));
-}
