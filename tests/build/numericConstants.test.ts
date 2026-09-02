@@ -214,6 +214,19 @@ const VERDICTS: Record<string, string> = {
  * The threshold is 100. Below it live array indices, percentages, month counts
  * and the arithmetic of dates, and a check that fires on `12` is one people
  * learn to silence.
+ *
+ * This half stays scoped to `src/engine` on purpose, unlike the named-constant
+ * sweep below, which reads all of `src/`. It was tried wider and the reason it
+ * cannot go there is mechanical rather than a matter of taste: this scan is
+ * line-based, and outside the engine the numbers live inside things a line
+ * cannot see the edges of. `src/readout/report.ts` embeds the report's whole
+ * stylesheet in a multi-line template literal, so `font-weight: 600` reads as a
+ * bare literal; `src/readout/extract.ts` matches `/\bform\s*1040\b/`, so a form
+ * number does too; and `src/tiles` is hundreds of worked-example values and
+ * input step sizes, every one of them a false positive. Telling those apart
+ * needs a tokenizer, not a regex. What covers that ground instead is the prose
+ * sweeps, which read those files the way a reader does and account for every
+ * amount, rate and year a reader can see.
  */
 describe("numbers the engine writes inline", () => {
   const ENGINE = resolve(ROOT, "src", "engine");
@@ -268,9 +281,15 @@ describe("numbers the engine writes inline", () => {
 });
 
 describe("what the code is allowed to know by heart", () => {
-  const found = ["engine", "readout", "profile", "tiles", "ui"]
-    .flatMap((d) => sourceFiles(join(ROOT, "src", d)))
-    .flatMap((f) => numericConstants(readFileSync(f, "utf8")));
+  // The scope is the directory, not a list of directories. It was
+  // ["engine", "readout", "profile", "tiles", "ui"] -- which is every directory
+  // under src/ except `src/data`, plus `src/main.ts`, both of which were swept
+  // by hand once and then left outside the gate. A sweep run by hand is a
+  // finding; a sweep in a list is a promise about tomorrow, and the list does
+  // not grow when the directory does.
+  const found = sourceFiles(resolve(ROOT, "src")).flatMap((f) =>
+    numericConstants(readFileSync(f, "utf8")),
+  );
 
   it("finds the constants at all", () => {
     expect(found.length).toBeGreaterThan(10);
@@ -281,7 +300,7 @@ describe("what the code is allowed to know by heart", () => {
     const unexplained = [...new Set(found)].filter((name) => !VERDICTS[name]).sort();
     expect(
       unexplained,
-      "a new numeric constant in src/{engine,readout,profile,tiles,ui} needs a line in VERDICTS saying whether it is a " +
+      "a new numeric constant anywhere in src/ needs a line in VERDICTS saying whether it is a " +
         "bound the code owns, a figure somebody legislates, or an assumption this site chose — see SALT_CAP and FALLBACK_LIMIT",
     ).toEqual([]);
   });
