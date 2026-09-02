@@ -173,3 +173,61 @@ describe("staleness fail-safe", () => {
     expect(result.status).toBe("ok");
   });
 });
+
+/**
+ * The manifest's `effectiveYear` and the shard's own citation must name the
+ * same year.
+ *
+ * The year lives in two places, and only one of them is the number a reader
+ * ever sees. A shard states its year inside its citation — "Ohio Rev. Code
+ * §5747.02(A)(3)(c) … for taxable years beginning in 2026" — while the manifest
+ * entry that pins that shard states it again, from a separate table in
+ * `scripts/build-manifest.ts`. Nothing compared them.
+ *
+ * The manifest's copy is what drives the **staleness gate**: `staleAfterYears`
+ * is measured from it, so it decides whether a figure degrades loudly or keeps
+ * rendering as current. Bump the table without rolling the shard and the site
+ * reports last year's numbers as fresh — a silent wrong-figure failure, which is
+ * the one class this repo is built to prevent. Roll the shard without the table
+ * and a current figure lapses for no reason, which teaches people to ignore the
+ * banner. Both are one-line mistakes, and the annual roll is the one recurring
+ * maintenance task that touches every shard in the repo.
+ *
+ * They agreed across all 81 when this was written. Nothing had made them.
+ */
+describe("the year the manifest pins is the year the shard states", () => {
+  /** Every `effectiveYear` that sits beside a `sourceUrl` — a real citation. */
+  function citedYears(value: unknown, into = new Set<number>()): Set<number> {
+    if (Array.isArray(value)) {
+      for (const v of value) citedYears(v, into);
+    } else if (value && typeof value === "object") {
+      const record = value as Record<string, unknown>;
+      if (typeof record.effectiveYear === "number" && typeof record.sourceUrl === "string") {
+        into.add(record.effectiveYear);
+      }
+      for (const v of Object.values(record)) citedYears(v, into);
+    }
+    return into;
+  }
+
+  it("agrees for every shard the manifest pins", () => {
+    const disagreements: string[] = [];
+    for (const entry of manifest.datasets) {
+      const years = citedYears(JSON.parse(shards[entry.id]!));
+      if (years.size === 0) {
+        disagreements.push(`${entry.id}: no cited effectiveYear anywhere in the shard`);
+        continue;
+      }
+      // A shard may cite several documents — a state's brackets and its
+      // standard deduction can be published separately — so the manifest's year
+      // has to be one of them, not the only one.
+      if (!years.has(entry.effectiveYear)) {
+        disagreements.push(
+          `${entry.id}: manifest says ${entry.effectiveYear}, shard cites ${[...years].sort().join(", ")}`,
+        );
+      }
+    }
+    expect(disagreements).toEqual([]);
+    expect(manifest.datasets.length).toBeGreaterThan(80);
+  });
+});

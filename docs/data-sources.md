@@ -116,6 +116,14 @@ After reading a changed source and updating the shard by hand, refresh the finge
 node scripts/refresh/watch-sources.ts --accept
 ```
 
+### The year is stated twice, and now they have to agree
+
+Every shard states its year inside its own citation — "Ohio Rev. Code §5747.02(A)(3)(c) … for taxable years beginning in 2026" — and the manifest entry that pins that shard states it again, from a separate table in [`build-manifest.ts`](../scripts/build-manifest.ts). Only one of the two is a number a reader ever sees, and it is the other one that matters most: the manifest's copy drives the **staleness gate**, so it decides whether a figure degrades loudly or keeps rendering as current.
+
+Nothing compared them. Bump the table without rolling the shard and the site reports last year's numbers as fresh, which is a silent wrong-figure failure — the one class this repo exists to prevent. Roll the shard without the table and a current figure lapses for no reason, which teaches people to ignore the banner. Both are one-line mistakes, and the annual roll is the one recurring maintenance task that touches every shard in the repo, so both are mistakes somebody will make.
+
+A test in [`tests/data.test.ts`](../tests/data.test.ts) now fails when the manifest's `effectiveYear` is not among the years the shard's own citations state. It reads a year only where it sits beside a `sourceUrl`, so a bare number somewhere in a shard is not mistaken for a claim about a document; and it accepts any of the shard's cited years rather than one, because a state's brackets and its standard deduction are often published separately. All 81 agreed when it was written — nothing had made them.
+
 ### Link health
 
 `npm run check:links` fetches every external URL the repo ships — from tile "Learn more" lists, shard citations, and these docs — and reports three things separately:
