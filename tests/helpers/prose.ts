@@ -50,6 +50,14 @@ export function shard(id: string): Record<string, unknown> {
   >;
 }
 
+/** A dotted path into a shard, whatever it lands on. */
+export function shardValue(id: string, path: string): unknown {
+  return path
+    .split(".")
+    .filter(Boolean)
+    .reduce<unknown>((o, k) => (o as Record<string, unknown>)[k], shard(id));
+}
+
 /** A dotted path into a shard, which must land on a number. */
 export function shardNumber(id: string, path: string): number {
   const value = path
