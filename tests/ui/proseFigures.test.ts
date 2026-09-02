@@ -29,6 +29,17 @@ import { resolve } from "node:path";
  */
 const ROOT = resolve(__dirname, "..", "..");
 
+/** Every `.ts` module under `src/`, as a path relative to it. */
+function walk(dir: string, prefix = ""): string[] {
+  const out: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) out.push(...walk(resolve(dir, entry.name), rel));
+    else if (entry.name.endsWith(".ts")) out.push(rel);
+  }
+  return out.sort();
+}
+
 const shard = (id: string): Record<string, unknown> =>
   JSON.parse(readFileSync(resolve(ROOT, "data", `${id}.json`), "utf8")) as Record<string, unknown>;
 
@@ -136,49 +147,73 @@ describe("the containment test on money", () => {
 });
 
 const BOUND: Bound[] = [
-  { file: "childTax.ts", shard: "child-tax-2024", path: ".dependentStandardDeductionBase" },
+  { file: "tiles/childTax.ts", shard: "child-tax-2024", path: ".dependentStandardDeductionBase" },
 
-  { file: "childTaxCredit.ts", shard: "eitc-ctc-2024", path: ".childTaxCredit.perChild" },
-  { file: "childTaxCredit.ts", shard: "eitc-ctc-2024", path: ".childTaxCredit.refundableCap" },
+  { file: "tiles/childTaxCredit.ts", shard: "eitc-ctc-2024", path: ".childTaxCredit.perChild" },
   {
-    file: "childTaxCredit.ts",
+    file: "tiles/childTaxCredit.ts",
+    shard: "eitc-ctc-2024",
+    path: ".childTaxCredit.refundableCap",
+  },
+  {
+    file: "tiles/childTaxCredit.ts",
     shard: "eitc-ctc-2024",
     path: ".childTaxCredit.phaseOutPerThousand",
   },
   {
-    file: "childTaxCredit.ts",
+    file: "tiles/childTaxCredit.ts",
     shard: "eitc-ctc-2024",
     path: ".childTaxCredit.phaseOutThresholdSingle",
   },
   {
-    file: "childTaxCredit.ts",
+    file: "tiles/childTaxCredit.ts",
     shard: "eitc-ctc-2024",
     path: ".childTaxCredit.phaseOutThresholdMarried",
   },
 
-  { file: "educationCredits.ts", shard: "education-credits-2024", path: ".aotc.maxCredit" },
-  { file: "educationCredits.ts", shard: "education-credits-2024", path: ".llc.expenseCap" },
-  { file: "educationCredits.ts", shard: "education-credits-2024", path: ".llc.maxCredit" },
-  { file: "educationCredits.ts", shard: "education-credits-2024", path: ".phaseOut.single.low" },
-  { file: "educationCredits.ts", shard: "education-credits-2024", path: ".phaseOut.single.high" },
-  { file: "educationCredits.ts", shard: "education-credits-2024", path: ".phaseOut.married.low" },
-  { file: "educationCredits.ts", shard: "education-credits-2024", path: ".phaseOut.married.high" },
+  { file: "tiles/educationCredits.ts", shard: "education-credits-2024", path: ".aotc.maxCredit" },
+  { file: "tiles/educationCredits.ts", shard: "education-credits-2024", path: ".llc.expenseCap" },
+  { file: "tiles/educationCredits.ts", shard: "education-credits-2024", path: ".llc.maxCredit" },
+  {
+    file: "tiles/educationCredits.ts",
+    shard: "education-credits-2024",
+    path: ".phaseOut.single.low",
+  },
+  {
+    file: "tiles/educationCredits.ts",
+    shard: "education-credits-2024",
+    path: ".phaseOut.single.high",
+  },
+  {
+    file: "tiles/educationCredits.ts",
+    shard: "education-credits-2024",
+    path: ".phaseOut.married.low",
+  },
+  {
+    file: "tiles/educationCredits.ts",
+    shard: "education-credits-2024",
+    path: ".phaseOut.married.high",
+  },
 
   // Every one of these is inflation-indexed, so they move every single year.
-  { file: "giftTax.ts", shard: "gift-tax-2024", path: ".annualExclusion" },
-  { file: "giftTax.ts", shard: "gift-tax-2024", path: ".annualExclusionNonCitizenSpouse" },
-  { file: "giftTax.ts", shard: "gift-tax-2024", path: ".lifetimeExemption" },
+  { file: "tiles/giftTax.ts", shard: "gift-tax-2024", path: ".annualExclusion" },
+  { file: "tiles/giftTax.ts", shard: "gift-tax-2024", path: ".annualExclusionNonCitizenSpouse" },
+  { file: "tiles/giftTax.ts", shard: "gift-tax-2024", path: ".lifetimeExemption" },
 
-  { file: "garnishment.ts", shard: "garnishment-limits-2026", path: ".federalMinimumHourlyWage" },
   {
-    file: "garnishment.ts",
+    file: "tiles/garnishment.ts",
+    shard: "garnishment-limits-2026",
+    path: ".federalMinimumHourlyWage",
+  },
+  {
+    file: "tiles/garnishment.ts",
     shard: "garnishment-limits-2026",
     path: ".federalMinimumHourlyWage",
     derive: (n) => n * 30,
     why: "the protected floor, thirty times the minimum wage (15 U.S.C. §1673(a)(2))",
   },
   {
-    file: "garnishment.ts",
+    file: "tiles/garnishment.ts",
     shard: "garnishment-limits-2026",
     path: ".federalMinimumHourlyWage",
     derive: (n) => (n * 30) / 0.75,
@@ -186,95 +221,99 @@ const BOUND: Bound[] = [
   },
 
   {
-    file: "socialSecurityTax.ts",
+    file: "tiles/socialSecurityTax.ts",
     shard: "social-security-taxation-2024",
     path: ".base1ByFilingStatus.single",
   },
   {
-    file: "socialSecurityTax.ts",
+    file: "tiles/socialSecurityTax.ts",
     shard: "social-security-taxation-2024",
     path: ".base2ByFilingStatus.single",
   },
   {
-    file: "socialSecurityTax.ts",
+    file: "tiles/socialSecurityTax.ts",
     shard: "social-security-taxation-2024",
     path: ".base1ByFilingStatus.married_jointly",
   },
   {
-    file: "socialSecurityTax.ts",
+    file: "tiles/socialSecurityTax.ts",
     shard: "social-security-taxation-2024",
     path: ".base2ByFilingStatus.married_jointly",
   },
 
   {
-    file: "federalIncomeTax.ts",
+    file: "tiles/federalIncomeTax.ts",
     shard: "federal-income-tax-2024",
     path: ".saltLimitation.applicableLimitationAmount",
   },
   {
-    file: "federalIncomeTax.ts",
+    file: "tiles/federalIncomeTax.ts",
     shard: "federal-income-tax-2024",
     path: ".saltLimitation.thresholdAmount",
   },
-  { file: "federalIncomeTax.ts", shard: "federal-income-tax-2024", path: ".saltLimitation.floor" },
+  {
+    file: "tiles/federalIncomeTax.ts",
+    shard: "federal-income-tax-2024",
+    path: ".saltLimitation.floor",
+  },
 
   {
-    file: "deductionCopy.ts",
+    file: "tiles/deductionCopy.ts",
     shard: "federal-income-tax-2024",
     path: ".nonItemizerCharitable.cap",
   },
   {
-    file: "deductionCopy.ts",
+    file: "tiles/deductionCopy.ts",
     shard: "federal-income-tax-2024",
     path: ".nonItemizerCharitable.capJointReturn",
   },
   {
-    file: "deductionCopy.ts",
+    file: "tiles/deductionCopy.ts",
     shard: "federal-income-tax-2024",
     path: ".seniorDeduction.perQualifiedIndividual",
   },
   {
-    file: "deductionCopy.ts",
+    file: "tiles/deductionCopy.ts",
     shard: "federal-income-tax-2024",
     path: ".seniorDeduction.thresholdSingle",
   },
   {
-    file: "deductionCopy.ts",
+    file: "tiles/deductionCopy.ts",
     shard: "federal-income-tax-2024",
     path: ".seniorDeduction.thresholdJointReturn",
   },
   {
-    file: "deductionCopy.ts",
+    file: "tiles/deductionCopy.ts",
     shard: "federal-income-tax-2024",
     path: ".qualifiedTipsDeduction.cap",
   },
   {
-    file: "deductionCopy.ts",
+    file: "tiles/deductionCopy.ts",
     shard: "federal-income-tax-2024",
     path: ".qualifiedOvertimeDeduction.cap",
   },
   {
-    file: "deductionCopy.ts",
+    file: "tiles/deductionCopy.ts",
     shard: "federal-income-tax-2024",
     path: ".qualifiedOvertimeDeduction.capJointReturn",
   },
   {
-    file: "deductionCopy.ts",
+    file: "tiles/deductionCopy.ts",
     shard: "federal-income-tax-2024",
     path: ".qualifiedTipsDeduction.phaseOutPerStep",
   },
   {
-    file: "deductionCopy.ts",
+    file: "tiles/deductionCopy.ts",
     shard: "federal-income-tax-2024",
     path: ".qualifiedTipsDeduction.phaseOutStep",
   },
   {
-    file: "deductionCopy.ts",
+    file: "tiles/deductionCopy.ts",
     shard: "federal-income-tax-2024",
     path: ".qualifiedTipsDeduction.thresholdJointReturn",
   },
   {
-    file: "deductionCopy.ts",
+    file: "tiles/deductionCopy.ts",
     shard: "federal-income-tax-2024",
     path: ".vehicleLoanInterestDeduction.cap",
   },
@@ -283,7 +322,7 @@ const BOUND: Bound[] = [
   // the same three figures is a second place for them to go stale, so it joins
   // the check rather than being trusted.
   {
-    file: "autoLoan.ts",
+    file: "tiles/autoLoan.ts",
     shard: "federal-income-tax-2024",
     path: ".vehicleLoanInterestDeduction.cap",
   },
@@ -291,37 +330,37 @@ const BOUND: Bound[] = [
   // is exactly what this check exists for — and it shipped this morning without
   // being bound, by the person who had spent the day binding everything else.
   {
-    file: "trumpAccount.ts",
+    file: "tiles/trumpAccount.ts",
     shard: "trump-accounts-2026",
     path: ".annualContributionLimit",
   },
   {
-    file: "trumpAccount.ts",
+    file: "tiles/trumpAccount.ts",
     shard: "trump-accounts-2026",
     path: ".pilotContribution",
   },
   {
-    file: "autoLoan.ts",
+    file: "tiles/autoLoan.ts",
     shard: "federal-income-tax-2024",
     path: ".vehicleLoanInterestDeduction.thresholdSingle",
   },
   {
-    file: "autoLoan.ts",
+    file: "tiles/autoLoan.ts",
     shard: "federal-income-tax-2024",
     path: ".vehicleLoanInterestDeduction.thresholdJointReturn",
   },
   {
-    file: "deductionCopy.ts",
+    file: "tiles/deductionCopy.ts",
     shard: "federal-income-tax-2024",
     path: ".vehicleLoanInterestDeduction.phaseOutPerStep",
   },
   {
-    file: "deductionCopy.ts",
+    file: "tiles/deductionCopy.ts",
     shard: "federal-income-tax-2024",
     path: ".vehicleLoanInterestDeduction.thresholdSingle",
   },
   {
-    file: "deductionCopy.ts",
+    file: "tiles/deductionCopy.ts",
     shard: "federal-income-tax-2024",
     path: ".vehicleLoanInterestDeduction.thresholdJointReturn",
   },
@@ -332,15 +371,15 @@ const BOUND: Bound[] = [
   // not look. Same class as the §530A pair — a shard figure in a sentence that
   // nothing compared.
   {
-    file: "fafsaSai.ts",
+    file: "tiles/fafsaSai.ts",
     shard: "fafsa-2024-2025",
     path: ".saiFloor",
     derive: (n) => Math.abs(n),
     why: "the floor is negative and the sentence writes the sign outside the amount",
   },
-  { file: "saversCredit.ts", shard: "savers-credit-2024", path: ".maxContributionPerPerson" },
+  { file: "tiles/saversCredit.ts", shard: "savers-credit-2024", path: ".maxContributionPerPerson" },
   {
-    file: "saversCredit.ts",
+    file: "tiles/saversCredit.ts",
     shard: "savers-credit-2024",
     path: ".maxContributionPerPerson",
     derive: (n) => n * 2,
@@ -360,24 +399,34 @@ const BOUND: Bound[] = [
  * both constants are in the engine module that applies them.
  */
 const BOUND_TO_CODE: { file: string; figure: string; from: string; declaredIn?: string }[] = [
-  { file: "taxLossHarvesting.ts", figure: "$3,000", from: "LOSS_OFFSET_LIMIT" },
-  { file: "taxLossHarvesting.ts", figure: "$1,500", from: "LOSS_OFFSET_LIMIT_SEPARATE" },
+  { file: "tiles/taxLossHarvesting.ts", figure: "$3,000", from: "LOSS_OFFSET_LIMIT" },
+  { file: "tiles/taxLossHarvesting.ts", figure: "$1,500", from: "LOSS_OFFSET_LIMIT_SEPARATE" },
   {
-    file: "iraDeduction.ts",
+    file: "tiles/iraDeduction.ts",
     figure: "$10",
     from: "IRA_PARTIAL_ROUNDING",
     declaredIn: "engine/iraDeduction.ts",
   },
   {
-    file: "iraDeduction.ts",
+    file: "tiles/iraDeduction.ts",
     figure: "$200",
     from: "IRA_PARTIAL_MINIMUM",
     declaredIn: "engine/iraDeduction.ts",
   },
+  // Not statutory — an assumption this site chose (SPEC-4-ledger §3.1) — but the
+  // sentence and the comparison have to agree for the same reason: the view
+  // told the reader "$25 or 1%" from a literal while the profile module held
+  // the floor, and nothing compared them.
+  {
+    file: "ui/ledgerView.ts",
+    figure: "$25",
+    from: "MATERIAL_FLOOR_DOLLARS",
+    declaredIn: "profile/ledger.ts",
+  },
 ];
 
 /**
- * Dollar figures anywhere in `src/tiles` that are not statutory amounts: an
+ * Dollar figures anywhere in `src/` that are not statutory amounts: an
  * illustrative sum, a step size, a rounding unit, a UI default. Each is here so
  * that a figure which IS statutory cannot arrive unnoticed.
  *
@@ -390,7 +439,7 @@ const BOUND_TO_CODE: { file: string; figure: string; from: string; declaredIn?: 
  * a real `$25` arriving in that tile's prose would have been waved through.
  */
 const NOT_A_FIGURE: Record<string, Record<string, string>> = {
-  "deductionCopy.ts": {
+  "tiles/deductionCopy.ts": {
     // Where §163(h)(4)'s joint phase-out lands, which is the threshold plus the
     // cap divided by the step: $200,000 + $10,000 ÷ $200 × $1,000. Every term is
     // bound above, so the sentence cannot drift without one of them moving; the
@@ -402,28 +451,41 @@ const NOT_A_FIGURE: Record<string, Record<string, string>> = {
     // halves of the sentence move together if the rate ever does.
     $500: "0.5% of the illustrative $100,000 income in the same sentence",
   },
-  "childTaxCredit.ts": { "$1,000": "the per-$1,000 step the phase-out is quoted in" },
-  "federalIncomeTax.ts": { "$1,000": "an illustrative next-dollar amount" },
+  "tiles/childTaxCredit.ts": { "$1,000": "the per-$1,000 step the phase-out is quoted in" },
+  "tiles/federalIncomeTax.ts": { "$1,000": "an illustrative next-dollar amount" },
   // The same illustrative next-$1,000 sentence, in each tile that asks what a
   // raise or a dollar of income actually costs. It is the unit the answer is
   // quoted in, not an amount anyone legislates.
-  "benefitCliffs.ts": { "$1,000": "the illustrative next dollars a cliff is quoted against" },
-  "capitalGains.ts": { "$1,000": "an illustrative next-dollar amount, in a link's note" },
-  "marginalExplorer.ts": {
+  "tiles/benefitCliffs.ts": { "$1,000": "the illustrative next dollars a cliff is quoted against" },
+  "tiles/capitalGains.ts": { "$1,000": "an illustrative next-dollar amount, in a link's note" },
+  "tiles/marginalExplorer.ts": {
     "$1,000": "the illustrative next-dollar amount the whole tile is about",
   },
-  "paycheckOptimizer.ts": { "$1,000": "the illustrative next dollars into each account" },
+  "tiles/paycheckOptimizer.ts": { "$1,000": "the illustrative next dollars into each account" },
+  "readout/report.ts": { "$1,000": "the same illustrative next-dollar line, in the saved report" },
+  "engine/cliffs.ts": {
+    // The refundable Child Tax Credit's phase-in is shown at its cap, and this
+    // is the earnings below which that reads high. It is a rounded "roughly",
+    // deliberately, so it is not the arithmetic of any field.
+    "$15,000": "a rounded 'roughly', in the disclosure of a modelling limit",
+  },
 };
 
 describe("a figure in the prose is the figure in the shard", () => {
-  // Every tile, not the ones already listed here. Scoping the sweep to the
-  // files that had a binding meant a tile could quote a statutory amount and
-  // never be looked at — the completeness half was complete only about itself.
-  // Reading the directory found the IRA Deduction Checker's explainer, which
-  // states §219(g)(2)(B)'s round-up and floor and was in nobody's scope.
-  const files = readdirSync(resolve(ROOT, "src", "tiles")).filter((f) => f.endsWith(".ts"));
+  // Every module under src/, not the ones already listed here. Scoping the
+  // sweep to the files that had a binding meant a file could quote a statutory
+  // amount and never be looked at — the completeness half was complete only
+  // about itself. Reading the tiles directory found the IRA Deduction Checker's
+  // explainer, which states §219(g)(2)(B)'s round-up and floor; reading the rest
+  // of src/ found the ledger view's materiality sentence, which states the
+  // dollar arm of a floor the profile module owns.
+  //
+  // A tile is not the only thing with prose. The Readout Report is a document a
+  // household saves, the ledger view explains what it treats as news, and the
+  // cliff engine writes its own disclosures — all of it on somebody's screen.
+  const files = walk(resolve(ROOT, "src"));
   const source = new Map(
-    files.map((f) => [f, readFileSync(resolve(ROOT, "src", "tiles", f), "utf8")] as const),
+    files.map((f) => [f, readFileSync(resolve(ROOT, "src", f), "utf8")] as const),
   );
 
   for (const b of BOUND) {
@@ -441,7 +503,7 @@ describe("a figure in the prose is the figure in the shard", () => {
   for (const b of BOUND_TO_CODE) {
     it(`${b.file} states ${b.figure}, the value of ${b.from}`, () => {
       const text = source.get(b.file)!;
-      const where = b.declaredIn ?? `tiles/${b.file}`;
+      const where = b.declaredIn ?? b.file;
       const declaredIn = readFileSync(resolve(ROOT, "src", where), "utf8");
       const declared = new RegExp(`const ${b.from} = (\\d+);`).exec(declaredIn);
       expect(declared, `${b.from} is not declared in ${where}`).not.toBeNull();
@@ -492,7 +554,7 @@ describe("a figure in the prose is the figure in the shard", () => {
   it("no longer says the Child Tax Credit is $2,000", () => {
     // The live case. The shard has carried $2,200 since the One Big Beautiful
     // Bill Act, so the tile computed $2,200 under a paragraph saying $2,000.
-    expect(source.get("childTaxCredit.ts")).not.toContain("$2,000");
+    expect(source.get("tiles/childTaxCredit.ts")!).not.toContain("$2,000");
   });
 
   it("reads the strings and not the comments", () => {
