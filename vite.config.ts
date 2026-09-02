@@ -211,8 +211,15 @@ export default defineConfig({
     // The app runs in the browser, where mammoth resolves its `browser` package
     // field (an arrayBuffer-based unzip). Node's vitest resolver would otherwise
     // pull mammoth's Node build (which wants a Buffer), so the .docx extraction
-    // test would exercise a code path the shipped bundle never uses. Aliasing to
-    // the prebuilt browser bundle makes the test mirror production exactly.
+    // test would exercise a code path the shipped bundle never uses.
+    //
+    // This does NOT mirror production, and a comment here said it did until
+    // 2026-09-02. `mammoth.browser.min.js` is mammoth's own prebuilt bundle with
+    // its dependencies inlined; the shipped app imports `mammoth` plainly, so
+    // Vite tree-shakes `lib/` and links the installed `@xmldom/xmldom`. The two
+    // differ by exactly the thing an override changes — which is how bumping
+    // that package to 0.9 passed this whole suite and threw on the first .docx
+    // in a real browser. The shipped path is held by e2e/wordDocument.spec.ts.
     alias: {
       mammoth: resolve(REPO_ROOT, "node_modules/mammoth/mammoth.browser.min.js"),
     },

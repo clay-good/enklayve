@@ -25,6 +25,7 @@
     "audit": "node scripts/audit-release.ts",
     "check:links": "node scripts/check-links.ts",
     "check:adapters": "node scripts/check-adapters.ts",
+    "check:advisories": "node scripts/check-advisories.ts",
     "check:boundaries": "node scripts/check-boundaries.ts",
     "check:boundaries:classify": "node scripts/check-boundaries.ts --classify",
     "data:manifest": "node scripts/build-manifest.ts",

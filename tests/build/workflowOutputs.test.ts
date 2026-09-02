@@ -38,6 +38,7 @@ export function emittedOutputs(source: string): string[] {
 const PAIRS: [script: string, workflow: string][] = [
   ["scripts/check-adapters.ts", ".github/workflows/check-adapters.yml"],
   ["scripts/check-links.ts", ".github/workflows/check-links.yml"],
+  ["scripts/check-advisories.ts", ".github/workflows/check-advisories.yml"],
   ["scripts/refresh/watch-sources.ts", ".github/workflows/watch-pillar4-sources.yml"],
 ];
 

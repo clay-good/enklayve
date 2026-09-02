@@ -1,0 +1,49 @@
+{
+  "note": [
+    "Reviewed npm advisories that do NOT gate the build, each with the reason it",
+    "does not reach this app. Anything npm audit reports and this file does not",
+    "list fails `npm run check:advisories`.",
+    "",
+    "A dependency advisory is not automatically a vulnerability in the thing that",
+    "depends on it. It is a vulnerability in a code path, and the question is",
+    "whether this app can reach that path. 'We ship the package' is the start of",
+    "the answer, not the end of it -- but neither is 'probably fine'. An entry",
+    "here has to name the specific entry point and say what calls it, so the claim",
+    "is checkable by the next person instead of inherited on trust.",
+    "",
+    "The bar for adding an entry: an upgrade is not available or breaks the app,",
+    "AND the vulnerable path is not reachable. Both halves, written down.",
+    "",
+    "Entries expire. `reviewed` is the date someone last checked the reasoning",
+    "against the actual code; the check warns on any entry older than a year,",
+    "because 'unreachable' is a statement about a codebase that keeps changing."
+  ],
+  "accepted": [
+    {
+      "id": "GHSA-6gmq-8vp8-gcm6",
+      "package": "@xmldom/xmldom",
+      "severity": "moderate",
+      "reviewed": "2026-09-02",
+      "why": [
+        "XML fragment injection during SERIALIZATION: the flaw is in XMLSerializer,",
+        "reached through serializeToString with requireWellFormed. This app never",
+        "serializes XML. The package arrives only through mammoth, which reads .docx",
+        "and only ever parses -- mammoth/lib/xml/xmldom.js constructs a DOMParser and",
+        "calls parseFromString, and neither mammoth nor src/ contains the string",
+        "XMLSerializer or serializeToString anywhere. The definition ships in the lazy",
+        "chunk; nothing calls it.",
+        "",
+        "The fix is 0.9.x and it is NOT available to us: mammoth 1.12.0 requires",
+        "^0.8.6, and 0.9 made parseFromString's mimeType argument mandatory while",
+        "mammoth calls parseFromString(string) with one argument. Overriding to 0.9.12",
+        "was tried on 2026-09-02 -- the unit suite passed, because vitest aliases",
+        "mammoth to its prebuilt browser bundle, and the real browser threw",
+        "'DOMParser.parseFromString: the provided mimeType \"undefined\" is not valid'",
+        "on the first .docx. e2e/wordDocument.spec.ts exists because of that day and",
+        "holds the shipped path.",
+        "",
+        "Revisit when mammoth widens its range to ^0.9."
+      ]
+    }
+  ]
+}

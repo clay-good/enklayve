@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **69** in **12 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **81**, each with a sibling `.sha256` + manifest entry; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | unit/golden across **125** files, **+43** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | unit/golden across **126** files, **+44** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Source audits | **all 51 jurisdictions + the federal and benefits shards** read against the agency's own document; 8 wrong figures found and fixed | [`docs/data-sources.md`](docs/data-sources.md#source-audits) |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale/theme preference touches `localStorage`, asserted end-to-end across a full session | `npm run audit` / `npm run test:e2e` |
@@ -220,6 +220,7 @@ flowchart LR
 - **Sensitive inputs never persist.** Income, balances, and parsed documents live in memory and are cleared on page unload (`pagehide`).
 - **Datasets are bundled, not fetched.** Every shard is inlined at build time and re-verified in the browser against its content hash before use, so the running app knows exactly what it's computing from while staying offline-capable.
 - The release audit (`npm run audit`) fails the build if any of these invariants is violated.
+- **The dependencies are audited too, and the reasoning is written down.** The guarantee is a claim about the code running on your device, and most of that code is other people's — a document reader, a PDF renderer, an OCR engine. `npm audit` knew about a moderate advisory in `@xmldom/xmldom` — the XML parser behind the Readout's Word support — and nothing in this repo was reading it. [`npm run check:advisories`](scripts/check-advisories.ts) ([workflow](.github/workflows/check-advisories.yml), monthly) now does, and it gates on **an advisory nobody has looked at** rather than on an advisory: most findings in a front-end dependency tree are unreachable, the upgrade often does not exist, and a check that fails on every one of them is muted inside a month. Each finding must appear in [`advisory-triage.json`](scripts/advisory-triage.json) naming the vulnerable entry point and what calls it; a test rejects a reason too short to be checkable, because *"not exploitable"* is a decision with no argument attached. The one standing entry is that xmldom advisory: the flaw is in `XMLSerializer`, and neither this app nor mammoth ever serializes — the function ships in a lazy chunk with no call site. The fix, 0.9.x, is genuinely out of reach: mammoth calls `parseFromString(string)` with no mimeType, which 0.9 rejects. **That was learned the expensive way.** The override passed all 126 test files — because vitest aliases mammoth to its own prebuilt browser bundle while the shipped app links the installed package, so the suite was testing a different parser than production ships — and threw on the first `.docx` in a real browser. The comment claiming that alias mirrored production has been corrected, and [`e2e/wordDocument.spec.ts`](e2e/wordDocument.spec.ts) now reads a Word document in Chromium so the shipped path is held by something.
 
 Two same-origin **workers** are the only carve-outs from `connect-src 'none'`, and each is allowed `connect-src 'self'` for the same reason — it fetches same-origin static assets only, has no server endpoint, and never touches your in-memory data: the **offline service worker** (`/sw.js`), which caches the shell, and the **OCR worker** (`/ocr/*`), which loads its wasm engine and bundled language model when you drop a scanned image. A worker's CSP comes from its own response, not the page's, so neither loosens any page — every page still serves `connect-src 'none'`.
 
@@ -615,7 +616,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**The unit and golden suite across 125 files** (plus 43 Playwright e2e tests) passes today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**The unit and golden suite across 126 files** (plus 44 Playwright e2e tests) passes today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
