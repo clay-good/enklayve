@@ -83,9 +83,13 @@ export function proseFigures(source: string): string[] {
 export function statesFigure(text: string, prose: string): boolean {
   // Ruling out a following comma outright was too much: prose writes "over
   // $75,000, or $150,000 on a joint return", and a comma that ends a clause is
-  // not a thousands separator. What disqualifies a match is a digit after it, a
-  // decimal point, or a comma with three digits behind it.
-  return new RegExp(`${prose.replace(/[$.]/g, "\\$&")}(?![\\d.]|,\\d)`).test(text);
+  // not a thousands separator. The same was true of the full stop, and it took
+  // longer to notice: rejecting any following "." rejected every figure that
+  // ENDS A SENTENCE — "the SAI can be as low as -$1,500." — reporting a figure
+  // plainly present as absent, which is the one answer this helper must never
+  // give. What disqualifies a match is a digit after it, a decimal point
+  // followed by a digit, or a comma with three digits behind it.
+  return new RegExp(`${prose.replace(/[$.]/g, "\\$&")}(?!\\d|\\.\\d|,\\d)`).test(text);
 }
 
 interface Bound {
@@ -96,6 +100,26 @@ interface Bound {
   derive?: (n: number) => number;
   why?: string;
 }
+
+describe("the containment test on money", () => {
+  it("rejects a prefix of a longer figure", () => {
+    expect(statesFigure("we cap it at $25,000,000 in total", "$25,000")).toBe(false);
+    expect(statesFigure("the fee is $217.50", "$217.5")).toBe(false);
+  });
+
+  it("accepts a figure that ends a sentence", () => {
+    // It did not, and that is the failure worth a case: rejecting any following
+    // "." rejected every figure at the end of a sentence and reported it as
+    // absent. A checker that says a figure is missing when it is right there
+    // teaches people to stop believing it.
+    expect(statesFigure("the SAI can be as low as -$1,500.", "$1,500")).toBe(true);
+    expect(statesFigure("you may deduct $10,000.", "$10,000")).toBe(true);
+  });
+
+  it("still accepts a figure before a clause comma", () => {
+    expect(statesFigure("over $75,000, or $150,000 jointly", "$75,000")).toBe(true);
+  });
+});
 
 const BOUND: Bound[] = [
   { file: "childTax.ts", shard: "child-tax-2024", path: ".dependentStandardDeductionBase" },
@@ -288,6 +312,18 @@ const BOUND: Bound[] = [
     path: ".vehicleLoanInterestDeduction.thresholdJointReturn",
   },
 
+  // The SAI floor, quoted in the FAFSA tile's explainer as "-$1,500" and bound
+  // by its magnitude: the prose carries the sign in a minus before the dollar
+  // sign, which is where a reader expects it and where the figure pattern does
+  // not look. Same class as the §530A pair — a shard figure in a sentence that
+  // nothing compared.
+  {
+    file: "fafsaSai.ts",
+    shard: "fafsa-2024-2025",
+    path: ".saiFloor",
+    derive: (n) => Math.abs(n),
+    why: "the floor is negative and the sentence writes the sign outside the amount",
+  },
   { file: "saversCredit.ts", shard: "savers-credit-2024", path: ".maxContributionPerPerson" },
   {
     file: "saversCredit.ts",
