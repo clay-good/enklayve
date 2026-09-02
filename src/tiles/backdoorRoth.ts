@@ -55,11 +55,11 @@ function iraLimitFor(age: number, l: RetirementLimitsData["limits"]): number {
  * produced the constant sweep, and it is the same mistake. The mount already
  * refuses to render without the shard, so there is always one to read.
  */
-function exampleFor(deferral: number): Fields {
+function exampleFor(deferral: number, iraContribution: number): Fields {
   return {
     mode: "backdoor",
     age: 35,
-    contribution: 7500,
+    contribution: iraContribution,
     pretaxIra: 0,
     ordinaryRatePct: 24,
     electiveDeferral: deferral,
@@ -67,12 +67,22 @@ function exampleFor(deferral: number): Fields {
   };
 }
 
-function readFields(p: URLSearchParams, deferral: number): Fields {
+function readFields(
+  p: URLSearchParams,
+  deferral: number,
+  limits: RetirementLimitsData["limits"],
+): Fields {
   const mode = p.get("m") === "mega" ? "mega" : "backdoor";
+  const age = Math.round(parseNonNegative(p.get("age"), 35));
   return {
     mode,
-    age: Math.round(parseNonNegative(p.get("age"), 35)),
-    contribution: p.has("c") ? parseNonNegative(p.get("c"), 0) : 7500,
+    age,
+    // The same fix the deferral got, applied to the field beside it. This read
+    // `7500` — the shard's own `ira_contribution` for 2026, right today and
+    // silently a year behind from 2027 — under a paragraph saying defaults come
+    // off the shard and never from a literal. Half a fix is how the second one
+    // survives.
+    contribution: p.has("c") ? parseNonNegative(p.get("c"), 0) : iraLimitFor(age, limits),
     pretaxIra: parseNonNegative(p.get("pt"), 0),
     ordinaryRatePct: parseNonNegative(p.get("ord"), 24),
     electiveDeferral: parseNonNegative(p.get("ed"), deferral),
@@ -111,7 +121,7 @@ export function mountBackdoorRoth(ctx: TileContext): void {
   }
 
   const shardDeferral = limits.limits.elective_deferral_401k;
-  let fields = readFields(ctx.params, shardDeferral);
+  let fields = readFields(ctx.params, shardDeferral, limits.limits);
 
   const modeSelect = el(
     "select",
@@ -260,7 +270,7 @@ export function mountBackdoorRoth(ctx: TileContext): void {
     i.addEventListener("input", recompute);
 
   const tryExample = tryExampleButton(() => {
-    fields = exampleFor(shardDeferral);
+    fields = exampleFor(shardDeferral, iraLimitFor(35, limits!.limits));
     modeSelect.value = fields.mode;
     ageInput.value = String(fields.age);
     contribInput.value = String(fields.contribution);

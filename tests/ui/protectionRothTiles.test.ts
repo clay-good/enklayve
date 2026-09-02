@@ -222,3 +222,40 @@ describe("the mega-backdoor deferral default", () => {
     expect(Number(input!.value)).toBe(deferral());
   });
 });
+
+/**
+ * And the field beside it, which the same fix missed.
+ *
+ * The IRA contribution box opened on a hardcoded `7500` — the shard's own
+ * `ira_contribution` for 2026, right today and a year behind from 2027 — sitting
+ * two lines under a paragraph explaining that defaults come off the shard and
+ * never from a literal. The deferral was fixed and its neighbour was not, which
+ * is how the second instance of a bug outlives the first: the story of the fix
+ * makes everyone believe the class is closed.
+ */
+describe("the IRA contribution default", () => {
+  const iraLimit = (): number => data.retirementLimits()!.limits.ira_contribution;
+
+  it("is the shard's IRA limit, not a literal", () => {
+    const { root } = mount(mountBackdoorRoth, new URLSearchParams());
+    const input = root.querySelector<HTMLInputElement>('input[name="c"]');
+    expect(input, "the backdoor mode has a contribution field").not.toBeNull();
+    expect(Number(input!.value)).toBe(iraLimit());
+  });
+
+  it("adds the age-50 catch-up from the shard, rather than a second literal", () => {
+    // The tile already knew how to do this in its computation; the default just
+    // was not asking. A 55-year-old's box should open on the larger figure.
+    const { root } = mount(mountBackdoorRoth, new URLSearchParams({ age: "55" }));
+    const input = root.querySelector<HTMLInputElement>('input[name="c"]');
+    expect(Number(input!.value)).toBe(
+      iraLimit() + data.retirementLimits()!.limits.ira_catch_up_50plus!,
+    );
+  });
+
+  it("a deep link still wins over the default", () => {
+    const { root } = mount(mountBackdoorRoth, new URLSearchParams({ c: "3000" }));
+    const input = root.querySelector<HTMLInputElement>('input[name="c"]');
+    expect(Number(input!.value)).toBe(3000);
+  });
+});
