@@ -8,7 +8,7 @@
  */
 import { Money } from "../engine/money";
 import { iraDeductibility, type IraDeductionStatus } from "../engine/iraDeduction";
-import type { FilingStatus } from "../data/schemas";
+import type { FilingStatus, RetirementLimitsData } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
@@ -33,14 +33,25 @@ interface Fields {
   age50Plus: boolean;
 }
 
-const EXAMPLE: Fields = {
-  fs: "single",
-  magi: 86000,
-  contribution: 7500,
-  covered: true,
-  spouseCovered: false,
-  age50Plus: false,
-};
+/**
+ * The worked example, with the contribution read from the shard.
+ *
+ * It was a hardcoded 7500 — the shard's own `ira_contribution` for 2026 — in
+ * the one tile whose entire subject is that limit, while the computation two
+ * hundred lines below read the shard properly. The backdoor-Roth tile had the
+ * identical pair and only one half of it was fixed; this is the other file
+ * where that half-fix was waiting.
+ */
+function exampleFor(iraContribution: number): Fields {
+  return {
+    fs: "single",
+    magi: 86000,
+    contribution: iraContribution,
+    covered: true,
+    spouseCovered: false,
+    age50Plus: false,
+  };
+}
 
 function isFilingStatus(v: string): v is FilingStatus {
   return FILING_STATUSES.some((f) => f.value === v);
@@ -50,12 +61,22 @@ function isJoint(fs: FilingStatus): boolean {
   return fs === "married_jointly" || fs === "qualifying_surviving_spouse";
 }
 
-function readFields(p: URLSearchParams, profile: SituationStore): Fields {
+function readFields(
+  p: URLSearchParams,
+  profile: SituationStore,
+  limits: RetirementLimitsData["limits"],
+): Fields {
   const fs = p.get("fs");
+  const age50Plus = p.get("a50") === "1";
   return {
     fs: fs && isFilingStatus(fs) ? fs : (profile.get("filingStatus") ?? "single"),
     magi: p.has("magi") ? parseNonNegative(p.get("magi"), 0) : (profile.get("annualIncome") ?? 0),
-    contribution: parseNonNegative(p.get("c"), 7500),
+    // The limit the box opens on comes off the shard, catch-up included, the
+    // same way the computation below has always read it.
+    contribution: parseNonNegative(
+      p.get("c"),
+      (limits.ira_contribution ?? 0) + (age50Plus ? (limits.ira_catch_up_50plus ?? 0) : 0),
+    ),
     covered: p.get("cov") === "1",
     spouseCovered: p.get("scov") === "1",
     age50Plus: p.get("a50") === "1",
@@ -97,7 +118,7 @@ export function mountIraDeduction(ctx: TileContext): void {
     );
     return;
   }
-  let fields = readFields(ctx.params, profile);
+  let fields = readFields(ctx.params, profile, limits.limits);
 
   const fsSelect = el(
     "select",
@@ -227,7 +248,7 @@ export function mountIraDeduction(ctx: TileContext): void {
   for (const b of [covBox, scovBox, a50Box]) b.addEventListener("change", recompute);
 
   const tryExample = tryExampleButton(() => {
-    fields = { ...EXAMPLE };
+    fields = exampleFor(limits!.limits.ira_contribution ?? 0);
     fsSelect.value = fields.fs;
     magiInput.value = String(fields.magi);
     cInput.value = String(fields.contribution);

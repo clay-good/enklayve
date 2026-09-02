@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import axe from "axe-core";
+import { mountIraDeduction } from "../../src/tiles/iraDeduction";
 import { mountBackdoorRoth } from "../../src/tiles/backdoorRoth";
 import { mountDisability } from "../../src/tiles/disability";
 import { mountUmbrella } from "../../src/tiles/umbrella";
@@ -257,5 +258,42 @@ describe("the IRA contribution default", () => {
     const { root } = mount(mountBackdoorRoth, new URLSearchParams({ c: "3000" }));
     const input = root.querySelector<HTMLInputElement>('input[name="c"]');
     expect(Number(input!.value)).toBe(3000);
+  });
+});
+
+/**
+ * The same pair, in the tile whose entire subject is that limit.
+ *
+ * The IRA Deduction Checker read the shard for the phase-out ranges and the
+ * computation, and opened its contribution box on a hardcoded 7500 — with a
+ * worked example carrying the same literal. Two files, two identical pairs, one
+ * of which had already been half-fixed. A detector helped here where reading did
+ * not: comparing every tile's numeric default against every figure on every
+ * shard, and looking only at the matches, put this file next to the one that had
+ * just been fixed.
+ */
+describe("the IRA Deduction Checker's contribution default", () => {
+  const limits = () => data.retirementLimits()!.limits;
+
+  it("opens on the shard's IRA limit", () => {
+    const { root } = mount(mountIraDeduction, new URLSearchParams());
+    const input = root.querySelector<HTMLInputElement>('input[name="c"]');
+    expect(Number(input!.value)).toBe(limits().ira_contribution);
+  });
+
+  it("adds the catch-up when the deep link says the filer is 50 or over", () => {
+    const { root } = mount(mountIraDeduction, new URLSearchParams({ a50: "1" }));
+    const input = root.querySelector<HTMLInputElement>('input[name="c"]');
+    expect(Number(input!.value)).toBe(limits().ira_contribution! + limits().ira_catch_up_50plus!);
+  });
+
+  it("uses the shard figure in the worked example too", () => {
+    const { root } = mount(mountIraDeduction, new URLSearchParams());
+    const example = [...root.querySelectorAll("button")].find((b) =>
+      /example/i.test(b.textContent ?? ""),
+    );
+    example!.click();
+    const input = root.querySelector<HTMLInputElement>('input[name="c"]');
+    expect(Number(input!.value)).toBe(limits().ira_contribution);
   });
 });
