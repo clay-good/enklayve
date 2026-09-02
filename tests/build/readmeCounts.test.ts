@@ -239,3 +239,117 @@ describe("every internal doc link resolves", () => {
     expect(found).toEqual([target]);
   });
 });
+
+/**
+ * The state coverage cheat sheet quotes a rate for nearly every state, and
+ * nothing compared those rates with the shards the engine computes from.
+ *
+ * It is the table a reader scans to see whether their state is right — 25
+ * parentheticals, most of them a rate or a range — and it sits in the file the
+ * repo already promises is "reproducible from the repo, not marketing". The
+ * counts in that promise are checked. The rates were not, and a state rolling
+ * to a new rate would leave the table quietly wrong in the most-read place it
+ * could be.
+ *
+ * The rule is the general one, so a state added to the table is checked the day
+ * it lands: every percentage inside a state's parenthetical is a bracket rate on
+ * that state's shard. Four are something else, and each says what:
+ *
+ *   - MA's "+4%" and ME's "+2% surtax" are increments the engine models as a
+ *     top tier (5.0 + 4 = 9.0, 7.15 + 2 = 9.15), so they are DERIVED from the
+ *     shard rather than excused -- top rate minus the base below it;
+ *   - MD's county range is on `localAddOns`, 24 counties deep, so it is checked
+ *     against the min and max of those;
+ *   - WV's "2026 5% cut" is a rate CHANGE, not a rate, and is the only entry
+ *     here that is written down rather than computed.
+ */
+describe("the cheat sheet's rates are the shards' rates", () => {
+  const CHEAT_SHEET = (() => {
+    const readme = readFileSync(join(ROOT, "README.md"), "utf8");
+    const start = readme.indexOf("### State coverage cheat sheet");
+    expect(start, "the cheat-sheet heading moved or was renamed").toBeGreaterThan(-1);
+    const end = readme.indexOf("\n## ", start);
+    return readme.slice(start, end === -1 ? undefined : end);
+  })();
+
+  /** `MD (state 2%→6.5%, plus a county tax 2.25%–3.30%)` → `["MD", "state 2%…"]`. */
+  const PARENTHETICAL = /\b([A-Z]{2})\s*\(([^()]*(?:\([^()]*\)[^()]*)*)\)/g;
+
+  const shardOf = (code: string): Record<string, unknown> =>
+    JSON.parse(
+      readFileSync(join(ROOT, "data", `state-${code.toLowerCase()}-income-tax-2024.json`), "utf8"),
+    ) as Record<string, unknown>;
+
+  const pct = (n: number): number => Number((n * 100).toFixed(4));
+
+  /** Every bracket rate on a shard, across every filing status. */
+  function bracketRates(code: string): Set<number> {
+    const byStatus = shardOf(code).bracketsByFilingStatus as Record<
+      string,
+      { rate: number; lowerBound: number }[]
+    >;
+    const out = new Set<number>();
+    for (const schedule of Object.values(byStatus)) for (const b of schedule) out.add(pct(b.rate));
+    return out;
+  }
+
+  /** A surtax the engine folds into the top tier: the top rate less the one below it. */
+  function topTierIncrement(code: string): number {
+    const sorted = [...bracketRates(code)].sort((a, b) => a - b);
+    return Number((sorted[sorted.length - 1]! - sorted[sorted.length - 2]!).toFixed(4));
+  }
+
+  /** Maryland's county tax, which is 24 entries on `localAddOns` rather than a bracket. */
+  function localAddOnRates(code: string): number[] {
+    const addOns = shardOf(code).localAddOns as {
+      flatRate?: number;
+      brackets?: { rate: number }[];
+    }[];
+    return addOns.flatMap((a) => [
+      ...(a.flatRate === undefined ? [] : [pct(a.flatRate)]),
+      ...(a.brackets ?? []).map((b) => pct(b.rate)),
+    ]);
+  }
+
+  /** A percentage in the table that is not a rate on the shard, and what it is. */
+  const NOT_A_BRACKET_RATE: Record<string, Record<number, string>> = {
+    WV: { 5: "the size of the 2026 cut, which is a change in a rate and not one" },
+  };
+
+  const claims = [...CHEAT_SHEET.matchAll(PARENTHETICAL)]
+    .map(([, code, body]) => ({
+      code: code!,
+      rates: [...body!.matchAll(/(\d+(?:\.\d+)?)\s*%/g)].map((m) => Number(m[1])),
+    }))
+    .filter(
+      (c) =>
+        c.rates.length > 0 &&
+        existsSync(join(ROOT, "data", `state-${c.code.toLowerCase()}-income-tax-2024.json`)),
+    );
+
+  it("finds the table and the states in it", () => {
+    // A pattern that matches nothing is a check switched off by a reword.
+    expect(claims.length).toBeGreaterThan(15);
+    expect(claims.map((c) => c.code)).toContain("PA");
+  });
+
+  for (const { code, rates } of claims) {
+    it(`${code} states ${rates.map((r) => `${r}%`).join(", ")}, and the shard agrees`, () => {
+      const onShard = bracketRates(code);
+      const local = code === "MD" ? localAddOnRates(code) : [];
+      const increment = topTierIncrement(code);
+      const allowed = NOT_A_BRACKET_RATE[code] ?? {};
+      const unmatched = rates.filter(
+        (r) =>
+          !onShard.has(r) &&
+          r !== increment &&
+          !(local.length > 0 && (r === Math.min(...local) || r === Math.max(...local))) &&
+          !(r in allowed),
+      );
+      expect(
+        unmatched,
+        `${code}: ${unmatched.join(", ")} appears in the cheat sheet and nowhere on its shard`,
+      ).toEqual([]);
+    });
+  }
+});
