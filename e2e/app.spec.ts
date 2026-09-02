@@ -237,3 +237,45 @@ test("the car loan interest a reader deducts is one year of it", async ({ page }
   expect(carint).toBeGreaterThan(2200);
   expect(carint).toBeLessThan(2400);
 });
+
+test("a 2026 W-2 carries its tips and overtime into Take-Home", async ({ page }) => {
+  // The whole point of the new box 12 codes, end to end in a real browser: an
+  // employer reports the figures IRC §§224 and 225 deduct, the Readout reads
+  // them on the device, the reader confirms, and the calculator that spends
+  // them opens with them already filled in. Every step of that is unit-tested
+  // in isolation; none of it had ever been run as one path.
+  const w2 = [
+    "Form W-2 Wage and Tax Statement 2026 Employer Diner Inc",
+    "1 Wages, tips, other compensation 48000.00",
+    "2 Federal income tax withheld 3100.00",
+    "12a D 2000.00 12b TP 14000.00 12c TT 3200.00",
+    "14b 000 101",
+    "16 State wages 48000.00 17 State income tax 1400.00",
+  ].join("\n");
+
+  await page.goto("/#/readout");
+  await page.waitForSelector("input.readout-file");
+  await page.setInputFiles("input.readout-file", {
+    name: "w2-2026.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from(w2, "utf-8"),
+  });
+
+  // Both new boxes are read, and the tips figure is labelled a ceiling because
+  // box 14b carries the 000 that says some of them are not qualified.
+  // Both labels appear twice — once in the editable field list, once in the
+  // plain-English restatement — which is the answer layer doing its job.
+  await expect(page.getByText(/Cash tips reported to employer/i).first()).toBeVisible();
+  await expect(page.getByText(/Qualified overtime compensation/i).first()).toBeVisible();
+
+  const confirm = page.getByRole("button", { name: /confirm and add/i });
+  await expect(confirm).toBeVisible();
+  await confirm.click();
+  await page.waitForSelector(".readout-summary");
+
+  // The session profile carries them to the tile that applies §§224 and 225.
+  await page.goto("/#/paycheck-taxes?tool=take-home");
+  await page.waitForSelector(".tile-form");
+  await expect(page.locator('input[name="tips"]').first()).toHaveValue("14000");
+  await expect(page.locator('input[name="ot"]').first()).toHaveValue("3200");
+});
