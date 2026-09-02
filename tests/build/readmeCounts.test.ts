@@ -353,3 +353,63 @@ describe("the cheat sheet's rates are the shards' rates", () => {
     });
   }
 });
+
+/**
+ * A worked result the README quotes is a value the golden corpus actually pins.
+ *
+ * Ninety-six of them are written as `single $60k → $1,882.67`, one or more per
+ * state, and they are the README's strongest claim: not "we model Missouri" but
+ * "here is what it computes, and a test holds it". Nothing compared them with
+ * the tests.
+ *
+ * Two were wrong when this was written, and wrong in the way that matters. The
+ * Missouri paragraph quoted **$1,887.36 / $1,130.66** against a corpus pinning
+ * **$1,882.67 / $1,125.97** — and the same paragraph still described the
+ * pre-roll schedule ($1,313 steps, top rate above $9,191) and said the 2026
+ * indexed thresholds "roll as the reviewer's data-only step", after that roll
+ * had happened. The shard, the engine and the golden cases had all moved
+ * together to the DOR's 2026 formula; the sentence describing them had not.
+ *
+ * The check is presence, not attribution: a figure has to appear as an EXPECTED
+ * value somewhere in `tests/golden`, matched against the argument of a `toBe`
+ * rather than any number in the file — which is what makes it precise enough to
+ * have caught these two, since a loose scan of every number in the corpus finds
+ * them by coincidence. It cannot catch a right figure filed under the wrong
+ * state; it catches the one that actually happens, which is a figure going stale
+ * where the number beneath it moved.
+ */
+describe("the README's worked results are the corpus's", () => {
+  const README = readFileSync(join(ROOT, "README.md"), "utf8");
+  const GOLDEN = join(ROOT, "tests", "golden");
+
+  /** Every `expect(...).toBe(<number or numeric string>)` in the golden corpus. */
+  const pinned = (() => {
+    const out = new Set<number>();
+    for (const name of readdirSync(GOLDEN)) {
+      if (!name.endsWith(".ts")) continue;
+      const text = readFileSync(join(GOLDEN, name), "utf8");
+      for (const m of text.matchAll(/\.toBe\(\s*"?(-?\d+(?:\.\d+)?)"?\s*\)/g)) {
+        out.add(Number(m[1]));
+      }
+    }
+    return out;
+  })();
+
+  const claims = [...README.matchAll(/(?:→|->)\s*\*{0,2}\$([\d,]+\.\d{2})/g)].map((m) =>
+    Number(m[1]!.replace(/,/g, "")),
+  );
+
+  it("finds the corpus and the claims", () => {
+    // Either pattern matching nothing is a check switched off by a reword.
+    expect(pinned.size, "no expected values found in tests/golden").toBeGreaterThan(200);
+    expect(claims.length, "no worked results found in the README").toBeGreaterThan(50);
+  });
+
+  it("pins every figure the README says is golden-tested", () => {
+    const unpinned = claims.filter((c) => !pinned.has(c));
+    expect(
+      unpinned,
+      "the README quotes a result no golden case expects — the shard moved and the sentence did not",
+    ).toEqual([]);
+  });
+});
