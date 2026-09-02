@@ -392,6 +392,158 @@ describe("§D coverage gaps (correct today, now pinned against future edits)", (
  * statuses**, which is the criterion as written, rather than the three statuses
  * in one state the engine's own suite covers.
  */
+/**
+ * The One Big Beautiful Bill Act's deductions, as properties rather than cases.
+ *
+ * Seven statutory rules were added to this engine on 2026-09-01 — five new
+ * deductions, a floor on giving, and §68's cap on what an itemized deduction is
+ * worth — each with its own worked examples. What examples cannot say is that
+ * nothing they add up to goes wrong at a value nobody thought to try. These are
+ * the properties that must hold at EVERY value: a deduction that is never
+ * negative, never larger than what it was given, never able to drive taxable
+ * income below zero, and always weakly monotone in the amount it applies to.
+ */
+describe("the 2026 deductions hold their shape at every input", () => {
+  const AMOUNTS = [0, 0.01, 1, 999, 1000, 12_500, 25_000, 100_000, 1e7];
+  const INCOMES = [0, 1, 40_000, 99_999, 100_000, 150_001, 300_000, 640_600, 2e6];
+  const STATUSES: FilingStatus[] = [
+    "single",
+    "married_jointly",
+    "married_separately",
+    "head_of_household",
+    "qualifying_surviving_spouse",
+  ];
+
+  it("never returns a negative or non-finite deduction, at any income or status", () => {
+    for (const status of STATUSES) {
+      for (const wages of INCOMES) {
+        for (const amount of AMOUNTS) {
+          const r = evaluateTaxes(
+            {
+              filingStatus: status,
+              wages,
+              qualifiedTips: amount,
+              qualifiedOvertime: amount,
+              vehicleLoanInterest: amount,
+              seniorsAge65Plus: 2,
+              itemized: { charitable: amount, mortgageInterest: amount },
+            },
+            { federal: data.federal()!, fica: data.fica()! },
+          );
+          const d = r.federal.deduction;
+          for (const [label, m] of Object.entries(d)) {
+            if (typeof m === "string") continue;
+            const n = (m as Money).toNumber();
+            expect(Number.isFinite(n), `${label} at ${status}/${wages}/${amount}`).toBe(true);
+            expect(n, `${label} at ${status}/${wages}/${amount}`).toBeGreaterThanOrEqual(0);
+          }
+          // Nothing any of them do can push taxable income below zero, or make
+          // the tax negative — a refund this engine has no business inventing.
+          expect(r.federal.taxableIncome.toNumber()).toBeGreaterThanOrEqual(0);
+          expect(r.federal.incomeTax.toNumber()).toBeGreaterThanOrEqual(0);
+        }
+      }
+    }
+  });
+
+  it("never deducts more of a thing than it was given", () => {
+    // Each deduction is a ceiling on the reader's own figure, so it can shrink
+    // that figure but never invent one. The senior deduction is excluded: it is
+    // a per-person allowance rather than a share of an input.
+    for (const status of STATUSES) {
+      for (const wages of INCOMES) {
+        for (const amount of AMOUNTS) {
+          const d = evaluateTaxes(
+            {
+              filingStatus: status,
+              wages,
+              qualifiedTips: amount,
+              qualifiedOvertime: amount,
+              vehicleLoanInterest: amount,
+              itemized: { charitable: amount },
+              deductionMode: "standard",
+            },
+            { federal: data.federal()!, fica: data.fica()! },
+          ).federal.deduction;
+          expect(d.qualifiedTips.toNumber()).toBeLessThanOrEqual(amount);
+          expect(d.qualifiedOvertime.toNumber()).toBeLessThanOrEqual(amount);
+          expect(d.vehicleLoanInterest.toNumber()).toBeLessThanOrEqual(amount);
+          expect(d.nonItemizedCharitable.toNumber()).toBeLessThanOrEqual(amount);
+        }
+      }
+    }
+  });
+
+  it("is weakly monotone: giving more never deducts less", () => {
+    // A phase-out is a function of INCOME, not of the amount, so at a fixed
+    // income every one of these must be non-decreasing in what it is given. A
+    // cap flattens the curve; nothing may bend it downward.
+    for (const status of STATUSES) {
+      for (const wages of [40_000, 150_001, 300_000]) {
+        let previous = { tips: -1, overtime: -1, loan: -1, giving: -1 };
+        for (const amount of AMOUNTS) {
+          const d = evaluateTaxes(
+            {
+              filingStatus: status,
+              wages,
+              qualifiedTips: amount,
+              qualifiedOvertime: amount,
+              vehicleLoanInterest: amount,
+              itemized: { charitable: amount },
+              deductionMode: "standard",
+            },
+            { federal: data.federal()!, fica: data.fica()! },
+          ).federal.deduction;
+          const now = {
+            tips: d.qualifiedTips.toNumber(),
+            overtime: d.qualifiedOvertime.toNumber(),
+            loan: d.vehicleLoanInterest.toNumber(),
+            giving: d.nonItemizedCharitable.toNumber(),
+          };
+          for (const key of ["tips", "overtime", "loan", "giving"] as const) {
+            expect(now[key], `${key} fell at ${status}/${wages}/${amount}`).toBeGreaterThanOrEqual(
+              previous[key],
+            );
+          }
+          previous = now;
+        }
+      }
+    }
+  });
+
+  it("never lets §68 take back more than 2/37 of the deduction", () => {
+    // The reduction is 2/37 of the LESSER of two things, so it can never exceed
+    // 2/37 of the deduction itself — and the deduction after it is never
+    // negative, whatever the income.
+    for (const status of STATUSES) {
+      for (const wages of [640_600, 700_000, 5e6]) {
+        const d = evaluateTaxes(
+          {
+            filingStatus: status,
+            wages,
+            deductionMode: "itemized",
+            itemized: { mortgageInterest: 250_000 },
+          },
+          { federal: data.federal()!, fica: data.fica()! },
+        ).federal.deduction;
+        const before = d.amount.add(d.itemizedLimitation).toNumber();
+        expect(d.itemizedLimitation.toNumber()).toBeLessThanOrEqual((before * 2) / 37 + 0.01);
+        expect(d.amount.toNumber()).toBeGreaterThanOrEqual(0);
+      }
+    }
+  });
+
+  it("keeps the charitable floor from ever exceeding the giving it applies to", () => {
+    for (const agi of INCOMES) {
+      for (const given of AMOUNTS) {
+        const total = itemizedTotal({ charitable: given }, Money.from(agi), Infinity, 0.005);
+        expect(total.toNumber()).toBeGreaterThanOrEqual(0);
+        expect(total.toNumber()).toBeLessThanOrEqual(given);
+      }
+    }
+  });
+});
+
 describe("sweepResources over the whole jurisdiction × filing-status space", () => {
   const STATUSES: FilingStatus[] = [
     "single",
