@@ -1,12 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { describeResolverFailure, nameResolvesDirectly } from "../../scripts/fetch-source";
 import {
+  check,
   classify,
   awaitedUrls,
   extractUrls,
   renderLinkReport,
   sourceFiles,
   type LinkResult,
+  type Request,
 } from "../../scripts/check-links";
 import { ADAPTERS } from "../../scripts/refresh/adapters";
 import { readFileSync, readdirSync } from "node:fs";
@@ -307,5 +309,87 @@ describe("the report a person reads", () => {
     const report = renderLinkReport([result({ url: "https://gone.test/x", status: 404 })]);
     expect(report).toContain("## Broken");
     expect(report).not.toContain("a browser refuses too");
+  });
+});
+
+describe("asking twice before calling a link dead", () => {
+  /** Replays a scripted sequence of answers, recording what was asked. */
+  function replay(answers: (number | Error)[]): {
+    request: Request;
+    asked: string[];
+  } {
+    const asked: string[] = [];
+    let i = 0;
+    const request: Request = async (_url, method) => {
+      asked.push(method);
+      const next = answers[Math.min(i++, answers.length - 1)]!;
+      if (next instanceof Error) throw next;
+      return { status: next, location: "" };
+    };
+    return { request, asked };
+  }
+
+  const never = async (): Promise<void> => {
+    throw new Error("a healthy link must not pause");
+  };
+  const instant = async (): Promise<void> => {};
+
+  it("costs one request and no pause when the link is fine", async () => {
+    const { request, asked } = replay([200]);
+    expect(await check("https://ok.test/a", ["src/x.ts"], request, never)).toEqual({
+      url: "https://ok.test/a",
+      status: 200,
+      detail: "",
+      files: ["src/x.ts"],
+    });
+    expect(asked).toEqual(["HEAD"]);
+  });
+
+  // The bug this closes. On 2026-09-02 the sweep reported Wisconsin's
+  // 2026-Form1-ES-Inst.pdf as a hard 404 and the same URL answered 200 on the
+  // next ask, unchanged: eight-way concurrency against one agency is enough to
+  // meet a throttle, and several answer one with a 404 rather than a 429. The
+  // report asked a person to go replace a citation that works.
+  it("does not report a 404 the server takes back on the next ask", async () => {
+    const { request, asked } = replay([404, 404, 200]);
+    const r = await check("https://blip.test/a", ["README.md"], request, instant);
+    expect(classify(r)).toBe("ok");
+    // HEAD said broken, so a GET was asked; that GET said broken, so a second
+    // GET confirmed it. Three asks, and only because the first two failed.
+    expect(asked).toEqual(["HEAD", "GET", "GET"]);
+  });
+
+  it("still reports a link that is dead both times it is asked", async () => {
+    const { request, asked } = replay([404]);
+    const r = await check("https://gone.test/a", ["README.md"], request, instant);
+    expect(classify(r)).toBe("broken");
+    expect(r.status).toBe(404);
+    expect(asked).toEqual(["HEAD", "GET", "GET"]);
+  });
+
+  it("keeps the status when the confirming ask never lands", async () => {
+    // A server that answers 404 and then drops the connection has still told us
+    // something; "fetch failed (after retries)" would throw that away and send
+    // the reader looking for a network problem instead of a moved page.
+    const { request } = replay([500, 500, new Error("socket hang up")]);
+    const r = await check("https://flaky.test/a", ["README.md"], request, instant);
+    expect(r.status).toBe(500);
+    expect(classify(r)).toBe("broken");
+  });
+
+  it("takes a redirect at its word without a second ask", async () => {
+    // A redirect is reported, not retried: it is an answer about where the
+    // canonical URL went, and asking again cannot change it.
+    const { request, asked } = replay([301]);
+    const r = await check("https://moved.test/a", ["src/x.ts"], request, never);
+    expect(classify(r)).toBe("redirect");
+    expect(asked).toEqual(["HEAD"]);
+  });
+
+  it("retries a transport failure once, per method, as it always has", async () => {
+    const { request, asked } = replay([new Error("socket hang up"), 200]);
+    const r = await check("https://dropped.test/a", ["src/x.ts"], request, never);
+    expect(classify(r)).toBe("ok");
+    expect(asked).toEqual(["HEAD", "HEAD"]);
   });
 });

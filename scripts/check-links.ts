@@ -265,46 +265,100 @@ export function renderLinkReport(results: LinkResult[]): string {
 const USER_AGENT = BROWSER_USER_AGENT;
 const CONCURRENCY = 8;
 const TIMEOUT_MS = 30_000;
+/**
+ * How long to wait before asking a second time about a status that says broken.
+ * Long enough for a rate limiter's window or a cache's bad entry to have moved
+ * on, short enough that it costs nothing on a healthy run — this delay is only
+ * ever paid on a URL that is one answer away from being reported.
+ */
+const CONFIRM_DELAY_MS = 3_000;
+
+/** One request, reduced to what this check reads: a status and a redirect target. */
+export interface Attempt {
+  status: number;
+  location: string;
+}
+
+/** The single HTTP request, injectable so the retry policy is testable offline. */
+export type Request = (url: string, method: "HEAD" | "GET") => Promise<Attempt>;
+
+const fetchOnce: Request = async (url, method) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      method,
+      redirect: "manual",
+      headers: { "user-agent": USER_AGENT },
+      signal: controller.signal,
+    });
+    return { status: res.status, location: res.headers.get("location") ?? "" };
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+/* c8 ignore stop */
 
 /**
- * Check one URL, retrying once on a transport failure. A government site
- * dropping a single connection is common and means nothing; reporting it as a
- * dead link is how a monitor earns a reputation for crying wolf, and a monitor
- * people ignore is worse than none. An HTTP status is never retried — a 404 is
- * an answer.
+ * Check one URL, retrying once on a transport failure and once on a status that
+ * says the link is broken. A government site dropping a single connection is
+ * common and means nothing; reporting it as a dead link is how a monitor earns
+ * a reputation for crying wolf, and a monitor people ignore is worse than none.
+ *
+ * "An HTTP status is never retried — a 404 is an answer" is what this said
+ * until 2026-09-02, and it is the same mistake as the resolver one two commits
+ * earlier, arriving through the last door left open. A status is an answer from
+ * the *server*, and a server can be wrong for a minute: on that day the sweep
+ * reported Wisconsin's `2026-Form1-ES-Inst.pdf` as a hard 404 and the very same
+ * URL answered 200 on the next ask, unchanged. Eight-way concurrency against
+ * one agency is enough to meet a rate limiter, and several of them answer a
+ * throttle with a 404 rather than a 429. The report that run produced asked a
+ * person to go replace a citation that works, which is the one answer these
+ * checks must never give.
+ *
+ * So a broken status is confirmed once, after a pause, before it is believed. A
+ * healthy link pays nothing: the second ask happens only on the answer that was
+ * about to become a line in the report.
  */
-async function check(url: string, files: string[]): Promise<LinkResult> {
+export async function check(
+  url: string,
+  files: string[],
+  request: Request = fetchOnce,
+  pause: (ms: number) => Promise<void> = sleep,
+): Promise<LinkResult> {
   let last = "";
+  /** A GET that answered "broken", kept in case the confirming ask never lands. */
+  let answered: LinkResult | undefined;
   // HEAD first: several cited sources are multi-megabyte PDFs, and downloading
   // them just to learn the status is what made this time out on a slow link.
   // Some servers reject HEAD, so a non-2xx HEAD is confirmed with a GET before
   // it is reported as a failure.
   for (const method of ["HEAD", "GET"] as const) {
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
       try {
-        const res = await fetch(url, {
-          method,
-          redirect: "manual",
-          headers: { "user-agent": USER_AGENT },
-          signal: controller.signal,
-        });
-        const result = {
-          url,
-          status: res.status,
-          detail: res.headers.get("location") ?? "",
-          files,
-        };
-        if (method === "GET" || classify(result) !== "broken") return result;
-        break; // HEAD said broken — confirm with a GET before believing it.
+        const res = await request(url, method);
+        const result = { url, status: res.status, detail: res.location, files };
+        if (classify(result) !== "broken") return result;
+        // HEAD said broken — a GET answers that better than a second HEAD would.
+        if (method === "HEAD") break;
+        if (attempt > 0) return result; // Said twice. It is the link.
+        answered = result;
+        await pause(CONFIRM_DELAY_MS);
       } catch (err) {
         last = String((err as Error).cause ?? err).slice(0, 140);
-      } finally {
-        clearTimeout(timer);
       }
     }
   }
+  // The server answered, and then the confirming ask failed to arrive at all.
+  // The status is the more useful of those two things to put in front of a
+  // reader, and the transport diagnosis below is about a server that never
+  // answered — which this one did.
+  if (answered) return answered;
   // A chain the server did not serve completely is not a dead link — it is the
   // missing intermediate a browser fetches and Node does not. The refresh
   // pipeline repairs it, so this must too, or the two checks go back to
