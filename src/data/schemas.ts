@@ -399,6 +399,30 @@ export const FederalDeductionConformitySchema = z.object({
 });
 export type FederalDeductionConformityData = z.infer<typeof FederalDeductionConformitySchema>;
 
+/**
+ * IRC §170(b)(1)(I): the floor an itemizer's charitable giving must clear.
+ *
+ * Added by the One Big Beautiful Bill Act (Pub. L. 119-21 §70425) for taxable
+ * years beginning after December 31, 2025. A contribution "shall be allowed only
+ * to the extent that the aggregate of such contributions exceeds 0.5 percent of
+ * the taxpayer's contribution base for the taxable year" — the contribution base
+ * being adjusted gross income computed without any net operating loss carryback
+ * (§170(b)(1)(H)), which for a wage earner is the AGI this engine already has.
+ *
+ * A rate rather than a dollar figure, so nothing indexes and a change is an
+ * amendment somebody reads. Optional, and absence is an answer the same way
+ * §170(p)'s is: before 2026 there was no floor, and zero is the right number.
+ *
+ * It does NOT reach the §170(p) deduction, and that is not an inference — the
+ * statute excludes it by name, computing that deduction "without regard to
+ * subsections (b)(1)(G)(ii), (b)(1)(I), and (d)(1)".
+ */
+export const CharitableFloorSchema = z.object({
+  /** Share of the contribution base a gift must exceed before any is allowed. */
+  rate: z.number().gte(0).lte(1),
+});
+export type CharitableFloorData = z.infer<typeof CharitableFloorSchema>;
+
 export const SaltLimitationSchema = z.object({
   applicableLimitationAmount: z.number().gt(0),
   thresholdAmount: z.number().gt(0),
@@ -548,6 +572,8 @@ export const JurisdictionSchema = z.object({
   saltLimitation: SaltLimitationSchema.optional(),
   /** IRC §170(p), cash giving deductible without itemizing (federal only). */
   nonItemizerCharitable: NonItemizerCharitableSchema.optional(),
+  /** IRC §170(b)(1)(I), the floor on an itemizer's giving (federal only). */
+  charitableFloor: CharitableFloorSchema.optional(),
   /** IRC §151(d)(5)(C), the deduction at 65 (federal only). */
   seniorDeduction: SeniorDeductionSchema.optional(),
   /** IRC §224, the deduction for qualified tips (federal only). */

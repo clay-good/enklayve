@@ -18,7 +18,7 @@ const SENIOR =
 
 /** §170(p), which needs a giving figure and so reaches only one of the two. */
 const CHARITY =
-  "If you take the standard deduction we also apply §170(p), which since 2026 lets you deduct up to $1,000 of cash giving — $2,000 on a joint return — without itemizing. It counts only cash to a public charity, not gifts of property or to a donor-advised fund, so if your giving was not all of that kind the real figure is smaller.";
+  "If you take the standard deduction we also apply §170(p), which since 2026 lets you deduct up to $1,000 of cash giving — $2,000 on a joint return — without itemizing. It counts only cash to a public charity, not gifts of property or to a donor-advised fund, so if your giving was not all of that kind the real figure is smaller. If you itemize instead, the same Act works the other way: §170(b)(1)(I) allows your giving only above 0.5% of your income, so the first $500 of giving at $100,000 deducts nothing. The floor applies to itemizers only — §170(p) is computed without regard to it — which is why the same $1,000 can be worth more to someone who does not itemize.";
 
 /** §163(h)(4), which needs a car loan interest figure and so reaches one tile. */
 const CAR_LOAN =

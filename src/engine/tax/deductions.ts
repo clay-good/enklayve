@@ -54,14 +54,34 @@ export const MEDICAL_AGI_FLOOR_RATE = 0.075;
 
 /**
  * Total federal itemized deduction from the "big four" (BUILD-SPEC.md §3.2):
- * SALT (capped), mortgage interest, charitable contributions, and medical
- * expenses above the AGI floor. AGI-based charitable limits and other refinements
- * are out of scope for this phase.
+ * SALT (capped), mortgage interest, charitable contributions above the §170(b)(1)(I)
+ * floor, and medical expenses above the AGI floor. The percentage CEILINGS on
+ * giving (60% of the contribution base for cash to a public charity, 30% for
+ * appreciated property) remain out of scope: they bind a filer giving a large
+ * share of their income, and this engine's single `charitable` input cannot tell
+ * the two kinds apart to apply them.
  */
-export function itemizedTotal(itemized: ItemizedInput, agi: Money, saltCap: number): Money {
+export function itemizedTotal(
+  itemized: ItemizedInput,
+  agi: Money,
+  saltCap: number,
+  charitableFloorRate = 0,
+): Money {
   const salt = Money.from(Math.min(itemized.stateAndLocalTaxes ?? 0, saltCap));
   const mortgage = Money.from(itemized.mortgageInterest ?? 0);
-  const charitable = Money.from(itemized.charitable ?? 0);
+  // §170(b)(1)(I), new for 2026: giving is allowed "only to the extent that the
+  // aggregate of such contributions exceeds 0.5 percent of the taxpayer's
+  // contribution base". The base is AGI without a net operating loss carryback
+  // (§170(b)(1)(H)); for a wage earner that is the AGI already computed here.
+  // The rate is zero for a tax year whose shard carries no floor, which is every
+  // year before this one.
+  const charitableFloor = agi.isNegative()
+    ? Money.zero()
+    : agi.multiply(Math.max(0, charitableFloorRate));
+  const charitableRaw = Money.from(itemized.charitable ?? 0);
+  const charitable = charitableRaw.greaterThan(charitableFloor)
+    ? charitableRaw.subtract(charitableFloor)
+    : Money.zero();
 
   // 7.5% of AGI, but never negative: a non-positive AGI yields a $0 floor, so
   // the whole expense is deductible and the deduction never exceeds the actual
@@ -119,8 +139,9 @@ export function chooseFederalDeduction(
   agi: Money,
   saltCap: number,
   nonItemizedCharitable: Money = Money.zero(),
+  charitableFloorRate = 0,
 ): DeductionResult {
-  const itemizedAmount = itemizedTotal(itemized, agi, saltCap);
+  const itemizedAmount = itemizedTotal(itemized, agi, saltCap, charitableFloorRate);
   // `senior` is filled in by the caller: §151(d)(5)(C) does not depend on this
   // choice, so it has no business influencing it.
   const takeStandard = (): DeductionResult => ({

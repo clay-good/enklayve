@@ -308,6 +308,11 @@ const NOT_A_FIGURE: Record<string, Record<string, string>> = {
     // bound above, so the sentence cannot drift without one of them moving; the
     // arithmetic is stated for the reader rather than being a fifth field.
     "$250,000": "where the joint phase-out ends, derived from four bound fields",
+    // The §170(b)(1)(I) floor is a RATE, not a dollar amount — the shard carries
+    // 0.005 and nothing else. This is that rate worked through an illustrative
+    // income, which is the only way to say what a floor costs a reader, and both
+    // halves of the sentence move together if the rate ever does.
+    $500: "0.5% of the illustrative $100,000 income in the same sentence",
   },
   "childTaxCredit.ts": { "$1,000": "the per-$1,000 step the phase-out is quoted in" },
   "federalIncomeTax.ts": { "$1,000": "an illustrative next-dollar amount" },

@@ -53,9 +53,14 @@ describe("auto deduction picks the larger", () => {
     // flat `SALT_CAP = 10000` that the One Big Beautiful Bill Act had replaced —
     // $2,400 of federal tax this filer does not owe, on a worked example the
     // corpus had been checking for months.
-    expect(cents(r.federal.deduction.amount)).toBe("43000");
-    // taxable 157,000 → $30,278.00.
-    expect(cents(r.federal.incomeTax)).toBe("30278");
+    // And $42,000 rather than $43,000 since 2026-09-01, because §170(b)(1)(I)
+    // now allows giving "only to the extent that the aggregate of such
+    // contributions exceeds 0.5 percent of the taxpayer's contribution base":
+    // 0.5% of 200,000 is 1,000, so 5,000 of giving deducts 4,000. The first
+    // $1,000 an itemizer gives at this income is worth nothing.
+    expect(cents(r.federal.deduction.amount)).toBe("42000");
+    // taxable 158,000, still inside the 24% band → 30,278 + 24% of 1,000.
+    expect(cents(r.federal.incomeTax)).toBe("30518");
   });
 
   it("falls back to the standard deduction when itemized is smaller", () => {

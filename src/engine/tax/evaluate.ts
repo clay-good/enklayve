@@ -71,6 +71,10 @@ function computeFederal(
       input.filingStatus,
       input.itemized ?? {},
     ),
+    // §170(b)(1)(I) reaches the itemized side only. §170(p) says so itself,
+    // computing its figure "without regard to ... (b)(1)(I)", which is why the
+    // floor is passed here and not into `nonItemizerCharitableFor`.
+    federal.charitableFloor?.rate ?? 0,
   );
   // §63(b)(4): a non-itemizer subtracts the standard deduction AND §170(p).
   // §151(d)(5)(C) comes off either way — §63(a) for an itemizer, §63(b)(2) for
