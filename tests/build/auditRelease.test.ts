@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  checkBuildIsCurrent,
   checkCsp,
   checkIndexHtml,
   checkProvenance,
@@ -318,5 +319,41 @@ describe("checkBundleBudget", () => {
     // enough room for routine growth, not enough to absorb a new dependency.
     expect(SHELL_GZIP_BUDGET_KB).toBeGreaterThan(200);
     expect(SHELL_GZIP_BUDGET_KB).toBeLessThan(320);
+  });
+});
+
+describe("the build under audit is the build of this tree", () => {
+  /**
+   * Every other check in the release audit reads `dist/`, and nothing checked
+   * that `dist/` came from the code beside it. `npm run audit` on a stale build
+   * printed "✓ Release audit passed" about an artifact three commits old — the
+   * failure this file exists to prevent, in the file that exists to prevent it.
+   * Two runs on 2026-09-02 reported the eager shell at 271.3 kB with 8.7 kB
+   * free while the tree they stood in built to 275.2 kB with 4.8 kB free, and
+   * that budget's whole headroom is a few kilobytes.
+   */
+  it("passes when the build is newer than every source it reads", () => {
+    expect(checkBuildIsCurrent(1_000, 2_000, "src/tiles/x.ts")).toEqual([]);
+  });
+
+  it("passes when the build is exactly as new as the newest source", () => {
+    // A build finishing in the same millisecond as the edit that triggered it
+    // is not stale, and a coarse filesystem clock makes that an ordinary case
+    // rather than a curiosity.
+    expect(checkBuildIsCurrent(2_000, 2_000, "src/tiles/x.ts")).toEqual([]);
+  });
+
+  it("fails when a source has been edited since the build, and names it", () => {
+    const [violation] = checkBuildIsCurrent(2_000, 1_000, "src/tiles/peaceOfMind.ts");
+    expect(violation).toContain("dist/ is older");
+    expect(violation).toContain("src/tiles/peaceOfMind.ts");
+    expect(violation).toContain("npm run build");
+  });
+
+  it("says nothing when there is no build at all", () => {
+    // "dist/index.html not found" is a violation this audit already reports, at
+    // its own check. Two lines about one missing directory is noise, and the
+    // other one names the file.
+    expect(checkBuildIsCurrent(2_000, null, "src/tiles/x.ts")).toEqual([]);
   });
 });

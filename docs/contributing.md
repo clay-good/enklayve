@@ -20,7 +20,7 @@ npm run typecheck      # tsc --noEmit (strict)
 npm run lint           # eslint
 npm run format         # prettier --write  (format:check in CI)
 npm run build          # production build to dist/
-npm run audit          # the release gate — run after build
+npm run audit          # the release gate — run after build (it refuses a stale dist/)
 npm run deploy:dry     # wrangler dry-run
 ```
 

@@ -20,6 +20,41 @@ import { gzipSync } from "node:zlib";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
+/**
+ * 0. The build under audit must BE the build of this tree.
+ *
+ * Every other check here reads `dist/`, and nothing checked whether `dist/` was
+ * the output of the code beside it. `npm run audit` on a stale build prints
+ * "✓ Release audit passed" about an artifact three commits old — the exact
+ * shape of failure this file exists to prevent, in the file that exists to
+ * prevent it. It was not hypothetical: on 2026-09-02 two runs certified a
+ * `dist/` predating the session's changes and reported the eager shell at
+ * 271.3 kB with 8.7 kB free, while the tree it was standing in built to 275.2 kB
+ * with 4.8 kB free. The headroom in that budget is a few kilobytes wide, so
+ * "passed" was being said about a number wrong by most of it.
+ *
+ * CI is unaffected — it builds in a fresh checkout and then audits — which is
+ * precisely why nothing caught this. The person running the launch checklist by
+ * hand is the one who gets the wrong answer.
+ *
+ * mtimes rather than hashes: a build is not reproducible byte-for-byte across
+ * machines, and the question here is only "did the build happen after the last
+ * edit", which a timestamp answers exactly. A `git checkout` restamps the files
+ * it touches, so switching branches without rebuilding is correctly flagged.
+ */
+export function checkBuildIsCurrent(
+  newestSourceMs: number,
+  builtMs: number | null,
+  newestSourcePath: string,
+): string[] {
+  if (builtMs === null) return []; // The missing-dist violation is reported at its own check.
+  if (builtMs >= newestSourceMs) return [];
+  return [
+    `dist/ is older than the sources it is being audited against — ${newestSourcePath} is newer ` +
+      "than the build. Run `npm run build` first; every check below reads dist/.",
+  ];
+}
+
 /** 1. The page CSP must keep connect-src locked to 'none'. */
 export function checkCsp(workerSource: string): string[] {
   return /connect-src 'none'/.test(workerSource)
@@ -361,6 +396,43 @@ export function shellBreakdown(sources: readonly string[], lengths: readonly num
     .map(([group, len]) => `${(len / 1024).toFixed(1).padStart(8)} kB  ${group}`);
 }
 
+/**
+ * What vite reads to produce `dist/`, and nothing else.
+ *
+ * `tests/` and `docs/` are deliberately outside it: editing a test does not make
+ * a build stale, and a gate that fires on an edit it does not depend on is one
+ * people learn to work around by rebuilding for no reason.
+ */
+const BUILD_INPUTS = ["src", "data", "public", "worker", "index.html", "vite.config.ts"];
+
+/** The newest mtime across the build's inputs, and which file carries it. */
+function newestBuildInput(root: string): { mtimeMs: number; path: string } {
+  let newest = { mtimeMs: 0, path: "(nothing)" };
+  const consider = (p: string): void => {
+    const ms = statSync(p).mtimeMs;
+    if (ms > newest.mtimeMs) newest = { mtimeMs: ms, path: p.slice(root.length + 1) };
+  };
+  for (const entry of BUILD_INPUTS) {
+    const p = join(root, entry);
+    try {
+      if (statSync(p).isDirectory()) for (const f of walk(p, () => true)) consider(f);
+      else consider(p);
+    } catch {
+      // An optional input this checkout does not have.
+    }
+  }
+  return newest;
+}
+
+/** When the build ran, read off the one file every build rewrites. */
+function distBuiltMs(root: string): number | null {
+  try {
+    return statSync(join(root, "dist", "index.html")).mtimeMs;
+  } catch {
+    return null;
+  }
+}
+
 /** Every asset the built service worker precaches, with its gzipped size. */
 function precachedAssets(root: string): ShellAsset[] {
   let sw: string;
@@ -386,6 +458,10 @@ function precachedAssets(root: string): ShellAsset[] {
 function runCli(): void {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
   const violations: string[] = [];
+
+  // 0. Is dist/ the build of this tree at all?
+  const newest = newestBuildInput(root);
+  violations.push(...checkBuildIsCurrent(newest.mtimeMs, distBuiltMs(root), newest.path));
 
   // 1. CSP.
   violations.push(...checkCsp(readFileSync(join(root, "worker", "index.ts"), "utf8")));
