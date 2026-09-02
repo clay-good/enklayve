@@ -3482,6 +3482,29 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl: "https://www.ftb.ca.gov/file/personal/deductions/index.html",
     cadence: "Annual",
     parse: parseStandardDeductions,
+    // The deduction this adapter anchors is already on 2026. The BRACKETS are
+    // not: the FTB indexes them to the California CPI and had not published a
+    // 2026 rate schedule as of 2026-09-01, so the shard deliberately carries the
+    // 2025 thresholds forward and its own note says so.
+    //
+    // Nothing was watching for the day that changes. This adapter reads the
+    // deductions page, which will keep agreeing with a shard that is already
+    // right, so the arrival of the rate schedules would have been noticed by
+    // whoever happened to remember — the failure that left four other states
+    // stale. California is the largest of the fifty-one; a year of un-indexed
+    // brackets there is the most people this repo can be slightly wrong about
+    // at once.
+    awaiting: {
+      what: "California FTB's 2026 California Tax Rate Schedules (Schedule X single/MFS, Schedule Y MFJ/QSS, Schedule Z head of household — the CCPI-indexed bracket thresholds)",
+      // The URL carries the tax year, so answering at all is the whole signal.
+      // Nothing is parsed from it: arrival means a person transcribes the
+      // schedule and reads the diff, which is what a bracket table deserves.
+      arrived: { url: "https://www.ftb.ca.gov/forms/2026/2026-540-tax-rate-schedules.pdf" },
+      // The 2025 schedule at the same pattern, verified answering on
+      // 2026-09-01 while the 2026 one 404s. If the FTB renames the scheme, this
+      // stops hitting and the probe reports itself blind rather than patient.
+      calibration: { url: "https://www.ftb.ca.gov/forms/2025/2025-540-tax-rate-schedules.pdf" },
+    },
   },
   {
     id: "state-ny-income-tax-2024",
