@@ -156,6 +156,36 @@ describe("round-tripping the carried file", () => {
     expect(back).toEqual(snap);
   });
 
+  it("carries the county, so a restored ledger recomputes the same tax it stored", () => {
+    // The ledger's whole promise is that dropping the file back recomputes YOUR
+    // answers against today's data and shows only what moved. A county tax that
+    // did not survive the file would read as a change in the figures on the day
+    // it was restored — a movement the reader would go looking for a cause of,
+    // caused by the file forgetting where they live.
+    const p = new SituationStore();
+    p.set("annualIncome", 82000, "typed");
+    p.set("filingStatus", "single", "typed");
+    p.set("stateCode", "md", "typed");
+    p.set("county", "md-worcester", "typed");
+    const snap = snapshotOf(p, buildReport(p, data));
+    const back = parseLedger(serializeLedger(snap));
+    expect(back.situation.values.county).toBe("md-worcester");
+
+    const restored = new SituationStore();
+    restored.load(back.situation);
+    expect(restored.get("county")).toBe("md-worcester");
+    // And the report recomputed from the restored profile is the one that was
+    // stored — which is only true because the county came back with it.
+    expect(buildReport(restored, data).sections).toEqual(buildReport(p, data).sections);
+    // The check has teeth: a different county really does change the report.
+    const elsewhere = new SituationStore();
+    elsewhere.load({
+      ...back.situation,
+      values: { ...back.situation.values, county: "md-dorchester" },
+    });
+    expect(buildReport(elsewhere, data).sections).not.toEqual(buildReport(p, data).sections);
+  });
+
   it("round-trips through the encrypted envelope under its own format id", async () => {
     const profile = populated();
     const snap = snapshotOf(profile, buildReport(profile, data));

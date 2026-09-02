@@ -17,8 +17,11 @@ import {
  */
 const EVERY_FIELD: Required<SituationValues> = {
   filingStatus: "married_jointly",
-  stateCode: "mt",
-  county: "Gallatin",
+  stateCode: "md",
+  // A `localAddOns` id, not a place name — see SituationValues. It read
+  // "Gallatin" while nothing consumed the field, which is exactly how a fixture
+  // teaches the wrong convention to whoever reads it next.
+  county: "md-montgomery",
   householdSize: 3,
   ages: [41, 39, 8],
   annualIncome: 92_000,
