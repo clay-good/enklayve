@@ -122,6 +122,28 @@ describe("the 35% cap on what an itemized deduction is worth", () => {
     ).toBe(0);
   });
 
+  it("creates a marginal rate that appears in no rate schedule, and it is right", () => {
+    // Clause (2) ties the reduction to income, not to the deductions: while it
+    // binds, another dollar of income raises the reduction by 2/37 of a dollar,
+    // which raises taxable income by 1 + 2/37. So the bracket rate is
+    // multiplied by 39/37 — a filer in the 35% band faces 36.89% of federal
+    // tax, and one in the 37% band 39.00%, neither of which is a number anyone
+    // legislated or a reader could find in the tables.
+    //
+    // The engine measures this with its $100 wage probe rather than being told
+    // about it, so this case is really asking whether the probe sees a second
+    // -order effect. Both figures below are the bracket rate × 39/37 plus the
+    // 2.35% of Medicare that a wage earner up here still pays.
+    const marginal = (wages: number): number =>
+      evaluateTaxes(filer(wages, 80_000), ctx()).totals.marginalRate;
+    // $690,000 of wages: taxable lands in the 35% band.
+    expect(marginal(690_000)).toBeCloseTo(0.35 * (39 / 37) + 0.0235, 4);
+    // $720,000: taxable clears $640,600 and the same multiple applies to 37%.
+    expect(marginal(720_000)).toBeCloseTo(0.37 * (39 / 37) + 0.0235, 4);
+    // And below the threshold there is no multiplier at all.
+    expect(marginal(640_000)).toBeCloseTo(0.37 + 0.0035, 4);
+  });
+
   it("carries the fraction as the statute writes it, not as a decimal", () => {
     // 2/37 does not terminate. A rounded copy would be a figure nobody could
     // reproduce from the Code, so the shard holds the two integers.
