@@ -23,7 +23,14 @@ import { existsSync, readFileSync, readdirSync, statSync, appendFileSync } from 
 import { resolve, dirname, join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BROWSER_USER_AGENT } from "./user-agent.ts";
-import { BAD_CERTIFICATE, INCOMPLETE_CERT_CHAIN } from "./fetch-source.ts";
+import {
+  BAD_CERTIFICATE,
+  INCOMPLETE_CERT_CHAIN,
+  LOCAL_RESOLVER_FAILURE,
+  NAME_NOT_RESOLVED,
+  describeResolverFailure,
+  nameResolvesDirectly,
+} from "./fetch-source.ts";
 import { repairedCaBundle, requestWithChain } from "./chain-repair.ts";
 import { ADAPTERS } from "./refresh/adapters.ts";
 
@@ -133,12 +140,20 @@ export type LinkStatus = "ok" | "redirect" | "broken" | "unreachable";
 /**
  * A TLS chain the server did not serve completely. The page is fine in a
  * browser, so calling it "broken" would send someone to replace a link that
- * works — it gets its own category instead. Every other transport failure (DNS,
- * refused, timeout after retries) really is a broken link, and so, since
- * 2026-08-30, is a certificate that is expired, self-signed, or issued for
- * another hostname: a browser refuses those too, so a reader following the link
- * gets an interstitial rather than the page. They used to land here, under a
- * sentence promising the page was almost certainly fine.
+ * works — it gets its own category instead. A refused connection or a timeout
+ * after retries really is a broken link, and so, since 2026-08-30, is a
+ * certificate that is expired, self-signed, or issued for another hostname: a
+ * browser refuses those too, so a reader following the link gets an
+ * interstitial rather than the page. They used to land here, under a sentence
+ * promising the page was almost certainly fine.
+ *
+ * DNS left this sentence on 2026-09-02. "Every other transport failure (DNS,
+ * refused, timeout)" was right about the common case and wrong about the one
+ * that matters: `getaddrinfo` asks the operating system, and the operating
+ * system can be wrong by itself. The sweep reported `www.oregonlegislature.gov`
+ * broken while its A record answered on the first direct ask. A name that
+ * resolves directly is now unreachable rather than broken; a name that resolves
+ * nowhere is still a dead link.
  *
  * The pattern itself lives beside the shared fetch, because the adapter check
  * needs the same fact about the same servers and the two used to disagree: this
@@ -152,7 +167,15 @@ const CERT_ERROR = INCOMPLETE_CERT_CHAIN;
  * network.
  */
 export function classify(result: Pick<LinkResult, "status" | "detail">): LinkStatus {
-  if (result.status === 0) return CERT_ERROR.test(result.detail) ? "unreachable" : "broken";
+  if (result.status === 0) {
+    // A chain the server did not serve, or a name this machine's resolver could
+    // not find while a direct DNS query answers for it. Both are the checker's
+    // environment rather than the link, and reporting either as broken sends
+    // somebody to replace a citation that works.
+    if (CERT_ERROR.test(result.detail)) return "unreachable";
+    if (LOCAL_RESOLVER_FAILURE.test(result.detail)) return "unreachable";
+    return "broken";
+  }
   if (result.status >= 200 && result.status < 300) return "ok";
   if (result.status >= 300 && result.status < 400) return "redirect";
   return "broken";
@@ -207,9 +230,18 @@ export function renderLinkReport(results: LinkResult[]): string {
     lines.push(
       "## Unreachable",
       "",
-      "The server did not serve a complete certificate chain. A browser and curl" +
-        " repair that by fetching the missing intermediate; Node does not. The page" +
-        " itself is almost certainly fine — open it in a browser before replacing it.",
+      "Not a broken link: something between this check and the page failed, so" +
+        " the page itself is almost certainly fine — open it in a browser before" +
+        " replacing it. Two causes reach this list, and each entry says which.",
+      "",
+      "- **An incomplete certificate chain.** The server did not serve its" +
+        " intermediate. A browser and curl repair that by fetching the missing" +
+        " certificate; Node does not, and where the repair here also fails, the" +
+        " reader still sees the page.",
+      "- **A name this machine could not look up**, while a direct DNS query" +
+        " answers for it. `getaddrinfo` goes through the operating system, which" +
+        " can be wrong on its own — a stale negative cache, a VPN's resolver, a" +
+        " sandboxed runner. The link is fine; the machine that checked it was not.",
       "",
     );
     for (const r of unreachable) {
@@ -275,6 +307,16 @@ async function check(url: string, files: string[]): Promise<LinkResult> {
   if (CERT_ERROR.test(last)) {
     const repaired = await checkWithRepairedChain(url, files);
     if (repaired) return repaired;
+  }
+  // A name `getaddrinfo` refused is usually a dead host and occasionally a
+  // broken resolver, and the two look identical from inside `fetch`. Ask DNS
+  // directly before calling it a dead link: if the name has an address, the
+  // machine running this is what could not find it.
+  if (NAME_NOT_RESOLVED.test(last)) {
+    const hostname = new URL(url).hostname;
+    if (await nameResolvesDirectly(hostname)) {
+      return { url, status: 0, detail: describeResolverFailure(hostname), files };
+    }
   }
   return { url, status: 0, detail: `${last} (after retries)`, files };
 }

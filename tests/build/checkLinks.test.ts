@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { describeResolverFailure, nameResolvesDirectly } from "../../scripts/fetch-source";
 import {
   classify,
   awaitedUrls,
@@ -157,6 +158,27 @@ describe("classifying a checked link", () => {
     expect(classify({ status: 0, detail: "connect ECONNREFUSED" })).toBe("broken");
   });
 
+  it("separates a name THIS MACHINE could not look up from a name that is gone", () => {
+    // `getaddrinfo` asks the operating system, which can be wrong on its own: a
+    // stale negative cache, a VPN's resolver, a sandboxed runner. On 2026-09-02
+    // the sweep reported www.oregonlegislature.gov broken, and its A record
+    // answered on the first direct ask. Filing that as a dead link asks somebody
+    // to go replace a working citation.
+    expect(
+      classify({ status: 0, detail: describeResolverFailure("www.oregonlegislature.gov") }),
+    ).toBe("unreachable");
+    // A name with no records anywhere is still a dead link, and the marker is
+    // the whole difference — the raw ENOTFOUND above stays broken.
+    expect(classify({ status: 0, detail: "getaddrinfo ENOTFOUND gone.test" })).toBe("broken");
+  });
+
+  it("asks DNS directly, so the two cases can actually be told apart", async () => {
+    // The distinction is only worth drawing if something can draw it. A reserved
+    // name resolves nowhere by definition (RFC 2606), and this repo already uses
+    // `.invalid` for exactly that.
+    expect(await nameResolvesDirectly("no-such-host.example.invalid")).toBe(false);
+  });
+
   it("calls a certificate a browser also refuses a broken link", () => {
     // This pattern used to be /certificate|CERT_|self[- ]signed|SSL|TLS/i, which
     // swept up three failures that are nothing like a missing intermediate and
@@ -233,6 +255,23 @@ describe("the report a person reads", () => {
     expect(report).toContain("## Unreachable");
     expect(report).not.toContain("## Broken");
     expect(report).toContain("open it in a browser before replacing it");
+  });
+
+  it("puts a local resolver failure there too, and says which of the two it is", () => {
+    // The section carries two causes now, so the heading has to name both — a
+    // reader told "the server did not serve a complete certificate chain" about
+    // a DNS failure would go looking for a certificate that is perfectly fine.
+    const report = renderLinkReport([
+      result({
+        url: "https://www.oregonlegislature.gov/x",
+        status: 0,
+        detail: describeResolverFailure("www.oregonlegislature.gov"),
+      }),
+    ]);
+    expect(report).toContain("## Unreachable");
+    expect(report).not.toContain("## Broken");
+    expect(report).toContain("a direct DNS query answers for it");
+    expect(report).toContain("could not look up www.oregonlegislature.gov");
   });
 
   it("tells the reader a refused certificate is not a URL to replace", () => {

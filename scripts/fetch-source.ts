@@ -64,6 +64,57 @@ export const BAD_CERTIFICATE =
   /CERT_HAS_EXPIRED|certificate has expired|ERR_TLS_CERT_ALTNAME_INVALID|does not match certificate|SELF_SIGNED_CERT|self[- ]signed certificate/i;
 
 /**
+ * A name the machine running this could not look up.
+ *
+ * `getaddrinfo ENOTFOUND` is reported by Node's fetch and by curl alike, and it
+ * is ambiguous in the one way that matters: it says the *local resolver* had no
+ * answer, which is usually a dead host and occasionally a broken resolver. See
+ * {@link nameResolvesDirectly}, which tells the two apart.
+ */
+export const NAME_NOT_RESOLVED = /ENOTFOUND|EAI_AGAIN|getaddrinfo/i;
+
+/**
+ * A resolver failure the checks must not report as a dead link.
+ *
+ * `dns.lookup` — what `fetch` and every other client go through — asks the
+ * operating system, and the operating system can be wrong on its own: a stale
+ * negative cache, a VPN's split-horizon resolver, a sandbox that answers for
+ * some names and not others. A direct query does not go through it. When the
+ * direct query returns an address for a name `getaddrinfo` refused, the name
+ * exists and the machine is the problem.
+ *
+ * Found on 2026-09-02, when the link sweep reported
+ * `www.oregonlegislature.gov` broken — a host whose A record answered on the
+ * first ask. Reporting that as broken files an issue asking someone to replace
+ * a working citation, which is the exact failure the certificate-chain case was
+ * split out to prevent, arriving through a different door.
+ */
+export async function nameResolvesDirectly(hostname: string): Promise<boolean> {
+  const { promises: dns } = await import("node:dns");
+  try {
+    if ((await dns.resolve4(hostname)).length > 0) return true;
+  } catch {
+    // No A records, or the query itself failed — an AAAA-only host is still up.
+  }
+  try {
+    return (await dns.resolve6(hostname)).length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/** Marker text for the case above, so the pure classifiers can recognize it. */
+export const LOCAL_RESOLVER_FAILURE = /\[LOCAL_RESOLVER\]/;
+
+/** Phrase a resolver failure so the report says who is broken: not the link. */
+export function describeResolverFailure(hostname: string): string {
+  return (
+    `the machine running this check could not look up ${hostname}, but a direct ` +
+    `DNS query answers for it — the resolver is the problem, not the link [LOCAL_RESOLVER]`
+  );
+}
+
+/**
  * Say what actually went wrong.
  *
  * Node's `fetch` reports every transport failure as the same four words —
