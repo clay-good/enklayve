@@ -111,12 +111,20 @@ const BILL_LINE =
 
 /** Filing-status phrases, longest/most-specific first so "single" can't shadow
  * "married filing separately". */
-const FILING_STATUS_PHRASES: { re: RegExp; status: string }[] = [
-  { re: /married filing jointly/i, status: "married_jointly" },
-  { re: /married filing separately/i, status: "married_separately" },
-  { re: /head of household/i, status: "head_of_household" },
-  { re: /qualifying surviving spouse/i, status: "qualifying_surviving_spouse" },
-  { re: /\bsingle\b/i, status: "single" },
+const FILING_STATUS_PHRASES: { re: RegExp; status: string; label: string }[] = [
+  { re: /married filing jointly/i, status: "married_jointly", label: "Married filing jointly" },
+  {
+    re: /married filing separately/i,
+    status: "married_separately",
+    label: "Married filing separately",
+  },
+  { re: /head of household/i, status: "head_of_household", label: "Head of household" },
+  {
+    re: /qualifying surviving spouse/i,
+    status: "qualifying_surviving_spouse",
+    label: "Qualifying surviving spouse",
+  },
+  { re: /\bsingle\b/i, status: "single", label: "Single" },
 ];
 
 /**
@@ -165,22 +173,17 @@ const NOTICE_PROGRAMS: { re: RegExp; value: string }[] = [
  * them invites them to wonder what else was missed. Widening it can only turn a
  * confident reading into a question, which is the safe direction.
  */
-function detectFilingStatuses(text: string): string[] {
+function detectFilingStatuses(text: string): { status: string; label: string }[] {
   const idx = text.search(/filing status/i);
   if (idx < 0) return [];
   const window = text.slice(idx, idx + 200);
-  return FILING_STATUS_PHRASES.map(({ re, status }) => {
+  return FILING_STATUS_PHRASES.map(({ re, status, label }) => {
     const m = re.exec(window);
-    return m ? { status, at: m.index } : null;
+    return m ? { status, label, at: m.index } : null;
   })
-    .filter((x): x is { status: string; at: number } => x !== null)
+    .filter((x): x is { status: string; label: string; at: number } => x !== null)
     .sort((a, b) => a.at - b.at)
-    .map((x) => x.status);
-}
-
-/** The human label for a status, for a note a reader reads. */
-function statusLabel(status: string): string {
-  return status.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+    .map(({ status, label }) => ({ status, label }));
 }
 
 /** The detected document kind and revision. */
@@ -418,7 +421,7 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
         fields.push({
           id: "f1040-filing-status",
           label: "Filing status",
-          value: statuses[0]!,
+          value: statuses[0]!.status,
           confidence: "high",
           needsReview: false,
           target: "filingStatus",
@@ -431,7 +434,7 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
           confidence: "needs-review",
           needsReview: true,
           note:
-            `The form lists every option (${statuses.map(statusLabel).join(", ")}) and the ` +
+            `The form lists every option (${statuses.map((s) => s.label).join(", ")}) and the ` +
             "checked box is not text, so which one you checked cannot be read. Set it in " +
             "My Situation.",
         });

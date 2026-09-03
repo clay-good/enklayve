@@ -124,6 +124,43 @@ describe("Readout view", () => {
     );
   });
 
+  it("shows an unreadable filing status as text, not an empty number box", async () => {
+    // A real 1040 prints all five statuses and the checked box is a glyph, so
+    // the extractor reports "Not read" with a note and no target. The editor
+    // branches on `target === "filingStatus"` for its select and treats
+    // everything else as a number — which would have put an empty numeric
+    // spinner under the label "Filing status": a control that does nothing,
+    // dressed as one that does.
+    const form1040 =
+      "Form 1040 U.S. Individual Income Tax Return 2024 " +
+      "Filing Status Check only one box. Single Married filing jointly (MFJ) " +
+      "Married filing separately (MFS) Head of household (HOH) " +
+      "Qualifying surviving spouse (QSS) 11 Adjusted gross income 52000.00";
+    const { container, profile } = setup(async () => ({
+      text: form1040,
+      pages: [form1040],
+      source: "typed" as const,
+    }));
+    await dropFile(container, "1040.pdf");
+
+    const statik = container.querySelector(".readout-field-static");
+    expect(statik?.textContent).toBe("Not read");
+    expect(container.querySelector('input[name="f1040-filing-status"]')).toBeNull();
+    expect(container.querySelector('select[name="f1040-filing-status"]')).toBeNull();
+    expect(
+      Array.from(container.querySelectorAll(".readout-field-note")).some((n) =>
+        (n.textContent ?? "").includes("Head of household"),
+      ),
+    ).toBe(true);
+
+    // Confirming still applies what WAS read, and leaves the status unset.
+    Array.from(container.querySelectorAll("button"))
+      .find((b) => b.textContent?.startsWith("Confirm and add"))
+      ?.click();
+    expect(profile.get("annualIncome")).toBe(52000);
+    expect(profile.get("filingStatus")).toBeUndefined();
+  });
+
   it("shows the error message when a file type isn't supported", async () => {
     const failing: TextExtractor = async () => {
       throw new Error("Unsupported file. Drop a typed PDF or paste the text.");

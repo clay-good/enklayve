@@ -2084,6 +2084,12 @@ body {
   gap: 0.4rem;
   font-weight: 600;
 }
+.readout-field-static {
+  display: block;
+  padding: 0.45rem 0;
+  color: var(--enk-text-muted);
+  font-style: italic;
+}
 .readout-field-note {
   display: block;
   font-size: 0.8rem;

@@ -433,6 +433,16 @@ export function renderReadout(opts: RenderReadoutOptions): void {
           ),
         );
         list.append(wrapField(f, sel));
+      } else if (typeof f.value === "string") {
+        // A field the extractor could not resolve to a value: Form 1040's filing
+        // status when the page shows the printed option list rather than which
+        // box is checked. It carries no `target`, so it cannot reach My
+        // Situation, and there is nothing here for the reader to correct —
+        // offering a number box under the label "Filing status", which is what
+        // the numeric branch below does with a string, would be a control that
+        // does nothing dressed as one that does. It is shown, with its note
+        // saying where to answer instead.
+        list.append(wrapField(f, el("span", { class: "readout-field-static", text: f.value })));
       } else {
         const input = el("input", {
           type: "number",
