@@ -62,6 +62,26 @@ function reachable(cls: string): boolean {
   return source.includes(`${stem}--\${`);
 }
 
+/**
+ * Custom properties the stylesheet declares. Only the palette's own names — a
+ * property declared inside a `@media` or `[data-theme]` block is the same name
+ * redefined, not a new one.
+ */
+const declaredVars = [
+  ...new Set([...css.matchAll(/^\s*(--[a-zA-Z][\w-]*)\s*:/gm)].map((m) => m[1]!)),
+];
+
+/**
+ * Read anywhere: by a rule in this file, by the app, or by a `var()` the app
+ * builds — `charts.ts` writes ``var(--enk-chart-${n})`` for a ten-colour
+ * palette, so nine of the ten names appear nowhere as literal text.
+ */
+function varIsRead(name: string): boolean {
+  if (css.includes(`var(${name}`) || source.includes(name)) return true;
+  const stem = name.replace(/-\d+$/, "");
+  return stem !== name && source.includes(`${stem}-\${`);
+}
+
 describe("styles that nothing can reach", () => {
   it("finds the stylesheet's classes, so an empty pass cannot look like a clean one", () => {
     expect(declared.length).toBeGreaterThan(100);
@@ -74,6 +94,23 @@ describe("styles that nothing can reach", () => {
     expect(reachable("deadline--past")).toBe(true);
     expect(reachable("ledger-row--gone")).toBe(true);
     expect(reachable("stat-card--warn")).toBe(true);
+  });
+
+  it("leaves no custom property nothing reads", () => {
+    // The other half of the same file. Nothing was dead here on 2026-09-03 —
+    // this is the gate arriving before the debt does, which is cheaper than the
+    // other order.
+    const unread = declaredVars.filter((v) => !varIsRead(v));
+    expect(
+      unread,
+      "these custom properties are declared and never read — by a rule here, by the app, or by" +
+        " a var() the app builds. Delete them, or use them",
+    ).toEqual([]);
+  });
+
+  it("still counts a palette entry the app indexes into", () => {
+    // Nine of the ten chart colours appear nowhere as literal text.
+    expect(varIsRead("--enk-chart-7")).toBe(true);
   });
 
   it("leaves nothing in the precached stylesheet that no element can wear", () => {
