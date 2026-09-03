@@ -42,6 +42,14 @@ describe("allocatePercents", () => {
   it("claims nothing when there is no whole to divide", () => {
     expect(allocatePercents([0, 0], 0)).toEqual([0, 0]);
   });
+
+  it("allocates to a target other than 100 when the caller states one", () => {
+    // The Quarterly Taxes ring: its tax slices must add to the share printed in
+    // its hole, not to a whole of their own.
+    expect(allocatePercents([1, 1, 1], 3, 29).reduce((a, b) => a + b, 0)).toBe(29);
+    expect(allocatePercents([5337.72, 2032.98, 540.02], 7910.72, 21)).toEqual([14, 5, 2]);
+    expect(allocatePercents([1, 1], 2, 0)).toEqual([0, 0]);
+  });
 });
 
 /** The legend's own text, one row at a time. */
@@ -145,4 +153,61 @@ describe("Quarterly Taxes: the ring covers every tax the breakdown lists", () =>
     // The same figure the sweep compares it against, on the page beside it.
     expect(moneyRows(root).some((r) => r.value === 3_777_700)).toBe(true);
   });
+});
+
+/**
+ * A figure that contradicts itself at a glance.
+ *
+ * The Quarterly Taxes ring states a share in its hole — "30% to taxes" — over a
+ * legend that names each tax and its share. Those were three separate roundings
+ * of one split: the hole from the exact rate, each legend percent from its own
+ * slice, and the "Set aside this share of every payment" row from the exact
+ * rate again at one decimal. In 5 of 42 combinations the hole and the legend
+ * column disagreed outright (30% above 14 + 11 + 4); allocating the legend to a
+ * whole of its own fixed that and moved the disagreement to the breakdown row
+ * instead, 29% under 29.6%, in 27 of 312.
+ *
+ * There is one rounding now. The hole rounds the rate once; the tax slices are
+ * allocated to that number; "what you keep" is the remainder to 100.
+ */
+describe("the Quarterly Taxes ring agrees with itself", () => {
+  function render(stateCode: string, profit: number): HTMLElement {
+    return mounted("quarterly-taxes", (r) => {
+      const state = r.querySelector<HTMLSelectElement>("select[name='st']")!;
+      state.value = stateCode;
+      state.dispatchEvent(new Event("change", { bubbles: true }));
+      const np = r.querySelector<HTMLInputElement>('input[name="np"]')!;
+      np.value = String(profit);
+      np.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  }
+
+  const numeric = (text: string): number => Number(text.replace("%", ""));
+
+  it("prints the same share in the hole, in the legend, and in the breakdown", () => {
+    const off: string[] = [];
+    for (const stateCode of ["", ...data.stateCodes()]) {
+      for (const profit of [18_000, 37_777, 61_111, 95_000, 123_457, 250_001]) {
+        const root = render(stateCode, profit);
+        const hole = numeric(root.querySelector(".donut-total")?.textContent ?? "");
+        const items = [...root.querySelectorAll(".legend-item")];
+        const taxes = items
+          .filter((li) => !/keep/i.test(li.querySelector(".legend-label")?.textContent ?? ""))
+          .reduce((a, li) => a + numeric(li.querySelector(".legend-pct")?.textContent ?? ""), 0);
+        const all = items.reduce(
+          (a, li) => a + numeric(li.querySelector(".legend-pct")?.textContent ?? ""),
+          0,
+        );
+        const row = [...root.querySelectorAll(".bd-row")].find((r) =>
+          /Set aside this share/.test(r.textContent ?? ""),
+        );
+        const exact = numeric(row?.querySelector(".bd-value")?.textContent ?? "");
+        const where = `${stateCode || "no state"} at ${profit}`;
+        if (taxes !== hole) off.push(`${where}: hole ${hole}% vs legend ${taxes}%`);
+        if (all !== 100) off.push(`${where}: legend sums to ${all}%`);
+        if (Math.abs(exact - hole) > 0.5) off.push(`${where}: hole ${hole}% vs row ${exact}%`);
+      }
+    }
+    expect(off).toEqual([]);
+  }, 60_000);
 });

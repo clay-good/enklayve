@@ -32,19 +32,23 @@ function currency(locale: string, n: number): string {
 }
 
 /**
- * Whole percents that add to 100.
+ * Whole percents that add to `target` (100 unless a caller says otherwise).
  *
  * Rounding each share on its own is right per share and wrong as a column: a
  * legend reading 14% / 5% / 1% / 79% sums to 99, and the reader who adds it is
  * not making a mistake. Largest remainder gives the spare points to the shares
  * that gave up the most when they rounded, the same rule `allocateRounded`
  * applies to the cents.
+ *
+ * `target` exists for the caller whose ring is one part of a larger claim: the
+ * Quarterly Taxes donut states a share in its hole, and the tax slices in its
+ * legend have to add to *that*, not merely to something self-consistent.
  */
-export function allocatePercents(values: readonly number[], total: number): number[] {
-  if (total <= 0) return values.map(() => 0);
-  const exact = values.map((v) => (v / total) * 100);
+export function allocatePercents(values: readonly number[], total: number, target = 100): number[] {
+  if (total <= 0 || target <= 0) return values.map(() => 0);
+  const exact = values.map((v) => (v / total) * target);
   const out = exact.map((p) => Math.floor(p));
-  let residual = 100 - out.reduce((sum, p) => sum + p, 0);
+  let residual = target - out.reduce((sum, p) => sum + p, 0);
   const order = exact
     .map((p, i) => ({ i, remainder: p - Math.floor(p) }))
     .sort((a, b) => b.remainder - a.remainder);
@@ -71,15 +75,22 @@ function swatch(color: string): HTMLElement {
  * showed both failures at once at $37,777 of profit: four amounts a cent under
  * the net profit printed beside them, and four percents summing to 99.
  */
-function legend(slices: Slice[], total: number, locale: string): HTMLElement {
+function legend(
+  slices: Slice[],
+  total: number,
+  locale: string,
+  override?: readonly number[],
+): HTMLElement {
   const amounts = allocateRounded(
     slices.map((s) => Money.from(Math.max(0, s.value))),
     Money.from(total),
   );
-  const percents = allocatePercents(
-    slices.map((s) => Math.max(0, s.value)),
-    total,
-  );
+  const percents =
+    override ??
+    allocatePercents(
+      slices.map((s) => Math.max(0, s.value)),
+      total,
+    );
   return el(
     "ul",
     { class: "chart-legend" },
@@ -105,6 +116,12 @@ export interface DonutOptions {
   centerLabel?: string;
   /** Big figure inside the hole (e.g. the total, pre-formatted). */
   centerValue?: string;
+  /**
+   * Whole percents to print in the legend, when the caller has a constraint
+   * this function cannot see — most often that some subset of the slices must
+   * add to the figure in the hole. Must be one per slice and add to 100.
+   */
+  percents?: readonly number[];
 }
 
 /**
@@ -144,7 +161,7 @@ export function donutChart(opts: DonutOptions): HTMLElement {
     "figure",
     { class: "chart chart--donut", attrs: { role: "img", "aria-label": opts.ariaLabel } },
     el("div", { class: "donut-wrap" }, ring, center),
-    legend(colored, total, locale),
+    legend(colored, total, locale, opts.percents),
   );
 }
 

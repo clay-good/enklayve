@@ -17,7 +17,7 @@ import type { CitationData, FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
-import { donutChart, paletteVar } from "../ui/charts";
+import { allocatePercents, donutChart, paletteVar } from "../ui/charts";
 import { rememberableCounty, residenceLocalField, seedResidenceLocal } from "../ui/residenceLocal";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
@@ -232,34 +232,59 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
         "We don't subtract the QBI (20% pass-through) deduction, so this errs a little high: the safe side when you're setting money aside.",
     });
 
+    // Built once: the ring, its legend, and the share in its hole are three
+    // renderings of one split, and computing any of them separately is how they
+    // came to disagree. "What you keep" is last, which is what lets the centre
+    // be 100 minus it.
+    const donutSlices = [
+      { label: "Self-employment tax", value: se.total.toNumber(), color: paletteVar(0) },
+      { label: "Federal income tax", value: fedIncome.toNumber(), color: paletteVar(1) },
+      ...(stateJur && stateIncome.greaterThan(0)
+        ? [{ label: "State income tax", value: stateIncome.toNumber(), color: paletteVar(2) }]
+        : []),
+      // The county tax is a slice like any other. Left out, the ring's whole was
+      // income MINUS the local tax, so every other share read a little high and
+      // a Maryland household's county tax vanished from the picture while
+      // sitting on its own line in the breakdown beneath it.
+      ...r.local.lines
+        .filter((l) => l.tax.greaterThan(0))
+        .map((l, i) => ({
+          label: `${l.name} local tax`,
+          value: l.tax.toNumber(),
+          color: paletteVar(3 + i),
+        })),
+      {
+        label: "What you keep",
+        value: Math.max(0, kept.toNumber()),
+        color: "var(--enk-accent)",
+      },
+    ];
+    // The share in the ring's hole is the rate the breakdown states below it,
+    // rounded once -- and the tax slices in the legend are then allocated to
+    // THAT, not to a whole of their own. Computed separately, the hole read
+    // "30% to taxes" over a legend column of 14 + 11 + 4, which is a
+    // contradiction inside one figure at one glance; allocating the legend to
+    // its own total instead moved the disagreement rather than removing it,
+    // leaving the hole at 29% under a breakdown row reading 29.6%.
+    const taxSlices = donutSlices.slice(0, -1);
+    const taxShare = Math.max(0, Math.min(100, Math.round(Math.max(0, setAside) * 100)));
+    const donutPercents = [
+      ...allocatePercents(
+        taxSlices.map((sl) => sl.value),
+        taxSlices.reduce((a, sl) => a + Math.max(0, sl.value), 0),
+        taxShare,
+      ),
+      100 - taxShare,
+    ];
+
     chartContainer.replaceChildren(
       donutChart({
-        slices: [
-          { label: "Self-employment tax", value: se.total.toNumber(), color: paletteVar(0) },
-          { label: "Federal income tax", value: fedIncome.toNumber(), color: paletteVar(1) },
-          ...(stateJur && stateIncome.greaterThan(0)
-            ? [{ label: "State income tax", value: stateIncome.toNumber(), color: paletteVar(2) }]
-            : []),
-          // The county tax is a slice like any other. Left out, the ring's whole
-          // was income MINUS the local tax, so every other share read a little
-          // high and a Maryland household's county tax vanished from the picture
-          // while sitting on its own line in the breakdown beneath it.
-          ...r.local.lines
-            .filter((l) => l.tax.greaterThan(0))
-            .map((l, i) => ({
-              label: `${l.name} local tax`,
-              value: l.tax.toNumber(),
-              color: paletteVar(3 + i),
-            })),
-          {
-            label: "What you keep",
-            value: Math.max(0, kept.toNumber()),
-            color: "var(--enk-accent)",
-          },
-        ],
+        slices: donutSlices,
         locale: ctx.locale,
         ariaLabel: "Your income split between taxes and what you keep",
-        centerValue: pct(Math.max(0, setAside), 0),
+        // One rounding, read by the hole and by the legend both.
+        percents: donutPercents,
+        centerValue: `${taxShare}%`,
         centerLabel: "to taxes",
       }),
     );
