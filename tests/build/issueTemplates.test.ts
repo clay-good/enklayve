@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { readdirSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { resolve, join, relative } from "node:path";
 import { load } from "js-yaml";
 import { SUB_TOOLS } from "../../src/tiles/registry";
 import { declaredLabels } from "../../scripts/sync-labels";
@@ -15,12 +15,19 @@ import { declaredLabels } from "../../scripts/sync-labels";
  * the repository does not have is dropped on the way in the same way — the
  * issue is created, the triage signal is not.
  *
- * That second one had already happened. `wrong-figure.yml` has applied `data`
- * since it was written and the repository has no `data` label, because the
- * label set lived in a web UI, which nothing here could see, review, or diff:
- * the same shape as the token scope moved into the repo on 2026-09-02, one file
- * over. `.github/labels.yml` now holds the set and this test holds the
- * templates to it.
+ * That second one had already happened, twice. `wrong-figure.yml` has applied
+ * `data` since it was written and the repository had no `data` label, because
+ * the label set lived in a web UI, which nothing here could see, review, or
+ * diff: the same shape as the token scope moved into the repo on 2026-09-02,
+ * one file over. `.github/labels.yml` now holds the set.
+ *
+ * The second was worse, and was found only because the first version of this
+ * file swept `ISSUE_TEMPLATE/` and stopped there. "The issue forms" is not the
+ * same set as "the things that create issues": the four scheduled checks that
+ * watch for source rot — links, adapters, advisories, the Pillar 4 sources —
+ * each open an issue labelled `data-review`, and the repository had no such
+ * label either. Those run monthly and quarterly with nobody watching, which is
+ * the entire reason they exist. The sweep now reads every file under `.github`.
  *
  * The third thing checked here is a privacy defect rather than a rot one. Every
  * result on this site is deep-linkable, which means a permalink encodes what
@@ -38,6 +45,31 @@ const FILES = readdirSync(DIR)
 
 const LABELS = declaredLabels(readFileSync(resolve(ROOT, ".github", "labels.yml"), "utf8"));
 const DECLARED = new Set(LABELS.map((l) => l.name));
+
+/** Every file under `.github`, which is every place a label can be named. */
+function githubFiles(dir = resolve(ROOT, ".github")): string[] {
+  return readdirSync(dir).flatMap((name) => {
+    const p = join(dir, name);
+    return statSync(p).isDirectory() ? githubFiles(p) : [p];
+  });
+}
+
+/**
+ * Labels named by a `labels:` list anywhere under `.github`, by file.
+ *
+ * The issue forms use YAML's `labels: ["bug"]`; the scheduled checks use the
+ * same flow-sequence inside a `github-script` body that creates an issue. One
+ * pattern reads both, which is the point — sweeping only the templates is how
+ * `data-review` stayed broken in four workflows while the forms were fixed.
+ */
+export function labelsNamedIn(source: string): string[] {
+  return [...source.matchAll(/labels:\s*\[([^\]]*)\]/g)].flatMap((m) =>
+    m[1]!
+      .split(",")
+      .map((raw) => raw.trim().replace(/^["']|["']$/g, ""))
+      .filter((name) => name.length > 0 && !name.includes("$")),
+  );
+}
 
 interface Field {
   type?: string;
@@ -152,10 +184,37 @@ describe("every label a form applies exists", () => {
     expect(DECLARED.has("data")).toBe(true);
   });
 
-  for (const file of FILES) {
+  it("declares the label the four scheduled checks apply to what they find", () => {
+    // The same defect as `data`, one directory over and unattended: the link,
+    // adapter, advisory and Pillar 4 source checks each open a `data-review`
+    // issue on a schedule, and the repository had no such label either.
+    expect(DECLARED.has("data-review")).toBe(true);
+  });
+
+  describe("reading the labels a file names", () => {
+    it("reads a YAML sequence and a github-script call alike", () => {
+      expect(labelsNamedIn('labels: ["bug"]\n')).toEqual(["bug"]);
+      expect(labelsNamedIn("  labels: ['a', \"b\"],\n")).toEqual(["a", "b"]);
+      expect(labelsNamedIn("labels: []")).toEqual([]);
+      // An interpolated label is not a literal this can check.
+      expect(labelsNamedIn('labels: ["${{ env.L }}"]')).toEqual([]);
+    });
+  });
+
+  const named = githubFiles()
+    .filter((p) => !p.endsWith("labels.yml"))
+    .map((p) => [relative(ROOT, p), labelsNamedIn(readFileSync(p, "utf8"))] as const)
+    .filter(([, labels]) => labels.length > 0);
+
+  it("finds the files that name a label", () => {
+    // Templates and workflows both. A sweep that had quietly stopped matching
+    // would otherwise pass by finding nothing to check.
+    expect(named.length).toBeGreaterThanOrEqual(5);
+  });
+
+  for (const [file, labels] of named) {
     it(`${file} names no label that labels.yml does not declare`, () => {
-      const missing = (forms.get(file)!.labels ?? []).filter((l) => !DECLARED.has(l));
-      expect(missing).toEqual([]);
+      expect(labels.filter((l) => !DECLARED.has(l))).toEqual([]);
     });
   }
 });

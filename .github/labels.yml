@@ -10,10 +10,19 @@
 # diff -- the same shape as the token scope that was moved in here on
 # 2026-09-02, one file over.
 #
-# `tests/build/issueTemplates.test.ts` holds every label a template applies to
-# this list, and `.github/workflows/sync-labels.yml` writes the list to the
-# repository on every push that touches this file. Adding a label is an edit
-# here, not a click.
+# `data-review` was the same defect one directory over, and worse for being
+# unattended: the four scheduled checks that watch for source rot -- links,
+# adapters, advisories, the Pillar 4 sources -- each open an issue labelled
+# `data-review` when they find something, and the repository had no such label
+# either. Those fire monthly and quarterly, on nobody's screen, which is the
+# whole point of them.
+#
+# `tests/build/issueTemplates.test.ts` holds every label named anywhere under
+# `.github` to this list -- templates and workflows both, because "the issue
+# forms" is not the same set as "the things that create issues", and checking
+# only the first is how the second stayed broken. `.github/workflows/
+# sync-labels.yml` writes the list to the repository on every push that touches
+# this file. Adding a label is an edit here, not a click.
 #
 # The sync creates and updates; it never deletes. A label somebody made by hand
 # in the middle of a triage is not an error, and losing it on the next push
@@ -22,6 +31,9 @@ labels:
   - name: data
     color: 6D28D9
     description: A bundled figure disagrees with the document it cites
+  - name: data-review
+    color: B45309
+    description: A scheduled check found a source, link, or advisory that needs a human
   - name: bug
     color: d73a4a
     description: Something isn't working

@@ -16,34 +16,23 @@
     "",
     "Entries expire. `reviewed` is the date someone last checked the reasoning",
     "against the actual code; the check warns on any entry older than a year,",
-    "because 'unreachable' is a statement about a codebase that keeps changing."
+    "because 'unreachable' is a statement about a codebase that keeps changing.",
+    "",
+    "The first entry this file ever held was wrong, and it is worth writing down",
+    "how. GHSA-6gmq-8vp8-gcm6 in @xmldom/xmldom was accepted on 2026-09-02 on the",
+    "reasoning that no upgrade existed: mammoth pins ^0.8.6, and 0.9 made",
+    "parseFromString's mimeType argument mandatory, so overriding to 0.9.12 broke",
+    "the shipped .docx path in a real browser. All of that was true. The",
+    "conclusion was not -- 0.8.15 backported the fix inside mammoth's own range",
+    "and had been published on 2026-08-21, eleven minutes before the 0.9.12 that",
+    "got tested and twelve days before the entry was written. The upgrade was",
+    "there; only the 0.9 door was tried.",
+    "",
+    "`npm audit --json` had been saying so the whole time, in the same payload the",
+    "check already parsed: `fixAvailable: true`. So the check now reads it. An",
+    "entry here for an advisory npm reports as fixable fails the run, whatever the",
+    "prose says -- 'an upgrade is not available' is half the bar for an entry, and",
+    "it was the half nothing checked."
   ],
-  "accepted": [
-    {
-      "id": "GHSA-6gmq-8vp8-gcm6",
-      "package": "@xmldom/xmldom",
-      "severity": "moderate",
-      "reviewed": "2026-09-02",
-      "why": [
-        "XML fragment injection during SERIALIZATION: the flaw is in XMLSerializer,",
-        "reached through serializeToString with requireWellFormed. This app never",
-        "serializes XML. The package arrives only through mammoth, which reads .docx",
-        "and only ever parses -- mammoth/lib/xml/xmldom.js constructs a DOMParser and",
-        "calls parseFromString, and neither mammoth nor src/ contains the string",
-        "XMLSerializer or serializeToString anywhere. The definition ships in the lazy",
-        "chunk; nothing calls it.",
-        "",
-        "The fix is 0.9.x and it is NOT available to us: mammoth 1.12.0 requires",
-        "^0.8.6, and 0.9 made parseFromString's mimeType argument mandatory while",
-        "mammoth calls parseFromString(string) with one argument. Overriding to 0.9.12",
-        "was tried on 2026-09-02 -- the unit suite passed, because vitest aliases",
-        "mammoth to its prebuilt browser bundle, and the real browser threw",
-        "'DOMParser.parseFromString: the provided mimeType \"undefined\" is not valid'",
-        "on the first .docx. e2e/wordDocument.spec.ts exists because of that day and",
-        "holds the shipped path.",
-        "",
-        "Revisit when mammoth widens its range to ^0.9."
-      ]
-    }
-  ]
+  "accepted": []
 }

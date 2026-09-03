@@ -9,17 +9,31 @@
  * bundle that parses a household's Word documents, had been open for some time
  * with nobody in a position to say whether it mattered.
  *
- * It turned out not to matter (the flaw is in serialization; this app only ever
- * parses), and that is exactly the outcome this check is designed for. An audit
- * that reports every advisory as a build failure gets muted within a month,
- * because most advisories in a front-end dependency tree are unreachable and the
- * upgrade often is not available. An audit nobody runs is worse. So this one
- * asks a narrower question: **is there an advisory nobody has looked at yet?**
+ * It turned out not to reach us (the flaw is in serialization; this app only
+ * ever parses), and reaching that verdict is what this check is designed for.
+ * An audit that reports every advisory as a build failure gets muted within a
+ * month, because most advisories in a front-end dependency tree are unreachable
+ * and the upgrade often is not available. An audit nobody runs is worse. So this
+ * one asks a narrower question: **is there an advisory nobody has looked at
+ * yet?** (That particular advisory is gone now — the patched 0.8.15 was taken
+ * on 2026-09-03, see below — but it is the reason this file exists.)
  *
  * Every finding must appear in `scripts/advisory-triage.json` with the reason it
  * does not reach this app, or this fails. A reviewed advisory is quiet; a new
  * one is loud; a triage entry that has gone a year without being re-read against
  * the code warns, because "unreachable" is a claim about a codebase that moves.
+ *
+ * **And an entry may not stand while a fix is on the shelf.** The stated bar for
+ * accepting an advisory is two halves — no upgrade is available *and* the
+ * vulnerable path is unreachable — and only the second half was ever checked.
+ * The first entry this file held got the first half wrong: `@xmldom/xmldom`
+ * 0.8.15 backported the fix inside mammoth's own `^0.8.6` range and had been
+ * published twelve days before the entry was written, but only the 0.9 upgrade
+ * was tried, and 0.9 breaks the shipped `.docx` path. `npm audit` was reporting
+ * `fixAvailable: true` in the same payload this script already parsed. It now
+ * reads it: an accepted entry for an advisory npm calls fixable fails the run,
+ * whatever the prose beside it says. Unreachable is a judgement worth trusting
+ * for a year; "there is no fix" is a fact with an expiry date.
  *
  * Like check-links and check-adapters, it stays out of the unit CI: it needs the
  * network, and the advisory database changes under you.
@@ -51,6 +65,14 @@ export interface Advisory {
   severity: string;
   title: string;
   url: string;
+  /**
+   * Whether npm says the tree can move off it. `fixAvailable` is reported per
+   * *package*, not per advisory, so every advisory reaching this app through a
+   * given package carries that package's answer. `false` and an object both
+   * mean something: the object names the upgrade and whether it is a breaking
+   * one, and npm reports `true` when a plain `npm audit fix` would do it.
+   */
+  fixAvailable: boolean;
 }
 
 /**
@@ -60,11 +82,17 @@ export interface Advisory {
  * dependency is", which would otherwise be counted as findings with no id.
  */
 export function advisoriesFrom(report: unknown): Advisory[] {
-  const vulns = (report as { vulnerabilities?: Record<string, { via?: unknown[] }> })
-    ?.vulnerabilities;
+  const vulns = (
+    report as {
+      vulnerabilities?: Record<string, { via?: unknown[]; fixAvailable?: unknown }>;
+    }
+  )?.vulnerabilities;
   if (!vulns) return [];
   const out = new Map<string, Advisory>();
   for (const entry of Object.values(vulns)) {
+    // `fixAvailable: false` is the only answer that means "nothing to take".
+    // An object is npm naming the version that fixes it, which is a fix.
+    const fixAvailable = entry.fixAvailable !== undefined && entry.fixAvailable !== false;
     for (const via of entry.via ?? []) {
       if (typeof via !== "object" || via === null) continue;
       const v = via as { url?: string; name?: string; severity?: string; title?: string };
@@ -79,6 +107,7 @@ export function advisoriesFrom(report: unknown): Advisory[] {
         severity: v.severity ?? "unknown",
         title: v.title ?? "",
         url: v.url ?? "",
+        fixAvailable,
       });
     }
   }
@@ -99,6 +128,19 @@ export function reconcile(
     // which is how an allowlist quietly stops being a list of decisions.
     stale: accepted.filter((a) => !foundIds.has(a.id)),
   };
+}
+
+/**
+ * Accepted entries for an advisory npm says the tree can move off.
+ *
+ * The bar for an entry is two halves — no upgrade is available AND the
+ * vulnerable path is unreachable — and this is the first half, asked of npm
+ * rather than of the prose. An entry standing over an available fix is not a
+ * reviewed risk; it is an upgrade nobody did, wearing a reviewed risk's clothes.
+ */
+export function fixable(found: Advisory[], accepted: TriageEntry[]): Advisory[] {
+  const acceptedIds = new Set(accepted.map((a) => a.id));
+  return found.filter((a) => acceptedIds.has(a.id) && a.fixAvailable);
 }
 
 /** Triage entries whose reasoning has not been re-read against the code in a year. */
@@ -128,6 +170,7 @@ function main(): void {
 
   const found = advisoriesFrom(JSON.parse(raw));
   const { untriaged, stale } = reconcile(found, triage.accepted);
+  const patchable = fixable(found, triage.accepted);
   const old = overdue(triage.accepted, new Date());
 
   const lines: string[] = [];
@@ -141,10 +184,14 @@ function main(): void {
       `  RESOLVED   ${a.package} (${a.id}) is no longer reported — drop its triage entry.`,
     );
   }
+  for (const a of patchable) {
+    lines.push(`  FIXABLE    ${a.severity.padEnd(8)} ${a.package} — npm reports a fix available.`);
+    lines.push(`             Take the upgrade and drop its triage entry: ${a.url}`);
+  }
   for (const a of old) {
     lines.push(`  RE-READ    ${a.package} (${a.id}) was last reviewed ${a.reviewed}.`);
   }
-  if (untriaged.length === 0 && stale.length === 0 && old.length === 0) {
+  if (untriaged.length === 0 && stale.length === 0 && patchable.length === 0 && old.length === 0) {
     lines.push("Every reported advisory has a reviewed reason it does not reach this app.");
   }
   const report = lines.join("\n");
@@ -153,13 +200,16 @@ function main(): void {
   if (process.env.GITHUB_OUTPUT) {
     appendFileSync(
       process.env.GITHUB_OUTPUT,
-      `untriaged=${untriaged.length}\nstale=${stale.length}\nreport<<EOF\n${report}\nEOF\n`,
+      `untriaged=${untriaged.length}\nstale=${stale.length}\nfixable=${patchable.length}\n` +
+        `report<<EOF\n${report}\nEOF\n`,
     );
   }
 
-  // Only an advisory nobody has looked at fails the run. A resolved or overdue
-  // entry is housekeeping — worth saying, not worth blocking on.
-  if (untriaged.length > 0) process.exit(1);
+  // An advisory nobody has looked at fails the run, and so does one standing
+  // behind a triage entry while npm reports a fix on the shelf: that is not a
+  // reviewed risk, it is an upgrade nobody did. A resolved or overdue entry is
+  // housekeeping — worth saying, not worth blocking on.
+  if (untriaged.length > 0 || patchable.length > 0) process.exit(1);
 }
 
 /* c8 ignore start */

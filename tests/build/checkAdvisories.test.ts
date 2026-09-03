@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { advisoriesFrom, reconcile, overdue } from "../../scripts/check-advisories";
+import { advisoriesFrom, reconcile, overdue, fixable } from "../../scripts/check-advisories";
 
 /**
  * The dependency-advisory triage (scripts/check-advisories.ts).
@@ -25,6 +25,7 @@ const REPORT = {
   vulnerabilities: {
     "@xmldom/xmldom": {
       severity: "moderate",
+      fixAvailable: true,
       via: [
         {
           source: 1158518,
@@ -35,7 +36,7 @@ const REPORT = {
         },
       ],
     },
-    mammoth: { severity: "moderate", via: ["@xmldom/xmldom"] },
+    mammoth: { severity: "moderate", fixAvailable: true, via: ["@xmldom/xmldom"] },
   },
 };
 
@@ -93,9 +94,69 @@ describe("reconciling findings against the triage file", () => {
   });
 });
 
+/**
+ * The half of the bar that nothing checked.
+ *
+ * An entry is admissible only when no upgrade is available AND the vulnerable
+ * path is unreachable. The second half is a judgement about this codebase and
+ * has to be written down and re-read. The first half is a fact npm already
+ * reports, and asking npm is free — so an entry standing over an available fix
+ * now fails the run rather than resting on its prose.
+ *
+ * This is not hypothetical. The only entry this file ever held said the fix was
+ * 0.9.x and out of reach behind mammoth's `^0.8.6`, which was true of 0.9 and
+ * false of the 0.8.15 backport published twelve days earlier. `npm audit` was
+ * reporting `fixAvailable: true` the whole time, in the same payload the script
+ * parsed to find the advisory in the first place.
+ */
+describe("an entry may not stand over a fix that is on the shelf", () => {
+  const accepted = [
+    { id: "GHSA-6gmq-8vp8-gcm6", package: "@xmldom/xmldom", reviewed: "2026-09-02", why: ["x"] },
+  ];
+
+  it("fails the entry npm says is fixable — the mistake this check was added for", () => {
+    const found = advisoriesFrom(REPORT);
+    expect(found[0]!.fixAvailable).toBe(true);
+    expect(fixable(found, accepted).map((a) => a.id)).toEqual(["GHSA-6gmq-8vp8-gcm6"]);
+  });
+
+  it("is quiet when npm reports no fix, which is when an entry is admissible", () => {
+    const noFix = {
+      vulnerabilities: {
+        "@xmldom/xmldom": { ...REPORT.vulnerabilities["@xmldom/xmldom"], fixAvailable: false },
+      },
+    };
+    expect(advisoriesFrom(noFix)[0]!.fixAvailable).toBe(false);
+    expect(fixable(advisoriesFrom(noFix), accepted)).toEqual([]);
+  });
+
+  it("counts npm's named-upgrade object as a fix, not as an absence of one", () => {
+    // npm reports `true` when `npm audit fix` would do it and an object when the
+    // upgrade needs naming (often a breaking one). Both are a fix that exists.
+    const named = {
+      vulnerabilities: {
+        "@xmldom/xmldom": {
+          ...REPORT.vulnerabilities["@xmldom/xmldom"],
+          fixAvailable: { name: "@xmldom/xmldom", version: "0.8.15", isSemVerMajor: false },
+        },
+      },
+    };
+    expect(advisoriesFrom(named)[0]!.fixAvailable).toBe(true);
+  });
+
+  it("says nothing about an advisory that has no triage entry — that is untriaged", () => {
+    // The two failures are distinct: nobody looked (untriaged) versus somebody
+    // looked and got the availability half wrong (fixable). Reporting a
+    // fixable-and-untriaged advisory twice would make the report harder to read.
+    expect(fixable(advisoriesFrom(REPORT), [])).toEqual([]);
+  });
+});
+
 describe("the triage file's own contract", () => {
   it("gives every accepted advisory an id, a package, a review date, and a reason", () => {
-    expect(triage.accepted.length).toBeGreaterThan(0);
+    // An empty list is the state to want: it means every advisory npm reports
+    // has been fixed rather than argued with. The file held exactly one entry,
+    // and that entry turned out to be an upgrade nobody had taken.
     for (const entry of triage.accepted) {
       expect(entry.id, "an advisory with no id cannot be matched to a finding").toMatch(/^GHSA-/);
       expect(entry.package).toBeTruthy();

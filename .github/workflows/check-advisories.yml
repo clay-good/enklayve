@@ -9,6 +9,12 @@
 # a check that fires on every unreachable finding in a front-end dependency tree
 # is one people mute.
 #
+# Since 2026-09-03 it also fires on `fixable`: a triage entry standing while npm
+# reports a fix available. That entry was the reason -- it said the upgrade was
+# out of reach behind mammoth's pin, which was true of 0.9 and false of the
+# 0.8.15 backport published twelve days earlier. "There is no fix" is a fact
+# with an expiry date, and npm was already reporting it.
+#
 # Not part of the unit CI: it needs the network, and the advisory database
 # changes underneath a build that has not changed at all.
 name: Check dependency advisories
@@ -37,23 +43,30 @@ jobs:
         continue-on-error: true
         run: node scripts/check-advisories.ts
 
-      # Gated on `untriaged` only. `stale` (a triage entry for an advisory that
-      # is no longer reported) and the overdue-review warning are housekeeping —
-      # they appear in the body when this fires, and an issue a month about
-      # tidying an allowlist is how an alert becomes scenery.
-      - name: Open an issue for an advisory nobody has reviewed
-        if: steps.advisories.outputs.untriaged != '0'
+      # Gated on the two the script exits non-zero for: `untriaged` (nobody has
+      # looked) and `fixable` (somebody looked and got the availability half
+      # wrong). `stale` — a triage entry for an advisory that is no longer
+      # reported — and the overdue-review warning are housekeeping: they appear
+      # in the body when this fires, and an issue a month about tidying an
+      # allowlist is how an alert becomes scenery.
+      - name: Open an issue for an advisory nobody has reviewed, or one with a fix waiting
+        if: steps.advisories.outputs.untriaged != '0' || steps.advisories.outputs.fixable != '0'
         uses: actions/github-script@v7
         with:
           script: |
+            const { UNTRIAGED, FIXABLE } = process.env;
+            const parts = [];
+            if (UNTRIAGED !== "0") parts.push(`${UNTRIAGED} not yet reviewed`);
+            if (FIXABLE !== "0") parts.push(`${FIXABLE} with a fix available`);
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `Dependency advisories: ${process.env.UNTRIAGED} not yet reviewed`,
+              title: `Dependency advisories: ${parts.join(", ")}`,
               body: process.env.REPORT,
               labels: ["data-review"],
             });
         env:
           REPORT: ${{ steps.advisories.outputs.report }}
           UNTRIAGED: ${{ steps.advisories.outputs.untriaged }}
+          FIXABLE: ${{ steps.advisories.outputs.fixable }}
           STALE: ${{ steps.advisories.outputs.stale }}

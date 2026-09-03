@@ -50,7 +50,7 @@ npm run check:boundaries     # which inclusive/exclusive comparisons a test actu
 npm run check:boundaries -- --help   # it rewrites src/engine in place; read this first
 ```
 
-`check:advisories` is the one most likely to surprise you: it does **not** fail on an advisory, it fails on an advisory nobody has looked at. If it stops you, the fix is a triage entry in [`scripts/advisory-triage.json`](../scripts/advisory-triage.json) naming the vulnerable entry point and what calls it — or an upgrade, if one exists and works.
+`check:advisories` is the one most likely to surprise you: it does **not** fail on an advisory, it fails on an advisory nobody has looked at — or on one somebody accepted while a fix was on the shelf. If it stops you, the fix is an upgrade where one exists, and a triage entry in [`scripts/advisory-triage.json`](../scripts/advisory-triage.json) naming the vulnerable entry point and what calls it where one does not. Both halves are checked now: an entry standing over an advisory npm reports as fixable fails the run, because "there is no fix" is a fact with an expiry date and npm already knows the answer. **Take the upgrade before writing the reason.**
 
 ## Adding a tile (calculator)
 

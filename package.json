@@ -60,6 +60,7 @@
   },
   "overrides": {
     "esbuild": "^0.28.1",
+    "@xmldom/xmldom": "^0.8.15",
     "ws": "^8.21.0",
     "brace-expansion": "^2.1.4",
     "js-yaml": "^4.3.1",
