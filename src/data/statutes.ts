@@ -77,3 +77,24 @@ export const EITC_JOINT_RETURN_CITATION: CitationData = {
   effectiveYear: 2026,
   dateRetrieved: "2026-09-03",
 };
+
+/**
+ * IRC §1091, the wash-sale rule. Cited by the Tax-Loss Harvesting tile and by
+ * the Cost-Basis Lot Picker.
+ *
+ * It lived privately in `taxLossHarvesting.ts`, which was the only tile that
+ * named the rule — while the lot picker, whose own "How this works" recommends
+ * specific identification "often to harvest losses", showed a realized loss
+ * with nothing beside it. That is the tile where a person chooses which shares
+ * to sell, so it is the tile where the rule that can disallow the loss belongs.
+ *
+ * Here rather than in a second private constant, for the reason this module
+ * exists: a statute cited from two places must not drift into two versions of
+ * itself.
+ */
+export const WASH_SALE_CITATION: CitationData = {
+  sourceUrl: "https://www.irs.gov/publications/p550",
+  sourceDocument: "IRS Publication 550, Wash Sales (IRC §1091)",
+  effectiveYear: 2026,
+  dateRetrieved: "2026-05-29",
+};

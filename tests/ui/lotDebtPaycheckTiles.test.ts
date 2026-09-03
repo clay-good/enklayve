@@ -84,6 +84,71 @@ describe("Cost-Basis Lot Picker", () => {
     expect(rowValue(root, "Total realized gain")).toContain("$7,000");
   });
 
+  it("names the wash-sale rule when a lot sells below its basis", () => {
+    // This tile's own "How this works" recommends specific identification
+    // "often to harvest losses", and said nothing about §1091 — the rule that
+    // most often makes a harvested loss not real. The Tax-Loss Harvesting tile
+    // has named it since it was written; this is the tile where a person
+    // actually picks which shares go.
+    const { root } = mount(
+      mountLotPicker,
+      new URLSearchParams({
+        px: "30",
+        m: "specific",
+        k: "1",
+        s0: "100",
+        b0: "50",
+        lt0: "0",
+        ss0: "100",
+      }),
+    );
+    expect(dollars(rowValue(root, "Total realized gain"))).toBe(-2000);
+    expect(rowValue(root, "Watch the wash-sale rule")).toContain("30 days");
+    const hrefs = Array.from(root.querySelectorAll("a.cite-link")).map((a) =>
+      a.getAttribute("href"),
+    );
+    expect(hrefs.some((h) => h?.includes("publications/p550"))).toBe(true);
+  });
+
+  it("names it per lot, not on the net — a sale can gain overall and still wash", () => {
+    // §1091 disallows the loss on the replaced shares, so a net gain does not
+    // mean there is nothing to warn about.
+    const { root } = mount(
+      mountLotPicker,
+      new URLSearchParams({
+        px: "60",
+        m: "specific",
+        k: "2",
+        s0: "100",
+        b0: "10",
+        lt0: "1",
+        ss0: "100",
+        s1: "10",
+        b1: "90",
+        lt1: "0",
+        ss1: "10",
+      }),
+    );
+    expect(dollars(rowValue(root, "Total realized gain"))).toBeGreaterThan(0);
+    expect(rowValue(root, "Watch the wash-sale rule")).toBeDefined();
+  });
+
+  it("stays quiet when every lot sells at a gain", () => {
+    const { root } = mount(
+      mountLotPicker,
+      new URLSearchParams({
+        px: "60",
+        m: "specific",
+        k: "1",
+        s0: "100",
+        b0: "50",
+        lt0: "0",
+        ss0: "100",
+      }),
+    );
+    expect(rowValue(root, "Watch the wash-sale rule")).toBeUndefined();
+  });
+
   it("uses per-lot quantities in specific-ID mode", () => {
     const { root } = mount(
       mountLotPicker,

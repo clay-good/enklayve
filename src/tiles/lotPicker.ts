@@ -6,6 +6,7 @@
  * the character that feeds the Capital Gains tile. Pure arithmetic, no dataset.
  */
 import { Money } from "../engine/money";
+import { WASH_SALE_CITATION } from "../data/statutes";
 import { fifoSelect, costBasisGain, type CostLot, type LotSale } from "../engine/costBasis";
 import { el, option, clear } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
@@ -126,8 +127,12 @@ export function mountLotPicker(ctx: TileContext): void {
   }
 
   function compute(): void {
-    const r = costBasisGain(fields.salePrice, salesOf(fields));
+    const sales = salesOf(fields);
+    const r = costBasisGain(fields.salePrice, sales);
     const fmt = (m: Money): string => m.format(ctx.locale);
+    // Per lot, not on the net: §1091 disallows the loss on the shares that were
+    // replaced, so a sale can net to a gain and still contain a washed loss.
+    const anyLossLot = sales.some((s) => fields.salePrice < s.lot.costPerShare);
 
     const lines: BreakdownLine[] = [
       { label: "Shares sold", value: String(r.sharesSold) },
@@ -139,6 +144,21 @@ export function mountLotPicker(ctx: TileContext): void {
     if (!r.longTermGain.isZero())
       lines.push({ label: "Long-term gain (preferential rate)", value: fmt(r.longTermGain) });
     lines.push({ label: "Total realized gain", value: fmt(r.totalGain), emphasis: true });
+    // This tile's own "How this works" recommends specific identification
+    // "often to harvest losses", and until 2026-09-03 said nothing about the
+    // rule that most often makes a harvested loss not real. The Tax-Loss
+    // Harvesting tile has named §1091 since it was written; this is the tile
+    // where a person actually chooses which shares go.
+    if (anyLossLot) {
+      lines.push({
+        label: "Watch the wash-sale rule",
+        value:
+          "At least one lot here sells below its basis. Buying the same or a substantially " +
+          "identical security within 30 days before or after the sale disallows that loss — it " +
+          "moves into the basis of the replacement shares instead.",
+        citation: WASH_SALE_CITATION,
+      });
+    }
 
     resultContainer.replaceChildren(
       resultCard({
@@ -315,7 +335,7 @@ export const lotPickerTile: TileDefinition = {
   description: "FIFO or specific-ID cost basis for a stock sale.",
   keywords: ["cost basis", "fifo", "specific identification", "lots", "capital gains", "shares"],
   status: "ready",
-  how: "When you sell part of a position you bought at different prices, which shares you sell changes your taxable gain. Two methods: FIFO sells your oldest lots first (the broker default), while specific identification lets you choose exactly which lots go, often to harvest losses or favor long-term shares. Enter each lot's shares, cost per share, and whether it's long-term (held more than one year), then a sale price.\n\nWe split the realized gain into short-term (taxed as ordinary income) and long-term (the preferential capital-gains rate), because the character matters as much as the amount. Feed the result into the Capital Gains tile to see the tax. Pure arithmetic on your numbers: confirm your broker's basis records, especially after splits or reinvested dividends.",
+  how: "When you sell part of a position you bought at different prices, which shares you sell changes your taxable gain. Two methods: FIFO sells your oldest lots first (the broker default), while specific identification lets you choose exactly which lots go, often to harvest losses or favor long-term shares. A harvested loss is only real if you stay out of the security: buying the same or a substantially identical one within 30 days either side of the sale disallows the loss under the wash-sale rule (IRC §1091), which moves it into the basis of the replacement shares instead. Enter each lot's shares, cost per share, and whether it's long-term (held more than one year), then a sale price.\n\nWe split the realized gain into short-term (taxed as ordinary income) and long-term (the preferential capital-gains rate), because the character matters as much as the amount. Feed the result into the Capital Gains tile to see the tax. Pure arithmetic on your numbers: confirm your broker's basis records, especially after splits or reinvested dividends.",
   resources: [
     {
       label: "IRS Publication 550 (cost basis)",

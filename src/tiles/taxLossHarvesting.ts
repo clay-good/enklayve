@@ -8,6 +8,7 @@
  * Situation. Information, not advice.
  */
 import { Money } from "../engine/money";
+import { WASH_SALE_CITATION } from "../data/statutes";
 import { taxLossHarvest } from "../engine/taxMoves";
 import type { CitationData } from "../data/schemas";
 import { el } from "../ui/dom";
@@ -34,13 +35,6 @@ const LOSS_OFFSET_LIMIT_SEPARATE = 1500;
 const LOSS_LIMIT_CITATION: CitationData = {
   sourceUrl: "https://www.irs.gov/taxtopics/tc409",
   sourceDocument: "IRS Topic No. 409, Capital Gains and Losses (IRC §1211(b))",
-  effectiveYear: 2026,
-  dateRetrieved: "2026-05-29",
-};
-/** The wash-sale rule (IRC §1091). */
-const WASH_SALE_CITATION: CitationData = {
-  sourceUrl: "https://www.irs.gov/publications/p550",
-  sourceDocument: "IRS Publication 550, Wash Sales (IRC §1091)",
   effectiveYear: 2026,
   dateRetrieved: "2026-05-29",
 };
