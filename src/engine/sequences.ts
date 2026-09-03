@@ -15,7 +15,7 @@
  * is exactly how the window gets missed.
  */
 import type { Deadline } from "./deadline";
-import type { EnrollmentWindowsData, LifeEventsData } from "../data/schemas";
+import type { CitationData, EnrollmentWindowsData, LifeEventsData } from "../data/schemas";
 
 /** One window from the shard, plus the program it belongs to. */
 export interface EnrollmentWindow {
@@ -84,6 +84,8 @@ export interface SequenceStep {
   isCeiling: boolean;
   channel?: { label: string; url: string };
   tileId?: string;
+  /** The rule the step states on its own, where it states one. */
+  citation?: CitationData;
 }
 
 /** One life-event sequence, in order. */
@@ -126,6 +128,7 @@ export function resolveSequences(
         isCeiling: window?.isCeiling ?? false,
         ...(step.channel ? { channel: step.channel } : {}),
         ...(step.tileId ? { tileId: step.tileId } : {}),
+        ...(step.citation ? { citation: step.citation } : {}),
       };
     }),
   }));

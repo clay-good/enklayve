@@ -1428,6 +1428,13 @@ export const LifeEventsSchema = z.object({
               channel: z.object({ label: z.string().min(1), url: z.string().url() }).optional(),
               /** A tile that does the arithmetic this step calls for. */
               tileId: z.string().min(1).optional(),
+              /**
+               * The rule behind the step, where the step states one. Most do
+               * not — they sequence actions, and the clocks they reference are
+               * cited in the `enrollment-windows` shard through `windowId`. A
+               * step that asserts a regulation on its own needs the regulation.
+               */
+              citation: CitationSchema.optional(),
             }),
           )
           .min(1),

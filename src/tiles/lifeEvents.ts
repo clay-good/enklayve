@@ -20,6 +20,7 @@ import { resolveSequences, type Sequence, type SequenceStep } from "../engine/se
 import { el, option } from "../ui/dom";
 import { field, tryExampleButton } from "../ui/form";
 import { renderDeadline } from "../ui/deadline";
+import { citationLink } from "../ui/resultCard";
 import type { TileContext, TileDefinition } from "./types";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -105,6 +106,12 @@ export function mountLifeEvents(ctx: TileContext): void {
           }),
         );
       }
+    }
+    if (step.citation) {
+      // Most steps sequence actions and cite nothing; their clocks are cited in
+      // the enrollment-window shard through `windowId`. A step that states a
+      // rule of its own carries the rule.
+      body.append(el("p", { class: "lev-step-cite" }, citationLink(step.citation)));
     }
     if (step.channel) {
       body.append(

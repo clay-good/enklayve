@@ -38,6 +38,22 @@
           "tileId": "aca-ptc"
         },
         {
+          "id": "cobra-one-way-door",
+          "label": "Know that choosing COBRA closes the Marketplace door until you run it out",
+          "detail": "This is the part of the decision that is hard to undo. Losing job-based coverage opens a Marketplace window; dropping COBRA later does not. A voluntary termination is not a loss of coverage, and neither is stopping payment, so a person who elects COBRA and gives it up in March is generally waiting for open enrollment. Running COBRA out to its end does open a window, and so does your former employer completely ceasing to pay toward the premium, which is the case worth watching if severance is covering it for now.",
+          "channel": {
+            "label": "HealthCare.gov: COBRA and the Marketplace",
+            "url": "https://www.healthcare.gov/unemployed/cobra-coverage/"
+          },
+          "citation": {
+            "sourceUrl": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-E/section-155.420",
+            "sourceDocument": "45 CFR §155.420(e), (d)(15)",
+            "sourceNote": "Paragraph (e): \"Loss of coverage does not include voluntary termination of coverage or other loss due to (1) Failure to pay premiums on a timely basis, including COBRA continuation coverage premiums prior to expiration of COBRA continuation coverage, except for circumstances in which an employer completely ceases its contributions to COBRA continuation coverage...\" Paragraph (d)(15) makes that cessation its own triggering event, dated to the last day the coverage was paid for or subsidized.",
+            "effectiveYear": 2026,
+            "dateRetrieved": "2026-09-03"
+          }
+        },
+        {
           "id": "recheck-income",
           "label": "Re-screen every benefit against your new income, not last year's",
           "detail": "Eligibility for Medicaid, SNAP, and the premium tax credit is based on current income. A household that did not qualify in January can qualify in March, and nothing tells you that automatically.",

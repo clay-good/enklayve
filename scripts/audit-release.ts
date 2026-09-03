@@ -333,8 +333,28 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * rejected on grounds stated above, which is the useful conclusion — the next
  * raise will not have a cheap alternative to compare itself against, and should
  * be argued on what it buys rather than on what it could have trimmed instead.
+ *
+ * **Raised 282 -> 283 on 2026-09-03, argued on what it buys, as promised one
+ * paragraph up.** The Life-Event Sequences page asks a laid-off reader to
+ * choose between COBRA and a Marketplace plan and did not say the choice is
+ * hard to undo. 45 CFR §155.420(e): "Loss of coverage does not include
+ * voluntary termination of coverage or other loss due to (1) Failure to pay
+ * premiums on a timely basis, including COBRA continuation coverage premiums
+ * prior to expiration of COBRA continuation coverage". So electing COBRA and
+ * dropping it in March generally means waiting for open enrollment, while
+ * running it out to the end opens a window — and so does the former employer
+ * completely ceasing to pay toward the premium, under (d)(15), which is exactly
+ * what happens when severance-funded COBRA runs out.
+ *
+ * Measured: the entry chunk went 278,360 -> 278,915 bytes gzipped, so the step
+ * and its citation cost 555 bytes. That is a fifth of a kilobyte more than the
+ * remaining headroom, on the page this project describes as carrying its
+ * highest-harm numbers, at the moment a household is deciding.
+ *
+ * One, not two. The headroom is 0.6 kB, which is the smallest this has ever
+ * been left, and the gate is meant to trip on the next sentence.
  */
-export const SHELL_GZIP_BUDGET_KB = 282;
+export const SHELL_GZIP_BUDGET_KB = 283;
 
 /** A precached asset and its gzipped size. */
 export interface ShellAsset {

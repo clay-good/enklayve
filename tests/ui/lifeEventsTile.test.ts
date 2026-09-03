@@ -107,10 +107,34 @@ describe("Life-Event Sequences", () => {
   it("renders the steps in order, numbered", () => {
     const root = mount(JOB_LOSS);
     const numbers = Array.from(root.querySelectorAll(".lev-step-n")).map((n) => n.textContent);
-    expect(numbers).toEqual(["1", "2", "3", "4", "5", "6"]);
+    expect(numbers).toEqual(["1", "2", "3", "4", "5", "6", "7"]);
     expect(root.querySelector(".lev-step-label")?.textContent).toContain(
       "File for unemployment in your state, today",
     );
+  });
+
+  it("names the one-way door in the COBRA decision, with the rule that closes it", () => {
+    // The sequence asked the reader to choose between COBRA and a Marketplace
+    // plan and did not say the choice is hard to undo. 45 CFR §155.420(e):
+    // "Loss of coverage does not include voluntary termination of coverage or
+    // other loss due to (1) Failure to pay premiums on a timely basis,
+    // including COBRA continuation coverage premiums prior to expiration" — so
+    // electing COBRA and dropping it in March generally means waiting for open
+    // enrollment. Running it out does open a window, and so does the employer
+    // ceasing to pay toward the premium under (d)(15), which is the case a
+    // laid-off worker on severance-funded COBRA walks into.
+    const root = mount(JOB_LOSS);
+    const step = [...root.querySelectorAll(".lev-step-body")].find((n) =>
+      (n.textContent ?? "").includes("closes the Marketplace door"),
+    );
+    expect(step, "the sequence still stops short of the trap").toBeDefined();
+    const text = step!.textContent ?? "";
+    expect(text).toContain("dropping COBRA later does not");
+    expect(text).toContain("Running COBRA out to its end does open a window");
+    expect(text).toContain("ceasing to pay toward the premium");
+    // A step that states a rule of its own carries the rule; the others point
+    // at the enrollment-window shard, where their clocks are cited.
+    expect(step!.querySelector(".lev-step-cite a")?.getAttribute("href")).toContain("155.420");
   });
 
   it("renders every clock through renderDeadline, each with its source link", () => {
