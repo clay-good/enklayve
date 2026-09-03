@@ -133,7 +133,19 @@ export function describeResolverFailure(hostname: string): string {
  * comment on the chain repair gives: the diagnosis belongs beside the shared
  * fetch, or the checks go back to disagreeing about the same server.
  */
-export async function resolverFailureFor(url: string, message: string): Promise<string | null> {
+export async function resolverFailureFor(
+  url: string,
+  message: string,
+  /**
+   * How to ask DNS. Injectable so the unit suite can hold both branches without
+   * a real query: a test that resolves a live government host is a network test
+   * wearing a unit test's clothes, and this repo keeps those on a schedule for
+   * the reason that a check failing on somebody else's afternoon is one people
+   * learn to ignore. The first version of these tests did exactly that and made
+   * the suite flaky.
+   */
+  resolves: (hostname: string) => Promise<boolean> = nameResolvesDirectly,
+): Promise<string | null> {
   if (!NAME_NOT_RESOLVED.test(message)) return null;
   let hostname: string;
   try {
@@ -142,7 +154,7 @@ export async function resolverFailureFor(url: string, message: string): Promise<
     // Not a URL this can ask DNS about; the raw message is the better answer.
     return null;
   }
-  return (await nameResolvesDirectly(hostname)) ? describeResolverFailure(hostname) : null;
+  return (await resolves(hostname)) ? describeResolverFailure(hostname) : null;
 }
 
 /**
@@ -250,25 +262,42 @@ async function fetchRaw(url: string, signal: AbortSignal): Promise<RawResponse> 
   }
 }
 
+/** Present, absent, or nobody answered — three answers, not two. */
+export type SourceStatus = "present" | "absent" | "unreached";
+
 /**
- * Does this document exist yet?
+ * Does this document exist yet — and if not, is that the agency's answer or
+ * nobody's?
  *
  * For an adapter parked on a state's unpublished form, the whole signal is
  * whether a year-carrying URL has started answering. Reading the document is
  * the wrong question and an expensive one — Oregon's OR-40 booklet is 120 kB of
  * PDF that would be text-extracted every month to learn one bit — so this
  * checks the status and never touches the body.
+ *
+ * **It used to return a boolean, and `false` meant two different things.** "The
+ * agency says there is no such document" and "nobody answered" are not the same
+ * fact, and the caller needs them apart: the wait probes use this twice, once
+ * for the awaited document and once to prove the probe can still see the year
+ * that IS published, and a transport failure on the second read as a probe gone
+ * permanently blind — an alarm this repo already learned not to raise when
+ * Pennsylvania flaked under concurrency and was reported as having stopped
+ * anchoring.
+ *
+ * Only 404 and 410 are an absence. A 403 from a WAF, a 500, a rate limit — none
+ * of those is a statement about the document, and reading them as one is how a
+ * wait goes blind on an afternoon.
  */
-export async function sourceExists(url: string): Promise<boolean> {
+export async function sourceStatus(url: string): Promise<SourceStatus> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
     const response = await fetchRaw(url, controller.signal);
-    return response.status >= 200 && response.status < 300;
+    if (response.status >= 200 && response.status < 300) return "present";
+    return response.status === 404 || response.status === 410 ? "absent" : "unreached";
   } catch {
-    // Unreachable is not "published". A host having a bad afternoon must not
-    // read as a state releasing a form.
-    return false;
+    // Unreachable is not "published", and it is not "unpublished" either.
+    return "unreached";
   } finally {
     clearTimeout(timer);
   }

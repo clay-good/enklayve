@@ -47,7 +47,7 @@ import {
   type RefreshAdapter,
   type RefreshGroup,
 } from "./refresh/adapters.ts";
-import { fetchSource, sourceExists, INCOMPLETE_CERT_CHAIN } from "./fetch-source.ts";
+import { fetchSource, sourceStatus, INCOMPLETE_CERT_CHAIN } from "./fetch-source.ts";
 import { diffShards } from "./refresh/contract.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -206,8 +206,22 @@ export function againstBaseline(
  * calibration misses. Calibration exists to catch a false NEGATIVE — a wait that
  * has quietly become permanent — and a probe that has found the thing it was
  * looking for has no false negative to catch.
+ *
+ * **`unreached` is the fourth answer, and it was missing.** Both probes returned
+ * a boolean, so a dropped connection, a WAF's 403 or a 500 on the calibration
+ * URL was indistinguishable from a probe that genuinely cannot see the year the
+ * state has published — and that reads as `blind`, which fails the check and
+ * opens an issue saying nothing is watching for the arrival any more. This file
+ * already learned that lesson one level up: Pennsylvania flaked under six-way
+ * concurrency on 2026-08-30, fell out of the anchoring set, and was reported as
+ * a shard that had stopped being watched. A check that cries wolf about the
+ * failure it exists to catch is worse than no check. A run that could not ask
+ * now says so, and says it in a section that does not gate.
  */
-export type WaitVerdict = "waiting" | "arrived" | "blind";
+export type WaitVerdict = "waiting" | "arrived" | "blind" | "unreached";
+
+/** One probe's answer: the thing is there, it is not, or nobody said. */
+export type ProbeResult = "hit" | "miss" | "unreached";
 
 export interface WaitResult {
   adapterId: string;
@@ -218,9 +232,13 @@ export interface WaitResult {
   url: string;
 }
 
-export function classifyWait(arrived: boolean, calibrated: boolean): WaitVerdict {
-  if (arrived) return "arrived";
-  return calibrated ? "waiting" : "blind";
+export function classifyWait(arrived: ProbeResult, calibration: ProbeResult): WaitVerdict {
+  if (arrived === "hit") return "arrived";
+  // Not reached is not "still waiting": the awaited document may well be there.
+  if (arrived === "unreached") return "unreached";
+  if (calibration === "hit") return "waiting";
+  // Only a calibration the source ANSWERED and missed is a blind probe.
+  return calibration === "unreached" ? "unreached" : "blind";
 }
 
 /**
@@ -234,6 +252,7 @@ export function renderWaitReport(waits: readonly WaitResult[]): string {
   const arrived = waits.filter((w) => w.verdict === "arrived");
   const blind = waits.filter((w) => w.verdict === "blind");
   const waiting = waits.filter((w) => w.verdict === "waiting");
+  const unreached = waits.filter((w) => w.verdict === "unreached");
   const lines: string[] = [];
 
   if (arrived.length > 0) {
@@ -259,6 +278,20 @@ export function renderWaitReport(waits: readonly WaitResult[]): string {
     );
     lines.push("");
     for (const w of blind) lines.push(`- \`${w.adapterId}\` — ${w.what}`, `  - ${w.url}`);
+  }
+
+  if (unreached.length > 0) {
+    lines.push("", "## A wait this run could not ask about", "");
+    lines.push(
+      "Neither the awaited document nor the calibration answered, so this run has no" +
+        " opinion about either and does not claim one. That is usually the agency's" +
+        " afternoon. It does NOT fail the check — a probe reported blind on a dropped" +
+        " connection is the cry-wolf failure this file already fixed one level up, when" +
+        " Pennsylvania flaked under concurrency and was reported as having stopped" +
+        " anchoring. The same entry here two months running is the thing to act on.",
+    );
+    lines.push("");
+    for (const w of unreached) lines.push(`- \`${w.adapterId}\` — ${w.what}`, `  - ${w.url}`);
   }
 
   if (waiting.length > 0) {
@@ -500,24 +533,31 @@ async function check(adapter: RefreshAdapter): Promise<AnchorResult> {
 }
 
 /** One half of a wait probe: is the document there, and does it look like itself? */
-async function probe(target: { url: string; match?: RegExp }): Promise<boolean> {
-  if (!target.match) return sourceExists(target.url);
+async function probe(target: { url: string; match?: RegExp }): Promise<ProbeResult> {
+  if (!target.match) {
+    const status = await sourceStatus(target.url);
+    return status === "present" ? "hit" : status === "absent" ? "miss" : "unreached";
+  }
   const fetched = await fetchSource(target.url);
-  return fetched.ok && target.match.test(fetched.raw);
+  // A page that arrived and does not name the year is a real miss. A page that
+  // did not arrive says nothing about the year at all.
+  if (!fetched.ok) return "unreached";
+  return target.match.test(fetched.raw) ? "hit" : "miss";
 }
 
 async function checkWait(adapter: RefreshAdapter): Promise<WaitResult | null> {
   const awaiting = adapter.awaiting;
   if (!awaiting) return null;
   const arrived = await probe(awaiting.arrived);
-  // Skipped when the document is already there: the calibration only guards the
-  // "still waiting" answer, and a second fetch to confirm a hit costs a request
-  // against an agency for nothing.
-  const calibrated = arrived || (await probe(awaiting.calibration));
+  // Skipped when the document is already there, or when the first probe could
+  // not be asked: the calibration only guards the "still waiting" answer, and a
+  // second fetch costs a request against an agency for nothing.
+  const calibration =
+    arrived === "miss" ? await probe(awaiting.calibration) : ("hit" as ProbeResult);
   return {
     adapterId: adapter.id,
     what: awaiting.what,
-    verdict: classifyWait(arrived, calibrated),
+    verdict: classifyWait(arrived, calibration),
     url: awaiting.arrived.url,
   };
 }
@@ -568,7 +608,8 @@ async function main(): Promise<void> {
       out,
       `regressions=${regressions.length}\nwouldChange=${wouldChange}\nunreachable=${unreachable}\n` +
         `waitsOver=${waits.filter((w) => w.verdict === "arrived").length}\n` +
-        `blindWaits=${waits.filter((w) => w.verdict === "blind").length}\n`,
+        `blindWaits=${waits.filter((w) => w.verdict === "blind").length}\n` +
+        `unreachedWaits=${waits.filter((w) => w.verdict === "unreached").length}\n`,
     );
     appendFileSync(out, `report<<EOF\n${report}\nEOF\n`);
   }

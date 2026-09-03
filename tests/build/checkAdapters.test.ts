@@ -411,25 +411,54 @@ describe("the known-anchoring baseline", () => {
  */
 describe("deciding whether a wait is over", () => {
   it("says the wait is over when the document is there", () => {
-    expect(classifyWait(true, true)).toBe("arrived");
+    expect(classifyWait("hit", "hit")).toBe("arrived");
   });
 
   it("calls a probe blind when it cannot see the year that IS published", () => {
     // The failure mode worth naming: a state renames its URL scheme, the
     // awaited path 404s forever, and the report says "still waiting" in exactly
     // the words it uses when the wait is real.
-    expect(classifyWait(false, false)).toBe("blind");
+    expect(classifyWait("miss", "miss")).toBe("blind");
   });
 
   it("believes a hit even when the calibration missed", () => {
     // Calibration guards a false NEGATIVE. A probe that has found the thing it
     // was looking for has no false negative left to guard against, and refusing
     // its own answer would be the report arguing with itself.
-    expect(classifyWait(true, false)).toBe("arrived");
+    expect(classifyWait("hit", "miss")).toBe("arrived");
   });
 
   it("is patient only when it has earned it", () => {
-    expect(classifyWait(false, true)).toBe("waiting");
+    expect(classifyWait("miss", "hit")).toBe("waiting");
+  });
+
+  /**
+   * A probe nobody answered is not a probe that has gone blind.
+   *
+   * Both halves used to return a boolean, so a dropped connection, a WAF's 403
+   * or a 500 on the calibration URL was indistinguishable from a state having
+   * renamed its scheme — and that reads as `blind`, which fails the check and
+   * opens an issue saying nothing is watching for the arrival any more. This
+   * file already learned the lesson one level up: Pennsylvania flaked under
+   * six-way concurrency on 2026-08-30, fell out of the anchoring set, and was
+   * reported as a shard that had stopped being watched, then anchored fine a
+   * minute later. Only 404 and 410 are an absence now; everything else is
+   * nobody's answer, reported and not gated.
+   */
+  it("does not call a probe blind on a calibration nobody answered", () => {
+    expect(classifyWait("miss", "unreached")).toBe("unreached");
+  });
+
+  it("does not claim patience when the awaited document could not be asked about", () => {
+    // "Still waiting" is a claim that the document is not there. An unreached
+    // probe has not established that, and the document may well have arrived.
+    expect(classifyWait("unreached", "hit")).toBe("unreached");
+    expect(classifyWait("unreached", "unreached")).toBe("unreached");
+    expect(classifyWait("unreached", "miss")).toBe("unreached");
+  });
+
+  it("still believes an arrival it actually saw, whatever the calibration did", () => {
+    expect(classifyWait("hit", "unreached")).toBe("arrived");
   });
 });
 

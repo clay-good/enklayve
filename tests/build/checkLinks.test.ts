@@ -224,7 +224,8 @@ describe("classifying a checked link", () => {
     });
 
     it("leaves a name that resolves nowhere as the dead host it is", async () => {
-      // RFC 2606 reserves `.invalid`, so this cannot start answering later.
+      // RFC 2606 reserves `.invalid`, so the real resolver is safe to use here
+      // and worth using once: it proves the default argument is wired up.
       expect(
         await resolverFailureFor(
           "https://no-such-host.example.invalid/x",
@@ -234,19 +235,30 @@ describe("classifying a checked link", () => {
     });
 
     it("names the machine when the host answers a direct query", async () => {
-      // Mississippi's DOR is the case this was found on. Skipped rather than
-      // failed where the network is unavailable: the point is the branch, and a
-      // test that needs DNS must not fail a build for lacking it.
+      // Mississippi's DOR is the case this was found on, and the resolver is
+      // injected rather than asked: the first version of this test queried
+      // www.dor.ms.gov for real and made the unit suite flaky, which is the
+      // network-in-the-unit-suite mistake the scheduled checks exist to avoid.
       const host = "www.dor.ms.gov";
-      if (!(await nameResolvesDirectly(host))) return;
       const said = await resolverFailureFor(
         `https://${host}/general-information`,
         `getaddrinfo ENOTFOUND ${host}`,
+        async () => true,
       );
       expect(said).toBe(describeResolverFailure(host));
       // And the marker is what the report reads, so this classifies as the
       // machine's problem rather than a dead link.
       expect(classify({ status: 0, detail: said! })).toBe("unreachable");
+    });
+
+    it("leaves the message alone when DNS agrees the name is gone", async () => {
+      expect(
+        await resolverFailureFor(
+          "https://gone.test/x",
+          "getaddrinfo ENOTFOUND gone.test",
+          async () => false,
+        ),
+      ).toBeNull();
     });
 
     it("does not ask DNS about something that is not a URL", async () => {

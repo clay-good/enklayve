@@ -67,12 +67,23 @@ jobs:
       # number, and only a person reading the diff can tell. Unreachable is
       # usually the agency having an afternoon and appears in the body only.
       #
-      # WAITS_OVER and BLIND_WAITS are the two states of an adapter parked on a
-      # document a state has not published. An arrival means that shard is now
-      # knowably a year behind, and a blind probe means nothing is watching for
-      # the arrival any more — both are work, and both are silent unless
-      # somebody is told. This job is the only thing that runs those probes, so
-      # a count it does not read is a count nobody ever sees.
+      # WAITS_OVER and BLIND_WAITS are two of the three states of an adapter
+      # parked on a document a state has not published. An arrival means that
+      # shard is now knowably a year behind, and a blind probe means nothing is
+      # watching for the arrival any more — both are work, and both are silent
+      # unless somebody is told. This job is the only thing that runs those
+      # probes, so a count it does not read is a count nobody ever sees.
+      #
+      # UNREACHED_WAITS is the third, and it deliberately does NOT gate. Until
+      # 2026-09-03 both halves of a wait probe returned a boolean, so a dropped
+      # connection or a WAF's 403 on the calibration URL was indistinguishable
+      # from a state having renamed its scheme — and that counted as BLIND,
+      # which opens an issue claiming nothing is watching for the arrival. Only
+      # a 404 or a 410 is an absence now; everything else is nobody's answer,
+      # reported in the body and gated on by nothing. It is the same fix, and
+      # the same reason, as the known-anchoring baseline one level up: a check
+      # that cries wolf about the failure it exists to catch is worse than no
+      # check. The same entry two months running is the thing to act on.
       - name: Open an issue when an adapter stopped anchoring, would change a shard, or its wait is over
         if: >-
           steps.adapters.outputs.report != '' &&
@@ -89,6 +100,11 @@ jobs:
             ];
             if (process.env.WAITS_OVER !== "0") parts.push(`${process.env.WAITS_OVER} wait(s) over`);
             if (process.env.BLIND_WAITS !== "0") parts.push(`${process.env.BLIND_WAITS} blind probe(s)`);
+            if (process.env.UNREACHED_WAITS !== "0") {
+              // Named in the title, never the reason the issue exists: this
+              // line is only reached because one of the gated counts fired.
+              parts.push(`${process.env.UNREACHED_WAITS} probe(s) not reached`);
+            }
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -102,3 +118,4 @@ jobs:
           WOULD_CHANGE: ${{ steps.adapters.outputs.wouldChange }}
           WAITS_OVER: ${{ steps.adapters.outputs.waitsOver }}
           BLIND_WAITS: ${{ steps.adapters.outputs.blindWaits }}
+          UNREACHED_WAITS: ${{ steps.adapters.outputs.unreachedWaits }}
