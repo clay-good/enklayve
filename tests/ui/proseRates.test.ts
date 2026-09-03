@@ -151,12 +151,12 @@ const BOUND: RateBound[] = [
     derive: asPoints,
     why: "the cliff the tile warns about, read from the last applicable-percentage band",
   },
-  {
-    file: "tiles/owedScreener.ts",
-    shard: "medicaid-2024",
-    path: ".expansionThresholdPctFpl",
-    derive: asPoints,
-  },
+  // The screener used to write 138% into its Medicaid note, which is why this
+  // list bound it to the shard. It interpolates the shard's own field now — and
+  // asks `medicaidEligibility` for the per-state answer where the profile knows
+  // the state — so there is no figure left in that prose to bind. A rate that is
+  // read rather than typed is the outcome this sweep exists to push toward, so
+  // the entry is removed rather than kept passing on a coincidence.
   {
     file: "tiles/owedScreener.ts",
     shard: "aca-2024",

@@ -13,6 +13,8 @@ import {
   estimateCtc,
   estimateSnap,
   estimateSaversCredit,
+  medicaidEligibility,
+  acaCreditEligible,
 } from "../engine/benefits";
 import { el, option } from "../ui/dom";
 import { field, fplPercentText, parseNonNegative, tryExampleButton } from "../ui/form";
@@ -268,24 +270,60 @@ export function mountOwedScreener(ctx: TileContext): void {
       }
     }
 
-    if (pctOfLine <= 138) {
+    // Medicaid and the premium tax credit were drawn here with literals — `<= 138`
+    // and `>= 100 && <= 400` — which is the shape the Readout Report was fixed
+    // out of, one surface later than this one. The 138 is a shard field with a
+    // per-state override the literal could not see: DC expands to 215%, so a DC
+    // resident at 170% of the poverty line is eligible, is told so by the
+    // Medicaid tile and by the saved Report, and heard nothing here.
+    const medicaidData = bundled.medicaid();
+    const stateCode = profile.get("stateCode");
+    const medicaidThreshold = medicaidData?.expansionThresholdPctFpl ?? 138;
+    if (medicaidData && stateCode) {
+      const m = medicaidEligibility(
+        { stateCode, income: fields.income, householdSize: fields.householdSize },
+        medicaidData,
+        fpl,
+      );
+      if (m.eligible) {
+        findings.push({
+          program: "Medicaid (likely)",
+          estimate: "Eligibility",
+          note: `Your income is ${fplPercentText(pctOfLine, [m.thresholdPctFpl ?? medicaidThreshold])} of the poverty line, and ${stateCode.toUpperCase()} covers adults up to ${m.thresholdPctFpl}%.`,
+          citation: medicaidData.citation,
+        });
+      } else if (!m.expansionState && pctOfLine <= medicaidThreshold) {
+        // Not a maybe. In a state that did not expand, income alone does not
+        // qualify most adults, and saying "likely eligible" to this household
+        // would be the coverage gap described as good news.
+        findings.push({
+          program: "Medicaid",
+          estimate: "Depends on more than income",
+          note: `${stateCode.toUpperCase()} has not expanded Medicaid, so most adults do not qualify on income alone. Parents, pregnant people, children (CHIP), and people with disabilities may still qualify under separate rules.`,
+          citation: medicaidData.citation,
+        });
+      }
+    } else if (pctOfLine <= medicaidThreshold) {
+      // No state on file, so the generic answer — with the threshold read from
+      // the shard rather than typed here.
       findings.push({
         program: "Medicaid (likely, in expansion states)",
         estimate: "Eligibility",
-        note: `Your income is ${fplPercentText(pctOfLine, [138])} of the poverty line; at or below 138% suggests Medicaid eligibility where the state expanded it.`,
-        citation: fpl.citation,
+        note: `Your income is ${fplPercentText(pctOfLine, [medicaidThreshold])} of the poverty line; at or below ${medicaidThreshold}% suggests Medicaid eligibility where the state expanded it. Set your state in My Situation for the figure your state actually uses.`,
+        citation: medicaidData?.citation ?? fpl.citation,
       });
     }
-    // Premium tax credits run from 100% to 400% of the poverty line. The
-    // ARPA/IRA enhancement that lifted the 400% cliff expired at the end of
-    // 2025, so for the 2026 plan year the cliff is back: above 400% FPL there is
-    // no credit (matches the engine's `aboveSubsidyCap` and the ACA tile).
-    if (pctOfLine >= 100 && pctOfLine <= 400) {
+    // The premium-tax-credit band is the engine's whole §36B(c)(1)(A) rule now,
+    // rather than two literals that happened to agree with it: at least 100% of
+    // the poverty line and not more than 400%, the cliff having returned for
+    // 2026 when the ARPA/IRA enhancement expired.
+    const acaData = bundled.aca();
+    if (acaData && acaCreditEligible(pctOfLine, acaData)) {
       findings.push({
         program: "ACA marketplace subsidies (likely)",
         estimate: "Premium tax credit",
         note: `At ${fplPercentText(pctOfLine, [100, 400])} of the poverty line (within the 100–400% range) you likely qualify for a marketplace premium tax credit. Use the ACA Premium Tax Credit tool for a dollar estimate.`,
-        citation: fpl.citation,
+        citation: acaData.citation,
       });
     }
 

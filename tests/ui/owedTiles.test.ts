@@ -119,6 +119,69 @@ describe("What Am I Owed screener", () => {
     expect(root.querySelectorAll(".screener-item a.cite-link").length).toBeGreaterThanOrEqual(2);
   });
 
+  it("uses DC's 215% threshold, which the hardcoded 138 could not see", () => {
+    // The Readout Report was fixed out of this exact shape on an earlier day —
+    // `p <= 138` against a literal it held itself — and the screener was the
+    // surface that kept it. A single DC resident at $27,000 is around 169% of
+    // the poverty line: over 138, under DC's 215, and eligible. The Medicaid
+    // tile said so, the saved Report said so, and the screener whose entire job
+    // is to find what a household is owed said nothing.
+    const profile = new SituationStore();
+    profile.set("stateCode", "dc");
+    const root = mount(mountOwedScreener, new URLSearchParams({ hh: "1", inc: "27000" }), profile);
+    const items = Array.from(root.querySelectorAll(".screener-item")).map(
+      (n) => n.textContent ?? "",
+    );
+    const medicaid = items.find((t) => t.includes("Medicaid"));
+    expect(medicaid, "a DC resident at ~169% FPL should be told about Medicaid").toBeDefined();
+    expect(medicaid).toContain("215%");
+  });
+
+  it("does not promise Medicaid to a household in a non-expansion state", () => {
+    // Texas at 100% of the poverty line for one person. The literal said "at or
+    // below 138% suggests Medicaid eligibility where the state expanded it",
+    // which is a maybe offered to a household for which the answer is known and
+    // is no. Naming the separate rules that do reach people there is the useful
+    // half of that sentence; "likely eligible" is not.
+    const profile = new SituationStore();
+    profile.set("stateCode", "tx");
+    const root = mount(mountOwedScreener, new URLSearchParams({ hh: "1", inc: "15960" }), profile);
+    const items = Array.from(root.querySelectorAll(".screener-item")).map(
+      (n) => n.textContent ?? "",
+    );
+    const medicaid = items.find((t) => t.includes("Medicaid"));
+    expect(medicaid).toBeDefined();
+    expect(medicaid).toContain("has not expanded");
+    expect(medicaid).not.toContain("likely");
+  });
+
+  it("still answers generically when no state is on file", () => {
+    const root = mount(mountOwedScreener, new URLSearchParams({ hh: "1", inc: "15000" }));
+    const items = Array.from(root.querySelectorAll(".screener-item")).map(
+      (n) => n.textContent ?? "",
+    );
+    const medicaid = items.find((t) => t.includes("Medicaid"));
+    expect(medicaid).toContain("where the state expanded it");
+    expect(medicaid).toContain("Set your state in My Situation");
+  });
+
+  it("draws the premium-tax-credit band with the engine, at both of its ends", () => {
+    // $63,840 for a household of one is exactly 400% FPL — inside the band —
+    // and a dollar over is not. The screener held `>= 100 && <= 400` as
+    // literals; they agreed with the statute, and would have gone on agreeing
+    // with themselves after the engine moved.
+    const on = mount(mountOwedScreener, new URLSearchParams({ hh: "1", inc: "63840" }));
+    const onItems = Array.from(on.querySelectorAll(".screener-item")).map(
+      (n) => n.textContent ?? "",
+    );
+    expect(onItems.some((t) => t.includes("ACA marketplace subsidies"))).toBe(true);
+    const over = mount(mountOwedScreener, new URLSearchParams({ hh: "1", inc: "63900" }));
+    const overItems = Array.from(over.querySelectorAll(".screener-item")).map(
+      (n) => n.textContent ?? "",
+    );
+    expect(overItems.some((t) => t.includes("ACA marketplace subsidies"))).toBe(false);
+  });
+
   it("writes household size and income back to Your Situation on edit", () => {
     const profile = new SituationStore();
     const root = mount(mountOwedScreener, new URLSearchParams(), profile);
