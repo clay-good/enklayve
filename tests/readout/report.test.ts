@@ -197,3 +197,69 @@ describe("a marginal rate over 100% in the document a household keeps", () => {
     expect(snapshot(60_000).note).toBeUndefined();
   });
 });
+
+/**
+ * "My tax picture" is a column in a document somebody prints and keeps.
+ *
+ * There is no tile beside it to explain a gap, and no way to ask it a question
+ * months later — so the figures under "Total tax" have to be the whole of that
+ * total and have to add to it exactly. Both failed. The county tax was in the
+ * total and not on the page, so a Maryland resident at $95,000 read three lines
+ * summing to $23,486.38 beneath a total of $26,316.78, with nothing accounting
+ * for $2,830.40 of it. And the parts that were listed rounded to themselves, so
+ * the column missed the total by a cent at incomes where the halves fell badly
+ * — California at $250,001, New York at $61,111.
+ */
+describe("the saved document's tax column", () => {
+  const centsOf = (s: string): number => Math.round(Number(s.replace(/[^0-9.-]/g, "")) * 100);
+
+  function taxPicture(profile: SituationStore) {
+    const section = buildReport(profile, data).sections.find((s) => s.title === "My tax picture")!;
+    const parts = section.lines.filter((l) => /tax|FICA/i.test(l.label) && l.value.startsWith("$"));
+    const total = parts.find((l) => l.label === "Total tax")!;
+    return {
+      labels: section.lines.map((l) => l.label),
+      addends: parts.filter((l) => l !== total),
+      total: centsOf(total.value),
+    };
+  }
+
+  function at(income: number, stateCode: string, county?: string): SituationStore {
+    const p = new SituationStore();
+    p.set("annualIncome", income);
+    p.set("filingStatus", "single");
+    p.set("stateCode", stateCode);
+    if (county) p.set("county", county);
+    return p;
+  }
+
+  it("names the county tax it counts, instead of burying it in the total", () => {
+    const md = taxPicture(at(95_000, "md", "md-allegany"));
+    expect(md.labels).toContain("Allegany County local tax");
+    expect(md.addends.reduce((a, l) => a + centsOf(l.value), 0)).toBe(md.total);
+  });
+
+  it("adds up at the incomes where rounding each line to itself did not", () => {
+    for (const [income, st] of [
+      [250_001, "ca"],
+      [61_111, "ny"],
+    ] as const) {
+      const p = taxPicture(at(income, st));
+      expect(`${st} ${income}: ${p.addends.reduce((a, l) => a + centsOf(l.value), 0)}`).toBe(
+        `${st} ${income}: ${p.total}`,
+      );
+    }
+  });
+
+  it("adds up in every jurisdiction, at five incomes", () => {
+    const off: string[] = [];
+    for (const st of data.stateCodes()) {
+      for (const income of [37_777, 61_111, 95_000, 123_457, 250_001]) {
+        const p = taxPicture(at(income, st));
+        const sum = p.addends.reduce((a, l) => a + centsOf(l.value), 0);
+        if (sum !== p.total) off.push(`${st} at ${income}: ${sum} vs ${p.total}`);
+      }
+    }
+    expect(off).toEqual([]);
+  }, 60_000);
+});

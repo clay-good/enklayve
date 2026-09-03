@@ -11,7 +11,7 @@
  * step), the Safe Harbor readings (net worth, rainy-day months), and the dataset
  * manifest (the assumptions-and-sources appendix).
  */
-import { Money } from "../engine/money";
+import { Money, allocateRounded } from "../engine/money";
 import { evaluateTaxes, type TaxInput, type TaxResult } from "../engine/tax";
 import { resolveResidenceLocal } from "../ui/residenceLocal";
 import { evaluatePlan, DEFAULT_CONFIG, type PlanConfig, type PlanInput } from "../engine/plan";
@@ -192,19 +192,36 @@ export function buildReport(
       ],
     });
 
+    // The parts of "Total tax", in the order they are printed. The county tax
+    // belongs here for the same reason it is in the total: it is a tax the
+    // household pays. Left out, the document listed three figures under a total
+    // that included a fourth -- $23,486.38 of lines beneath a $26,316.78 total,
+    // for a Maryland resident at $95,000, with nothing on the page accounting
+    // for the difference. And the parts are allocated to the total by largest
+    // remainder rather than each rounded to itself, so the column adds up
+    // exactly: see `allocateRounded`.
+    const taxParts: { label: string; amount: Money }[] = [
+      { label: "Federal income tax", amount: result.federal.incomeTax },
+      { label: "Social Security + Medicare (FICA)", amount: result.fica.total },
+      ...(result.state
+        ? [
+            {
+              label: `${result.state.jurisdictionName} income tax`,
+              amount: result.state.incomeTax,
+            },
+          ]
+        : []),
+      ...result.local.lines.map((l) => ({ label: `${l.name} local tax`, amount: l.tax })),
+    ];
+    const taxShares = allocateRounded(
+      taxParts.map((p) => p.amount),
+      result.totals.totalTax,
+    );
+
     sections.push({
       title: "My tax picture",
       lines: [
-        { label: "Federal income tax", value: usd(result.federal.incomeTax) },
-        { label: "Social Security + Medicare (FICA)", value: usd(result.fica.total) },
-        ...(result.state
-          ? [
-              {
-                label: `${result.state.jurisdictionName} income tax`,
-                value: usd(result.state.incomeTax),
-              },
-            ]
-          : []),
+        ...taxParts.map((p, i) => ({ label: p.label, value: usd(taxShares[i]!) })),
         { label: "Total tax", value: usd(result.totals.totalTax) },
         {
           label: "Cost of your next $1,000 of income",
