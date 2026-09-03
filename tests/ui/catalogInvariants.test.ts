@@ -20,6 +20,39 @@ import type { TileContext, TileDefinition } from "../../src/tiles/types";
  * option visibly changes — rather than leaving a control blank or, worse,
  * silently computing against something the reader cannot see.
  */
+
+/**
+ * Publishers a label may name, and the hosts each of them actually serves.
+ *
+ * Deliberately partial: it holds the agencies this catalog cites by name, and a
+ * label naming nothing on the list is not checked at all. The point is not to
+ * enumerate the federal government — it is that a label saying "IRS" must not
+ * open a page the IRS did not write. Investor.gov is on the SEC's row because
+ * it is the SEC's investor-education site, which is why "SEC, saving for
+ * college (529 plans)" is a correct credit rather than the fourth bug.
+ */
+const AGENCY_HOSTS: [RegExp, string[]][] = [
+  [/\bIRS\b/, ["irs.gov"]],
+  [/\bCFPB\b|Consumer Financial Protection Bureau/, ["consumerfinance.gov"]],
+  [/\bSSA\b|Social Security Administration/, ["ssa.gov"]],
+  [/\bSEC\b|Investor\.gov/, ["sec.gov", "investor.gov"]],
+  [/\bHUD\b/, ["hud.gov"]],
+  [/\bDOL\b|Dept\. of Labor|Department of Labor/, ["dol.gov"]],
+  [/\bUSDA\b/, ["usda.gov"]],
+  [/\bCMS\b/, ["cms.gov"]],
+  [/\bHHS\b/, ["hhs.gov"]],
+  [/\bSBA\b/, ["sba.gov"]],
+  [/\bBLS\b/, ["bls.gov"]],
+  [/\bNAIC\b/, ["naic.org"]],
+  [/\bFAFSA\b|Federal Student Aid/, ["studentaid.gov", "ed.gov"]],
+  [/HealthCare\.gov/, ["healthcare.gov"]],
+  [/Medicare\.gov/, ["medicare.gov"]],
+  [/Medicaid\.gov/, ["medicaid.gov"]],
+  [/TreasuryDirect/, ["treasurydirect.gov"]],
+  [/USA\.gov/, ["usa.gov"]],
+  [/Benefits\.gov/, ["benefits.gov"]],
+];
+
 let data: BundledData;
 beforeAll(async () => {
   data = await loadBundledData();
@@ -197,6 +230,27 @@ describe("every calculator meets the tile bar", () => {
         for (const r of tile.resources ?? []) {
           expect(r.url).toMatch(/^https:\/\//);
           expect(r.label.trim().length).toBeGreaterThan(3);
+        }
+      });
+
+      it("credits the agency that actually published the page", () => {
+        // The whole reason a reader trusts one of these links before opening it
+        // is the agency named beside it. On 2026-09-03 three did not match:
+        // "CFPB, life insurance basics" pointed at NAIC, "DOL: COBRA
+        // continuation coverage" pointed at Cornell's LII, and four
+        // "Benefits.gov" links pointed at USA.gov, which is where benefits.gov
+        // now redirects. Nothing was broken and nothing 404'd — the label was
+        // simply about a different publisher than the page, which no link check
+        // can see, because both halves are individually fine.
+        for (const r of [...(tile.resources ?? []), ...(tile.channels ?? [])]) {
+          const host = new URL(r.url).hostname;
+          for (const [name, hosts] of AGENCY_HOSTS) {
+            if (!name.test(r.label)) continue;
+            expect(
+              hosts.some((h) => host === h || host.endsWith(`.${h}`)),
+              `${tile.id}: "${r.label}" is credited to a publisher that does not serve ${host}`,
+            ).toBe(true);
+          }
         }
       });
 

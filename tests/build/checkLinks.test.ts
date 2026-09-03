@@ -166,6 +166,23 @@ describe("classifying a checked link", () => {
     expect(classify({ status: 302, detail: "/elsewhere" })).toBe("redirect");
   });
 
+  it("separates a server that refused THIS CLIENT from a page that is gone", () => {
+    // NAIC's consumer life-insurance page — cited by the Life Insurance tile —
+    // answered 403 to this sweep on 2026-09-03 and rendered perfectly in a
+    // browser the same minute. An agency turned on bot protection; nothing
+    // about the page changed. Reporting that as broken is the one answer these
+    // checks must never give, and the repo's other fetch already knew it:
+    // `sourceStatus` has always held that only a 404 or a 410 is an absence.
+    expect(classify({ status: 403, detail: "" })).toBe("unreachable");
+    expect(classify({ status: 401, detail: "" })).toBe("unreachable");
+    expect(classify({ status: 429, detail: "" })).toBe("unreachable");
+    // The statuses that describe the *document* stay broken. So does a 5xx: a
+    // page erroring for everyone is a page the reader does not get either.
+    expect(classify({ status: 404, detail: "" })).toBe("broken");
+    expect(classify({ status: 410, detail: "" })).toBe("broken");
+    expect(classify({ status: 503, detail: "" })).toBe("broken");
+  });
+
   it("separates an incomplete certificate chain from a dead link", () => {
     // Several state revenue sites omit an intermediate; browsers repair it and
     // Node does not. The page works, so reporting it as broken would send
@@ -313,6 +330,19 @@ describe("the report a person reads", () => {
     expect(report).toContain("Every link resolves directly");
   });
 
+  it("tells a reader why a refused link is in the report and what to do about it", () => {
+    // A refusal has no `detail` — its reason is the status — so the entry has
+    // to say the status out loud or it reads as a URL beside an empty dash.
+    const report = renderLinkReport([
+      result({ url: "https://walled.test/x", status: 403, detail: "", files: ["src/tiles/a.ts"] }),
+    ]);
+    expect(report).not.toContain("## Broken");
+    expect(report).toContain("## Unreachable");
+    expect(report).toContain("`403` — the server refused this client");
+    expect(report).toContain("1 unreachable");
+    expect(report).toContain("0 broken");
+  });
+
   it("names the files a broken link lives in, so a fix has somewhere to go", () => {
     const report = renderLinkReport([
       result({ url: "https://gone.test/x", status: 404, files: ["src/tiles/a.ts", "data/b.json"] }),
@@ -427,6 +457,25 @@ describe("asking twice before calling a link dead", () => {
     expect(classify(r)).toBe("ok");
     // HEAD said broken, so a GET was asked; that GET said broken, so a second
     // GET confirmed it. Three asks, and only because the first two failed.
+    expect(asked).toEqual(["HEAD", "GET", "GET"]);
+  });
+
+  it("escalates a refused HEAD to a GET rather than filing it as unreachable", async () => {
+    // The reason a refusal is still asked twice: plenty of servers refuse a
+    // HEAD and serve the GET. Returning early on the 403 — which is what a
+    // rule of "stop unless it is broken" would now do, since a 403 is no
+    // longer broken — would report a 200 page as unreachable.
+    const { request, asked } = replay([403, 200]);
+    const r = await check("https://picky.test/a", ["src/x.ts"], request, instant);
+    expect(classify(r)).toBe("ok");
+    expect(asked).toEqual(["HEAD", "GET"]);
+  });
+
+  it("files a refusal that survives both asks under unreachable, not broken", async () => {
+    const { request, asked } = replay([403]);
+    const r = await check("https://walled.test/a", ["src/x.ts"], request, instant);
+    expect(classify(r)).toBe("unreachable");
+    expect(r.status).toBe(403);
     expect(asked).toEqual(["HEAD", "GET", "GET"]);
   });
 

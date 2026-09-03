@@ -237,7 +237,11 @@ describe("What Am I Owed screener", () => {
     expect(snap).toBeDefined();
     expect(snap?.querySelector(".screener-estimate")?.textContent).toBe("Not estimated here");
     expect(snap?.textContent).toContain("Hawaii");
-    expect(snap?.textContent).toContain("Benefits.gov");
+    // Named USA.gov since 2026-09-03: benefits.gov redirects there, and a
+    // sentence sending someone to a site that no longer serves the page is a
+    // dead end dressed as a next step. What the assertion is for is unchanged —
+    // the row must not just say "not estimated" and stop.
+    expect(snap?.textContent).toContain("USA.gov");
   });
 
   it("flags ACA subsidies within the 100–400% FPL band", () => {

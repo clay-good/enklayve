@@ -207,7 +207,11 @@ export const enrollmentWindowsTile: TileDefinition = {
   harmTier: 2,
   channels: [
     {
-      label: "DOL: COBRA continuation coverage",
+      // Credited to the Department of Labor until 2026-09-03, pointing at
+      // Cornell's LII. The note beside it always said what the page is; the
+      // label said who published it, and was wrong. Named after the section it
+      // is, like the other statute links in this tile.
+      label: "29 U.S.C. §1165 — the COBRA election period",
       url: "https://www.law.cornell.edu/uscode/text/29/1165",
       note: "The election-period statute itself",
     },

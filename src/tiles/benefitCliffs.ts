@@ -694,7 +694,7 @@ export const cliffExplorerTile: TileDefinition = {
     },
   ],
   resources: [
-    { label: "Benefits.gov, find benefits", url: "https://www.usa.gov/benefit-finder" },
+    { label: "USA.gov, find benefits", url: "https://www.usa.gov/benefit-finder" },
     { label: "HealthCare.gov, find your benchmark premium", url: "https://www.healthcare.gov/" },
   ],
 };

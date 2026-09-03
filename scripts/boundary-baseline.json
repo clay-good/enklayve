@@ -108,7 +108,7 @@
     "  reduces to the one-rate formula, and finance 736, a loan paid off in exactly",
     "  its term. Also finance 653, a spend at exactly the deductible.",
     "",
-    "  THE ARM THAT IS ALREADY TRUE. benefits 352: the shipped ACA table covers from",
+    "  THE ARM THAT IS ALREADY TRUE. benefits 360: the shipped ACA table covers from",
     "  0% FPL, so `!acaCovered(pct)` only fires above 400% FPL, where the `pct >= 100`",
     "  guard beside it is trivially true. benefits 166: past the allotment table's top",
     "  the fallback adds the per-person amount times (size - top), which is zero AT",

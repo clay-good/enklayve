@@ -201,7 +201,12 @@ export const lifeInsuranceTile: TileDefinition = {
   how: "We use the transparent 'DIME' needs method: replace several years of your income for your dependents, clear your Debts and your Mortgage, and cover final expenses plus future obligations like a child's Education. That's the gross need. We then subtract the coverage you already have and your liquid assets to get the new coverage worth considering.\n\nIt's a starting estimate, not advice. Term life is usually the low-cost way to cover a need that fades as debts shrink and kids grow up. Verify specifics with a licensed agent or fee-only planner.",
   resources: [
     {
-      label: "CFPB, life insurance basics",
+      // Labelled "CFPB" until 2026-09-03, pointing at NAIC. Insurance is
+      // regulated by the states, and NAIC is the association of the state
+      // commissioners who do it — a fine source for this, and not the bureau
+      // the label credited. A reader who trusts the link because of the agency
+      // named beside it was told the wrong agency.
+      label: "NAIC, life insurance basics",
       url: "https://content.naic.org/consumer/life-insurance.htm",
     },
     { label: "Investor.gov, insurance", url: "https://www.investor.gov/" },

@@ -142,6 +142,24 @@ export interface LinkResult {
 export type LinkStatus = "ok" | "redirect" | "broken" | "unreachable";
 
 /**
+ * Statuses that refuse the *client* rather than deny the *document*.
+ *
+ * `sourceStatus` in `fetch-source.ts` has said this since it was written — "only
+ * 404 and 410 are an absence; a 403 from a WAF, a 500, a rate limit, none of
+ * those is a statement about the document" — and this check said the opposite
+ * about the same servers, which is how a sibling check ends up sending someone
+ * to replace a citation the other one is happily reading. NAIC's consumer life
+ * insurance page answered 403 to this sweep on 2026-09-03 and rendered
+ * perfectly in a browser the same minute: an agency turned on bot protection,
+ * and nothing about the page changed.
+ *
+ * 401 and 429 join it for the same reason. A 404 or a 410 is the server
+ * describing the document and stays broken, as does a 5xx: a page that is
+ * erroring for everyone is a page the reader does not get either.
+ */
+const REFUSES_THE_CLIENT = new Set([401, 403, 429]);
+
+/**
  * A TLS chain the server did not serve completely. The page is fine in a
  * browser, so calling it "broken" would send someone to replace a link that
  * works — it gets its own category instead. A refused connection or a timeout
@@ -182,6 +200,8 @@ export function classify(result: Pick<LinkResult, "status" | "detail">): LinkSta
   }
   if (result.status >= 200 && result.status < 300) return "ok";
   if (result.status >= 300 && result.status < 400) return "redirect";
+  // A refusal aimed at this client is the checker's problem, not the link's.
+  if (REFUSES_THE_CLIENT.has(result.status)) return "unreachable";
   return "broken";
 }
 
@@ -236,7 +256,7 @@ export function renderLinkReport(results: LinkResult[]): string {
       "",
       "Not a broken link: something between this check and the page failed, so" +
         " the page itself is almost certainly fine — open it in a browser before" +
-        " replacing it. Two causes reach this list, and each entry says which.",
+        " replacing it. Three causes reach this list, and each entry says which.",
       "",
       "- **An incomplete certificate chain.** The server did not serve its" +
         " intermediate. A browser and curl repair that by fetching the missing" +
@@ -246,10 +266,22 @@ export function renderLinkReport(results: LinkResult[]): string {
         " answers for it. `getaddrinfo` goes through the operating system, which" +
         " can be wrong on its own — a stale negative cache, a VPN's resolver, a" +
         " sandboxed runner. The link is fine; the machine that checked it was not.",
+      "- **A server that refused this client** — a `401`, `403` or `429` from" +
+        " bot protection. That is a statement about the request, not about the" +
+        " document: a `404` or a `410` is the server saying the page is gone, and" +
+        " those stay broken. This one needs a human with a browser, and the answer" +
+        " is usually that the page is fine. Confirm it before touching the URL —" +
+        " and if it really has been withdrawn, the fix is a new citation, not a" +
+        " different user agent.",
       "",
     );
     for (const r of unreachable) {
-      lines.push(`- ${r.url} — ${r.detail}\n  - in ${r.files.join(", ")}`);
+      // A transport failure carries its reason in `detail`; a refusal's reason
+      // *is* the status, and printing an empty dash beside a URL says nothing.
+      const why = REFUSES_THE_CLIENT.has(r.status)
+        ? `\`${r.status}\` — the server refused this client${r.detail ? ` (${r.detail})` : ""}`
+        : r.detail;
+      lines.push(`- ${r.url} — ${why}\n  - in ${r.files.join(", ")}`);
     }
     lines.push("");
   }
@@ -330,7 +362,7 @@ export async function check(
   pause: (ms: number) => Promise<void> = sleep,
 ): Promise<LinkResult> {
   let last = "";
-  /** A GET that answered "broken", kept in case the confirming ask never lands. */
+  /** A GET that answered badly, kept in case the confirming ask never lands. */
   let answered: LinkResult | undefined;
   // HEAD first: several cited sources are multi-megabyte PDFs, and downloading
   // them just to learn the status is what made this time out on a slow link.
@@ -341,8 +373,13 @@ export async function check(
       try {
         const res = await request(url, method);
         const result = { url, status: res.status, detail: res.location, files };
-        if (classify(result) !== "broken") return result;
-        // HEAD said broken — a GET answers that better than a second HEAD would.
+        // Anything that is not already an answer worth reporting gets asked
+        // again. That includes a refusal: plenty of servers refuse a HEAD and
+        // serve the GET, so escalating on a 403 is the difference between
+        // "unreachable" and the 200 that was there all along.
+        const verdict = classify(result);
+        if (verdict === "ok" || verdict === "redirect") return result;
+        // HEAD said no — a GET answers that better than a second HEAD would.
         if (method === "HEAD") break;
         if (attempt > 0) return result; // Said twice. It is the link.
         answered = result;
@@ -397,7 +434,10 @@ async function checkWithRepairedChain(
         detail: (Array.isArray(location) ? location[0] : location) ?? "",
         files,
       };
-      if (method === "GET" || classify(result) !== "broken") return result;
+      // Same escalation rule as the plain path: only an answer worth reporting
+      // stops the HEAD from being retried as a GET.
+      const verdict = classify(result);
+      if (method === "GET" || verdict === "ok" || verdict === "redirect") return result;
     } catch {
       // Fall through to the GET, then to the caller's original diagnosis.
     }
