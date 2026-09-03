@@ -40,6 +40,25 @@ jobs:
         continue-on-error: true
         run: node scripts/check-adapters.ts
 
+      # A check that never reported is not a quiet month.
+      #
+      # Every count this job gates on is read out of `$GITHUB_OUTPUT`, and the
+      # script writes that block last -- after the fetches and the parsing. A
+      # crash on the way there leaves every output UNSET, an unset output is the
+      # empty string, and `'' != '0'` is true. So this job used to open an issue
+      # with an empty body and a title ending in nothing, off the back of a
+      # check that had not run.
+      #
+      # The issue below now requires a report to exist, and a missing one fails
+      # the job here instead. A red scheduled run reaches the owner; a green one
+      # that checked nothing does not.
+      - name: Fail loudly if the check never reported
+        if: steps.adapters.outputs.report == ''
+        run: |
+          echo "::error::scripts/check-adapters.ts exited without writing its report."
+          echo "::error::The counts this job gates on are unset: nothing was checked."
+          exit 1
+
       # Gated on REGRESSIONS against the committed known-anchoring baseline, not
       # on the raw count. Forty-odd adapters cannot anchor today; an issue
       # listing all of them every month is the alert people learn to close
@@ -56,10 +75,11 @@ jobs:
       # a count it does not read is a count nobody ever sees.
       - name: Open an issue when an adapter stopped anchoring, would change a shard, or its wait is over
         if: >-
-          steps.adapters.outputs.regressions != '0' ||
-          steps.adapters.outputs.wouldChange != '0' ||
-          steps.adapters.outputs.waitsOver != '0' ||
-          steps.adapters.outputs.blindWaits != '0'
+          steps.adapters.outputs.report != '' &&
+          (steps.adapters.outputs.regressions != '0' ||
+           steps.adapters.outputs.wouldChange != '0' ||
+           steps.adapters.outputs.waitsOver != '0' ||
+           steps.adapters.outputs.blindWaits != '0')
         uses: actions/github-script@v7
         with:
           script: |

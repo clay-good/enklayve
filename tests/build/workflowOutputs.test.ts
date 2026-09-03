@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { load } from "js-yaml";
 
 /**
  * A count the check computes reaches the workflow that runs it.
@@ -68,6 +69,87 @@ describe("reading the counts the scheduled checks emit", () => {
           key.toLowerCase(),
         );
       }
+    });
+  }
+});
+
+/**
+ * An alarm that fires when the check never ran.
+ *
+ * These four workflows decide whether to open an issue by comparing a count to
+ * the string `'0'`. The counts arrive through `$GITHUB_OUTPUT`, which every one
+ * of these scripts writes LAST — after the fetches, the parsing, the diffing.
+ * So a crash on the way there leaves every output unset, an unset output
+ * evaluates to the empty string, and `'' != '0'` is **true**.
+ *
+ * Which means each of these jobs would open an issue with an empty body and a
+ * title ending in nothing, off the back of a check that had not run — and
+ * `continue-on-error: true`, which is there so a government site's bad
+ * afternoon does not fail a build, is exactly what made it silent: the step
+ * fails, the job stays green, and the only trace is the empty issue.
+ *
+ * It is not hypothetical. `scripts/check-advisories.ts` exits before its output
+ * block whenever `npm audit` itself cannot run.
+ *
+ * Two rules, and the second is the one that matters:
+ *
+ * 1. **An issue condition requires the report to exist.** `report` is written in
+ *    the same append as the counts and is never empty on a run that got there —
+ *    every one of these reports opens with a summary line — so `report != ''`
+ *    is exactly "the check reported".
+ * 2. **A missing report fails the job.** Rule 1 alone would turn a spurious
+ *    issue into silence, which is worse: an unattended monthly check that has
+ *    stopped working and says nothing. A red scheduled run reaches the owner.
+ *
+ * The workflows are found by looking for `outputs.report`, not from a list, so a
+ * fifth scheduled alarm is covered the day it is written.
+ */
+describe("a scheduled alarm cannot fire on a check that never reported", () => {
+  interface Step {
+    name?: string;
+    id?: string;
+    if?: string;
+    run?: string;
+    "continue-on-error"?: boolean;
+  }
+
+  /** Every step of the workflow's single job, parsed rather than pattern-matched. */
+  function steps(workflow: string): Step[] {
+    const doc = load(readFileSync(resolve(ROOT, workflow), "utf8")) as {
+      jobs: Record<string, { steps: Step[] }>;
+    };
+    return Object.values(doc.jobs).flatMap((j) => j.steps ?? []);
+  }
+
+  const alarms = PAIRS.map(([, workflow]) => workflow).filter((w) =>
+    steps(w).some((s) => (s.if ?? "").includes("outputs.report")),
+  );
+
+  it("finds the alarm workflows", () => {
+    expect(alarms.length).toBe(PAIRS.length);
+  });
+
+  for (const workflow of alarms) {
+    const conditions = steps(workflow)
+      .map((s) => (s.if ?? "").replace(/\s+/g, " ").trim())
+      .filter((c) => c.length > 0);
+
+    it(`${workflow} gates every count comparison on the report existing`, () => {
+      const gating = conditions.filter((c) => /outputs\.\w+ != '0'/.test(c));
+      expect(gating.length, "no condition compares a count — has the shape changed?").toBe(1);
+      for (const c of gating) {
+        expect(c, `this condition fires when the outputs are unset: ${c}`).toContain(
+          "outputs.report != ''",
+        );
+      }
+    });
+
+    it(`${workflow} fails the job when no report was written`, () => {
+      const guard = steps(workflow).find((s) => (s.if ?? "").includes("outputs.report == ''"));
+      expect(guard, `${workflow} has no step that fires on a missing report`).toBeDefined();
+      // And that step must actually fail, not just print. A guard that logs and
+      // exits 0 is the silence the second rule exists to prevent.
+      expect(guard?.run ?? "", `${workflow}'s guard does not fail the job`).toMatch(/exit 1/);
     });
   }
 });

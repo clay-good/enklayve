@@ -34,13 +34,35 @@ jobs:
         continue-on-error: true
         run: node scripts/check-links.ts
 
+      # A check that never reported is not a quiet month.
+      #
+      # Every count this job gates on is read out of `$GITHUB_OUTPUT`, and the
+      # script writes that block last -- after the fetches and the parsing. A
+      # crash on the way there leaves every output UNSET, an unset output is the
+      # empty string, and `'' != '0'` is true. So this job used to open an issue
+      # with an empty body and a title ending in nothing, off the back of a
+      # check that had not run.
+      #
+      # The issue below now requires a report to exist, and a missing one fails
+      # the job here instead. A red scheduled run reaches the owner; a green one
+      # that checked nothing does not.
+      - name: Fail loudly if the check never reported
+        if: steps.links.outputs.report == ''
+        run: |
+          echo "::error::scripts/check-links.ts exited without writing its report."
+          echo "::error::The counts this job gates on are unset: nothing was checked."
+          exit 1
+
       # Gated on broken and redirected only. An "unreachable" result is a
       # server serving an incomplete certificate chain — the page is fine, so
       # alerting on it every month would be exactly the noise that teaches
       # people to close these issues unread. It still appears in the body when
       # one of the other two fires.
       - name: Open an issue when a link rotted
-        if: steps.links.outputs.broken != '0' || steps.links.outputs.redirects != '0'
+        if: >-
+          steps.links.outputs.report != '' &&
+          (steps.links.outputs.broken != '0' ||
+           steps.links.outputs.redirects != '0')
         uses: actions/github-script@v7
         with:
           script: |
