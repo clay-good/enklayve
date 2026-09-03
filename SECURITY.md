@@ -18,7 +18,7 @@ The promises in [README](README.md#the-privacy-guarantee-its-literal) are the th
 - **The encrypted ledger.** A saved ledger file is encrypted with a passphrase. Anything that weakens that — a key-derivation mistake, a plaintext leak, a file that decrypts without the passphrase — is in scope.
 - **Supply chain.** A dependency or build step that could inject code into what ships.
 
-**A wrong number is not a security issue** — it is the most useful bug report this project can get, and it belongs in a public issue where it can be cited and argued with. [Open one](https://github.com/clay-good/enklayve/issues/new?template=wrong-figure.yml) with the source that proves it.
+**A wrong number is not a security issue** — it is the most useful bug report this project can get, and it belongs in a public issue where it can be cited and argued with. [Open one](https://github.com/clay-good/enklayve/issues) on the **A figure is wrong** form, with the source that proves it.
 
 ## Out of scope
 

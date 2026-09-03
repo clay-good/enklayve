@@ -8,9 +8,11 @@ Three paths, and the difference matters:
 
 | What you found | Where it goes |
 |---|---|
-| A figure that disagrees with the agency that publishes it | [**A figure is wrong**](https://github.com/clay-good/enklayve/issues/new?template=wrong-figure.yml) — a public issue, with the agency's own document. This is the most useful report this project gets. |
-| A page that will not load, a control that does nothing, a wrong answer from figures that are right | [**Something is broken**](https://github.com/clay-good/enklayve/issues/new?template=broken.yml) |
+| A figure that disagrees with the agency that publishes it | A [public issue](https://github.com/clay-good/enklayve/issues) on the **A figure is wrong** form, with the agency's own document. This is the most useful report this project gets. |
+| A page that will not load, a control that does nothing, a wrong answer from figures that are right | A [public issue](https://github.com/clay-good/enklayve/issues) on the **Something is broken** form. |
 | Data leaving the device, an input that persists, a weakened header, a flaw in the encrypted ledger | The [Security tab](https://github.com/clay-good/enklayve/security), privately. See [SECURITY.md](../SECURITY.md) — not a public issue. |
+
+New Issue lists both forms with the fields each one needs. These link the issues page rather than a pre-filled `issues/new?template=…` URL on purpose: GitHub answers that one with a `302` to a login page for anyone not signed in, and `npm run check:links` is right to call a redirect a failure — a link in this repo that only works for some readers would have opened a `data-review` issue every month for as long as it stood.
 
 **One warning worth repeating here.** Every result on this site is deep-linkable, which is deliberate and which means a permalink encodes what you typed — your income, your balances. An issue is public and permanent. Reproduce the problem with round figures and paste *that* link. A wrong bracket is wrong at $50,000 the same as it is at yours.
 

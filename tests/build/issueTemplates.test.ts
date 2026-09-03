@@ -46,6 +46,17 @@ const FILES = readdirSync(DIR)
 const LABELS = declaredLabels(readFileSync(resolve(ROOT, ".github", "labels.yml"), "utf8"));
 const DECLARED = new Set(LABELS.map((l) => l.name));
 
+/** Every markdown file in the repo, skipping what is generated or vendored. */
+function markdownFiles(dir: string): string[] {
+  const SKIP = ["node_modules", ".git", "dist", "playwright-report", "test-results", "openspec"];
+  return readdirSync(dir).flatMap((name) => {
+    if (SKIP.includes(name)) return [];
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) return markdownFiles(p);
+    return name.endsWith(".md") ? [p] : [];
+  });
+}
+
 /** Every file under `.github`, which is every place a label can be named. */
 function githubFiles(dir = resolve(ROOT, ".github")): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -255,6 +266,40 @@ describe("no template teaches a reader to publish their own figures", () => {
         if (tool === null) continue;
         expect(TOOLS.get(tool), `${file}: tool "${tool}" is not in hub "${hub}"`).toBe(hub);
       }
+    });
+  }
+});
+
+/**
+ * No document links a pre-filled new-issue URL.
+ *
+ * `issues/new?template=wrong-figure.yml` is the obvious way to point a reader
+ * at a form, and GitHub answers it with a `302` to a login page for anyone not
+ * signed in. `npm run check:links` treats a redirect as a failure — correctly,
+ * since an agency reusing an article id is how a citation quietly starts
+ * pointing somewhere else — so two of those links, added to SECURITY.md and the
+ * contributing guide on 2026-09-03, were the only two redirects among 248
+ * external links, and would have opened a `data-review` issue every month for
+ * as long as they stood. That is the alert-that-cries-wolf failure, self-
+ * inflicted one commit after fixing another instance of it.
+ *
+ * `issues/new/choose` redirects the same way; there is no variant that does not.
+ * So the docs link `/issues`, which answers 200, and name the form to pick.
+ */
+describe("no document links a URL GitHub will redirect", () => {
+  const files = markdownFiles(ROOT);
+
+  it("finds the markdown to read", () => {
+    expect(files.length).toBeGreaterThan(5);
+  });
+
+  for (const file of files) {
+    it(`${relative(ROOT, file)} links no pre-filled new-issue URL`, () => {
+      const text = readFileSync(file, "utf8");
+      const found = [...text.matchAll(/github\.com\/[\w-]+\/[\w-]+\/issues\/new[^\s)]*/g)].map(
+        (m) => m[0],
+      );
+      expect(found, "links the issues page and name the form instead").toEqual([]);
     });
   }
 });
