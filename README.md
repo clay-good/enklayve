@@ -26,7 +26,7 @@ A verifiable snapshot — every figure here is reproducible from the repo, not m
 | Deterministic calculators | **69** in **12 topic hubs**, plus the on-home anti-budget | [`src/tiles/registry.ts`](src/tiles/registry.ts) |
 | Tax jurisdictions | **51 — every one of the 50 states + DC** (41 income-tax states + DC + 9 no-income-tax) | [`data/state-*-income-tax-*.json`](data) |
 | Cited dataset shards | **81**, each with a sibling `.sha256` + manifest entry — the file, its sibling, and the manifest are checked to agree three ways; every `sourceDocument` ≤160 chars (audit-enforced) | [`data/manifest.json`](data/manifest.json) |
-| Tests | unit/golden across **135** files, **+48** Playwright e2e | `npm run test` / `npm run test:e2e` |
+| Tests | unit/golden across **136** files, **+48** Playwright e2e | `npm run test` / `npm run test:e2e` |
 | Source audits | **all 51 jurisdictions + the federal and benefits shards** read against the agency's own document; 8 wrong figures found and fixed. Every one also has a hand-verified golden case, and that is now a **gate** rather than somebody's diligence | [`docs/data-sources.md`](docs/data-sources.md#source-audits) |
 | Runtime network requests | **0** — `connect-src 'none'` blocks them at the browser | [`worker/index.ts`](worker/index.ts) |
 | Auto-persisted user data | **0** — only the locale/theme preference touches `localStorage`, and the gate now covers `sessionStorage`, IndexedDB, cookies and the Cache API too, asserted end-to-end across a full session | `npm run audit` / `npm run test:e2e` |
@@ -654,7 +654,7 @@ Every output is a pure function of the inputs and the bundled dataset version. N
 
 *The same computed result on a 390px phone — the guarantee made visible: the form controls shrink to their track and the breakdown's amounts **wrap** instead of forcing a sideways scroll, so the page scrolls vertically only. Regenerate every shot from the live build with `npm run screenshots`.*
 
-**The unit and golden suite across 135 files** (plus 48 Playwright e2e tests) passes today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
+**The unit and golden suite across 136 files** (plus 48 Playwright e2e tests) passes today, alongside `format:check`, `lint`, `typecheck`, `build`, the audit, and `wrangler deploy --dry-run`.
 
 ---
 
@@ -763,6 +763,8 @@ flowchart LR
 ```
 
 **GitHub Actions is the quality gate; Cloudflare is the deploy.** The repo is connected to Cloudflare's native Git integration (Workers Builds), which builds and deploys on every push to `main` — so there is no deploy workflow and no `CLOUDFLARE_*` secret. Production responses carry the full security headers (CSP, HSTS, `Referrer-Policy: no-referrer`, `X-Content-Type-Options`, frame/permissions policies); `index.html` and the data manifest are served `no-cache`, hashed `/assets/*` are immutable for a year.
+
+**Two repository settings live in the repo rather than in a web UI**, because a setting nothing here can see is a setting nothing here can review. Every workflow declares its own `permissions:` block ([`tests/build/workflowPermissions.test.ts`](tests/build/workflowPermissions.test.ts)) instead of inheriting whatever the repository default happens to be. And the label set is declared in [`.github/labels.yml`](.github/labels.yml) and written from it by [`sync-labels.yml`](.github/workflows/sync-labels.yml) — a label an issue form names and the repository does not have is dropped on the way in silently, so `wrong-figure.yml` naming a `data` label the repository does not have would have created the project's most valuable report class untagged — caught here before the first one arrived, rather than after.
 
 The [launch checklist](docs/launch-checklist.md) walks every acceptance criterion before announcing.
 

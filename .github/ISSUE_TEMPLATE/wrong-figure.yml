@@ -13,9 +13,17 @@ body:
     attributes:
       label: Where you saw it
       description: The calculator, and the deep link if you have one.
-      placeholder: Federal Income Tax — https://enklayve.com/#/federal-income-tax?fs=single&w=85000
+      placeholder: Federal Income Tax — https://enklayve.com/#/paycheck-taxes?tool=federal-income-tax&fs=single
     validations:
       required: true
+  - type: markdown
+    attributes:
+      value: >-
+        **A deep link carries what you typed.** Every result on this site is
+        deep-linkable, which is the point — and it means the URL encodes your
+        income, your balances, whatever you entered. An issue is public and
+        permanent. Reproduce it with round figures and paste that link instead:
+        a wrong bracket is wrong at $50,000 the same as it is at yours.
   - type: input
     id: shown
     attributes:

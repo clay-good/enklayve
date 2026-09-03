@@ -1,0 +1,57 @@
+# The repository's labels, as code.
+#
+# `.github/ISSUE_TEMPLATE/wrong-figure.yml` applies `data` to every report that
+# a bundled figure disagrees with the agency that publishes it -- the most
+# useful report this project gets. This repository had no `data` label, so the
+# first such report would have arrived untagged: a label an issue form names and
+# the repository does not have is dropped on the way in, silently -- the issue
+# is created, the triage signal is not, and nothing anywhere says so. The label
+# set lived in a web UI, which nothing in this repository could see, review, or
+# diff -- the same shape as the token scope that was moved in here on
+# 2026-09-02, one file over.
+#
+# `tests/build/issueTemplates.test.ts` holds every label a template applies to
+# this list, and `.github/workflows/sync-labels.yml` writes the list to the
+# repository on every push that touches this file. Adding a label is an edit
+# here, not a click.
+#
+# The sync creates and updates; it never deletes. A label somebody made by hand
+# in the middle of a triage is not an error, and losing it on the next push
+# would be.
+labels:
+  - name: data
+    color: 6D28D9
+    description: A bundled figure disagrees with the document it cites
+  - name: bug
+    color: d73a4a
+    description: Something isn't working
+  - name: enhancement
+    color: a2eeef
+    description: New feature or request
+  - name: documentation
+    color: 0075ca
+    description: Improvements or additions to documentation
+  - name: good first issue
+    color: 7057ff
+    description: Good for newcomers
+  - name: help wanted
+    color: "008672"
+    description: Extra attention is needed
+  - name: question
+    color: d876e3
+    description: Further information is requested
+  - name: duplicate
+    color: cfd3d7
+    description: This issue or pull request already exists
+  - name: invalid
+    color: e4e669
+    description: This doesn't seem right
+  - name: wontfix
+    color: ffffff
+    description: This will not be worked on
+  - name: dependencies
+    color: "0366d6"
+    description: Pull requests that update a dependency file
+  - name: javascript
+    color: "168700"
+    description: Pull requests that update javascript code

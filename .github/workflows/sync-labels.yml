@@ -1,0 +1,36 @@
+name: Sync labels
+
+# The repository's labels are declared in .github/labels.yml and written from
+# it. A label an issue form names and the repository does not have is dropped
+# on the way in, silently -- so the list cannot live in a web UI, where nothing
+# in this repository can see, review, or diff it.
+on:
+  push:
+    branches: [main]
+    paths: [".github/labels.yml", "scripts/sync-labels.ts", ".github/workflows/sync-labels.yml"]
+  workflow_dispatch:
+
+# Reads the file, writes labels. `issues: write` is what `gh label create`
+# needs; nothing here touches the contents beyond the checkout.
+permissions:
+  contents: read
+  issues: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Node 24 runs the TypeScript script directly via native type
+          # stripping, and matches .nvmrc.
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/sync-labels.ts
+        env:
+          GH_TOKEN: ${{ github.token }}

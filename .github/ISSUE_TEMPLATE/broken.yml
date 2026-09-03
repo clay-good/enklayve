@@ -1,0 +1,69 @@
+name: Something is broken
+description: A page that will not load, a control that does nothing, a result you cannot reach with a keyboard, a calculator that computes the wrong answer from figures that are right.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        For a figure that disagrees with the agency that publishes it, use
+        **A figure is wrong** instead — that report needs different things and
+        gets fixed a different way. This one is for behaviour.
+  - type: input
+    id: where
+    attributes:
+      label: Where it happens
+      description: The calculator or page, and the deep link if you have one.
+      placeholder: Quarterly Taxes — https://enklayve.com/#/self-employed?tool=quarterly-taxes&st=md
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: >-
+        **A deep link carries what you typed.** Every result on this site is
+        deep-linkable, which is the point — and it means the URL encodes your
+        income, your balances, whatever you entered. An issue is public and
+        permanent. Reproduce it with round figures and paste that link instead.
+        If it only happens at your real numbers, say so and describe the shape;
+        that is enough to find it.
+  - type: textarea
+    id: steps
+    attributes:
+      label: What you did
+      description: The steps in order, starting from a fresh page load.
+      placeholder: |
+        1. Open Take-Home Pay
+        2. Set the state to Ohio and the income to $95,000
+        3. Switch the filing status to married filing jointly
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened instead
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and operating system
+      description: >-
+        Worth stating even when it seems irrelevant. Everything here runs in
+        your browser, so a bug that only one engine shows is a normal outcome
+        rather than a strange one.
+      placeholder: Firefox 145 on Windows 11
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Before you send it
+      options:
+        - label: >-
+            This issue carries no real income, balance, or other personal figure
+            of mine — in the text or inside a link.
+          required: true
+        - label: >-
+            This is not a security report. Data leaving the device, an input
+            that persists, a weakened response header, or a flaw in the
+            encrypted ledger goes to the Security tab privately, not here.
+          required: true

@@ -2,6 +2,20 @@
 
 Thanks for helping. enklayve is a free public utility, and contributions that keep it **accurate, private, and verifiable** are exactly the kind it wants. The non-negotiables below are not style preferences — they are the product.
 
+## Reporting something, without publishing your own figures
+
+Three paths, and the difference matters:
+
+| What you found | Where it goes |
+|---|---|
+| A figure that disagrees with the agency that publishes it | [**A figure is wrong**](https://github.com/clay-good/enklayve/issues/new?template=wrong-figure.yml) — a public issue, with the agency's own document. This is the most useful report this project gets. |
+| A page that will not load, a control that does nothing, a wrong answer from figures that are right | [**Something is broken**](https://github.com/clay-good/enklayve/issues/new?template=broken.yml) |
+| Data leaving the device, an input that persists, a weakened header, a flaw in the encrypted ledger | The [Security tab](https://github.com/clay-good/enklayve/security), privately. See [SECURITY.md](../SECURITY.md) — not a public issue. |
+
+**One warning worth repeating here.** Every result on this site is deep-linkable, which is deliberate and which means a permalink encodes what you typed — your income, your balances. An issue is public and permanent. Reproduce the problem with round figures and paste *that* link. A wrong bracket is wrong at $50,000 the same as it is at yours.
+
+The labels those forms apply live in [`.github/labels.yml`](../.github/labels.yml), not in a web UI. A label an issue form names and the repository does not have is dropped on the way in silently — the issue is created, the triage signal is not, and nothing anywhere says so. `.github/workflows/sync-labels.yml` writes the file to the repository on every push that touches it, and [`tests/build/issueTemplates.test.ts`](../tests/build/issueTemplates.test.ts) holds every label a template applies to that list. Adding a label is an edit to the file. Run `npm run labels:sync -- --dry-run` to see what a push would do.
+
 ## The non-negotiable principles (SPEC §2)
 
 1. **Deterministic.** Every output is a pure function of the inputs and the bundled dataset version. No AI, no inference, no randomness, no market prediction. Where an assumption is needed (a rate of return, an inflation rate), the user supplies it or accepts a clearly labeled default, and the math is shown.

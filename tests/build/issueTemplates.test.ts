@@ -1,0 +1,225 @@
+import { describe, it, expect } from "vitest";
+import { readdirSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { load } from "js-yaml";
+import { SUB_TOOLS } from "../../src/tiles/registry";
+import { declaredLabels } from "../../scripts/sync-labels";
+
+/**
+ * The public on-ramp works, and every claim it makes is checked.
+ *
+ * An issue template is the first thing a stranger touches, and everything about
+ * it fails quietly. A form whose YAML does not parse is not reported as broken:
+ * GitHub simply leaves it out of the chooser, so the most valuable report this
+ * project can get has no path and nobody finds out. A label the form names and
+ * the repository does not have is dropped on the way in the same way — the
+ * issue is created, the triage signal is not.
+ *
+ * That second one had already happened. `wrong-figure.yml` has applied `data`
+ * since it was written and the repository has no `data` label, because the
+ * label set lived in a web UI, which nothing here could see, review, or diff:
+ * the same shape as the token scope moved into the repo on 2026-09-02, one file
+ * over. `.github/labels.yml` now holds the set and this test holds the
+ * templates to it.
+ *
+ * The third thing checked here is a privacy defect rather than a rot one. Every
+ * result on this site is deep-linkable, which means a permalink encodes what
+ * the reader typed — their income, their balances. `wrong-figure.yml` asked for
+ * "the deep link if you have one" and *demonstrated* one carrying `w=85000`, on
+ * a public, permanent issue tracker, in the one product whose whole promise is
+ * that its figures never leave the device. Both templates now warn in the field
+ * that asks, and no placeholder carries a figure.
+ */
+const ROOT = resolve(__dirname, "..", "..");
+const DIR = resolve(ROOT, ".github", "ISSUE_TEMPLATE");
+const FILES = readdirSync(DIR)
+  .filter((f) => f.endsWith(".yml") && f !== "config.yml")
+  .sort();
+
+const LABELS = declaredLabels(readFileSync(resolve(ROOT, ".github", "labels.yml"), "utf8"));
+const DECLARED = new Set(LABELS.map((l) => l.name));
+
+interface Field {
+  type?: string;
+  id?: string;
+  attributes?: { label?: string; value?: string; options?: unknown[]; placeholder?: string };
+  validations?: { required?: boolean };
+}
+interface Form {
+  name?: string;
+  description?: string;
+  labels?: string[];
+  body?: Field[];
+}
+
+const forms = new Map<string, Form>(
+  FILES.map((f) => [f, load(readFileSync(resolve(DIR, f), "utf8")) as Form]),
+);
+
+/** Every string anywhere in a parsed form, for the sweeps that read prose. */
+function strings(value: unknown): string[] {
+  if (typeof value === "string") return [value];
+  if (Array.isArray(value)) return value.flatMap(strings);
+  if (value && typeof value === "object") return Object.values(value).flatMap(strings);
+  return [];
+}
+
+describe("there is a template for the report this project most wants", () => {
+  it("finds the templates", () => {
+    // A directory that has quietly emptied would otherwise turn every test
+    // below into a vacuous pass.
+    expect(FILES.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("SECURITY.md sends a wrong number to a public issue, and a form is waiting", () => {
+    const security = readFileSync(resolve(ROOT, "SECURITY.md"), "utf8");
+    expect(security).toMatch(/A wrong number is not a security issue/);
+    const names = [...forms.values()].map((f) => f.name ?? "");
+    expect(names.some((n) => /figure|number/i.test(n))).toBe(true);
+  });
+
+  it("and one for behaviour, which is not the same report", () => {
+    const names = [...forms.values()].map((f) => f.name ?? "");
+    expect(names.some((n) => /broken/i.test(n))).toBe(true);
+  });
+});
+
+describe("every issue form is one GitHub will actually show", () => {
+  const TYPES = new Set(["markdown", "input", "textarea", "dropdown", "checkboxes"]);
+
+  for (const file of FILES) {
+    describe(file, () => {
+      const form = forms.get(file)!;
+
+      it("declares a name, a description, and a body", () => {
+        expect(form.name, "a form with no name is not offered").toBeTruthy();
+        expect(form.description).toBeTruthy();
+        expect(Array.isArray(form.body)).toBe(true);
+        expect(form.body!.length).toBeGreaterThan(0);
+      });
+
+      it("uses only field types the schema defines", () => {
+        for (const field of form.body ?? []) expect(TYPES.has(field.type ?? "")).toBe(true);
+      });
+
+      it("gives every field that collects an answer a unique id and a label", () => {
+        const ids: string[] = [];
+        for (const field of form.body ?? []) {
+          if (field.type === "markdown") continue;
+          expect(field.id, `a ${field.type} with no id cannot be read back`).toBeTruthy();
+          expect(field.attributes?.label).toBeTruthy();
+          ids.push(field.id!);
+        }
+        expect(ids.length).toBeGreaterThan(0);
+        expect(new Set(ids).size, `duplicate field ids in ${file}`).toBe(ids.length);
+      });
+
+      it("keeps its markdown blocks as prose, not as questions", () => {
+        // GitHub rejects a form whose markdown block carries an id or a
+        // `validations` key -- a required note is not a thing. Rejects, as in
+        // does not show the form at all.
+        for (const field of form.body ?? []) {
+          if (field.type !== "markdown") continue;
+          expect(field.attributes?.value).toBeTruthy();
+          expect(field.id).toBeUndefined();
+          expect(field.validations).toBeUndefined();
+        }
+      });
+
+      it("gives every dropdown and checkbox something to choose", () => {
+        for (const field of form.body ?? []) {
+          if (field.type !== "dropdown" && field.type !== "checkboxes") continue;
+          expect(field.attributes?.options?.length).toBeGreaterThan(0);
+        }
+      });
+    });
+  }
+});
+
+describe("every label a form applies exists", () => {
+  it("labels.yml is well-formed: unique names, a real color, a description each", () => {
+    expect(LABELS.length).toBeGreaterThan(0);
+    expect(new Set(LABELS.map((l) => l.name)).size).toBe(LABELS.length);
+    for (const { name, color, description } of LABELS) {
+      expect(color, `${name} has color "${color}"`).toMatch(/^[0-9a-fA-F]{6}$/);
+      expect(description.length, `${name} has no description`).toBeGreaterThan(0);
+    }
+  });
+
+  it("declares the label the figure form applies", () => {
+    // The defect this file was written for: `data` was named by the form and
+    // owned by nothing.
+    expect(DECLARED.has("data")).toBe(true);
+  });
+
+  for (const file of FILES) {
+    it(`${file} names no label that labels.yml does not declare`, () => {
+      const missing = (forms.get(file)!.labels ?? []).filter((l) => !DECLARED.has(l));
+      expect(missing).toEqual([]);
+    });
+  }
+});
+
+describe("no template teaches a reader to publish their own figures", () => {
+  /** `#/<hub>?tool=<id>` -- a calculator is not a route. */
+  const DEEP_LINK = /enklayve\.com\/#\/([\w-]+)\?([^\s)]*)/g;
+  const HUBS = new Set(SUB_TOOLS.map(({ hubId }) => hubId));
+  const TOOLS = new Map(SUB_TOOLS.map(({ tile, hubId }) => [tile.id, hubId]));
+
+  for (const file of FILES) {
+    const text = strings(forms.get(file)!).join("\n");
+    const links = [...text.matchAll(DEEP_LINK)];
+
+    it(`${file} warns, in the field that asks for a link, that a link carries figures`, () => {
+      const asksForALink = /deep link|permalink/i.test(text);
+      if (!asksForALink) return;
+      expect(text).toMatch(/carries what you typed/);
+    });
+
+    it(`${file} shows no example link carrying a money figure`, () => {
+      // `w=85000` in a placeholder is an instruction, whatever the prose beside
+      // it says. A figure-shaped value in an example link is the defect.
+      for (const [, , query] of links) {
+        for (const [key, value] of new URLSearchParams(query!)) {
+          expect(
+            /^\d{4,}$/.test(value),
+            `${file}: example link sets ${key}=${value}, a figure a reader would copy`,
+          ).toBe(false);
+        }
+      }
+    });
+
+    it(`${file}'s example links name a hub and a tool that exist`, () => {
+      for (const [, hub, query] of links) {
+        expect(HUBS.has(hub!), `${file}: no hub "${hub}"`).toBe(true);
+        const tool = new URLSearchParams(query!).get("tool");
+        if (tool === null) continue;
+        expect(TOOLS.get(tool), `${file}: tool "${tool}" is not in hub "${hub}"`).toBe(hub);
+      }
+    });
+  }
+});
+
+describe("the config's contact links agree with the docs they stand in for", () => {
+  const config = load(readFileSync(resolve(DIR, "config.yml"), "utf8")) as {
+    blank_issues_enabled?: boolean;
+    contact_links?: { name?: string; url?: string; about?: string }[];
+  };
+
+  it("offers a private path for a security report", () => {
+    const security = readFileSync(resolve(ROOT, "SECURITY.md"), "utf8");
+    const repo = /(https:\/\/github\.com\/[\w-]+\/[\w-]+)\/security/.exec(security)?.[1];
+    expect(repo, "SECURITY.md names no repository").toBeTruthy();
+    const link = (config.contact_links ?? []).find((l) => /security|vulnerab/i.test(l.name ?? ""));
+    expect(link?.url).toMatch(new RegExp(`^${repo}/security`));
+  });
+
+  it("gives every contact link a name, a url, and a reason to click it", () => {
+    expect((config.contact_links ?? []).length).toBeGreaterThan(0);
+    for (const link of config.contact_links ?? []) {
+      expect(link.name).toBeTruthy();
+      expect(link.about).toBeTruthy();
+      expect(link.url).toMatch(/^https:\/\//);
+    }
+  });
+});
