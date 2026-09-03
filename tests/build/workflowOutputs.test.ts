@@ -41,6 +41,7 @@ const PAIRS: [script: string, workflow: string][] = [
   ["scripts/check-links.ts", ".github/workflows/check-links.yml"],
   ["scripts/check-advisories.ts", ".github/workflows/check-advisories.yml"],
   ["scripts/refresh/watch-sources.ts", ".github/workflows/watch-pillar4-sources.yml"],
+  ["scripts/check-boundaries.ts", ".github/workflows/check-boundaries.yml"],
 ];
 
 describe("reading the counts the scheduled checks emit", () => {

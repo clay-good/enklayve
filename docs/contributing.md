@@ -42,15 +42,17 @@ npm run deploy:dry     # wrangler dry-run
 
 Before opening a PR, make the whole gate green locally: `format:check`, `lint`, `typecheck`, `test`, `build`, and `audit`. CI runs exactly these on Node 24; Cloudflare's Git integration deploys on merge to `main`.
 
-Four more checks run on a **schedule** rather than per-commit, because each needs the network and a government site having a bad afternoon must not fail a build — a suite that fails for reasons outside the change is one people learn to ignore. You can run any of them on demand, and you should run the relevant one when your change touches what it watches:
+Five more checks run on a **schedule** rather than per-commit. Three of them because they need the network and a government site having a bad afternoon must not fail a build — a suite that fails for reasons outside the change is one people learn to ignore. The other two because they are slow: the source watch fingerprints a dozen pages, and the boundary sweep re-runs the whole suite once per comparison. You can run any of them on demand, and you should run the relevant one when your change touches what it watches:
 
 ```sh
 npm run check:links          # every external link the repo ships, monthly
 npm run check:adapters       # every refresh adapter still finds its figure, monthly
 npm run check:advisories     # every npm advisory has a reviewed reason, monthly
-npm run check:boundaries     # which inclusive/exclusive comparisons a test actually holds
+npm run check:boundaries     # which comparisons a test actually holds, monthly
 npm run check:boundaries -- --help   # it rewrites src/engine in place; read this first
 ```
+
+`check:boundaries` had no workflow until 2026-09-03, which is the reason to mention it here rather than leave it to the checklist: it ran when somebody typed it, and two days after the baseline was recorded it turned up a threshold in the cliff engine with no case sitting on it. If you add a comparison against a statutory figure, write the case that stands exactly on it — `<=` and `<` are different answers to a household at the limit, and a suite is green under either.
 
 `check:advisories` is the one most likely to surprise you: it does **not** fail on an advisory, it fails on an advisory nobody has looked at — or on one somebody accepted while a fix was on the shelf. If it stops you, the fix is an upgrade where one exists, and a triage entry in [`scripts/advisory-triage.json`](../scripts/advisory-triage.json) naming the vulnerable entry point and what calls it where one does not. Both halves are checked now: an entry standing over an advisory npm reports as fixable fails the run, because "there is no fix" is a fact with an expiry date and npm already knows the answer. **Take the upgrade before writing the reason.**
 

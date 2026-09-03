@@ -48,6 +48,7 @@ import {
   findCliffs,
   planSweep,
   sweepResources,
+  findTaxSteps,
   type CliffData,
   type CliffInput,
   type ResourcePoint,
@@ -159,14 +160,18 @@ const planInput: PlanInput = {
   netWorth: 900_000,
 };
 
-const point = (grossIncome: number, totalResources: number): ResourcePoint => ({
+const point = (
+  grossIncome: number,
+  totalResources: number,
+  stateTaxableIncome: number | null = null,
+): ResourcePoint => ({
   grossIncome,
   netAfterTax: totalResources,
   credits: 0,
   acaPremiumCredit: 0,
   snapAllotment: 0,
   totalResources,
-  stateTaxableIncome: null,
+  stateTaxableIncome,
   medicaidEligible: null,
 });
 
@@ -668,6 +673,20 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
     put(`findCliffs(${drop})`, findCliffs([point(30_000, 20_000), point(30_250, 20_000 - drop)]));
   }
   put("findCliffs(rising)", findCliffs([point(30_000, 20_000), point(30_250, 20_100)]));
+  // findTaxSteps at and around a point landing exactly on the notch. This probe
+  // exists because the classifier could not see `cliffs.ts:443` at all: the
+  // sweep above stops at $1,000 and never reaches Ohio's $26,050 step, so a
+  // boundary that decides whether a $332 statutory step is named or lost
+  // entirely had nothing observing it. A held boundary the probe cannot see is
+  // reported as a miscalibration, and it is one — the hole was here.
+  for (const prevTaxable of [26_049, 26_050, 26_051]) {
+    put(
+      `findTaxSteps(${prevTaxable})`,
+      findTaxSteps([point(26_000, 0, prevTaxable), point(26_250, 0, 26_300)], "Ohio", [
+        { taxableIncome: 26_050, amount: 332 },
+      ]),
+    );
+  }
 
   // --- plan -----------------------------------------------------------------
   for (const [savings, netWorth, essential, rate] of [

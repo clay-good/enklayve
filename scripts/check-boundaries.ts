@@ -46,6 +46,7 @@
  *   npm run check:boundaries -- --classify
  */
 import {
+  appendFileSync,
   readFileSync,
   writeFileSync,
   readdirSync,
@@ -643,6 +644,22 @@ async function main(): Promise<void> {
     baseline,
     scope,
   );
+
+  // The counts the scheduled run gates on. `fresh` is the one that fails: a
+  // boundary unheld and NOT on the baseline is a threshold somebody added
+  // without a case sitting exactly on it. `unheld` is the backlog, reported
+  // because a list that is meant to shrink should be visible when it does not.
+  //
+  // This is written last, the way every other check writes it, so a crash on
+  // the way here leaves the counts unset — which is why the workflow requires
+  // `report` to exist before it believes them.
+  if (process.env.GITHUB_OUTPUT) {
+    appendFileSync(
+      process.env.GITHUB_OUTPUT,
+      `fresh=${fresh.length}\nunheld=${unheld.length}\nreport<<EOF\n${report}\nEOF\n`,
+    );
+  }
+
   if (fresh.length > 0) process.exitCode = 1;
 }
 

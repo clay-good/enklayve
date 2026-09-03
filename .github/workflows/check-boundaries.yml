@@ -1,0 +1,88 @@
+# Which inclusive/exclusive comparisons a test actually holds (SPEC-3 §2.9).
+#
+# `<=` versus `<` is the difference between telling a household at exactly the
+# limit that it qualifies and telling it that it does not, and a suite can be
+# green with either one. This check flips every `<=` and `>=` in src/engine, one
+# at a time, and re-runs the suite: a mutation that still passes is a line
+# nobody has written a case on.
+#
+# It was the only check in the launch checklist with no workflow behind it, so
+# it ran when somebody typed it -- and nobody had since the baseline was
+# recorded on 2026-09-01. Run again on 2026-09-03 it found a newly unheld
+# boundary in the cliff engine, where flipping the operator did not shift a
+# statutory tax step by one point but lost it entirely. Two days is how long
+# that took to appear. A quarter is too long to wait for the next one.
+#
+# Monthly rather than per-commit: the sweep is ~70 suite runs, which is minutes
+# of runner time for a question whose answer changes only when somebody adds a
+# threshold.
+name: Check boundary coverage
+
+on:
+  schedule:
+    - cron: "0 13 9 * *" # the 9th of each month, 13:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  boundaries:
+    runs-on: ubuntu-latest
+    # The sweep re-runs the whole suite once per comparison. Generous, because a
+    # run killed halfway is the one case this script has to repair on its own.
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - id: boundaries
+        continue-on-error: true
+        run: node scripts/check-boundaries.ts
+
+      # A check that never reported is not a quiet month.
+      #
+      # Every count this job gates on is read out of `$GITHUB_OUTPUT`, and the
+      # script writes that block last. A crash on the way there leaves every
+      # output UNSET, an unset output is the empty string, and `'' != '0'` is
+      # true -- so without this the job would open an issue with an empty body
+      # off the back of a sweep that had not run, and stay green while doing it.
+      - name: Fail loudly if the check never reported
+        if: steps.boundaries.outputs.report == ''
+        run: |
+          echo "::error::scripts/check-boundaries.ts exited without writing its report."
+          echo "::error::The counts this job gates on are unset: nothing was checked."
+          exit 1
+
+      # Gated on `fresh` only -- a boundary that is unheld and NOT on the
+      # committed baseline. The 21 on the baseline each carry a written reason
+      # ("equivalent at the point it tests", "unreachable"), and an issue every
+      # month listing all of them is the alert people learn to close unread.
+      # `unheld` appears in the body, because a backlog that is meant to shrink
+      # should be visible when it does not.
+      - name: Open an issue when a threshold has no case sitting on it
+        if: >-
+          steps.boundaries.outputs.report != '' &&
+          steps.boundaries.outputs.fresh != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Boundary coverage: ${process.env.FRESH} threshold(s) with no case on them`,
+              body: process.env.REPORT,
+              labels: ["data-review"],
+            });
+        env:
+          REPORT: ${{ steps.boundaries.outputs.report }}
+          FRESH: ${{ steps.boundaries.outputs.fresh }}
+          UNHELD: ${{ steps.boundaries.outputs.unheld }}
