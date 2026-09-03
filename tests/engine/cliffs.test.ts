@@ -5,6 +5,7 @@ import {
   MAX_POINTS,
   findCliffs,
   findStatusChanges,
+  findTaxSteps,
   marginalReality,
   planSweep,
   resourcesAt,
@@ -379,5 +380,73 @@ describe("a step in the state's own schedule is not a benefit cliff", () => {
       step: 250,
     });
     expect(result.taxSteps).toEqual([]);
+  });
+});
+
+/**
+ * A sweep point sitting exactly on the statutory notch.
+ *
+ * `findTaxSteps` locates the interval where taxable income crosses a step in
+ * the state's own schedule: `prev <= notch && now > notch`. The Ohio case above
+ * never lands a point exactly on $26,050, so nothing held that `<=`, and
+ * `npm run check:boundaries` reported it as newly unheld on 2026-09-03 — the
+ * only unheld boundary in the engine that is not on the committed baseline with
+ * a written reason.
+ *
+ * Flipping it does not shift the step by one point. It **loses the step
+ * entirely**. With `<`, a point whose taxable income equals the notch fails
+ * `prev < notch`, and every later interval has `prev > notch` and fails too, so
+ * the loop runs out without ever pushing and without ever breaking. The reader
+ * is left with exactly what this function was written to prevent: an
+ * unexplained drop on a chart whose whole purpose is explaining drops. Ohio
+ * charges $332 the moment taxable income passes $26,050, and a household that
+ * lands on the threshold is the one most likely to be looking.
+ *
+ * Tested against `findTaxSteps` directly rather than through a sweep, because
+ * the condition is about the points and the sweep's own gross-to-taxable offset
+ * decides whether any point can land on the notch at all. The point is a pure
+ * function of its inputs — its docstring says so — so this is the level the
+ * boundary lives at.
+ */
+describe("a step is found when a point lands exactly on the notch", () => {
+  const OHIO_NOTCH = { taxableIncome: 26_050, amount: 332 };
+
+  /** A point carrying only what `findTaxSteps` reads. */
+  const at = (grossIncome: number, stateTaxableIncome: number | null): ResourcePoint =>
+    ({ grossIncome, stateTaxableIncome }) as ResourcePoint;
+
+  it("reports the step when the previous point is exactly at the threshold", () => {
+    // prev === 26,050 is the case `<` drops: `prev < notch` is false here, and
+    // false at every later interval too, so the notch is never reported.
+    const steps = findTaxSteps([at(26_000, 26_050), at(26_250, 26_300)], "Ohio", [OHIO_NOTCH]);
+    expect(steps).toEqual([
+      { jurisdictionName: "Ohio", atIncome: 26_250, atTaxableIncome: 26_050, amount: 332 },
+    ]);
+  });
+
+  it("reports it once, at the first crossing, when the sweep runs on past", () => {
+    const steps = findTaxSteps(
+      [at(25_750, 25_800), at(26_000, 26_050), at(26_250, 26_300), at(26_500, 26_550)],
+      "Ohio",
+      [OHIO_NOTCH],
+    );
+    expect(steps).toHaveLength(1);
+    expect(steps[0]!.atIncome).toBe(26_250);
+  });
+
+  it("says nothing when the sweep stops on the threshold and never passes it", () => {
+    // The other side of the same operator: at-or-below is not a crossing. The
+    // statute charges the $332 on the amount in EXCESS of $26,050, so a
+    // household exactly at the threshold owes nothing extra and must not be
+    // told it does.
+    expect(findTaxSteps([at(25_750, 25_800), at(26_000, 26_050)], "Ohio", [OHIO_NOTCH])).toEqual(
+      [],
+    );
+  });
+
+  it("skips a point with no state taxable income rather than treating it as zero", () => {
+    // A null means no state is modeled at that point; reading it as 0 would
+    // manufacture a crossing out of nothing.
+    expect(findTaxSteps([at(26_000, null), at(26_250, 26_300)], "Ohio", [OHIO_NOTCH])).toEqual([]);
   });
 });
