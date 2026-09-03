@@ -48,3 +48,28 @@ export function inEnhancedCatchUpWindow(
 ): boolean {
   return age >= 60 && age < 64 && limits.catch_up_401k_60to63 !== undefined;
 }
+
+/**
+ * Whether this participant's catch-up must be Roth, given prior-year wages.
+ *
+ * IRC §414(v)(7)(A), added by SECURE 2.0 §603: an eligible participant whose
+ * §3121(a) wages "for the preceding calendar year from the employer sponsoring
+ * the plan" exceed the threshold may make catch-up contributions "only if any
+ * additional elective deferrals are designated Roth contributions".
+ *
+ * 2026 is the first year it binds. Notice 2023-62 gave an administrative
+ * transition period through 2025, and Notice 2025-67 sets the threshold that
+ * governs 2026 at $150,000 of 2025 wages.
+ *
+ * It changes no limit — the catch-up is the same size either way. What it
+ * changes is whether that money is sheltered from tax this year, which is the
+ * question the Retirement Contribution Optimizer exists to answer.
+ */
+export function catchUpMustBeRoth(
+  priorYearWages: number,
+  limits: RetirementLimitsData["limits"],
+): boolean {
+  const threshold = limits.roth_catch_up_wage_threshold;
+  if (threshold === undefined || !Number.isFinite(priorYearWages)) return false;
+  return priorYearWages > threshold;
+}

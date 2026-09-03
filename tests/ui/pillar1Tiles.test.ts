@@ -363,6 +363,33 @@ describe("Retirement Contribution Optimizer tile", () => {
     expect(rowValue(at64.root, "401(k) limit")).toContain("$32,500");
   });
 
+  it("tells a high earner their catch-up has to be Roth, and stays quiet otherwise", () => {
+    // The tile's whole claim is "tax-advantaged room left this year", and for
+    // the group most likely to use a catch-up, part of that room is after-tax
+    // from 2026: §414(v)(7) lets a participant whose prior-year wages from that
+    // employer exceeded $150,000 make the catch-up only as Roth.
+    const { root: high } = mount(
+      mountRetirementOptimizer,
+      new URLSearchParams({ age: "55", k: "0", pw: "180000" }),
+    );
+    expect(rowValue(high, "Your catch-up has to be Roth")).toContain("after-tax");
+    // The amount is unchanged — the rule moves the tax treatment, not the room.
+    expect(rowValue(high, "401(k) limit")).toContain("$32,500");
+
+    const { root: under } = mount(
+      mountRetirementOptimizer,
+      new URLSearchParams({ age: "55", k: "0", pw: "120000" }),
+    );
+    expect(rowValue(under, "Your catch-up has to be Roth")).toBe("");
+
+    // And nothing for someone with no catch-up to make in the first place.
+    const { root: young } = mount(
+      mountRetirementOptimizer,
+      new URLSearchParams({ age: "40", k: "0", pw: "180000" }),
+    );
+    expect(rowValue(young, "Your catch-up has to be Roth")).toBe("");
+  });
+
   it("reads the 401(k) from the profile and writes edits back", () => {
     const profile = new SituationStore();
     profile.set("retirementContributionsAnnual", 8000);

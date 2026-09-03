@@ -7,7 +7,11 @@
  * back to My Situation so it feeds My Plan's "capture the match" step.
  */
 import { Money } from "../engine/money";
-import { electiveDeferralLimit, inEnhancedCatchUpWindow } from "../engine/contributionLimits";
+import {
+  catchUpMustBeRoth,
+  electiveDeferralLimit,
+  inEnhancedCatchUpWindow,
+} from "../engine/contributionLimits";
 import type { RetirementLimitsData } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
@@ -23,6 +27,8 @@ const COVERAGES: { value: HsaCoverage; label: string }[] = [
 
 interface Fields {
   age: number;
+  /** Prior-year §3121(a) wages from the plan's employer — §414(v)(7)(A). */
+  priorWages: number;
   contrib401k: number;
   contribIra: number;
   hsaCoverage: HsaCoverage;
@@ -32,6 +38,7 @@ interface Fields {
 
 const EXAMPLE: Fields = {
   age: 52,
+  priorWages: 0,
   contrib401k: 12000,
   contribIra: 3000,
   hsaCoverage: "family",
@@ -47,6 +54,7 @@ function readFields(p: URLSearchParams, contrib401kDefault: number): Fields {
   const cov = p.get("hsa");
   return {
     age: Math.max(0, parseNonNegative(p.get("age"), 35)),
+    priorWages: parseNonNegative(p.get("pw"), 0),
     contrib401k: p.has("k") ? parseNonNegative(p.get("k"), 0) : contrib401kDefault,
     contribIra: parseNonNegative(p.get("ira"), 0),
     hsaCoverage: cov && isCoverage(cov) ? cov : "none",
@@ -58,6 +66,7 @@ function readFields(p: URLSearchParams, contrib401kDefault: number): Fields {
 function writeFields(f: Fields): URLSearchParams {
   const p = new URLSearchParams();
   p.set("age", String(f.age));
+  if (f.priorWages > 0) p.set("pw", String(f.priorWages));
   p.set("k", String(f.contrib401k));
   if (f.contribIra > 0) p.set("ira", String(f.contribIra));
   if (f.hsaCoverage !== "none") p.set("hsa", f.hsaCoverage);
@@ -131,6 +140,11 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
   );
   const hInput = num("h", fields.contribHsa, "Current HSA contribution this year");
   const fInput = num("f", fields.contribFsa, "Current health FSA contribution this year");
+  const pwInput = num(
+    "pw",
+    fields.priorWages,
+    "Last year's wages from the employer sponsoring your 401(k)",
+  );
 
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
@@ -157,6 +171,16 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
         citation: cite,
       },
       { label: "401(k) room remaining", value: fmt(Money.from(room401k)), emphasis: true },
+      ...(catchUp && catchUpMustBeRoth(fields.priorWages, limits!.limits)
+        ? [
+            {
+              label: "Your catch-up has to be Roth",
+              value:
+                "Last year's wages from that employer were over the threshold, so §414(v)(7) lets you make the catch-up only as designated Roth contributions. The room above is real and the amount does not change — but the catch-up part of it is after-tax, so it does not lower this year's taxable income. 2026 is the first year this applies.",
+              citation: cite,
+            },
+          ]
+        : []),
       {
         label: `IRA limit${catchUp ? " (with catch-up)" : ""}`,
         value: fmt(Money.from(lim.ira)),
@@ -204,6 +228,7 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
       hsaCoverage: isCoverage(hsaSelect.value) ? hsaSelect.value : "none",
       contribHsa: parseNonNegative(hInput.value, 0),
       contribFsa: parseNonNegative(fInput.value, 0),
+      priorWages: parseNonNegative(pwInput.value, 0),
     };
   }
 
@@ -216,7 +241,7 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
   }
 
   hsaSelect.addEventListener("change", recompute);
-  for (const i of [ageInput, kInput, iraInput, hInput, fInput])
+  for (const i of [ageInput, kInput, iraInput, hInput, fInput, pwInput])
     i.addEventListener("input", recompute);
 
   const tryExample = tryExampleButton(() => {
@@ -227,6 +252,7 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
     hsaSelect.value = fields.hsaCoverage;
     hInput.value = String(fields.contribHsa);
     fInput.value = String(fields.contribFsa);
+    pwInput.value = String(fields.priorWages);
     recompute();
   });
 
@@ -239,6 +265,7 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
     field("HSA coverage", hsaSelect),
     field("HSA so far this year", hInput),
     field("Health FSA so far this year", fInput),
+    field("Last year's wages from your 401(k)'s employer", pwInput),
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
@@ -253,7 +280,7 @@ export const retirementOptimizerTile: TileDefinition = {
   description: "401(k), IRA, and HSA against the current IRS limits.",
   keywords: ["401k", "ira", "roth", "hsa", "retirement", "catch up", "limit"],
   status: "ready",
-  how: "Each account has a yearly IRS limit, and once you turn 50 (55 for an HSA) you get an extra 'catch-up' amount on top. We take this year's limit for your age and subtract what you've put in so far, so you can see exactly how much room is left to shelter from tax before the year ends.\n\nEvery limit here is read straight from the IRS notice for the current year and cites it, so you can check the figure yourself. Your 401(k) number flows into My Plan's 'capture the match' and 'fund retirement' steps.",
+  how: "Each account has a yearly IRS limit, and once you turn 50 (55 for an HSA) you get an extra 'catch-up' amount on top. We take this year's limit for your age and subtract what you've put in so far, so you can see exactly how much room is left to shelter from tax before the year ends.\n\nEvery limit here is read straight from the IRS notice for the current year and cites it, so you can check the figure yourself. If last year's wages from your 401(k)'s employer were over the §414(v)(7) threshold, the catch-up part of your room has to go in as Roth from 2026 — the same amount, but after-tax, so it does not lower this year's taxable income. Enter those wages and the page will say so. Your 401(k) number flows into My Plan's 'capture the match' and 'fund retirement' steps.",
   resources: [
     {
       label: "IRS, retirement topics: contribution limits",

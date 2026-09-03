@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import {
+  catchUpMustBeRoth,
   electiveDeferralCatchUp,
   electiveDeferralLimit,
   inEnhancedCatchUpWindow,
@@ -77,6 +78,28 @@ describe("the elective-deferral catch-up", () => {
     delete (older as Record<string, number | undefined>).catch_up_401k_60to63;
     expect(electiveDeferralCatchUp(61, older)).toBe(limits.catch_up_401k_50plus);
     expect(inEnhancedCatchUpWindow(61, older)).toBe(false);
+  });
+
+  it("makes the catch-up Roth above the §414(v)(7) wage threshold, and not below it", () => {
+    // SECURE 2.0 §603. The threshold is measured on the PRECEDING calendar
+    // year's §3121(a) wages from the employer sponsoring the plan, and Notice
+    // 2025-67 states it directly: "The Roth catch-up wage threshold for 2025 ...
+    // is increased from $145,000 to $150,000", governing 2026. It changes no
+    // limit — the catch-up is the same size — only whether that money is
+    // sheltered from tax this year, which is the question the optimizer exists
+    // to answer.
+    const threshold = limits.roth_catch_up_wage_threshold!;
+    expect(threshold).toBe(150_000);
+    expect(catchUpMustBeRoth(threshold + 1, limits)).toBe(true);
+    // "Exceed" is the statute's word, so the threshold itself is below the line.
+    expect(catchUpMustBeRoth(threshold, limits)).toBe(false);
+    expect(catchUpMustBeRoth(0, limits)).toBe(false);
+  });
+
+  it("says nothing about Roth when the shard does not carry the threshold", () => {
+    const older = { ...limits };
+    delete (older as Record<string, number | undefined>).roth_catch_up_wage_threshold;
+    expect(catchUpMustBeRoth(1_000_000, older)).toBe(false);
   });
 
   it("does not produce a limit for an age that is not a number", () => {

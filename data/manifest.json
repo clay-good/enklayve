@@ -38,8 +38,8 @@
       "shard": "retirement-limits-2024.json",
       "sourceUrl": "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
       "sourceDocument": "IRS Notice 2025-67 (2026 retirement plan limits); IRS Rev. Proc. 2025-19 (2026 HSA limits)",
-      "dateRetrieved": "2026-08-29",
-      "contentHash": "ae44f8246e384fc69faaf5bb0ea9ba8fba9e38f0edc216f4578fee11b47ed5a3"
+      "dateRetrieved": "2026-09-03",
+      "contentHash": "b1ea035ec76980955ffc2b9d55c8a5c5350487761d3203347480356d366f116a"
     },
     {
       "id": "capital-gains-2024",

@@ -10,13 +10,14 @@
     "hsa_family": 8750,
     "hsa_catch_up_55plus": 1000,
     "fsa_health": 3400,
-    "defined_contribution_415c": 72000
+    "defined_contribution_415c": 72000,
+    "roth_catch_up_wage_threshold": 150000
   },
   "citation": {
     "sourceUrl": "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
     "sourceDocument": "IRS Notice 2025-67 (2026 retirement plan limits); IRS Rev. Proc. 2025-19 (2026 HSA limits)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-08-29",
-    "sourceNote": "The 2026 retirement limits come from IRS Notice 2025-67, which states each one as an increase from its 2025 value: the §415(c)(1)(A) defined-contribution limit rises from $70,000 to $72,000; the §402(g)(1) elective-deferral limit (401(k), 403(b), 457(b), TSP) from $23,500 to $24,500; the §414(v)(2)(B)(i) age-50 catch-up from $7,500 to $8,000; the §414(v)(2)(E)(i) enhanced catch-up for those turning 60 through 63 REMAINS $11,250; and the §219(b)(5)(A) IRA limit from $7,000 to $7,500 with a $1,100 age-50 catch-up. The HSA figures are from Rev. Proc. 2025-19 — $4,400 self-only and $8,750 family — and the $3,400 health FSA limit is from Rev. Proc. 2025-32 §2.15 (which also sets the $680 maximum carryover). The schema requires every limit the tiles read to be present, so a shard missing one fails validation and the dependent tiles fall back to the verify-before-relying banner rather than substituting a stale literal. Omitted: the SIMPLE and SEP limits, the §401(a)(17) compensation cap, the saver's credit thresholds (which have their own shard), and the Roth catch-up wage threshold. Verified against IRS Notice 2025-67 and Rev. Proc. 2025-19 on 2026-08-29."
+    "dateRetrieved": "2026-09-03",
+    "sourceNote": "The 2026 retirement limits come from IRS Notice 2025-67, which states each one as an increase from its 2025 value: the §415(c)(1)(A) defined-contribution limit rises from $70,000 to $72,000; the §402(g)(1) elective-deferral limit (401(k), 403(b), 457(b), TSP) from $23,500 to $24,500; the §414(v)(2)(B)(i) age-50 catch-up from $7,500 to $8,000; the §414(v)(2)(E)(i) enhanced catch-up for those turning 60 through 63 REMAINS $11,250; and the §219(b)(5)(A) IRA limit from $7,000 to $7,500 with a $1,100 age-50 catch-up. The HSA figures are from Rev. Proc. 2025-19 — $4,400 self-only and $8,750 family — and the $3,400 health FSA limit is from Rev. Proc. 2025-32 §2.15 (which also sets the $680 maximum carryover). The schema requires every limit the tiles read to be present, so a shard missing one fails validation and the dependent tiles fall back to the verify-before-relying banner rather than substituting a stale literal. Omitted: the SIMPLE and SEP limits, the §401(a)(17) compensation cap, the saver's credit thresholds (which have their own shard), and the Roth catch-up wage threshold. Verified against IRS Notice 2025-67 and Rev. Proc. 2025-19 on 2026-08-29. Notice 2025-67 also states the §414(v)(7)(A) Roth catch-up wage threshold: \"The Roth catch-up wage threshold for 2025 ... is increased from $145,000 to $150,000.\" It is measured on the PRECEDING calendar year's §3121(a) wages from the employer sponsoring the plan, so 2025 wages decide 2026, and a participant over it may make catch-up contributions only as designated Roth contributions. 2026 is the first year this bites: Notice 2023-62 gave an administrative transition period through 2025."
   }
 }

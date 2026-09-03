@@ -144,6 +144,10 @@ const NOT_A_TAX_YEAR: Record<string, Record<string, string>> = {
     "2024": "the same §163(h)(4) lien date",
   },
   "tiles/benefitCliffs.ts": { "2026": "when the five new deductions took effect" },
+  "tiles/retirementOptimizer.ts": {
+    "2026":
+      "the first year §414(v)(7)'s Roth catch-up requirement binds — Notice 2023-62 gave an administrative transition through 2025, so this is a fixed date in history rather than the shard's tax year, and it stays 2026 when the shard rolls",
+  },
   "readout/report.ts": { "2026": "the same effective date, in the saved report" },
   "ui/shell.ts": { "2026": "the same effective date, on the home page" },
   "tiles/eobChecker.ts": { "2022": "when the No Surprises Act took effect" },
