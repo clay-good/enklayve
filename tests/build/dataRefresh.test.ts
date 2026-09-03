@@ -2338,7 +2338,14 @@ describe("adapters: seventh set — the remaining seeded states", () => {
       // And the rates, which are statutory under § 55 and not adjusted by the
       // procedure, come from the shard rather than being demanded of it.
       expect(result.shard.rateLow).toBe(0.26);
-      expect(result.shard.phaseoutRate).toBe(0.25);
+      // Carried through, not demanded: the phase-out rate is statutory and the
+      // procedure does not adjust it. It read 0.25 here — the figure on
+      // §55(d)(2)'s face — until the shard was corrected to the 50% that
+      // §55(d)(4)(A)(ii)(IV) substitutes. This assertion only ever proved that
+      // the parser leaves it alone; what proves the value is the pair of golden
+      // cases on the procedure's own complete-phase-out column, in
+      // `screeners.test.ts`.
+      expect(result.shard.phaseoutRate).toBe(0.5);
     });
 
     it("refuses a procedure for another year", () => {

@@ -195,11 +195,41 @@ describe("amtScreen (IRC §55, 2026)", () => {
     expect(r.verdict).toBe("likely");
   });
 
-  it("phases the exemption out 25% above the threshold", () => {
+  it("phases the exemption out 50% above the threshold, not the 25% on §55(d)(2)'s face", () => {
+    // This asserted 25% until 2026-09-03, which is what §55(d)(2) says and not
+    // what applies: §55(d)(4)(A)(ii)(IV), as amended by the One Big Beautiful
+    // Bill Act, applies that paragraph "by substituting '50 percent' for '25
+    // percent'". Rev. Proc. 2025-32 settles it without reading the statute at
+    // all — its complete-phase-out column is $680,200 for an unmarried filer
+    // against a $500,000 threshold and a $90,100 exemption, and $180,200 x 0.50
+    // is exactly $90,100. At 25% the exemption would survive to $860,400.
     const r = amtScreen({ filingStatus: "single", amtIncome: 600000, regularTax: 0 }, data.amt()!);
-    // (600,000 − 500,000) × 25% = 25,000 lost → exemption 65,100.
-    expect(r.exemptionPhaseout.toNumber()).toBe(25000);
-    expect(r.exemption.toNumber()).toBe(65100);
+    // (600,000 − 500,000) × 50% = 50,000 lost → exemption 40,100.
+    expect(r.exemptionPhaseout.toNumber()).toBe(50000);
+    expect(r.exemption.toNumber()).toBe(40100);
+  });
+
+  it("lands exactly on the IRS's own complete-phase-out figures", () => {
+    // The published table is a hand-verifiable golden case for the rate: at the
+    // complete phase-out amount the exemption is gone, and only one rate puts
+    // it there. Both statuses, straight out of Rev. Proc. 2025-32.
+    const single = amtScreen(
+      { filingStatus: "single", amtIncome: 680_200, regularTax: 0 },
+      data.amt()!,
+    );
+    expect(single.exemption.toNumber()).toBe(0);
+    const joint = amtScreen(
+      { filingStatus: "married_jointly", amtIncome: 1_280_400, regularTax: 0 },
+      data.amt()!,
+    );
+    expect(joint.exemption.toNumber()).toBe(0);
+    // A dollar short of it, the exemption is not quite gone — so the test is
+    // pinning the point rather than any income past it.
+    const nearly = amtScreen(
+      { filingStatus: "single", amtIncome: 680_198, regularTax: 0 },
+      data.amt()!,
+    );
+    expect(nearly.exemption.toNumber()).toBeGreaterThan(0);
   });
 
   it("flags 'maybe' near the crossover and 'none' well below it", () => {

@@ -14,7 +14,7 @@
     "qualifying_surviving_spouse": 1000000,
     "married_separately": 500000
   },
-  "phaseoutRate": 0.25,
+  "phaseoutRate": 0.5,
   "rateLow": 0.26,
   "rateHigh": 0.28,
   "rate28ThresholdByFilingStatus": {
@@ -28,7 +28,7 @@
     "sourceUrl": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
     "sourceDocument": "IRS Rev. Proc. 2025-32 (2026 AMT exemption & thresholds); IRC §55 (26%/28% rates)",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-08-29",
-    "sourceNote": "The alternative minimum tax runs a parallel calculation: a flat 26% on the first slice of alternative minimum taxable income and 28% above it, against an exemption that itself phases out for high earners. Rev. Proc. 2025-32 §2.10 gives the 2026 exemptions — $140,200 joint or surviving spouse, $90,100 unmarried, $70,100 married filing separately — and the 28%-rate threshold, $244,500 for everyone except married filing separately at $122,250 (exactly half). The exemption phases out at 25 cents per dollar of AMTI above $1,000,000 joint and $500,000 for all other statuses, including married filing separately, which is NOT half here — an asymmetry worth stating because the 28% threshold two lines above it IS halved. This shard drives a screener, not a filing calculation. Omitted: the AMT credit for prior-year AMT paid, the separate kiddie-tax exemption under §59(j), the preferential capital-gains rates inside the AMT computation, and the long list of adjustments and preferences (incentive stock option spreads, private-activity bond interest, depletion) that make real AMTI differ from taxable income. The screener says whether AMT is worth investigating, not what it would be. Verified against Rev. Proc. 2025-32 on 2026-08-29."
+    "dateRetrieved": "2026-09-03",
+    "sourceNote": "The alternative minimum tax runs a parallel calculation: a flat 26% on the first slice of alternative minimum taxable income and 28% above it, against an exemption that itself phases out for high earners. Rev. Proc. 2025-32 §2.10 gives the 2026 exemptions — $140,200 joint or surviving spouse, $90,100 unmarried, $70,100 married filing separately — and the 28%-rate threshold, $244,500 for everyone except married filing separately at $122,250 (exactly half). The exemption phases out at 25 cents per dollar of AMTI above $1,000,000 joint and $500,000 for all other statuses, including married filing separately, which is NOT half here — an asymmetry worth stating because the 28% threshold two lines above it IS halved. This shard drives a screener, not a filing calculation. Omitted: the AMT credit for prior-year AMT paid, the separate kiddie-tax exemption under §59(j), the preferential capital-gains rates inside the AMT computation, and the long list of adjustments and preferences (incentive stock option spreads, private-activity bond interest, depletion) that make real AMTI differ from taxable income. The screener says whether AMT is worth investigating, not what it would be. Verified against Rev. Proc. 2025-32 on 2026-08-29. The phase-out rate is 50%, not the 25% §55(d)(2) states on its face: §55(d)(4)(A)(ii)(IV), as amended by the One Big Beautiful Bill Act (Pub. L. 119-21 §70107), applies paragraph (2) \"by substituting '50 percent' for '25 percent'\". Rev. Proc. 2025-32 proves it arithmetically in its own table — the complete phase-out is $1,280,400 joint against a $1,000,000 threshold and a $140,200 exemption ($280,400 x 0.50 = $140,200), and $680,200 unmarried against $500,000 and $90,100 ($180,200 x 0.50 = $90,100). At 25% the exemption would survive to twice those figures."
   }
 }
