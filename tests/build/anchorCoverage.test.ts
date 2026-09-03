@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { ADAPTERS } from "../../scripts/refresh/adapters";
+import { stateName } from "../../src/data/usStates";
 
 /**
  * Every adapter is anchoring, or says why it is not.
@@ -132,6 +133,44 @@ describe("anchoring coverage over the refresh adapters", () => {
       // asks whether a url answers compares two different questions.
       expect(Boolean(awaiting.arrived.match)).toBe(Boolean(awaiting.calibration.match));
     }
+  });
+
+  it("names every wait probe in the README, where the enumeration is the claim", () => {
+    // The probes above are held to their own shape; nothing held the prose that
+    // tells a reader they exist. On 2026-09-03 that prose said "Four cannot" and
+    // named Oregon, Nebraska, Arkansas and Vermont, and there were five: the
+    // California probe had been added for a shard whose adapter ANCHORS AND
+    // AGREES, which is the case the four-refusal framing has no room for. Nobody
+    // was wrong for long, because nobody could be told.
+    //
+    // So the README paragraph is read back the way readmeCounts reads the
+    // by-the-numbers table. Held one way on purpose: every probe must be named,
+    // and a state named there need not have one, because the same paragraph
+    // narrates states that used to be stale and are not waiting on anything now.
+    const paragraph = readFileSync(resolve(ROOT, "README.md"), "utf8")
+      .split("\n")
+      .find((line) => line.includes("calibrated on the year that IS published"));
+    expect(
+      paragraph,
+      "the README paragraph describing the wait probes has moved or been reworded — this test" +
+        " anchors on 'calibrated on the year that IS published'",
+    ).toBeDefined();
+    // Every probe today belongs to a state adapter, so the state's own name is
+    // what a reader looks for. Anything else has to be named by its id, which
+    // will read badly in the prose and is meant to: it is the signal to write
+    // the sentence rather than to widen the pattern.
+    const named = (id: string): string => {
+      const code = /^state-([a-z]{2})-/.exec(id)?.[1];
+      return code ? stateName(code.toUpperCase()) : id;
+    };
+    const unnamed = ADAPTERS.filter((a) => a.awaiting)
+      .map((a) => ({ id: a.id, name: named(a.id) }))
+      .filter(({ name }) => !paragraph?.includes(name));
+    expect(
+      unnamed.map((u) => `${u.id} (${u.name})`),
+      "these adapters carry a wait probe that the README never mentions — a probe a reader has" +
+        " not heard of is a probe nobody will miss when it is deleted",
+    ).toEqual([]);
   });
 
   it("keeps the note explaining why a short healthy list needs a long explained one", () => {

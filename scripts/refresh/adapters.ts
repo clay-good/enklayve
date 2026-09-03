@@ -213,14 +213,30 @@ export interface RefreshAdapter {
    *
    * Most `settled` refusals clear themselves, because the parser runs against
    * the watched page first and starts anchoring the day that page states the
-   * figure. Four do not. Oregon, Nebraska, Arkansas and Vermont are waiting on a
-   * *different document at a different URL* — a booklet, a schedule, a year's
-   * forms index — and the page the adapter watches will never state the
-   * deduction no matter what the state publishes. Their notes all end "repoint
-   * this adapter the day the 2026 forms appear", which is a task assigned to
-   * whoever happens to remember, and the cost of forgetting is a shard sitting a
-   * year behind a citation that still points at a live .gov page. That is the
-   * exact failure that left Illinois, Michigan, Missouri and Georgia stale.
+   * figure. The ones that declare a probe here are the ones that will not, and
+   * they come in two shapes.
+   *
+   * The first is a refusal parked on a *different document at a different URL* —
+   * a booklet, a schedule, a year's forms index — where the page the adapter
+   * watches will never state the deduction no matter what the state publishes.
+   * Those notes all end "repoint this adapter the day the 2026 forms appear",
+   * which is a task assigned to whoever happens to remember, and the cost of
+   * forgetting is a shard sitting a year behind a citation that still points at
+   * a live .gov page. That is the exact failure that left Illinois, Michigan,
+   * Missouri and Georgia stale.
+   *
+   * The second is worse, because it does not look like a wait at all: an adapter
+   * that anchors and AGREES, over a shard carrying a *different* figure forward
+   * from a year the state has not yet republished. California is the live case —
+   * its deductions page states a 2026 amount the shard already has, so the check
+   * reports it healthy every month while the brackets beside it sit on 2025. A
+   * probe is the only thing standing between that and a silent year, so the rule
+   * is the wait, not the refusal: if some figure in the shard is waiting on a
+   * document, the adapter says which document and how to tell it has arrived.
+   *
+   * No count and no roster here — `tests/build/anchorCoverage.test.ts` reads the
+   * probes out of this file and holds the README's list of them to it, which is
+   * the one place the enumeration cannot decay unnoticed.
    *
    * So the wait is watched instead of remembered. Nothing here is ever parsed —
    * the arrival of a document is not permission to scrape it, and repointing an
