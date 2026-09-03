@@ -16,10 +16,16 @@ import {
 } from "../engine/benefits";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
-import { checkboxFilingStatus, marriedCheckbox, marriedDefault } from "./owedShared";
+import {
+  checkboxFilingStatus,
+  filesSeparately,
+  marriedCheckbox,
+  marriedDefault,
+} from "./owedShared";
 import type { CitationData } from "../data/schemas";
 import type { FplRegion } from "../data/browser";
 import type { SituationStore } from "../profile/situation";
+import { EITC_JOINT_RETURN_CITATION } from "../data/statutes";
 import type { TileContext, TileDefinition } from "./types";
 
 const REGIONS: { value: FplRegion; label: string }[] = [
@@ -148,11 +154,21 @@ export function mountOwedScreener(ctx: TileContext): void {
       eitcCtc,
     );
     if (eitc.credit.greaterThan(0)) {
+      // The schedule has a joint column and an everyone-else column, and married
+      // filing separately belongs to neither: §32(d)(1) applies the credit only
+      // to a joint return. Named rather than subtracted — §32(d)(2)(B) reaches a
+      // separated spouse who lived with a qualifying child, on facts this
+      // screener does not hold.
+      const separately = filesSeparately(fields.married, profile);
       findings.push({
         program: "Earned Income Tax Credit",
         estimate: fmt(eitc.credit),
-        note: "A refundable credit based on your earned income and children.",
-        citation: eitcCtc.citation,
+        note: separately
+          ? "A refundable credit based on your earned income and children — but it generally " +
+            "requires a joint return, and My Situation says married filing separately. It " +
+            "reaches you only if you lived apart from your spouse and with a qualifying child."
+          : "A refundable credit based on your earned income and children.",
+        citation: separately ? EITC_JOINT_RETURN_CITATION : eitcCtc.citation,
       });
     }
 

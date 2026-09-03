@@ -70,6 +70,26 @@ describe("EITC tile", () => {
   });
 });
 
+describe("the EITC tile and a separate return", () => {
+  it("names §32(d) beside the figure instead of leaving it unqualified", () => {
+    const profile = new SituationStore();
+    profile.set("filingStatus", "married_separately");
+    const root = mount(mountEitc, new URLSearchParams({ inc: "22000", kids: "1" }), profile);
+    expect(rowValue(root, "Filing separately")).toContain("generally requires a joint return");
+    const hrefs = Array.from(root.querySelectorAll("a.cite-link")).map((a) =>
+      a.getAttribute("href"),
+    );
+    expect(hrefs.some((h) => h?.includes("uscode/text/26/32"))).toBe(true);
+  });
+
+  it("leaves the row off entirely for a head of household", () => {
+    const profile = new SituationStore();
+    profile.set("filingStatus", "head_of_household");
+    const root = mount(mountEitc, new URLSearchParams({ inc: "22000", kids: "1" }), profile);
+    expect(rowValue(root, "Filing separately")).toBeUndefined();
+  });
+});
+
 describe("Child Tax Credit tile", () => {
   it("is $2,000 per child below the phaseout, with the refundable portion shown", () => {
     const root = mount(
@@ -110,6 +130,45 @@ describe("What Am I Owed screener", () => {
     inc.dispatchEvent(new Event("input"));
     expect(profile.get("householdSize")).toBe(3);
     expect(profile.get("annualIncome")).toBe(40000);
+  });
+
+  it("says a separate return generally bars the EITC, rather than quietly estimating it", () => {
+    // The schedule has two columns, joint and everyone else. Married filing
+    // separately belongs to neither — §32(d)(1) applies the credit only to a
+    // joint return — and the unchecked box put them on the everyone-else
+    // column, which produced a confident dollar figure for a credit they
+    // usually cannot claim. Named rather than zeroed: §32(d)(2)(B) does reach a
+    // separated spouse who lived with a qualifying child, on facts no figure
+    // here carries.
+    const profile = new SituationStore();
+    profile.set("filingStatus", "married_separately");
+    const root = mount(
+      mountOwedScreener,
+      new URLSearchParams({ hh: "2", inc: "22000", kids: "1" }),
+      profile,
+    );
+    const eitc = Array.from(root.querySelectorAll(".screener-item")).find((li) =>
+      (li.querySelector(".screener-program")?.textContent ?? "").startsWith("Earned Income"),
+    );
+    expect(eitc?.textContent).toContain("married filing separately");
+    expect(eitc?.querySelector("a.cite-link")?.getAttribute("href")).toMatch(
+      /law\.cornell\.edu\/uscode\/text\/26\/32/,
+    );
+  });
+
+  it("says nothing of the kind to a single filer", () => {
+    const profile = new SituationStore();
+    profile.set("filingStatus", "single");
+    const root = mount(
+      mountOwedScreener,
+      new URLSearchParams({ hh: "2", inc: "22000", kids: "1" }),
+      profile,
+    );
+    const eitc = Array.from(root.querySelectorAll(".screener-item")).find((li) =>
+      (li.querySelector(".screener-program")?.textContent ?? "").startsWith("Earned Income"),
+    );
+    expect(eitc, "a single filer with a child at $22,000 is owed the EITC").toBeDefined();
+    expect(eitc?.textContent).not.toContain("separately");
   });
 
   it("gives a head of household the Saver's Credit column the engine models", () => {

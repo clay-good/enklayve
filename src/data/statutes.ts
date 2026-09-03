@@ -49,3 +49,31 @@ export const TIPPED_OCCUPATION_CITATION: CitationData = {
   effectiveYear: 2026,
   dateRetrieved: "2026-09-01",
 };
+
+/**
+ * IRC §32(d). Cited by the EITC tile and by the What Am I Owed screener.
+ *
+ * The earned income credit's schedule has two columns, joint and everyone else,
+ * and both tools ask which with a *married filing jointly* checkbox. Unchecked
+ * puts a filer on the "everyone else" column, which is right for a single filer
+ * and a head of household and **wrong for married filing separately**: §32(d)(1)
+ * says the section applies only if a joint return is filed. There is no third
+ * column to move them to, because the answer is not a smaller credit — it is
+ * usually no credit at all.
+ *
+ * Usually, not always, which is why this is a disclosure rather than a rule the
+ * engine applies. §32(d)(2)(B) treats a separated spouse as not married, and it
+ * turns on facts no figure on this site carries: whether a qualifying child
+ * lived with them more than half the year, and whether they shared a home with
+ * their spouse in the last six months or hold a §121(d)(3)(C) decree. Computing
+ * a $0 for someone who meets that test would be its own wrong answer, in the
+ * direction this project cares about most.
+ */
+export const EITC_JOINT_RETURN_CITATION: CitationData = {
+  sourceUrl: "https://www.law.cornell.edu/uscode/text/26/32",
+  sourceDocument: "26 U.S.C. §32(d) — earned income credit, married individuals",
+  sourceNote:
+    "Section 32(d)(1): \"In the case of an individual who is married, this section shall apply only if a joint return is filed for the taxable year under section 6013.\" Section 32(d)(2)(B) is the exception, made permanent by ARPA: an individual is not treated as married if they do not file a joint return, reside with a qualifying child for more than half the year, and either do not share a principal place of abode with their spouse during the last six months of the year, or hold a decree, instrument, or agreement described in section 121(d)(3)(C) and are not a member of the same household by year end. Whether that test is met turns on facts this site does not hold, so the credit is neither computed nor denied for a separated spouse — the condition is named and the reader answers it.",
+  effectiveYear: 2026,
+  dateRetrieved: "2026-09-03",
+};

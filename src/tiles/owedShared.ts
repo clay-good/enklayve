@@ -51,3 +51,24 @@ export function checkboxFilingStatus(married: boolean, profile: SituationStore):
   const stored = profile.get("filingStatus");
   return stored && stored !== "married_jointly" ? stored : "single";
 }
+
+/**
+ * Whether the reader is a married person NOT filing jointly, so far as the
+ * profile knows.
+ *
+ * The joint / not-joint checkbox is right about two of its three audiences.
+ * Unchecked puts a single filer and a head of household on the "everyone else"
+ * column of a credit's schedule, which is where they belong. It puts married
+ * filing separately there too, and for the earned income credit that column
+ * does not apply to them at all: IRC §32(d)(1) says the section applies only if
+ * a joint return is filed.
+ *
+ * There is no third column to move them to and no figure to change, so this
+ * answers a narrower question than "which schedule" — it asks whether the
+ * estimate beside it needs a sentence the schedule cannot carry. Only a stored
+ * `married_separately` counts: a checkbox that is merely unchecked says nothing
+ * about a spouse.
+ */
+export function filesSeparately(married: boolean, profile: SituationStore): boolean {
+  return !married && profile.get("filingStatus") === "married_separately";
+}

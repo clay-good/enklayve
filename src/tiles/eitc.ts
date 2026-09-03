@@ -9,8 +9,9 @@ import { estimateEitc } from "../engine/benefits";
 import { el } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
-import { marriedCheckbox, marriedDefault } from "./owedShared";
+import { filesSeparately, marriedCheckbox, marriedDefault } from "./owedShared";
 import type { SituationStore } from "../profile/situation";
+import { EITC_JOINT_RETURN_CITATION } from "../data/statutes";
 import type { TileContext, TileDefinition } from "./types";
 
 interface Fields {
@@ -100,6 +101,21 @@ export function mountEitc(ctx: TileContext): void {
           : "A refundable credit. Eligibility also depends on investment income and (for no children) age 25–64.",
       },
     ];
+    // My Situation says married filing separately, and the schedule above has no
+    // column for that: §32(d)(1) applies the credit only to a joint return. The
+    // figure is left standing rather than zeroed, because §32(d)(2)(B) really
+    // does reach a separated spouse who lived with a qualifying child, and that
+    // turns on facts this site does not hold.
+    if (filesSeparately(fields.married, profile)) {
+      lines.push({
+        label: "Filing separately",
+        value:
+          "My Situation says married filing separately. The credit generally requires a joint " +
+          "return — unless you lived apart from your spouse and with a qualifying child, which " +
+          "only you can say. Treat the figure above as conditional on that.",
+        citation: EITC_JOINT_RETURN_CITATION,
+      });
+    }
 
     resultContainer.replaceChildren(
       resultCard({
