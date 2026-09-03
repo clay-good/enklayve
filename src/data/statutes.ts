@@ -26,6 +26,24 @@ export const HOSPITAL_FAP_CITATION: CitationData = {
 };
 
 /**
+ * 26 CFR §1.501(r)-6, the collection rule beside §501(r)(4)'s policy.
+ *
+ * The policy requirement tells a patient that help exists. This tells them how
+ * long they have to ask for it, and what the hospital may not do meanwhile —
+ * which is the half with a clock on it, and the half the charity-care screener
+ * was silent about. A person holding a hospital bill is usually being told to
+ * pay it now.
+ */
+export const HOSPITAL_COLLECTION_CITATION: CitationData = {
+  sourceUrl: "https://www.law.cornell.edu/cfr/text/26/1.501(r)-6",
+  sourceDocument: "26 CFR §1.501(r)-6 — extraordinary collection actions",
+  sourceNote:
+    "A hospital facility has made reasonable efforts to determine FAP eligibility only if it refrains from initiating extraordinary collection actions for at least 120 days from the date it provides the first post-discharge billing statement, and gives written notice at least 30 days before the first such action. The application period, defined at §1.501(r)-1(b)(3), ends no earlier than the 240th day after that first billing statement. Extraordinary collection actions include selling the debt, reporting adverse information to credit bureaus, placing a lien, foreclosing, seizing a bank account, commencing a civil action, garnishing wages, and deferring or denying medically necessary care because of nonpayment for prior care.",
+  effectiveYear: 2026,
+  dateRetrieved: "2026-09-03",
+};
+
+/**
  * The IRS instruction that gives W-2 box 14b its meaning.
  *
  * Cited rather than restated because the rule is one sentence and the whole

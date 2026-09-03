@@ -21,7 +21,7 @@
  */
 import { fplPercent } from "../engine/benefits";
 import { fplRegionFor } from "../data/usStates";
-import { HOSPITAL_FAP_CITATION } from "../data/statutes";
+import { HOSPITAL_COLLECTION_CITATION, HOSPITAL_FAP_CITATION } from "../data/statutes";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { citationLink } from "../ui/resultCard";
@@ -63,6 +63,7 @@ const ASK = [
   "Ask for a fully itemized bill, and check it against your insurer's Explanation of Benefits before you pay anything.",
   "Ask whether the bill can be held while your application is reviewed.",
   "Apply even if you think you earn too much. Policies differ, and some cover people well above the poverty line.",
+  "Apply even if the bill is months old, and even if it has already gone to collections. The application period runs to at least the 240th day after your first bill, and a hospital may accept one after that.",
 ];
 
 export function mountCharityCare(ctx: TileContext): void {
@@ -130,6 +131,18 @@ export function mountCharityCare(ctx: TileContext): void {
         { class: "cc-law" },
         "Every nonprofit hospital must have a written financial assistance policy covering emergency and medically necessary care, must say who qualifies and whether help is free or discounted, and must give you a paper copy on request at no charge. ",
         citationLink(HOSPITAL_FAP_CITATION),
+      ),
+      el("h3", { class: "cc-heading", text: "How long you have, and what they may not do" }),
+      el(
+        "p",
+        { class: "cc-law" },
+        "The clock is longer than a bill makes it look. A nonprofit hospital must accept a financial assistance " +
+          "application until at least the 240th day after your first bill after discharge, and it must hold off on " +
+          "collection for at least 120 days from that same bill — no selling the debt, no credit reporting, no lien, " +
+          "no lawsuit, no wage garnishment, and no refusing you medically necessary care over the unpaid bill. " +
+          "Before the first of those it owes you 30 days' written warning. Applying suspends them again while your " +
+          "application is reviewed. ",
+        citationLink(HOSPITAL_COLLECTION_CITATION),
       ),
       el("h3", { class: "cc-heading", text: "What to ask for" }),
       el("ol", { class: "cc-ask" }, ...ASK.map((a) => el("li", { text: a }))),

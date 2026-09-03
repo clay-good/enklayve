@@ -64,6 +64,29 @@ describe("Hospital Financial Assistance", () => {
     expect(law?.querySelector("a")?.getAttribute("href")).toContain("501r4");
   });
 
+  it("names the collection clocks, which are the half with a deadline on them", () => {
+    // §501(r)(4) tells a patient that help exists; 26 CFR §1.501(r)-6 tells
+    // them how long they have to ask and what the hospital may not do
+    // meanwhile, and this tile said nothing about it. A person holding a
+    // hospital bill is being told to pay it now: that the application period
+    // runs to at least the 240th day after the first post-discharge statement,
+    // and that no lawsuit, credit report, lien or garnishment may start for 120
+    // days from it, is the most useful thing on the page.
+    const laws = [...mount(LOW).querySelectorAll(".cc-law")].map((n) => n.textContent ?? "");
+    const collection = laws.find((t) => t.includes("240th day"));
+    expect(collection, "the collection clocks are not on the page").toBeDefined();
+    expect(collection).toContain("120 days");
+    expect(collection).toContain("30 days' written warning");
+    // The named actions matter more than the phrase "extraordinary collection
+    // action", which means nothing to the person receiving one.
+    expect(collection).toContain("wage garnishment");
+    expect(collection).toContain("credit reporting");
+    const href = [...mount(LOW).querySelectorAll(".cc-law a")]
+      .map((a) => a.getAttribute("href") ?? "")
+      .find((h) => h.includes("501(r)-6"));
+    expect(href, "the collection rule is uncited").toBeDefined();
+  });
+
   it("keeps the can't-determine limit visible rather than buried", () => {
     expect(mount(LOW).querySelector(".cc-limit")?.textContent).toContain(
       "not an eligibility determination",
