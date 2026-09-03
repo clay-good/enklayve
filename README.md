@@ -701,7 +701,7 @@ See the spec files for the full per-wave history.
 | `scripts` | Data-refresh adapters, the manifest builder, static-page generators, the social-card (`og:image`) and README-screenshot (`screenshots`) generators, the release audit |
 | `worker` | Cloudflare Worker asset router and security headers |
 | `tests` | Unit tests, the golden correctness corpus, and the axe accessibility sweep |
-| `docs` | The specs, data sources, adding-a-state, contributing, the source diff log, and the launch checklist |
+| `docs` | The specs, data sources, adding-a-state, the annual-roll runbook, contributing, the source diff log, and the launch checklist |
 
 ---
 
@@ -724,7 +724,7 @@ npm run screenshots    # regenerate the README screenshots (docs/screenshots/) f
 npm run deploy:dry     # wrangler dry-run deploy
 ```
 
-Node 20+ for the app (Node 24 in CI runs the TypeScript build scripts directly). New to the codebase? [docs/contributing.md](docs/contributing.md) covers the tile contract and the non-negotiable principles; [docs/adding-a-state.md](docs/adding-a-state.md) is a data-only walkthrough.
+Node 20+ for the app (Node 24 in CI runs the TypeScript build scripts directly). New to the codebase? [docs/contributing.md](docs/contributing.md) covers the tile contract and the non-negotiable principles; [docs/adding-a-state.md](docs/adding-a-state.md) is a data-only walkthrough, and [docs/annual-roll.md](docs/annual-roll.md) is the runbook for the one recurring task that touches every shard at once — rolling the tax year, where the year is a three-line edit in the manifest and 81 files in the shards, and that asymmetry is the whole danger.
 
 **Found a wrong number?** That is the most useful report this project gets, and there is a [form for it](.github/ISSUE_TEMPLATE/wrong-figure.yml) that asks for the one thing a fix needs: a deep link to the agency that publishes the figure. A security problem goes the other way — privately, through [SECURITY.md](SECURITY.md) — and a wrong figure is explicitly *not* one, because it belongs where it can be cited and argued with.
 

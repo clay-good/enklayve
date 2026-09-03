@@ -67,7 +67,7 @@ A new shard is its own short chain, in this order: the JSON in `data/`, a schema
 
 ## Adding or refreshing data
 
-See [`adding-a-state.md`](adding-a-state.md) for a jurisdiction and [`data-sources.md`](data-sources.md) for the source list and the fail-safe refresh contract. The rule of thumb: **never ship a number you cannot cite to a public source.** When a figure is too large or too local to bundle, have the user supply that one local number rather than guess — that is why the per-county ACA benchmark (second-lowest-cost silver) premium and the Social Security PIA are user-supplied, not bundled. (The FAFSA SAI + Pell tables *are* now bundled and cited from the ED SAI Formula Guide; only the independent-student variant and per-state aid stay out of scope.)
+See [`adding-a-state.md`](adding-a-state.md) for a jurisdiction, [`annual-roll.md`](annual-roll.md) for rolling every figure to a new tax year, and [`data-sources.md`](data-sources.md) for the source list and the fail-safe refresh contract. The rule of thumb: **never ship a number you cannot cite to a public source.** When a figure is too large or too local to bundle, have the user supply that one local number rather than guess — that is why the per-county ACA benchmark (second-lowest-cost silver) premium and the Social Security PIA are user-supplied, not bundled. (The FAFSA SAI + Pell tables *are* now bundled and cited from the ED SAI Formula Guide; only the independent-student variant and per-state aid stay out of scope.)
 
 ## Voice
 

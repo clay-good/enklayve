@@ -178,22 +178,26 @@ describe("staleness fail-safe", () => {
 /**
  * What the manifest says about a shard, the shard's own citations must say too.
  *
- * Provenance is stated twice. A shard carries its citations inside itself — the
- * document, the URL, the effective year, the date somebody read it — and the
- * manifest entry that pins that shard states the same four again, from a
- * separate table in `scripts/build-manifest.ts`. Nothing compared them.
+ * The four fields are not in the same position, and the difference is the point.
  *
- * The manifest's copy is not a duplicate for convenience. `effectiveYear` drives
- * the **staleness gate**, so it decides whether a figure degrades loudly or keeps
- * rendering as current; `sourceUrl` and `sourceDocument` are what the provenance
- * audit and [docs/data-sources.md](../docs/data-sources.md) publish as the place
- * the figure came from. Correct a shard's citation without the table and the
- * published provenance points at the document the figure is no longer from —
- * which is a citation that does not match its number, the one thing this repo's
- * whole claim rests on not happening. Bump the table's year without rolling the
- * shard and the site reports last year's figures as fresh. Both are one-line
- * mistakes, and the annual roll is the one recurring task that touches every
- * shard at once, so both are mistakes somebody will make.
+ * **`effectiveYear` is genuinely stated twice.** The shard states it inside its
+ * citations; the manifest gets it from a shared constant in
+ * `scripts/build-manifest.ts` — `ANNUAL`, `SEMIANNUAL`, or `PILLAR4_ANNUAL` —
+ * which means bumping the year for all 81 entries is a THREE-LINE edit while
+ * rolling the shards is 81 files. The manifest's copy drives the staleness gate,
+ * so those three lines alone tell the app every figure is current while every
+ * shard still holds last year's numbers: last year's figures reported as fresh,
+ * with no banner. That is the failure this test exists for, and the annual roll
+ * is when somebody will make it.
+ *
+ * **The other three are copied from the shard at generation time.**
+ * `build-manifest.ts` reads `sourceUrl`, `sourceDocument` and `dateRetrieved`
+ * out of each shard's own `citation` block rather than restating them, so for
+ * those three this compares a value against the value it was derived from. That
+ * is worth asserting anyway and worth being honest about what it asserts: it
+ * catches a manifest edited BY HAND without regenerating — the realistic way
+ * these drift, since `npm run data:manifest` is the sanctioned path and a
+ * hand-edited entry is the one nothing else would notice.
  *
  * A shard may cite several documents — a state's brackets and its standard
  * deduction are often published separately — so the manifest's value has to be
