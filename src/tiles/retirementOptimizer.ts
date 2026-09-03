@@ -7,6 +7,7 @@
  * back to My Situation so it feeds My Plan's "capture the match" step.
  */
 import { Money } from "../engine/money";
+import { electiveDeferralLimit, inEnhancedCatchUpWindow } from "../engine/contributionLimits";
 import type { RetirementLimitsData } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
@@ -64,7 +65,7 @@ function writeFields(f: Fields): URLSearchParams {
 /** The applicable limits for this person, given age and HSA coverage. */
 function limitsFor(f: Fields, d: RetirementLimitsData): { k: number; ira: number; hsa: number } {
   const l = d.limits;
-  const k = l.elective_deferral_401k + (f.age >= 50 ? l.catch_up_401k_50plus : 0);
+  const k = electiveDeferralLimit(f.age, l);
   const ira = l.ira_contribution + (f.age >= 50 ? l.ira_catch_up_50plus : 0);
   let hsa = 0;
   if (f.hsaCoverage === "self") hsa = l.hsa_self_only;
@@ -129,9 +130,13 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
     const totalRoom = room401k + roomIra + roomHsa;
 
     const catchUp = fields.age >= 50;
+    // 60 through 63 is a window, not a floor: §414(v)(2)(E)(i) reaches a
+    // participant who attains 60 but not 64, so the label must not follow a
+    // 64-year-old into a year they no longer get it.
+    const enhanced = inEnhancedCatchUpWindow(fields.age, limits!.limits);
     const lines: BreakdownLine[] = [
       {
-        label: `401(k) limit${catchUp ? " (with catch-up)" : ""}`,
+        label: `401(k) limit${enhanced ? " (with the 60–63 catch-up)" : catchUp ? " (with catch-up)" : ""}`,
         value: fmt(Money.from(lim.k)),
         citation: cite,
       },

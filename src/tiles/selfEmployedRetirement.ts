@@ -7,6 +7,7 @@
  * your net profit. Built on the existing SE-tax engine and the bundled IRS limits.
  */
 import { Money } from "../engine/money";
+import { electiveDeferralCatchUp, inEnhancedCatchUpWindow } from "../engine/contributionLimits";
 import { selfEmploymentTax } from "../engine/tax";
 import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
@@ -104,9 +105,9 @@ export function mountSelfEmployedRetirement(ctx: TileContext): void {
   function compute(): void {
     const limits = limitsData!.limits;
     const elective = limits.elective_deferral_401k;
-    const catchUp = fields.age >= 50 ? limits.catch_up_401k_50plus : 0;
+    const catchUp = electiveDeferralCatchUp(fields.age, limits);
     const dc415 = limits.defined_contribution_415c;
-    const overallCap = dc415 + catchUp; // §415(c) plus the 50+ catch-up
+    const overallCap = dc415 + catchUp; // §415(c) plus whichever catch-up the age earns
 
     const se = selfEmploymentTax(Money.from(fields.profit), fields.fs, fica!);
     const netEarnings = Money.from(fields.profit).subtract(se.deductibleHalf);
@@ -140,7 +141,13 @@ export function mountSelfEmployedRetirement(ctx: TileContext): void {
         citation: limitsData!.citation,
       },
       {
-        label: `Solo 401(k): employee deferral${catchUp > 0 ? " (incl. 50+ catch-up)" : ""}`,
+        label: `Solo 401(k): employee deferral${
+          inEnhancedCatchUpWindow(fields.age, limits)
+            ? " (incl. 60–63 catch-up)"
+            : catchUp > 0
+              ? " (incl. 50+ catch-up)"
+              : ""
+        }`,
         value: fmt(employeeDeferral),
         citation: limitsData!.citation,
       },

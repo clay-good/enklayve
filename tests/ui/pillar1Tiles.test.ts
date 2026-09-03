@@ -46,6 +46,15 @@ function mount(
 function labels(root: HTMLElement): string[] {
   return Array.from(root.querySelectorAll(".bd-label")).map((n) => n.textContent ?? "");
 }
+/** The value cell beside the first breakdown label starting with `label`. */
+function rowValue(root: HTMLElement, label: string): string {
+  for (const row of root.querySelectorAll(".bd-row")) {
+    if ((row.querySelector(".bd-label")?.textContent ?? "").startsWith(label)) {
+      return row.querySelector(".bd-value")?.textContent ?? "";
+    }
+  }
+  return "";
+}
 function clickExample(root: HTMLElement): void {
   Array.from(root.querySelectorAll("button"))
     .find((b) => b.textContent === "Try an example")!
@@ -336,6 +345,22 @@ describe("Retirement Contribution Optimizer tile", () => {
     expect(ls.some((l) => l.startsWith("HSA limit"))).toBe(true);
     // Every limit cites the IRS notice.
     expect(root.querySelectorAll("a.cite-link").length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("gives a 61-year-old the 60–63 catch-up, and a 64-year-old the ordinary one", () => {
+    // The shard has carried `catch_up_401k_60to63` since the 2026 limits landed
+    // and this tile read `catch_up_401k_50plus` for every age over 50, so a
+    // 61-year-old was told $32,500 where §414(v)(2)(E)(i) says $35,750. The
+    // 64-year-old is the other half of the same rule: the window closes.
+    const at61 = mount(mountRetirementOptimizer, new URLSearchParams({ age: "61", k: "0" }));
+    const l61 = labels(at61.root);
+    expect(l61.some((l) => l.startsWith("401(k) limit (with the 60–63 catch-up)"))).toBe(true);
+    expect(rowValue(at61.root, "401(k) limit")).toContain("$35,750");
+
+    const at64 = mount(mountRetirementOptimizer, new URLSearchParams({ age: "64", k: "0" }));
+    const l64 = labels(at64.root);
+    expect(l64.some((l) => l.startsWith("401(k) limit (with catch-up)"))).toBe(true);
+    expect(rowValue(at64.root, "401(k) limit")).toContain("$32,500");
   });
 
   it("reads the 401(k) from the profile and writes edits back", () => {

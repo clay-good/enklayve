@@ -70,6 +70,7 @@ import {
   retirementDrawdown,
 } from "../src/engine/finance";
 import { garnishmentCeiling } from "../src/engine/garnishment";
+import { electiveDeferralCatchUp, electiveDeferralLimit } from "../src/engine/contributionLimits";
 import { iraDeductibility } from "../src/engine/iraDeduction";
 import { evaluatePlan, DEFAULT_CONFIG, type PlanInput } from "../src/engine/plan";
 import { requiredMinimumDistribution } from "../src/engine/rmd";
@@ -101,6 +102,7 @@ export const PROBED_FILES = [
   "src/engine/fafsa.ts",
   "src/engine/finance.ts",
   "src/engine/garnishment.ts",
+  "src/engine/contributionLimits.ts",
   "src/engine/iraDeduction.ts",
   "src/engine/plan.ts",
   "src/engine/rmd.ts",
@@ -333,6 +335,17 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
         taxable: r.taxableBenefits.toNumber(),
       });
     }
+  }
+
+  // --- contributionLimits: the 50 and 60-63 catch-up edges ------------------
+  // 63 and 64 are the pair that matters: §414(v)(2)(E)(i) reaches a participant
+  // who attains 60 but not 64, so the window closes rather than running on.
+  const deferralLimits = data.retirementLimits()!.limits;
+  for (const age of [49, 50, 59, 60, 63, 64]) {
+    put(`deferral(${age})`, {
+      catchUp: electiveDeferralCatchUp(age, deferralLimits),
+      limit: electiveDeferralLimit(age, deferralLimits),
+    });
   }
 
   // --- iraDeduction / educationCredits: phase-out endpoints -----------------
