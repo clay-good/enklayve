@@ -74,12 +74,16 @@ function githubFiles(dir = resolve(ROOT, ".github")): string[] {
  * `data-review` stayed broken in four workflows while the forms were fixed.
  */
 export function labelsNamedIn(source: string): string[] {
-  return [...source.matchAll(/labels:\s*\[([^\]]*)\]/g)].flatMap((m) =>
-    m[1]!
-      .split(",")
-      .map((raw) => raw.trim().replace(/^["']|["']$/g, ""))
-      .filter((name) => name.length > 0 && !name.includes("$")),
+  const fromArrays = [...source.matchAll(/labels:\s*\[([^\]]*)\]/g)].flatMap((m) =>
+    m[1]!.split(",").map((raw) => raw.trim().replace(/^["']|["']$/g, "")),
   );
+  // `gh pr create --label data-refresh` names a label too, and the first
+  // version of this sweep could not see it -- which is how the two labels the
+  // whole data-refresh pipeline depends on stayed missing while the issue forms
+  // were fixed. Reading one syntax and not the other is the same
+  // told-where-to-look mistake, one syntax over.
+  const fromFlags = [...source.matchAll(/--label[=\s]+["']?([\w.-]+)/g)].map((m) => m[1]!);
+  return [...fromArrays, ...fromFlags].filter((name) => name.length > 0 && !name.includes("$"));
 }
 
 interface Field {
@@ -209,6 +213,13 @@ describe("every label a form applies exists", () => {
       expect(labelsNamedIn("labels: []")).toEqual([]);
       // An interpolated label is not a literal this can check.
       expect(labelsNamedIn('labels: ["${{ env.L }}"]')).toEqual([]);
+      // And the flag form, which a `gh pr create` in a run block uses.
+      expect(labelsNamedIn("  --label data-refresh \\\n  --label alert \\\n")).toEqual([
+        "data-refresh",
+        "alert",
+      ]);
+      expect(labelsNamedIn('gh pr create --label="needs-review"')).toEqual(["needs-review"]);
+      expect(labelsNamedIn("--label ${{ inputs.l }}")).toEqual([]);
     });
   });
 

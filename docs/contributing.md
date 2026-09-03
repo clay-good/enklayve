@@ -16,7 +16,7 @@ New Issue lists both forms with the fields each one needs. These link the issues
 
 **One warning worth repeating here.** Every result on this site is deep-linkable, which is deliberate and which means a permalink encodes what you typed — your income, your balances. An issue is public and permanent. Reproduce the problem with round figures and paste *that* link. A wrong bracket is wrong at $50,000 the same as it is at yours.
 
-The labels those forms apply live in [`.github/labels.yml`](../.github/labels.yml), not in a web UI. A label an issue form names and the repository does not have is dropped on the way in silently — the issue is created, the triage signal is not, and nothing anywhere says so. `.github/workflows/sync-labels.yml` writes the file to the repository on every push that touches it, and [`tests/build/issueTemplates.test.ts`](../tests/build/issueTemplates.test.ts) holds every label a template applies to that list. Adding a label is an edit to the file. Run `npm run labels:sync -- --dry-run` to see what a push would do.
+The labels those forms apply — and the ones the automated pipelines attach to their own pull requests — live in [`.github/labels.yml`](../.github/labels.yml), not in a web UI. A label an issue form names and the repository does not have is dropped on the way in silently — the issue is created, the triage signal is not, and nothing anywhere says so. `.github/workflows/sync-labels.yml` writes the file to the repository on every push that touches it, and [`tests/build/issueTemplates.test.ts`](../tests/build/issueTemplates.test.ts) holds every label a template applies to that list. Adding a label is an edit to the file. Run `npm run labels:sync -- --dry-run` to see what a push would do.
 
 ## The non-negotiable principles (SPEC §2)
 
@@ -51,6 +51,19 @@ npm run check:advisories     # every npm advisory has a reviewed reason, monthly
 npm run check:boundaries     # which comparisons a test actually holds, monthly
 npm run check:boundaries -- --help   # it rewrites src/engine in place; read this first
 ```
+
+## Exercising the data-refresh pipeline
+
+Forty-nine `refresh-*.yml` workflows call the reusable [`_data-refresh.yml`](../.github/workflows/_data-refresh.yml), each on its own annual or monthly cron: fetch the source, parse it, diff it against the shard, and open a pull request a person reviews. On 2026-09-03 **not one of them had ever run** — the crons had not come round — and the only way to exercise one was to wait for a cron and let it propose a change to real data.
+
+`_data-refresh.yml` is dispatchable now, and **defaults to a dry run**: it fetches, parses and diffs, prints what it would change, and writes nothing. The outcome is the genuine verdict — `--dry-run` changes what is written, not what is decided — so it answers "does this group still work end to end" with nothing proposed.
+
+```sh
+gh workflow run _data-refresh.yml -f group=state-oh          # dry run, the default
+node scripts/refresh/run.ts --group state-oh --dry-run       # the same thing locally
+```
+
+Run it after touching an adapter, and **read the diff rather than the outcome word**: an adapter that anchors a bracket threshold where a deduction belongs reports `open-pr` just as happily as one that is right, which is exactly what happened when Maine's deduction adapter was pointed at a form that does state the deduction.
 
 `check:boundaries` had no workflow until 2026-09-03, which is the reason to mention it here rather than leave it to the checklist: it ran when somebody typed it, and two days after the baseline was recorded it turned up a threshold in the cliff engine with no case sitting on it. If you add a comparison against a statutory figure, write the case that stands exactly on it — `<=` and `<` are different answers to a household at the limit, and a suite is green under either.
 

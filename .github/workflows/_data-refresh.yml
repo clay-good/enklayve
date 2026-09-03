@@ -7,6 +7,14 @@
 # merges anything itself; a human reviews every PR.
 name: _data-refresh
 
+# `workflow_dispatch` as well as `workflow_call`, because on 2026-09-03 not one
+# of the 49 refresh workflows had ever run -- their crons had not come round --
+# and a pipeline nobody has executed is a pipeline nobody knows works. The only
+# way to exercise it was to wait for a cron and let it open a pull request
+# against real data. `run.ts` already had `--dry-run`, which writes no shard and
+# no diff-log entry and prints what it WOULD change; this exposes it, so any
+# group can be run end to end on demand without proposing anything. Dispatch
+# defaults to a dry run for that reason; a real refresh is the deliberate act.
 on:
   workflow_call:
     inputs:
@@ -18,6 +26,27 @@ on:
         description: Human-readable source name for the PR title.
         required: true
         type: string
+      dry_run:
+        description: Fetch, parse and diff, but write nothing and open no PR.
+        required: false
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      group:
+        description: The refresh group (see scripts/refresh/adapters.ts).
+        required: true
+        type: string
+      source_name:
+        description: Human-readable source name, used only if this opens a PR.
+        required: false
+        type: string
+        default: manual run
+      dry_run:
+        description: Fetch, parse and diff, but write nothing and open no PR.
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -37,21 +66,23 @@ jobs:
       # Step 1: fetch + parse + diff + write the candidate shard and diff-log
       # entry. Emits outcome / changed / shards for the steps below.
       - id: refresh
-        run: node scripts/refresh/run.ts --group "${{ inputs.group }}"
+        run: |
+          node scripts/refresh/run.ts --group "${{ inputs.group }}" \
+            ${{ inputs.dry_run && '--dry-run' || '' }}
 
       # Steps 2–3 (open-pr only): rebuild the manifest + hashes, then run the
       # golden suite as the gate. A failure here stops the job, so no PR is
       # opened with data that breaks a golden case (§7.3 step 5, the "blocked"
       # outcome).
       - name: Rebuild manifest
-        if: steps.refresh.outputs.outcome == 'open-pr'
+        if: steps.refresh.outputs.outcome == 'open-pr' && !inputs.dry_run
         run: npm run data:manifest
       - name: Golden test gate
-        if: steps.refresh.outputs.outcome == 'open-pr'
+        if: steps.refresh.outputs.outcome == 'open-pr' && !inputs.dry_run
         run: npm run test
 
       - name: Open data pull request
-        if: steps.refresh.outputs.outcome == 'open-pr'
+        if: steps.refresh.outputs.outcome == 'open-pr' && !inputs.dry_run
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -71,12 +102,24 @@ jobs:
 
           The full golden test suite passed against this data (the BUILD-SPEC.md §7.3 gate). See \`docs/source-diff-log.md\` for the old-to-new values. A reviewer still owns any effective-year rollover and full bracket-table transcription."
 
+      # A dry run stops here, and says what a real one would have done. The
+      # outcome is the genuine verdict -- `--dry-run` changes what is written,
+      # not what is decided -- so this is the whole answer to "does this group's
+      # adapter still work end to end", with nothing proposed.
+      - name: Say what a real run would have done
+        if: inputs.dry_run
+        run: |
+          echo "::notice::dry run of ${{ inputs.group }}:" \
+            "outcome=${{ steps.refresh.outputs.outcome }}" \
+            "changed=${{ steps.refresh.outputs.changed }}" \
+            "shards=${{ steps.refresh.outputs.shards }}"
+
       # Fail-safe branch (§7.3 step 4): the source 404'd or failed to parse. The
       # shard is left untouched; raise an alert PR carrying the diff-log note so
       # a human investigates. The runtime fail-safe gate shows the verify banner
       # if the dataset goes stale before a good refresh lands.
       - name: Open fail-safe alert pull request
-        if: steps.refresh.outputs.outcome == 'alert-pr'
+        if: steps.refresh.outputs.outcome == 'alert-pr' && !inputs.dry_run
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

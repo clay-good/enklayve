@@ -10,6 +10,16 @@
 # diff -- the same shape as the token scope that was moved in here on
 # 2026-09-02, one file over.
 #
+# `data-refresh` and `alert` were the same defect again, and this is the place it
+# costs most. Every one of the 49 refresh workflows ends in `gh pr create
+# --label data-refresh` (plus `--label alert` on the fail-safe branch), and
+# neither label existed. Those workflows had never run -- their crons had not
+# come round -- so the first thing the data-refresh pipeline would ever do was
+# attach a label the repository does not have, on the pull request that is its
+# entire output and the only way a person learns a figure moved. They were found
+# only because the first version of the sweep read `labels: [...]` and not
+# `--label`, which is the told-where-to-look mistake one syntax over.
+#
 # `data-review` was the same defect one directory over, and worse for being
 # unattended: the four scheduled checks that watch for source rot -- links,
 # adapters, advisories, the Pillar 4 sources -- each open an issue labelled
@@ -24,42 +34,53 @@
 # sync-labels.yml` writes the list to the repository on every push that touches
 # this file. Adding a label is an edit here, not a click.
 #
+# Every colour is quoted, and it has to be: `0E7490` is valid YAML scientific
+# notation and parses to the number 0, so an unquoted teal became a falsy colour
+# that `declaredLabels` rejected at import. A six-character hex string is a
+# string; say so.
+#
 # The sync creates and updates; it never deletes. A label somebody made by hand
 # in the middle of a triage is not an error, and losing it on the next push
 # would be.
 labels:
   - name: data
-    color: 6D28D9
+    color: "6D28D9"
     description: A bundled figure disagrees with the document it cites
   - name: data-review
-    color: B45309
+    color: "B45309"
     description: A scheduled check found a source, link, or advisory that needs a human
+  - name: data-refresh
+    color: "0E7490"
+    description: An automated refresh proposing a change to a bundled shard
+  - name: alert
+    color: "B91C1C"
+    description: A refresh could not fetch or parse its source; the shard is untouched
   - name: bug
-    color: d73a4a
+    color: "d73a4a"
     description: Something isn't working
   - name: enhancement
-    color: a2eeef
+    color: "a2eeef"
     description: New feature or request
   - name: documentation
-    color: 0075ca
+    color: "0075ca"
     description: Improvements or additions to documentation
   - name: good first issue
-    color: 7057ff
+    color: "7057ff"
     description: Good for newcomers
   - name: help wanted
     color: "008672"
     description: Extra attention is needed
   - name: question
-    color: d876e3
+    color: "d876e3"
     description: Further information is requested
   - name: duplicate
-    color: cfd3d7
+    color: "cfd3d7"
     description: This issue or pull request already exists
   - name: invalid
-    color: e4e669
+    color: "e4e669"
     description: This doesn't seem right
   - name: wontfix
-    color: ffffff
+    color: "ffffff"
     description: This will not be worked on
   - name: dependencies
     color: "0366d6"
