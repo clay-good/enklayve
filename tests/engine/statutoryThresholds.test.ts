@@ -81,27 +81,65 @@ describe("the ACA premium tax credit at exactly 100% of the poverty line", () =>
     expect(r.annualCredit.toNumber()).toBeGreaterThan(0);
   });
 
-  it("denies any credit at exactly 400% FPL, where the cliff returned for 2026", () => {
+  it("still allows a credit at exactly 400% FPL — the cliff is above the line, not on it", () => {
     // The enhanced subsidies expired after 2025, so the top band closes at 400%
-    // and there is nothing above it. At exactly 400% you are above the top
-    // band, not in it: the band reads `< fplHigh`.
+    // and there is nothing above it. Which side of the line 400% itself sits on
+    // is a statute, not a rounding convention: §36B(c)(1)(A) defines an
+    // applicable taxpayer as one whose household income "does not exceed 400
+    // percent" of the poverty line, and Form 8962 bars the credit only when
+    // line 5 is *more than* 400. This engine used to read the top band as
+    // `< fplHigh` and deny the credit to a household standing exactly on it —
+    // the same household the owed screener was telling, in the same session,
+    // that it was "within the 100–400% range" and likely qualified.
     const r = estimatePremiumTaxCredit(
       { householdSize: 1, annualIncome: ONE_PERSON_LINE * 4, benchmarkMonthlyPremium: 800 },
       data.aca()!,
       data.fpl("contiguous")!,
     );
     expect(r.fplPercent).toBe(400);
-    expect(r.aboveSubsidyCap).toBe(true);
-    expect(r.eligible).toBe(false);
-    expect(r.annualCredit.toNumber()).toBe(0);
-    // A cent under the cliff is a real credit. This is a step, not a slope.
-    const under = estimatePremiumTaxCredit(
-      { householdSize: 1, annualIncome: ONE_PERSON_LINE * 4 - 1, benchmarkMonthlyPremium: 800 },
+    expect(r.aboveSubsidyCap).toBe(false);
+    expect(r.eligible).toBe(true);
+    // The top band is flat, so the applicable percentage on the line is the
+    // band's own final percentage rather than anything interpolated.
+    const top = data.aca()!.applicablePercentage.at(-1)!;
+    expect(r.applicablePercent).toBeCloseTo(top.percentageHigh, 10);
+    expect(r.annualCredit.toNumber()).toBeCloseTo(
+      800 * 12 - ONE_PERSON_LINE * 4 * (top.percentageHigh / 100),
+      6,
+    );
+  });
+
+  it("denies any credit a cent past 400% FPL", () => {
+    // The cliff is real, just one cent further along than the engine used to
+    // put it. This is a step, not a slope: the household above the line pays
+    // the whole premium.
+    const over = estimatePremiumTaxCredit(
+      { householdSize: 1, annualIncome: ONE_PERSON_LINE * 4 + 1, benchmarkMonthlyPremium: 800 },
       data.aca()!,
       data.fpl("contiguous")!,
     );
-    expect(under.aboveSubsidyCap).toBe(false);
-    expect(under.annualCredit.toNumber()).toBeGreaterThan(0);
+    expect(over.fplPercent).toBeGreaterThan(400);
+    expect(over.aboveSubsidyCap).toBe(true);
+    expect(over.eligible).toBe(false);
+    expect(over.annualCredit.toNumber()).toBe(0);
+  });
+
+  it("agrees with the owed screener about who is inside the 100-400% range", () => {
+    // The screener draws the same band with its own literals (`>= 100 && <= 400`)
+    // and prints "you likely qualify". A document generated beside a tile must
+    // not contradict it, so the engine and that inclusive reading are checked
+    // against each other on both endpoints and just outside them.
+    const aca = data.aca()!;
+    for (const pct of [100, 133, 150, 250, 399.99, 400]) {
+      expect(acaCovered(pct, aca)).toBe(pct >= 100 && pct <= 400);
+    }
+    expect(acaCovered(400.01, aca)).toBe(false);
+    // And the percentage the credit is sized from must not fall off the table
+    // at the endpoint either: reading past the last band returned 0%, which
+    // would have handed the household the entire benchmark premium as a credit
+    // had the coverage check not zeroed it first.
+    expect(acaApplicablePercent(400, aca)).toBeGreaterThan(0);
+    expect(acaApplicablePercent(400.01, aca)).toBe(0);
   });
 });
 

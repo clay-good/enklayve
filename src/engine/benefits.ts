@@ -276,18 +276,31 @@ export function medicaidEligibility(
   };
 }
 
+/**
+ * Whether an exact FPL% falls inside a band. Interior bands are half-open — the
+ * table reads "133% up to 150%", and the next band's initial percentage equals
+ * this one's final, so the shared endpoint belongs to the band above it and the
+ * schedule stays continuous. The *last* closed band is the exception: §36B(c)(1)(A)
+ * makes an applicable taxpayer one whose income "does not exceed 400 percent" of
+ * the poverty line, so a household standing exactly on 400% is inside the table,
+ * not past it. Closing that endpoint is the difference between the last band and
+ * the cliff.
+ */
+function inBand(fplPct: number, band: AcaData["applicablePercentage"][number], last: boolean) {
+  if (band.fplHigh === null) return fplPct >= band.fplLow;
+  return fplPct >= band.fplLow && (fplPct < band.fplHigh || (last && fplPct === band.fplHigh));
+}
+
 /** The applicable percentage for an exact FPL%, interpolated within its band. */
 export function acaApplicablePercent(fplPct: number, data: AcaData): number {
-  for (const band of data.applicablePercentage) {
-    if (band.fplHigh === null) {
-      if (fplPct >= band.fplLow) return band.percentageHigh;
-      continue;
-    }
-    if (fplPct >= band.fplLow && fplPct < band.fplHigh) {
-      const span = band.fplHigh - band.fplLow;
-      const frac = span > 0 ? (fplPct - band.fplLow) / span : 0;
-      return band.percentageLow + (band.percentageHigh - band.percentageLow) * frac;
-    }
+  const bands = data.applicablePercentage;
+  for (let i = 0; i < bands.length; i++) {
+    const band = bands[i]!;
+    if (!inBand(fplPct, band, i === bands.length - 1)) continue;
+    if (band.fplHigh === null) return band.percentageHigh;
+    const span = band.fplHigh - band.fplLow;
+    const frac = span > 0 ? (fplPct - band.fplLow) / span : 0;
+    return band.percentageLow + (band.percentageHigh - band.percentageLow) * frac;
   }
   return 0;
 }
@@ -295,18 +308,13 @@ export function acaApplicablePercent(fplPct: number, data: AcaData): number {
 /**
  * Whether an exact FPL% falls within a credit-eligible band. With the post-2025
  * table the top band ends at 400% FPL (the subsidy cliff returns), so income
- * above it is not covered and earns no credit; an open-ended top band (the
- * ARPA-enhanced schedule) instead covers everything above its floor.
+ * *above* it is not covered and earns no credit — but income exactly *on* it is
+ * covered, per §36B(c)(1)(A)'s "does not exceed 400 percent". An open-ended top
+ * band (the ARPA-enhanced schedule) instead covers everything above its floor.
  */
 export function acaCovered(fplPct: number, data: AcaData): boolean {
-  for (const band of data.applicablePercentage) {
-    if (band.fplHigh === null) {
-      if (fplPct >= band.fplLow) return true;
-    } else if (fplPct >= band.fplLow && fplPct < band.fplHigh) {
-      return true;
-    }
-  }
-  return false;
+  const bands = data.applicablePercentage;
+  return bands.some((band, i) => inBand(fplPct, band, i === bands.length - 1));
 }
 
 export interface AcaResult {
