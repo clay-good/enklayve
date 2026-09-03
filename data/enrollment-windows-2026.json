@@ -136,11 +136,11 @@
       "bound": "floor",
       "detail": "Eight consecutive months, counted from the end of group health coverage based on current employment. Using it avoids the Part B late-enrollment penalty entirely. Note that it runs from the end of *employment-based* coverage — COBRA is not employment-based coverage for this purpose, so the clock does not restart when COBRA ends.",
       "citation": {
-        "sourceUrl": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-B/part-406/subpart-C/section-406.24",
-        "sourceDocument": "42 CFR §406.24(b)(2)",
-        "sourceNote": "The special enrollment period ends on the last day of the eighth consecutive month during which the individual is at no time enrolled in a group health plan or large group health plan by reason of current employment status.",
+        "sourceUrl": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-B/part-407/subpart-B/section-407.20",
+        "sourceDocument": "42 CFR §407.20",
+        "sourceNote": "Section 407.20 is the Part B (supplementary medical insurance) special enrollment period, and it takes the SEP's definition — and so its duration — from 42 CFR §406.24(a)(4). §406.24(b)(2) states that the SEP ends on the last day of the eighth consecutive month during which the individual is at no time enrolled in a group health plan or large group health plan by reason of current employment status.",
         "effectiveYear": 2026,
-        "dateRetrieved": "2026-08-29"
+        "dateRetrieved": "2026-09-03"
       }
     },
     {
@@ -187,14 +187,14 @@
         "days": 90,
         "trigger": "the date of your eligibility determination notice"
       },
-      "bound": "floor",
-      "detail": "Ninety days from the date of the notice. A State-based Exchange may instead use its state Medicaid agency's timeframe, which can be shorter but never less than 30 days — so check the date on your own notice.",
+      "bound": "ceiling",
+      "detail": "Ninety days from the date of the notice, and that is the outer edge rather than a guarantee. A State-based Exchange may instead use its state Medicaid agency's timeframe, which can be shorter and is never less than 30 days — so the date on your own notice is the one that governs, not this one.",
       "citation": {
         "sourceUrl": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-F/section-155.520",
         "sourceDocument": "45 CFR §155.520(b)",
         "sourceNote": "The Exchange and the appeals entity must allow an appeal request within 90 days of the date of the notice of eligibility determination, or a timeframe consistent with the state Medicaid agency's requirement provided that timeframe is no less than 30 days.",
         "effectiveYear": 2026,
-        "dateRetrieved": "2026-08-29"
+        "dateRetrieved": "2026-09-03"
       }
     }
   ],

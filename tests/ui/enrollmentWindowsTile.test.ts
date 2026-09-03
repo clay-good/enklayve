@@ -79,6 +79,41 @@ describe("the enrollment-windows shard and its mapping", () => {
     expect(medicaid.deadline.isFloor).toBeUndefined();
   });
 
+  it("does not call the Marketplace appeal a floor, because a state can make it shorter", () => {
+    // 45 CFR §155.520(b): the Exchange must allow an appeal within 90 days of
+    // the notice, OR a timeframe consistent with the state Medicaid agency's
+    // requirement, "provided that timeframe is no less than 30 days". So 90 is
+    // the outer edge and a State-based Exchange may run 30. Marked a floor, the
+    // page said "at least 90 days" and added "your plan, state, or
+    // administrator may allow longer" — directly above its own paragraph saying
+    // the state's timeframe can be shorter. Two halves of one card, and the
+    // wrong half was the headline, on a deadline whose miss is final.
+    const all = enrollmentWindows(data.enrollmentWindows()!);
+    const appeal = all.find((w) => w.id === "marketplace-appeal")!;
+    expect(appeal.isCeiling).toBe(true);
+    expect(appeal.deadline.isFloor).toBeUndefined();
+    expect(appeal.detail).toContain("never less than 30 days");
+  });
+
+  it("cites the Part B special enrollment period to the Part B section", () => {
+    // The eight months are right and the section was not: 42 CFR §406.24 sits
+    // in Part 406, "Hospital Insurance Eligibility and Entitlement", subpart C
+    // — premium Part A. The Part B (SMI) SEP is §407.20, which takes the SEP's
+    // definition and duration from §406.24(a)(4). A reader following the link
+    // to check a Part B deadline landed on the Part A rule; every other
+    // Medicare window in this shard already cited Part 407.
+    const all = enrollmentWindows(data.enrollmentWindows()!);
+    const sep = all.find((w) => w.id === "medicare-part-b-sep")!;
+    expect(sep.deadline.citation.sourceDocument).toContain("407.20");
+    expect(sep.deadline.citation.sourceUrl).toContain("part-407");
+    // Every Medicare window points at the part that governs its own program.
+    for (const w of all.filter((x) => x.program === "Medicare")) {
+      expect(w.deadline.citation.sourceUrl, `${w.id} cites the wrong CFR part`).toContain(
+        "part-407",
+      );
+    }
+  });
+
   it("counts the Medicare periods in calendar months, not an approximation in days", () => {
     const shard = data.enrollmentWindows()!;
     const iep = windowsForProgram(shard, "Medicare").find(
