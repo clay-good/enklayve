@@ -333,13 +333,51 @@ export function shellSummary(
   );
 }
 
-export function checkLocalStorage(files: { path: string; content: string }[]): string[] {
-  const allowed = /(^|\/)ui\/theme\.ts$/;
+/**
+ * Nothing financial may persist on the device (SPEC §2 principle 8).
+ *
+ * This was `checkLocalStorage`, and the name is why the hole lasted: a gate
+ * named after one API looked at that one API. `sessionStorage`, IndexedDB,
+ * cookies and the Cache API all outlive a page the same way, and a tile writing
+ * a household's income into any of them would have passed an audit whose success
+ * line says "no sensitive persistence" — while the README states, flatly,
+ * "auto-persisted user data: 0".
+ *
+ * Nothing under `src/` used any of them when this widened; it is a hole closed
+ * rather than a leak stopped. The one allowance stays exactly as narrow as it
+ * was: `ui/theme.ts`, and only for `localStorage`, because the locale and theme
+ * preference is not financial and a reader's chosen theme flashing back to the
+ * default on every visit is a worse experience than the privacy cost is real.
+ * Theme is not thereby allowed IndexedDB.
+ *
+ * Comments are stripped before scanning, which the narrow version did not do and
+ * could not afford to skip once the words widened: this file's own prose says
+ * "the service worker caches the shell", and `caches` is the CacheStorage
+ * global. A sentence about storage is not a write to it.
+ */
+const PERSISTENCE = [
+  { pattern: /\blocalStorage\b/, name: "localStorage", allowed: /(^|\/)ui\/theme\.ts$/ },
+  { pattern: /\bsessionStorage\b/, name: "sessionStorage", allowed: null },
+  { pattern: /\bindexedDB\b|\bIDBFactory\b/, name: "IndexedDB", allowed: null },
+  { pattern: /\bdocument\.cookie\b/, name: "document.cookie", allowed: null },
+  { pattern: /\bcaches\b/, name: "the Cache API", allowed: null },
+  { pattern: /\bnavigator\.storage\b/, name: "navigator.storage", allowed: null },
+] as const;
+
+/** Source with comments removed, so prose about storage is not read as storage. */
+export function withoutComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+}
+
+export function checkClientStorage(files: { path: string; content: string }[]): string[] {
   const violations: string[] = [];
   for (const { path, content } of files) {
-    if (/\blocalStorage\b/.test(content) && !allowed.test(path)) {
+    const code = withoutComments(content);
+    for (const { pattern, name, allowed } of PERSISTENCE) {
+      if (!pattern.test(code)) continue;
+      if (allowed?.test(path)) continue;
       violations.push(
-        `${path} uses localStorage (only ui/theme.ts may, nothing financial persists)`,
+        `${path} uses ${name} (nothing financial persists; only ui/theme.ts may keep the locale/theme preference)`,
       );
     }
   }
@@ -487,7 +525,7 @@ function runCli(): void {
     path: p.slice(root.length + 1).replace(/\\/g, "/"),
     content: readFileSync(p, "utf8"),
   }));
-  violations.push(...checkLocalStorage(tsFiles));
+  violations.push(...checkClientStorage(tsFiles));
 
   // 5. The eager shell's byte budget — what a first visit actually costs, and
   // what is allowed to be in it at all.

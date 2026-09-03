@@ -6,7 +6,8 @@ import {
   checkProvenance,
   checkCitationLength,
   SOURCE_DOCUMENT_MAX,
-  checkLocalStorage,
+  checkClientStorage,
+  withoutComments,
   checkHarmTier,
   type AuditTile,
   checkBundleBudget,
@@ -82,18 +83,77 @@ describe("audit: citation sourceDocument length cap", () => {
   });
 });
 
-describe("audit: localStorage boundary", () => {
+/**
+ * This was `checkLocalStorage`, and the name is why the hole lasted: a gate
+ * named after one API looked at that one API. `sessionStorage`, IndexedDB,
+ * cookies and the Cache API all outlive a page the same way, and a tile writing
+ * a household's income into any of them passed an audit whose success line reads
+ * "no sensitive persistence" — under a README stating, flatly, "auto-persisted
+ * user data: 0". Nothing under `src/` used any of them; a hole closed rather
+ * than a leak stopped.
+ */
+describe("audit: the client-storage boundary", () => {
   it("allows localStorage only in ui/theme.ts", () => {
     expect(
-      checkLocalStorage([{ path: "src/ui/theme.ts", content: "localStorage.setItem(k, v)" }]),
+      checkClientStorage([{ path: "src/ui/theme.ts", content: "localStorage.setItem(k, v)" }]),
     ).toEqual([]);
   });
+
   it("flags localStorage anywhere financial", () => {
     expect(
-      checkLocalStorage([
+      checkClientStorage([
         { path: "src/tiles/takeHome.ts", content: "localStorage.setItem('income', x)" },
       ]).length,
     ).toBe(1);
+  });
+
+  it("flags every other way a page can outlive itself", () => {
+    const cases: [string, string][] = [
+      ["sessionStorage", "sessionStorage.setItem('income', x)"],
+      ["IndexedDB", "const db = indexedDB.open('enklayve')"],
+      ["document.cookie", "document.cookie = 'income=' + x"],
+      ["the Cache API", "await caches.open('answers')"],
+      ["navigator.storage", "await navigator.storage.persist()"],
+    ];
+    for (const [name, content] of cases) {
+      const found = checkClientStorage([{ path: "src/tiles/takeHome.ts", content }]);
+      expect(found, name).toHaveLength(1);
+      expect(found[0], name).toContain(name);
+    }
+  });
+
+  it("does not let the theme allowance widen past localStorage", () => {
+    // The carve-out is for a locale and theme preference, which is not
+    // financial. It is not a general licence for that file.
+    expect(
+      checkClientStorage([
+        { path: "src/ui/theme.ts", content: "const db = indexedDB.open('theme')" },
+      ]).length,
+    ).toBe(1);
+  });
+
+  it("reads a sentence about storage as a sentence", () => {
+    // The narrow version scanned raw text, which it could afford to: nothing
+    // says "localStorage" in prose outside theme.ts. It stops being affordable
+    // the moment the words widen — the audit's own file says "the service
+    // worker caches the shell", and `caches` is the CacheStorage global.
+    expect(
+      checkClientStorage([
+        {
+          path: "src/ui/shell.ts",
+          content: "// the service worker caches the shell\nconst x = 1;",
+        },
+      ]),
+    ).toEqual([]);
+    expect(
+      checkClientStorage([
+        {
+          path: "src/ui/shell.ts",
+          content: "/** never written to sessionStorage */\nconst x = 1;",
+        },
+      ]),
+    ).toEqual([]);
+    expect(withoutComments("/* a */ code // b")).toBe(" code ");
   });
 });
 
