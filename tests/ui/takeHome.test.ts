@@ -257,3 +257,60 @@ describe("a marginal rate over 100%", () => {
     expect(root.querySelector(".statute-step")).toBeNull();
   });
 });
+
+describe("the breakdown column adds up", () => {
+  /**
+   * Every line is correct to the cent on its own, and that is still not enough:
+   * `sum(round(xᵢ))` and `round(sum(xᵢ))` differ by a cent in roughly one case
+   * in fourteen, so a reader adding federal, FICA, state and local got a number
+   * the "Total tax" line beside it disagreed with — on the site whose whole
+   * claim is that its arithmetic can be checked. New York at $123,456 was one:
+   * the column came to $34,051.47 under a total reading $34,051.48.
+   */
+  const money = (s: string): number => Math.round(Number(s.replace(/[^0-9.-]/g, "")) * 100);
+
+  function column(params: Record<string, string>): { parts: number[]; total: number } {
+    const { root } = mount(new URLSearchParams(params));
+    const rows = Array.from(root.querySelectorAll(".bd-row")).map((r) => ({
+      label: r.querySelector(".bd-label")?.textContent ?? "",
+      value: r.querySelector(".bd-value")?.textContent ?? "",
+    }));
+    return {
+      parts: rows
+        .filter((r) => /income tax|FICA|Additional Medicare|local tax/.test(r.label))
+        .map((r) => money(r.value)),
+      total: money(rows.find((r) => r.label === "Total tax")!.value),
+    };
+  }
+
+  it("adds up for the case that did not", () => {
+    const { parts, total } = column({ fs: "single", st: "ny", w: "123456" });
+    expect(parts.length).toBeGreaterThan(2);
+    expect(parts.reduce((a, b) => a + b, 0)).toBe(total);
+  });
+
+  it("adds up across every jurisdiction, at incomes chosen to land off a cent", () => {
+    const failures: string[] = [];
+    for (const st of data.stateCodes()) {
+      for (const w of ["26000", "37777", "60000", "123456", "250000"]) {
+        const { parts, total } = column({ fs: "single", st, w });
+        const sum = parts.reduce((a, b) => a + b, 0);
+        if (sum !== total) failures.push(`${st} ${w}: parts ${sum} vs total ${total}`);
+      }
+    }
+    expect(failures).toEqual([]);
+  }, 60_000);
+
+  it("still shows each part within a cent of its own value", () => {
+    // The allocation moves at most one cent, and only where the column would
+    // not otherwise add. A part that drifts further than that is a bug, not a
+    // rounding choice.
+    const { root } = mount(new URLSearchParams({ fs: "single", st: "ny", w: "123456" }));
+    const fica = Array.from(root.querySelectorAll(".bd-row"))
+      .filter((r) => (r.querySelector(".bd-label")?.textContent ?? "").includes("Social Security"))
+      .map((r) => money(r.querySelector(".bd-value")?.textContent ?? ""));
+    // 6.2% of the 2026 wage base, which $123,456 clears.
+    expect(fica).toHaveLength(1);
+    expect(Math.abs(fica[0]! - 765427)).toBeLessThanOrEqual(1);
+  });
+});

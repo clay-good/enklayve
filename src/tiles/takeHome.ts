@@ -5,10 +5,10 @@
  * a worked example (§2 principle 6). The other Pillar 1 tiles in Phase 5 follow
  * this exact pattern.
  */
-import { Money } from "../engine/money";
+import { Money, allocateRounded } from "../engine/money";
 import { evaluateTaxes, type TaxInput, type TaxResult } from "../engine/tax";
 import type { DeductionMode } from "../engine/tax/types";
-import type { FilingStatus } from "../data/schemas";
+import type { CitationData, FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
@@ -133,47 +133,77 @@ function writeFields(f: Fields): URLSearchParams {
   return p;
 }
 
+/**
+ * The column a reader can add up.
+ *
+ * Every part here is correct to the cent on its own, and rounding each on its
+ * own is still wrong as a column: `sum(round(xᵢ))` and `round(sum(xᵢ))` differ
+ * by a cent in roughly one Take-Home case in fourteen, so somebody adding
+ * federal, FICA, state and local got a number the "Total tax" line beside it
+ * disagreed with — on the site whose whole claim is that its arithmetic can be
+ * checked.
+ *
+ * The total stays engine-exact and the parts are allocated to it by largest
+ * remainder ({@link allocateRounded}). Quantizing the total in the engine
+ * instead was tried and is worse: the combined marginal rate is measured over a
+ * $100 wage probe, so cents of noise in the total become hundredths of a point
+ * in a printed rate, and a hand-verified §68 identity stopped holding.
+ */
 function buildBreakdown(result: TaxResult, locale: string): BreakdownLine[] {
   const fmt = (m: Money): string => m.format(locale);
-  const lines: BreakdownLine[] = [
-    { label: "Gross income", value: fmt(result.grossIncome) },
+
+  /** Every line that is a share of Total tax, in the order they are shown. */
+  const parts: { label: string; amount: Money; citation?: CitationData }[] = [
     {
       label: `Federal income tax (${result.federal.deduction.kind} deduction)`,
-      value: fmt(result.federal.incomeTax),
+      amount: result.federal.incomeTax,
       citation: result.federal.citation,
     },
     {
       label: "Social Security (FICA)",
-      value: fmt(result.fica.socialSecurity),
+      amount: result.fica.socialSecurity,
       citation: result.fica.citation,
     },
-    { label: "Medicare (FICA)", value: fmt(result.fica.medicare), citation: result.fica.citation },
+    { label: "Medicare (FICA)", amount: result.fica.medicare, citation: result.fica.citation },
   ];
   if (result.fica.additionalMedicare.greaterThan(0)) {
-    lines.push({
+    parts.push({
       label: "Additional Medicare",
-      value: fmt(result.fica.additionalMedicare),
+      amount: result.fica.additionalMedicare,
       citation: result.fica.citation,
     });
   }
   if (result.state && result.state.incomeTax.greaterThan(0)) {
-    lines.push({
+    parts.push({
       label: `${result.state.jurisdictionName} income tax`,
-      value: fmt(result.state.incomeTax),
+      amount: result.state.incomeTax,
       citation: result.state.citation,
     });
   }
   for (const line of result.local.lines) {
-    lines.push({
+    parts.push({
       label: `${line.name} local tax`,
-      value: fmt(line.tax),
-      citation: result.local.citation,
+      amount: line.tax,
+      citation: result.local.citation ?? undefined,
     });
   }
-  lines.push({ label: "Total tax", value: fmt(result.totals.totalTax), emphasis: true });
-  lines.push({ label: "Effective rate", value: pct(result.totals.effectiveRate) });
-  lines.push({ label: "Marginal rate (next dollar)", value: pct(result.totals.marginalRate) });
-  return lines;
+
+  const shown = allocateRounded(
+    parts.map((p) => p.amount),
+    result.totals.totalTax,
+  );
+
+  return [
+    { label: "Gross income", value: fmt(result.grossIncome) },
+    ...parts.map((p, i) => ({
+      label: p.label,
+      value: fmt(shown[i]!),
+      ...(p.citation ? { citation: p.citation } : {}),
+    })),
+    { label: "Total tax", value: fmt(result.totals.totalTax), emphasis: true },
+    { label: "Effective rate", value: pct(result.totals.effectiveRate) },
+    { label: "Marginal rate (next dollar)", value: pct(result.totals.marginalRate) },
+  ];
 }
 
 export function mountTakeHome(ctx: TileContext): void {

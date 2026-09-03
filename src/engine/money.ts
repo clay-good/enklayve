@@ -143,6 +143,50 @@ export class Money {
 }
 
 /**
+ * Round a set of parts to cents so they add up to the rounded total.
+ *
+ * Rounding each part on its own is correct part by part and wrong as a column:
+ * `sum(round(xᵢ))` and `round(sum(xᵢ))` differ by a cent often enough to matter.
+ * On the Take-Home breakdown that happens in about one case in fourteen — a
+ * reader adding federal, FICA, state and local gets a number the "Total tax"
+ * line beside it does not agree with, on a site whose entire claim is that its
+ * arithmetic can be checked.
+ *
+ * The total stays exact. Quantizing it instead was tried and is worse: the
+ * combined marginal rate is measured over a $100 wage probe, so cents of noise
+ * in the total become hundredths of a point in a printed rate, and a
+ * hand-verified §68 identity stopped holding.
+ *
+ * So the residual is allocated the way every financial statement allocates one —
+ * largest remainder: the cent goes to the part whose own rounding gave up the
+ * most, which is the allocation that minimises the total displayed error.
+ * Deterministic, and the parts must already sum to the total exactly; a caller
+ * that hands over a set that does not gets its own residual spread the same way,
+ * which is a bug in the caller rather than a silent lie here.
+ */
+export function allocateRounded(parts: readonly Money[], total: Money): Money[] {
+  const rounded = parts.map((p) => p.roundToCents());
+  const target = total.roundToCents().toCents();
+  let residual = target - rounded.reduce((sum, p) => sum + p.toCents(), 0);
+  if (residual === 0 || rounded.length === 0) return rounded;
+
+  // Largest remainder: how much each part gave up (or gained) when it rounded.
+  // A part rounded DOWN has a positive remainder and is first in line for a
+  // cent; a part rounded UP is first to give one back.
+  const order = parts
+    .map((p, i) => ({ i, remainder: p.toNumber() * 100 - rounded[i]!.toCents() }))
+    .sort((a, b) => (residual > 0 ? b.remainder - a.remainder : a.remainder - b.remainder));
+
+  const step = residual > 0 ? 0.01 : -0.01;
+  for (const { i } of order) {
+    if (residual === 0) break;
+    rounded[i] = rounded[i]!.add(step);
+    residual -= residual > 0 ? 1 : -1;
+  }
+  return rounded;
+}
+
+/**
  * Format a raw number as currency for display, without throwing.
  *
  * {@link Money.from} rejects a non-finite number on purpose — a NaN paycheck is
