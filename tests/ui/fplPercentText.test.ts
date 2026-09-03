@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll } from "vitest";
-import { fplPercentText } from "../../src/ui/form";
+import { describe, it, expect, beforeAll, vi } from "vitest";
+import { fplPercentDigits, fplPercentText } from "../../src/ui/form";
 import { mountAcaPtc } from "../../src/tiles/acaPtc";
 import { mountFpl } from "../../src/tiles/fpl";
 import { mountOwedScreener } from "../../src/tiles/owedScreener";
@@ -88,6 +88,37 @@ describe("fplPercentText", () => {
   it("does not print NaN% for a household with no poverty line to divide by", () => {
     expect(fplPercentText(Number.NaN, [100])).toBe("(out of range)");
     expect(fplPercentText(Number.POSITIVE_INFINITY)).toBe("(out of range)");
+  });
+});
+
+describe("the animated headline, which runs the same format over every frame", () => {
+  it("decides the precision once, from the value the count-up is heading for", () => {
+    // Asking the question per frame would flicker: a count-up to 400.38 passes
+    // through 100 and 138 on the way, and each of those would grow a decimal
+    // for one frame and lose it again. The digits come from the destination.
+    expect(fplPercentDigits(400.38, [100, 400])).toBe(1);
+    expect(fplPercentDigits(212.4, [100, 400])).toBe(0);
+    expect(fplPercentDigits(400, [100, 400])).toBe(0);
+    expect(fplPercentDigits(Number.NaN, [100])).toBe(0);
+  });
+
+  it("shows the headline and the breakdown row the same figure", async () => {
+    // They are the same number in the same card, and the fix landed on one of
+    // them first: the row read "400.4%" while the headline above it still
+    // rounded to "400%", which is the original contradiction with a smaller gap
+    // between the two halves. The headline is filled by the count-up, so it is
+    // empty on the frame the tile mounts — every other test in the suite reads
+    // the breakdown for exactly that reason. Here the headline IS the claim,
+    // so this one waits for the animation to land.
+    const root = mount(mountFpl, new URLSearchParams({ inc: "63900", hh: "1" }));
+    const headline = root.querySelector(".result-value")!;
+    await vi.waitFor(
+      () => {
+        expect(headline.textContent ?? "").toContain("400.4%");
+      },
+      { timeout: 5000, interval: 20 },
+    );
+    expect(rowValue(root, "Income as % of poverty line")).toContain("400.4%");
   });
 });
 

@@ -111,12 +111,22 @@ export function pct(rate: number, digits = 2): string {
  * number, because two decimal places on every figure to save three edge cases
  * is a worse page. The caller passes the thresholds that actually decide its
  * answer; a surface that decides nothing passes none and always rounds.
+ *
+ * `fplPercentDigits` is the same decision without the formatting, for the
+ * animated headline: the count-up runs the format over every frame between zero
+ * and the answer, and asking this question per frame would make the digit count
+ * flicker on the way past 100 and 138. The decision is made once from the value
+ * the animation is heading for, and every frame is printed to that precision.
  */
+export function fplPercentDigits(value: number, decisive: readonly number[] = []): 0 | 1 {
+  if (!Number.isFinite(value)) return 0;
+  const whole = Math.round(value);
+  return decisive.some((t) => whole === t && value !== t) ? 1 : 0;
+}
+
 export function fplPercentText(value: number, decisive: readonly number[] = []): string {
   if (!Number.isFinite(value)) return "(out of range)";
-  const whole = Math.round(value);
-  const lands = decisive.some((t) => whole === t && value !== t);
-  return `${lands ? value.toFixed(1) : whole.toFixed(0)}%`;
+  return `${value.toFixed(fplPercentDigits(value, decisive))}%`;
 }
 
 /**

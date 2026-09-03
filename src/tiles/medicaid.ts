@@ -9,7 +9,13 @@
 import { Money } from "../engine/money";
 import { medicaidEligibility } from "../engine/benefits";
 import { el, option } from "../ui/dom";
-import { field, fplPercentText, parseNonNegative, tryExampleButton } from "../ui/form";
+import {
+  field,
+  fplPercentDigits,
+  fplPercentText,
+  parseNonNegative,
+  tryExampleButton,
+} from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { US_STATES, fplRegionFor, stateName } from "../data/usStates";
 import type { SituationStore } from "../profile/situation";
@@ -138,7 +144,8 @@ export function mountMedicaid(ctx: TileContext): void {
         // Headline is the FPL %, so the count-up has a meaningful number.
         value: Money.from(r.fplPercent),
         locale: ctx.locale,
-        format: (n) => `${n.toFixed(0)}% of poverty line`,
+        format: (n) =>
+          `${n.toFixed(fplPercentDigits(r.fplPercent, r.thresholdPctFpl === null ? [] : [r.thresholdPctFpl]))}% of poverty line`,
         copyText: `${fplPercentText(r.fplPercent, r.thresholdPctFpl === null ? [] : [r.thresholdPctFpl])} FPL`,
         breakdown: lines,
         permalink: () => ctx.permalink(writeFields(fields)),

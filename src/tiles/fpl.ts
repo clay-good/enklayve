@@ -8,7 +8,13 @@
 import { Money } from "../engine/money";
 import { povertyLine, fplPercent } from "../engine/benefits";
 import { el, option } from "../ui/dom";
-import { field, fplPercentText, parseNonNegative, tryExampleButton } from "../ui/form";
+import {
+  field,
+  fplPercentDigits,
+  fplPercentText,
+  parseNonNegative,
+  tryExampleButton,
+} from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import type { FplRegion } from "../data/browser";
 import type { SituationStore } from "../profile/situation";
@@ -134,7 +140,7 @@ export function mountFpl(ctx: TileContext): void {
         label: "Your income vs. the poverty line",
         value: Money.from(pctOfLine),
         locale: ctx.locale,
-        format: (n) => `${n.toFixed(0)}% of FPL`,
+        format: (n) => `${n.toFixed(fplPercentDigits(pctOfLine, [100, 138, 400]))}% of FPL`,
         copyText: `${fplPercentText(pctOfLine, [100, 138, 400])} of the federal poverty line`,
         breakdown: lines,
         permalink: () => ctx.permalink(writeFields(fields)),
