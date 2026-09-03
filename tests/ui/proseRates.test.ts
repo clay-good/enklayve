@@ -326,12 +326,13 @@ const NOT_A_RATE: Record<string, Record<string, string>> = {
     "0%": "the intro APR a card advertises, which the reader enters",
     "3%": "a typical transfer fee, named as typical",
   },
-  "tiles/takeHome.ts": {
+  "ui/statuteStep.ts": {
     // Same shape as the cliff tile's below: the sentence names the point a
     // combined marginal rate can pass, not a rate any statute sets. Ohio's $332
     // step at $26,050 puts a filer $50 under the line at 351%, measured over a
-    // $100 probe, and the note explains that rather than leaving it looking
-    // like a broken calculator.
+    // $100 probe, and the sentence explains that rather than leaving the number
+    // looking like a broken calculator. It lives here, shared by the Take-Home
+    // tile and the Readout Report, so the document cannot drift from the tile.
     "100%": "the point a combined rate can exceed, which is arithmetic and not a rate anyone sets",
   },
   "tiles/benefitCliffs.ts": {

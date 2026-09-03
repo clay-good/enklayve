@@ -23,6 +23,7 @@ import {
   medicaidEligibility,
 } from "../engine/benefits";
 import { pct } from "../ui/form";
+import { crossedStatutoryStep, statutoryStepSentence } from "../ui/statuteStep";
 import type { CitationData } from "../data/schemas";
 import type { BundledData, FplRegion } from "../data/browser";
 import type { SituationStore } from "../profile/situation";
@@ -161,8 +162,22 @@ export function buildReport(
     if (result.local.citation) citations.push(result.local.citation);
 
     const rainyMonths = essential > 0 ? savings / essential : null;
+    // A marginal rate over 100% is arithmetic — the rate is measured over a
+    // wage probe, and a filer just under a point where a state's schedule
+    // charges a flat amount straddles it. Ohio's $332 at $26,050 is the only
+    // such point in the repo. This document is the one a household saves and
+    // comes back to, so a bare "351%" here outlives the session that produced
+    // it; the sentence is shared with the Take-Home tile rather than written
+    // twice, because a document that disagrees with the tile that made it is a
+    // failure this project has already had once.
+    const stepCrossed = crossedStatutoryStep(result, ctx.state);
+    const snapshotNote =
+      result.totals.marginalRate > 1 && stepCrossed && result.state
+        ? statutoryStepSentence(stepCrossed, result.state.jurisdictionName, locale)
+        : undefined;
     sections.push({
       title: "Snapshot",
+      note: snapshotNote,
       lines: [
         { label: "Annual income", value: usd(Money.from(income)) },
         { label: "Effective tax rate", value: pct(result.totals.effectiveRate) },

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { buildReport, renderReportHtml } from "../../src/readout/report";
+import { statutoryStepSentence } from "../../src/ui/statuteStep";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 
@@ -152,5 +153,47 @@ describe("Readout Report, HTML", () => {
     p.set("debts", [{ name: "<b>x</b>", balance: 6000, ratePct: 23 }]);
     const html = renderReportHtml(buildReport(p, data));
     expect(html).not.toContain("<b>x</b>");
+  });
+});
+
+describe("a marginal rate over 100% in the document a household keeps", () => {
+  /**
+   * The Snapshot prints "Marginal rate (next dollar)", and for an Ohio filer
+   * just under $26,050 of taxable income that is 351% — the rate is measured
+   * over a $100 wage probe and Ohio Rev. Code §5747.02(A)(3)(c) charges $332 to
+   * cross that line, over 0% bands below. This document outlives the session
+   * that made it, so a bare "351%" here is read months later with no way to ask
+   * what it meant.
+   *
+   * The sentence is shared with the Take-Home tile rather than written twice: a
+   * document that disagrees with the tile that produced it is a failure this
+   * project has already had once, over the very same section.
+   */
+  const ohioAt = (income: number): SituationStore => {
+    const p = new SituationStore();
+    p.set("filingStatus", "single");
+    p.set("stateCode", "oh");
+    p.set("annualIncome", income);
+    return p;
+  };
+
+  const snapshot = (income: number) =>
+    buildReport(ohioAt(income), data).sections.find((s) => s.title === "Snapshot")!;
+
+  it("explains the rate rather than leaving it to be read as an error", () => {
+    const section = snapshot(26_000);
+    expect(section.lines.find((l) => l.label === "Marginal rate (next dollar)")).toBeDefined();
+    expect(section.note ?? "").toContain("over 100%");
+    expect(section.note ?? "").toContain("$26,050");
+    expect(section.note ?? "").toContain("$332.00");
+  });
+
+  it("says the same thing the Take-Home tile says, from one sentence", () => {
+    const notch = { taxableIncome: 26_050, amount: 332 };
+    expect(snapshot(26_000).note).toBe(statutoryStepSentence(notch, "Ohio", "en-US"));
+  });
+
+  it("says nothing when the rate is ordinary", () => {
+    expect(snapshot(60_000).note).toBeUndefined();
   });
 });
