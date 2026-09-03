@@ -10,7 +10,7 @@ import { educationCredits } from "../engine/educationCredits";
 import { el } from "../ui/dom";
 import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
-import { marriedCheckbox, marriedDefault } from "./owedShared";
+import { checkboxFilingStatus, marriedCheckbox, marriedDefault } from "./owedShared";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
@@ -161,7 +161,7 @@ export function mountEducationCredits(ctx: TileContext): void {
     };
     ctx.setParams(writeFields(fields));
     rememberShared(profile, {
-      filingStatus: fields.married ? "married_jointly" : "single",
+      filingStatus: checkboxFilingStatus(fields.married, profile),
       annualIncome: fields.magi,
     });
     compute();

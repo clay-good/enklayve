@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { mountTakeHome } from "../../src/tiles/takeHome";
 import { mountFederalIncomeTax } from "../../src/tiles/federalIncomeTax";
+import { mountEducationCredits } from "../../src/tiles/educationCredits";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import { extractDocument } from "../../src/readout/extract";
@@ -83,5 +84,48 @@ describe("Your Situation continuity", () => {
     profile.set("annualIncome", 90000);
     const fed = mount(mountFederalIncomeTax, new URLSearchParams({ inc: "250000" }), profile);
     expect(fed.querySelector<HTMLInputElement>('input[name="inc"]')?.value).toBe("250000");
+  });
+});
+
+describe("a two-value control writing a five-value field", () => {
+  it("does not demote a head of household to single for typing a MAGI", () => {
+    // Education Credits has one filing-status control, a "married filing
+    // jointly" checkbox, and it wrote `married ? "married_jointly" : "single"`
+    // straight into the shared profile on every keystroke. The field it
+    // overwrote is read by Take-Home, the federal tax tile and the rest, where
+    // head of household is a different schedule and a different standard
+    // deduction — so a single parent who opened this tile to compare two
+    // education credits left with a worse take-home figure everywhere else, for
+    // a status they never changed. Unchecked means "not a joint return", which
+    // head of household already satisfies.
+    const profile = new SituationStore();
+    profile.set("filingStatus", "head_of_household");
+    const root = mount(mountEducationCredits, new URLSearchParams(), profile);
+    const magi = root.querySelector<HTMLInputElement>('input[name="magi"]')!;
+    magi.value = "70000";
+    magi.dispatchEvent(new Event("input"));
+    expect(profile.get("filingStatus")).toBe("head_of_household");
+    expect(profile.get("annualIncome")).toBe(70000);
+  });
+
+  it("still records a joint return when the box is checked", () => {
+    const profile = new SituationStore();
+    profile.set("filingStatus", "head_of_household");
+    const root = mount(mountEducationCredits, new URLSearchParams(), profile);
+    const mfj = root.querySelector<HTMLInputElement>('input[name="mfj"]')!;
+    mfj.checked = true;
+    mfj.dispatchEvent(new Event("change"));
+    expect(profile.get("filingStatus")).toBe("married_jointly");
+  });
+
+  it("narrows a stored joint return the box contradicts, since single is all it can mean", () => {
+    const profile = new SituationStore();
+    profile.set("filingStatus", "married_jointly");
+    const root = mount(mountEducationCredits, new URLSearchParams(), profile);
+    const mfj = root.querySelector<HTMLInputElement>('input[name="mfj"]')!;
+    expect(mfj.checked, "the box defaults from the profile").toBe(true);
+    mfj.checked = false;
+    mfj.dispatchEvent(new Event("change"));
+    expect(profile.get("filingStatus")).toBe("single");
   });
 });

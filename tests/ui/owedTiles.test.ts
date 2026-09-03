@@ -112,6 +112,43 @@ describe("What Am I Owed screener", () => {
     expect(profile.get("annualIncome")).toBe(40000);
   });
 
+  it("gives a head of household the Saver's Credit column the engine models", () => {
+    // The screener's only filing-status control is a "married filing jointly"
+    // checkbox, and it used to hand the Saver's Credit `married ? joint :
+    // single`. Form 8880 has a THIRD column: head of household's ceilings are
+    // 1.5x single's, so $50,000 of AGI is above single's $40,250 and inside head
+    // of household's $60,375. Collapsed, the screener told a single parent the
+    // credit was zero — which is the one thing this tool exists not to do.
+    const profile = new SituationStore();
+    profile.set("filingStatus", "head_of_household");
+    profile.set("retirementContributionsAnnual", 2000);
+    const root = mount(
+      mountOwedScreener,
+      new URLSearchParams({ hh: "2", inc: "50000", kids: "1" }),
+      profile,
+    );
+    const savers = Array.from(root.querySelectorAll(".screener-item")).find((li) =>
+      (li.querySelector(".screener-program")?.textContent ?? "").startsWith("Saver's Credit"),
+    );
+    expect(savers, "a head-of-household filer at $50,000 qualifies at 10%").toBeDefined();
+    expect(savers?.querySelector(".screener-estimate")?.textContent).toContain("$200");
+  });
+
+  it("still reads a single filer off the single column", () => {
+    const profile = new SituationStore();
+    profile.set("filingStatus", "single");
+    profile.set("retirementContributionsAnnual", 2000);
+    const root = mount(
+      mountOwedScreener,
+      new URLSearchParams({ hh: "1", inc: "50000", kids: "0" }),
+      profile,
+    );
+    const savers = Array.from(root.querySelectorAll(".screener-item")).find((li) =>
+      (li.querySelector(".screener-program")?.textContent ?? "").startsWith("Saver's Credit"),
+    );
+    expect(savers, "$50,000 is past single's $40,250 ceiling").toBeUndefined();
+  });
+
   it("includes a SNAP estimate for a low-income contiguous household", () => {
     const root = mount(
       mountOwedScreener,

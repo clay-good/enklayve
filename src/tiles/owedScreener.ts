@@ -16,7 +16,7 @@ import {
 } from "../engine/benefits";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
-import { marriedCheckbox, marriedDefault } from "./owedShared";
+import { checkboxFilingStatus, marriedCheckbox, marriedDefault } from "./owedShared";
 import type { CitationData } from "../data/schemas";
 import type { FplRegion } from "../data/browser";
 import type { SituationStore } from "../profile/situation";
@@ -206,7 +206,7 @@ export function mountOwedScreener(ctx: TileContext): void {
       const sc = estimateSaversCredit(
         {
           agi: fields.income,
-          filingStatus: fields.married ? "married_jointly" : "single",
+          filingStatus: checkboxFilingStatus(fields.married, profile),
           contributions,
         },
         savers,
