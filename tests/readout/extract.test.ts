@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { extractDocument, detectDocument } from "../../src/readout/extract";
+import { SituationStore } from "../../src/profile/situation";
+import { applyToSituation } from "../../src/readout/toSituation";
 import type { ExtractedText } from "../../src/readout/extractText";
 
 /**
@@ -149,6 +151,49 @@ describe("Readout, Form 1040 extraction", () => {
     expect(value(result, "f1040-agi")).toBe(95000);
     expect(value(result, "f1040-filing-status")).toBe("married_jointly");
     expect(result.fields.find((f) => f.id === "f1040-filing-status")?.target).toBe("filingStatus");
+  });
+
+  it("refuses to read the option list as the answer", () => {
+    // A real Form 1040 PRINTS all five statuses — "Check only one box. Single /
+    // Married filing jointly (MFJ) / ..." — and a checked box is a glyph, not
+    // text, so the option list is what reaches the extractor. The detector
+    // walked its own priority order and returned the first match, which is
+    // married filing jointly, at HIGH confidence with needsReview false. Every
+    // filer who dropped in a real 1040 was recorded as filing jointly, and then
+    // charged joint brackets and a joint standard deduction in Take-Home, the
+    // plan, and the Readout Report — silently, because nothing asked them to
+    // check it.
+    const real = typed(
+      "Form 1040 U.S. Individual Income Tax Return 2024 " +
+        "Filing Status Check only one box. Single Married filing jointly (MFJ) " +
+        "Married filing separately (MFS) Head of household (HOH) " +
+        "Qualifying surviving spouse (QSS) " +
+        "11 Adjusted gross income 52000.00 15 Taxable income 38000.00 22 Total tax 4300.00",
+    );
+    const r = extractDocument(real);
+    const status = r.fields.find((f) => f.id === "f1040-filing-status");
+    expect(status?.value).toBe("Not read");
+    expect(status?.confidence).toBe("needs-review");
+    expect(status?.needsReview).toBe(true);
+    // No target is the part that matters: confirming this field must not be
+    // able to write a guess into My Situation.
+    expect(status?.target).toBeUndefined();
+    expect(status?.note).toContain("Head of household");
+    // The rest of the form still reads.
+    expect(value(r, "f1040-agi")).toBe(52000);
+  });
+
+  it("a confirmed 1040 with an unreadable status writes nothing to My Situation", () => {
+    const real = typed(
+      "Form 1040 U.S. Individual Income Tax Return 2024 " +
+        "Filing Status Check only one box. Single Married filing jointly (MFJ) " +
+        "Married filing separately (MFS) Head of household (HOH) " +
+        "Qualifying surviving spouse (QSS) 11 Adjusted gross income 52000.00",
+    );
+    const store = new SituationStore();
+    applyToSituation(store, extractDocument(real).fields);
+    expect(store.get("filingStatus")).toBeUndefined();
+    expect(store.get("annualIncome")).toBe(52000);
   });
 
   it("reads taxable income and total tax", () => {

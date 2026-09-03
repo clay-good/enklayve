@@ -140,14 +140,47 @@ const NOTICE_PROGRAMS: { re: RegExp; value: string }[] = [
 ];
 
 /** Read the filing status from the window just after the "filing status" label. */
-function detectFilingStatus(text: string): string | null {
+/**
+ * Every filing status named near the form's "Filing status" caption.
+ *
+ * More than one is the normal case and the dangerous one. Form 1040 PRINTS all
+ * five — "Check only one box. Single / Married filing jointly (MFJ) / Married
+ * filing separately (MFS) / Head of household (HOH) / Qualifying surviving
+ * spouse (QSS)" — and a checkbox is a glyph, not text, so the option list is
+ * what reaches the extractor and the checked box is not in it. This used to
+ * return the first phrase in its own priority order, which is "married filing
+ * jointly", at high confidence with `needsReview: false`, for every filer who
+ * dropped in a real 1040. A single filer was recorded as married filing jointly
+ * and then charged joint brackets and a joint standard deduction in Take-Home,
+ * the plan, and the Readout Report.
+ *
+ * The list is not an answer to the question the list asks. The caller decides
+ * what to do with an ambiguous reading; this only reports what it saw, in the
+ * document's own order rather than this table's, so the note reads like the
+ * page.
+ *
+ * The window is 200 characters rather than 80 so the whole option list fits in
+ * it. Ambiguity would be detected either way — two phrases are enough — but a
+ * note that names three of the five a reader can see on the page in front of
+ * them invites them to wonder what else was missed. Widening it can only turn a
+ * confident reading into a question, which is the safe direction.
+ */
+function detectFilingStatuses(text: string): string[] {
   const idx = text.search(/filing status/i);
-  if (idx < 0) return null;
-  const window = text.slice(idx, idx + 80);
-  for (const { re, status } of FILING_STATUS_PHRASES) {
-    if (re.test(window)) return status;
-  }
-  return null;
+  if (idx < 0) return [];
+  const window = text.slice(idx, idx + 200);
+  return FILING_STATUS_PHRASES.map(({ re, status }) => {
+    const m = re.exec(window);
+    return m ? { status, at: m.index } : null;
+  })
+    .filter((x): x is { status: string; at: number } => x !== null)
+    .sort((a, b) => a.at - b.at)
+    .map((x) => x.status);
+}
+
+/** The human label for a status, for a note a reader reads. */
+function statusLabel(status: string): string {
+  return status.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
 }
 
 /** The detected document kind and revision. */
@@ -371,16 +404,36 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
       const totalTax = field("f1040-tax", "Total tax", amountAfter(text, /total tax/i), undefined);
       if (totalTax) fields.push(totalTax);
 
-      // Filing status is a labeled checkbox/word, not a number — read it directly.
-      const status = detectFilingStatus(text);
-      if (status) {
+      // Filing status is a labeled checkbox/word, not a number — read it
+      // directly, and only when the page names exactly one. See
+      // {@link detectFilingStatuses}: the form prints all five, so a window
+      // holding several is the option list rather than the answer, and the
+      // checked box is a glyph the text layer does not carry. Reported without
+      // a `target`, the way an un-annualized pay stub is, so confirming it
+      // cannot write a guess into My Situation — the tiles ask with a
+      // five-option select, which is a better place to be asked than a field
+      // that looks already read.
+      const statuses = detectFilingStatuses(text);
+      if (statuses.length === 1) {
         fields.push({
           id: "f1040-filing-status",
           label: "Filing status",
-          value: status,
+          value: statuses[0]!,
           confidence: "high",
           needsReview: false,
           target: "filingStatus",
+        });
+      } else if (statuses.length > 1) {
+        fields.push({
+          id: "f1040-filing-status",
+          label: "Filing status",
+          value: "Not read",
+          confidence: "needs-review",
+          needsReview: true,
+          note:
+            `The form lists every option (${statuses.map(statusLabel).join(", ")}) and the ` +
+            "checked box is not text, so which one you checked cannot be read. Set it in " +
+            "My Situation.",
         });
       }
       return fields;
