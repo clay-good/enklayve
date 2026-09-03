@@ -13,7 +13,15 @@ import { Money } from "../engine/money";
 import { estimateCapitalGains } from "../engine/capitalGains";
 import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
-import { field, parseNonNegative, parseNumber, pct, tryExampleButton } from "../ui/form";
+import {
+  clampNote,
+  didClamp,
+  field,
+  parseNonNegative,
+  parseNumber,
+  pct,
+  tryExampleButton,
+} from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
@@ -226,7 +234,26 @@ export function mountCapitalGains(ctx: TileContext): void {
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
-  root.append(form, resultContainer);
+  // A loss in the link is rewritten to zero, and was rewritten silently. The
+  // clamp is right — this tool models gains, and `taxLossHarvest` is where a
+  // net loss and its §1211(b) $3,000 limit live — but a shared link carrying a
+  // loss then produced a confident figure computed from a number the reader
+  // never supplied. The seam exists for exactly this (SPEC-3 §2.3); this tile
+  // was not using it.
+  const clamped: string[] = [];
+  for (const [key, label, applied] of [
+    ["st", "the short-term loss", fields.shortTerm],
+    ["lt", "the long-term loss", fields.longTerm],
+  ] as const) {
+    if (didClamp(ctx.params, key, parseNumber(ctx.params.get(key), 0), applied)) {
+      clamped.push(
+        `${label} was read as zero — this tool models gains, and Tax-Loss Harvesting models losses`,
+      );
+    }
+  }
+  const note = clampNote(root, clamped);
+
+  root.append(form, ...(note ? [note] : []), resultContainer);
   compute();
 }
 

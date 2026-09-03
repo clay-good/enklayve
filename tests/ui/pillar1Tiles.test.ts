@@ -378,6 +378,29 @@ describe("Retirement Contribution Optimizer tile", () => {
 });
 
 describe("Capital Gains tile", () => {
+  it("says so when a shared link's loss was read as zero", () => {
+    // `parseNonNegative` clamps a negative gain to zero, which is correct —
+    // this tool models gains, and §1211(b)'s $3,000 limit lives in Tax-Loss
+    // Harvesting — but the clamp was silent. A link carrying `lt=-5000` then
+    // produced a confident figure computed from a number nobody supplied, and
+    // the disclosure seam SPEC-3 §2.3 exists for is used by three other tiles.
+    const { root } = mount(
+      mountCapitalGains,
+      new URLSearchParams({ fs: "single", ord: "80000", lt: "-5000" }),
+    );
+    const note = root.querySelector(".clamp-note")?.textContent ?? "";
+    expect(note).toContain("the long-term loss was read as zero");
+    expect(note).toContain("Tax-Loss Harvesting");
+  });
+
+  it("stays quiet when nothing was clamped", () => {
+    const { root } = mount(
+      mountCapitalGains,
+      new URLSearchParams({ fs: "single", ord: "80000", lt: "5000" }),
+    );
+    expect(root.querySelector(".clamp-note")).toBeNull();
+  });
+
   it("splits long-term gains into bands and cites each layer", () => {
     const { root } = mount(
       mountCapitalGains,
