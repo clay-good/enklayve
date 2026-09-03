@@ -175,7 +175,7 @@ export function mountAcaPtc(ctx: TileContext): void {
       lines.push({
         label: "Heads up",
         value:
-          "Income below 100% of the poverty line usually points to Medicaid (in expansion states) rather than a marketplace credit. Check the Medicaid tile.",
+          "Below 100% of the poverty line the premium tax credit does not reach you: §36B asks for household income that equals or exceeds the poverty line. In a state that expanded Medicaid this income points to Medicaid instead, and the Medicaid tile is the one to check. In a state that did not, this is the coverage gap — neither program — and a local navigator (free, on HealthCare.gov) is the person who knows what is left. One exception is worth knowing: if you are lawfully present and barred from Medicaid because of your immigration status, §36B(c)(1)(B) treats you as at 100% of the poverty line, and the credit is yours.",
       });
     } else if (r.aboveSubsidyCap) {
       lines.push({

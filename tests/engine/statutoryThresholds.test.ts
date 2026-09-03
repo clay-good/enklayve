@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import {
   acaApplicablePercent,
   acaCovered,
+  acaCreditEligible,
   estimatePremiumTaxCredit,
   estimateSnap,
 } from "../../src/engine/benefits";
@@ -73,12 +74,37 @@ describe("the ACA premium tax credit at exactly 100% of the poverty line", () =>
     expect(r.fplPercent).toBeLessThan(100);
     expect(r.belowMedicaidFloor).toBe(true);
     expect(r.eligible).toBe(false);
-    // Recorded as it is, not as it might be: the engine still *computes* a
-    // credit below the floor, and the tile prints that figure with a "heads up"
-    // beside it pointing at Medicaid. `eligible` is the gate; the number is not
-    // zeroed. In a non-expansion state this household is in the coverage gap
-    // and entitled to neither, so the figure is arguably too encouraging.
-    expect(r.annualCredit.toNumber()).toBeGreaterThan(0);
+    // This assertion used to read `toBeGreaterThan(0)`, with a comment calling
+    // the figure "arguably too encouraging" and recording it as-is. It was the
+    // 400% bug wearing the other shoe: §36B(c)(1)(A) requires income that
+    // "equals or exceeds 100 percent" exactly as firmly as it requires "not
+    // more than 400 percent", and the engine zeroed only the ceiling. So the
+    // ACA tile headlined thousands of dollars at an income where the Benefit
+    // Cliff Explorer — calling this same function, gating on `eligible` —
+    // plotted zero. In a state that did not expand Medicaid this household is
+    // in the coverage gap and entitled to neither program, which makes an
+    // encouraging figure the most expensive kind of wrong.
+    expect(r.annualCredit.toNumber()).toBe(0);
+    expect(r.monthlyCredit.toNumber()).toBe(0);
+    // The expected contribution is still computed and still shown: it is what
+    // the household would owe if its income turned out to reach the line, and
+    // it is the number the §36B(c)(1)(B) immigration exception makes real.
+    expect(r.expectedAnnualContribution.toNumber()).toBeGreaterThan(0);
+  });
+
+  it("does not tell a household below the floor that it is likely eligible", () => {
+    // The Readout Report asked `acaCovered`, which answers the narrower
+    // question of whether the applicable-percentage *table* has a band for this
+    // income. The table starts at 0% FPL, so it said yes at 50% — true of the
+    // table, false of the credit — and the document a household saves said
+    // "likely eligible" where the sweep beside it plotted zero.
+    const aca = data.aca()!;
+    expect(acaCovered(50, aca)).toBe(true);
+    expect(acaCreditEligible(50, aca)).toBe(false);
+    expect(acaCreditEligible(99.99, aca)).toBe(false);
+    expect(acaCreditEligible(100, aca)).toBe(true);
+    expect(acaCreditEligible(400, aca)).toBe(true);
+    expect(acaCreditEligible(400.01, aca)).toBe(false);
   });
 
   it("still allows a credit at exactly 400% FPL — the cliff is above the line, not on it", () => {

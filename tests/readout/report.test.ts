@@ -61,6 +61,23 @@ describe("the Report asks the engine, not a number it remembers", () => {
     expect(owed?.lines.find((l) => l.label === "ACA premium tax credit")).toBeDefined();
   });
 
+  it("does not offer the credit to a household in the coverage gap", () => {
+    // Texas did not expand Medicaid, and $10,000 is 63% of the poverty line for
+    // one person: no Medicaid, and — since §36B(c)(1)(A) asks for income that
+    // equals or exceeds the poverty line — no premium tax credit either. The
+    // Report used to ask `acaCovered`, which answers whether the applicable-
+    // percentage *table* has a band for that income. The table starts at 0%, so
+    // it said yes, and a document this household saves told it that it was
+    // likely eligible for a credit no one can give it.
+    const p = new SituationStore();
+    p.set("annualIncome", 10_000);
+    p.set("stateCode", "tx");
+    p.set("householdSize", 1);
+    const owed = buildReport(p, data).sections.find((s) => s.title === "What you may be owed");
+    expect(owed?.lines.find((l) => l.label === "Medicaid")).toBeUndefined();
+    expect(owed?.lines.find((l) => l.label === "ACA premium tax credit")).toBeUndefined();
+  });
+
   it("says nothing about either above the restored 400% cliff", () => {
     // §36B(c)(1)(B)'s suspension was repealed by Pub. L. 119-21 §71302(a), so
     // there is no credit above 400% of the poverty line for 2026. The Report's

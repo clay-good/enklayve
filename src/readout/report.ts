@@ -16,7 +16,7 @@ import { evaluateTaxes, type TaxInput, type TaxResult } from "../engine/tax";
 import { resolveResidenceLocal } from "../ui/residenceLocal";
 import { evaluatePlan, DEFAULT_CONFIG, type PlanConfig, type PlanInput } from "../engine/plan";
 import {
-  acaCovered,
+  acaCreditEligible,
   estimateCtc,
   estimateEitc,
   fplPercent,
@@ -286,7 +286,7 @@ export function buildReport(
         value: `Likely eligible — at or under ${medicaid.thresholdPctFpl}% of the poverty line in ${stateCode.toUpperCase()}`,
       });
       citations.push(medicaidData!.citation);
-    } else if (acaData && acaCovered(p, acaData)) {
+    } else if (acaData && acaCreditEligible(p, acaData)) {
       owedLines.push({
         label: "ACA premium tax credit",
         value: "Likely eligible; size it in the ACA tool",

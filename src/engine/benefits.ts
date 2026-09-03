@@ -317,6 +317,22 @@ export function acaCovered(fplPct: number, data: AcaData): boolean {
   return bands.some((band, i) => inBand(fplPct, band, i === bands.length - 1));
 }
 
+/**
+ * Whether the premium tax credit reaches this FPL% at all — the whole of
+ * §36B(c)(1)(A)'s "equals or exceeds 100 percent but does not exceed 400
+ * percent", rather than the half of it each caller used to write for itself.
+ *
+ * `acaCovered` answers a narrower question: whether the applicable-percentage
+ * table has a band for this income. The table starts at 0%, so it says yes to a
+ * household at 50% FPL, which is true of the table and false of the credit. The
+ * Readout Report asked `acaCovered` and told such a household it was likely
+ * eligible; the Benefit Cliff Explorer asked `eligible` and plotted zero at the
+ * same income. Both were reading this engine.
+ */
+export function acaCreditEligible(fplPct: number, data: AcaData): boolean {
+  return fplPct >= 100 && acaCovered(fplPct, data);
+}
+
 export interface AcaResult {
   /** Household income as a percentage of the poverty line. */
   fplPercent: number;
@@ -364,7 +380,17 @@ export function estimatePremiumTaxCredit(
   );
   const benchmarkAnnual = Money.from(Math.max(0, input.benchmarkMonthlyPremium)).multiply(12);
   const rawCredit = benchmarkAnnual.subtract(expectedAnnual);
-  const annualCredit = aboveSubsidyCap || rawCredit.isNegative() ? Money.zero() : rawCredit;
+  // Both ends of the band bar the credit, and this used to zero only one of
+  // them. §36B(c)(1)(A) requires household income that "equals or exceeds 100
+  // percent" of the poverty line as much as it requires "not more than 400
+  // percent", so a household under the floor is no more entitled to a credit
+  // than one over the cap — it belongs to Medicaid in an expansion state and to
+  // the coverage gap in the rest. Returning a figure for it made the ACA tile
+  // headline thousands of dollars at an income where the Benefit Cliff Explorer,
+  // reading the same function, plotted zero, because the sweep knew to gate on
+  // `eligible` and the tile printed `annualCredit`.
+  const barred = aboveSubsidyCap || belowMedicaidFloor;
+  const annualCredit = barred || rawCredit.isNegative() ? Money.zero() : rawCredit;
   return {
     fplPercent: pct,
     applicablePercent,

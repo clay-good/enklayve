@@ -320,9 +320,34 @@ describe("ACA Premium Tax Credit", () => {
     expect(root.querySelector(".ph-empty")).not.toBeNull();
   });
 
-  it("flags income below the Medicaid floor", () => {
+  it("flags income below the Medicaid floor, and stops printing a credit there", () => {
+    // $10,000 for a household of one is 63% FPL. The tile used to lead with
+    // "$X/mo" — the benchmark minus 2.1% of income, about $482 a month — beside
+    // a heads-up that said Medicaid "usually" applies. §36B(c)(1)(A) requires
+    // household income that equals or exceeds the poverty line, so there is no
+    // credit at this income at all, and the Benefit Cliff Explorer had been
+    // plotting exactly that from the same function. The figure is zero now.
     const root = mount(mountAcaPtc, new URLSearchParams({ hh: "1", inc: "10000", bm: "500" }));
-    expect(rowValue(root, "Heads up")).toContain("Medicaid");
+    expect(rowValue(root, "Estimated premium tax credit")).toContain("$0.00/mo");
+    const heads = rowValue(root, "Heads up") ?? "";
+    expect(heads).toContain("Medicaid");
+    // Both states, because which one you live in decides whether this is a
+    // referral or a dead end, and the tile does not know which.
+    expect(heads).toContain("coverage gap");
+    // And the one exception that makes the credit real below the line.
+    expect(heads).toContain("§36B(c)(1)(B)");
+  });
+
+  it("keeps showing the 400%-FPL household a credit, and the one above it none", () => {
+    // The two ends of the same band, asserted where a reader meets them. A
+    // household of one at exactly $63,840 is at 400% FPL — inside the table,
+    // per "does not exceed 400 percent" — and a dollar past it is not.
+    const on = mount(mountAcaPtc, new URLSearchParams({ hh: "1", inc: "63840", bm: "800" }));
+    expect(rowValue(on, "Income vs poverty line")).toContain("400% FPL");
+    expect(rowValue(on, "Estimated premium tax credit")).toContain("$270.13/mo");
+    const over = mount(mountAcaPtc, new URLSearchParams({ hh: "1", inc: "63900", bm: "800" }));
+    expect(rowValue(over, "Estimated premium tax credit")).toContain("$0.00/mo");
+    expect(rowValue(over, "Heads up")).toContain("Above 400%");
   });
 
   it("reads household size, region, and income from My Situation", () => {
