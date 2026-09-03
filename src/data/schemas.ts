@@ -1248,6 +1248,20 @@ export const NoSurprisesSchema = z.object({
   exclusions: z.array(NoSurprisesEntrySchema).min(1),
   /** The notice-and-consent form, which gives the protection up. */
   waiver: z.object({ label: z.string().min(1), detail: z.string().min(1) }),
+  /**
+   * The care no consent form reaches (45 CFR §149.420(b)). Required, and
+   * required non-empty, for the same reason `exclusions` is: the waiver
+   * paragraph without it tells a patient that signing is their choice, in a
+   * situation where the form they are holding cannot take the protection away.
+   * Carries its own citation because the rest of this shard is transcribed from
+   * the CMS consumer pages and this is the regulation itself.
+   */
+  waiverNeverApplies: z.object({
+    label: z.string().min(1),
+    detail: z.string().min(1),
+    entries: z.array(NoSurprisesEntrySchema).min(1),
+    citation: CitationSchema,
+  }),
   /** The uninsured / self-pay route: a good faith estimate and its dispute door. */
   uninsured: z.object({
     goodFaithEstimateAdvanceBusinessDays: z.number().int().positive(),

@@ -229,6 +229,14 @@ export function mountEobChecker(ctx: TileContext): void {
         `In effect since ${ns.effectiveFrom}. `,
         citationLink(ns.citation),
       ),
+      el("h4", { class: "eob-subheading", text: ns.waiverNeverApplies.label }),
+      el("p", { class: "eob-detail", text: ns.waiverNeverApplies.detail }),
+      el(
+        "ul",
+        { class: "eob-list" },
+        ...ns.waiverNeverApplies.entries.map((e) => el("li", { text: `${e.label} — ${e.detail}` })),
+      ),
+      el("p", { class: "eob-cite" }, citationLink(ns.waiverNeverApplies.citation)),
       el("h4", { class: "eob-subheading", text: "What the Act does not reach" }),
       el(
         "ul",

@@ -290,8 +290,35 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * service worker must hold for the site to work offline.
  *
  * Five, not ten. The gate is still meant to trip.
+ *
+ * **Raised 280 -> 282 on 2026-09-03, and it tripped on the rule most worth
+ * spending it on.** The No Surprises tile told a patient that a notice-and-
+ * consent form is their choice and that signing means paying more, and said
+ * nothing about 45 CFR §149.420(b) — the list of care where the consent
+ * criteria "do not apply" and the provider "will always be subject to" the
+ * balance-billing prohibition. Anesthesiology, pathology, radiology,
+ * neonatology, emergency medicine; assistant surgeons, hospitalists,
+ * intensivists; diagnostic and lab work; anything where the facility has no
+ * in-network provider who could do it; and anything an unforeseen urgent need
+ * calls for mid-procedure, which survives a signature that was otherwise valid.
+ * A patient handed that form at an in-network hospital was being asked to give
+ * up something the form cannot take, and this page was agreeing with the form.
+ *
+ * Measured rather than estimated: the entry chunk went 275,346 -> 276,568 bytes
+ * gzipped, so the rule and its citation cost **1.2 kB** — 0.4% of a first visit.
+ * The levers were re-checked and the 2026-09-01 finding stands unchanged: the
+ * entry chunk is 276.6 kB gzipped of the 280.1, the inlined shards are most of
+ * it and cannot leave (`connect-src 'none'` inlines them at build time and the
+ * manifest hash is computed over the exact shard bytes, so a lazily imported
+ * copy would be hashing a shard that is not the shard), and splitting the tiles
+ * moves bytes between chunks without moving them out of the precached set,
+ * which is what this number measures. /tools.html is still 4.9 kB and still the
+ * one asset with a real argument against it; dropping it would buy four times
+ * this raise and narrow the offline promise, which remains the worse trade.
+ *
+ * Two, not five. The headroom is 1.9 kB, and the gate is still meant to trip.
  */
-export const SHELL_GZIP_BUDGET_KB = 280;
+export const SHELL_GZIP_BUDGET_KB = 282;
 
 /** A precached asset and its gzipped size. */
 export interface ShellAsset {

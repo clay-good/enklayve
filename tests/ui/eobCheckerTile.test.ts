@@ -150,6 +150,34 @@ describe("Medical Bill & EOB Checker", () => {
     expect(text).toContain("notice and consent form");
   });
 
+  it("names the care no consent form can waive, beside the form that asks", () => {
+    // The waiver paragraph told a patient that signing is their choice and that
+    // they will likely pay more, and stopped there. 45 CFR §149.420(b) says the
+    // notice and consent criteria "do not apply" — and the provider "will
+    // always be subject to" the balance-billing prohibition — for a whole class
+    // of care: the ancillary specialties nobody picks, diagnostic and lab work,
+    // anything the facility has no in-network provider for, and anything an
+    // unforeseen urgent need calls for mid-procedure, which survives a
+    // signature that was otherwise valid. A patient handed that form at an
+    // in-network hospital was being asked to give up something the form cannot
+    // take, and this page was agreeing with the form.
+    const root = mount(MISMATCH);
+    const text = root.textContent ?? "";
+    expect(text).toContain("Care no form can waive");
+    expect(text).toContain("anesthesiology");
+    expect(text).toContain("Assistant surgeons, hospitalists, and intensivists");
+    expect(text).toContain("Diagnostic services");
+    expect(text).toContain("no in-network provider");
+    // The one that outlives a valid signature is the one worth stating loudest.
+    expect(text).toContain("unforeseen, urgent need");
+    // The rest of this shard is transcribed from the CMS consumer pages; this
+    // is the regulation, and it carries its own link rather than borrowing one.
+    const cite = Array.from(root.querySelectorAll("a.cite-link")).map((a) =>
+      a.getAttribute("href"),
+    );
+    expect(cite.some((h) => h?.includes("section-149.420"))).toBe(true);
+  });
+
   it("says a ground ambulance is outside the protections rather than staying quiet", () => {
     const text = mount(GROUND_AMBULANCE).textContent ?? "";
     expect(text).toContain("is not covered by the No Surprises Act's billing protections");

@@ -51,7 +51,50 @@
   ],
   "waiver": {
     "label": "A notice and consent form gives the protection up",
-    "detail": "For scheduled out-of-network care, or for post-stabilization care, a provider may ask you to sign a notice and consent form. Signing means you agree to be treated out-of-network and give up your protection from a surprise bill, and you will likely pay more. Signing is your choice; a provider may refuse the non-emergency care if you decline, in which case you can reschedule with an in-network provider."
+    "detail": "For scheduled out-of-network care, or for post-stabilization care, a provider may ask you to sign a notice and consent form. Signing means you agree to be treated out-of-network and give up your protection from a surprise bill, and you will likely pay more. Signing is your choice; a provider may refuse the non-emergency care if you decline, in which case you can reschedule with an in-network provider. The form also has to arrive in time to be a choice: at least 72 hours before the care when the appointment was made that far ahead, and at least 3 hours before it on the day itself, on its own page rather than buried in a stack of admission paperwork."
+  },
+  "waiverNeverApplies": {
+    "label": "Care no form can waive",
+    "detail": "For a whole class of care the consent form does not work, whoever signs it. A provider in these categories is always barred from balance billing you at a facility your plan is in-network with, so a form asking you to give that up is asking for something it cannot have — and being handed one is itself worth raising with the help desk below.",
+    "entries": [
+      {
+        "id": "emergency-services",
+        "label": "Emergency services",
+        "detail": "There is no consent route for emergency care at all. The notice-and-consent path exists only for non-emergency care at a facility your plan is in-network with."
+      },
+      {
+        "id": "ancillary-specialties",
+        "label": "Emergency medicine, anesthesiology, pathology, radiology, and neonatology",
+        "detail": "Named in the regulation as ancillary services, whether the person treating you is a physician or a non-physician practitioner. These are the specialties you do not choose, which is why they cannot be signed away."
+      },
+      {
+        "id": "assistant-surgeons-hospitalists-intensivists",
+        "label": "Assistant surgeons, hospitalists, and intensivists",
+        "detail": "Also ancillary, for the same reason: they are assigned to your care rather than picked by you."
+      },
+      {
+        "id": "diagnostic-services",
+        "label": "Diagnostic services, including radiology and laboratory work",
+        "detail": "The imaging and the labs ordered around your care are covered whatever the reading physician's network status is."
+      },
+      {
+        "id": "no-in-network-alternative",
+        "label": "Any service where the facility has no in-network provider who could do it",
+        "detail": "If nobody participating in your plan can furnish the item or service at that facility, consent cannot be asked for it — there was no in-network choice to decline."
+      },
+      {
+        "id": "unforeseen-urgent",
+        "label": "Anything done for an unforeseen, urgent need that came up during the care",
+        "detail": "This one survives a signature. If an urgent need arises while you are being treated, the items and services it calls for are protected even if you signed a valid consent form for the scheduled care."
+      }
+    ],
+    "citation": {
+      "sourceUrl": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-149/subpart-E/section-149.420",
+      "sourceDocument": "45 CFR §149.420(b)",
+      "sourceNote": "The notice and consent criteria do not apply, and the nonparticipating provider is always subject to the balance-billing prohibition, with respect to ancillary services — emergency medicine, anesthesiology, pathology, radiology and neonatology, whether provided by a physician or non-physician practitioner; assistant surgeons, hospitalists and intensivists; diagnostic services including radiology and laboratory services; and items and services provided by a nonparticipating provider if there is no participating provider who can furnish them at that facility — and with respect to items or services furnished as a result of unforeseen, urgent medical needs arising at the time an item or service is furnished, regardless of whether the notice and consent criteria were satisfied. Paragraph (a) reaches items and services other than emergency services, so emergency care has no consent route at all.",
+      "effectiveYear": 2026,
+      "dateRetrieved": "2026-09-03"
+    }
   },
   "uninsured": {
     "goodFaithEstimateAdvanceBusinessDays": 3,
