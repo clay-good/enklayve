@@ -15,16 +15,32 @@ import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import type { TileContext, TileDefinition } from "./types";
 
 // Single / head of household / qualifying surviving spouse share the $25k/$34k
-// bases; married jointly uses $32k/$44k. (Married-filing-separately-with-spouse,
-// a $0/$0 special case, is left out — see the shard note.)
-const STATUSES: { value: "single" | "married_jointly" | "head_of_household"; label: string }[] = [
+// bases; married jointly uses $32k/$44k.
+//
+// The fourth option is the one that used to be missing. §86(c)(1)(C)(ii) gives a
+// married individual filing separately a base amount of ZERO unless they lived
+// apart from their spouse for the whole year — up to 85% of the benefit is
+// taxable from the first dollar, with no exempt tier at all. It was documented
+// here as "left out — see the shard note", which is a scope decision that reads
+// fine in a comment and does something else on screen: a reader in that case
+// found no option describing them, picked Single, and was told nothing was
+// taxable below $25,000 of provisional income. Silently dropping an audience
+// costs more than naming them, and the amounts are two zeroes.
+//
+// A separate filer who DID live apart all year uses the single amounts under
+// §86(c)(1)(C)(i), which is what the note under the select says.
+const STATUSES: {
+  value: "single" | "married_jointly" | "head_of_household" | "married_separately";
+  label: string;
+}[] = [
   { value: "single", label: "Single" },
   { value: "married_jointly", label: "Married filing jointly" },
   { value: "head_of_household", label: "Head of household" },
+  { value: "married_separately", label: "Married filing separately, lived with spouse" },
 ];
 
 interface Fields {
-  fs: "single" | "married_jointly" | "head_of_household";
+  fs: "single" | "married_jointly" | "head_of_household" | "married_separately";
   ss: number;
   other: number;
   exempt: number;
@@ -130,6 +146,19 @@ export function mountSocialSecurityTax(ctx: TileContext): void {
         value: r.percentTaxable > 0 ? pct(r.percentTaxable, 1) : "0%",
       },
       { label: "How the threshold works", value: tierNote, citation: ssTax.citation },
+      ...(fields.fs === "married_separately"
+        ? [
+            {
+              label: "Why there is no exempt tier",
+              value:
+                "A separate return carries a base amount of zero unless you lived apart from " +
+                "your spouse for the entire year, so the benefit is taxable from the first " +
+                "dollar of provisional income. If you did live apart all year, use Single — the " +
+                "$25,000 and $34,000 amounts are the ones that apply to you.",
+              citation: ssTax.citation,
+            },
+          ]
+        : []),
     ];
 
     resultContainer.replaceChildren(

@@ -59,6 +59,38 @@ describe("Social Security Taxation tile", () => {
     expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/^https?:\/\//);
   });
 
+  it("gives a separate filer who lived with their spouse no exempt tier at all", () => {
+    // §86(c)(1)(C)(ii): the base amount is zero for a married individual filing
+    // separately who did not live apart from their spouse for the whole year,
+    // so the benefit is taxable from the first dollar of provisional income.
+    // The tile offered three statuses and documented this one as "left out —
+    // see the shard note", which reads fine in a comment and does something
+    // else on screen: the reader found nothing describing them, picked Single,
+    // and was told $25,000 of provisional income was safe.
+    const { root } = mount(
+      new URLSearchParams({ fs: "married_separately", ss: "20000", oi: "10000" }),
+    );
+    // The same inputs that produce $0.00 for a single filer, one row up.
+    expect(rowValue(root, "Provisional income")).toBe("$20,000.00");
+    expect(rowValue(root, "Taxable portion")).toBe("$17,000.00");
+    expect(rowValue(root, "Why there is no exempt tier")).toContain("lived apart");
+  });
+
+  it("sends a separate filer who lived apart all year to the single amounts", () => {
+    // The other half of §86(c)(1)(C), and the reason the option is labelled
+    // "lived with spouse" rather than "married filing separately": a separate
+    // filer who lived apart all year uses $25,000 / $34,000, and would be
+    // wrongly taxed from the first dollar by an option that did not ask.
+    const { root } = mount(
+      new URLSearchParams({ fs: "married_separately", ss: "20000", oi: "10000" }),
+    );
+    expect(rowValue(root, "Why there is no exempt tier")).toContain("use Single");
+    const options = [...root.querySelectorAll('select[name="fs"] option')].map(
+      (o) => o.textContent ?? "",
+    );
+    expect(options).toContain("Married filing separately, lived with spouse");
+  });
+
   it("shows the verify banner when data is missing and stays finite on junk input", () => {
     expect(mount(new URLSearchParams(), null).root.querySelector(".verify-banner")).not.toBeNull();
     const { root } = mount(new URLSearchParams({ fs: "zzz", ss: "x", oi: "-9", ti: "NaN" }));
