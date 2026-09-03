@@ -4,10 +4,10 @@
  * state. It evaluates the engine at the current income and at income + the
  * step, then attributes the difference to each layer — every line cited.
  */
-import { Money } from "../engine/money";
+import { Money, allocateRounded } from "../engine/money";
 import { evaluateTaxes, type TaxInput, type TaxResult } from "../engine/tax";
 import { bracketsFor, statutoryNotches } from "../engine/tax/brackets";
-import type { FilingStatus } from "../data/schemas";
+import type { CitationData, FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
@@ -145,20 +145,33 @@ export function mountMarginalExplorer(ctx: TileContext): void {
     const kept = Money.from(fields.step).subtract(totalDelta);
     const marginalRate = fields.step === 0 ? 0 : totalDelta.divide(fields.step).toNumber();
 
-    const lines: BreakdownLine[] = [
-      { label: "Federal income tax", value: fmt(fedDelta), citation: base.federal.citation },
-      { label: "FICA", value: fmt(ficaDelta), citation: base.fica.citation },
+    // The parts of "Total cost of the next dollars", allocated to it by largest
+    // remainder rather than each rounded to itself -- see `allocateRounded`.
+    // Rounded independently, federal + FICA + state came to a cent under the
+    // total printed beneath them at a $91,913 income, among others.
+    const parts: { label: string; amount: Money; citation: CitationData | null }[] = [
+      { label: "Federal income tax", amount: fedDelta, citation: base.federal.citation },
+      { label: "FICA", amount: ficaDelta, citation: base.fica.citation },
     ];
     if (base.state) {
-      lines.push({
+      parts.push({
         label: `${base.state.jurisdictionName} income tax`,
-        value: fmt(stateDelta),
+        amount: stateDelta,
         citation: base.state.citation,
       });
     }
-    if (base.local.lines.length > 0 && base.local.citation) {
-      lines.push({ label: "Local tax", value: fmt(localDelta), citation: base.local.citation });
+    if (base.local.lines.length > 0) {
+      parts.push({ label: "Local tax", amount: localDelta, citation: base.local.citation });
     }
+    const shares = allocateRounded(
+      parts.map((p) => p.amount),
+      totalDelta,
+    );
+    const lines: BreakdownLine[] = parts.map((p, i) => ({
+      label: p.label,
+      value: fmt(shares[i]!),
+      citation: p.citation,
+    }));
     // A step that crosses a point where the SCHEDULE charges a flat amount is
     // the one case where "your marginal rate" is a misleading answer on its own:
     // the number is real, and it is a step rather than a rate, so it does not

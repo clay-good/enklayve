@@ -28,9 +28,16 @@ import { renderReport } from "../../src/ui/reportView";
  * hand-kept list of which lines are supposed to add up. That list is the thing
  * that would go stale the day a tile gains a line.
  *
- * Each tile is checked at its worked example and at four perturbed incomes,
- * because a cent of disagreement is a property of the particular numbers: the
- * Take-Home bug is invisible at most incomes and plain at $123,456.
+ * **At every field, not the income.** A cent of disagreement is a property of
+ * the particular numbers — the Take-Home bug is invisible at most incomes and
+ * plain at $123,456 — so each tile is driven through a grid of states rather
+ * than read once. The first version moved only the largest field the example
+ * filled, which is the income on a tax tile and nothing at all on the three
+ * tiles whose examples fill no field above $1,000. Both columns it missed were
+ * moved by a different field: the Marginal Explorer's step, and Marginal
+ * Reality's raise. Every numeric field now takes every perturbation in turn,
+ * and every dropdown takes every option — a state's bracket schedule decides
+ * where the halves fall as surely as the income does.
  *
  * **Every money figure on the page, not one CSS class.** The first version read
  * `.bd-row` — the breakdown table — and so was blind to money shown anywhere
@@ -72,37 +79,6 @@ export function nearMisses(
   return out;
 }
 
-function rowsOf(
-  tile: TileDefinition,
-  perturb: number | null,
-): { label: string; value: number | null }[] {
-  const root = document.createElement("div");
-  tile.mount!({
-    root,
-    params: new URLSearchParams(),
-    setParams: () => {},
-    permalink: () => "https://enklayve.com/#/x",
-    navigate: () => {},
-    locale: "en-US",
-    data,
-    profile: new SituationStore(),
-  } as TileContext);
-  [...root.querySelectorAll("button")]
-    .find((b) => /try an example/i.test(b.textContent ?? ""))
-    ?.click();
-  if (perturb !== null) {
-    // The largest field the example filled: for a tax tile that is the income,
-    // which is what moves every line in the column at once.
-    const target = [...root.querySelectorAll<HTMLInputElement>('input[type="number"]')].find(
-      (i) => Number(i.value) > 1000,
-    );
-    if (!target) return [];
-    target.value = String(perturb);
-    target.dispatchEvent(new Event("input", { bubbles: true }));
-  }
-  return moneyRows(root);
-}
-
 /**
  * Every money figure in the subtree, in document order, labelled by the row it
  * sits in. A leaf whose entire text is a currency string is a displayed amount;
@@ -119,6 +95,71 @@ export function moneyRows(root: Element): { label: string; value: number | null 
         .slice(0, 70),
       value: displayedCents(e.textContent ?? ""),
     }));
+}
+
+/** A freshly mounted tile with its worked example filled in. */
+function mounted(tile: TileDefinition): HTMLElement {
+  const root = document.createElement("div");
+  tile.mount!({
+    root,
+    params: new URLSearchParams(),
+    setParams: () => {},
+    permalink: () => "https://enklayve.com/#/x",
+    navigate: () => {},
+    locale: "en-US",
+    data,
+    profile: new SituationStore(),
+  } as TileContext);
+  [...root.querySelectorAll("button")]
+    .find((b) => /try an example/i.test(b.textContent ?? ""))
+    ?.click();
+  return root;
+}
+
+/** The values every numeric field is driven to, one field at a time. */
+const PERTURBATIONS = [123_457, 37_777, 91_913, 250_001, 13];
+
+/**
+ * Every state of a tile this sweep visits: the worked example, then each
+ * numeric field driven to each perturbation with the others left alone, then
+ * each option of each dropdown.
+ *
+ * The first version moved only "the largest field the example filled", which
+ * for a tax tile is the income. That reaches the columns income moves and no
+ * others, and it silently did nothing at all on the three tiles whose examples
+ * fill no field above $1,000. Both defects it missed were in a field that was
+ * not the income: the Marginal Explorer's step, and Marginal Reality's raise.
+ */
+function* states(tile: TileDefinition): Generator<{ label: string; root: HTMLElement }> {
+  yield { label: "example", root: mounted(tile) };
+
+  const count = mounted(tile).querySelectorAll('input[type="number"]').length;
+  for (let i = 0; i < count; i += 1) {
+    const root = mounted(tile);
+    const input = [...root.querySelectorAll<HTMLInputElement>('input[type="number"]')][i]!;
+    const original = input.value;
+    for (const value of PERTURBATIONS) {
+      input.value = String(value);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      yield { label: `field ${i} at ${value}`, root };
+    }
+    input.value = original;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  const selects = mounted(tile).querySelectorAll("select").length;
+  for (let i = 0; i < selects; i += 1) {
+    const root = mounted(tile);
+    const select = [...root.querySelectorAll<HTMLSelectElement>("select")][i]!;
+    const original = select.value;
+    for (const opt of [...select.options]) {
+      select.value = opt.value;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      yield { label: `${select.name || `select ${i}`} = ${opt.value || "(blank)"}`, root };
+    }
+    select.value = original;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  }
 }
 
 describe("finding a column that does not add up", () => {
@@ -154,13 +195,11 @@ describe("every calculator's breakdown adds up", () => {
     if (!tile.mount) continue;
     it(`${tile.id} shows no column that misses by a cent`, () => {
       const problems: string[] = [];
-      for (const perturb of [null, 123_457, 37_777, 91_913, 250_001]) {
-        for (const miss of nearMisses(rowsOf(tile, perturb))) {
-          problems.push(`${perturb === null ? "example" : `at ${perturb}`}: ${miss}`);
-        }
+      for (const { label, root } of states(tile)) {
+        for (const miss of nearMisses(moneyRows(root))) problems.push(`${label}: ${miss}`);
       }
       expect([...new Set(problems)]).toEqual([]);
-    }, 20_000);
+    }, 30_000);
   }
 });
 

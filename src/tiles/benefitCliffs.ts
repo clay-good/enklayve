@@ -12,7 +12,7 @@
  * Medicaid is shown as a status change rather than converted into dollars we
  * cannot source.
  */
-import { Money } from "../engine/money";
+import { Money, allocateRounded } from "../engine/money";
 import { marginalReality, sweepResources, type CliffData, type CliffInput } from "../engine/cliffs";
 import { fplRegionFor } from "../data/usStates";
 import type { FilingStatus } from "../data/schemas";
@@ -545,10 +545,21 @@ export function mountMarginalReality(ctx: TileContext): void {
     const r = marginalReality(fields.income, fields.step, toCliffInput(fields), cliffData);
     const fmt = (n: number): string => Money.from(n).format(ctx.locale);
 
+    // "What you actually keep" is the sum of the three rows above it, and
+    // rounding each of those to itself put the column a cent off the total at
+    // ordinary raises -- $37,777, $91,913, $123,457. The raise is the number the
+    // reader typed, so it is pinned and printed exactly as entered; the two
+    // derived rows are allocated to what is left by largest remainder
+    // (`allocateRounded`), which is the same rule the tax breakdowns use.
+    const raise = Money.from(fields.step).roundToCents();
+    const [lostToTax, benefits] = allocateRounded(
+      [Money.from(r.taxDelta - fields.step), Money.from(r.benefitDelta)],
+      Money.from(r.netDelta).subtract(raise),
+    );
     const lines: BreakdownLine[] = [
-      { label: "Extra pay", value: fmt(fields.step) },
-      { label: "Lost to tax and FICA", value: fmt(-(fields.step - r.taxDelta)) },
-      { label: "Change in benefits and credits", value: fmt(r.benefitDelta) },
+      { label: "Extra pay", value: fmt(raise.toNumber()) },
+      { label: "Lost to tax and FICA", value: fmt(lostToTax!.toNumber()) },
+      { label: "Change in benefits and credits", value: fmt(benefits!.toNumber()) },
       { label: "What you actually keep", value: fmt(r.netDelta), emphasis: true },
       { label: "Combined marginal rate", value: pct(r.combinedRate) },
     ];
