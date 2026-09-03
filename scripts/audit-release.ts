@@ -312,11 +312,27 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * manifest hash is computed over the exact shard bytes, so a lazily imported
  * copy would be hashing a shard that is not the shard), and splitting the tiles
  * moves bytes between chunks without moving them out of the precached set,
- * which is what this number measures. /tools.html is still 4.9 kB and still the
- * one asset with a real argument against it; dropping it would buy four times
- * this raise and narrow the offline promise, which remains the worse trade.
+ * which is what this number measures.
  *
  * Two, not five. The headroom is 1.9 kB, and the gate is still meant to trip.
+ *
+ * **Correction, same day, and the lever list was the thing that needed it.**
+ * The paragraph above first ended by saying `/tools.html` "is still 4.9 kB and
+ * still the one asset with a real argument against it", and that dropping it
+ * would buy four times the raise. It would buy nothing. It has not been in the
+ * precache since 2026-09-01, and rule 8 below is a *gate* that keeps it out —
+ * the 4.9 kB was spent two days before it was offered here as a saving.
+ *
+ * The paragraph claimed to have re-checked the levers and had re-quoted one,
+ * which is the specific failure this comment already warns about two entries
+ * up, where "~7%" and "~11%" described one quantity that had grown past both.
+ * A lever list is a set of measurements with a shelf life, and a lever that a
+ * gate forecloses is not a lever at all. Re-measured now: the precached shell
+ * is `/`, `/index.html`, the entry chunk, the stylesheet, two icons and the web
+ * manifest, and there is no fat asset left in it. Every remaining lever is
+ * rejected on grounds stated above, which is the useful conclusion — the next
+ * raise will not have a cheap alternative to compare itself against, and should
+ * be argued on what it buys rather than on what it could have trimmed instead.
  */
 export const SHELL_GZIP_BUDGET_KB = 282;
 

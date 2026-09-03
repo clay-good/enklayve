@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { renderToolsIndex } from "./scripts/tools-index";
 import { toolPages } from "./scripts/tool-pages";
 import { renderSitemap, renderRobots, SITE_ORIGIN } from "./scripts/sitemap";
-import { renderServiceWorker, renderWebManifest } from "./scripts/service-worker";
+import { CORE_SHELL, renderServiceWorker, renderWebManifest } from "./scripts/service-worker";
 
 const REPO_ROOT = resolve(__dirname);
 
@@ -120,13 +120,7 @@ function offlinePwa(): Plugin {
       // Tools view already mirrors from the shell that IS precached. It is still
       // built, still served, still in the sitemap, and the fetch handler
       // runtime-caches it the moment anyone opens it.
-      const core = new Set<string>([
-        "/",
-        "/index.html",
-        "/manifest.webmanifest",
-        "/favicon.svg",
-        "/icon.svg",
-      ]);
+      const core = new Set<string>(CORE_SHELL);
       for (const [name, output] of Object.entries(bundle)) {
         if (output.type === "chunk" && output.isEntry) core.add(`/${name}`);
         if (output.type === "asset" && name.endsWith(".css")) core.add(`/${name}`);

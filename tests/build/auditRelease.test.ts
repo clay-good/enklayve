@@ -19,6 +19,7 @@ import {
   SHELL_GZIP_BUDGET_KB,
 } from "../../scripts/audit-release";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
+import { CORE_SHELL } from "../../scripts/service-worker";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -408,6 +409,30 @@ describe("where the shell's bytes come from", () => {
     const violations = checkPrecacheContents(["/", "/index.html", "/tools.html"]);
     expect(violations).toHaveLength(1);
     expect(violations[0]).toContain("/tools.html");
+  });
+
+  it("pins the precache seed, so the budget's lever list cannot describe a shell that moved", () => {
+    // The unit test above proves the *rule*. This pins the *set*, which is the
+    // half that went stale: the budget comment spent two days offering
+    // `/tools.html` as the alternative to raising the number, after it had
+    // already left the precache and after `checkPrecacheContents` became a gate
+    // keeping it out. A lever a gate forecloses is not a lever, and re-quoting
+    // one inside a paragraph that says the levers were re-checked is how a
+    // measurement outlives the thing it measured.
+    //
+    // The seed lived as a literal inside `vite.config.ts`, where no test could
+    // see it. Adding a sixth entry now means editing this list too, which is
+    // the moment to ask what a first visit is paying for — and the moment the
+    // budget comment needs rewriting rather than re-quoting.
+    expect([...CORE_SHELL]).toEqual([
+      "/",
+      "/index.html",
+      "/manifest.webmanifest",
+      "/favicon.svg",
+      "/icon.svg",
+    ]);
+    // And the seed itself must satisfy rule 8: no crawl page may enter this way.
+    expect(checkPrecacheContents(CORE_SHELL)).toEqual([]);
   });
 
   it("measures the sourceNote prose inside a shard, at any depth", () => {

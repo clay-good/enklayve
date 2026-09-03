@@ -20,6 +20,28 @@
  * 'self'` so it can cache same-origin assets — see worker/index.ts.)
  */
 
+/**
+ * The precache seed: the app shell, minus the hashed assets the build adds.
+ *
+ * A literal in `vite.config.ts` until 2026-09-03, which made it invisible to the
+ * suite — and the shell budget's lever list spent two days offering
+ * `/tools.html` as the alternative to raising the number, after that file had
+ * left the precache and after `checkPrecacheContents` became a gate keeping it
+ * out. The size of the precached shell is a number the project argues about in
+ * prose; what is *in* it should be somewhere a test can read.
+ *
+ * The build adds the entry chunk and the stylesheet, whose names carry content
+ * hashes. Everything else is here, and adding to it is the moment to ask what a
+ * first visit is paying for.
+ */
+export const CORE_SHELL = [
+  "/",
+  "/index.html",
+  "/manifest.webmanifest",
+  "/favicon.svg",
+  "/icon.svg",
+] as const;
+
 /** Render the service worker source for a given precache list and version. */
 export function renderServiceWorker(precache: string[], version: string): string {
   const sorted = [...new Set(precache)].sort();
