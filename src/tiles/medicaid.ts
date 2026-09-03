@@ -9,7 +9,7 @@
 import { Money } from "../engine/money";
 import { medicaidEligibility } from "../engine/benefits";
 import { el, option } from "../ui/dom";
-import { field, parseNonNegative, tryExampleButton } from "../ui/form";
+import { field, fplPercentText, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { US_STATES, fplRegionFor, stateName } from "../data/usStates";
 import type { SituationStore } from "../profile/situation";
@@ -100,7 +100,10 @@ export function mountMedicaid(ctx: TileContext): void {
       },
       {
         label: "Income as % of poverty line",
-        value: `${r.fplPercent.toFixed(0)}%`,
+        // The state's own threshold is what this tile decides with — 138% in
+        // most expansion states, 215% in DC — so that is the line the printed
+        // figure must not be rounded onto.
+        value: fplPercentText(r.fplPercent, r.thresholdPctFpl === null ? [] : [r.thresholdPctFpl]),
         citation: fpl.citation,
       },
     ];
@@ -136,7 +139,7 @@ export function mountMedicaid(ctx: TileContext): void {
         value: Money.from(r.fplPercent),
         locale: ctx.locale,
         format: (n) => `${n.toFixed(0)}% of poverty line`,
-        copyText: `${r.fplPercent.toFixed(0)}% FPL`,
+        copyText: `${fplPercentText(r.fplPercent, r.thresholdPctFpl === null ? [] : [r.thresholdPctFpl])} FPL`,
         breakdown: lines,
         permalink: () => ctx.permalink(writeFields(fields)),
       }),

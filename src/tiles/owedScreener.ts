@@ -15,7 +15,7 @@ import {
   estimateSaversCredit,
 } from "../engine/benefits";
 import { el, option } from "../ui/dom";
-import { field, parseNonNegative, tryExampleButton } from "../ui/form";
+import { field, fplPercentText, parseNonNegative, tryExampleButton } from "../ui/form";
 import {
   checkboxFilingStatus,
   filesSeparately,
@@ -272,7 +272,7 @@ export function mountOwedScreener(ctx: TileContext): void {
       findings.push({
         program: "Medicaid (likely, in expansion states)",
         estimate: "Eligibility",
-        note: `Your income is ${pctOfLine.toFixed(0)}% of the poverty line; at or below 138% suggests Medicaid eligibility where the state expanded it.`,
+        note: `Your income is ${fplPercentText(pctOfLine, [138])} of the poverty line; at or below 138% suggests Medicaid eligibility where the state expanded it.`,
         citation: fpl.citation,
       });
     }
@@ -284,7 +284,7 @@ export function mountOwedScreener(ctx: TileContext): void {
       findings.push({
         program: "ACA marketplace subsidies (likely)",
         estimate: "Premium tax credit",
-        note: `At ${pctOfLine.toFixed(0)}% of the poverty line (within the 100–400% range) you likely qualify for a marketplace premium tax credit. Use the ACA Premium Tax Credit tool for a dollar estimate.`,
+        note: `At ${fplPercentText(pctOfLine, [100, 400])} of the poverty line (within the 100–400% range) you likely qualify for a marketplace premium tax credit. Use the ACA Premium Tax Credit tool for a dollar estimate.`,
         citation: fpl.citation,
       });
     }
@@ -292,7 +292,7 @@ export function mountOwedScreener(ctx: TileContext): void {
     results.append(
       el("p", {
         class: "screener-summary",
-        text: `Your household income is ${pctOfLine.toFixed(0)}% of the federal poverty line.`,
+        text: `Your household income is ${fplPercentText(pctOfLine, [100, 138, 400])} of the federal poverty line.`,
       }),
     );
     if (findings.length === 0) {

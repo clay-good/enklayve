@@ -8,7 +8,7 @@
 import { Money } from "../engine/money";
 import { povertyLine, fplPercent } from "../engine/benefits";
 import { el, option } from "../ui/dom";
-import { field, parseNonNegative, tryExampleButton } from "../ui/form";
+import { field, fplPercentText, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import type { FplRegion } from "../data/browser";
 import type { SituationStore } from "../profile/situation";
@@ -114,7 +114,13 @@ export function mountFpl(ctx: TileContext): void {
       { label: "Household size", value: String(fields.householdSize) },
       { label: "Poverty line (100% FPL)", value: fmt(line), citation: fpl.citation },
       { label: "Your household income", value: fmt(Money.from(fields.income)) },
-      { label: "Income as % of poverty line", value: `${pctOfLine.toFixed(0)}%`, emphasis: true },
+      {
+        label: "Income as % of poverty line",
+        // This tile prints the 138% and 100–400% lines two rows below, so those
+        // are the numbers a reader will hold this figure against.
+        value: fplPercentText(pctOfLine, [100, 138, 400]),
+        emphasis: true,
+      },
       {
         label: "Medicaid expansion (≤138%)",
         value: fmt(line.multiply(1.38)),
@@ -129,7 +135,7 @@ export function mountFpl(ctx: TileContext): void {
         value: Money.from(pctOfLine),
         locale: ctx.locale,
         format: (n) => `${n.toFixed(0)}% of FPL`,
-        copyText: `${pctOfLine.toFixed(0)}% of the federal poverty line`,
+        copyText: `${fplPercentText(pctOfLine, [100, 138, 400])} of the federal poverty line`,
         breakdown: lines,
         permalink: () => ctx.permalink(writeFields(fields)),
       }),

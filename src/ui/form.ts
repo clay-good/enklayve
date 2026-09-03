@@ -94,6 +94,32 @@ export function pct(rate: number, digits = 2): string {
 }
 
 /**
+ * Format a percentage-of-a-line figure without rounding it onto a line it is
+ * not on.
+ *
+ * A household of one earning $63,900 is at 400.38% of the poverty line, which
+ * `toFixed(0)` renders as "400%" — printed directly above a sentence saying
+ * that above 400% of the poverty line there is no premium tax credit. The page
+ * contradicted itself, and the reader's only way to tell which half was right
+ * was to redo the division. The same rounding puts $15,900 (99.62%) on "100%"
+ * beside a note explaining that below 100% the credit does not reach them, and
+ * $22,100 (138.47%) on "138%" beside a Medicaid row that is missing because the
+ * true figure is over the line.
+ *
+ * So a figure that rounds *onto* a threshold this surface decides with, without
+ * being on it, is shown with a decimal instead. Everything else keeps the whole
+ * number, because two decimal places on every figure to save three edge cases
+ * is a worse page. The caller passes the thresholds that actually decide its
+ * answer; a surface that decides nothing passes none and always rounds.
+ */
+export function fplPercentText(value: number, decisive: readonly number[] = []): string {
+  if (!Number.isFinite(value)) return "(out of range)";
+  const whole = Math.round(value);
+  const lands = decisive.some((t) => whole === t && value !== t);
+  return `${lands ? value.toFixed(1) : whole.toFixed(0)}%`;
+}
+
+/**
  * Whether a fragment param was present but silently rewritten by a clamp — the
  * deep-link-reproducibility seam (SPEC-3 §2.3 / hardening B1). The clamps
  * themselves are correct and must stay (they prevent divide-by-zero); this only

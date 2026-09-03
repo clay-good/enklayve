@@ -11,7 +11,7 @@
 import { Money } from "../engine/money";
 import { estimatePremiumTaxCredit } from "../engine/benefits";
 import { el, option } from "../ui/dom";
-import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
+import { field, fplPercentText, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import type { FplRegion } from "../data/browser";
 import type { SituationStore } from "../profile/situation";
@@ -154,7 +154,13 @@ export function mountAcaPtc(ctx: TileContext): void {
     const fmt = (m: Money): string => m.format(ctx.locale);
 
     const lines: BreakdownLine[] = [
-      { label: "Income vs poverty line", value: `${r.fplPercent.toFixed(0)}% FPL` },
+      {
+        label: "Income vs poverty line",
+        // 100 and 400 are the two numbers this tile decides with, so neither
+        // may be printed for a household that is not on it. See
+        // `fplPercentText`.
+        value: `${fplPercentText(r.fplPercent, [100, 400])} FPL`,
+      },
       {
         label: "Expected contribution",
         value: `${pct(r.applicablePercent / 100)} of income · ${fmt(r.expectedMonthlyContribution)}/mo`,

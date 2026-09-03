@@ -22,7 +22,7 @@ import {
   fplPercent,
   medicaidEligibility,
 } from "../engine/benefits";
-import { pct } from "../ui/form";
+import { fplPercentText, pct } from "../ui/form";
 import { crossedStatutoryStep, statutoryStepSentence } from "../ui/statuteStep";
 import type { CitationData } from "../data/schemas";
 import type { BundledData, FplRegion } from "../data/browser";
@@ -266,7 +266,7 @@ export function buildReport(
     const p = fplPercent(income, householdSize, fplData);
     owedLines.push({
       label: "Household income vs. poverty line",
-      value: `${p.toFixed(0)}% of FPL`,
+      value: `${fplPercentText(p, [100, 138, 400])} of FPL`,
     });
     citations.push(fplData.citation);
     // The Report used to test `p <= 138` and `p >= 100` against literals it
