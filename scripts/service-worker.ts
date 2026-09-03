@@ -45,8 +45,18 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Cache-first for same-origin GETs, then runtime-cache the response. Navigations
-// fall back to the cached shell so the app opens offline.
+// Cache-first for same-origin GETs, then runtime-cache the response.
+//
+// A NAVIGATION that cannot be fetched falls back to the cached shell, which is
+// how the app opens offline. Nothing else does, and the difference is the whole
+// point of the check: the fallback used to apply to every failed same-origin
+// GET, so offline, a request for a chunk that is not in the precache -- the
+// pdf.js reader, the OCR wasm core, the language model, none of which are in
+// the six-asset shell -- came back \`200 text/html\` carrying index.html.
+// The browser then parsed a page as a module and reported a syntax error, so
+// dropping a PDF into the Readout with no network failed as though the code
+// were broken rather than as though the network were gone. A request that
+// cannot be served is now a network error, which is what it is.
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
@@ -64,7 +74,11 @@ self.addEventListener("fetch", (event) => {
           }
           return response;
         })
-        .catch(() => caches.match("/index.html"));
+        .catch(() =>
+          request.mode === "navigate"
+            ? caches.match("/index.html").then((shell) => shell || Response.error())
+            : Response.error(),
+        );
     }),
   );
 });

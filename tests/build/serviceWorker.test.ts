@@ -36,6 +36,20 @@ describe("service worker", () => {
     expect(sw).toContain('caches.match("/index.html")');
   });
 
+  it("falls back to the shell for a navigation and for nothing else", () => {
+    // The fallback used to catch every failed same-origin GET. Offline, a
+    // request for a chunk outside the six-asset precache — the pdf.js reader,
+    // the OCR wasm core, the language model — came back `200 text/html`
+    // carrying index.html, and the browser reported a syntax error from parsing
+    // a page as a module. Dropping a PDF into the Readout with no network
+    // failed as though the code were broken rather than the network gone.
+    expect(sw).toContain('request.mode === "navigate"');
+    // And a shell that is not in the cache is a network error, not `undefined`
+    // handed to respondWith, which throws a TypeError instead of failing
+    // honestly.
+    expect(sw).toContain("Response.error()");
+  });
+
   it("only ever fetches GET requests", () => {
     expect(sw).toContain('request.method !== "GET"');
   });

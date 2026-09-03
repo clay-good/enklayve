@@ -90,6 +90,39 @@ test("works offline after the first visit", async ({ page, context }) => {
   // Cut the network and reload: the cached shell must still boot the app, and
   // since datasets are inlined at build time there is no runtime fetch to miss.
   await context.setOffline(true);
+
+  // An asset OUTSIDE the precache must fail like an asset, not like a page.
+  //
+  // The shell fallback used to catch every failed same-origin GET, so offline
+  // this came back `200 text/html` carrying index.html — for the pdf.js reader,
+  // the OCR wasm core, the language model, none of which are in the six-asset
+  // shell. A script or a wasm module that arrives as a web page fails in a way
+  // that reads as broken code rather than a missing network: dropping a scan
+  // into the Readout with no connection reported a syntax error.
+  //
+  // Asked before the offline reload, and about a path that does not exist, and
+  // both of those are the test rather than an accident of it. The emulated
+  // offline state does not survive the navigation it was set before, so a probe
+  // after the reload quietly runs online — where `vite preview` answers an
+  // unknown path with index.html, which is the very response being ruled out. A
+  // path nothing has ever fetched keeps the runtime cache out of it too: a real
+  // lazy asset may already be cached, which is the happy case and useless here,
+  // because a cache hit never reaches the code under test.
+  const offlineAsset = await page.evaluate(async () => {
+    try {
+      const r = await fetch("/assets/not-a-real-chunk.js");
+      return { reached: true, type: r.headers.get("content-type") };
+    } catch {
+      // A rejected fetch is the honest outcome for an asset nothing cached.
+      return { reached: false, type: null };
+    }
+  });
+  expect(
+    offlineAsset.type ?? "",
+    "an asset that is not cached must never come back as the app's own page",
+  ).not.toContain("text/html");
+
+  // Then the navigation itself: the cached shell still boots the app.
   await page.reload();
   await expect(page.locator(".wordmark")).toHaveText("enklayve");
   await context.setOffline(false);
