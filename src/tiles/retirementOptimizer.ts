@@ -27,6 +27,7 @@ interface Fields {
   contribIra: number;
   hsaCoverage: HsaCoverage;
   contribHsa: number;
+  contribFsa: number;
 }
 
 const EXAMPLE: Fields = {
@@ -35,6 +36,7 @@ const EXAMPLE: Fields = {
   contribIra: 3000,
   hsaCoverage: "family",
   contribHsa: 4000,
+  contribFsa: 0,
 };
 
 function isCoverage(v: string): v is HsaCoverage {
@@ -49,6 +51,7 @@ function readFields(p: URLSearchParams, contrib401kDefault: number): Fields {
     contribIra: parseNonNegative(p.get("ira"), 0),
     hsaCoverage: cov && isCoverage(cov) ? cov : "none",
     contribHsa: parseNonNegative(p.get("h"), 0),
+    contribFsa: parseNonNegative(p.get("f"), 0),
   };
 }
 
@@ -59,11 +62,15 @@ function writeFields(f: Fields): URLSearchParams {
   if (f.contribIra > 0) p.set("ira", String(f.contribIra));
   if (f.hsaCoverage !== "none") p.set("hsa", f.hsaCoverage);
   if (f.contribHsa > 0) p.set("h", String(f.contribHsa));
+  if (f.contribFsa > 0) p.set("f", String(f.contribFsa));
   return p;
 }
 
 /** The applicable limits for this person, given age and HSA coverage. */
-function limitsFor(f: Fields, d: RetirementLimitsData): { k: number; ira: number; hsa: number } {
+function limitsFor(
+  f: Fields,
+  d: RetirementLimitsData,
+): { k: number; ira: number; hsa: number; fsa: number } {
   const l = d.limits;
   const k = electiveDeferralLimit(f.age, l);
   const ira = l.ira_contribution + (f.age >= 50 ? l.ira_catch_up_50plus : 0);
@@ -71,7 +78,14 @@ function limitsFor(f: Fields, d: RetirementLimitsData): { k: number; ira: number
   if (f.hsaCoverage === "self") hsa = l.hsa_self_only;
   else if (f.hsaCoverage === "family") hsa = l.hsa_family;
   if (f.hsaCoverage !== "none" && f.age >= 55) hsa += l.hsa_catch_up_55plus;
-  return { k, ira, hsa };
+  // A general-purpose health FSA and an HSA do not stack: §223(c)(1)(B) makes
+  // anyone covered by one HSA-ineligible, which is why the row appears only for
+  // a household with no HDHP selected. A limited-purpose or post-deductible FSA
+  // is the exception, and it is not a question this tile asks — offering the
+  // room without asking would hand an HSA holder a number that disqualifies the
+  // account they already have.
+  const fsa = f.hsaCoverage === "none" ? (l.fsa_health ?? 0) : 0;
+  return { k, ira, hsa, fsa };
 }
 
 export function mountRetirementOptimizer(ctx: TileContext): void {
@@ -116,6 +130,7 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
     ...COVERAGES.map((c) => option(c.value, c.label, c.value === fields.hsaCoverage)),
   );
   const hInput = num("h", fields.contribHsa, "Current HSA contribution this year");
+  const fInput = num("f", fields.contribFsa, "Current health FSA contribution this year");
 
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
@@ -127,7 +142,8 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
     const room401k = Math.max(0, lim.k - fields.contrib401k);
     const roomIra = Math.max(0, lim.ira - fields.contribIra);
     const roomHsa = Math.max(0, lim.hsa - fields.contribHsa);
-    const totalRoom = room401k + roomIra + roomHsa;
+    const roomFsa = Math.max(0, lim.fsa - fields.contribFsa);
+    const totalRoom = room401k + roomIra + roomHsa + roomFsa;
 
     const catchUp = fields.age >= 50;
     // 60 through 63 is a window, not a floor: §414(v)(2)(E)(i) reaches a
@@ -157,6 +173,16 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
         },
         { label: "HSA room remaining", value: fmt(Money.from(roomHsa)), emphasis: true },
       );
+    } else if (lim.fsa > 0) {
+      lines.push(
+        { label: "Health FSA limit", value: fmt(Money.from(lim.fsa)), citation: cite },
+        { label: "Health FSA room remaining", value: fmt(Money.from(roomFsa)), emphasis: true },
+        {
+          label: "Note",
+          value:
+            "A health FSA is your employer's to offer, and it is use-it-or-lose-it: what is left at the end of the plan year is generally forfeited, beyond whatever carryover or grace period your plan allows. It also rules out an HSA while you have one.",
+        },
+      );
     }
 
     resultContainer.replaceChildren(
@@ -177,6 +203,7 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
       contribIra: parseNonNegative(iraInput.value, 0),
       hsaCoverage: isCoverage(hsaSelect.value) ? hsaSelect.value : "none",
       contribHsa: parseNonNegative(hInput.value, 0),
+      contribFsa: parseNonNegative(fInput.value, 0),
     };
   }
 
@@ -189,7 +216,8 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
   }
 
   hsaSelect.addEventListener("change", recompute);
-  for (const i of [ageInput, kInput, iraInput, hInput]) i.addEventListener("input", recompute);
+  for (const i of [ageInput, kInput, iraInput, hInput, fInput])
+    i.addEventListener("input", recompute);
 
   const tryExample = tryExampleButton(() => {
     fields = { ...EXAMPLE };
@@ -198,6 +226,7 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
     iraInput.value = String(fields.contribIra);
     hsaSelect.value = fields.hsaCoverage;
     hInput.value = String(fields.contribHsa);
+    fInput.value = String(fields.contribFsa);
     recompute();
   });
 
@@ -209,6 +238,7 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
     field("IRA so far this year", iraInput),
     field("HSA coverage", hsaSelect),
     field("HSA so far this year", hInput),
+    field("Health FSA so far this year", fInput),
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
