@@ -6,6 +6,14 @@ on:
   pull_request:
     branches: [main]
 
+# The gate reads the repository and writes nothing. `npm ci` runs install
+# scripts from the dependency tree on every push and every pull request, and on
+# a public repository that is the widest untrusted code path there is -- so the
+# token it runs beside is scoped down to a read of the contents, explicitly,
+# rather than inherited from whatever the repository default happens to be.
+permissions:
+  contents: read
+
 # Run the bundled JS actions (checkout, setup-node) on Node 24 ahead of
 # GitHub's mid-2026 default switch, silencing the Node 20 deprecation notice.
 env:
