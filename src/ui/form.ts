@@ -86,7 +86,11 @@ export function parseNumber(value: string | null, fallback: number): number {
  *  rather than "NaN%"/"Infinity%". */
 export function pct(rate: number, digits = 2): string {
   if (!Number.isFinite(rate)) return "(out of range)";
-  return `${(rate * 100).toFixed(digits)}%`;
+  // "-0.00%" is the same non-number as "-$0.00": a sign in front of nothing.
+  // Dropped after rounding to the displayed digits, not before, so a rate that
+  // is genuinely negative at the printed precision keeps its sign.
+  const shown = (rate * 100).toFixed(digits);
+  return `${Number(shown) === 0 ? (0).toFixed(digits) : shown}%`;
 }
 
 /**

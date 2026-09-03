@@ -135,10 +135,17 @@ export class Money {
   format(locale = "en-US", currency = "USD"): string {
     const n = this.roundToCents().toNumber();
     if (!Number.isFinite(n)) return "(out of range)";
+    // A minus sign in front of nothing. `Intl` formats both -0 and any amount
+    // that rounds to it as "-$0.00", which is not a number a reader can do
+    // anything with: it reads as either a bug or a debt of zero dollars. An
+    // exact zero times -1 is enough to produce it, and so is any difference
+    // that lands under half a cent below zero. Rounding is the last step before
+    // display, so the sign is dropped after it, never before -- a real -$0.004
+    // is still negative to every caller that asks for the number.
     return new Intl.NumberFormat(locale, {
       style: "currency",
       currency,
-    }).format(n);
+    }).format(n === 0 ? 0 : n);
   }
 }
 

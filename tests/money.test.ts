@@ -87,6 +87,27 @@ describe("Money formatting", () => {
     expect(Money.from("-1234.567").format()).toBe("-$1,234.57");
   });
 
+  /**
+   * A minus sign in front of nothing.
+   *
+   * `Intl` renders -0, and every amount that rounds to it, as "-$0.00" — a
+   * string that is not a number a reader can act on. It reads as a bug, or as
+   * a debt of zero dollars, on a site whose claim is that its arithmetic checks
+   * out. An exact zero times -1 produces it, and so does any difference landing
+   * under half a cent below zero.
+   */
+  it("never prints a minus sign in front of a zero", () => {
+    expect(Money.from(0).multiply(-1).format()).toBe("$0.00");
+    expect(Money.from("-0.001").format()).toBe("$0.00");
+    expect(Money.from("-0.004").format()).toBe("$0.00");
+    expect(Money.zero().subtract(0).format()).toBe("$0.00");
+  });
+
+  it("still signs an amount that is negative at the cent it prints", () => {
+    expect(Money.from("-0.005").format()).toBe("-$0.01");
+    expect(Money.from("-0.01").format()).toBe("-$0.01");
+  });
+
   it("shows a sentinel instead of $NaN/$∞ when a value exceeds Number range", () => {
     // Decimal arithmetic on absurd inputs can produce a value beyond JS Number
     // range; its `.toNumber()` is Infinity, which must not render as "$∞".
