@@ -353,8 +353,29 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  *
  * One, not two. The headroom is 0.6 kB, which is the smallest this has ever
  * been left, and the gate is meant to trip on the next sentence.
+ *
+ * **Then CI failed twice on a budget that passed locally, and the headroom was
+ * the reason.** This number is measured with zlib, and zlib does not produce
+ * identical output across versions. On 2026-09-03 a build measured 281.7 kB on
+ * a developer machine running Node 26 and 282.0 kB on the CI runner at Node 24;
+ * the next one, 281.8 against 282.2. A consistent 0.3-0.4 kB, which is nothing
+ * against 282 kB and everything against the 0.2 kB of headroom that had been
+ * left. Two commits went to `main` green locally and red in CI, and the number
+ * that decided it was whose machine ran the check.
+ *
+ * Two changes. The compression level is pinned at 9 rather than defaulted,
+ * which removes one source of drift — `gzipSync`'s default is not a promise.
+ * And the rule that was missing: **the headroom must exceed the spread between
+ * environments, or the gate is measuring the runner rather than the shell.**
+ * 0.4 kB is the observed spread, so headroom below about 1 kB means the gate
+ * has stopped being reproducible, whatever it says locally.
+ *
+ * **Raised 283 -> 284 on that finding**, which buys no new content at all — it
+ * restores the margin the previous three raises each ate into, and it is the
+ * first raise here that is not paying for a feature. CI is the authority on
+ * this figure; a local run is an estimate that reads about 0.4 kB low.
  */
-export const SHELL_GZIP_BUDGET_KB = 283;
+export const SHELL_GZIP_BUDGET_KB = 284;
 
 /** A precached asset and its gzipped size. */
 export interface ShellAsset {
@@ -580,7 +601,14 @@ function precachedAssets(root: string): ShellAsset[] {
   const assets: ShellAsset[] = [];
   for (const p of paths) {
     try {
-      assets.push({ path: p, gzipBytes: gzipSync(readFileSync(join(root, "dist", p))).length });
+      assets.push({
+        path: p,
+        // Level pinned rather than defaulted. `gzipSync`'s default has been
+        // level 6 for a long time and is not a promise; a budget the compressor
+        // can move is not a budget. See SHELL_GZIP_BUDGET_KB for the residual
+        // variance this does *not* remove.
+        gzipBytes: gzipSync(readFileSync(join(root, "dist", p)), { level: 9 }).length,
+      });
     } catch {
       // "/" is an alias for index.html and has no file of its own.
     }
