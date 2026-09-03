@@ -10,8 +10,14 @@ import { educationCredits } from "../engine/educationCredits";
 import { el } from "../ui/dom";
 import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
-import { checkboxFilingStatus, marriedCheckbox, marriedDefault } from "./owedShared";
+import {
+  checkboxFilingStatus,
+  filesSeparately,
+  marriedCheckbox,
+  marriedDefault,
+} from "./owedShared";
 import { rememberShared } from "./profileSync";
+import { EDUCATION_CREDIT_JOINT_RETURN_CITATION } from "../data/statutes";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
 
@@ -95,7 +101,28 @@ export function mountEducationCredits(ctx: TileContext): void {
       ec!,
     );
     const fmt = (m: Money): string => m.format(ctx.locale);
+    // §25A(g)(6) bars both credits on a separate return, and unlike the earned
+    // income credit's §32(d)(2)(B) there is no exception for a spouse living
+    // apart. So this is an answer rather than a caveat beside a figure: the
+    // rows say what is available, which is nothing, instead of a dollar amount
+    // the reader cannot have. The checkbox on this tile has two values and the
+    // filing status has five, so only a profile that actually stores
+    // `married_separately` reaches here — an unchecked box says nothing about a
+    // spouse.
+    const separate = filesSeparately(fields.married, profile);
     const lines: BreakdownLine[] = [];
+    if (separate) {
+      lines.push({
+        label: "Filing separately",
+        value:
+          "My Situation says married filing separately. Neither education credit is available on " +
+          "a separate return — the section applies only if you and your spouse file jointly, and " +
+          "there is no exception for living apart. Filing jointly is what makes the figures below " +
+          "reachable.",
+        emphasis: true,
+        citation: EDUCATION_CREDIT_JOINT_RETURN_CITATION,
+      });
+    }
     if (fields.aotcEligible) {
       lines.push({
         label: "American Opportunity Credit (per student)",
@@ -143,8 +170,8 @@ export function mountEducationCredits(ctx: TileContext): void {
 
     resultContainer.replaceChildren(
       resultCard({
-        label: "Larger education credit",
-        value: r.recommendedCredit,
+        label: separate ? "Larger education credit, on a joint return" : "Larger education credit",
+        value: separate ? Money.zero() : r.recommendedCredit,
         locale: ctx.locale,
         breakdown: lines,
         permalink: () => ctx.permalink(writeFields(fields)),

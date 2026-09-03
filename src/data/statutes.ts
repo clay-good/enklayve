@@ -97,6 +97,25 @@ export const EITC_JOINT_RETURN_CITATION: CitationData = {
 };
 
 /**
+ * IRC §25A(g)(6), the education credits and a separate return.
+ *
+ * The sibling of §32(d)(1) and the stricter of the two. The earned income
+ * credit has §32(d)(2)(B), a real exception for a separated spouse living with
+ * a qualifying child, which is why that figure is named rather than zeroed.
+ * §25A has nothing of the kind: a married individual who does not file jointly
+ * may claim neither the American Opportunity Credit nor the Lifetime Learning
+ * Credit, on any facts. So this one is an answer, not a caveat.
+ */
+export const EDUCATION_CREDIT_JOINT_RETURN_CITATION: CitationData = {
+  sourceUrl: "https://www.law.cornell.edu/uscode/text/26/25A",
+  sourceDocument: "26 U.S.C. §25A(g)(6) — education credits, married individuals",
+  sourceNote:
+    'Section 25A(g)(6): "If the taxpayer is a married individual (within the meaning of section 7703), this section shall apply only if the taxpayer and the taxpayer\'s spouse file a joint return for the taxable year." The section is both credits, so a separate return claims neither, and unlike §32(d) there is no exception for a spouse living apart.',
+  effectiveYear: 2026,
+  dateRetrieved: "2026-09-03",
+};
+
+/**
  * IRC §1091, the wash-sale rule. Cited by the Tax-Loss Harvesting tile and by
  * the Cost-Basis Lot Picker.
  *

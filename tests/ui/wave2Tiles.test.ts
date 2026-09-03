@@ -24,6 +24,7 @@ function mount(
   mountFn: (ctx: TileContext) => void,
   params: URLSearchParams,
   bundled: BundledData | null = data,
+  profile: SituationStore = new SituationStore(),
 ): { root: HTMLElement; lastParams: () => URLSearchParams | null } {
   const root = document.createElement("div");
   let captured: URLSearchParams | null = null;
@@ -37,7 +38,7 @@ function mount(
     navigate: () => {},
     locale: "en-US",
     data: bundled,
-    profile: new SituationStore(),
+    profile,
   });
   return { root, lastParams: () => captured };
 }
@@ -80,6 +81,41 @@ describe("Education Credit Comparison", () => {
     expect(rowValue(root, "American Opportunity Credit (per student)")).toBe("$2,500.00");
     expect(rowValue(root, "Lifetime Learning Credit")).toBe("$800.00");
     expect(rowValue(root, "Which saves more")).toContain("American Opportunity");
+  });
+
+  it("offers neither credit on a separate return, which §25A(g)(6) bars outright", () => {
+    // The same two-value checkbox that cost the EITC tile a §32(d) sentence.
+    // §25A(g)(6) is the stricter sibling: the section applies only if the
+    // spouses file jointly, and there is no §32(d)(2)(B) to reach a spouse
+    // living apart. So this is an answer rather than a caveat — the tile used
+    // to hand a separate filer $2,500 it computed from the single phase-out.
+    const profile = new SituationStore();
+    profile.set("filingStatus", "married_separately");
+    const { root } = mount(
+      mountEducationCredits,
+      new URLSearchParams({ magi: "70000", exp: "4000", aotc: "1", mfj: "0" }),
+      data,
+      profile,
+    );
+    const row = rowValue(root, "Filing separately") ?? "";
+    expect(row).toContain("Neither education credit is available");
+    expect(root.textContent).toContain("on a joint return");
+    const cites = [...root.querySelectorAll("a.cite-link")].map(
+      (a) => a.getAttribute("href") ?? "",
+    );
+    expect(cites.some((h) => h.includes("/26/25A"))).toBe(true);
+    // The comparison below stays, because filing jointly makes it real again.
+    expect(rowValue(root, "American Opportunity Credit (per student)")).toBe("$2,500.00");
+  });
+
+  it("leaves a filer who merely left the box unchecked alone", () => {
+    // An unchecked box says nothing about a spouse: only a stored
+    // `married_separately` means the reader told us.
+    const { root } = mount(
+      mountEducationCredits,
+      new URLSearchParams({ magi: "70000", exp: "4000", aotc: "1", mfj: "0" }),
+    );
+    expect(rowValue(root, "Filing separately")).toBeUndefined();
   });
 
   it("shows the verify banner when data is missing and stays finite on junk input", () => {
