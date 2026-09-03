@@ -341,6 +341,35 @@ describe("Saver's Credit tile", () => {
 });
 
 describe("SNAP tile", () => {
+  it("does not tell an elderly household it is ineligible on a test that skips them", () => {
+    // 7 CFR §273.9(a), verbatim: "Households which contain an elderly or
+    // disabled member shall meet the net income eligibility standards for
+    // SNAP. Households which do not contain an elderly or disabled member
+    // shall meet both." The exemption sat in the engine's doc comment and in
+    // the tile's explainer while the result card said "Not eligible at this
+    // income" to a household the gross test does not reach — a denial of food
+    // assistance, stated with more confidence than the rule has.
+    const params = new URLSearchParams({ hh: "1", inc: "1750" });
+    const without = mount(mountSnap, params);
+    expect(rowValue(without, "Gross income test")).toContain("Over the limit");
+    expect(rowValue(without, "Estimated monthly benefit")).toContain("Not eligible");
+
+    const withElderly = mount(mountSnap, new URLSearchParams({ hh: "1", inc: "1750", ed: "1" }));
+    // The row says the test does not apply, rather than showing a pass the
+    // household never had to earn.
+    expect(rowValue(withElderly, "Gross income test")).toContain("Does not apply");
+    expect(rowValue(withElderly, "Estimated monthly benefit")).not.toContain("Not eligible");
+  });
+
+  it("still applies the net test to a household the gross test skips", () => {
+    // Skipping the gross test can only reveal eligibility, never invent a
+    // benefit: the net standard still governs, and a household over it is
+    // still over it.
+    const rich = mount(mountSnap, new URLSearchParams({ hh: "1", inc: "6000", ed: "1" }));
+    expect(rowValue(rich, "Net income test")).toContain("Over the limit");
+    expect(rowValue(rich, "Estimated monthly benefit")).toContain("Not eligible");
+  });
+
   it("estimates a monthly benefit for an eligible household, cited", () => {
     const root = mount(mountSnap, new URLSearchParams({ hh: "3", inc: "2200" }));
     expect(rowValue(root, "Estimated monthly benefit")).toContain("$319");

@@ -143,10 +143,17 @@ export function estimateSaversCredit(
 }
 
 export interface SnapResult {
-  /** True when the household passes both the gross and net income tests. */
+  /** True when the household passes the tests that apply to it. */
   eligible: boolean;
   passedGrossTest: boolean;
   passedNetTest: boolean;
+  /**
+   * False for a household with an elderly or disabled member, which 7 CFR
+   * §273.9(a) holds to the net standard only. Reported rather than folded into
+   * `passedGrossTest`, so a surface can say the test does not apply instead of
+   * showing a pass the household never had to earn.
+   */
+  grossTestApplies: boolean;
   /** Estimated monthly benefit (0 when ineligible). */
   monthlyBenefit: Money;
   grossMonthlyIncome: Money;
@@ -187,12 +194,29 @@ function snapStandardDeduction(size: number, data: SnapData): Money {
  * of net income), floored at zero or the minimum benefit for small households.
  *
  * This is a deterministic estimate: it models the standard and earned-income
- * deductions but not the shelter, dependent-care, or medical deductions (which
- * would only raise the benefit), and households with an elderly or disabled
- * member are exempt from the gross test. States vary; the agency decides.
+ * deductions but not the shelter, dependent-care, or medical deductions, which
+ * would only raise the benefit. States vary; the agency decides.
+ *
+ * The elderly-or-disabled exemption is *modelled* rather than mentioned. 7 CFR
+ * §273.9(a) is plain: "Households which contain an elderly or disabled member
+ * shall meet the net income eligibility standards", and only households without
+ * one "shall meet both". It sat in this comment and in the tile's explainer
+ * while the result card said "Not eligible at this income" to a household the
+ * gross test does not reach — a denial of food assistance, phrased with more
+ * confidence than the rule has. Elderly means 60 or over (§271.2).
+ *
+ * Skipping the gross test can only ever reveal eligibility, never overstate a
+ * benefit: the allotment still comes off the net test and the expected
+ * contribution, both unchanged.
  */
 export function estimateSnap(
-  input: { householdSize: number; monthlyGrossIncome: number; monthlyEarnedIncome?: number },
+  input: {
+    householdSize: number;
+    monthlyGrossIncome: number;
+    monthlyEarnedIncome?: number;
+    /** A member aged 60+ or with a disability, per 7 CFR §273.9(a) and §271.2. */
+    elderlyOrDisabled?: boolean;
+  },
   data: SnapData,
   fpl: FederalPovertyLevelData,
 ): SnapResult {
@@ -209,9 +233,10 @@ export function estimateSnap(
   let net = gross.subtract(standardDeduction).subtract(earnedDeduction);
   if (net.isNegative()) net = Money.zero();
 
+  const grossTestApplies = !input.elderlyOrDisabled;
   const passedGrossTest = gross.lessThanOrEqual(grossLimit);
   const passedNetTest = net.lessThanOrEqual(netLimit);
-  const eligible = passedGrossTest && passedNetTest;
+  const eligible = (passedGrossTest || !grossTestApplies) && passedNetTest;
 
   const maxAllotment = snapAllotment(size, data);
   let monthlyBenefit = Money.zero();
@@ -229,6 +254,7 @@ export function estimateSnap(
     eligible,
     passedGrossTest,
     passedNetTest,
+    grossTestApplies,
     monthlyBenefit,
     grossMonthlyIncome: gross,
     netMonthlyIncome: net,

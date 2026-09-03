@@ -16,9 +16,10 @@ import type { TileContext, TileDefinition } from "./types";
 interface Fields {
   householdSize: number;
   monthlyIncome: number;
+  elderlyOrDisabled: boolean;
 }
 
-const EXAMPLE: Fields = { householdSize: 3, monthlyIncome: 2200 };
+const EXAMPLE: Fields = { householdSize: 3, monthlyIncome: 2200, elderlyOrDisabled: false };
 
 function readFields(p: URLSearchParams, profile: SituationStore): Fields {
   const annual = profile.get("annualIncome");
@@ -31,6 +32,7 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
       : annual !== undefined
         ? Math.round(annual / 12)
         : 0,
+    elderlyOrDisabled: p.get("ed") === "1",
   };
 }
 
@@ -38,6 +40,7 @@ function writeFields(f: Fields): URLSearchParams {
   const p = new URLSearchParams();
   p.set("hh", String(f.householdSize));
   p.set("inc", String(f.monthlyIncome));
+  if (f.elderlyOrDisabled) p.set("ed", "1");
   return p;
 }
 
@@ -75,11 +78,22 @@ export function mountSnap(ctx: TileContext): void {
     attrs: { "aria-label": "Monthly gross income", inputmode: "decimal" },
   });
 
+  const edBox = el("input", {
+    type: "checkbox",
+    name: "ed",
+    checked: fields.elderlyOrDisabled,
+    attrs: { "aria-label": "Someone in the household is 60 or older, or has a disability" },
+  });
+
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
   function compute(): void {
     const r = estimateSnap(
-      { householdSize: fields.householdSize, monthlyGrossIncome: fields.monthlyIncome },
+      {
+        householdSize: fields.householdSize,
+        monthlyGrossIncome: fields.monthlyIncome,
+        elderlyOrDisabled: fields.elderlyOrDisabled,
+      },
       snap!,
       fpl!,
     );
@@ -89,7 +103,9 @@ export function mountSnap(ctx: TileContext): void {
     const lines: BreakdownLine[] = [
       {
         label: "Gross income test (≤130% FPL)",
-        value: `${fmt(r.grossMonthlyIncome)} vs ${fmt(r.grossLimit)}: ${yesno(r.passedGrossTest)}`,
+        value: r.grossTestApplies
+          ? `${fmt(r.grossMonthlyIncome)} vs ${fmt(r.grossLimit)}: ${yesno(r.passedGrossTest)}`
+          : "Does not apply — a household with a member 60 or older, or with a disability, meets the net standard only",
         citation: fpl!.citation,
       },
       {
@@ -130,6 +146,7 @@ export function mountSnap(ctx: TileContext): void {
     fields = {
       householdSize: Math.max(1, parseNonNegative(hhInput.value, 1)),
       monthlyIncome: parseNonNegative(incInput.value, 0),
+      elderlyOrDisabled: edBox.checked,
     };
     ctx.setParams(writeFields(fields));
     profile.set("householdSize", fields.householdSize);
@@ -137,11 +154,13 @@ export function mountSnap(ctx: TileContext): void {
   }
 
   for (const i of [hhInput, incInput]) i.addEventListener("input", recompute);
+  edBox.addEventListener("change", recompute);
 
   const tryExample = tryExampleButton(() => {
     fields = { ...EXAMPLE };
     hhInput.value = String(fields.householdSize);
     incInput.value = String(fields.monthlyIncome);
+    edBox.checked = fields.elderlyOrDisabled;
     recompute();
   });
 
@@ -150,6 +169,7 @@ export function mountSnap(ctx: TileContext): void {
     { class: "tile-form", on: { submit: (e) => e.preventDefault() } },
     field("Household size", hhInput),
     field("Monthly gross income", incInput),
+    field("Someone is 60+ or has a disability", edBox),
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
@@ -164,7 +184,7 @@ export const snapTile: TileDefinition = {
   description: "Gross and net income tests against the poverty line.",
   keywords: ["snap", "food stamps", "benefits", "ebt", "nutrition"],
   status: "ready",
-  how: "SNAP (food assistance) runs two monthly income tests. The gross test checks your income against 130% of the poverty line for your household size. If you pass, the net test checks income after the standard deduction and a 20% earned-income deduction against 100% of the line. If both pass, your benefit is the maximum allotment minus about 30% of your net income.\n\nThis is a deterministic estimate using the FY2026 figures for the 48 contiguous states and DC. It doesn't model the shelter, dependent-care, or medical deductions (which only raise the benefit), and households with an elderly or disabled member skip the gross test. Alaska, Hawaii, and the territories use different amounts. States vary, and the agency makes the final decision.",
+  how: "SNAP (food assistance) runs two monthly income tests. The gross test checks your income against 130% of the poverty line for your household size. If you pass, the net test checks income after the standard deduction and a 20% earned-income deduction against 100% of the line. If both pass, your benefit is the maximum allotment minus about 30% of your net income.\n\nThis is a deterministic estimate using the FY2026 figures for the 48 contiguous states and DC. It doesn't model the shelter, dependent-care, or medical deductions, which only raise the benefit. Tick the box if someone in the household is 60 or older or has a disability: 7 CFR §273.9(a) holds those households to the net standard only, so the gross test does not apply to them at all. Alaska, Hawaii, and the territories use different amounts. States vary, and the agency makes the final decision.",
   resources: [
     { label: "USDA, SNAP eligibility", url: "https://www.fna.usda.gov/snap/recipient/eligibility" },
     { label: "USA.gov, SNAP", url: "https://www.usa.gov/food-stamps" },
