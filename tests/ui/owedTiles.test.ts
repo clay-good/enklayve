@@ -151,9 +151,13 @@ describe("What Am I Owed screener", () => {
       (li.querySelector(".screener-program")?.textContent ?? "").startsWith("Earned Income"),
     );
     expect(eitc?.textContent).toContain("married filing separately");
-    expect(eitc?.querySelector("a.cite-link")?.getAttribute("href")).toMatch(
-      /law\.cornell\.edu\/uscode\/text\/26\/32/,
+    // Both rules keep their own link: the schedule the figure came from, and the
+    // section the sentence beside it came from.
+    const hrefs = Array.from(eitc?.querySelectorAll("a.cite-link") ?? []).map((a) =>
+      a.getAttribute("href"),
     );
+    expect(hrefs.some((h) => h?.includes("uscode/text/26/32"))).toBe(true);
+    expect(hrefs.length).toBe(2);
   });
 
   it("says nothing of the kind to a single filer", () => {

@@ -81,7 +81,17 @@ interface Finding {
   program: string;
   estimate: string;
   note: string;
+  /** Where the figure comes from. */
   citation: CitationData | null;
+  /**
+   * A second rule the note names, with its own link.
+   *
+   * The EITC row is the case: the estimate comes from the published schedule and
+   * the sentence beside it comes from §32(d). One `citation` field meant one of
+   * them lost — either an uncited rule, or a figure with no source — in a
+   * project whose first principle is that every rule cites its own.
+   */
+  caveat?: { label: string; citation: CitationData };
 }
 
 function programItem(f: Finding): HTMLElement {
@@ -104,9 +114,29 @@ function programItem(f: Finding): HTMLElement {
             {
               class: "cite-link",
               href: f.citation.sourceUrl,
-              attrs: { rel: "noopener noreferrer", target: "_blank" },
+              attrs: {
+                rel: "noopener noreferrer",
+                target: "_blank",
+                title: f.citation.sourceDocument,
+              },
             },
             "source",
+          )
+        : null,
+      f.caveat ? el("span", { text: " " }) : null,
+      f.caveat
+        ? el(
+            "a",
+            {
+              class: "cite-link",
+              href: f.caveat.citation.sourceUrl,
+              attrs: {
+                rel: "noopener noreferrer",
+                target: "_blank",
+                title: f.caveat.citation.sourceDocument,
+              },
+            },
+            f.caveat.label,
           )
         : null,
     ),
@@ -168,7 +198,8 @@ export function mountOwedScreener(ctx: TileContext): void {
             "requires a joint return, and My Situation says married filing separately. It " +
             "reaches you only if you lived apart from your spouse and with a qualifying child."
           : "A refundable credit based on your earned income and children.",
-        citation: separately ? EITC_JOINT_RETURN_CITATION : eitcCtc.citation,
+        citation: eitcCtc.citation,
+        caveat: separately ? { label: "§32(d)", citation: EITC_JOINT_RETURN_CITATION } : undefined,
       });
     }
 
