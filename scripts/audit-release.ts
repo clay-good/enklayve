@@ -113,11 +113,43 @@ export function checkCitationLength(shards: { name: string; json: unknown }[]): 
 }
 
 /**
- * The advice line every Pillar 4 tile must carry (SPEC-4 §3.3). Matched loosely
- * — we check the tile says it is not advice and points somewhere official, not
- * that it uses one exact sentence, so the house voice stays free to vary.
+ * The advice line a tier-2 or tier-3 tile must carry (SPEC-4 §3.3, gated per
+ * §7.2). Matched loosely — the tile has to say its output is not a
+ * determination somebody official makes, not use one exact sentence, so the
+ * house voice stays free to vary.
+ *
+ * **§3.3 names four domains and this list saw one of them.** The rule is that a
+ * Pillar 4 tool "is not legal, tax, medical-billing, or benefits-eligibility
+ * determination", and the markers matched `legal|financial|tax` and the bare
+ * phrase "not advice" — so a tile stating the line in the benefits-eligibility
+ * or medical-billing form the spec itself prescribes failed the gate. That is
+ * not hypothetical and it is the wrong way round: the Benefit Cliff Explorer's
+ * copy already reads "not an eligibility determination. Only the agency that
+ * runs a program decides who qualifies", which is a better sentence than any of
+ * the eight that pass, and it would have failed this check the day the tile went
+ * to tier 2. A gate that pushes correct copy toward a narrower phrasing to
+ * satisfy a regex is worse than no gate.
+ *
+ * The other half of the finding: `/\bnot advice\b/i` had never matched a single
+ * tile. All eight say "not legal or financial advice", with words between, so
+ * the list was one regex wearing the look of two. It stays — a tile may yet say
+ * it plainly — but `tests/build/auditRelease.test.ts` now exercises every marker
+ * in the list, so a marker that matches nothing at all is a failure rather than
+ * decoration.
+ *
+ * The domains are read out of SPEC-4 §3.3 by that test rather than trusted here,
+ * so a fifth domain added to the spec fails loudly instead of going unchecked.
  */
-const ADVICE_MARKERS = [/not\s+(legal|financial|tax)\b/i, /\bnot advice\b/i];
+export const ADVICE_MARKERS = [
+  // "not legal, tax, or financial advice" — the form every shipping tile uses.
+  /not\s+(legal|financial|tax|medical)\b/i,
+  // "not an eligibility determination" — benefits eligibility, §3.3's fourth.
+  /not\s+(?:an?\s+|your\s+)?(?:benefits?[-\s]?)?eligibility\s+determination\b/i,
+  // "not a medical-billing determination" — §3.3's third, stated as a noun.
+  /not\s+(?:an?\s+)?medical[-\s]?billing\s+determination\b/i,
+  // The plainest form there is.
+  /\bnot advice\b/i,
+];
 
 /** The minimal shape this check needs; avoids importing the DOM-bound tile type. */
 export interface AuditTile {

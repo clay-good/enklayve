@@ -9,6 +9,7 @@ import {
   checkClientStorage,
   withoutComments,
   checkHarmTier,
+  ADVICE_MARKERS,
   type AuditTile,
   checkBundleBudget,
   checkPrecacheContents,
@@ -18,6 +19,8 @@ import {
   SHELL_GZIP_BUDGET_KB,
 } from "../../scripts/audit-release";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 /**
  * The release audit gate (BUILD-SPEC.md §10). The checks are pure functions of
@@ -208,6 +211,92 @@ describe("audit: Pillar 4 harm tiers", () => {
         },
       ]),
     ).toEqual([]);
+  });
+
+  /**
+   * The advice line, in every form §3.3 prescribes.
+   *
+   * §3.3's rule is one sentence: a Pillar 4 tool "is not legal, tax,
+   * medical-billing, or benefits-eligibility determination". `ADVICE_MARKERS`
+   * saw the first two and missed the last two, so a tile stating the line in the
+   * spec's own benefits or medical-billing wording failed the gate. The Benefit
+   * Cliff Explorer's copy is exactly that case — "not an eligibility
+   * determination. Only the agency that runs a program decides who qualifies" —
+   * and it is a better sentence than any of the eight that pass. It would have
+   * failed the day that tile went to tier 2, and the only way through would have
+   * been to reword good copy at a regex's request.
+   *
+   * The domains are read out of the spec rather than listed here, so adding a
+   * fifth to §3.3 fails this test instead of quietly going unchecked.
+   */
+  const SPEC = readFileSync(resolve(__dirname, "..", "..", "docs", "specs", "SPEC-4.md"), "utf8");
+  const DOMAINS = (/It is not ([^.]+) determination\./.exec(SPEC)?.[1] ?? "")
+    .split(/,| or /)
+    .map((d) => d.trim())
+    .filter((d) => d.length > 0);
+
+  it("reads the domains out of SPEC-4 §3.3 rather than trusting a list here", () => {
+    // If the spec sentence is reworded so this stops matching, the test below
+    // would pass over an empty list — which is the way a check like this rots.
+    expect(DOMAINS).toContain("legal");
+    expect(DOMAINS).toContain("medical-billing");
+    expect(DOMAINS).toContain("benefits-eligibility");
+    expect(DOMAINS.length).toBeGreaterThanOrEqual(4);
+  });
+
+  for (const domain of DOMAINS) {
+    it(`accepts the line stated as ${domain}`, () => {
+      // Either the adjective form ("not legal advice") or the noun form ("not a
+      // benefits-eligibility determination"). A domain the gate can see in
+      // neither form is a domain the spec requires and the gate rejects.
+      const forms = [
+        `This is information about published rules. It is not ${domain} advice.`,
+        `This is an estimate, not a ${domain} determination. Only the agency decides.`,
+      ];
+      const accepted = forms.filter((how) => ADVICE_MARKERS.some((re) => re.test(how)));
+      expect(accepted.length, `no marker matches either form for "${domain}"`).toBeGreaterThan(0);
+    });
+  }
+
+  it("accepts the Benefit Cliff Explorer's own wording, which used to fail", () => {
+    const how =
+      "This is an estimate from public data and the figures you enter, not an eligibility " +
+      "determination. Only the agency that runs a program decides who qualifies.";
+    expect(checkHarmTier([{ id: "cliff-explorer", pillar: "rough", harmTier: 2, how }])).toEqual(
+      [],
+    );
+  });
+
+  it("still rejects a how block that claims nothing about advice at all", () => {
+    // Widening the markers must not widen them into everything.
+    const violations = checkHarmTier([
+      {
+        id: "bill-triage",
+        pillar: "rough",
+        harmTier: 2,
+        how: "Sorts your bills by what happens if each goes unpaid, worst consequence first.",
+      },
+    ]);
+    expect(violations.length).toBe(1);
+    expect(violations[0]).toContain("omits the advice line");
+  });
+
+  it("leaves no marker in the list that matches nothing", () => {
+    // `/\bnot advice\b/` had never matched a tile — every one says "not legal or
+    // financial advice", with words between — so the list was one regex wearing
+    // the look of two. A marker is either exercised or it is decoration.
+    const catalog = [...TILES, ...SUB_TOOLS.map((s) => s.tile)].map((t) => t.how ?? "");
+    const specForms = DOMAINS.flatMap((d) => [
+      `It is not ${d} advice.`,
+      `It is not a ${d} determination.`,
+    ]);
+    const corpus = [...catalog, ...specForms, "It is not advice."];
+    for (const re of ADVICE_MARKERS) {
+      expect(
+        corpus.some((text) => re.test(text)),
+        `marker ${re} matches nothing in the catalog or in §3.3's own forms`,
+      ).toBe(true);
+    }
   });
 
   it("holds over the real catalog, hubs and sub-tools alike", () => {
