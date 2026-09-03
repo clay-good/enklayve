@@ -3,6 +3,8 @@ import { SUB_TOOLS } from "../../src/tiles/registry";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext, TileDefinition } from "../../src/tiles/types";
+import { renderHome } from "../../src/ui/shell";
+import { renderReport } from "../../src/ui/reportView";
 
 /**
  * A column a reader can add up.
@@ -159,5 +161,74 @@ describe("every calculator's breakdown adds up", () => {
       }
       expect([...new Set(problems)]).toEqual([]);
     }, 20_000);
+  }
+});
+
+/**
+ * The views that are not tiles.
+ *
+ * Sweeping `SUB_TOOLS` reaches every calculator and nothing else, and "every
+ * calculator" is not the same set as "every page that prints a column". The
+ * Readout Report is the clearest case: it is generated on the device, saved as
+ * a file, and read months later with no calculator beside it — and it was in no
+ * sweep, which is how it kept a tax column that missed its own total by a cent.
+ * The home budget is here for the same reason, not because it was broken.
+ */
+describe("the views that have no tile", () => {
+  const PROFILES: [string, [string, unknown][]][] = [
+    [
+      "California at $250,001",
+      [
+        ["annualIncome", 250_001],
+        ["filingStatus", "single"],
+        ["stateCode", "ca"],
+        ["essentialMonthlyExpenses", 3200],
+        ["liquidSavings", 12_000],
+      ],
+    ],
+    [
+      "New York at $61,111",
+      [
+        ["annualIncome", 61_111],
+        ["filingStatus", "married_jointly"],
+        ["stateCode", "ny"],
+        ["essentialMonthlyExpenses", 2400],
+        ["liquidSavings", 5000],
+      ],
+    ],
+    [
+      "an Allegany County, Maryland household at $95,000",
+      [
+        ["annualIncome", 95_000],
+        ["filingStatus", "single"],
+        ["stateCode", "md"],
+        ["county", "md-allegany"],
+        ["essentialMonthlyExpenses", 3200],
+        ["liquidSavings", 12_000],
+      ],
+    ],
+  ];
+
+  for (const [name, entries] of PROFILES) {
+    it(`the Readout Report adds up for ${name}`, () => {
+      const profile = new SituationStore();
+      for (const [k, v] of entries) profile.set(k as never, v as never);
+      const container = document.createElement("div");
+      renderReport({ container, navigate: () => {}, profile, data });
+      expect(nearMisses(moneyRows(container))).toEqual([]);
+    });
+  }
+
+  for (const income of [37_777, 61_111, 95_000, 123_457, 250_001]) {
+    it(`the home budget adds up at ${income}`, () => {
+      const container = document.createElement("div");
+      renderHome(container, () => {}, data);
+      const first = container.querySelector<HTMLInputElement>('input[type="number"]');
+      if (first) {
+        first.value = String(income);
+        first.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      expect(nearMisses(moneyRows(container))).toEqual([]);
+    });
   }
 });
