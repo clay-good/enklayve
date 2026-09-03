@@ -13,6 +13,7 @@
  * — keeping the shell's XSS-by-construction guarantee.
  */
 import { el } from "./dom";
+import { Money, allocateRounded } from "../engine/money";
 
 /** Cycle the themed chart palette (`--enk-chart-1..10`, defined per theme). */
 export function paletteVar(index: number): string {
@@ -30,8 +31,29 @@ function currency(locale: string, n: number): string {
   return new Intl.NumberFormat(locale, { style: "currency", currency: "USD" }).format(n);
 }
 
-function pctOf(value: number, total: number): number {
-  return total > 0 ? (value / total) * 100 : 0;
+/**
+ * Whole percents that add to 100.
+ *
+ * Rounding each share on its own is right per share and wrong as a column: a
+ * legend reading 14% / 5% / 1% / 79% sums to 99, and the reader who adds it is
+ * not making a mistake. Largest remainder gives the spare points to the shares
+ * that gave up the most when they rounded, the same rule `allocateRounded`
+ * applies to the cents.
+ */
+export function allocatePercents(values: readonly number[], total: number): number[] {
+  if (total <= 0) return values.map(() => 0);
+  const exact = values.map((v) => (v / total) * 100);
+  const out = exact.map((p) => Math.floor(p));
+  let residual = 100 - out.reduce((sum, p) => sum + p, 0);
+  const order = exact
+    .map((p, i) => ({ i, remainder: p - Math.floor(p) }))
+    .sort((a, b) => b.remainder - a.remainder);
+  for (const { i } of order) {
+    if (residual <= 0) break;
+    out[i] = out[i]! + 1;
+    residual -= 1;
+  }
+  return out;
 }
 
 function swatch(color: string): HTMLElement {
@@ -40,19 +62,35 @@ function swatch(color: string): HTMLElement {
   return s;
 }
 
-/** Build a shared legend: swatch + label + amount (+ percent of total). */
+/**
+ * Build a shared legend: swatch + label + amount (+ percent of total).
+ *
+ * Both columns are allocated to their whole rather than rounded one row at a
+ * time. A legend is a column a reader adds up — it is a list of parts of one
+ * stated total — and `sum(round(xᵢ))` is not `round(sum(xᵢ))`. Quarterly Taxes
+ * showed both failures at once at $37,777 of profit: four amounts a cent under
+ * the net profit printed beside them, and four percents summing to 99.
+ */
 function legend(slices: Slice[], total: number, locale: string): HTMLElement {
+  const amounts = allocateRounded(
+    slices.map((s) => Money.from(Math.max(0, s.value))),
+    Money.from(total),
+  );
+  const percents = allocatePercents(
+    slices.map((s) => Math.max(0, s.value)),
+    total,
+  );
   return el(
     "ul",
     { class: "chart-legend" },
-    ...slices.map((s) =>
+    ...slices.map((s, i) =>
       el(
         "li",
         { class: "legend-item" },
         swatch(s.color ?? "var(--enk-border)"),
         el("span", { class: "legend-label", text: s.label }),
-        el("span", { class: "legend-value", text: currency(locale, s.value) }),
-        el("span", { class: "legend-pct", text: `${pctOf(s.value, total).toFixed(0)}%` }),
+        el("span", { class: "legend-value", text: currency(locale, amounts[i]!.toNumber()) }),
+        el("span", { class: "legend-pct", text: `${percents[i]!}%` }),
       ),
     ),
   );

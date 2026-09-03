@@ -240,6 +240,17 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
           ...(stateJur && stateIncome.greaterThan(0)
             ? [{ label: "State income tax", value: stateIncome.toNumber(), color: paletteVar(2) }]
             : []),
+          // The county tax is a slice like any other. Left out, the ring's whole
+          // was income MINUS the local tax, so every other share read a little
+          // high and a Maryland household's county tax vanished from the picture
+          // while sitting on its own line in the breakdown beneath it.
+          ...r.local.lines
+            .filter((l) => l.tax.greaterThan(0))
+            .map((l, i) => ({
+              label: `${l.name} local tax`,
+              value: l.tax.toNumber(),
+              color: paletteVar(3 + i),
+            })),
           {
             label: "What you keep",
             value: Math.max(0, kept.toNumber()),

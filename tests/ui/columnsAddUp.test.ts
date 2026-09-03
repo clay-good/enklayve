@@ -29,6 +29,14 @@ import type { TileContext, TileDefinition } from "../../src/tiles/types";
  * Each tile is checked at its worked example and at four perturbed incomes,
  * because a cent of disagreement is a property of the particular numbers: the
  * Take-Home bug is invisible at most incomes and plain at $123,456.
+ *
+ * **Every money figure on the page, not one CSS class.** The first version read
+ * `.bd-row` — the breakdown table — and so was blind to money shown anywhere
+ * else, which is the same hand-kept-list failure one level up: the sweep was
+ * told where to look. It now reads every leaf element whose whole text is a
+ * currency figure, in document order, which is the order a reader's eye goes
+ * down the page. That widening is what found the donut legend in Quarterly
+ * Taxes summing to a cent under the net profit printed beside it.
  */
 let data: BundledData;
 beforeAll(async () => {
@@ -90,10 +98,25 @@ function rowsOf(
     target.value = String(perturb);
     target.dispatchEvent(new Event("input", { bubbles: true }));
   }
-  return [...root.querySelectorAll(".bd-row")].map((r) => ({
-    label: r.querySelector(".bd-label")?.textContent ?? "",
-    value: displayedCents(r.querySelector(".bd-value")?.textContent ?? ""),
-  }));
+  return moneyRows(root);
+}
+
+/**
+ * Every money figure in the subtree, in document order, labelled by the row it
+ * sits in. A leaf whose entire text is a currency string is a displayed amount;
+ * anything else (a sentence that mentions a dollar figure, a percent, a date)
+ * is not a row in a column and is skipped.
+ */
+export function moneyRows(root: Element): { label: string; value: number | null }[] {
+  return [...root.querySelectorAll("*")]
+    .filter((e) => e.children.length === 0 && displayedCents(e.textContent ?? "") !== null)
+    .map((e) => ({
+      label: (e.closest(".bd-row, .legend-item, li, tr, div")?.textContent ?? "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .slice(0, 70),
+      value: displayedCents(e.textContent ?? ""),
+    }));
 }
 
 describe("finding a column that does not add up", () => {
