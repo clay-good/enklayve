@@ -88,18 +88,6 @@ body {
   border-radius: 4px;
 }
 
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  border: 0;
-  clip: rect(0 0 0 0);
-  overflow: hidden;
-  white-space: nowrap;
-}
-
 /* Skip-to-content link: off-screen until a keyboard user focuses it, then it
    slides in at the top-left above the sticky header. */
 .skip-link {
@@ -600,10 +588,6 @@ body {
   background: var(--enk-primary-soft);
 }
 
-.tile-link--soon {
-  color: var(--enk-text-muted);
-}
-
 /* A calculator entry: title over a muted one-line description. Defined after
    `.tile-link` so its column layout wins over the base row's `align-items`. */
 .tile-link--stacked {
@@ -708,7 +692,6 @@ body {
    compact (key to the budget fitting one calm page). */
 .tile-form > .field-group-label,
 .tile-form > .plan-debts,
-.tile-form > .cat-chips,
 .tile-form > .triage-editor {
   grid-column: 1 / -1;
 }
@@ -1896,9 +1879,6 @@ body {
 
 /* --- The Budget tile: a one-line lead, the "why it sticks" note, and a calm
    "balanced" cue on the donut. --------------------------------------------- */
-.budget-lead {
-  margin: 0 0 1rem;
-}
 .budget-why {
   margin-top: 1.75rem;
   padding: 1.25rem 1.4rem;
@@ -2732,7 +2712,6 @@ body {
   color: transparent;
 }
 @media (prefers-reduced-motion: no-preference) {
-  .journey-step,
   .explainer-point,
   .tile-link,
   .footer-link,
@@ -2743,14 +2722,10 @@ body {
       border-color 0.15s ease,
       color 0.15s ease;
   }
-  .journey-step:hover,
   .explainer-point:hover,
   .readout-dropzone:hover {
     transform: translateY(-2px);
     box-shadow: var(--enk-shadow);
-  }
-  .journey-step:hover {
-    border-color: var(--enk-primary);
   }
   .tile-link:hover {
     transform: translateX(2px);
