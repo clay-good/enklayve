@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { describeResolverFailure, nameResolvesDirectly } from "../../scripts/fetch-source";
+import {
+  describeResolverFailure,
+  nameResolvesDirectly,
+  resolverFailureFor,
+} from "../../scripts/fetch-source";
 import {
   check,
   classify,
@@ -193,6 +197,61 @@ describe("classifying a checked link", () => {
     // name resolves nowhere by definition (RFC 2606), and this repo already uses
     // `.invalid` for exactly that.
     expect(await nameResolvesDirectly("no-such-host.example.invalid")).toBe(false);
+  });
+
+  /**
+   * One diagnosis, shared by every caller of the fetch.
+   *
+   * `resolverFailureFor` exists because there were nearly two of these. The
+   * diagnosis landed in this check on 2026-09-02 and nowhere else, so the three
+   * other callers of `fetchSource` — the adapter check, the source watch, the
+   * refresh runner — kept reporting a broken resolver as a source that did not
+   * answer. On 2026-09-03 the adapter check called Mississippi's shard
+   * unreachable with `getaddrinfo ENOTFOUND www.dor.ms.gov`, on a machine where
+   * `dns.resolve4` answers for that exact name and the page returns 200. Two
+   * such runs in a row means "the source has gone away" by the report's own
+   * rule, which would have sent somebody to replace a working citation.
+   */
+  describe("the resolver diagnosis every caller of the fetch now shares", () => {
+    it("says nothing about a failure that is not a name lookup", async () => {
+      expect(await resolverFailureFor("https://example.test/x", "socket hang up")).toBeNull();
+      expect(
+        await resolverFailureFor(
+          "https://example.test/x",
+          "unable to verify the first certificate",
+        ),
+      ).toBeNull();
+    });
+
+    it("leaves a name that resolves nowhere as the dead host it is", async () => {
+      // RFC 2606 reserves `.invalid`, so this cannot start answering later.
+      expect(
+        await resolverFailureFor(
+          "https://no-such-host.example.invalid/x",
+          "getaddrinfo ENOTFOUND no-such-host.example.invalid",
+        ),
+      ).toBeNull();
+    });
+
+    it("names the machine when the host answers a direct query", async () => {
+      // Mississippi's DOR is the case this was found on. Skipped rather than
+      // failed where the network is unavailable: the point is the branch, and a
+      // test that needs DNS must not fail a build for lacking it.
+      const host = "www.dor.ms.gov";
+      if (!(await nameResolvesDirectly(host))) return;
+      const said = await resolverFailureFor(
+        `https://${host}/general-information`,
+        `getaddrinfo ENOTFOUND ${host}`,
+      );
+      expect(said).toBe(describeResolverFailure(host));
+      // And the marker is what the report reads, so this classifies as the
+      // machine's problem rather than a dead link.
+      expect(classify({ status: 0, detail: said! })).toBe("unreachable");
+    });
+
+    it("does not ask DNS about something that is not a URL", async () => {
+      expect(await resolverFailureFor("not a url", "getaddrinfo ENOTFOUND whatever")).toBeNull();
+    });
   });
 
   it("calls a certificate a browser also refuses a broken link", () => {

@@ -27,9 +27,7 @@ import {
   BAD_CERTIFICATE,
   INCOMPLETE_CERT_CHAIN,
   LOCAL_RESOLVER_FAILURE,
-  NAME_NOT_RESOLVED,
-  describeResolverFailure,
-  nameResolvesDirectly,
+  resolverFailureFor,
 } from "./fetch-source.ts";
 import { repairedCaBundle, requestWithChain } from "./chain-repair.ts";
 import { ADAPTERS } from "./refresh/adapters.ts";
@@ -372,12 +370,8 @@ export async function check(
   // broken resolver, and the two look identical from inside `fetch`. Ask DNS
   // directly before calling it a dead link: if the name has an address, the
   // machine running this is what could not find it.
-  if (NAME_NOT_RESOLVED.test(last)) {
-    const hostname = new URL(url).hostname;
-    if (await nameResolvesDirectly(hostname)) {
-      return { url, status: 0, detail: describeResolverFailure(hostname), files };
-    }
-  }
+  const resolver = await resolverFailureFor(url, last);
+  if (resolver) return { url, status: 0, detail: resolver, files };
   return { url, status: 0, detail: `${last} (after retries)`, files };
 }
 

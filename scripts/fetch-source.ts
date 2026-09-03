@@ -115,6 +115,37 @@ export function describeResolverFailure(hostname: string): string {
 }
 
 /**
+ * The resolver-failure phrasing for a transport failure, or null if it is not one.
+ *
+ * One implementation, because there were nearly two. The diagnosis above landed
+ * in the link check on 2026-09-02 and nowhere else, so the three other callers
+ * of {@link fetchSource} — the adapter check, the source watch, and the refresh
+ * runner — went on reporting a broken resolver as a source that did not answer.
+ * On 2026-09-03 the adapter check said `state-ms-income-tax-2024` was
+ * unreachable with `getaddrinfo ENOTFOUND www.dor.ms.gov`, on a machine where
+ * `dns.resolve4` answers `205.144.237.37` for that exact name and the page
+ * returns 200. The report's own rule is that the same adapter unreachable two
+ * months running means the source has gone away, so two flakes would have sent
+ * somebody to replace a citation that works.
+ *
+ * That is the failure the certificate case was split out to prevent, arriving
+ * through the door beside it — and it has the same fix, for the same reason the
+ * comment on the chain repair gives: the diagnosis belongs beside the shared
+ * fetch, or the checks go back to disagreeing about the same server.
+ */
+export async function resolverFailureFor(url: string, message: string): Promise<string | null> {
+  if (!NAME_NOT_RESOLVED.test(message)) return null;
+  let hostname: string;
+  try {
+    hostname = new URL(url).hostname;
+  } catch {
+    // Not a URL this can ask DNS about; the raw message is the better answer.
+    return null;
+  }
+  return (await nameResolvesDirectly(hostname)) ? describeResolverFailure(hostname) : null;
+}
+
+/**
  * Say what actually went wrong.
  *
  * Node's `fetch` reports every transport failure as the same four words —
@@ -261,7 +292,13 @@ export async function fetchSource(url: string): Promise<FetchedSource> {
       return { ok: false, reason: `could not read the PDF: ${describeFetchError(error)}` };
     }
   } catch (error) {
-    return { ok: false, reason: `fetch failed: ${describeFetchError(error)}` };
+    const described = describeFetchError(error);
+    // A name `getaddrinfo` refused is usually a dead host and occasionally a
+    // broken resolver, and the two are identical from inside `fetch`. Every
+    // caller of this function reports on the same servers, so the question is
+    // answered here rather than in one of them.
+    const resolver = await resolverFailureFor(url, described);
+    return { ok: false, reason: `fetch failed: ${resolver ?? described}` };
   } finally {
     clearTimeout(timer);
   }
