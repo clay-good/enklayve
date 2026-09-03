@@ -4,7 +4,7 @@
  * FICA dataset as the employee-side computation, so the rates carry the SSA/IRS
  * citation; the four quarterly due dates cite IRS Form 1040-ES.
  */
-import { Money } from "../engine/money";
+import { Money, allocateRounded } from "../engine/money";
 import { selfEmploymentTax } from "../engine/tax";
 import type { CitationData, FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
@@ -97,19 +97,25 @@ export function mountSelfEmploymentTax(ctx: TileContext): void {
     const quarterly = r.total.divide(4);
     const effective = fields.netProfit > 0 ? r.total.divide(fields.netProfit).toNumber() : 0;
 
+    // The shares of the total, rounded so the column adds up to it rather than
+    // each to itself — see `allocateRounded`. Rounding them independently left
+    // Social Security + Medicare a cent short of the total beside them.
+    const shares = [r.socialSecurity, r.medicare, r.additionalMedicare];
+    const [ss, med, addl] = allocateRounded(shares, r.total);
+
     const lines: BreakdownLine[] = [
       {
         label: "Earnings subject to SE tax (92.35%)",
         value: fmt(r.taxableBase),
         citation: r.citation,
       },
-      { label: "Social Security (12.4%)", value: fmt(r.socialSecurity), citation: r.citation },
-      { label: "Medicare (2.9%)", value: fmt(r.medicare), citation: r.citation },
+      { label: "Social Security (12.4%)", value: fmt(ss!), citation: r.citation },
+      { label: "Medicare (2.9%)", value: fmt(med!), citation: r.citation },
     ];
     if (r.additionalMedicare.greaterThan(0)) {
       lines.push({
         label: "Additional Medicare (0.9%)",
-        value: fmt(r.additionalMedicare),
+        value: fmt(addl!),
         citation: r.citation,
       });
     }

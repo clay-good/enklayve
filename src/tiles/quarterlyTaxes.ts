@@ -10,7 +10,7 @@
  * Simplification: we omit the QBI / §199A deduction, so the figure errs slightly
  * high — the safe direction when the goal is "set enough aside."
  */
-import { Money } from "../engine/money";
+import { Money, allocateRounded } from "../engine/money";
 import { evaluateTaxes, selfEmploymentTax, type TaxInput } from "../engine/tax";
 import { estimatedTaxDueDates, formatDueDate } from "../engine/dueDates";
 import type { CitationData, FilingStatus } from "../data/schemas";
@@ -168,25 +168,32 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
     const kept = Money.from(totalIncome).subtract(totalTax);
     const fmt = (m: Money): string => m.format(ctx.locale);
 
+    // The shares of the total, rounded so the column adds up to it rather than
+    // each to itself — see `allocateRounded`. Rounded independently, SE tax +
+    // federal + state came to a cent less than the total printed beneath them.
+    const shares = allocateRounded(
+      [se.total, fedIncome, stateIncome, ...r.local.lines.map((l) => l.tax)],
+      totalTax,
+    );
     const lines: BreakdownLine[] = [
       { label: "Net business profit", value: fmt(Money.from(fields.profit)) },
-      { label: "Self-employment tax", value: fmt(se.total), citation: se.citation },
-      { label: "Federal income tax", value: fmt(fedIncome), citation: fed!.citation },
+      { label: "Self-employment tax", value: fmt(shares[0]!), citation: se.citation },
+      { label: "Federal income tax", value: fmt(shares[1]!), citation: fed!.citation },
     ];
     if (stateJur) {
       lines.push({
         label: `State income tax (${fields.state.toUpperCase()})`,
-        value: fmt(stateIncome),
+        value: fmt(shares[2]!),
         citation: r.state?.citation ?? null,
       });
     }
     // Its own line, never folded into the state's: the county tax is a separate
     // figure on a separate authority's schedule, and someone reconciling this
     // against their own return needs to see the two apart.
-    for (const local of r.local.lines) {
+    for (const [i, local] of r.local.lines.entries()) {
       lines.push({
         label: `${local.name} local tax`,
-        value: fmt(local.tax),
+        value: fmt(shares[3 + i]!),
         citation: r.local.citation ?? null,
       });
     }
