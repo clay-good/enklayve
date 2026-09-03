@@ -303,23 +303,28 @@ export async function sourceStatus(url: string): Promise<SourceStatus> {
   }
 }
 
-/** Fetch a source page as text, reading PDFs where the figures have moved. */
-export async function fetchSource(url: string): Promise<FetchedSource> {
+/**
+ * Everything that came off the wire, before anything decodes it.
+ *
+ * The split exists so the timeout can end here. See {@link fetchSource}.
+ */
+export type Transferred =
+  | { ok: true; pdf: false; text: string }
+  | { ok: true; pdf: true; bytes: Uint8Array }
+  | { ok: false; reason: string };
+
+/** Pull the whole body down under the timeout, and stop timing. */
+async function transfer(url: string, timeoutMs: number): Promise<Transferred> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetchRaw(url, controller.signal);
     if (response.status < 200 || response.status >= 300) {
       return { ok: false, reason: `source returned HTTP ${response.status}` };
     }
-    if (!isPdf(url, response.contentType)) return { ok: true, raw: await response.text() };
-    try {
-      return { ok: true, raw: await pdfToText(await response.bytes()) };
-    } catch (error) {
-      // A PDF that cannot be read is a source problem, not a parse problem: say
-      // so plainly rather than letting the adapter report "could not anchor".
-      return { ok: false, reason: `could not read the PDF: ${describeFetchError(error)}` };
-    }
+    return isPdf(url, response.contentType)
+      ? { ok: true, pdf: true, bytes: await response.bytes() }
+      : { ok: true, pdf: false, text: await response.text() };
   } catch (error) {
     const described = describeFetchError(error);
     // A name `getaddrinfo` refused is usually a dead host and occasionally a
@@ -333,3 +338,58 @@ export async function fetchSource(url: string): Promise<FetchedSource> {
   }
 }
 /* c8 ignore stop */
+
+/** The two halves, injectable so the composition below is testable offline. */
+export interface SourceTransport {
+  transfer(url: string, timeoutMs: number): Promise<Transferred>;
+  decode(bytes: Uint8Array): Promise<string>;
+}
+
+const LIVE: SourceTransport = { transfer, decode: pdfToText };
+
+/**
+ * Fetch a source page as text, reading PDFs where the figures have moved.
+ *
+ * **The timeout bounds the transfer and nothing else**, which is why the two
+ * halves are separate functions rather than one `try`. They used to share a
+ * single `AbortController` — the timer started before the request and was
+ * cleared in a `finally` after `pdfToText` had returned — so the thirty seconds
+ * budgeted for a government server were being spent, in part, on this machine's
+ * own CPU decoding what that server had already sent. When the decode ran long
+ * the controller fired mid-work, and the abort surfaced as
+ * `could not read the PDF: This operation was aborted`, which the adapter check
+ * files under UNREACHABLE: "the page did not come back, or came back declining
+ * to serve. This may be transient, and a government site having a bad afternoon
+ * is not an adapter defect."
+ *
+ * Every clause of that is wrong about this failure. The page came back — in a
+ * third of a second. Nothing about it was transient in the way the heading
+ * means: the trigger is a large PDF decoded while seven other adapters decode
+ * theirs, so it fires in the monthly run, where the concurrency is, and never in
+ * the dry run somebody does afterwards to see what went wrong. Colorado's
+ * Individual Income Tax Guide is 3.2 MB and was the standing case; it reported
+ * unreachable while its shard sat unwatched behind a heading that says to wait.
+ *
+ * Nor could the retry above it help. `fetchTwice` retries a `fetch failed` and
+ * deliberately does not retry a page that came back and failed to parse, which
+ * is right — and this was neither.
+ *
+ * So the transfer owns the clock, and the decode runs with nothing pending over
+ * it. A PDF that genuinely cannot be read still says so, in the same words.
+ */
+export async function fetchSource(
+  url: string,
+  transport: SourceTransport = LIVE,
+  timeoutMs: number = TIMEOUT_MS,
+): Promise<FetchedSource> {
+  const got = await transport.transfer(url, timeoutMs);
+  if (!got.ok) return { ok: false, reason: got.reason };
+  if (!got.pdf) return { ok: true, raw: got.text };
+  try {
+    return { ok: true, raw: await transport.decode(got.bytes) };
+  } catch (error) {
+    // A PDF that cannot be read is a source problem, not a parse problem: say
+    // so plainly rather than letting the adapter report "could not anchor".
+    return { ok: false, reason: `could not read the PDF: ${describeFetchError(error)}` };
+  }
+}
