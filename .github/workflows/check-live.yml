@@ -53,20 +53,31 @@ jobs:
           echo "::error::scripts/check-live.ts exited without writing its report."
           exit 1
 
+      # The report goes through `env`, never into the script source. It is full
+      # of markdown code spans, and a backtick interpolated into a JS template
+      # literal ends the literal — the issue step would fail with a syntax error
+      # on exactly the run that had something to report. `check-links` had this
+      # right already; this is the same shape.
       - name: Open an issue when production does not match the promise
-        if: steps.live.outputs.findings != '0' && steps.live.outputs.findings != ''
+        if: >-
+          steps.live.outputs.report != '' &&
+          steps.live.outputs.findings != '0'
         uses: actions/github-script@v7
         with:
           script: |
-            const body = `${{ toJSON(steps.live.outputs.report) }}`;
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: "Production is not serving what the repository promises",
-              body: JSON.parse(body),
+              title: `Production is not serving what the repository promises (${process.env.FINDINGS})`,
+              body: process.env.REPORT,
               labels: ["bug"],
             });
+        env:
+          REPORT: ${{ steps.live.outputs.report }}
+          FINDINGS: ${{ steps.live.outputs.findings }}
 
       - name: Fail the run so the schedule is visibly red
-        if: steps.live.outputs.findings != '0' && steps.live.outputs.findings != ''
+        if: >-
+          steps.live.outputs.report != '' &&
+          steps.live.outputs.findings != '0'
         run: exit 1
