@@ -36,6 +36,7 @@ import { amtScreen } from "../src/engine/amt";
 import {
   acaApplicablePercent,
   acaCovered,
+  acaCreditEligible,
   estimatePremiumTaxCredit,
   estimateSnap,
   estimateSaversCredit,
@@ -70,7 +71,11 @@ import {
   retirementDrawdown,
 } from "../src/engine/finance";
 import { garnishmentCeiling } from "../src/engine/garnishment";
-import { electiveDeferralCatchUp, electiveDeferralLimit } from "../src/engine/contributionLimits";
+import {
+  electiveDeferralCatchUp,
+  electiveDeferralLimit,
+  inEnhancedCatchUpWindow,
+} from "../src/engine/contributionLimits";
 import { iraDeductibility } from "../src/engine/iraDeduction";
 import { evaluatePlan, DEFAULT_CONFIG, type PlanInput } from "../src/engine/plan";
 import { requiredMinimumDistribution } from "../src/engine/rmd";
@@ -288,6 +293,13 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
       }
     }
   }
+  // The whole §36B(c)(1)(A) band, which `acaCovered` does not answer on its own:
+  // the applicable-percentage table starts at 0% FPL and says yes at 50, where
+  // the credit says no. Its `>= 100` is held by a test and was invisible to this
+  // probe, which made the calibration refuse the report.
+  for (const pct of [99.99, 100, 100.01, 400, 400.01]) {
+    put(`acaCreditEligible(${pct})`, acaCreditEligible(pct, aca));
+  }
   const medicaid = data.medicaid()!;
   for (const income of [line1 * 1.38, line1 * 1.39]) {
     put(
@@ -345,6 +357,11 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
     put(`deferral(${age})`, {
       catchUp: electiveDeferralCatchUp(age, deferralLimits),
       limit: electiveDeferralLimit(age, deferralLimits),
+      // The window predicate is its own comparison and needs its own reading:
+      // `catchUp` alone cannot see `age >= 60` when the shard's enhanced amount
+      // is what makes the two differ, so the probe reported a boundary a test
+      // holds as invisible, and the calibration refused the whole report.
+      inWindow: inEnhancedCatchUpWindow(age, deferralLimits),
     });
   }
 
