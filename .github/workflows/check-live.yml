@@ -1,0 +1,72 @@
+# What production actually serves.
+#
+# Every other check in this repository reads the repository. On 2026-09-03 all
+# of them passed while https://enklayve.com/ answered with no
+# Content-Security-Policy, no HSTS, no Referrer-Policy and no
+# X-Content-Type-Options, on every path, cache busted — because a request
+# matching a file under `[assets] directory` is served by Workers Static Assets
+# without invoking the Worker, and the Worker is where every header is set. The
+# claim was true of the code and absent from the site.
+#
+# It is NOT part of the unit CI, for the reason `check-links` is not: it needs
+# the network, and a site mid-deploy is not a broken site. Weekly, on demand,
+# and worth running by hand after any change to headers, caching, or routing.
+name: Check the live site
+
+on:
+  schedule:
+    - cron: "0 11 * * 1" # Mondays, 11:00 UTC
+  workflow_dispatch:
+    inputs:
+      origin:
+        description: "Origin to check (defaults to production)"
+        required: false
+        default: "https://enklayve.com"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - id: live
+        continue-on-error: true
+        env:
+          LIVE_ORIGIN: ${{ inputs.origin || 'https://enklayve.com' }}
+        run: node scripts/check-live.ts "$LIVE_ORIGIN"
+
+      # A check that never reported is not a healthy site. Same reasoning as
+      # check-links: an unset output is the empty string, and a job that gates
+      # on one would pass silently after a crash.
+      - name: Fail loudly if the check never reported
+        if: steps.live.outputs.report == ''
+        run: |
+          echo "::error::scripts/check-live.ts exited without writing its report."
+          exit 1
+
+      - name: Open an issue when production does not match the promise
+        if: steps.live.outputs.findings != '0' && steps.live.outputs.findings != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `${{ toJSON(steps.live.outputs.report) }}`;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "Production is not serving what the repository promises",
+              body: JSON.parse(body),
+              labels: ["bug"],
+            });
+
+      - name: Fail the run so the schedule is visibly red
+        if: steps.live.outputs.findings != '0' && steps.live.outputs.findings != ''
+        run: exit 1

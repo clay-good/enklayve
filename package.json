@@ -24,6 +24,7 @@
     "deploy:dry": "wrangler deploy --dry-run",
     "audit": "node scripts/audit-release.ts",
     "check:links": "node scripts/check-links.ts",
+    "check:live": "node scripts/check-live.ts",
     "check:adapters": "node scripts/check-adapters.ts",
     "check:advisories": "node scripts/check-advisories.ts",
     "check:boundaries": "node scripts/check-boundaries.ts",

@@ -42,10 +42,11 @@ npm run deploy:dry     # wrangler dry-run
 
 Before opening a PR, make the whole gate green locally: `format:check`, `lint`, `typecheck`, `test`, `build`, and `audit`. CI runs exactly these on Node 24; Cloudflare's Git integration deploys on merge to `main`.
 
-The remaining checks run on a **schedule** rather than per-commit — the block below is the whole list, and a count here would be one more thing to keep. Three of them run on a schedule because they need the network and a government site having a bad afternoon must not fail a build — a suite that fails for reasons outside the change is one people learn to ignore. The other two because they are slow: the source watch fingerprints a dozen pages, and the boundary sweep re-runs the whole suite once per comparison. You can run any of them on demand, and you should run the relevant one when your change touches what it watches:
+The remaining checks run on a **schedule** rather than per-commit — the block below is the whole list, and a count here would be one more thing to keep. Four of them run on a schedule because they need the network and a government site having a bad afternoon must not fail a build — a suite that fails for reasons outside the change is one people learn to ignore. `check:live` is the newest and the one worth understanding: every other check in this repository reads the repository, and on 2026-09-03 all of them passed while the production site served no Content-Security-Policy at all, because a request matching a built file was answered without ever invoking the Worker that sets the headers. Run it after any change to headers, caching, or routing — and note it takes an origin, so `npm run check:live -- https://staging.example` works too. The other two are on a schedule because they are slow: the source watch fingerprints a dozen pages, and the boundary sweep re-runs the whole suite once per comparison. You can run any of them on demand, and you should run the relevant one when your change touches what it watches:
 
 ```sh
 npm run check:links          # every external link the repo ships, monthly
+npm run check:live           # what production actually serves, weekly
 npm run check:adapters       # every refresh adapter still finds its figure, monthly
 npm run check:advisories     # every npm advisory has a reviewed reason, monthly
 npm run check:boundaries     # which comparisons a test actually holds, monthly
