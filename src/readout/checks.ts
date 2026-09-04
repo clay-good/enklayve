@@ -249,21 +249,30 @@ export const CHECKS: CheckDefinition[] = [
     // against a scan.
     suppressOnOcr: true,
     run: (ctx) => {
+      // Counted in full before anything is said. Returning on the second
+      // sighting reported "appears 2 times" for a line that appears five —
+      // understating a repeat on a medical bill, which is the direction that
+      // costs the reader, and on the one figure the question is entirely about.
       const lines = billLines(doc(ctx, "medicalBill"));
-      const seen = new Map<string, number>();
+      const counts = new Map<string, { label: string; value: number; n: number }>();
       for (const l of lines) {
         const key = `${l.label}|${l.value}`;
-        const n = (seen.get(key) ?? 0) + 1;
-        if (n > 1) {
-          return {
-            question: "Is this line meant to appear twice?",
-            detail: `"${l.label}" at ${usd(l.value)} appears ${n} times on the same bill. This may well be intentional — worth confirming.`,
-            askWho: "The provider's billing office.",
-          };
-        }
-        seen.set(key, n);
+        const prev = counts.get(key);
+        counts.set(key, { label: l.label, value: l.value, n: (prev?.n ?? 0) + 1 });
       }
-      return null;
+      // The most-repeated line, and the first of them on a tie, so the question
+      // is stable for a given bill rather than dependent on map ordering.
+      let worst: { label: string; value: number; n: number } | null = null;
+      for (const c of counts.values()) {
+        if (c.n > (worst?.n ?? 1)) worst = c;
+      }
+      if (!worst) return null;
+      return {
+        question:
+          worst.n === 2 ? "Is this line meant to appear twice?" : "Is this line meant to repeat?",
+        detail: `"${worst.label}" at ${usd(worst.value)} appears ${worst.n} times on the same bill. This may well be intentional — worth confirming.`,
+        askWho: "The provider's billing office.",
+      };
     },
   },
   {

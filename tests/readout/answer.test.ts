@@ -69,6 +69,16 @@ const BILL_DUPLICATE =
   "09/12/2026 Office visit level 3 400.00 " +
   "Total Charges 640.00";
 
+/** The same clinic, with the panel charged four times rather than twice. */
+const BILL_TRIPLICATE =
+  "Riverside Clinic Itemized Statement Patient Account 44120 " +
+  "09/12/2026 Metabolic panel 140.00 " +
+  "09/12/2026 Metabolic panel 140.00 " +
+  "09/12/2026 Metabolic panel 140.00 " +
+  "09/12/2026 Metabolic panel 140.00 " +
+  "09/12/2026 Office visit level 3 400.00 " +
+  "Total Charges 960.00";
+
 const NOTICE_DENIAL =
   "State Department of Human Services Notice of Action — Medicaid " +
   "Your application has been denied. Reason code: MA-217 " +
@@ -233,6 +243,34 @@ describe("Readout v2, what the checks do and do not say", () => {
     const flag = withPlan.find((f) => f.checkId === "eob-deductible-over-plan-deductible");
     expect(flag?.kind).toBe("plan-math");
     expect(flag?.detail).toContain("If your deductible is $1,500.00");
+  });
+
+  it("counts every repeat, rather than stopping at the second one", () => {
+    // The check returned on the second sighting and reported the count it had
+    // reached, so a line appearing four times read "appears 2 times" — a figure
+    // understated on a medical bill, on the one number the question is about.
+    const four = extractDocument(typed(BILL_TRIPLICATE));
+    const dup = runChecks({ primary: four, documents: [four] }).find(
+      (f) => f.checkId === "bill-duplicate-line",
+    );
+    expect(dup?.detail).toContain("appears 4 times");
+    expect(dup?.detail).not.toContain("appears 2 times");
+    // Two is still two, and still reads naturally.
+    const twice = runChecks({ primary: bill, documents: [bill] }).find(
+      (f) => f.checkId === "bill-duplicate-line",
+    );
+    expect(twice?.detail).toContain("appears 2 times");
+    expect(twice?.question).toContain("twice");
+    expect(dup?.question).not.toContain("twice");
+  });
+
+  it("stays silent on a bill whose lines are all distinct", () => {
+    const clean = extractDocument(typed(BILL_CLEAN));
+    expect(
+      runChecks({ primary: clean, documents: [clean] }).find(
+        (f) => f.checkId === "bill-duplicate-line",
+      ),
+    ).toBeUndefined();
   });
 
   it("screens a bill for a duplicated line and for lines that do not sum", () => {
