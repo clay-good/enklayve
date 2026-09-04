@@ -20,7 +20,7 @@
  * on demand, and it is the thing to run after a deploy that changes headers,
  * caching, or routing.
  *
- * Usage: `npm run check:live [-- https://staging.example]`
+ * Usage: `npm run check:live [-- https://staging.example.com]`
  */
 import { appendFileSync } from "node:fs";
 

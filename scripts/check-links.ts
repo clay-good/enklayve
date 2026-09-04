@@ -55,8 +55,16 @@ const rootMarkdown = (root: string): string[] =>
     .sort();
 const EXTENSIONS = new Set([".ts", ".json", ".md", ".css", ".html"]);
 
-/** A URL that is a fixture or our own site, not a source link the site ships. */
-const NOT_SHIPPED = /(example\.(gov|com|org|invalid)|enklayve\.com)/;
+/**
+ * A URL that is a fixture or our own site, not a source link the site ships.
+ *
+ * `.example` is in here as a TLD as well as a second-level label, because RFC
+ * 2606 §2 reserves it exactly like `.invalid` and somebody writing
+ * `https://staging.example` in a usage line is not shipping a citation. That
+ * cost two false "broken" entries on 2026-09-03 — a check asking a person to go
+ * fix a hostname that is reserved to never resolve.
+ */
+const NOT_SHIPPED = /(example\.(gov|com|org|invalid)|\.example(?![A-Za-z0-9-])|enklayve\.com)/;
 
 // Parentheses are in the character class because federal citations put them in
 // the path: the eCFR states a Treasury regulation as `.../section-1.401(a)(9)-9`.

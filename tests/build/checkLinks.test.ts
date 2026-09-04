@@ -36,6 +36,20 @@ function result(over: Partial<LinkResult>): LinkResult {
 }
 
 describe("finding the links the site ships", () => {
+  it("treats the reserved .example TLD as a fixture, not a citation", () => {
+    // RFC 2606 §2 reserves `.example` exactly as it reserves `.invalid`, and
+    // the pattern here already knew about `example.invalid`. A usage line
+    // reading `npm run check:live -- https://staging.example` is not shipping a
+    // source link, and on 2026-09-03 the sweep reported two of them broken —
+    // asking a person to go repair a hostname reserved never to resolve.
+    expect(extractUrls("see https://staging.example for a dry run")).toEqual([]);
+    expect(extractUrls("see https://foo.bar.example/path here")).toEqual([]);
+    // A real host that merely starts the same way is still checked.
+    expect(extractUrls("https://example.gov/a")).toEqual([]);
+    expect(extractUrls("https://exampled.gov/a")).toEqual(["https://exampled.gov/a"]);
+    expect(extractUrls("https://www.irs.gov/a")).toEqual(["https://www.irs.gov/a"]);
+  });
+
   it("pulls a URL out of code, data, and prose alike", () => {
     expect(extractUrls('const u = "https://www.irs.gov/pub/a.pdf";')).toEqual([
       "https://www.irs.gov/pub/a.pdf",
