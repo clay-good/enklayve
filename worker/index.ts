@@ -105,10 +105,57 @@ function cacheControlFor(pathname: string): string {
   return "public, max-age=3600, must-revalidate";
 }
 
+/**
+ * Whether the asset server answered a sub-resource with the single-page-app
+ * fallback — the shell, under a URL that asked for something else.
+ *
+ * `not_found_handling = "single-page-application"` is right for a navigation:
+ * `/#/take-home` has no file behind it and must open the app. It is wrong for
+ * everything else. A browser holding a cached `index.html` from before a deploy
+ * asks for `/assets/index-OLDHASH.js`, that file is gone, and the asset server
+ * hands back `200 text/html` carrying the home page — which the browser then
+ * parses as a module and reports as a syntax error, so a deploy looks to the
+ * reader like the code broke.
+ *
+ * The service worker learned this in its own form: a chunk missing from the
+ * precache came back as the shell, and dropping a PDF into the Readout offline
+ * failed as though the code were broken rather than as though the network were
+ * gone. The rule it settled on is the rule here — a request that cannot be
+ * served is an error, which is what it is.
+ *
+ * A path with a file extension is asking for that file. Nothing else is
+ * treated as a miss, so extensionless routes keep the fallback that makes the
+ * app open.
+ */
+function isSpaFallbackForAsset(pathname: string, response: Response): boolean {
+  if (!response.ok) return false;
+  const isHtml = (response.headers.get("Content-Type") ?? "").includes("text/html");
+  if (!isHtml) return false;
+  const file = pathname.slice(pathname.lastIndexOf("/") + 1);
+  const dot = file.lastIndexOf(".");
+  if (dot <= 0) return false; // extensionless: a route, not a file
+  const ext = file.slice(dot + 1).toLowerCase();
+  return ext !== "html";
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const assetResponse = await env.ASSETS.fetch(request);
+
+    if (isSpaFallbackForAsset(url.pathname, assetResponse)) {
+      // 404, and emphatically not the year of `immutable` this path would
+      // otherwise earn — caching the shell under a hashed asset URL would make
+      // one bad deploy permanent for that browser.
+      return new Response("Not found", {
+        status: 404,
+        headers: {
+          ...securityHeaders(url.pathname),
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-store",
+        },
+      });
+    }
 
     const headers = new Headers(assetResponse.headers);
     for (const [key, value] of Object.entries(securityHeaders(url.pathname))) {

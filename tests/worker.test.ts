@@ -76,16 +76,33 @@ describe("worker security headers", () => {
   });
 
   it("caches hashed assets immutably and revalidates html/manifest", async () => {
-    expect((await get("/assets/index-abcd1234.js")).headers.get("Cache-Control")).toBe(
-      "public, max-age=31536000, immutable",
-    );
+    // Each non-HTML path is served through a mock that answers with its own
+    // content type. The shared `mockEnv` returns `text/html` for everything,
+    // which is precisely the single-page-app fallback the worker now turns into
+    // a 404 — a realistic asset server does not hand back a page for a .js.
+    const served = (type: string): Env => ({
+      ASSETS: {
+        fetch: async () => new Response("body", { status: 200, headers: { "Content-Type": type } }),
+      },
+    });
+    expect(
+      (await get("/assets/index-abcd1234.js", served("text/javascript"))).headers.get(
+        "Cache-Control",
+      ),
+    ).toBe("public, max-age=31536000, immutable");
     expect((await get("/")).headers.get("Cache-Control")).toBe("no-cache");
     expect((await get("/tools.html")).headers.get("Cache-Control")).toBe("no-cache");
-    expect((await get("/data/manifest.json")).headers.get("Cache-Control")).toBe("no-cache");
-    expect((await get("/site.webmanifest")).headers.get("Cache-Control")).toBe("no-cache");
-    expect((await get("/sitemap.xml")).headers.get("Cache-Control")).toBe(
-      "public, max-age=3600, must-revalidate",
-    );
+    expect(
+      (await get("/data/manifest.json", served("application/json"))).headers.get("Cache-Control"),
+    ).toBe("no-cache");
+    expect(
+      (await get("/site.webmanifest", served("application/manifest+json"))).headers.get(
+        "Cache-Control",
+      ),
+    ).toBe("no-cache");
+    expect(
+      (await get("/sitemap.xml", served("application/xml"))).headers.get("Cache-Control"),
+    ).toBe("public, max-age=3600, must-revalidate");
   });
 
   it("passes the upstream status and body through, still decorated with headers", async () => {
@@ -94,5 +111,77 @@ describe("worker security headers", () => {
     expect(await res.text()).toBe("not found");
     expect(res.headers.get("X-Frame-Options")).toBe("DENY");
     expect(res.headers.get("Content-Security-Policy")).toContain("connect-src 'none'");
+  });
+});
+
+describe("a sub-resource the asset server could not find", () => {
+  /** The single-page-app fallback: 200, and the shell, whatever was asked for. */
+  const spa = (): Env => ({
+    ASSETS: {
+      fetch: async () =>
+        new Response("<!doctype html><title>enklayve</title>", {
+          status: 200,
+          headers: { "Content-Type": "text/html" },
+        }),
+    },
+  });
+
+  it("is a 404, not the home page wearing a .js URL", async () => {
+    // A browser holding an index.html from before a deploy asks for the old
+    // hashed chunk, which is gone. `not_found_handling = "single-page-
+    // application"` hands back the shell with a 200, the browser parses a page
+    // as a module, and a deploy looks to the reader like the code broke. The
+    // service worker settled this in its own form one commit before this
+    // session: a request that cannot be served is an error.
+    const r = await get("/assets/index-OLDHASH.js", spa());
+    expect(r.status).toBe(404);
+    expect(r.headers.get("Content-Type")).toContain("text/plain");
+  });
+
+  it("never caches that miss, let alone for a year", async () => {
+    // The path starts with /assets/, so the ordinary policy would be
+    // `immutable` for a year — which would make one bad deploy permanent in
+    // that browser.
+    const r = await get("/assets/index-OLDHASH.js", spa());
+    expect(r.headers.get("Cache-Control")).toBe("no-store");
+    expect(r.headers.get("Cache-Control")).not.toContain("immutable");
+  });
+
+  it("still carries the security headers, because a 404 is a response too", async () => {
+    const r = await get("/assets/index-OLDHASH.js", spa());
+    expect(r.headers.get("Content-Security-Policy") ?? "").toContain("connect-src 'none'");
+    expect(r.headers.get("X-Content-Type-Options")).toBe("nosniff");
+  });
+
+  it("leaves the fallback alone for a route, which is what it is for", async () => {
+    // Extensionless paths are the app's own routes and must open the shell.
+    for (const path of ["/", "/take-home", "/deeply/nested/route"]) {
+      const r = await get(path, spa());
+      expect(r.status, `${path} should still open the app`).toBe(200);
+    }
+  });
+
+  it("does not mistake a real asset for the fallback", async () => {
+    const js: Env = {
+      ASSETS: {
+        fetch: async () =>
+          new Response("export const a = 1;", {
+            status: 200,
+            headers: { "Content-Type": "text/javascript" },
+          }),
+      },
+    };
+    const r = await get("/assets/index-CURRENT.js", js);
+    expect(r.status).toBe(200);
+    expect(r.headers.get("Cache-Control")).toContain("immutable");
+  });
+
+  it("passes a real 404 through rather than rewriting it", async () => {
+    const missing: Env = {
+      ASSETS: {
+        fetch: async () => new Response("nope", { status: 404 }),
+      },
+    };
+    expect((await get("/assets/gone.js", missing)).status).toBe(404);
   });
 });
