@@ -15,7 +15,7 @@
  * (that still runs through the user's confirmation in `toSituation`), and the
  * module is pure: extractions in, an answer out.
  */
-import { HOSPITAL_FAP_CITATION } from "../data/statutes";
+import { HOSPITAL_COLLECTION_CITATION, HOSPITAL_FAP_CITATION } from "../data/statutes";
 import type { NoSurprisesData } from "../data/schemas";
 import { runChecks, type CheckDefinition, type PlanParameters } from "./checks";
 import type { AnswerSection, ExtractedField, ExtractionResult, ReadoutAnswer } from "./types";
@@ -139,6 +139,17 @@ function owedFor(
         label:
           "If this bill is from a nonprofit hospital, it must have a written financial assistance policy and give you a paper copy free, on request.",
         citation: HOSPITAL_FAP_CITATION,
+        tileId: "charity-care",
+      },
+      {
+        // The half with a clock on it. §501(r)(4) says help exists;
+        // §1.501(r)-6 says how long you have to ask and what the hospital may
+        // not do meanwhile, and a person reading a bill is being told to pay it
+        // now. The charity-care tile gained this today; a document generated
+        // beside a tile must not know less than the tile does.
+        label:
+          "You have longer than the bill suggests. A nonprofit hospital must accept a financial assistance application until at least the 240th day after your first bill after discharge, and must hold off collection — no credit reporting, no lawsuit, no wage garnishment — for at least 120 days from it. Apply even if it has already gone to collections.",
+        citation: HOSPITAL_COLLECTION_CITATION,
         tileId: "charity-care",
       },
     ];

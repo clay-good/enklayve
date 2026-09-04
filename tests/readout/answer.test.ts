@@ -455,11 +455,21 @@ describe("Readout v2, the four-part answer (§2)", () => {
 
   it("points an itemized bill at the hospital financial-assistance obligation, with its citation", () => {
     const answer = buildAnswer(extractDocument(typed(BILL_CLEAN)));
-    expect(answer.owed).toHaveLength(1);
-    expect(answer.owed[0]?.tileId).toBe("charity-care");
+    expect(answer.owed).toHaveLength(2);
+    for (const o of answer.owed) {
+      expect(o.tileId).toBe("charity-care");
+      // An obligation on the hospital, never a determination about this household.
+      expect(o.estimate).toBeUndefined();
+    }
     expect(answer.owed[0]?.citation.sourceDocument).toContain("501(r)(4)");
-    // An obligation on the hospital, never a determination about this household.
-    expect(answer.owed[0]?.estimate).toBeUndefined();
+    // §501(r)(4) says help exists; §1.501(r)-6 says how long you have to ask
+    // and what the hospital may not do meanwhile. The charity-care tile gained
+    // that today, and a document generated beside a tile must not know less
+    // than the tile — a person reading a bill is being told to pay it now.
+    expect(answer.owed[1]?.citation.sourceDocument).toContain("501(r)-6");
+    expect(answer.owed[1]?.label).toContain("240th day");
+    expect(answer.owed[1]?.label).toContain("120 days");
+    expect(answer.owed[1]?.label).toContain("already gone to collections");
     const said = answer.owed.map((o) => o.label.toLowerCase()).join(" ");
     expect(said).not.toContain("you qualify");
     expect(said).not.toContain("you are eligible");
