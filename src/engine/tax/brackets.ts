@@ -146,6 +146,44 @@ export function standardDeductionFor(jurisdiction: Jurisdiction, status: FilingS
   return 0;
 }
 
+/**
+ * IRC §63(f), the additional standard deduction for the aged.
+ *
+ * An addition to the *standard* deduction, so it reaches a filer who takes it
+ * and nobody who itemizes — which is what separates it from §151(d)(5)(C)'s
+ * $6,000, a deduction that comes off either way and stacks on top of this one.
+ * The two are easy to conflate: both turn on being 65, both arrived in the same
+ * revenue procedure, and this project modelled the newer one first and left the
+ * older one out entirely. A 66-year-old single filer taking the standard
+ * deduction was short $2,050 of it.
+ *
+ * §63(f)(3) is the reason there are two figures rather than one: the amount is
+ * larger for an individual "unmarried and not a surviving spouse", so a single
+ * or head-of-household filer gets $2,050 for 2026 where a joint filer gets
+ * $1,650 for each qualifying spouse.
+ *
+ * Only the aged half is modelled. §63(f)(2) grants the same amount again for
+ * blindness, and this site does not ask.
+ */
+export function agedStandardDeductionFor(
+  jurisdiction: Jurisdiction,
+  status: FilingStatus,
+  qualifyingIndividuals: number,
+): number {
+  const amounts = jurisdiction.agedAdditionalStandardDeduction;
+  if (!amounts) return 0;
+  const n = Math.max(0, Math.floor(qualifyingIndividuals));
+  if (n === 0) return 0;
+  // "Unmarried and not a surviving spouse" is the statute's own test, so a
+  // married-filing-separately filer takes the married amount and a qualifying
+  // surviving spouse takes it too, by name.
+  const unmarried = status === "single" || status === "head_of_household";
+  const per = unmarried ? amounts.perPersonUnmarried : amounts.perPersonMarried;
+  // Only a joint return can have two qualifying individuals on it.
+  const cap = status === "married_jointly" || status === "qualifying_surviving_spouse" ? 2 : 1;
+  return per * Math.min(n, cap);
+}
+
 /** Personal exemption for a status (via {@link fallbackChain}), 0 when none. */
 export function personalExemptionFor(jurisdiction: Jurisdiction, status: FilingStatus): number {
   const table = jurisdiction.personalExemptionByFilingStatus;

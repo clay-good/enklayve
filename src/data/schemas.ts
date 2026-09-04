@@ -598,6 +598,23 @@ export const JurisdictionSchema = z.object({
   supportedFilingStatuses: z.array(FilingStatus).min(1),
   bracketsByFilingStatus: bracketsByStatus,
   standardDeductionByFilingStatus: amountByStatus,
+  /**
+   * IRC §63(f), the additional standard deduction for the aged — per
+   * qualifying individual, and an addition to the *standard* deduction, so an
+   * itemizer does not get it. Distinct from, and stacking with,
+   * §151(d)(5)(C)'s `seniorDeduction`, which comes off either way.
+   *
+   * Optional because only the federal shard has one: no state legislates it,
+   * and a state schedule that omits it is not incomplete.
+   */
+  agedAdditionalStandardDeduction: z
+    .object({
+      /** §63(f)(1): the amount for a married filer, per qualifying individual. */
+      perPersonMarried: z.number().gte(0),
+      /** §63(f)(3): the larger amount, for one unmarried and not a surviving spouse. */
+      perPersonUnmarried: z.number().gte(0),
+    })
+    .optional(),
   personalExemptionByFilingStatus: amountByStatus.optional(),
   /** AGI-based phase-out of the standard deduction (South Carolina SCIAD). */
   standardDeductionPhaseOut: StandardDeductionPhaseOutSchema.optional(),

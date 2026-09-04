@@ -10,6 +10,7 @@ import {
   personalCreditRateFor,
   personalExemptionFor,
   standardDeductionFor,
+  agedStandardDeductionFor,
   standardDeductionPhaseOutFor,
   taxpayerCreditBaseFor,
 } from "./brackets";
@@ -71,7 +72,14 @@ function computeFederal(
   agi: Money,
   federal: Jurisdiction,
 ): JurisdictionComputation {
-  const standard = Money.from(standardDeductionFor(federal, input.filingStatus));
+  // §63(f) rides on the standard deduction itself, so it goes in before the
+  // choice between standard and itemized rather than after: an itemizer does
+  // not get it, and adding it later would hand it to one. That is the whole
+  // difference between this and §151(d)(5)(C) below, which comes off either way.
+  const standard = Money.from(
+    standardDeductionFor(federal, input.filingStatus) +
+      agedStandardDeductionFor(federal, input.filingStatus, input.seniorsAge65Plus ?? 0),
+  );
   const deduction = chooseFederalDeduction(
     input.deductionMode ?? "auto",
     standard,

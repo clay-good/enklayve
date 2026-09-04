@@ -103,14 +103,23 @@ describe("through the whole engine", () => {
     expect(ds.federal.seniorDeduction).toEqual(RULE);
   });
 
-  it("lowers taxable income by the full amount for a filer at 65", () => {
+  it("lowers taxable income by its own amount AND by §63(f), which is a different rule", () => {
+    // Turning 65 moves two deductions, not one, and this test used to know
+    // about only the newer of them. §151(d)(5)(C) is the $6,000 the Act added;
+    // §63(f) is the long-standing addition to the *standard* deduction, $2,050
+    // for 2026 for a filer unmarried and not a surviving spouse. They stack,
+    // and this engine modelled the new one and omitted the old one entirely —
+    // so a 66-year-old single filer taking the standard deduction was short
+    // $2,050 of deduction and paid tax on it.
     const base = { filingStatus: "single" as const, wages: 60_000 };
     const ctx = { federal: ds.federal, fica: ds.fica };
     const under = evaluateTaxes(base, ctx);
     const over = evaluateTaxes({ ...base, seniorsAge65Plus: 1 }, ctx);
     expect(over.federal.deduction.senior.toNumber()).toBe(6000);
+    const aged = ds.federal.agedAdditionalStandardDeduction!.perPersonUnmarried;
+    expect(aged).toBe(2050);
     expect(over.federal.taxableIncome.toNumber()).toBe(
-      under.federal.taxableIncome.toNumber() - 6000,
+      under.federal.taxableIncome.toNumber() - 6000 - aged,
     );
     expect(over.federal.incomeTax.lessThan(under.federal.incomeTax)).toBe(true);
   });

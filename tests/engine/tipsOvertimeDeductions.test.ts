@@ -144,7 +144,12 @@ describe("through the whole engine", () => {
     expect(r.federal.deduction.qualifiedTips.toNumber()).toBe(5000);
     expect(r.federal.deduction.qualifiedOvertime.toNumber()).toBe(3000);
     expect(r.federal.deduction.senior.toNumber()).toBe(6000);
-    const standard = ds.federal.standardDeductionByFilingStatus.single!;
+    // §63(f) rides on the standard deduction for a filer aged 65 who takes it —
+    // a separate rule from §151(d)(5)(C)'s $6,000, stacking with it, and one
+    // this engine did not model until 2026-09-03.
+    const standard =
+      ds.federal.standardDeductionByFilingStatus.single! +
+      ds.federal.agedAdditionalStandardDeduction!.perPersonUnmarried;
     expect(r.federal.taxableIncome.toNumber()).toBe(60_000 - standard - 5000 - 3000 - 6000);
   });
 

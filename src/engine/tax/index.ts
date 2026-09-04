@@ -9,6 +9,7 @@ export {
   marginalBracketRate,
   bracketsFor,
   standardDeductionFor,
+  agedStandardDeductionFor,
   personalExemptionFor,
   type Bracket,
 } from "./brackets";
