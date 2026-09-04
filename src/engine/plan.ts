@@ -321,14 +321,30 @@ export const PLAN_STEPS: StepDef[] = [
         };
       }
       const gap = positiveGap(limit, contributing);
+      // The limit here is §402(g)'s base, which is every filer's until they
+      // turn 50 and nobody's after. §414(v) adds a catch-up from 50 and a
+      // larger one at 60 through 63, so this step used to call itself
+      // *satisfied* for a 55-year-old contributing the base amount — telling
+      // somebody they had finished a step with $8,000 of room left in it.
+      //
+      // The age is not computed, because the profile cannot supply it: `ages`
+      // is the household's, and which entry is the filer is not something this
+      // plan knows. Naming the rule beats guessing at it — and beats a step
+      // that quietly assumes everyone is under 50, which is the version that
+      // was shipping.
+      const catchUp =
+        "From 50 your limit is higher, and higher again at 60 through 63, so this figure is the " +
+        "base limit rather than yours. The Retirement Contribution Optimizer asks your age and " +
+        "sizes it.";
       return {
         satisfied: contributing >= limit,
         action: `Increase tax-advantaged retirement by ${usd(gap)} to move toward the ${usd(limit)} annual limit.`,
         amount: Money.from(gap),
         math: [
-          { label: "Annual contribution limit", value: usd(limit) },
+          { label: "Annual contribution limit (under 50)", value: usd(limit) },
           { label: "You're contributing", value: usd(contributing) },
           { label: "Room remaining", value: usd(gap) },
+          { label: "If you are 50 or older", value: catchUp },
         ],
         // The one statutory threshold in the plan: cite the IRS limit (§4.2).
         citation: input.retirementLimitCitation,

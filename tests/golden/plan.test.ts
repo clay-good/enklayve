@@ -186,6 +186,27 @@ describe("Your Plan, invariants and provenance", () => {
     expect(steps.find((s) => s.id === "rainy-day-fund")?.citation).toBeNull();
   });
 
+  it("does not let the retirement step read as everyone's limit", () => {
+    // §402(g)'s base is every filer's limit until they turn 50 and nobody's
+    // after: §414(v) adds a catch-up from 50 and a larger one at 60 through 63.
+    // The step called itself satisfied for a 55-year-old contributing the base
+    // amount — telling somebody they had finished a step with $8,000 of room
+    // left in it. The age is not computed, because `ages` is the household's
+    // and which entry is the filer is not something this plan knows, so the
+    // rule is named where the figure is shown.
+    const retirement = evaluatePlan(
+      base({ liquidSavings: 20000, retirementContributionsAnnual: 0 }),
+    ).steps.find((s) => s.id === "retirement");
+    const labels = retirement?.math.map((m) => m.label) ?? [];
+    expect(labels).toContain("Annual contribution limit (under 50)");
+    const note = retirement?.math.find((m) => m.label === "If you are 50 or older")?.value ?? "";
+    expect(note).toContain("60 through 63");
+    expect(note).toContain("Retirement Contribution Optimizer");
+    // And it still states no figure of its own for the catch-up, which lives on
+    // a cited shard the plan does not read.
+    expect(note).not.toMatch(/\$[\d,]/);
+  });
+
   it("exposes all seven default steps", () => {
     expect(PLAN_STEPS.map((s) => s.id)).toEqual(DEFAULT_ORDER);
     expect(PLAN_STEPS).toHaveLength(7);
