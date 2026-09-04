@@ -15,3 +15,16 @@ directory = "./dist"
 binding = "ASSETS"
 # Serve index.html for unknown paths so client-side fragment routing works.
 not_found_handling = "single-page-application"
+# REQUIRED, and the reason is the whole privacy claim. With Workers Static
+# Assets, a request that matches a file in `directory` is answered by the asset
+# server *without invoking the Worker at all* — so `worker/index.ts`, which is
+# where every security header including `connect-src 'none'` is set, never ran
+# for `/`, `/index.html`, `/assets/*` or any other real path. On 2026-09-03 the
+# production site was serving no Content-Security-Policy, no HSTS, no
+# Referrer-Policy and no X-Content-Type-Options, while the README told readers
+# the browser physically could not send their data anywhere. It was true of the
+# code and false of the site.
+#
+# `run_worker_first` puts the Worker in front of every request; it still serves
+# the same bytes, through `env.ASSETS.fetch`, and now decorates them.
+run_worker_first = true
