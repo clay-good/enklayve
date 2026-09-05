@@ -2839,6 +2839,21 @@ body {
   .ph-config > summary {
     padding-block: 0.7rem;
   }
+  /* Everything else a mounted tool renders, by shape rather than by name.
+     The four `summary` selectors above are a hand-kept list, and the list had
+     fallen behind the catalog: the cliff explorer's "See the numbers" and "What
+     this leaves out" disclosures were 24px tall on a phone, the Bill Triage
+     editor's category picker 19px, and its "Add a bill" and "Remove" buttons
+     21px — all measured on a 390px viewport with a coarse pointer. Naming the
+     shapes covers the tile nobody has written yet, which is the same reason the
+     catalog sweeps read their field names off the rendered form. */
+  .hub-tool summary {
+    padding-block: 0.7rem;
+  }
+  .hub-tool select,
+  .hub-tool button {
+    min-height: 44px;
+  }
 }
 
 /* Tablets and below: trim the widest gutters so content gets the full width. */

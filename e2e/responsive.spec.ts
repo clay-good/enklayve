@@ -405,6 +405,70 @@ test.describe("touch targets meet the 44px minimum on a coarse pointer", () => {
     },
   ];
 
+  /**
+   * Every hub, with an answer on the screen.
+   *
+   * The four cases above check one hub. The controls a tile grows *after* it has
+   * computed something — "Copy number", "Copy link", the show-the-math
+   * disclosure, the sensitivity toggle — are on none of them, and neither are
+   * the other eleven hubs' pickers and selects. Opened at the default tool with
+   * the worked example pressed, so the page under the thumb is the one a reader
+   * actually has.
+   */
+  const HUBS = [
+    "paycheck-taxes",
+    "self-employed",
+    "investing",
+    "retirement",
+    "debt",
+    "budget-cashflow",
+    "home-purchases",
+    "protection",
+    "benefits",
+    "benefit-cliffs",
+    "when-money-is-tight",
+    "where-you-stand",
+  ] as const;
+
+  for (const hub of HUBS) {
+    test(`the ${hub} hub sizes its controls to a 44px target, showing an answer`, async ({
+      page,
+    }) => {
+      await page.goto(`/#/${hub}`);
+      await page.waitForSelector(".content");
+      const example = page.getByRole("button", { name: /try an example/i }).first();
+      if (await example.isVisible().catch(() => false)) {
+        await example.click();
+        await page.waitForTimeout(200);
+      }
+      const tooSmall = await page.evaluate(() => {
+        const out: string[] = [];
+        const seen = new Set<string>();
+        for (const el of Array.from(
+          document.querySelectorAll<HTMLElement>(
+            ".hub-tool button, .hub-tool select, .hub-tool summary, .hub-tool input[type='checkbox'], .segmented__btn",
+          ),
+        )) {
+          const r = el.getBoundingClientRect();
+          if (r.width === 0 || r.height === 0) continue;
+          if (getComputedStyle(el).visibility === "hidden") continue;
+          if (r.height >= 43.5) continue;
+          // A checkbox wrapped in its label is not the target — the label is,
+          // and every one of them is already 44px. Measuring the 13px input
+          // inside it would report a failure a thumb never meets.
+          const label = el.closest("label");
+          if (label && label.getBoundingClientRect().height >= 43.5) continue;
+          const id = `${el.tagName.toLowerCase()}${el.className ? `.${String(el.className).split(" ")[0]}` : ""}`;
+          if (seen.has(id)) continue;
+          seen.add(id);
+          out.push(`${id} ${r.height.toFixed(1)}px`);
+        }
+        return out;
+      });
+      expect(tooSmall.join(", "), `${hub}: below the 44px tap target`).toBe("");
+    });
+  }
+
   for (const c of CASES) {
     test(`${c.name} sizes its controls to a 44px target`, async ({ page }) => {
       await page.goto(c.hash);

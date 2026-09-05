@@ -98,3 +98,72 @@ for (const [name, hash, expect1] of [
     expect(invisible.join(", "), `${name}: focused with no visible indicator`).toBe("");
   });
 }
+
+/**
+ * Every hub, with an answer on the screen.
+ *
+ * The four views above are the same four the contrast check started with, and
+ * for the same reason they were not enough: a control that only exists once a
+ * tile has computed something — "Copy number", "Copy link", the show-the-math
+ * disclosure, the sensitivity toggle, the segmented picker on eleven other hubs
+ * — is not on the page when an empty form is opened. So each hub is opened at
+ * its default tool and its worked example is pressed first.
+ */
+const HUBS = [
+  "paycheck-taxes",
+  "self-employed",
+  "investing",
+  "retirement",
+  "debt",
+  "budget-cashflow",
+  "home-purchases",
+  "protection",
+  "benefits",
+  "benefit-cliffs",
+  "when-money-is-tight",
+  "where-you-stand",
+] as const;
+
+for (const hub of HUBS) {
+  test(`every focusable control on the ${hub} hub shows focus, showing an answer`, async ({
+    page,
+  }) => {
+    await page.goto(`/#/${hub}`);
+    await page.waitForSelector("#content");
+    await expect(page.locator(".segmented, .hub-tool").first()).toBeVisible({ timeout: 15_000 });
+    // Pressed with the keyboard, not clicked. A real mouse click switches the
+    // browser's `:focus-visible` heuristic to pointer modality, and every
+    // subsequent programmatic `.focus()` then matches `:focus` but not
+    // `:focus-visible` — which reported all twenty-eight controls on this page
+    // as having no indicator, including the skip link the four views above
+    // prove is fine. The check has to stay in the modality it is testing.
+    const example = page.getByRole("button", { name: /try an example/i }).first();
+    if (await example.isVisible().catch(() => false)) {
+      await example.focus();
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(200);
+    }
+    await page.waitForTimeout(300);
+
+    const handles = await page.locator(FOCUSABLE).elementHandles();
+    expect(handles.length, `${hub} has nothing focusable`).toBeGreaterThan(3);
+
+    const invisible: string[] = [];
+    for (const handle of handles.slice(0, 40)) {
+      if (!(await handle.isVisible())) continue;
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      const before = await handle.evaluate(appearance);
+      await handle.focus();
+      const after = await handle.evaluate(appearance);
+      if (before === after) {
+        invisible.push(
+          await handle.evaluate(
+            (el: Element) =>
+              `${el.tagName.toLowerCase()}${el.className ? `.${String(el.className).split(" ")[0]}` : ""}`,
+          ),
+        );
+      }
+    }
+    expect(invisible.join(", "), `${hub}: focused with no visible indicator`).toBe("");
+  });
+}
