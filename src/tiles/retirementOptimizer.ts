@@ -5,6 +5,13 @@
  * read from the bundled IRS retirement-limits dataset, so each carries its
  * citation (no orphan numbers). The 401(k) contribution reads from and writes
  * back to My Situation so it feeds My Plan's "capture the match" step.
+ *
+ * That sentence was written before the match itself was asked about anywhere.
+ * `employerMatchAnnual` and `employerMatchCaptured` existed in My Situation and
+ * in the plan step that spends them, and no surface on the site set either —
+ * so the step compared 0 against 0, called itself satisfied, and the plan
+ * stepped over the highest-return move in personal finance without ever asking.
+ * The two fields below are where the reader answers.
  */
 import { Money } from "../engine/money";
 import {
@@ -16,6 +23,7 @@ import type { RetirementLimitsData } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
 
 type HsaCoverage = "none" | "self" | "family";
@@ -34,6 +42,9 @@ interface Fields {
   hsaCoverage: HsaCoverage;
   contribHsa: number;
   contribFsa: number;
+  /** Full employer match on offer for the year, and what you are capturing. */
+  matchAvailable: number;
+  matchCaptured: number;
 }
 
 const EXAMPLE: Fields = {
@@ -44,22 +55,32 @@ const EXAMPLE: Fields = {
   hsaCoverage: "family",
   contribHsa: 4000,
   contribFsa: 0,
+  matchAvailable: 4000,
+  matchCaptured: 2500,
 };
 
 function isCoverage(v: string): v is HsaCoverage {
   return COVERAGES.some((c) => c.value === v);
 }
 
-function readFields(p: URLSearchParams, contrib401kDefault: number): Fields {
+function readFields(p: URLSearchParams, profile: SituationStore): Fields {
   const cov = p.get("hsa");
   return {
     age: Math.max(0, parseNonNegative(p.get("age"), 35)),
     priorWages: parseNonNegative(p.get("pw"), 0),
-    contrib401k: p.has("k") ? parseNonNegative(p.get("k"), 0) : contrib401kDefault,
+    contrib401k: p.has("k")
+      ? parseNonNegative(p.get("k"), 0)
+      : (profile.get("retirementContributionsAnnual") ?? 0),
     contribIra: parseNonNegative(p.get("ira"), 0),
     hsaCoverage: cov && isCoverage(cov) ? cov : "none",
     contribHsa: parseNonNegative(p.get("h"), 0),
     contribFsa: parseNonNegative(p.get("f"), 0),
+    matchAvailable: p.has("m")
+      ? parseNonNegative(p.get("m"), 0)
+      : (profile.get("employerMatchAnnual") ?? 0),
+    matchCaptured: p.has("mc")
+      ? parseNonNegative(p.get("mc"), 0)
+      : (profile.get("employerMatchCaptured") ?? 0),
   };
 }
 
@@ -72,6 +93,12 @@ function writeFields(f: Fields): URLSearchParams {
   if (f.hsaCoverage !== "none") p.set("hsa", f.hsaCoverage);
   if (f.contribHsa > 0) p.set("h", String(f.contribHsa));
   if (f.contribFsa > 0) p.set("f", String(f.contribFsa));
+  // Both are written whether or not they are zero. A zero match is an answer —
+  // "my employer offers none" — and My Plan reads the absence of one as a
+  // question it still has to ask, so a link that dropped it would reopen on a
+  // different plan than the sender saw.
+  p.set("m", String(f.matchAvailable));
+  p.set("mc", String(f.matchCaptured));
   return p;
 }
 
@@ -112,7 +139,7 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
     return;
   }
 
-  let fields = readFields(ctx.params, ctx.profile.get("retirementContributionsAnnual") ?? 0);
+  let fields = readFields(ctx.params, ctx.profile);
 
   const ageInput = el("input", {
     type: "number",
@@ -140,6 +167,8 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
   );
   const hInput = num("h", fields.contribHsa, "Current HSA contribution this year");
   const fInput = num("f", fields.contribFsa, "Current health FSA contribution this year");
+  const mInput = num("m", fields.matchAvailable, "Full employer match offered this year");
+  const mcInput = num("mc", fields.matchCaptured, "Employer match you are capturing this year");
   const pwInput = num(
     "pw",
     fields.priorWages,
@@ -229,6 +258,8 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
       contribHsa: parseNonNegative(hInput.value, 0),
       contribFsa: parseNonNegative(fInput.value, 0),
       priorWages: parseNonNegative(pwInput.value, 0),
+      matchAvailable: parseNonNegative(mInput.value, 0),
+      matchCaptured: parseNonNegative(mcInput.value, 0),
     };
   }
 
@@ -237,11 +268,14 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
     ctx.setParams(writeFields(fields));
     // Feed My Plan's retirement step with the 401(k) contribution.
     ctx.profile.set("retirementContributionsAnnual", fields.contrib401k);
+    // The two the plan had no other way of learning.
+    ctx.profile.set("employerMatchAnnual", fields.matchAvailable);
+    ctx.profile.set("employerMatchCaptured", fields.matchCaptured);
     compute();
   }
 
   hsaSelect.addEventListener("change", recompute);
-  for (const i of [ageInput, kInput, iraInput, hInput, fInput, pwInput])
+  for (const i of [ageInput, kInput, iraInput, hInput, fInput, pwInput, mInput, mcInput])
     i.addEventListener("input", recompute);
 
   const tryExample = tryExampleButton(() => {
@@ -253,6 +287,8 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
     hInput.value = String(fields.contribHsa);
     fInput.value = String(fields.contribFsa);
     pwInput.value = String(fields.priorWages);
+    mInput.value = String(fields.matchAvailable);
+    mcInput.value = String(fields.matchCaptured);
     recompute();
   });
 
@@ -261,6 +297,8 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
     { class: "tile-form", on: { submit: (e) => e.preventDefault() } },
     field("Your age", ageInput),
     field("401(k) so far this year", kInput),
+    field("Full employer match offered this year", mInput),
+    field("Employer match captured so far", mcInput),
     field("IRA so far this year", iraInput),
     field("HSA coverage", hsaSelect),
     field("HSA so far this year", hInput),

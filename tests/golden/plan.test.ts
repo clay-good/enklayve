@@ -50,6 +50,33 @@ describe("Your Plan, current-step selection", () => {
     expect(currentId(base({ liquidSavings: 0 }))).toBe("starter-cushion");
   });
 
+  it("asks about the employer match rather than assuming it is captured", () => {
+    // The two match fields lived in My Situation and in the step that spends
+    // them, and until 2026-09-05 no surface on the site set either. Every real
+    // reader therefore arrived with 0 available and 0 captured, the step
+    // compared them, called itself satisfied, and the plan stepped silently
+    // over the one move it knows that pays a guaranteed return — on an
+    // assumption about the reader's money that nobody had made out loud.
+    //
+    // Null is "nobody has been asked", and it is a different thing from a zero
+    // somebody typed. The Retirement Contribution Optimizer is where they type
+    // it, which is what the step's action names.
+    const unasked = evaluatePlan(
+      base({ liquidSavings: 2000, employerMatchAnnual: null }),
+      DEFAULT_CONFIG,
+    );
+    expect(unasked.current?.id).toBe("employer-match");
+    expect(unasked.current?.needsInfo).toBe("employerMatchAnnual");
+    expect(unasked.current?.action).toContain("Retirement Contribution Optimizer");
+    expect(unasked.current?.amount).toBeNull();
+
+    // Zero is an answer — "my employer offers none" — and the plan moves past
+    // the step to the next unsatisfied one rather than stopping to ask.
+    expect(
+      currentId(base({ liquidSavings: 2000, employerMatchAnnual: 0, employerMatchCaptured: 0 })),
+    ).toBe("rainy-day-fund");
+  });
+
   it("picks the employer match once the cushion is met", () => {
     expect(currentId(base({ liquidSavings: 2000, employerMatchCaptured: 0 }))).toBe(
       "employer-match",

@@ -172,6 +172,12 @@ describe("the Report against a profile no form could have produced", () => {
     store.set("essentialMonthlyExpenses", 3_200);
     store.set("liquidSavings", 12_000);
     store.set("debts", [{ name: "Card", balance: 4_200, ratePct: 24.99 }]);
+    // The employer-match step comes before the debt step, and it is a question
+    // now rather than an assumption: an unanswered match is the plan's current
+    // step, so the debt line this test is about is never reached. Answering it
+    // — with zero, which is a real answer — puts the reader back on the step
+    // whose rate is under test.
+    store.set("employerMatchAnnual", 0);
     const container = document.createElement("div");
     renderReport({ container, navigate: () => {}, profile: store, data });
     expect(container.textContent).toContain("24.99%");

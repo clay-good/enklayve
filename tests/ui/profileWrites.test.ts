@@ -109,6 +109,8 @@ const EXPECTED = [
   "peace-of-mind | liquidSavings <- Liquid savings",
   "peace-of-mind | totalMonthlyExpenses <- Total monthly spending",
   "quarterly-taxes | annualIncome <- Net business profit",
+  "retirement-optimizer | employerMatchAnnual <- Full employer match offered this year",
+  "retirement-optimizer | employerMatchCaptured <- Employer match captured so far",
   "retirement-optimizer | retirementContributionsAnnual <- 401(k) so far this year",
   "sabbatical | essentialMonthlyExpenses <- Essential monthly spending",
   "sabbatical | liquidSavings <- Savings set aside",

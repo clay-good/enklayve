@@ -41,7 +41,19 @@ export interface SinkingGoal {
 export interface PlanInput {
   liquidSavings: number;
   essentialMonthlyExpenses: number;
-  employerMatchAnnual: number;
+  /**
+   * The full employer match on offer for the year, or **null when nobody has
+   * been asked**.
+   *
+   * Null rather than 0, for the same reason the retirement limit above is. The
+   * two match fields lived in My Situation and in the step below, and no
+   * surface on the site set either — so the step compared 0 against 0, reported
+   * itself satisfied, and the plan silently stepped over the highest-return
+   * move it knows about, on an assumption about the reader's money that nobody
+   * had made out loud. Zero is now an answer a person gives ("my employer
+   * offers none"), and it is a different thing from never having been asked.
+   */
+  employerMatchAnnual: number | null;
   employerMatchCaptured: number;
   debts: Debt[];
   retirementContributionsAnnual: number;
@@ -222,6 +234,17 @@ export const PLAN_STEPS: StepDef[] = [
     tileId: "retirement",
     evaluate(input) {
       const available = input.employerMatchAnnual;
+      if (available === null) {
+        return {
+          satisfied: false,
+          action:
+            "Add your employer match in the Retirement Contribution Optimizer so this step can be sized. It is the one step here that pays a guaranteed return, so it is worth answering even if the answer is zero.",
+          amount: null,
+          math: [{ label: "Employer match available", value: "not set" }],
+          citation: null,
+          needsInfo: "employerMatchAnnual",
+        };
+      }
       const captured = input.employerMatchCaptured;
       const gap = positiveGap(available, captured);
       return {

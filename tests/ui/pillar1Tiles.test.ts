@@ -347,6 +347,36 @@ describe("Retirement Contribution Optimizer tile", () => {
     expect(root.querySelectorAll("a.cite-link").length).toBeGreaterThanOrEqual(3);
   });
 
+  it("asks for the employer match, and answers My Plan's question with it", () => {
+    // The tile's own header comment has said since it was written that it
+    // "writes back to My Situation so it feeds My Plan's capture-the-match
+    // step". It wrote the 401(k) contribution and nothing else: the two match
+    // fields existed in the profile and in the step that spends them, and no
+    // surface on the site set either. So every reader's plan compared 0 against
+    // 0, called the step satisfied, and stepped over the one move that pays a
+    // guaranteed return without saying it had.
+    const profile = new SituationStore();
+    const { root, lastParams } = mount(mountRetirementOptimizer, new URLSearchParams(), profile);
+    const match = root.querySelector<HTMLInputElement>('input[name="m"]')!;
+    const captured = root.querySelector<HTMLInputElement>('input[name="mc"]')!;
+    match.value = "6000";
+    match.dispatchEvent(new Event("input"));
+    captured.value = "2000";
+    captured.dispatchEvent(new Event("input"));
+    expect(profile.get("employerMatchAnnual")).toBe(6000);
+    expect(profile.get("employerMatchCaptured")).toBe(2000);
+
+    // And the link carries both, including a zero — which is a real answer
+    // ("my employer offers none") that the plan reads differently from silence,
+    // so a link dropping it would reopen on a different plan than the sender
+    // saw.
+    match.value = "0";
+    match.dispatchEvent(new Event("input"));
+    expect(lastParams()?.get("m")).toBe("0");
+    expect(lastParams()?.get("mc")).toBe("2000");
+    expect(profile.get("employerMatchAnnual")).toBe(0);
+  });
+
   it("gives a 61-year-old the 60–63 catch-up, and a 64-year-old the ordinary one", () => {
     // The shard has carried `catch_up_401k_60to63` since the 2026 limits landed
     // and this tile read `catch_up_401k_50plus` for every age over 50, so a

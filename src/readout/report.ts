@@ -75,7 +75,10 @@ function planInputFrom(profile: SituationStore, data: BundledData | null): PlanI
   return {
     liquidSavings: profile.get("liquidSavings") ?? 0,
     essentialMonthlyExpenses: profile.get("essentialMonthlyExpenses") ?? 0,
-    employerMatchAnnual: profile.get("employerMatchAnnual") ?? 0,
+    // Null, not zero: the plan tells the difference between "no match offered"
+    // and "nobody has been asked", and reads the second as a question it still
+    // owes the reader.
+    employerMatchAnnual: profile.get("employerMatchAnnual") ?? null,
     employerMatchCaptured: profile.get("employerMatchCaptured") ?? 0,
     debts: profile.get("debts") ?? [],
     retirementContributionsAnnual: profile.get("retirementContributionsAnnual") ?? 0,
