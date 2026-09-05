@@ -6,6 +6,7 @@ import { resolve, join } from "node:path";
 import {
   againstBaseline,
   boundariesIn,
+  maskNonCode,
   renderReport,
   readJournal,
   writeJournal,
@@ -87,6 +88,86 @@ describe("finding the comparisons worth flipping", () => {
 
   it("finds every comparison on a line, not just the first", () => {
     expect(boundariesIn("x.ts", "if (a <= b && c <= d) return 0;")).toHaveLength(2);
+  });
+
+  it("does not read a comparison out of a sentence about one", () => {
+    // The real one, from the paragraph above `electiveDeferralCatchUp`, which
+    // exists to say that `age >= 60` is the WRONG rule because §414(v)(2)(E)(i)
+    // closes at 64. It was reported on 2026-09-05 as a fresh unheld boundary:
+    // not on the baseline, so the check failed and the scheduled workflow was
+    // one run from filing an issue asking for a test that holds a threshold in
+    // a doc comment. Flipping prose changes no answer, so no such test can be
+    // written and the entry would have sat on the backlog forever.
+    const doc = [
+      "/**",
+      " * It is a *window*, not a floor. Written as `age >= 60` it would quietly",
+      " * overstate the limit for every year after.",
+      " */",
+      "if (age >= 60 && age < 64) return big;",
+    ].join("\n");
+    const found = boundariesIn("contributionLimits.ts", doc);
+    expect(found).toHaveLength(1);
+    expect(found[0]?.line).toBe(5);
+  });
+
+  it("ignores a comparison after a trailing // and keeps the code before it", () => {
+    const found = boundariesIn("x.ts", "if (a <= b) return 0; // and not when a <= c");
+    expect(found).toHaveLength(1);
+    expect(found[0]?.column).toBe(6);
+  });
+
+  it("ignores a comparison inside a string or a template literal", () => {
+    const source = [
+      'const label = "at or below (<=)";',
+      "const note = `pct >= ${limit}`;",
+      "if (pct >= limit) return true;",
+    ].join("\n");
+    const found = boundariesIn("x.ts", source);
+    expect(found).toHaveLength(1);
+    expect(found[0]?.line).toBe(3);
+  });
+
+  it("keeps a comparison interpolated into a template, which is code", () => {
+    // `${...}` is not the string; it runs. Blanking it would hide a real
+    // boundary, and a boundary this check cannot see is one nothing will ever
+    // ask a test for.
+    const found = boundariesIn("x.ts", "const s = `over: ${count >= cap}`;");
+    expect(found).toHaveLength(1);
+    expect(found[0]?.from).toBe(">=");
+  });
+
+  it("does not let a // inside a string comment out the rest of the line", () => {
+    const found = boundariesIn("x.ts", 'const u = "https://x"; if (a <= b) return 0;');
+    expect(found).toHaveLength(1);
+  });
+
+  it("masks without moving anything, so the column still indexes the real line", () => {
+    // The mutation writes its replacement at `column` and the report quotes the
+    // line. Both index the file on disk, so a mask that changed a length would
+    // corrupt source rather than flip an operator.
+    const source = [
+      "/* a <= b */ if (c <= d) return 0;",
+      "const t = `x <= y`; // z <= w",
+      "if (e.lessThanOrEqual(f)) return 1;",
+    ].join("\n");
+    const lines = source.split("\n");
+    expect(maskNonCode(source).map((l) => l.length)).toEqual(lines.map((l) => l.length));
+    const found = boundariesIn("x.ts", source);
+    expect(found).toHaveLength(2);
+    for (const b of found) {
+      expect(lines[b.line - 1]!.slice(b.column, b.column + b.from.length)).toBe(b.from);
+    }
+  });
+
+  it("keeps the id and the quoted line from the real source, not the mask", () => {
+    // The baseline's twenty-one ids hash the line they were recorded from. An
+    // id taken from the masked text would have renamed every one of them, and a
+    // renamed backlog reads as twenty-one boundaries newly broken.
+    const withComment = "if (a <= b) return 0; // at or below";
+    const [masked] = boundariesIn("x.ts", withComment);
+    const [plain] = boundariesIn("x.ts", "if (a <= b) return 0;");
+    expect(masked?.context).toBe(withComment);
+    expect(masked?.id).not.toBe(plain?.id);
   });
 });
 

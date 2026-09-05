@@ -142,16 +142,139 @@ export function sourceFiles(dir: string): string[] {
 }
 
 /**
+ * Blank out everything in a file that is not code, keeping every line and every
+ * column exactly where it was.
+ *
+ * A comparison is a boundary only if the machine runs it. `age >= 60` written
+ * inside a sentence explaining why the code does *not* say that is prose, and
+ * on 2026-09-05 one such sentence — the paragraph above
+ * {@link electiveDeferralCatchUp} arguing that §414(v)(2)(E)(i) is a window and
+ * `age >= 60` would overstate the limit for every year after 63 — was reported
+ * as a brand-new unheld boundary. Nothing on the baseline, so the check failed
+ * and the scheduled workflow was one run away from filing an issue demanding a
+ * test that pins a threshold in a doc comment. No such test can exist: the
+ * mutation rewrites the sentence, the suite stays green, and the entry is
+ * unfixable backlog forever. The same applies to a `"<="` inside a string.
+ *
+ * Comment and string characters become spaces rather than disappearing, because
+ * the mutation writes its replacement at a column and the report quotes the
+ * line: both index the real file, so the mask must not shift anything.
+ *
+ * Regular expressions are left alone deliberately. Telling `/` division from
+ * `/` regex needs the parse this file exists to avoid, and a wrong guess would
+ * blank out real code — the failure that hides a boundary, which is worse than
+ * the one that invents it.
+ */
+export function maskNonCode(text: string): string[] {
+  /** Inside a template literal, or inside a `${...}` within one. */
+  type Ctx = { kind: "code"; braces: number } | { kind: "template" };
+  const stack: Ctx[] = [{ kind: "code", braces: 0 }];
+  let inBlockComment = false;
+  const masked: string[] = [];
+
+  for (const line of text.split("\n")) {
+    const out = line.split("");
+    const blank = (at: number, n = 1): void => {
+      for (let k = at; k < at + n && k < out.length; k++) out[k] = " ";
+    };
+    let i = 0;
+    while (i < line.length) {
+      if (inBlockComment) {
+        if (line.startsWith("*/", i)) {
+          inBlockComment = false;
+          blank(i, 2);
+          i += 2;
+        } else {
+          blank(i);
+          i += 1;
+        }
+        continue;
+      }
+      const top = stack[stack.length - 1]!;
+      if (top.kind === "template") {
+        if (line[i] === "\\") {
+          blank(i, 2);
+          i += 2;
+        } else if (line.startsWith("${", i)) {
+          blank(i, 2);
+          stack.push({ kind: "code", braces: 0 });
+          i += 2;
+        } else if (line[i] === "`") {
+          stack.pop();
+          blank(i);
+          i += 1;
+        } else {
+          blank(i);
+          i += 1;
+        }
+        continue;
+      }
+      const c = line[i]!;
+      if (line.startsWith("//", i)) {
+        blank(i, line.length - i);
+        break;
+      }
+      if (line.startsWith("/*", i)) {
+        inBlockComment = true;
+        blank(i, 2);
+        i += 2;
+        continue;
+      }
+      if (c === '"' || c === "'") {
+        blank(i);
+        i += 1;
+        while (i < line.length) {
+          if (line[i] === "\\") {
+            blank(i, 2);
+            i += 2;
+          } else if (line[i] === c) {
+            blank(i);
+            i += 1;
+            break;
+          } else {
+            blank(i);
+            i += 1;
+          }
+        }
+        continue;
+      }
+      if (c === "`") {
+        stack.push({ kind: "template" });
+        blank(i);
+        i += 1;
+        continue;
+      }
+      if (c === "{") top.braces += 1;
+      else if (c === "}") {
+        if (top.braces === 0 && stack.length > 1) {
+          stack.pop();
+          blank(i);
+        } else if (top.braces > 0) top.braces -= 1;
+      }
+      i += 1;
+    }
+    masked.push(out.join(""));
+  }
+  return masked;
+}
+
+/**
  * Find the flippable comparisons in one file's text.
  *
  * A method *definition* is skipped. Renaming `lessThanOrEqual` where it is
  * declared does not ask "is this boundary held" — it deletes the method and
  * every caller breaks, which tells you nothing about any threshold.
+ *
+ * Operators are searched for in the masked text ({@link maskNonCode}) and every
+ * field of the result is taken from the real line, so the id — which hashes the
+ * line — keeps matching the baseline entries recorded before the mask existed.
  */
 export function boundariesIn(relPath: string, text: string): Boundary[] {
   const found: Boundary[] = [];
   const lines = text.split("\n");
-  lines.forEach((line, i) => {
+  const code = maskNonCode(text);
+  lines.forEach((raw, i) => {
+    const line = code[i]!;
     // A declaration, not a use: `lessThanOrEqual(other: MoneyInput): boolean {`
     if (/^\s{0,4}(?:export )?(?:private |public )?\w+\(.*\)\s*:\s*\w+\s*\{?\s*$/.test(line)) {
       if (PAIRS.some(([from]) => line.trimStart().startsWith(from.replace("(", "")))) return;
@@ -166,10 +289,10 @@ export function boundariesIn(relPath: string, text: string): Boundary[] {
             file: relPath,
             line: i + 1,
             column: at,
-            id: boundaryId(relPath, from, at, line),
+            id: boundaryId(relPath, from, at, raw),
             from,
             to,
-            context: line.trim().slice(0, 120),
+            context: raw.trim().slice(0, 120),
           });
         }
         at = line.indexOf(from, at + 1);
