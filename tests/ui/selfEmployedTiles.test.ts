@@ -161,6 +161,46 @@ describe("Self-Employed Retirement", () => {
     expect(sep).toBeLessThanOrEqual(69000);
     expect(solo).toBeLessThanOrEqual(69000);
   });
+
+  it("never offers a ceiling above what the reader earned", () => {
+    // §415(c)(1)(B): annual additions may not exceed 100% of compensation, and
+    // §415(c)(3)(B) makes a self-employed person's compensation their earned
+    // income. The tile applied only the dollar limb of §415(c)(1), adding a
+    // deferral capped at net earnings to an employer share of 20% of the same
+    // net earnings — so at $10,000 of profit it offered $11,152 against $9,294
+    // of net earnings, 120% of what the person had. Over-contributing is a
+    // correction, 10% under §4972 and 6% a year under §4973, and the tile's own
+    // explainer recommends the solo 401(k) "especially at low-to-moderate
+    // profit" — the exact range this was wrong in.
+    for (const profit of ["4000", "10000", "30000"]) {
+      const { root } = mount(
+        mountSelfEmployedRetirement,
+        new URLSearchParams({ fs: "single", np: profit, age: "45" }),
+      );
+      const net = dollars(rowValue(root, "Net self-employment earnings"));
+      const solo = dollars(rowValue(root, "Solo 401(k) total"));
+      const sep = dollars(rowValue(root, "SEP-IRA maximum"));
+      expect(solo, `solo at $${profit} of profit`).toBeLessThanOrEqual(net);
+      expect(sep, `sep at $${profit} of profit`).toBeLessThanOrEqual(net);
+    }
+  });
+
+  it("says why the total is lower when compensation is the binding limit", () => {
+    // A number that is smaller than the arithmetic a reader can do in their
+    // head — 20% plus the full deferral — needs to say so, or it reads as a bug
+    // in the page.
+    const { root } = mount(
+      mountSelfEmployedRetirement,
+      new URLSearchParams({ fs: "single", np: "10000", age: "45" }),
+    );
+    expect(root.textContent).toContain("Why this is lower");
+    expect(rowValue(root, "Why this is lower")).toContain("100% of your compensation");
+    const high = mount(
+      mountSelfEmployedRetirement,
+      new URLSearchParams({ fs: "single", np: "90000", age: "45" }),
+    ).root;
+    expect(high.textContent).not.toContain("Why this is lower");
+  });
 });
 
 describe("1099 Contract vs W-2 Salary", () => {

@@ -325,7 +325,7 @@ const BOUND: RateBound[] = [
   },
   {
     file: "tiles/selfEmployedRetirement.ts",
-    constant: { name: "EMPLOYER_SHARE_RATE", in: "tiles/selfEmployedRetirement.ts" },
+    constant: { name: "EMPLOYER_SHARE_RATE", in: "engine/contributionLimits.ts" },
     derive: (rate) => rate * 100,
   },
 ];
@@ -376,6 +376,13 @@ const NOT_A_RATE: Record<string, Record<string, string>> = {
   "tiles/peaceOfMind.ts": { "4%": "an illustrative safe-withdrawal rate, shown as ≈ 25×" },
   "tiles/quarterlyTaxes.ts": {
     "20%": "the QBI deduction, named in the sentence saying it is NOT subtracted",
+  },
+  "tiles/selfEmployedRetirement.ts": {
+    // Not a figure that can drift. §415(c)(1)(B) caps annual additions at "100
+    // percent of the participant's compensation" — the whole of it, which is
+    // the one quantity a statute cannot index. Binding it to a `const` set to
+    // 1 would dress a tautology up as a watched number.
+    "100%": "the §415(c)(1)(B) limb, which is the whole of compensation by statute",
   },
   "tiles/socialSecurity.ts": {
     "1%": "the unit the SSA quotes its reduction fractions in — 5/9 of 1% a month",

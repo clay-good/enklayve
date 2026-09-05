@@ -73,3 +73,118 @@ export function catchUpMustBeRoth(
   if (threshold === undefined || !Number.isFinite(priorYearWages)) return false;
   return priorYearWages > threshold;
 }
+
+/**
+ * The employer share both self-employed plans allow: 25% of compensation,
+ * which for a self-employed person works out to 20% of net earnings.
+ *
+ * §404(h)(1)(C) and §404(a)(3) cap the deduction at 25% of compensation, and
+ * §401(c)(2) defines a self-employed person's compensation as net earnings
+ * *reduced by* the contribution itself — so 25% of what is left of X after
+ * taking C out of it is 20% of X. This is the rate table in Pub 560 Chapter 5,
+ * stated as a number instead of looked up.
+ */
+const EMPLOYER_SHARE_RATE = 0.2;
+
+/** What a self-employed person may put into each plan, and the pieces behind it. */
+export interface SelfEmployedPlanCeilings {
+  /** SEP-IRA: the employer share alone. */
+  sep: number;
+  /** Solo 401(k): the employee deferral plus the employer share it can afford. */
+  solo: number;
+  /** The employer contribution inside `solo`. */
+  employerShare: number;
+  /** The elective deferral inside `solo`, catch-up excluded. */
+  employeeDeferral: number;
+  /** The §414(v) catch-up this age earns, which sits outside §415(c). */
+  catchUp: number;
+  /**
+   * True when §415(c)(1)(B) — 100% of compensation — is the binding limit
+   * rather than the dollar figure, which is what happens at low profit.
+   */
+  cappedByCompensation: boolean;
+}
+
+/**
+ * The most a self-employed person may contribute for the year, to a SEP-IRA and
+ * to a solo 401(k).
+ *
+ * `netEarnings` is net business profit less the deductible half of
+ * self-employment tax — the base every figure below is measured from.
+ *
+ * **§415(c)(1) has two limbs and only the dollar one was modelled.** The limit
+ * on annual additions is the *lesser* of (A) the defined-contribution dollar
+ * figure and (B) **"100 percent of the participant's compensation"**, and
+ * §415(c)(3)(B) makes a self-employed person's compensation their earned
+ * income. The Self-Employed Retirement tile applied (A) alone: it added an
+ * employee deferral capped at net earnings to an employer share of 20% of the
+ * same net earnings, so the answer topped out at **120% of what the person
+ * earned**. At $10,000 of profit it offered a solo-401(k) ceiling of $11,152
+ * against $9,294 of net earnings, and at $30,000 it offered 107.9%. Both are
+ * over the limit, in the direction that costs money: an excess contribution is
+ * a correction, a 10% excise tax on the employer side under §4972, and 6% a
+ * year under §4973 on an excess that stays. The tile's own explainer recommends
+ * the solo 401(k) "especially at low-to-moderate profit", which is the exact
+ * range where it was wrong.
+ *
+ * **Why the answer is not simply `min(total, netEarnings)`.** Earned income is
+ * net earnings reduced by the contributions made for the participant
+ * (§401(c)(2), and the IRS states it the same way for one-participant plans),
+ * so the employer share shrinks the very compensation the limit is measured
+ * against, while elective deferrals do not — §404(n) keeps them out of the
+ * deduction limit and out of its application to other contributions. The reader
+ * chooses how much employer contribution to make, so the ceiling is the best
+ * that choice can do:
+ *
+ *   compensation(E) = netEarnings − E,  deferral = min(§402(g), compensation),
+ *   additions = deferral + E ≤ min(dollar limit, compensation).
+ *
+ * Below the §402(g) limit the deferral alone already reaches net earnings, so
+ * every dollar of employer contribution costs a dollar of room and the ceiling
+ * is `netEarnings` with no employer share at all. Above it, each dollar of
+ * employer contribution adds a dollar and removes a dollar of compensation, so
+ * it pays until the two meet — at half the gap between net earnings and the
+ * deferral limit. `min(total, netEarnings)` would have said $27,881 at $30,000
+ * of profit where the real ceiling is $26,190, which is the same class of error
+ * one step smaller.
+ *
+ * The catch-up is added afterwards because §414(v)(3)(A)(i) puts it outside
+ * §415(c) entirely.
+ */
+export function selfEmployedPlanCeilings(
+  netEarnings: number,
+  age: number,
+  limits: RetirementLimitsData["limits"],
+): SelfEmployedPlanCeilings {
+  const net = Number.isFinite(netEarnings) ? Math.max(0, netEarnings) : 0;
+  const elective = limits.elective_deferral_401k;
+  const catchUp = electiveDeferralCatchUp(age, limits);
+  const dollarLimit = limits.defined_contribution_415c;
+
+  // SEP-IRA: the employer share alone, under both limbs. The compensation limb
+  // is never the binding one here — 20% of net is always under half of it — but
+  // it is applied rather than assumed away.
+  const sepShare = net * EMPLOYER_SHARE_RATE;
+  const sep = Math.min(sepShare, dollarLimit, net - sepShare);
+
+  // Solo 401(k): the employer share worth making, given that each dollar of it
+  // costs a dollar of the compensation the limit is measured against.
+  const worthMaking = Math.max(0, (net - elective) / 2);
+  const employerShare = Math.min(sepShare, worthMaking);
+  const compensation = net - employerShare;
+  const employeeDeferral = Math.min(elective, compensation);
+  const additions = Math.min(employeeDeferral + employerShare, dollarLimit, compensation);
+  // `additions` is a `min` that includes compensation, so it reaches compensation
+  // exactly when limb (B) is the one that bound. Written `>=` rather than `===`
+  // because these are floating-point dollars.
+  const cappedByCompensation = additions >= compensation;
+
+  return {
+    sep,
+    solo: additions + catchUp,
+    employerShare,
+    employeeDeferral,
+    catchUp,
+    cappedByCompensation,
+  };
+}

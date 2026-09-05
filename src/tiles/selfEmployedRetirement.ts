@@ -7,7 +7,11 @@
  * your net profit. Built on the existing SE-tax engine and the bundled IRS limits.
  */
 import { Money } from "../engine/money";
-import { electiveDeferralCatchUp, inEnhancedCatchUpWindow } from "../engine/contributionLimits";
+import {
+  electiveDeferralCatchUp,
+  inEnhancedCatchUpWindow,
+  selfEmployedPlanCeilings,
+} from "../engine/contributionLimits";
 import { selfEmploymentTax } from "../engine/tax";
 import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
@@ -24,10 +28,6 @@ const FILING_STATUSES: { value: FilingStatus; label: string }[] = [
   { value: "head_of_household", label: "Head of household" },
   { value: "qualifying_surviving_spouse", label: "Qualifying surviving spouse" },
 ];
-
-// The employer-side share both plans allow: ~20% of net self-employment earnings
-// (the 25%-of-net-after-contribution rule, expressed as 20% of net earnings).
-const EMPLOYER_SHARE_RATE = 0.2;
 
 interface Fields {
   fs: FilingStatus;
@@ -104,26 +104,21 @@ export function mountSelfEmployedRetirement(ctx: TileContext): void {
 
   function compute(): void {
     const limits = limitsData!.limits;
-    const elective = limits.elective_deferral_401k;
     const catchUp = electiveDeferralCatchUp(fields.age, limits);
-    const dc415 = limits.defined_contribution_415c;
-    const overallCap = dc415 + catchUp; // §415(c) plus whichever catch-up the age earns
 
     const se = selfEmploymentTax(Money.from(fields.profit), fields.fs, fica!);
     const netEarnings = Money.from(fields.profit).subtract(se.deductibleHalf);
     const net = netEarnings.isNegative() ? Money.zero() : netEarnings;
 
-    const employerShare = net.multiply(EMPLOYER_SHARE_RATE);
-
-    // SEP-IRA: employer share only, capped at §415(c).
-    const sep = employerShare.greaterThan(dc415) ? Money.from(dc415) : employerShare;
-
-    // Solo 401(k): employee deferral (capped at earnings) + the same employer
-    // share, capped overall at §415(c) plus any catch-up.
-    const deferralCap = elective + catchUp;
-    const employeeDeferral = net.greaterThan(deferralCap) ? Money.from(deferralCap) : net;
-    const soloRaw = employeeDeferral.add(employerShare);
-    const solo = soloRaw.greaterThan(overallCap) ? Money.from(overallCap) : soloRaw;
+    // Both ceilings, and the §415(c)(1)(B) compensation limb that used to be
+    // missing here — see `selfEmployedPlanCeilings`. This tile applied only the
+    // dollar limb, so at low profit it offered a solo-401(k) total of 120% of
+    // what the person earned.
+    const ceilings = selfEmployedPlanCeilings(net.toNumber(), fields.age, limits);
+    const sep = Money.from(ceilings.sep);
+    const employerShare = Money.from(ceilings.employerShare);
+    const employeeDeferral = Money.from(ceilings.employeeDeferral + ceilings.catchUp);
+    const solo = Money.from(ceilings.solo);
 
     const best = solo.greaterThan(sep) ? solo : sep;
     const fmt = (m: Money): string => m.format(ctx.locale);
@@ -162,6 +157,16 @@ export function mountSelfEmployedRetirement(ctx: TileContext): void {
         citation: limitsData!.citation,
         emphasis: true,
       },
+      ...(ceilings.cappedByCompensation
+        ? [
+            {
+              label: "Why this is lower than 20% plus the full deferral",
+              value:
+                "§415(c)(1) caps what may go into the plan at the lesser of the annual dollar limit and 100% of your compensation, and for a self-employed person compensation is net earnings after the contributions themselves. At this profit the second limit is the one that binds, so the total stops at what you earned rather than adding a 20% employer share on top of it.",
+              citation: limitsData!.citation,
+            },
+          ]
+        : []),
       {
         label: "Which lets you save more",
         value: solo.greaterThan(sep)
@@ -234,7 +239,7 @@ export const selfEmployedRetirementTile: TileDefinition = {
     "contribution",
   ],
   status: "ready",
-  how: "Self-employment doesn't shut you out of retirement accounts; the opposite. Two plans let you contribute as both the 'employer' and the 'employee' of your own business. We start from your net self-employment earnings (your profit minus the deductible half of self-employment tax), then compute each plan.\n\nA SEP-IRA lets you contribute about 20% of those net earnings (the employer share), capped at the annual defined-contribution limit. A Solo 401(k) lets you make that same ~20% employer contribution AND add an employee deferral on top, up to the 401(k) elective limit (plus a catch-up if you're 50 or older), with the combined total capped at the same overall limit. Because the deferral stacks on top, the Solo 401(k) almost always lets you save more, especially at low-to-moderate profit, while the SEP-IRA is simpler to open and administer.\n\nFiling status and income flow to and from My Situation. The limits carry their IRS citation; this is the contribution ceiling, not advice on how much to actually save.",
+  how: "Self-employment doesn't shut you out of retirement accounts; the opposite. Two plans let you contribute as both the 'employer' and the 'employee' of your own business. We start from your net self-employment earnings (your profit minus the deductible half of self-employment tax), then compute each plan.\n\nA SEP-IRA lets you contribute about 20% of those net earnings (the employer share), capped at the annual defined-contribution limit. A Solo 401(k) lets you make that same ~20% employer contribution AND add an employee deferral on top, up to the 401(k) elective limit (plus a catch-up if you're 50 or older). Because the deferral stacks on top, the Solo 401(k) lets you save more, while the SEP-IRA is simpler to open and administer.\n\nThere are two ceilings, not one. §415(c)(1) limits what may go into the plan to the LESSER of the annual dollar limit and 100% of your compensation — which, for someone self-employed, is net earnings after the contributions themselves. Above roughly the elective-deferral limit the dollar figure is what binds and the 20% stacks on top as you would expect. Below it the second ceiling binds instead: the deferral alone already reaches everything you earned, so an employer contribution just takes room away from itself, and the total stops at your net earnings. When that happens the breakdown says so rather than quietly showing a smaller number. The catch-up sits outside this limit by statute, so it is added after.\n\nFiling status and income flow to and from My Situation. The limits carry their IRS citation; this is the contribution ceiling, not advice on how much to actually save.",
   resources: [
     {
       label: "IRS, retirement plans for the self-employed",
