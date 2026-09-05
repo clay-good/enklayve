@@ -106,10 +106,13 @@ export type SituationKey = keyof SituationValues;
  * reader with a visible, editable figure, and a value that vanished from My
  * Situation on restore would be a field the person has to notice is gone.
  */
-const bounded = z
-  .number()
-  .finite()
-  .transform((n) => Math.max(-MAX_INPUT_MAGNITUDE, Math.min(MAX_INPUT_MAGNITUDE, n)));
+/** A finite number pulled inside {@link MAX_INPUT_MAGNITUDE} from either end. */
+function clampMagnitude(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(-MAX_INPUT_MAGNITUDE, Math.min(MAX_INPUT_MAGNITUDE, n));
+}
+
+const bounded = z.number().finite().transform(clampMagnitude);
 const num = bounded.optional().catch(undefined);
 const str = z.string().optional().catch(undefined);
 
@@ -220,6 +223,40 @@ export function sanitizeSnapshot(snapshot: unknown): SituationSnapshot {
   return { values, sources } as SituationSnapshot;
 }
 
+/**
+ * The same two ceilings, on the write that does not go through the schema.
+ *
+ * There are **three** doors into the profile, not two. A typed field and a deep
+ * link are clamped by `parseNonNegative` before they get here; a restored file
+ * is clamped by {@link SituationValuesSchema}. The third is a **document**: the
+ * Readout writes every confirmed field straight through `set`, and its only
+ * check was `Number.isFinite`. A W-2 whose wage box holds a 300-digit number
+ * put `1e300` into `annualIncome`, and from there into every tile that reads
+ * its default from the profile — the same overflow, through the one door where
+ * the value was never typed by the person it is about.
+ *
+ * So the ceiling moves to the write itself, which is where all three doors
+ * meet, rather than being repeated at each of them. `set` is also how a tile
+ * writes a value it *computed* rather than parsed, so this covers a caller that
+ * has no parse boundary to go through at all.
+ */
+function boundValue<T>(value: T): T {
+  if (typeof value === "number") return clampMagnitude(value) as T;
+  if (!Array.isArray(value)) return value;
+  return value.slice(0, MAX_PROFILE_ROWS).map((row) => {
+    if (typeof row === "number") return clampMagnitude(row);
+    if (row && typeof row === "object" && "balance" in row && "ratePct" in row) {
+      const debt = row as Debt;
+      return {
+        ...debt,
+        balance: clampMagnitude(debt.balance),
+        ratePct: clampMagnitude(debt.ratePct),
+      };
+    }
+    return row;
+  }) as T;
+}
+
 /** A serializable snapshot of the profile (used by the portable export). */
 export interface SituationSnapshot {
   values: Partial<SituationValues>;
@@ -257,7 +294,7 @@ export class SituationStore {
     value: SituationValues[K],
     source: FieldSource = "typed",
   ): void {
-    this.values[key] = value;
+    this.values[key] = boundValue(value);
     this.sources[key] = source;
     this.emit();
   }

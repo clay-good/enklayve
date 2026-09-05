@@ -184,3 +184,40 @@ describe("a restored snapshot cannot be absurd, only wrong", () => {
     expect(clean.values.debts?.[0]?.ratePct).toBe(MAX_INPUT_MAGNITUDE);
   });
 });
+
+/**
+ * The ceiling belongs on the write, not on each entrance.
+ *
+ * `load` is one of two ways a value gets in and `set` is the other, and `set`
+ * had no check at all — the Readout writes every confirmed field from a
+ * document through it, and a tile writing a value it computed rather than
+ * parsed has no parse boundary to go through either.
+ */
+describe("the store bounds a direct write too", () => {
+  it("clamps a number written straight in", () => {
+    const store = new SituationStore();
+    store.set("annualIncome", 1e300, "extracted");
+    expect(store.get("annualIncome")).toBe(MAX_INPUT_MAGNITUDE);
+  });
+
+  it("clamps inside a list and caps its length", () => {
+    const store = new SituationStore();
+    store.set(
+      "debts",
+      Array.from({ length: 5_000 }, () => ({ name: "d", balance: 1e300, ratePct: 20 })),
+    );
+    expect(store.get("debts")).toHaveLength(MAX_PROFILE_ROWS);
+    expect(store.get("debts")?.[0]?.balance).toBe(MAX_INPUT_MAGNITUDE);
+  });
+
+  it("leaves a real value and a real list untouched", () => {
+    const store = new SituationStore();
+    const debts = [{ name: "Card", balance: 4_200, ratePct: 24.99 }];
+    store.set("annualIncome", 82_000);
+    store.set("debts", debts);
+    store.set("stateCode", "tx");
+    expect(store.get("annualIncome")).toBe(82_000);
+    expect(store.get("debts")).toEqual(debts);
+    expect(store.get("stateCode")).toBe("tx");
+  });
+});

@@ -373,3 +373,44 @@ describe("Readout, flagging, not guessing (§2.2)", () => {
     expect(extractDocument(W2_2024)).toEqual(extractDocument(W2_2024));
   });
 });
+
+/**
+ * The third door into My Situation (SPEC-3 §2.3, the one the other two hid).
+ *
+ * A typed field and a deep link are clamped by `parseNonNegative` before they
+ * reach the profile, and a restored file is clamped by the snapshot schema. A
+ * **document** is neither: the Readout writes every confirmed field straight
+ * through `SituationStore.set`, and the only check on the way was
+ * `Number.isFinite` — which a 300-digit figure passes, because 1e300 is a
+ * perfectly finite number.
+ *
+ * It is also the door where the value was never typed by the person it is
+ * about, which is the argument for putting the ceiling on the write rather than
+ * repeating it at each entrance.
+ */
+describe("a document cannot put an absurd figure into the profile", () => {
+  const HUGE = "9".repeat(300) + ".00";
+
+  it("clamps a wage box that would overflow the tiles reading it", () => {
+    const result = extractDocument(
+      typed(
+        "Form W-2 Wage and Tax Statement 2024 Employer ABC Inc " +
+          `1 Wages, tips, other compensation ${HUGE} ` +
+          "2 Federal income tax withheld 9200.00 ",
+      ),
+    );
+    // The extractor reports what the document says — that is its job, and the
+    // confirm screen shows it to the reader before anything is applied.
+    expect(value(result, "w2-box1")).toBe(1e300);
+
+    const store = new SituationStore();
+    applyToSituation(store, result.fields);
+    expect(store.get("annualIncome")).toBe(1e15);
+  });
+
+  it("leaves a real wage exactly as the document stated it", () => {
+    const store = new SituationStore();
+    applyToSituation(store, extractDocument(W2_2024).fields);
+    expect(store.get("annualIncome")).toBe(75_000);
+  });
+});
