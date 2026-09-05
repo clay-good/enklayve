@@ -362,6 +362,27 @@ describe("what the audit says when the budget passes", () => {
   it("does not fall over on an empty precache list", () => {
     expect(() => shellSummary([], SHELL_GZIP_BUDGET_KB)).not.toThrow();
   });
+
+  it("keeps the README's shell figure with the budget it is measured against", () => {
+    // The README has a paragraph explaining why the shell costs what it costs,
+    // and it opened with "280 kB gzipped" while the budget had been raised to
+    // 284 underneath it — two raises out of date, in the one place a reader
+    // goes to understand the number. It is a claim about the build, so it
+    // drifts exactly the way a count in a comment does, and nothing was
+    // watching it.
+    //
+    // Held against the pinned budget rather than against a build, so this stays
+    // in the unit suite: the shell is always just under its budget by
+    // construction — that is what the gate enforces — so a figure far below it
+    // is stale and a figure above it is impossible. Raising the budget without
+    // re-measuring the prose fails here.
+    const readme = readFileSync(resolve(__dirname, "..", "..", "README.md"), "utf8");
+    const stated = /\*\*([\d.]+) kB gzipped\*\* across the whole precached shell/.exec(readme);
+    expect(stated, "the README no longer states the precached shell's size").not.toBeNull();
+    const kb = Number(stated![1]);
+    expect(kb).toBeLessThanOrEqual(SHELL_GZIP_BUDGET_KB);
+    expect(SHELL_GZIP_BUDGET_KB - kb).toBeLessThanOrEqual(3);
+  });
 });
 
 describe("where the shell's bytes come from", () => {
