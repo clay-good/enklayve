@@ -54,11 +54,11 @@ import type { TileContext } from "../../src/tiles/types";
  * only one the saved Report deliberately does not carry — it points at the
  * screener instead — so the pair is the screener and the chart. Worth pinning
  * because the chart reads SNAP's `monthlyBenefit` without checking `eligible`,
- * which is the exact shape of the ACA bug fixed two lines above it in
- * `resourcesAt`, and is correct today only because `estimateSnap` returns zero
- * for an ineligible household where `estimatePremiumTaxCredit` returns a credit
- * computed for display. That is a silent coupling between two engine functions
- * that do not otherwise resemble each other, and nothing held it.
+ * and takes on faith that an ineligible household is handed a zero. It is: both
+ * benefit engines bar their ineligible households at the source now. But that is
+ * a guarantee held in `estimateSnap`, relied on in `resourcesAt`, and stated in
+ * neither — the shape the ACA term already failed in once, when the credit
+ * engine did return a display figure for a household outside the band.
  *
  * All of it came back green, which is the outcome to want and not evidence the
  * sweep was unnecessary — the four bugs it was written for were found by hand,
@@ -308,15 +308,16 @@ describe("the screener and the saved Report answer one household the same way", 
       // the saved Report deliberately does not carry — it points at the
       // screener instead, so the pair here is the screener and the chart.
       //
-      // The chart reads `monthlyBenefit` without checking `eligible`, which is
-      // the exact shape of the ACA bug fixed two lines above it in
-      // `resourcesAt`. It is correct only because `estimateSnap` returns zero
-      // for an ineligible household, where `estimatePremiumTaxCredit` returns a
-      // credit computed for display and needs the gate applied by its caller.
-      // That difference is a silent coupling: the day SNAP's engine grows a
-      // display figure of its own, the chart starts inventing food assistance
-      // for households that fail the income test, flattening the very cliff it
-      // exists to draw, and nothing else in the suite would notice.
+      // The chart reads `monthlyBenefit` without checking `eligible`, taking on
+      // faith that an ineligible household is handed a zero. It is — the gate
+      // lives inside `estimateSnap` — but that guarantee is held in one function
+      // and relied on in another, and written down in neither. The ACA term
+      // beside it failed in exactly that shape once, back when the credit engine
+      // returned a display figure for a household outside the band: the day a
+      // benefit engine grows a number it computes "for display", the chart
+      // starts inventing assistance for households that fail the income test,
+      // flattening the very cliff it exists to draw. This is where that shows
+      // up.
       const snap = estimateSnap(
         { householdSize: size, monthlyGrossIncome: income / 12 },
         data.snap()!,

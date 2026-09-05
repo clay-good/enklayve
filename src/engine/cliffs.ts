@@ -327,9 +327,18 @@ export function resourcesAt(income: number, input: CliffInput, data: CliffData):
     );
     // Below 100% FPL there is no premium tax credit at all — that household is
     // in Medicaid territory (expansion states) or the coverage gap (the rest).
-    // `annualCredit` is computed for display by the ACA tile regardless, so the
-    // sweep must gate on `eligible` or it would invent thousands of dollars at
-    // the low end and flatten the real step at the 100%-FPL line.
+    //
+    // This gate used to be load-bearing: `annualCredit` was computed for display
+    // whatever the band, so without it the sweep invented thousands of dollars
+    // at the low end and flattened the real step at the 100%-FPL line. It is not
+    // load-bearing now. `estimatePremiumTaxCredit` bars both ends itself — the
+    // §36B(c)(1)(A) floor as well as the 400% cap — and returns zero, which
+    // `statutoryThresholds.test.ts` pins at each line. So this restates the
+    // engine's guarantee rather than repairing its absence, and is kept as one
+    // line of belt-and-braces rather than a coupling to remember. The comment is
+    // updated because the old one said the engine still hands back a credit for
+    // a household that cannot have one, and a reader who believed that would go
+    // add this gate somewhere it is not needed.
     acaPremiumCredit = aca.eligible ? finite(aca.annualCredit.toNumber()) : 0;
   }
 
