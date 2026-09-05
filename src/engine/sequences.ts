@@ -60,14 +60,6 @@ export function enrollmentWindows(data: EnrollmentWindowsData): EnrollmentWindow
   }));
 }
 
-/** The windows for one program, e.g. every COBRA clock in the sequence. */
-export function windowsForProgram(
-  data: EnrollmentWindowsData,
-  program: string,
-): EnrollmentWindow[] {
-  return enrollmentWindows(data).filter((w) => w.program === program);
-}
-
 /** Every distinct program the shard carries, in first-appearance order. */
 export function programsIn(data: EnrollmentWindowsData): string[] {
   return Array.from(new Set(data.windows.map((w) => w.program)));

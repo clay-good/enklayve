@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import axe from "axe-core";
 import { mountEnrollmentWindows, enrollmentWindowsTile } from "../../src/tiles/enrollmentWindows";
 import { resolveDueDate } from "../../src/engine/deadline";
-import { enrollmentWindows, programsIn, windowsForProgram } from "../../src/engine/sequences";
+import { enrollmentWindows, programsIn } from "../../src/engine/sequences";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import { checkHarmTier, type AuditTile } from "../../scripts/audit-release";
@@ -116,15 +116,17 @@ describe("the enrollment-windows shard and its mapping", () => {
 
   it("counts the Medicare periods in calendar months, not an approximation in days", () => {
     const shard = data.enrollmentWindows()!;
-    const iep = windowsForProgram(shard, "Medicare").find(
-      (w) => w.id === "medicare-initial-enrollment",
-    )!;
+    const iep = enrollmentWindows(shard)
+      .filter((w) => w.program === "Medicare")
+      .find((w) => w.id === "medicare-initial-enrollment")!;
     // Three months from the last day of February 2026 is the last day of May.
     expect(resolveDueDate(iep.deadline.due, "2026-02-28")).toBe("2026-05-28");
     // ...and from the last day of a 31-day month, the last day of a 30-day one.
     expect(resolveDueDate(iep.deadline.due, "2026-01-31")).toBe("2026-04-30");
 
-    const sep = windowsForProgram(shard, "Medicare").find((w) => w.id === "medicare-part-b-sep")!;
+    const sep = enrollmentWindows(shard)
+      .filter((w) => w.program === "Medicare")
+      .find((w) => w.id === "medicare-part-b-sep")!;
     expect(resolveDueDate(sep.deadline.due, "2026-01-31")).toBe("2026-09-30");
   });
 
