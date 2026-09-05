@@ -16,6 +16,7 @@ import {
   shellBreakdown,
   sourceNoteBytes,
   shellSummary,
+  mappedBytesBySource,
   SHELL_GZIP_BUDGET_KB,
 } from "../../scripts/audit-release";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
@@ -396,6 +397,67 @@ describe("where the shell's bytes come from", () => {
     expect(shellBreakdown([], [])).toEqual([]);
     // A source map with no embedded content still ranks nothing rather than NaN.
     expect(shellBreakdown(["../../src/ui/dom.ts"], [])).toEqual(["     0.0 kB  src/ui"]);
+  });
+
+  /**
+   * The breakdown ranked by how long each source file is, and this codebase's
+   * source is mostly prose. Measured on 2026-09-05: 64% of `src/` never reaches
+   * the chunk, and the ranking was wrong where it mattered —
+   * `src/data/schemas.ts` came first at 70.3 kB of source and is third at 12.6
+   * kB of chunk, 82% of it documentation and types that are erased at build
+   * time. That is the wrong answer from the tool whose job is saying what to
+   * trim, on a day the budget had 0.3 kB left: acting on it meant deleting
+   * documentation from the file with the least to give.
+   */
+  it("charges each source the bytes it occupies in the generated file", () => {
+    // Two segments on one line. Each is [columnDelta, sourceIndex, line,
+    // column]; the first starts at column 0 and the second at column 10, so the
+    // first source owns 10 bytes. The last segment on a line has no successor
+    // to measure against and is charged nothing.
+    const mappings = "AAAA,UAAA";
+    const bytes = mappedBytesBySource(
+      JSON.stringify({ mappings, sources: ["../../src/a.ts", "../../src/b.ts"] }),
+    );
+    expect(bytes).toEqual([10, 0]);
+  });
+
+  it("accumulates across lines and keeps the source index running between them", () => {
+    // Source indices are deltas that persist across lines, which is the part a
+    // hand-rolled decoder gets wrong: the second line's `A` means "same source
+    // as last time", not "source 0".
+    // Line one moves to source 1 on its second segment; line two's leading `A`
+    // is a delta of zero, so it must still be source 1. A decoder that reset
+    // per line would charge those 16 bytes to source 0 instead.
+    const bytes = mappedBytesBySource(
+      JSON.stringify({
+        mappings: "AAAA,UCAA;AAAA,gBAAA",
+        sources: ["../../src/a.ts", "../../src/b.ts"],
+      }),
+    );
+    expect(bytes[0]).toBe(10);
+    expect(bytes[1]).toBe(16);
+  });
+
+  it("returns nothing rather than throwing on a map it cannot read", () => {
+    // This runs inside a report, not a gate. A map that is missing, truncated
+    // or not JSON at all must cost the reader the composition, never the
+    // headroom figure printed above it.
+    expect(mappedBytesBySource("not json")).toEqual([]);
+    expect(mappedBytesBySource("{}")).toEqual([]);
+    expect(mappedBytesBySource(JSON.stringify({ mappings: "AAAA", sources: [] }))).toEqual([]);
+    expect(mappedBytesBySource(JSON.stringify({ mappings: "!!!!", sources: ["a.ts"] }))).toEqual([
+      0,
+    ]);
+  });
+
+  it("feeds the ranking, so a comment-heavy file stops outranking a large one", () => {
+    // The regression in one assertion: `schemas.ts` with a lot of source and
+    // little output must rank below `shell.ts` with the reverse.
+    const sources = ["../../src/data/schemas.ts", "../../src/ui/shell.ts"];
+    const bySourceLength = shellBreakdown(sources, [70_000, 40_000]);
+    const byGeneratedBytes = shellBreakdown(sources, [12_600, 17_400]);
+    expect(bySourceLength[0]).toContain("src/data");
+    expect(byGeneratedBytes[0]).toContain("src/ui");
   });
 
   it("keeps static crawl pages out of the precache, and the app shell in", () => {
