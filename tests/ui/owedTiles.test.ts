@@ -522,17 +522,33 @@ describe("FAFSA Student Aid Index tile", () => {
     expect(inRange.querySelector(".clamp-note")).toBeNull();
   });
 
-  it("writes income and household size back to Your Situation", () => {
+  it("reads Your Situation for its defaults and writes neither field back", () => {
+    // It used to write both. Every other field on this form is the student's;
+    // these two are the *parents'*, and the shared slots they were written to
+    // mean the reader's own gross income and the reader's own household — read
+    // by Take-Home, the federal tax tile, SNAP, Medicaid, the poverty line and
+    // the cliff explorer. A dependent student filling this in honestly left
+    // with their parents' $60,000 as their annual wages and their own poverty
+    // line drawn for five people. See `profileWrites.test.ts`, which pins the
+    // whole map of which control may write which shared field.
+    //
+    // The reads stay: a parent who is the one at the keyboard has typed the
+    // same two figures elsewhere already, and offering them back costs nothing.
     const profile = new SituationStore();
+    profile.set("annualIncome", 82000);
+    profile.set("householdSize", 3);
     const root = mount(mountFafsaSai, new URLSearchParams(), profile);
+    expect(root.querySelector<HTMLInputElement>('input[name="pinc"]')!.value).toBe("82000");
+    expect(root.querySelector<HTMLInputElement>('input[name="size"]')!.value).toBe("3");
+
     const pinc = root.querySelector<HTMLInputElement>('input[name="pinc"]')!;
     pinc.value = "60000";
     pinc.dispatchEvent(new Event("input"));
     const size = root.querySelector<HTMLInputElement>('input[name="size"]')!;
     size.value = "5";
     size.dispatchEvent(new Event("input"));
-    expect(profile.get("annualIncome")).toBe(60000);
-    expect(profile.get("householdSize")).toBe(5);
+    expect(profile.get("annualIncome")).toBe(82000);
+    expect(profile.get("householdSize")).toBe(3);
   });
 });
 

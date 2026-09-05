@@ -185,8 +185,20 @@ export function mountFafsaSai(ctx: TileContext): void {
       studentAssets: parseNonNegative(inputs.sasset.value, 0),
     };
     ctx.setParams(writeFields(fields));
-    profile.set("annualIncome", fields.parentIncome);
-    profile.set("householdSize", fields.familySize);
+    // `parentIncome` is not written back. It is somebody else's income —
+    // a dependent student filling this in types their parents' figure, and
+    // the shared field means "your gross annual income", read by Take-Home,
+    // the federal tax tile, the subsidy screeners and a dozen more. Writing it
+    // handed all of them the parents' number under the student's name. The
+    // read above stays: a parent who is the one using the site has already
+    // typed the same figure elsewhere, and offering it back costs nothing.
+    //
+    // The same is true of the family size beside it, and for the same reason:
+    // the control is labelled "People in the parents' household", the shared
+    // field sizes the reader's own, and SNAP, Medicaid, the poverty-line tile
+    // and the cliff explorer all draw a benefit line straight off it. A student
+    // living alone who types the four people at home moved their own line from
+    // one person to four.
     compute();
   }
 

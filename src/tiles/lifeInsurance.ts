@@ -10,7 +10,6 @@ import { clampYears, lifeInsuranceNeed } from "../engine/finance";
 import { el } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
-import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
 
@@ -150,7 +149,14 @@ export function mountLifeInsurance(ctx: TileContext): void {
       liquidAssets: parseNonNegative(assetsInput.value, 0),
     };
     ctx.setParams(writeFields(fields));
-    rememberShared(profile, { annualIncome: fields.annualIncome });
+    // Deliberately writes nothing back to the shared profile. The field above
+    // reads `annualIncome` as a starting point, because replacing your income
+    // is the usual reason to buy the policy — but "income to replace" is a
+    // *decision*, not a fact about the household. Someone with $120,000 of
+    // wages who decides $50,000 of it needs replacing (the rest is the spouse's
+    // salary, or a pension, or a choice) used to overwrite the profile with
+    // $50,000 on the keystroke, and every tax, subsidy and affordability tile
+    // they opened next computed on an income they do not have.
     compute();
   }
 
