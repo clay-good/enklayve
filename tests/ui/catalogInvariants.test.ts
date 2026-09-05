@@ -113,6 +113,60 @@ afterEach(() => {
 /** Text that must never reach the screen (SPEC-3 §2.1). */
 const NON_FINITE = /\b(NaN|Infinity|-Infinity)\b|∞/;
 
+/**
+ * A figure that reached a currency or percent slot without a formatter: seven
+ * or more ungrouped digits behind a `$` or in front of a `%`. Seven, because
+ * `Intl` groups at four and a real formatted figure never runs that far
+ * without a separator.
+ */
+const UNFORMATTED_READING = /\$\d{7,}|\d{7,}(?:\.\d+)?\s*%/;
+
+/**
+ * Tiles that do this today, and what each one is.
+ *
+ * A description of the catalog rather than a list of debts — the distinction
+ * the boundary baseline draws, and for the same reason. **Eleven of the
+ * thirteen echo a rate the reader typed**: a "% annual return" field set to
+ * 1e15 comes back as `1000000000000000.00%`, which is unformatted but is also
+ * just the number they entered, and grouping it would be a nicety rather than
+ * a fix.
+ *
+ * Two are not echoes and are worth someone's time:
+ *
+ *   - `child-tax` prints an *effective rate* of `3699999999500002304.0%` —
+ *     computed, not typed, and meaningless on its face.
+ *   - `spending-plan` prints `99.97999999999999%`, which is float noise
+ *     reaching the screen rather than a rounded percentage.
+ *
+ * Both are held here rather than fixed in the same pass: the shell's gzipped
+ * budget had 0.2 kB free the day this was written, so adding a formatter to
+ * two more tiles is a decision about the budget rather than a cleanup. What
+ * this list does is stop a fourteenth tile from joining quietly.
+ *
+ * **Four came off it immediately**, which is the argument for the sweep. The
+ * ACA tile, the poverty-line tile, the Medicaid tile and the screener all
+ * printed `6265664160401% FPL` — the same computed figure, on four surfaces,
+ * because they all render through `fplPercentText` and it built its string with
+ * `toFixed`, which is not a formatter. One helper, four surfaces, and the
+ * figure was computed rather than typed, so it was never the reader's to blame.
+ */
+const UNFORMATTED_ALLOWED: Record<string, string> = {
+  "child-tax": "a COMPUTED effective rate, unbounded and unformatted — the one worth fixing first",
+  "spending-plan": "a computed share printed with full float noise (99.97999999999999%)",
+  "compound-growth": "echoes the reader's own assumed-return field",
+  "roth-ladder": "echoes the reader's own conversion-tax-rate field",
+  "retirement-drawdown":
+    "echoes the reader's own real-return field, inside its own 'unusually high' warning",
+  downshift: "echoes the reader's own assumed-return field",
+  "balance-transfer": "echoes the reader's own transfer-fee field, inside its own warning",
+  "freedom-date": "echoes the reader's own interest-rate field",
+  "sinking-fund": "echoes the reader's own rate field",
+  "rent-vs-buy": "echoes the reader's own appreciation field, in the assumptions line",
+  "college-cost": "echoes the reader's own college-inflation field, in the assumptions line",
+  "disability-insurance": "echoes the reader's own share-of-income field, in the math line",
+  "peace-of-mind": "echoes the reader's own safe-withdrawal-rate field",
+};
+
 const CALCULATORS = SUB_TOOLS.map(({ tile }) => tile).filter((t) => t.mount);
 
 describe("every calculator in the catalog", () => {
@@ -153,6 +207,68 @@ describe("every calculator in the catalog", () => {
       it("paints no NaN or Infinity for a hostile deep link", () => {
         const text = mount(tile, new URLSearchParams(HOSTILE)).textContent ?? "";
         expect(text, `${tile.id} painted a non-finite value`).not.toMatch(NON_FINITE);
+      });
+
+      it("keeps a currency or percent reading formatted under mixed magnitudes", () => {
+        // Two blind spots, both found on 2026-09-05 by a bug that walked
+        // through this sweep untouched.
+        //
+        // The first is that setting every field to the same magnitude cancels
+        // in a ratio: savings ÷ spending is 1 whether both are 1e308 or both
+        // are 1. The interesting input is a *mix*, so each field in turn is
+        // made tiny while the rest are huge, and the reverse.
+        //
+        // The second is that the assertion above only looks for NaN and
+        // Infinity. A finite absurdity passes it — the Peace of Mind dashboard
+        // printed "would stretch it to 100000000000000000.0 months" for months
+        // on end, finite and therefore invisible here. So this asks a different
+        // question: a figure in a slot that is meant to be formatted must
+        // still be formatted. Seven ungrouped digits behind a `$` or in front
+        // of a `%` is a number that went to the screen without passing through
+        // a formatter.
+        //
+        // The names in ALLOWED are a description of the catalog, not a debt —
+        // see the constant. What this holds is that the list does not grow.
+        const clean = mount(tile, new URLSearchParams());
+        const names = [...clean.querySelectorAll<HTMLInputElement>('input[type="number"]')]
+          .map((i) => i.name || i.id.replace(/^f-/, ""))
+          .filter((n) => n.length > 0);
+        if (names.length < 2) return;
+
+        const offenders: string[] = [];
+        for (let i = 0; i < names.length; i++) {
+          for (const [small, big] of [
+            ["0.01", "1e15"],
+            ["1e15", "0.01"],
+          ] as const) {
+            const params = new URLSearchParams();
+            names.forEach((n, j) => params.set(n, j === i ? small : big));
+            let root: HTMLElement;
+            try {
+              root = mount(tile, params);
+            } catch {
+              // Throwing is the neighbouring test's assertion, not this one's.
+              continue;
+            }
+            const text = (root.textContent ?? "").replace(/\s+/g, " ");
+            const hit = UNFORMATTED_READING.exec(text);
+            if (hit) offenders.push(text.slice(Math.max(0, hit.index - 40), hit.index + 30));
+          }
+        }
+        if (UNFORMATTED_ALLOWED[tile.id]) {
+          // A tile on the list that has stopped offending should come off it,
+          // for the same reason a dead allowlist entry anywhere else here does:
+          // it is a standing pass for something nobody is looking at.
+          expect(
+            offenders.length,
+            `${tile.id} is on UNFORMATTED_ALLOWED and no longer needs to be — remove it`,
+          ).toBeGreaterThan(0);
+          return;
+        }
+        expect(
+          offenders.slice(0, 1),
+          `${tile.id} sent an unformatted figure to a currency or percent slot`,
+        ).toEqual([]);
       });
 
       it("survives absurd values in every numeric field it owns", () => {

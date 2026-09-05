@@ -126,7 +126,17 @@ export function fplPercentDigits(value: number, decisive: readonly number[] = []
 
 export function fplPercentText(value: number, decisive: readonly number[] = []): string {
   if (!Number.isFinite(value)) return "(out of range)";
-  return `${value.toFixed(fplPercentDigits(value, decisive))}%`;
+  // Grouped, because `toFixed` is not a formatter. A household whose income is
+  // a rounding error above zero has an FPL percentage in the trillions, and
+  // this printed it as "6265664160401% FPL" — one unbroken run of digits, on
+  // four surfaces at once, since the ACA tile, the poverty-line tile, the
+  // Medicaid tile and the screener all render through here. The figure is
+  // computed rather than typed, so it is this helper's to format.
+  const digits = fplPercentDigits(value, decisive);
+  return `${value.toLocaleString("en-US", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  })}%`;
 }
 
 /**
