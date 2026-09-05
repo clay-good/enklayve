@@ -16,6 +16,7 @@
  * target months and the withdrawal rate) are shown and adjustable — never hidden
  * (§5.3). The tone frames progress, never "you are behind".
  */
+import { capMonths, MAX_HORIZON_MONTHS } from "../engine/finance";
 import { el } from "../ui/dom";
 import { countUp } from "../ui/countup";
 import {
@@ -123,17 +124,22 @@ function compute(profile: SituationStore, config: Config): Readings {
   // conservative, market-return-free projection — §5.3, SPEC-3 §4.8).
   const enoughGap = Number.isFinite(enough) && enough > netWorth ? enough - netWorth : 0;
   const monthsToEnough =
-    config.monthlySavings > 0 && enoughGap > 0 ? enoughGap / config.monthlySavings : 0;
+    config.monthlySavings > 0 && enoughGap > 0 ? capMonths(enoughGap / config.monthlySavings) : 0;
   return {
     essential,
     total,
     savings,
     debts,
     netWorth,
-    cushionMonths: essential > 0 ? savings / essential : 0,
+    // Capped at the engine's horizon ceiling, like every other horizon on the
+    // site. These are divisions done here rather than in the engine, and they
+    // were the one set that skipped it: a deep link with a cent of monthly
+    // spending printed a runway of 100000000000000000.0 months — finite, so the
+    // no-NaN sweep passed it, and in the middle of a calm sentence.
+    cushionMonths: essential > 0 ? capMonths(savings / essential) : 0,
     cushionTarget: essential * config.targetMonths,
-    runwayMonths: total > 0 ? savings / total : 0,
-    downshiftMonths: essential > 0 ? savings / essential : 0,
+    runwayMonths: total > 0 ? capMonths(savings / total) : 0,
+    downshiftMonths: essential > 0 ? capMonths(savings / essential) : 0,
     annualEssentials,
     enough,
     // Both netWorth and `enough` can overflow to Infinity on absurd inputs
@@ -149,6 +155,7 @@ function compute(profile: SituationStore, config: Config): Readings {
 /** A months count as calm prose: "about 8 years 4 months", year-only past a year. */
 function durationLabel(totalMonths: number): string {
   if (!Number.isFinite(totalMonths) || totalMonths <= 0) return "—";
+  if (totalMonths >= MAX_HORIZON_MONTHS) return `over ${MAX_HORIZON_MONTHS / 12} years`;
   const years = Math.floor(totalMonths / 12);
   const months = Math.round(totalMonths % 12);
   if (years === 0) return `${months} month${months === 1 ? "" : "s"}`;
@@ -167,8 +174,21 @@ const usd = (n: number, locale: string): string =>
         maximumFractionDigits: 0,
       }).format(n)
     : "(out of range)";
-const months = (n: number): string =>
-  Number.isFinite(n) ? `${n.toFixed(1)} months` : "(out of range)";
+/**
+ * A months reading, in the calm register the rest of the tile uses.
+ *
+ * At the ceiling it says so rather than printing 1200.0, because the cap is the
+ * point past which this stops being an answer — quoting it to a tenth of a
+ * month would dress a limit up as a measurement. Below it, digits are grouped:
+ * this was the only figure on the page that was not, so a large but perfectly
+ * real reading arrived as an unbroken run of numerals beside money that was
+ * formatted properly.
+ */
+const months = (n: number): string => {
+  if (!Number.isFinite(n)) return "(out of range)";
+  if (n >= MAX_HORIZON_MONTHS) return `over ${MAX_HORIZON_MONTHS / 12} years`;
+  return `${n.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} months`;
+};
 
 /** One calm reading: a label, an animated headline, a sub-line, and an optional
  * progress bar. */

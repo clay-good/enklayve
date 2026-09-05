@@ -5,6 +5,9 @@ import {
   collegeCostPlan,
   MAX_YEARS,
   MAX_PERIODS,
+  MAX_HORIZON_MONTHS,
+  capMonths,
+  clampMonths,
 } from "../../src/engine/finance";
 import { rothConversionLadder } from "../../src/engine/taxMoves";
 
@@ -75,3 +78,42 @@ describe("horizon caps keep projections bounded", () => {
     expect(finite(r.monthlyContribution.toNumber())).toBe(true);
   });
 }, 1000);
+
+describe("a computed horizon is capped without being rounded", () => {
+  /**
+   * `clampMonths` rounds, because what it clamps is about to become a loop
+   * bound or an exponent and a fractional period is meaningless there. A
+   * *reading* is different: "your savings cover 3.5 months of essentials" is
+   * the answer, and rounding it to 4 moves a number the reader is looking at.
+   *
+   * `capMonths` exists because the Peace of Mind dashboard divides savings by
+   * monthly spending itself and skipped the ceiling entirely — a deep link with
+   * a cent of monthly spending printed "would stretch it to
+   * 100000000000000000.0 months". Finite, so the no-NaN sweep passed it.
+   */
+  it("keeps the fraction a reading depends on, where clampMonths would not", () => {
+    expect(capMonths(3.5)).toBe(3.5);
+    expect(clampMonths(3.5)).toBe(4);
+  });
+
+  it("stops at the same ceiling every other horizon stops at", () => {
+    expect(capMonths(1e17)).toBe(MAX_HORIZON_MONTHS);
+    expect(capMonths(MAX_HORIZON_MONTHS)).toBe(MAX_HORIZON_MONTHS);
+    // Exactly under the line is still an answer, and still exact.
+    expect(capMonths(MAX_HORIZON_MONTHS - 0.5)).toBe(MAX_HORIZON_MONTHS - 0.5);
+  });
+
+  it("reads an overflowed horizon as past the ceiling, not as none at all", () => {
+    // A runway can overflow to +Infinity — a large balance against a spending
+    // figure small enough to underflow the division — and that household's
+    // savings effectively never run out. Answering 0 would print "no runway" to
+    // exactly the person who has the most, which is wrong in the alarming
+    // direction. NaN says nothing, so it gets nothing, and a negative horizon
+    // is not a horizon.
+    expect(capMonths(Number.POSITIVE_INFINITY)).toBe(MAX_HORIZON_MONTHS);
+    expect(capMonths(Number.NaN)).toBe(0);
+    expect(capMonths(Number.NEGATIVE_INFINITY)).toBe(0);
+    expect(capMonths(-1)).toBe(0);
+    expect(capMonths(0)).toBe(0);
+  });
+});

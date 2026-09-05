@@ -31,6 +31,36 @@ export function clampMonths(months: number): number {
   return Math.min(MAX_HORIZON_MONTHS, Math.max(0, Math.round(months)));
 }
 
+/**
+ * The same ceiling for a *computed* month count, without the rounding.
+ *
+ * {@link clampMonths} rounds because it clamps an input that is about to become
+ * a loop bound or an exponent, and a fractional period is meaningless there. A
+ * reading is different: "your savings cover 3.5 months of essentials" is the
+ * answer, and rounding it to 4 would move a number the reader is looking at.
+ *
+ * It exists because a tile computed its horizons itself and skipped the ceiling
+ * entirely. The Peace of Mind dashboard divides savings by monthly spending for
+ * its cushion, runway and downshift readings, and a deep link with a cent of
+ * monthly spending and a large balance printed "back to essentials would
+ * stretch it to 100000000000000000.0 months" — finite, so the no-NaN sweep
+ * passed it, and unformatted, so it arrived as a wall of digits in the middle
+ * of a calm sentence. The README's promise is that every horizon is clamped at
+ * the engine; that one was not clamped at all.
+ */
+export function capMonths(months: number): number {
+  // The two non-finite cases are not the same answer. A runway that overflows
+  // to +Infinity — a large balance against a spending figure small enough to
+  // underflow the division — is a horizon past the ceiling, and the ceiling is
+  // what a reader should be told: "over 100 years". Returning 0 there would
+  // print "no runway" to someone whose savings effectively never run out, which
+  // is wrong in the alarming direction. NaN says nothing at all, so it gets
+  // nothing.
+  if (Number.isNaN(months)) return 0;
+  if (months === Number.POSITIVE_INFINITY) return MAX_HORIZON_MONTHS;
+  return Math.min(MAX_HORIZON_MONTHS, Math.max(0, months));
+}
+
 export interface CompoundGrowthInput {
   /** Starting balance. */
   principal: number;

@@ -313,3 +313,49 @@ describe("Sabbatical Planner tile", () => {
     expect(results.violations.map((v) => v.id).join(", ")).toBe("");
   }, 30000);
 });
+
+describe("Peace of Mind horizons stay inside the engine's ceiling", () => {
+  /**
+   * Every horizon on this site is clamped at the engine — SPEC-3 §2.3, and the
+   * README says so — because an absurd input or a crafted deep link must not
+   * spin a runaway loop or paint a number nobody can read. This dashboard
+   * computes its cushion, runway and downshift readings by dividing here rather
+   * than in the engine, and that set skipped the ceiling entirely.
+   *
+   * The value is finite, so the no-NaN sweep passed it, and it was the one
+   * figure on the page with no digit grouping, so it arrived as an unbroken run
+   * of numerals in the middle of a calm sentence:
+   *
+   *   "Cutting back to essentials would stretch it to 100000000000000000.0 months."
+   */
+  it("does not print a runway of a hundred quadrillion months", () => {
+    const { root } = mount(
+      mountPeaceOfMind,
+      new URLSearchParams({ ess: "0.01", tot: "0.01", s: "1e15" }),
+    );
+    const text = root.textContent ?? "";
+    expect(text).not.toMatch(/\d{7}/);
+    expect(text).toContain("over 100 years");
+  });
+
+  it("still reads an ordinary runway to a tenth of a month", () => {
+    // The cap must not round or reshape a real answer: $7,000 of savings
+    // against $2,000 a month is 3.5 months, and it says 3.5.
+    const { root } = mount(
+      mountPeaceOfMind,
+      new URLSearchParams({ ess: "2000", tot: "2000", s: "7000" }),
+    );
+    expect(root.textContent).toContain("3.5 months");
+  });
+
+  it("groups the digits of a large but real reading", () => {
+    // 1,100 months is under the ceiling, so it is still an answer and is still
+    // printed as one — with a separator. This was the only figure on the page
+    // that had none, sitting beside money that was formatted properly.
+    const { root } = mount(
+      mountPeaceOfMind,
+      new URLSearchParams({ ess: "1000", tot: "1000", s: "1100000" }),
+    );
+    expect(root.textContent).toContain("1,100.0 months");
+  });
+});
