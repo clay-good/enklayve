@@ -25,9 +25,19 @@ const PRESETS: { label: string; needs: number; wants: number }[] = [
   { label: "70 / 20 / 10", needs: 70, wants: 20 },
 ];
 
-/** Savings is whatever is left after needs and wants, never negative. */
+/**
+ * Savings is whatever is left after needs and wants, never negative.
+ *
+ * Rounded to the hundredth because it is a subtraction of user-supplied
+ * numbers, and floating point does not subtract the way the label implies:
+ * needs and wants of 0.01 each left `100 - 0.01 - 0.01` as
+ * **99.97999999999999**, which went straight into "Savings & debt payoff
+ * (99.97999999999999%)". The two shares beside it are echoed as typed, so this
+ * was the only figure in the ring that could grow a tail, and it is the only
+ * one the tile computes.
+ */
 function savingsPctOf(needsPct: number, wantsPct: number): number {
-  return Math.max(0, 100 - needsPct - wantsPct);
+  return Math.round(Math.max(0, 100 - needsPct - wantsPct) * 100) / 100;
 }
 
 function readFields(p: URLSearchParams): Fields {

@@ -125,46 +125,37 @@ const UNFORMATTED_READING = /\$\d{7,}|\d{7,}(?:\.\d+)?\s*%/;
  * Tiles that do this today, and what each one is.
  *
  * A description of the catalog rather than a list of debts — the distinction
- * the boundary baseline draws, and for the same reason. **Eleven of the
- * thirteen echo a rate the reader typed**: a "% annual return" field set to
- * 1e15 comes back as `1000000000000000.00%`, which is unformatted but is also
- * just the number they entered, and grouping it would be a nicety rather than
- * a fix.
+ * the boundary baseline draws, and for the same reason. Each remaining entry
+ * **echoes a rate the reader typed** back into a label: a "% annual return"
+ * field set to 1e15 returns as `1000000000000000.00%`, which is unformatted
+ * but is also just the number they entered, and grouping it would be a nicety
+ * rather than a fix.
  *
- * Two are not echoes and are worth someone's time:
+ * **The list started at thirteen and two helpers took eight of them.** Every
+ * computed figure that reached the screen unformatted did so through one of
+ * two functions, which is the argument for sweeping rather than fixing tiles
+ * one at a time:
  *
- *   - `child-tax` prints an *effective rate* of `3699999999500002304.0%` —
- *     computed, not typed, and meaningless on its face.
- *   - `spending-plan` prints `99.97999999999999%`, which is float noise
- *     reaching the screen rather than a rounded percentage.
+ *   - `fplPercentText` printed `6265664160401% FPL` on four surfaces at once —
+ *     the ACA tile, the poverty-line tile, the Medicaid tile and the screener.
+ *   - `pct` printed the Child Tax tile's effective rate on unearned income as
+ *     `3699999999500002304.0%`, and it is the percentage helper the whole
+ *     catalog renders through.
  *
- * Both are held here rather than fixed in the same pass: the shell's gzipped
- * budget had 0.2 kB free the day this was written, so adding a formatter to
- * two more tiles is a decision about the budget rather than a cleanup. What
- * this list does is stop a fourteenth tile from joining quietly.
+ * Both built their strings with `toFixed`, which rounds and does not group. The
+ * ninth was `spending-plan`, whose "Savings & debt payoff (99.97999999999999%)"
+ * was floating-point subtraction reaching the screen rather than a formatting
+ * miss, and is rounded where it is computed.
  *
- * **Four came off it immediately**, which is the argument for the sweep. The
- * ACA tile, the poverty-line tile, the Medicaid tile and the screener all
- * printed `6265664160401% FPL` — the same computed figure, on four surfaces,
- * because they all render through `fplPercentText` and it built its string with
- * `toFixed`, which is not a formatter. One helper, four surfaces, and the
- * figure was computed rather than typed, so it was never the reader's to blame.
+ * What this list enforces is that it does not grow, and that a tile which stops
+ * offending comes off it — a standing pass for something nobody is looking at
+ * is the failure mode of every allowlist in this repo.
  */
 const UNFORMATTED_ALLOWED: Record<string, string> = {
-  "child-tax": "a COMPUTED effective rate, unbounded and unformatted — the one worth fixing first",
-  "spending-plan": "a computed share printed with full float noise (99.97999999999999%)",
-  "compound-growth": "echoes the reader's own assumed-return field",
-  "roth-ladder": "echoes the reader's own conversion-tax-rate field",
-  "retirement-drawdown":
-    "echoes the reader's own real-return field, inside its own 'unusually high' warning",
-  downshift: "echoes the reader's own assumed-return field",
-  "balance-transfer": "echoes the reader's own transfer-fee field, inside its own warning",
-  "freedom-date": "echoes the reader's own interest-rate field",
-  "sinking-fund": "echoes the reader's own rate field",
+  "roth-ladder": "echoes the reader's own conversion-tax-rate field into a label",
   "rent-vs-buy": "echoes the reader's own appreciation field, in the assumptions line",
   "college-cost": "echoes the reader's own college-inflation field, in the assumptions line",
   "disability-insurance": "echoes the reader's own share-of-income field, in the math line",
-  "peace-of-mind": "echoes the reader's own safe-withdrawal-rate field",
 };
 
 const CALCULATORS = SUB_TOOLS.map(({ tile }) => tile).filter((t) => t.mount);

@@ -89,8 +89,17 @@ export function pct(rate: number, digits = 2): string {
   // "-0.00%" is the same non-number as "-$0.00": a sign in front of nothing.
   // Dropped after rounding to the displayed digits, not before, so a rate that
   // is genuinely negative at the printed precision keeps its sign.
-  const shown = (rate * 100).toFixed(digits);
-  return `${Number(shown) === 0 ? (0).toFixed(digits) : shown}%`;
+  // Grouped for the same reason `fplPercentText` is: `toFixed` is not a
+  // formatter, and every percentage on the site runs through here. The Child
+  // Tax tile's effective rate on unearned income reached the screen as
+  // "3699999999500002304.0%" — computed, not typed, and one unbroken run of
+  // digits. Rounding happens first, so a rate that is genuinely negative at the
+  // printed precision keeps its sign and one that is not loses it.
+  const shown = Number((rate * 100).toFixed(digits));
+  return `${(shown === 0 ? 0 : shown).toLocaleString("en-US", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  })}%`;
 }
 
 /**
