@@ -66,6 +66,10 @@ export function applyToSituation(store: SituationStore, fields: ExtractedField[]
       }
       continue;
     }
+    // A blank value is a field the reader cleared, which is how someone says
+    // "leave this one out" — never a zero. `Number("")` is 0 and finite, so
+    // without this the gesture wrote $0 into the slot it was trying to skip.
+    if (typeof f.value === "string" && f.value.trim() === "") continue;
     // The remaining targets are numeric (income, retirement contributions).
     const n = typeof f.value === "number" ? f.value : Number(f.value);
     if (Number.isFinite(n)) {

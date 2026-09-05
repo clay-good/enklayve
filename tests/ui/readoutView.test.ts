@@ -291,6 +291,23 @@ describe("Readout view, the four-part answer", () => {
     expect(container.querySelector(".readout-flag-ask")?.textContent).toContain("Who to ask:");
   });
 
+  it('treats a cleared box as "leave this one out", not as zero', async () => {
+    // Deleting a figure the extractor got wrong is the natural way to say skip
+    // it, and `Number("")` is 0 — finite, so it used to be confirmed and
+    // written. A reader who cleared the wages box and pressed Confirm recorded
+    // an annual income of $0, which the EITC tile and the subsidy screeners
+    // downstream believe. Nothing on the screen said so.
+    const { container, profile } = setup();
+    await dropFile(container);
+    const wages = container.querySelector<HTMLInputElement>('input[name="w2-box1"]')!;
+    wages.value = "";
+    wages.dispatchEvent(new Event("input"));
+    container.querySelector<HTMLButtonElement>(".readout-actions .btn--accent")!.click();
+    expect(profile.has("annualIncome")).toBe(false);
+    // The count says what was written, so the skipped field is visible there too.
+    expect(container.querySelector(".readout-note")?.textContent).not.toContain("Added 2 values");
+  });
+
   it("says which figure a second document replaced, and what it was", async () => {
     // The summary's own "Read another document" button makes this a first-class
     // path: a freelancer with a job confirms a W-2 and then a 1099-NEC, and both

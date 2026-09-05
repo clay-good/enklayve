@@ -452,8 +452,15 @@ export function renderReadout(opts: RenderReadoutOptions): void {
           attrs: { "aria-label": f.label, inputmode: "decimal" },
           on: {
             input: (e) => {
-              const v = Number((e.target as HTMLInputElement).value);
-              working[i] = { ...f, value: Number.isFinite(v) ? v : 0 };
+              // A cleared box means "not this one", not zero. Deleting a figure
+              // the extractor got wrong is the natural way to say leave it out,
+              // and `Number("")` is 0 — which is finite, so it used to be
+              // confirmed and written. A reader who cleared the wages box and
+              // pressed Confirm recorded an annual income of $0, which the
+              // subsidy screeners and the EITC tile downstream believe.
+              const raw = (e.target as HTMLInputElement).value.trim();
+              const v = Number(raw);
+              working[i] = { ...f, value: raw !== "" && Number.isFinite(v) ? v : "" };
             },
           },
         });

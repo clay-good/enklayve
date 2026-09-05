@@ -454,6 +454,17 @@ describe("a second document landing on a field the first one filled", () => {
     ]);
   });
 
+  it("skips a field the reader cleared rather than writing zero", () => {
+    const store = new SituationStore();
+    const fields = extractDocument({ text: W2, pages: [W2], source: "typed" }).fields.map((f) =>
+      f.target === "annualIncome" ? { ...f, value: "" } : f,
+    );
+    const update = applyToSituation(store, fields);
+    expect(store.has("annualIncome")).toBe(false);
+    expect(update.replaced).toEqual([]);
+    expect(update.applied).toBe(0);
+  });
+
   it("says nothing when the second document agrees with the first", () => {
     const store = new SituationStore();
     confirm(store, W2);
