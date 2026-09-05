@@ -6,6 +6,8 @@ import { enrollmentWindows, programsIn } from "../../src/engine/sequences";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import { checkHarmTier, type AuditTile } from "../../scripts/audit-release";
+import { SEARCH_ENTRIES, searchEntryText } from "../../src/tiles/registry";
+import { fuzzyFilter } from "../../src/ui/fuzzy";
 import type { TileContext } from "../../src/tiles/types";
 
 /**
@@ -224,4 +226,38 @@ describe("Enrollment & Appeal Windows", () => {
     expect(results.violations.map((v) => v.id).join(", ")).toBe("");
     document.body.replaceChildren();
   }, 30000);
+});
+
+/**
+ * The page is reachable by the name of every program it speaks about.
+ *
+ * Search is one of the two primary browse paths, and this is the page where
+ * arriving by typing the word for what happened matters most: the reader has
+ * lost a job, or a plan, or an appeal, and types the program's name. Three of
+ * the seven programs this shard carries reached nothing useful, and the two
+ * worst were the two the *states* set — the entries with no figure at all,
+ * whose whole content is "your notice is the authority, go by that date".
+ * **"Unemployment insurance" returned an empty list**, and so did "state
+ * continuation coverage" (mini-COBRA); "marketplace" found the subsidy
+ * calculator and not the page holding the open-enrollment and appeal
+ * deadlines. The honest non-answer is the thing the reader needs, and it was
+ * the least findable content on the site.
+ *
+ * Reading the programs off the shard rather than a hand-kept list is the point:
+ * a window added later brings its own coverage, and a program renamed in the
+ * data fails here rather than quietly going dark in search.
+ */
+describe("finding this page by the name of a program it carries", () => {
+  it("every program the shard names leads here", () => {
+    const shard = data.enrollmentWindows()!;
+    const programs = [...new Set([...shard.windows, ...shard.stateSet].map((w) => w.program))];
+    expect(programs.length).toBeGreaterThan(5);
+    const unreachable = programs.filter(
+      (program) =>
+        !fuzzyFilter(program, SEARCH_ENTRIES, searchEntryText).some(
+          (r) => r.item.tool === enrollmentWindowsTile.id,
+        ),
+    );
+    expect(unreachable, "a program named on this page that search cannot reach").toEqual([]);
+  });
 });

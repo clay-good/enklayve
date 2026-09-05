@@ -238,6 +238,17 @@ export const enrollmentWindowsTile: TileDefinition = {
     "fair hearing",
     "appeal deadline",
     "lost my job insurance",
+    // The programs this page names, in the words a reader types. Three of them
+    // reached nothing: "unemployment insurance" and "state continuation
+    // coverage" are the two windows the states set — the page's honest
+    // non-answers, and the reader who needs one has just lost a job — and
+    // "marketplace" found only the subsidy calculator, not the page holding
+    // the open-enrollment and appeal deadlines.
+    "unemployment",
+    "unemployment appeal",
+    "marketplace",
+    "state continuation coverage",
+    "mini-cobra",
   ],
   status: "ready",
   mount: mountEnrollmentWindows,
