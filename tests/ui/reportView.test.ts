@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import axe from "axe-core";
 import { renderReport } from "../../src/ui/reportView";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
-import { SituationStore } from "../../src/profile/situation";
+import { SituationStore, type SituationValues } from "../../src/profile/situation";
 import { serialize } from "../../src/profile/portable";
 
 /** Set a read-only file input's `files` for a change-event simulation. */
@@ -132,23 +132,41 @@ describe("the Report against a profile no form could have produced", () => {
   const NON_FINITE = /\b(NaN|Infinity|-Infinity)\b|∞/;
   const UNFORMATTED = /\$\d{7,}|\d{7,}(?:\.\d+)?\s*%/;
 
+  /**
+   * Every field My Situation declares, at a magnitude no form could produce.
+   *
+   * Typed `Required<SituationValues>`, so a field added to the interface fails
+   * to build here until somebody gives it a hostile value. The hand-written
+   * version covered six of the sixteen and read as if it covered a restored
+   * profile — the same drift the catalog sweep's copy had, and the same fix.
+   */
+  const HOSTILE_VALUES: Required<SituationValues> = {
+    filingStatus: "single",
+    stateCode: "CA",
+    county: "in-marion",
+    householdSize: 1e308,
+    ages: Array.from({ length: 5_000 }, () => 40),
+    qualifyingChildren: 1e308,
+    annualIncome: 1e308,
+    qualifiedTipsAnnual: 1e308,
+    qualifiedOvertimeAnnual: 1e308,
+    preTaxContributions: 1e308,
+    retirementContributionsAnnual: 1e308,
+    employerMatchAnnual: 1e308,
+    employerMatchCaptured: 0.01,
+    debts: Array.from({ length: 5_000 }, (_, i) => ({
+      name: `d${i}`,
+      balance: 1e308,
+      ratePct: 1e308,
+    })),
+    essentialMonthlyExpenses: 0.01,
+    totalMonthlyExpenses: 0.01,
+    liquidSavings: 1e308,
+  };
+
   function hostileProfile(): SituationStore {
     const store = new SituationStore();
-    store.load({
-      values: {
-        filingStatus: "single",
-        stateCode: "CA",
-        annualIncome: 1e308,
-        essentialMonthlyExpenses: 0.01,
-        liquidSavings: 1e308,
-        debts: Array.from({ length: 5_000 }, (_, i) => ({
-          name: `d${i}`,
-          balance: 1e308,
-          ratePct: 1e308,
-        })),
-      },
-      sources: {},
-    } as never);
+    store.load({ values: HOSTILE_VALUES, sources: {} } as never);
     return store;
   }
 

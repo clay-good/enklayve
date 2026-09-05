@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import axe from "axe-core";
 import { SUB_TOOLS, TILES } from "../../src/tiles/registry";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
-import { SituationStore } from "../../src/profile/situation";
+import { SituationStore, type SituationValues } from "../../src/profile/situation";
 import type { TileContext, TileDefinition } from "../../src/tiles/types";
 
 /**
@@ -336,27 +336,48 @@ describe("every calculator in the catalog", () => {
  * hostile *restored* profile: it is the input a hub actually has.
  */
 describe("every hub survives what its calculators are swept for", () => {
+  /**
+   * Every field My Situation declares, at a magnitude no form could produce.
+   *
+   * Typed `Required<SituationValues>` on purpose, which is the half the
+   * compiler enforces: a field added to the interface fails to build here until
+   * somebody gives it a hostile value. It was a hand-written object literal
+   * until 2026-09-05 and had drifted to covering ten of the sixteen fields —
+   * the tips and overtime boxes, the retirement contributions, both employer
+   * match figures, the county and the new child count all restored as
+   * *nothing*, so the sweep read as covering a hostile restore while leaving
+   * six doors it never opened. That is the same rot the pinned write map had,
+   * and the same fix: derive the list, do not keep it.
+   */
+  const HOSTILE_VALUES: Required<SituationValues> = {
+    filingStatus: "single",
+    stateCode: "CA",
+    // A county id from a state that is not the one above, which is the shape a
+    // stale profile carries after a move.
+    county: "in-marion",
+    householdSize: 1e308,
+    ages: Array.from({ length: 5_000 }, () => 40),
+    qualifyingChildren: 1e308,
+    annualIncome: 1e308,
+    qualifiedTipsAnnual: 1e308,
+    qualifiedOvertimeAnnual: 1e308,
+    preTaxContributions: 1e308,
+    retirementContributionsAnnual: 1e308,
+    employerMatchAnnual: 1e308,
+    employerMatchCaptured: 0.01,
+    debts: Array.from({ length: 5_000 }, (_, i) => ({
+      name: `d${i}`,
+      balance: 1e308,
+      ratePct: 1e308,
+    })),
+    essentialMonthlyExpenses: 0.01,
+    totalMonthlyExpenses: 0.01,
+    liquidSavings: 1e308,
+  };
+
   function hostileProfile(): SituationStore {
     const store = new SituationStore();
-    store.load({
-      values: {
-        filingStatus: "single",
-        stateCode: "CA",
-        householdSize: 1e308,
-        annualIncome: 1e308,
-        preTaxContributions: 1e308,
-        essentialMonthlyExpenses: 0.01,
-        totalMonthlyExpenses: 0.01,
-        liquidSavings: 1e308,
-        ages: Array.from({ length: 5_000 }, () => 40),
-        debts: Array.from({ length: 5_000 }, (_, i) => ({
-          name: `d${i}`,
-          balance: 1e308,
-          ratePct: 1e308,
-        })),
-      },
-      sources: {},
-    } as never);
+    store.load({ values: HOSTILE_VALUES, sources: {} } as never);
     return store;
   }
 
