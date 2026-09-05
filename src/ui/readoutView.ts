@@ -10,7 +10,7 @@
 import { el, clear, option } from "./dom";
 import { field } from "./form";
 import { extractDocument, labelFor } from "../readout/extract";
-import { applyToSituation } from "../readout/toSituation";
+import { applyToSituation, replacementNote } from "../readout/toSituation";
 import { extractTextFromFile, type TextExtractor } from "../readout/extractText";
 import { importProfile, isEncrypted, readFileText } from "../profile/portable";
 import {
@@ -467,8 +467,8 @@ export function renderReadout(opts: RenderReadoutOptions): void {
       text: "Confirm and add to My Situation",
       on: {
         click: () => {
-          const applied = applyToSituation(profile, working);
-          renderSummary(working, applied);
+          const update = applyToSituation(profile, working);
+          renderSummary(working, update.applied, replacementNote(update.replaced, "en-US"));
         },
       },
     });
@@ -660,7 +660,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
     );
   }
 
-  function renderSummary(fields: ExtractedField[], applied: number): void {
+  function renderSummary(fields: ExtractedField[], applied: number, replaced = ""): void {
     clear(resultRegion);
     resultRegion.append(
       el(
@@ -675,6 +675,10 @@ export function renderReadout(opts: RenderReadoutOptions): void {
               ? `Added ${applied} value${applied === 1 ? "" : "s"} to My Situation (provenance: from a document) — they prefill the matching tools. Open the report to see where you stand and, if you like, save a private copy you can restore later. Everything stays in this browser tab and is cleared when you leave; nothing is uploaded.`
               : "These values are informational: review them above and carry them into the matching tile. Nothing was changed in My Situation.",
         }),
+        // A second document in the same session can land on a slot the first
+        // one filled. Saying so is the whole point: the profile keeps one value
+        // per field, and the reader is the only one who knows which they meant.
+        replaced ? el("p", { class: "readout-note readout-note--replaced", text: replaced }) : null,
         el(
           "div",
           { class: "readout-actions" },

@@ -46,7 +46,7 @@ describe("a W-2 read by the Readout reaches the tile that spends it", () => {
       "12b TP 14000.00 12c TT 3200.00 " +
       "16 State wages 48000.00 17 State income tax 1400.00";
     const fields = extractDocument({ text: w2, pages: [w2], source: "typed" }).fields;
-    expect(applyToSituation(profile, fields)).toBeGreaterThan(0);
+    expect(applyToSituation(profile, fields).applied).toBeGreaterThan(0);
     expect(profile.get("qualifiedTipsAnnual")).toBe(14000);
     expect(profile.get("qualifiedOvertimeAnnual")).toBe(3200);
 

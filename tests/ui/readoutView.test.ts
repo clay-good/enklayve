@@ -291,6 +291,29 @@ describe("Readout view, the four-part answer", () => {
     expect(container.querySelector(".readout-flag-ask")?.textContent).toContain("Who to ask:");
   });
 
+  it("says which figure a second document replaced, and what it was", async () => {
+    // The summary's own "Read another document" button makes this a first-class
+    // path: a freelancer with a job confirms a W-2 and then a 1099-NEC, and both
+    // target `annualIncome`. Last write wins — summing would double-count a
+    // 1040's AGI against the W-2 it came from — but it used to win in silence,
+    // under a line reading "Added 1 value to My Situation".
+    const NEC_TEXT =
+      "Form 1099-NEC Nonemployee Compensation 2024 1 Nonemployee compensation 30000.00";
+    const { container, profile } = setup(sequence(W2_TEXT, NEC_TEXT));
+
+    await dropFile(container, "w2.pdf");
+    container.querySelector<HTMLButtonElement>(".readout-actions .btn--accent")!.click();
+    expect(profile.get("annualIncome")).toBe(75000);
+    expect(container.querySelector(".readout-note--replaced")).toBeNull();
+
+    await dropFile(container, "1099nec.pdf");
+    container.querySelector<HTMLButtonElement>(".readout-actions .btn--accent")!.click();
+    expect(profile.get("annualIncome")).toBe(30000);
+    const note = container.querySelector(".readout-note--replaced")?.textContent ?? "";
+    expect(note).toContain("Annual income was $75,000 from a document read earlier");
+    expect(note).toContain("is now $30,000");
+  });
+
   it("points a medical bill at the hospital financial-assistance rule, with its source", async () => {
     const { container } = setup(sequence(BILL_TEXT));
     await dropFile(container, "bill.pdf");

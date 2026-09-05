@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { extractDocument, detectDocument } from "../../src/readout/extract";
 import { SituationStore } from "../../src/profile/situation";
-import { applyToSituation } from "../../src/readout/toSituation";
+import { applyToSituation, replacementNote } from "../../src/readout/toSituation";
 import type { ExtractedText } from "../../src/readout/extractText";
 
 /**
@@ -412,5 +412,63 @@ describe("a document cannot put an absurd figure into the profile", () => {
     const store = new SituationStore();
     applyToSituation(store, extractDocument(W2_2024).fields);
     expect(store.get("annualIncome")).toBe(75_000);
+  });
+});
+
+/**
+ * Two documents, one slot (SPEC-2 §2.3).
+ *
+ * The Readout is a session — its summary offers "Read another document" — and
+ * four of the five fields it can populate are single slots the profile holds
+ * one value in. A freelancer with a job confirms a W-2 and then a 1099-NEC, and
+ * both target `annualIncome`.
+ *
+ * Last write wins, and that is the only rule that can be right here: summing
+ * would double-count a 1040's AGI against the W-2 box 1 it was computed from,
+ * and this module's premise is that it never infers. What it must not do is win
+ * quietly. It used to: `applyToSituation` returned a count, the summary said
+ * "Added 1 value to My Situation", and the $75,000 the reader had confirmed
+ * ten seconds earlier was gone with nothing on the screen about it — while
+ * every tax, subsidy and affordability tile downstream computed on $30,000.
+ */
+describe("a second document landing on a field the first one filled", () => {
+  const W2 =
+    "Form W-2 Wage and Tax Statement 2024 1 Wages, tips, other compensation 75000.00 " +
+    "2 Federal income tax withheld 9200.00";
+  const NEC = "Form 1099-NEC Nonemployee Compensation 2024 1 Nonemployee compensation 30000.00";
+
+  function confirm(store: SituationStore, text: string) {
+    return applyToSituation(
+      store,
+      extractDocument({ text, pages: [text], source: "typed" }).fields,
+    );
+  }
+
+  it("reports what it replaced, and with what", () => {
+    const store = new SituationStore();
+    expect(confirm(store, W2).replaced).toEqual([]);
+    const second = confirm(store, NEC);
+    expect(store.get("annualIncome")).toBe(30000);
+    expect(second.replaced).toEqual([
+      { target: "annualIncome", previous: 75000, previousSource: "extracted", next: 30000 },
+    ]);
+  });
+
+  it("says nothing when the second document agrees with the first", () => {
+    const store = new SituationStore();
+    confirm(store, W2);
+    expect(confirm(store, W2).replaced).toEqual([]);
+  });
+
+  it("names a value the reader typed as theirs, not as a document's", () => {
+    const store = new SituationStore();
+    store.set("annualIncome", 90000, "typed");
+    const note = replacementNote(confirm(store, W2).replaced, "en-US");
+    expect(note).toContain("Annual income was $90,000 as you entered it, and is now $75,000.");
+    // States what happened and stops. "If both are yours, add them" would be
+    // advice, and it is wrong for the commonest pair: a 1040's AGI and the W-2
+    // box 1 it was computed from are not two incomes.
+    expect(note).not.toMatch(/\badd\b|\btotal\b/i);
+    expect(replacementNote([], "en-US")).toBe("");
   });
 });
