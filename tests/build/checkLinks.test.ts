@@ -15,7 +15,7 @@ import {
   type Request,
 } from "../../scripts/check-links";
 import { ADAPTERS } from "../../scripts/refresh/adapters";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve, relative } from "node:path";
 
 /**
@@ -525,5 +525,135 @@ describe("asking twice before calling a link dead", () => {
     const r = await check("https://dropped.test/a", ["src/x.ts"], request, never);
     expect(classify(r)).toBe("ok");
     expect(asked).toEqual(["HEAD", "HEAD"]);
+  });
+});
+
+/**
+ * The links that point *inside* the repository, which nothing checked.
+ *
+ * `npm run check:links` sweeps external URLs, monthly, over the network. Every
+ * other link in these documents — 383 of them across 20 markdown files, and 71
+ * of those carrying a heading anchor — is a relative path, and a relative path
+ * is exactly the kind of link that rots without anyone touching it: rename a
+ * test file, move a spec section, and the prose goes on pointing at where it
+ * used to be. Nothing here needs the network to find that.
+ *
+ * The launch checklist and the README are the documents this repo asks a
+ * reader to trust, and their argument is made almost entirely by pointing at
+ * the file that proves each claim. A link that resolves to nothing turns an
+ * argument into an assertion.
+ */
+describe("the links that point inside this repository", () => {
+  const REPO = resolve(__dirname, "../..");
+  const SKIP = new Set([
+    "node_modules",
+    "dist",
+    ".git",
+    ".claude",
+    "test-results",
+    "playwright-report",
+  ]);
+
+  function markdownFiles(dir: string): string[] {
+    const out: string[] = [];
+    for (const name of readdirSync(dir, { withFileTypes: true })) {
+      if (SKIP.has(name.name)) continue;
+      const path = resolve(dir, name.name);
+      if (name.isDirectory()) out.push(...markdownFiles(path));
+      else if (name.name.endsWith(".md")) out.push(path);
+    }
+    return out;
+  }
+
+  /**
+   * GitHub's heading slug, which is **not** a general slugifier.
+   *
+   * It lowercases, drops everything that is not a word character, a space or a
+   * hyphen, and then turns each remaining space into a hyphen — one at a time,
+   * without collapsing a run. So "Determinism & verification" becomes
+   * `determinism--verification`, with two hyphens where the ampersand was. A
+   * slugifier that collapses whitespace reports the README's own anchors as
+   * broken, which is how this check first "found" four failures that were not.
+   */
+  function slug(heading: string): string {
+    return heading
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, "")
+      .trim()
+      .replace(/ /g, "-");
+  }
+
+  const FILES = markdownFiles(REPO);
+  const HEADINGS = new Map<string, Set<string>>(
+    FILES.map((f) => [
+      f,
+      new Set(
+        [...readFileSync(f, "utf8").matchAll(/^#{1,6}\s+(.+)$/gm)].map((m) =>
+          slug((m[1] ?? "").trim()),
+        ),
+      ),
+    ]),
+  );
+
+  interface Link {
+    from: string;
+    href: string;
+    target: string;
+    anchor: string;
+  }
+
+  function localLinks(): Link[] {
+    const out: Link[] = [];
+    for (const from of FILES) {
+      for (const m of readFileSync(from, "utf8").matchAll(/\]\(([^)\s]+)\)/g)) {
+        const href = m[1] ?? "";
+        if (/^(https?:|mailto:|tel:)/.test(href)) continue;
+        const at = href.indexOf("#");
+        const path = at < 0 ? href : href.slice(0, at);
+        const anchor = at < 0 ? "" : href.slice(at + 1);
+        out.push({
+          from: relative(REPO, from),
+          href,
+          target: path ? resolve(resolve(from, ".."), path) : from,
+          anchor,
+        });
+      }
+    }
+    return out;
+  }
+
+  const LINKS = localLinks();
+
+  it("finds the links it is meant to be checking", () => {
+    // The failure mode of a sweep is matching nothing and reporting a clean
+    // sheet, which is the same reason the browser contrast check asserts a
+    // floor on how many elements axe evaluated.
+    expect(FILES.length).toBeGreaterThan(10);
+    expect(LINKS.length).toBeGreaterThan(200);
+    expect(LINKS.filter((l) => l.anchor).length).toBeGreaterThan(20);
+  });
+
+  it("points at a file that exists", () => {
+    const missing = LINKS.filter((l) => !existsSync(l.target)).map((l) => `${l.from} → ${l.href}`);
+    expect(missing.join("\n")).toBe("");
+  });
+
+  it("points at a heading that exists, where it names one", () => {
+    const missing = LINKS.filter((l) => {
+      if (!l.anchor || !existsSync(l.target)) return false;
+      const headings = HEADINGS.get(l.target);
+      // A link into a file this sweep does not read (a `.ts`, say) names
+      // something other than a markdown heading and is not this check's to
+      // judge — the file's existence is.
+      return headings !== undefined && !headings.has(l.anchor);
+    }).map((l) => `${l.from} → ${l.href}`);
+    expect(missing.join("\n")).toBe("");
+  });
+
+  it("slugs a heading the way GitHub does", () => {
+    expect(slug("Determinism & verification")).toBe("determinism--verification");
+    expect(slug("Roadmap & deliberately deferred")).toBe("roadmap--deliberately-deferred");
+    expect(slug("What's in the box?")).toBe("whats-in-the-box");
+    expect(slug("§2.3 Inputs")).toBe("23-inputs");
   });
 });
