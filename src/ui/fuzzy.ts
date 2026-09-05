@@ -40,6 +40,18 @@ function scoreToken(q: string, t: string): number | null {
   if (t === q) return 1000;
   if (t.startsWith(q)) return 800 - (t.length - q.length);
 
+  // A token that begins a *word* inside the text is very nearly as good as one
+  // that begins the text. Without this the scorer knew only about the start of
+  // the whole string, so "pay" was worth 727 against "Paycheck Optimizer" — a
+  // prefix of the string — and 24.6 against "Take-Home Pay", where it is the
+  // last word, matched as a scatter of letters like any other subsequence.
+  // Since a multi-word query sums its tokens, typing a tool's own full name
+  // could rank a different tool first: "Take-Home Pay" scored 775.4 for the
+  // Paycheck Optimizer and 769.6 for Take-Home Pay, and Enter takes the top
+  // row. The word's position breaks the tie, so an earlier word still wins.
+  const at = wordStart(t, q);
+  if (at > 0) return 800 - (t.length - q.length) - at * 0.5;
+
   let score = 0;
   let qi = 0;
   let prevMatch = -2;
@@ -56,6 +68,15 @@ function scoreToken(q: string, t: string): number | null {
   if (qi < q.length) return null; // not all query chars matched in order
   // Prefer shorter targets so the tightest match wins ties.
   return score - t.length * 0.1;
+}
+
+/** Where `q` first appears at the start of a word in `t`, or -1. */
+function wordStart(t: string, q: string): number {
+  for (let i = t.indexOf(q); i >= 0; i = t.indexOf(q, i + 1)) {
+    const prev = t[i - 1];
+    if (prev === undefined || prev === " " || prev === "-" || prev === "/") return i;
+  }
+  return -1;
 }
 
 /**
