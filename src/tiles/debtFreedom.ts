@@ -128,6 +128,25 @@ export function mountDebtFreedom(ctx: TileContext): void {
 
   function persist(): void {
     ctx.setParams(writeFields(fields));
+    // And into My Situation, which is the whole reason the field exists. This
+    // tile has always *read* `debts` to seed itself and never written it back,
+    // and six surfaces were waiting for the list: the Report's net worth
+    // subtracted zero of it, My Plan's "clear high-cost debt" step could never
+    // fire, and Life Insurance, Peace of Mind and Freedom Date each defaulted
+    // the balance they cover to nothing. A household with $40,000 of debt and
+    // $12,000 saved read its own net worth as $12,000, positive, in the
+    // document this product asks it to keep.
+    //
+    // Rows with no balance are not debts yet — the tile opens on two blank ones
+    // — so they are not written, and the minimum payment is left behind
+    // because `Debt` does not carry it and no reader of the shared list needs
+    // it.
+    ctx.profile.set(
+      "debts",
+      fields.debts
+        .filter((d) => d.balance > 0)
+        .map((d) => ({ name: d.name, balance: d.balance, ratePct: d.ratePct })),
+    );
   }
 
   function compute(): void {

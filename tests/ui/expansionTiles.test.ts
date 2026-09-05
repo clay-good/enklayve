@@ -337,6 +337,41 @@ describe("Debt Freedom Planner", () => {
     expect(root.querySelector(".compare-card--chosen")).not.toBeNull();
   });
 
+  it("writes its debt list into My Situation, which six surfaces were waiting for", () => {
+    // The tile read `debts` to seed itself from the day it was written and
+    // never wrote it back. Six readers were waiting: the Report's net worth
+    // subtracted zero of it, so a household with $40,000 of debt and $12,000
+    // saved read its net worth as $12,000, positive, in the document this
+    // product asks it to keep; My Plan's "clear high-cost debt" step could
+    // never fire; and Life Insurance, Peace of Mind and Freedom Date each
+    // defaulted the balance they cover to nothing. The minimum payment is left
+    // behind: `Debt` does not carry one and no reader of the shared list needs
+    // it.
+    const profile = new SituationStore();
+    const { root } = mount(mountDebtFreedom, params(), profile);
+    const avalanche = Array.from(root.querySelectorAll("button")).find(
+      (b) => b.getAttribute("aria-label") === "Use the Avalanche method",
+    )!;
+    avalanche.click();
+    expect(profile.get("debts")).toEqual([
+      { name: "Visa", balance: 1000, ratePct: 20 },
+      { name: "Car", balance: 4000, ratePct: 6 },
+    ]);
+  });
+
+  it("does not write a row that is still blank", () => {
+    // The tile opens on two empty rows. A row with no balance is not a debt
+    // yet, and writing it would put "Debt 1, $0" into every surface that reads
+    // the list.
+    const profile = new SituationStore();
+    mount(mountDebtFreedom, new URLSearchParams(), profile);
+    const { root } = mount(mountDebtFreedom, new URLSearchParams(), profile);
+    const extra = root.querySelector<HTMLInputElement>('input[name="x"]')!;
+    extra.value = "100";
+    extra.dispatchEvent(new Event("input"));
+    expect(profile.get("debts")).toEqual([]);
+  });
+
   it("recomputes for the chosen method when a compare card is clicked", () => {
     const { root, lastParams } = mount(mountDebtFreedom, params());
     const avalanche = Array.from(root.querySelectorAll("button")).find(
