@@ -137,9 +137,11 @@ afterEach(() => {
 const CALCULATORS = SUB_TOOLS.map(({ tile }) => tile).filter((t) => t.mount);
 
 /** The visible label of a control, which is the only statement of what it holds. */
-function labelOf(root: HTMLElement, input: HTMLInputElement): string {
-  const label = input.id ? root.querySelector(`label[for="${CSS.escape(input.id)}"]`) : null;
-  return (label?.textContent ?? input.name ?? input.id).replace(/\s+/g, " ").trim();
+function labelOf(root: HTMLElement, control: HTMLElement): string {
+  const id = (control as HTMLInputElement).id;
+  const label = id ? root.querySelector(`label[for="${CSS.escape(id)}"]`) : null;
+  const text = label?.textContent ?? control.closest("label")?.textContent;
+  return (text ?? (control as HTMLInputElement).name ?? id).replace(/\s+/g, " ").trim();
 }
 
 /**
@@ -186,6 +188,113 @@ function writesFrom(tile: TileDefinition): string[] {
   return found;
 }
 
+/**
+ * The same map for the three fields a sentinel cannot drive.
+ *
+ * `filingStatus`, `stateCode` and `county` are enums, so "did this control
+ * write it" is answered by walking a control through its own options and asking
+ * which shared field comes back holding one. They are the fields where the
+ * catalog's one confirmed instance of this bug actually landed — Education
+ * Credits' two-value checkbox writing the five-value filing status — and that
+ * fix was pinned to that one tile, which is a lock on the door somebody already
+ * came through rather than on the corridor.
+ *
+ * Every row today is a control labelled "Filing status" or "State", which is
+ * the honest result: a lock rather than a fix. What it holds is the meaning —
+ * these fields say where the reader *lives* and how the reader *files*. A
+ * control asking a question shaped like "and if you moved to" or "your spouse's
+ * state" belongs to the same species as the two income writers removed above,
+ * and the point of a pin is that the row appears here before it ships rather
+ * than after.
+ *
+ * `county` is written by the six tiles that render the residence-local control
+ * and by nothing else, and it never appears below: the county select exists
+ * only once a state that levies a mandatory local tax is chosen, so it is not
+ * reachable by walking the controls a tile opens with. `residenceLocalTiles.test.ts`
+ * and the five tiles' own suites cover it, including the clearing case — moving
+ * from Maryland to Texas must not leave Montgomery behind.
+ */
+const EXPECTED_ENUMS = [
+  'amt-screener | filingStatus <- select "Filing status"',
+  'capital-gains | filingStatus <- select "Filing status"',
+  'charity-care | stateCode <- select "State"',
+  'cliff-explorer | filingStatus <- select "Filing status"',
+  'cliff-explorer | stateCode <- select "State"',
+  'contract-vs-salary | filingStatus <- select "Filing status"',
+  'education-credits | filingStatus <- checkbox "Married filing jointly"',
+  'federal-income-tax | filingStatus <- select "Filing status"',
+  'ira-deduction | filingStatus <- select "Filing status"',
+  'marginal-explorer | filingStatus <- select "Filing status"',
+  'marginal-explorer | stateCode <- select "State"',
+  'marginal-reality | filingStatus <- select "Filing status"',
+  'marginal-reality | stateCode <- select "State"',
+  'paycheck-optimizer | filingStatus <- select "Filing status"',
+  'paycheck-optimizer | stateCode <- select "State"',
+  'quarterly-taxes | filingStatus <- select "Filing status"',
+  'quarterly-taxes | stateCode <- select "State"',
+  'savers-credit | filingStatus <- select "Filing status"',
+  'se-retirement | filingStatus <- select "Filing status"',
+  'self-employment-tax | filingStatus <- select "Filing status"',
+  'take-home | filingStatus <- select "Filing status"',
+  'take-home | stateCode <- select "State"',
+  'w4 | filingStatus <- select "Filing status"',
+];
+
+const ENUM_FIELDS = [
+  "filingStatus",
+  "stateCode",
+  "county",
+] as const satisfies readonly SituationKey[];
+
+/** Walk every option of every select, and both states of every checkbox. */
+function enumWritesFrom(tile: TileDefinition): string[] {
+  const root = document.createElement("div");
+  const profile = new SituationStore();
+  tile.mount!({
+    root,
+    params: new URLSearchParams(),
+    setParams: () => {},
+    permalink: () => "https://enklayve.com/#/x",
+    navigate: () => {},
+    locale: "en-US",
+    data,
+    profile,
+  } as TileContext);
+
+  const found: string[] = [];
+  for (const select of root.querySelectorAll<HTMLSelectElement>("select")) {
+    // Six options is enough to separate "writes the control's value" from
+    // "happens to agree with the default", and keeps a fifty-state picker from
+    // costing fifty recomputes in a sweep that runs over the whole catalog.
+    for (const option of [...select.options]
+      .map((o) => o.value)
+      .filter(Boolean)
+      .slice(0, 6)) {
+      select.value = option;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      select.dispatchEvent(new Event("input", { bubbles: true }));
+      for (const field of ENUM_FIELDS) {
+        if (profile.get(field) === option) {
+          found.push(`${tile.id} | ${field} <- select "${labelOf(root, select)}"`);
+        }
+      }
+    }
+  }
+  for (const box of root.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')) {
+    for (const checked of [true, false]) {
+      const before = ENUM_FIELDS.map((f) => profile.get(f));
+      box.checked = checked;
+      box.dispatchEvent(new Event("change", { bubbles: true }));
+      ENUM_FIELDS.forEach((field, i) => {
+        if (profile.get(field) !== before[i]) {
+          found.push(`${tile.id} | ${field} <- checkbox "${labelOf(root, box)}"`);
+        }
+      });
+    }
+  }
+  return found;
+}
+
 describe("what a calculator may write into My Situation", () => {
   it("is exactly the pinned map of control to shared field", () => {
     const actual = [...new Set(CALCULATORS.flatMap(writesFrom))].sort();
@@ -195,6 +304,16 @@ describe("what a calculator may write into My Situation", () => {
         "read the new line as a sentence and decide whether that control really holds that " +
         "quantity for THIS reader before pinning it",
     ).toEqual(EXPECTED);
+  });
+
+  it("is exactly the pinned map for the fields a sentinel cannot drive", () => {
+    const actual = [...new Set(CALCULATORS.flatMap(enumWritesFrom))].sort();
+    expect(
+      actual,
+      "a calculator's control now writes the reader's filing status, state or county — " +
+        "these fields say where the reader lives and how the reader files, so a control " +
+        "asking about anywhere or anyone else does not belong on this list",
+    ).toEqual(EXPECTED_ENUMS);
   });
 
   it("asks about somebody else's money without writing it down", () => {
