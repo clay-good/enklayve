@@ -17,6 +17,7 @@ import {
   sourceNoteBytes,
   shellSummary,
   mappedBytesBySource,
+  MIN_HEADROOM_KB,
   SHELL_GZIP_BUDGET_KB,
 } from "../../scripts/audit-release";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
@@ -563,6 +564,29 @@ describe("checkBundleBudget", () => {
     // A failure has to say *what* grew, or the next person just raises the number.
     expect(violation).toContain("/assets/index.js 300 kB");
     expect(violation).toContain("raise SHELL_GZIP_BUDGET_KB deliberately and say why");
+  });
+
+  it("fails a shell that is inside the budget by less than the spread between machines", () => {
+    // The rule was written into the budget's own comment and never enforced, so
+    // it held for one raise: 284 was set locally with 0.2 kB free, CI measured
+    // 284.4 on the same tree, and three commits went to `main` green here and
+    // red there. A pass this machine cannot promise another machine will repeat
+    // is not a pass.
+    const [violation] = checkBundleBudget([{ path: "/assets/index.js", gzipBytes: kb(99.5) }], 100);
+    expect(violation).toContain("99.5 kB gzipped");
+    expect(violation).toContain("by only 0.5 kB");
+    expect(violation).toContain(`less than the ${MIN_HEADROOM_KB} kB`);
+    expect(violation).toContain("/assets/index.js 100 kB");
+  });
+
+  it("passes a shell with headroom to spare", () => {
+    expect(checkBundleBudget([{ path: "/assets/index.js", gzipBytes: kb(90) }], 100)).toEqual([]);
+  });
+
+  it("keeps the headroom rule wider than the spread it exists for", () => {
+    // 0.4-0.6 kB is the observed difference between two zlib versions. A rule
+    // that only just covers it is the same mistake in a smaller size.
+    expect(MIN_HEADROOM_KB).toBeGreaterThan(0.6);
   });
 
   it("treats an empty asset list as a failure, not a pass", () => {

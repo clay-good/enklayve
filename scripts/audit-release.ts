@@ -374,8 +374,43 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * restores the margin the previous three raises each ate into, and it is the
  * first raise here that is not paying for a feature. CI is the authority on
  * this figure; a local run is an estimate that reads about 0.4 kB low.
+ *
+ * **Raised 284 -> 286 on 2026-09-05, because the rule two paragraphs up was
+ * never enforced and lasted exactly one raise.** 284 was set from a local
+ * measurement with **0.2 kB free** — half the spread it had just finished
+ * describing. CI measured the same tree at **284.4** and failed, and so did
+ * every commit pushed after it: three green local runs, three red builds on
+ * `main`, on a number nobody had touched. The gate was reporting whose zlib ran
+ * it.
+ *
+ * Two kilobytes, and they are not buying content. One restores real headroom
+ * over the CI figure (284.5 measured there today, 2.0 kB free locally and about
+ * 1.4 in CI). The other pays for the check that makes a local pass mean
+ * something: {@link MIN_HEADROOM_KB} fails a build that is inside the budget by
+ * less than a kilobyte, so the *next* raise set from a local reading trips here
+ * rather than after the push. The levers are unchanged and every one of them is
+ * still rejected on the grounds written above; this raise is argued on the gate
+ * being reproducible, which is the only property that made it worth having.
  */
-export const SHELL_GZIP_BUDGET_KB = 284;
+export const SHELL_GZIP_BUDGET_KB = 286;
+
+/**
+ * The headroom this gate needs to be measuring the shell rather than the runner.
+ *
+ * The paragraph above ends by stating this rule and nothing enforced it, so it
+ * held for exactly one raise. `284` was set from a **local** measurement with
+ * 0.2 kB free, and 0.2 kB is half the observed spread between Node versions: the
+ * commit that set it was green on the machine that set it and **red in CI on
+ * the same tree**, at 284.4 against 284.0, and so was every commit after it. A
+ * gate whose verdict depends on whose zlib ran it is not a gate, and it fails in
+ * the worst place — after the push, on `main`, on a number nobody changed.
+ *
+ * So the rule is a check now. A shell inside its budget but within a kilobyte of
+ * it fails **locally**, with the reason, which is the only place that failure is
+ * cheap. One kilobyte because the measured spread is 0.4-0.6 kB and a rule that
+ * only just covers the spread is the same mistake again.
+ */
+export const MIN_HEADROOM_KB = 1;
 
 /** A precached asset and its gzipped size. */
 export interface ShellAsset {
@@ -419,16 +454,26 @@ export function checkBundleBudget(
   if (assets.length === 0)
     return ["no precached assets found, run `npm run build` before the audit"];
   const totalKb = assets.reduce((sum, a) => sum + a.gzipBytes, 0) / 1024;
-  if (totalKb <= budgetKb) return [];
   const biggest = [...assets]
     .sort((a, b) => b.gzipBytes - a.gzipBytes)
     .slice(0, 3)
     .map((a) => `${a.path} ${Math.round(a.gzipBytes / 1024)} kB`)
     .join(", ");
-  return [
-    `the precached shell is ${totalKb.toFixed(1)} kB gzipped, over its ${budgetKb} kB budget ` +
-      `(largest: ${biggest}). Trim it, or raise SHELL_GZIP_BUDGET_KB deliberately and say why.`,
-  ];
+  if (totalKb > budgetKb)
+    return [
+      `the precached shell is ${totalKb.toFixed(1)} kB gzipped, over its ${budgetKb} kB budget ` +
+        `(largest: ${biggest}). Trim it, or raise SHELL_GZIP_BUDGET_KB deliberately and say why.`,
+    ];
+  // Inside the budget by less than the spread between two zlib versions is a
+  // pass this machine cannot promise CI will repeat. See MIN_HEADROOM_KB.
+  if (budgetKb - totalKb < MIN_HEADROOM_KB)
+    return [
+      `the precached shell is ${totalKb.toFixed(1)} kB gzipped, inside its ${budgetKb} kB budget ` +
+        `by only ${(budgetKb - totalKb).toFixed(1)} kB — less than the ${MIN_HEADROOM_KB} kB this ` +
+        `check needs to mean the same thing on another machine (largest: ${biggest}). Trim it, or ` +
+        "raise SHELL_GZIP_BUDGET_KB deliberately and say why.",
+    ];
+  return [];
 }
 
 /**

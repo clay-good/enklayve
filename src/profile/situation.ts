@@ -13,6 +13,7 @@
  */
 import { z } from "zod";
 import { FilingStatus } from "../data/schemas";
+import { MAX_INPUT_MAGNITUDE } from "../ui/form";
 
 /** Where a field's value came from (§3.1). */
 export type FieldSource = "typed" | "extracted" | "assumed";
@@ -84,14 +85,32 @@ export interface SituationValues {
 export type SituationKey = keyof SituationValues;
 
 /**
- * A finite number, or nothing.
+ * A finite number inside the magnitude every other door already enforces, or
+ * nothing.
  *
- * `.catch(undefined)` is the whole shape of this schema: a snapshot arrives
- * from a file the user chose, and one unreadable field should cost that field
- * and not the rest of their situation. So every entry drops on its own rather
- * than failing the object.
+ * `.catch(undefined)` is the first half: a snapshot arrives from a file the
+ * user chose, and one unreadable field should cost that field and not the rest
+ * of their situation, so every entry drops on its own rather than failing the
+ * object.
+ *
+ * The clamp is the second half, and it was missing. `MAX_INPUT_MAGNITUDE` is
+ * the ceiling that stops a finite-but-absurd figure from overflowing one
+ * multiplication later and throwing a `RangeError` out of `Money.from`, which
+ * renders a blank page rather than a bad number — and it was enforced on
+ * exactly one of the two doors into a tile. A typed field and a deep link go
+ * through `parseNonNegative`; a **restored profile does not**, and a restore is
+ * the door that carries a whole situation at once rather than one field. With
+ * `1e308` in every value, a portable profile file blanked the Downshift tile.
+ *
+ * Clamped rather than dropped, to match the other door: `?bal=1e308` leaves the
+ * reader with a visible, editable figure, and a value that vanished from My
+ * Situation on restore would be a field the person has to notice is gone.
  */
-const num = z.number().finite().optional().catch(undefined);
+const bounded = z
+  .number()
+  .finite()
+  .transform((n) => Math.max(-MAX_INPUT_MAGNITUDE, Math.min(MAX_INPUT_MAGNITUDE, n)));
+const num = bounded.optional().catch(undefined);
 const str = z.string().optional().catch(undefined);
 
 /**
@@ -111,13 +130,36 @@ const str = z.string().optional().catch(undefined);
  * a zero income is a state a person can genuinely be in and the tiles handle
  * it; a string where a number belongs is not, and never came from here.
  */
+/**
+ * The most rows a restored list may carry.
+ *
+ * A magnitude ceiling stops one absurd *value*; it does nothing about an absurd
+ * *count*, and a file carries a whole list at once. Fifty thousand debts in a
+ * profile file took the Debt Freedom tile past eight seconds and twelve
+ * thousand DOM nodes before the tab stopped answering — the same freeze the
+ * horizon caps exist to prevent, reached through the one door that had no cap
+ * on it. A hundred is far past any household's real list and far short of a
+ * number that costs anything to render.
+ */
+export const MAX_PROFILE_ROWS = 100;
+
+/** Keep the first {@link MAX_PROFILE_ROWS} rows of a restored list, or nothing. */
+function rows<T extends z.ZodTypeAny>(
+  schema: T,
+): z.ZodCatch<z.ZodOptional<z.ZodEffects<T, z.infer<T>, z.input<T>>>> {
+  return schema
+    .transform((list: z.infer<T>) => (list as unknown[]).slice(0, MAX_PROFILE_ROWS) as z.infer<T>)
+    .optional()
+    .catch(undefined) as never;
+}
+
 export const SituationValuesSchema = z
   .object({
     filingStatus: FilingStatus.optional().catch(undefined),
     stateCode: str,
     county: str,
     householdSize: num,
-    ages: z.array(z.number().finite()).optional().catch(undefined),
+    ages: rows(z.array(bounded)),
     annualIncome: num,
     qualifiedTipsAnnual: num,
     qualifiedOvertimeAnnual: num,
@@ -125,16 +167,15 @@ export const SituationValuesSchema = z
     retirementContributionsAnnual: num,
     employerMatchAnnual: num,
     employerMatchCaptured: num,
-    debts: z
-      .array(
+    debts: rows(
+      z.array(
         z.object({
           name: z.string(),
-          balance: z.number().finite(),
-          ratePct: z.number().finite(),
+          balance: bounded,
+          ratePct: bounded,
         }),
-      )
-      .optional()
-      .catch(undefined),
+      ),
+    ),
     essentialMonthlyExpenses: num,
     totalMonthlyExpenses: num,
     liquidSavings: num,

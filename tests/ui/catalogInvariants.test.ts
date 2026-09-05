@@ -322,6 +322,88 @@ describe("every calculator in the catalog", () => {
 });
 
 /**
+ * The other door into a tile (SPEC-3 §2.3, the half that had no sweep).
+ *
+ * Everything above drives a tile through its form and its fragment, which is
+ * where `parseNonNegative` clamps. A **restored profile** reaches the same
+ * tiles without passing that boundary at all: the portable profile file and the
+ * Standing Ledger both call `SituationStore.load`, and a tile reads its
+ * defaults straight out of the store. So the sweep that proves no crafted link
+ * can blank a page proved nothing about a crafted file.
+ *
+ * A file is the stronger of the two doors, too. A link carries one tile's
+ * fields; a file carries a whole situation at once, which is how `1e308` in
+ * every value found the Downshift tile — two figures large enough that their
+ * product overflowed, `Money.from` threw a `RangeError`, and the tile rendered
+ * nothing. And a file carries *lists*: fifty thousand debts took Debt Freedom
+ * past eight seconds and twelve thousand DOM nodes, and the worker running this
+ * suite died rather than finishing the mount.
+ */
+describe("every calculator survives a restored profile", () => {
+  const KEYS = [
+    "householdSize",
+    "annualIncome",
+    "preTaxContributions",
+    "retirementContributionsAnnual",
+    "employerMatchAnnual",
+    "employerMatchCaptured",
+    "essentialMonthlyExpenses",
+    "totalMonthlyExpenses",
+    "liquidSavings",
+    "qualifiedTipsAnnual",
+    "qualifiedOvertimeAnnual",
+  ] as const;
+
+  /** A profile as a hostile file would leave it, restored through the real path. */
+  function restored(value: number, rows: number): SituationStore {
+    const store = new SituationStore();
+    const values: Record<string, unknown> = {
+      filingStatus: "single",
+      stateCode: "CA",
+      ages: Array.from({ length: rows }, () => 40),
+      debts: Array.from({ length: rows }, (_, i) => ({
+        name: `d${i}`,
+        balance: value,
+        ratePct: 20,
+      })),
+    };
+    for (const key of KEYS) values[key] = value;
+    store.load({ values, sources: {} } as never);
+    return store;
+  }
+
+  for (const [label, value, rows] of [
+    ["magnitudes that overflow a product", 1e308, 4],
+    ["negative magnitudes", -1e308, 4],
+    ["lists longer than any household's", 1e15, 50_000],
+  ] as const) {
+    it(`mounts against ${label} without throwing or hanging`, () => {
+      const profile = restored(value, rows);
+      for (const tile of CALCULATORS) {
+        const root = document.createElement("div");
+        expect(
+          () =>
+            tile.mount!({
+              root,
+              params: new URLSearchParams(),
+              setParams: () => {},
+              permalink: () => "https://enklayve.com/#/x",
+              navigate: () => {},
+              locale: "en-US",
+              data,
+              profile,
+            } as TileContext),
+          `${tile.id} threw on a restored profile — a shared file must never blank the page`,
+        ).not.toThrow();
+        expect(root.textContent ?? "", `${tile.id} painted a non-finite value`).not.toMatch(
+          NON_FINITE,
+        );
+      }
+    }, 60_000);
+  }
+});
+
+/**
  * The README promises axe-core runs "across the home, About, All Tools, the
  * Readout, the Report, and **every tile form**, with zero violations". It ran
  * over eighteen of sixty-eight — a hand-kept list that new tiles were never

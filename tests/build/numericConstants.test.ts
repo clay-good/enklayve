@@ -118,6 +118,7 @@ const VERDICTS: Record<string, string> = {
   MAX_HORIZON_MONTHS: "bound — the same ceiling in months",
   MAX_PERIODS: "bound — a compounding-loop ceiling",
   // --- outside the engine: readout, profile, tiles, ui ---
+  MAX_PROFILE_ROWS: "bound — how many rows a restored list may carry",
   FORMAT_VERSION: "bound — the situation file's format number",
   LEDGER_VERSION: "bound — the ledger file's format number",
   PBKDF2_ITERATIONS: "bound — key-derivation work factor for the encrypted ledger",

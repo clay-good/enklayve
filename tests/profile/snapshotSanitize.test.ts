@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { sanitizeSnapshot, SituationStore } from "../../src/profile/situation";
+import { MAX_PROFILE_ROWS, sanitizeSnapshot, SituationStore } from "../../src/profile/situation";
+import { MAX_INPUT_MAGNITUDE } from "../../src/ui/form";
 
 /**
  * What a restored snapshot may put into the profile.
@@ -108,5 +109,78 @@ describe("the store is where the check lives", () => {
     } as never);
     expect(store.snapshot().values.annualIncome).toBeUndefined();
     expect(store.snapshot().values.liquidSavings).toBe(900);
+  });
+});
+
+/**
+ * The shape check was the first half of this boundary and it was the only half.
+ *
+ * `NaN` and a string where a number belongs were caught; a **finite** figure of
+ * any size was not, and neither was a list of any length. Both of those are the
+ * things the *other* door into a tile — a typed field or a deep link, through
+ * `parseNonNegative` — has always stopped, and a restored file is the door that
+ * carries a whole situation at once rather than one field.
+ */
+describe("a restored snapshot cannot be absurd, only wrong", () => {
+  it("clamps a finite-but-enormous value instead of letting it reach Money", () => {
+    // `?bal=1e308` used to throw a RangeError out of `Money.from` and render a
+    // blank page for sixteen tiles. The same value in a profile file blanked
+    // the Downshift tile, by the same overflow, one door further in.
+    const clean = sanitizeSnapshot({ values: { annualIncome: 1e308, liquidSavings: -1e308 } });
+    expect(clean.values.annualIncome).toBe(MAX_INPUT_MAGNITUDE);
+    expect(clean.values.liquidSavings).toBe(-MAX_INPUT_MAGNITUDE);
+  });
+
+  it("clamps rather than drops, so the figure stays visible and editable", () => {
+    // Dropping it would be the other defensible answer, and it is the worse
+    // one: a value that vanished from My Situation on restore is a field the
+    // person has to notice is gone.
+    expect(sanitizeSnapshot({ values: { annualIncome: 1e308 } }).values.annualIncome).toBeDefined();
+  });
+
+  it("leaves every figure a household could really hold exactly as it was", () => {
+    const real = { annualIncome: 82_000, liquidSavings: 0, essentialMonthlyExpenses: 3_412.75 };
+    expect(sanitizeSnapshot({ values: real }).values).toEqual(real);
+  });
+
+  it("caps how many rows a restored list may carry", () => {
+    // A magnitude ceiling stops one absurd value and says nothing about an
+    // absurd count. 50,000 debts in a file took the Debt Freedom tile past
+    // eight seconds and twelve thousand DOM nodes before the tab stopped
+    // answering — the freeze the horizon caps exist to prevent, through the
+    // one door with no cap on it.
+    const many = sanitizeSnapshot({
+      values: {
+        ages: Array.from({ length: 50_000 }, () => 40),
+        debts: Array.from({ length: 50_000 }, (_, i) => ({
+          name: `d${i}`,
+          balance: 1_000,
+          ratePct: 20,
+        })),
+      },
+    });
+    expect(many.values.ages).toHaveLength(MAX_PROFILE_ROWS);
+    expect(many.values.debts).toHaveLength(MAX_PROFILE_ROWS);
+    // The rows that survive are the ones the file listed first, unchanged.
+    expect(many.values.debts?.[0]).toEqual({ name: "d0", balance: 1_000, ratePct: 20 });
+  });
+
+  it("leaves a household's real list alone", () => {
+    const debts = [
+      { name: "Card", balance: 4_200, ratePct: 24.99 },
+      { name: "Car", balance: 11_800, ratePct: 6.4 },
+    ];
+    expect(sanitizeSnapshot({ values: { debts, ages: [38, 36, 7] } }).values).toEqual({
+      debts,
+      ages: [38, 36, 7],
+    });
+  });
+
+  it("clamps inside a row, not just at the top level", () => {
+    const clean = sanitizeSnapshot({
+      values: { debts: [{ name: "Card", balance: 1e308, ratePct: 1e308 }] },
+    });
+    expect(clean.values.debts?.[0]?.balance).toBe(MAX_INPUT_MAGNITUDE);
+    expect(clean.values.debts?.[0]?.ratePct).toBe(MAX_INPUT_MAGNITUDE);
   });
 });
