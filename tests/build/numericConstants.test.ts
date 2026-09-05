@@ -181,6 +181,14 @@ const VERDICTS: Record<string, string> = {
     "figure — half of it, for a married individual filing separately (§1211(b)(1) again)",
   SAFE_HARBOR_HIGH_AGI:
     "figure — IRC §6654(d)(1)(C)(i). Above $150,000 of prior-year AGI the estimated-tax safe harbor rises from 100% to 110% of last year's tax. Statutory and never indexed; it has not moved since 1993, and a change would be an act of Congress rather than an annual adjustment.",
+  SAFE_HARBOR_HIGH_AGI_SEPARATE:
+    "figure — §6654(d)(1)(C)(ii) substitutes $75,000 for the $150,000 above when a married individual files a separate return. Half, from the same statute and just as unindexed. It was missing entirely while the threshold lived on the tile, so a separate filer between the two figures was told 100% of last year's tax was safe when the statute wants 110%.",
+  CURRENT_YEAR_SHARE:
+    "figure — §6654(d)(1)(B)(i), the 90% of this year's own tax that is always a safe harbor. A share rather than an amount, so nothing indexes it.",
+  PRIOR_YEAR_SHARE:
+    "figure — §6654(d)(1)(B)(ii), the 100% of last year's tax that is the other safe harbor. Named rather than left as a bare 1 so the prose sweep can bind the sentence quoting it to the arithmetic using it.",
+  PRIOR_YEAR_SHARE_HIGH_AGI:
+    'figure — the "110 percent" §6654(d)(1)(C)(i) substitutes for it above the AGI threshold. A share, not an amount, and unindexed since 1993.',
   SEASONING_YEARS:
     "figure — IRC §408A(d)(3)(F), the five-year seasoning period before a converted amount comes out penalty-free. A period rather than an amount, so nothing indexes it.",
   MEDICAL_AGI_FLOOR_RATE:

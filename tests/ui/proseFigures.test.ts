@@ -423,6 +423,23 @@ const BOUND_TO_CODE: { file: string; figure: string; from: string; declaredIn?: 
     from: "MATERIAL_FLOOR_DOLLARS",
     declaredIn: "profile/ledger.ts",
   },
+  // §6654(d)(1)(C)'s two AGI lines, quoted by the tile that applies them. The
+  // tile used to own the $150,000 as a literal and did not know the $75,000
+  // existed at all, which is exactly the drift this sweep is for: one of the
+  // two numbers a separate filer needs was absent from the prose because it was
+  // absent from the code.
+  {
+    file: "tiles/quarterlyTaxes.ts",
+    figure: "$150,000",
+    from: "SAFE_HARBOR_HIGH_AGI",
+    declaredIn: "engine/dueDates.ts",
+  },
+  {
+    file: "tiles/quarterlyTaxes.ts",
+    figure: "$75,000",
+    from: "SAFE_HARBOR_HIGH_AGI_SEPARATE",
+    declaredIn: "engine/dueDates.ts",
+  },
 ];
 
 /**
@@ -505,9 +522,12 @@ describe("a figure in the prose is the figure in the shard", () => {
       const text = source.get(b.file)!;
       const where = b.declaredIn ?? b.file;
       const declaredIn = readFileSync(resolve(ROOT, "src", where), "utf8");
-      const declared = new RegExp(`const ${b.from} = (\\d+);`).exec(declaredIn);
+      // `[\\d_]` rather than `\\d`: `150_000` is the same number as `150000`, and
+      // without the separator here the binding fails as "is not declared in",
+      // which reads as a missing constant rather than an underscore.
+      const declared = new RegExp(`const ${b.from} = ([\\d_]+);`).exec(declaredIn);
       expect(declared, `${b.from} is not declared in ${where}`).not.toBeNull();
-      expect(asProse(Number(declared![1]))).toBe(b.figure);
+      expect(asProse(Number(declared![1]!.replace(/_/g, "")))).toBe(b.figure);
       expect(statesFigure(text, b.figure), `${b.file} does not state ${b.figure}`).toBe(true);
     });
   }

@@ -12,7 +12,7 @@
  */
 import { Money, allocateRounded } from "../engine/money";
 import { evaluateTaxes, selfEmploymentTax, type TaxInput } from "../engine/tax";
-import { estimatedTaxDueDates, formatDueDate } from "../engine/dueDates";
+import { estimatedTaxDueDates, estimatedTaxSafeHarbor, formatDueDate } from "../engine/dueDates";
 import type { CitationData, FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
@@ -39,15 +39,25 @@ const ESTIMATED_PAYMENT_CITATION: CitationData = {
   dateRetrieved: "2026-06-02",
 };
 
-// The safe harbor rises from 100% to 110% of last year's tax above this AGI.
-const SAFE_HARBOR_HIGH_AGI = 150000;
-
 interface Fields {
   fs: FilingStatus;
   state: string;
   profit: number;
   other: number;
   lastYearTax: number;
+  /**
+   * Last year's AGI, which is the number IRC §6654(d)(1)(C) actually asks about
+   * — "the adjusted gross income shown on the return of the individual for the
+   * preceding taxable year". This tile used to test *this* year's computed AGI
+   * against it, which is a different question and, for a self-employed person
+   * whose income is the thing that moves, frequently a different answer.
+   *
+   * Optional, because someone who has last year's total tax to hand may not
+   * have last year's AGI. Left blank, this year's AGI stands in and the
+   * safe-harbor line says so rather than quietly presenting a guess as the
+   * statute's answer.
+   */
+  lastYearAgi: number;
   /**
    * The mandatory residence-based county tax (Maryland, Indiana). It belongs in
    * an ESTIMATED-tax figure more than anywhere else on the site: the number this
@@ -64,6 +74,7 @@ const EXAMPLE: Fields = {
   profit: 90000,
   other: 0,
   lastYearTax: 0,
+  lastYearAgi: 0,
   local: [],
 };
 
@@ -80,6 +91,7 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
     profit: p.has("np") ? parseNonNegative(p.get("np"), 0) : (profile.get("annualIncome") ?? 0),
     other: parseNonNegative(p.get("oth"), 0),
     lastYearTax: parseNonNegative(p.get("ly"), 0),
+    lastYearAgi: parseNonNegative(p.get("lya"), 0),
     local: p.getAll("loc"),
   };
 }
@@ -91,6 +103,7 @@ function writeFields(f: Fields): URLSearchParams {
   p.set("np", String(f.profit));
   if (f.other > 0) p.set("oth", String(f.other));
   if (f.lastYearTax > 0) p.set("ly", String(f.lastYearTax));
+  if (f.lastYearAgi > 0) p.set("lya", String(f.lastYearAgi));
   for (const id of f.local) p.append("loc", id);
   return p;
 }
@@ -140,6 +153,7 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
   const npInput = mkNum("np", "Net business profit", fields.profit);
   const othInput = mkNum("oth", "Other taxable household income", fields.other);
   const lyInput = mkNum("ly", "Last year's total tax (optional)", fields.lastYearTax);
+  const lyaInput = mkNum("lya", "Last year's AGI (optional)", fields.lastYearAgi);
 
   const chartContainer = el("div", { class: "tile-charts" });
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
@@ -216,13 +230,33 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
       });
     }
     if (fields.lastYearTax > 0) {
-      const factor = r.agi.greaterThan(SAFE_HARBOR_HIGH_AGI) ? 1.1 : 1.0;
-      const byLastYear = Money.from(fields.lastYearTax).multiply(factor);
-      const byThisYear = totalTax.multiply(0.9);
-      const safe = byLastYear.lessThan(byThisYear) ? byLastYear : byThisYear;
+      // §6654(d)(1)(C) measures the threshold on LAST year's AGI. When it is not
+      // given, this year's stands in — and the line below says so, because a
+      // substituted number presented as the statute's own is the failure this
+      // tile already had.
+      const proxied = fields.lastYearAgi <= 0;
+      const priorAgi = proxied ? r.agi.toNumber() : fields.lastYearAgi;
+      const harbor = estimatedTaxSafeHarbor(
+        fields.fs,
+        Money.from(fields.lastYearTax),
+        priorAgi,
+        totalTax,
+      );
       lines.push({
         label: "Safe-harbor minimum for the year (avoids the underpayment penalty)",
-        value: `${fmt(safe)} (${fmt(safe.divide(4))} per quarter)`,
+        value: `${fmt(harbor.minimum)} (${fmt(harbor.minimum.divide(4))} per quarter)`,
+        citation: ESTIMATED_PAYMENT_CITATION,
+      });
+      const line = `$${harbor.threshold.toLocaleString(ctx.locale)}`;
+      const rateSentence =
+        harbor.priorYearRate > 1
+          ? `Your AGI is over ${line}, so the safe harbor is 110% of last year's tax rather than 100% (IRC §6654(d)(1)(C)).`
+          : `At or under ${line} of AGI the safe harbor is 100% of last year's tax (IRC §6654(d)(1)(C)).`;
+      lines.push({
+        label: "How the safe harbor was set",
+        value: proxied
+          ? `${rateSentence} We used this year's AGI because last year's is blank — the statute measures it on last year's return, so enter it above for the exact test.`
+          : rateSentence,
         citation: ESTIMATED_PAYMENT_CITATION,
       });
     }
@@ -321,6 +355,7 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
       profit: parseNonNegative(npInput.value, 0),
       other: parseNonNegative(othInput.value, 0),
       lastYearTax: parseNonNegative(lyInput.value, 0),
+      lastYearAgi: parseNonNegative(lyaInput.value, 0),
       local: countySelect && countySelect.value ? [countySelect.value] : [],
     };
     renderLocal();
@@ -338,7 +373,7 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
   }
 
   for (const s of [fsSelect, stateSelect]) s.addEventListener("change", recompute);
-  for (const i of [npInput, othInput, lyInput]) i.addEventListener("input", recompute);
+  for (const i of [npInput, othInput, lyInput, lyaInput]) i.addEventListener("input", recompute);
 
   const tryExample = tryExampleButton(() => {
     fields = { ...EXAMPLE };
@@ -347,6 +382,7 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
     npInput.value = String(fields.profit);
     othInput.value = String(fields.other);
     lyInput.value = String(fields.lastYearTax);
+    lyaInput.value = String(fields.lastYearAgi);
     recompute();
   });
 
@@ -358,6 +394,7 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
     field("Net business profit", npInput),
     field("Other taxable household income", othInput),
     field("Last year's total tax (optional)", lyInput),
+    field("Last year's AGI (optional)", lyaInput),
     localContainer,
     el("div", { class: "tile-form-actions" }, tryExample),
   );
@@ -386,7 +423,7 @@ export const quarterlyTaxesTile: TileDefinition = {
   ],
   status: "ready",
   how:
-    "When you work for yourself, no employer withholds taxes from your pay, so you have to do it yourself, and you owe two taxes, not one. First is self-employment tax: both halves of Social Security and Medicare (15.3% on 92.35% of your profit). Second is regular income tax, federal and state, on your profit minus the deductible half of that SE tax. We add the two together to get your tax for the year.\n\nFrom that we show the share to skim off every payment you receive (move it to a separate tax account the day it lands) and the four equal estimated payments the IRS expects on the 1040-ES schedule. If you enter last year's total tax, we also show the safe-harbor minimum: pay at least that much across the year and you avoid the underpayment penalty even if you earn more than expected.\n\nWe don't subtract the QBI (20% qualified business income) deduction, so the number leans slightly high, which is the safe side when the whole point is setting enough aside. Filing status, state, and income flow to and from My Situation.\n\n" +
+    "When you work for yourself, no employer withholds taxes from your pay, so you have to do it yourself, and you owe two taxes, not one. First is self-employment tax: both halves of Social Security and Medicare (15.3% on 92.35% of your profit). Second is regular income tax, federal and state, on your profit minus the deductible half of that SE tax. We add the two together to get your tax for the year.\n\nFrom that we show the share to skim off every payment you receive (move it to a separate tax account the day it lands) and the four equal estimated payments the IRS expects on the 1040-ES schedule. If you enter last year's total tax, we also show the safe-harbor minimum: pay at least that much across the year and you avoid the underpayment penalty even if you earn more than expected. It is the smaller of 90% of this year's tax and 100% of last year's — 110% of last year's if last year's AGI was over $150,000, or over $75,000 if you file separately (IRC \u00a76654(d)(1)(C)). The threshold is measured on LAST year's AGI, so enter it too if you have it; left blank we use this year's and say so on the line.\n\nWe don't subtract the QBI (20% qualified business income) deduction, so the number leans slightly high, which is the safe side when the whole point is setting enough aside. Filing status, state, and income flow to and from My Situation.\n\n" +
     OBBBA_DEDUCTIONS_NOT_MODELED,
   resources: [
     {

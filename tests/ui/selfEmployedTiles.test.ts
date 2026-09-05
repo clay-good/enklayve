@@ -80,6 +80,49 @@ describe("Quarterly Taxes & Set-Aside", () => {
     );
     expect(root.textContent).toContain("Safe-harbor minimum");
   });
+
+  it("halves the safe-harbor AGI threshold for a separate return", () => {
+    // IRC §6654(d)(1)(C)(ii). $100,000 of prior-year AGI is under the general
+    // $150,000 line and over the separate filer's $75,000 one, so these two
+    // must disagree. Until 2026-09-05 they did not: the tile held a single
+    // $150,000 literal, and the separate filer was told 100% of last year's tax
+    // avoided the penalty when the statute wants 110% — an underpayment, on the
+    // one line whose whole purpose is avoiding one.
+    const base = { st: "", np: "90000", ly: "12000", lya: "100000" };
+    const single = mount(mountQuarterlyTaxes, new URLSearchParams({ ...base, fs: "single" })).root;
+    const separate = mount(
+      mountQuarterlyTaxes,
+      new URLSearchParams({ ...base, fs: "married_separately" }),
+    ).root;
+    expect(rowValue(single, "How the safe harbor was set")).toContain("100% of last year's tax");
+    expect(rowValue(separate, "How the safe harbor was set")).toContain("110%");
+    expect(rowValue(separate, "How the safe harbor was set")).toContain("$75,000");
+  });
+
+  it("measures the threshold on last year's AGI, and says when it had to guess", () => {
+    // The statute reads "the adjusted gross income shown on the return of the
+    // individual for the preceding taxable year". The tile tested *this* year's
+    // computed AGI, which for a self-employed person is precisely the number
+    // that moves: $200,000 of profit this year charged 110% off a prior year the
+    // filer had not even reported.
+    const thisYearHigh = new URLSearchParams({
+      fs: "single",
+      st: "",
+      np: "200000",
+      ly: "12000",
+      lya: "80000",
+    });
+    expect(
+      rowValue(mount(mountQuarterlyTaxes, thisYearHigh).root, "How the safe harbor was set"),
+    ).toContain("100% of last year's tax");
+
+    // Blank, and this year's AGI stands in — which is allowed, but it is said
+    // out loud rather than presented as the statute's own answer.
+    const blank = new URLSearchParams({ fs: "single", st: "", np: "200000", ly: "12000" });
+    const proxied = rowValue(mount(mountQuarterlyTaxes, blank).root, "How the safe harbor was set");
+    expect(proxied).toContain("110%");
+    expect(proxied).toContain("We used this year's AGI because last year's is blank");
+  });
 });
 
 describe("What Should I Charge?", () => {

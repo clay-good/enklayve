@@ -10,7 +10,8 @@ import { socialSecurityBenefitTaxation } from "../../src/engine/socialSecurityTa
 import { iraDeductibility } from "../../src/engine/iraDeduction";
 import { garnishmentCeiling } from "../../src/engine/garnishment";
 import { educationCredits } from "../../src/engine/educationCredits";
-import { estimatedTaxDueDates } from "../../src/engine/dueDates";
+import { estimatedTaxDueDates, estimatedTaxSafeHarbor } from "../../src/engine/dueDates";
+import { Money } from "../../src/engine/money";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import type { AcaData, FilingStatus } from "../../src/data/schemas";
 
@@ -498,5 +499,47 @@ describe("the Q4 estimated-tax deadline when January 15 is Martin Luther King Jr
     const apr = estimatedTaxDueDates(2027)[0]!;
     expect(apr.statutory.toISOString().slice(0, 10)).toBe("2027-04-15");
     expect(apr.due.getTime()).toBeGreaterThanOrEqual(apr.statutory.getTime());
+  });
+});
+
+describe("the §6654 safe harbor at exactly the AGI it turns on", () => {
+  // IRC §6654(d)(1)(C)(i) raises the safe harbor from 100% to 110% of last
+  // year's tax when prior-year AGI "exceeds" $150,000 — so a filer standing
+  // exactly on $150,000 is on the 100% side, and the dollar after is not. The
+  // threshold is halved to $75,000 for a separate return by clause (ii), which
+  // this codebase did not model at all until 2026-09-05: the tile applied
+  // $150,000 to every filing status, and a separate filer between the two
+  // figures was told 100% of last year's tax would avoid the penalty.
+  //
+  // `currentYearTax` is deliberately enormous in these cases so the 90%-of-this
+  // year test never binds and the prior-year rate is the whole answer.
+  const harbor = (fs: FilingStatus, agi: number): ReturnType<typeof estimatedTaxSafeHarbor> =>
+    estimatedTaxSafeHarbor(fs, Money.from(20_000), agi, Money.from(10_000_000));
+
+  it("charges 100% at exactly $150,000 and 110% one dollar above it", () => {
+    expect(harbor("single", 150_000).priorYearRate).toBe(1);
+    expect(harbor("single", 150_000).minimum.toNumber()).toBe(20_000);
+    expect(harbor("single", 150_001).priorYearRate).toBe(1.1);
+    expect(harbor("single", 150_001).minimum.toNumber()).toBe(22_000);
+  });
+
+  it("halves the line for a separate return, at exactly $75,000", () => {
+    expect(harbor("married_separately", 75_000).priorYearRate).toBe(1);
+    expect(harbor("married_separately", 75_001).priorYearRate).toBe(1.1);
+    // The bug this pins: $100,000 of prior-year AGI is under the general
+    // $150,000 line and over the separate filer's own, so the two statuses must
+    // disagree here. They did not, and the separate filer was the one shorted.
+    expect(harbor("single", 100_000).priorYearRate).toBe(1);
+    expect(harbor("married_separately", 100_000).priorYearRate).toBe(1.1);
+    expect(harbor("married_separately", 100_000).threshold).toBe(75_000);
+  });
+
+  it("takes the smaller of the two tests, and says which one bound", () => {
+    // 90% of this year's tax is the lesser here, so it is the safe harbor —
+    // §6654(d)(1)(B) is a floor made of two options, not two floors.
+    const small = estimatedTaxSafeHarbor("single", Money.from(20_000), 200_000, Money.from(10_000));
+    expect(small.minimum.toNumber()).toBe(9_000);
+    expect(small.basis).toBe("current-year");
+    expect(harbor("single", 200_000).basis).toBe("prior-year");
   });
 });

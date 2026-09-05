@@ -286,6 +286,27 @@ const BOUND: RateBound[] = [
     constant: { name: "SE_TAX_BASE_RATE", in: "engine/tax/fica.ts" },
     derive: (rate) => rate * 100,
   },
+  // The three §6654(d)(1) multiples the safe-harbor sentence quotes. They are
+  // the statute's own words and they are also what the engine multiplies by, so
+  // the sentence and the arithmetic move together or not at all.
+  {
+    file: "tiles/quarterlyTaxes.ts",
+    constant: { name: "CURRENT_YEAR_SHARE", in: "engine/dueDates.ts" },
+    derive: (share) => share * 100,
+    why: "90% of this year's own tax, §6654(d)(1)(B)(i)",
+  },
+  {
+    file: "tiles/quarterlyTaxes.ts",
+    constant: { name: "PRIOR_YEAR_SHARE", in: "engine/dueDates.ts" },
+    derive: (share) => share * 100,
+    why: "100% of last year's, §6654(d)(1)(B)(ii)",
+  },
+  {
+    file: "tiles/quarterlyTaxes.ts",
+    constant: { name: "PRIOR_YEAR_SHARE_HIGH_AGI", in: "engine/dueDates.ts" },
+    derive: (share) => share * 100,
+    why: "what subparagraph (C)(i) substitutes above the AGI line",
+  },
   {
     file: "ui/ledgerView.ts",
     constant: { name: "MATERIAL_FLOOR_SHARE", in: "profile/ledger.ts" },

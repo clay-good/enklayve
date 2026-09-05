@@ -70,9 +70,13 @@ export function shardNumber(id: string, path: string): number {
 
 /** The value of a `const NAME = <number>;` declared in a `src/` module. */
 export function declaredConstant(file: string, name: string): number {
-  const declared = new RegExp(`const ${name} = (\\d+(?:\\.\\d+)?);`).exec(
+  // `150_000` is the same number as `150000`, and the engine writes the readable
+  // form. Without the underscore here the binding throws "is not declared in" —
+  // a hard failure, but one that reads as a missing constant rather than a
+  // numeric separator, and the fix looks like deleting the separator.
+  const declared = new RegExp(`const ${name} = ([\\d_]+(?:\\.\\d+)?);`).exec(
     readFileSync(resolve(ROOT, "src", file), "utf8"),
   );
   if (!declared) throw new Error(`${name} is not declared in ${file}`);
-  return Number(declared[1]);
+  return Number(declared[1]!.replace(/_/g, ""));
 }

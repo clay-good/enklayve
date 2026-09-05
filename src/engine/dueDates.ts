@@ -1,11 +1,21 @@
 /**
- * Estimated-tax (Form 1040-ES) due-date calendar (SPEC-3 §4.2). The four
- * installments for a tax year are statutorily due April 15, June 15, September 15,
- * and January 15 of the following year — but when a date falls on a weekend or a
- * legal holiday (including DC's Emancipation Day, which the IRS observes), it
- * moves to the next business day. This is a pure, deterministic function of the
- * tax year: same year in, same four dates out, no clock read.
+ * The IRC §6654 rules a 1040-ES filer needs: when the four installments are due,
+ * and how much of the year's tax has to be paid across them to escape the
+ * underpayment penalty.
+ *
+ * The calendar (SPEC-3 §4.2): the four installments for a tax year are
+ * statutorily due April 15, June 15, September 15, and January 15 of the
+ * following year — but when a date falls on a weekend or a legal holiday
+ * (including DC's Emancipation Day, which the IRS observes), it moves to the
+ * next business day. This is a pure, deterministic function of the tax year:
+ * same year in, same four dates out, no clock read.
+ *
+ * The safe harbor is §6654(d)(1)(B)–(C) and lives here beside it because it is
+ * the same statute answering the same person's question, and because it had
+ * been living on a tile as two literals instead.
  */
+import { Money } from "./money";
+import type { FilingStatus } from "../data/schemas";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -84,4 +94,94 @@ export function formatDueDate(d: Date, locale = "en-US"): string {
     year: "numeric",
     timeZone: "UTC",
   }).format(d);
+}
+
+/**
+ * Prior-year AGI above which the safe harbor rises from 100% to 110% of last
+ * year's tax — IRC §6654(d)(1)(C)(i).
+ *
+ * Statutory and never indexed: $150,000 since the Omnibus Budget Reconciliation
+ * Act of 1993, so there is no annual figure to chase and a change would be an
+ * act of Congress rather than an adjustment.
+ */
+export const SAFE_HARBOR_HIGH_AGI = 150_000;
+
+/**
+ * The same threshold for a married individual filing separately: **half**.
+ *
+ * §6654(d)(1)(C)(ii), verbatim: "In the case of a married individual (within the
+ * meaning of section 7703) who files a separate return for the taxable year for
+ * which the amount of the installment is being determined, clause (i) shall be
+ * applied by substituting '$75,000' for '$150,000'."
+ *
+ * The tile that asked this question applied $150,000 to every filing status, so
+ * a separate filer whose prior-year AGI was between $75,000 and $150,000 was
+ * told that 100% of last year's tax was enough. It is not; the statute wants
+ * 110%, and the gap is an underpayment penalty under §6654 printed on the one
+ * line whose entire purpose is avoiding it. Wrong in the reassuring direction,
+ * which is the direction that costs somebody money.
+ */
+export const SAFE_HARBOR_HIGH_AGI_SEPARATE = 75_000;
+
+/** Share of the *current* year's tax that is always a safe harbor — §6654(d)(1)(B)(i). */
+const CURRENT_YEAR_SHARE = 0.9;
+
+/** Multiple of last year's tax that is a safe harbor — §6654(d)(1)(B)(ii), "100 percent". */
+const PRIOR_YEAR_SHARE = 1;
+
+/** What subparagraph (C)(i) substitutes for it above the threshold: "110 percent". */
+const PRIOR_YEAR_SHARE_HIGH_AGI = 1.1;
+
+/** The prior-year AGI threshold that applies to one filing status. */
+export function safeHarborAgiThreshold(filingStatus: FilingStatus): number {
+  return filingStatus === "married_separately"
+    ? SAFE_HARBOR_HIGH_AGI_SEPARATE
+    : SAFE_HARBOR_HIGH_AGI;
+}
+
+export interface SafeHarbor {
+  /** The least the year's payments may total without a §6654 penalty. */
+  minimum: Money;
+  /** 1 or 1.1 — the multiple of last year's tax this filer must reach. */
+  priorYearRate: number;
+  /** The threshold that produced that rate, for a line that can explain itself. */
+  threshold: number;
+  /** Which of the two tests was the smaller, and therefore binding. */
+  basis: "prior-year" | "current-year";
+}
+
+/**
+ * The smaller of the two §6654(d)(1)(B) tests, which is the one that binds.
+ *
+ * (i) 90% of the tax shown on this year's return, or (ii) 100% of the tax shown
+ * on last year's — raised to 110% by subparagraph (C) when last year's AGI was
+ * over the threshold.
+ *
+ * `priorYearAgi` is **last year's**, not this year's. The statute says "the
+ * adjusted gross income shown on the return of the individual for the preceding
+ * taxable year", and a self-employed person's AGI is exactly the number that
+ * swings between the two — someone whose business doubled this year would have
+ * been charged 110% on the strength of a year they had not filed yet, and
+ * someone whose business halved would have been told 100% when last year's
+ * return says otherwise.
+ */
+export function estimatedTaxSafeHarbor(
+  filingStatus: FilingStatus,
+  priorYearTax: Money,
+  priorYearAgi: number,
+  currentYearTax: Money,
+): SafeHarbor {
+  const threshold = safeHarborAgiThreshold(filingStatus);
+  // "Exceeds" — a filer standing exactly on $150,000 (or $75,000 separately) is
+  // on the 100% side of it.
+  const priorYearRate = priorYearAgi > threshold ? PRIOR_YEAR_SHARE_HIGH_AGI : PRIOR_YEAR_SHARE;
+  const byPriorYear = priorYearTax.multiply(priorYearRate);
+  const byCurrentYear = currentYearTax.multiply(CURRENT_YEAR_SHARE);
+  const priorBinds = byPriorYear.lessThan(byCurrentYear);
+  return {
+    minimum: priorBinds ? byPriorYear : byCurrentYear,
+    priorYearRate,
+    threshold,
+    basis: priorBinds ? "prior-year" : "current-year",
+  };
 }
