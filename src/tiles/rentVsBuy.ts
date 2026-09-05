@@ -14,6 +14,7 @@ import {
   field,
   parseNonNegative,
   parseNumber,
+  pctPoints,
   tryExampleButton,
 } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
@@ -193,7 +194,7 @@ export function mountRentVsBuy(ctx: TileContext): void {
       { label: "Verdict", value: verdict, emphasis: true },
       {
         label: "Assumptions",
-        value: `${fields.appreciationPct}% appreciation, ${fields.rentGrowthPct}% rent growth, ${fields.investReturnPct}% investment return, all yours to change.`,
+        value: `${pctPoints(fields.appreciationPct)} appreciation, ${pctPoints(fields.rentGrowthPct)} rent growth, ${pctPoints(fields.investReturnPct)} investment return, all yours to change.`,
       },
     ];
 
@@ -219,7 +220,7 @@ export function mountRentVsBuy(ctx: TileContext): void {
       const high = fields.appreciationPct + APPR_DELTA;
       resultContainer.append(
         sensitivityTable(
-          `If home appreciation runs ${APPR_DELTA} points either side of your ${fields.appreciationPct}% assumption (it can flip the answer):`,
+          `If home appreciation runs ${APPR_DELTA} points either side of your ${pctPoints(fields.appreciationPct)} assumption (it can flip the answer):`,
           [
             {
               label: "Lower appreciation",
@@ -228,7 +229,7 @@ export function mountRentVsBuy(ctx: TileContext): void {
             },
             {
               label: "Your assumption",
-              assumption: `${fields.appreciationPct}%`,
+              assumption: pctPoints(fields.appreciationPct),
               result: outcomeAt(fields, fields.appreciationPct, fmt),
               base: true,
             },

@@ -148,41 +148,35 @@ const UNFORMATTED_READING = /\$\d{7,}|\d{7,}(?:\.\d+)?\s*%/;
 const UNCLAMPED_HORIZON = /(?<![.,\d])\d{5,}(?:\.\d+)?\s?(?:years?|yrs?|months?|mos?)/i;
 
 /**
- * Tiles that do this today, and what each one is.
+ * Tiles allowed to send an unformatted figure to a currency or percent slot.
  *
- * A description of the catalog rather than a list of debts — the distinction
- * the boundary baseline draws, and for the same reason. Each remaining entry
- * **echoes a rate the reader typed** back into a label: a "% annual return"
- * field set to 1e15 returns as `1000000000000000.00%`, which is unformatted
- * but is also just the number they entered, and grouping it would be a nicety
- * rather than a fix.
- *
- * **The list started at thirteen and two helpers took eight of them.** Every
- * computed figure that reached the screen unformatted did so through one of
- * two functions, which is the argument for sweeping rather than fixing tiles
- * one at a time:
+ * **It is empty, and that is the assertion.** The list ran to thirteen names on
+ * 2026-09-05, every one of them a tile that dropped a number into a string
+ * without a formatter, and it came down in three passes rather than one:
  *
  *   - `fplPercentText` printed `6265664160401% FPL` on four surfaces at once —
  *     the ACA tile, the poverty-line tile, the Medicaid tile and the screener.
- *   - `pct` printed the Child Tax tile's effective rate on unearned income as
- *     `3699999999500002304.0%`, and it is the percentage helper the whole
- *     catalog renders through.
+ *   - `pct`, the percentage helper the whole catalog renders answers through,
+ *     printed the Child Tax tile's effective rate on unearned income as
+ *     `3699999999500002304.0%`. Both built their strings with `toFixed`, which
+ *     rounds and does not group.
+ *   - `spending-plan` printed `99.97999999999999%`, which was floating-point
+ *     subtraction reaching the screen rather than a formatting miss, and is
+ *     rounded where it is computed.
  *
- * Both built their strings with `toFixed`, which rounds and does not group. The
- * ninth was `spending-plan`, whose "Savings & debt payoff (99.97999999999999%)"
- * was floating-point subtraction reaching the screen rather than a formatting
- * miss, and is rounded where it is computed.
+ * The four that survived were excused on the grounds that they only echo a rate
+ * the reader typed, which is unformatted but is also just their own number. It
+ * was a fair description and a bad excuse: `1000000000000000% appreciation` is
+ * the reader's own number the way a wall of digits is a sentence. Fourteen
+ * labels across seven tiles interpolated a raw rate field, and they render
+ * through {@link pctPoints} now — which groups and trims rather than padding,
+ * so every rate a person would type prints exactly as it did before.
  *
- * What this list enforces is that it does not grow, and that a tile which stops
- * offending comes off it — a standing pass for something nobody is looking at
- * is the failure mode of every allowlist in this repo.
+ * The dead-entry branch below is kept for the next name that lands here: an
+ * allowlist whose entries are never re-checked is the failure mode of every
+ * allowlist in this repo, and an empty one is the only kind that cannot rot.
  */
-const UNFORMATTED_ALLOWED: Record<string, string> = {
-  "roth-ladder": "echoes the reader's own conversion-tax-rate field into a label",
-  "rent-vs-buy": "echoes the reader's own appreciation field, in the assumptions line",
-  "college-cost": "echoes the reader's own college-inflation field, in the assumptions line",
-  "disability-insurance": "echoes the reader's own share-of-income field, in the math line",
-};
+const UNFORMATTED_ALLOWED: Record<string, string> = {};
 
 const CALCULATORS = SUB_TOOLS.map(({ tile }) => tile).filter((t) => t.mount);
 

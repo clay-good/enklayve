@@ -9,7 +9,14 @@
 import { Money } from "../engine/money";
 import { retirementDrawdown } from "../engine/finance";
 import { el } from "../ui/dom";
-import { assumptionHint, field, parseNonNegative, parseNumber, tryExampleButton } from "../ui/form";
+import {
+  assumptionHint,
+  field,
+  parseNonNegative,
+  parseNumber,
+  pctPoints,
+  tryExampleButton,
+} from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { sensitivityTable, sensitivityToggle } from "../ui/sensitivity";
 import type { TileContext, TileDefinition } from "./types";
@@ -173,12 +180,12 @@ export function mountDrawdown(ctx: TileContext): void {
       const high = fields.realReturnPct + RETURN_DELTA;
       resultContainer.append(
         sensitivityTable(
-          `If your real return runs ${RETURN_DELTA} points either side of your ${fields.realReturnPct}% assumption:`,
+          `If your real return runs ${RETURN_DELTA} points either side of your ${pctPoints(fields.realReturnPct)} assumption:`,
           [
             { label: "Lower return", assumption: `${low}%`, result: yearsLabelAt(low) },
             {
               label: "Your assumption",
-              assumption: `${fields.realReturnPct}%`,
+              assumption: pctPoints(fields.realReturnPct),
               result: yearsLabelAt(fields.realReturnPct),
               base: true,
             },

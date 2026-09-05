@@ -6,7 +6,7 @@
  */
 import { Money } from "../engine/money";
 import { el } from "../ui/dom";
-import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
+import { field, parseNonNegative, pct, pctPoints, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { donutChart, paletteVar } from "../ui/charts";
 import type { TileContext, TileDefinition } from "./types";
@@ -104,10 +104,18 @@ export function mountSpendingPlan(ctx: TileContext): void {
     chartContainer.replaceChildren(
       donutChart({
         slices: [
-          { label: `Needs (${fields.needsPct}%)`, value: needs.toNumber(), color: paletteVar(0) },
-          { label: `Wants (${fields.wantsPct}%)`, value: wants.toNumber(), color: paletteVar(1) },
           {
-            label: `Savings & debt payoff (${savingsPct}%)`,
+            label: `Needs (${pctPoints(fields.needsPct)})`,
+            value: needs.toNumber(),
+            color: paletteVar(0),
+          },
+          {
+            label: `Wants (${pctPoints(fields.wantsPct)})`,
+            value: wants.toNumber(),
+            color: paletteVar(1),
+          },
+          {
+            label: `Savings & debt payoff (${pctPoints(savingsPct)})`,
             value: savings.toNumber(),
             color: "var(--enk-accent)",
           },

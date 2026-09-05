@@ -26,6 +26,7 @@ import {
   parseNonNegative,
   parseNumber,
   pct,
+  pctPoints,
   tryExampleButton,
 } from "../ui/form";
 import type { SituationStore } from "../profile/situation";
@@ -254,7 +255,9 @@ export function mountPeaceOfMind(ctx: TileContext): void {
     );
   }
   if (didClamp(ctx.params, "wr", parseNumber(ctx.params.get("wr"), 4), config.withdrawalRatePct)) {
-    clampMessages.push(`the withdrawal rate was raised to its ${config.withdrawalRatePct}% floor`);
+    clampMessages.push(
+      `the withdrawal rate was raised to its ${pctPoints(config.withdrawalRatePct)} floor`,
+    );
   }
 
   const dashboard = el("div", { class: "ph-dashboard", attrs: { "aria-live": "polite" } });

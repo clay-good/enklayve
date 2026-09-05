@@ -103,6 +103,27 @@ export function pct(rate: number, digits = 2): string {
 }
 
 /**
+ * Format a figure that is already in percentage *points* — a "6.5" that means
+ * 6.5%, which is what every rate field on this site holds.
+ *
+ * {@link pct} takes a 0–1 rate and pads to a fixed width, which is right above
+ * an answer and wrong inside a sentence: "5.00% college inflation" is a worse
+ * line than "5% college inflation". So this groups and trims instead of
+ * padding, and every reading a person would actually type comes out byte for
+ * byte as it did when these were template interpolations.
+ *
+ * What changes is the reading nobody types. Fourteen labels across seven tiles
+ * dropped a raw field straight into a string, so a stress-test rate of 1e15 —
+ * which is allowed, deliberately, because an assumption is never clamped here —
+ * arrived as "1000000000000000% appreciation": an unbroken run of digits in a
+ * sentence about the reader's own number.
+ */
+export function pctPoints(points: number, maxDigits = 2): string {
+  if (!Number.isFinite(points)) return "(out of range)";
+  return `${points.toLocaleString("en-US", { maximumFractionDigits: maxDigits })}%`;
+}
+
+/**
  * Format a percentage-of-a-line figure without rounding it onto a line it is
  * not on.
  *

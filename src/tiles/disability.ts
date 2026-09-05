@@ -8,7 +8,7 @@
 import { Money } from "../engine/money";
 import { disabilityCoverageNeed } from "../engine/finance";
 import { el } from "../ui/dom";
-import { field, parseNonNegative, tryExampleButton } from "../ui/form";
+import { field, parseNonNegative, pctPoints, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
@@ -80,7 +80,7 @@ export function mountDisability(ctx: TileContext): void {
 
     const lines: BreakdownLine[] = [
       {
-        label: `Income to replace (${fields.replacementRatePct}%)`,
+        label: `Income to replace (${pctPoints(fields.replacementRatePct)})`,
         value: `${fmt(r.targetMonthly)}/mo`,
       },
       { label: "Already covered", value: `${fmt(r.coveredMonthly)}/mo` },

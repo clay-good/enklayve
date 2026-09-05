@@ -10,7 +10,7 @@ import { Money } from "../engine/money";
 import { rothConversionLadder } from "../engine/taxMoves";
 import type { CitationData } from "../data/schemas";
 import { el } from "../ui/dom";
-import { field, parseNonNegative, tryExampleButton } from "../ui/form";
+import { field, parseNonNegative, pctPoints, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import type { TileContext, TileDefinition } from "./types";
 
@@ -105,7 +105,7 @@ export function mountRothLadder(ctx: TileContext): void {
     }));
     lines.push({ label: "Total converted", value: fmt(r.totalConverted), emphasis: true });
     lines.push({
-      label: `Estimated conversion tax (at ${fields.ordinaryRatePct}%)`,
+      label: `Estimated conversion tax (at ${pctPoints(fields.ordinaryRatePct)})`,
       value: fmt(r.totalEstimatedTax),
     });
     lines.push({

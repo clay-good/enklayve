@@ -9,7 +9,7 @@
 import { Money } from "../engine/money";
 import { clampYears, collegeCostPlan } from "../engine/finance";
 import { el } from "../ui/dom";
-import { assumptionHints, field, parseNonNegative, tryExampleButton } from "../ui/form";
+import { assumptionHints, field, parseNonNegative, pctPoints, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { sensitivityTable, sensitivityToggle } from "../ui/sensitivity";
 import type { TileContext, TileDefinition } from "./types";
@@ -141,7 +141,7 @@ export function mountCollegeCost(ctx: TileContext): void {
       },
       {
         label: "Assumptions",
-        value: `${fields.costInflationPct}% college inflation, ${fields.expectedReturnPct}% return, both yours to change. Targets the full cost by freshman year.`,
+        value: `${pctPoints(fields.costInflationPct)} college inflation, ${pctPoints(fields.expectedReturnPct)} return, both yours to change. Targets the full cost by freshman year.`,
       },
     ];
 
@@ -166,7 +166,7 @@ export function mountCollegeCost(ctx: TileContext): void {
       const high = fields.costInflationPct + INFLATION_DELTA;
       resultContainer.append(
         sensitivityTable(
-          `If college inflation runs ${INFLATION_DELTA} points either side of your ${fields.costInflationPct}% assumption:`,
+          `If college inflation runs ${INFLATION_DELTA} points either side of your ${pctPoints(fields.costInflationPct)} assumption:`,
           [
             {
               label: "Lower inflation",
@@ -175,7 +175,7 @@ export function mountCollegeCost(ctx: TileContext): void {
             },
             {
               label: "Your assumption",
-              assumption: `${fields.costInflationPct}%`,
+              assumption: pctPoints(fields.costInflationPct),
               result: fmt(r.monthlyContribution),
               base: true,
             },
