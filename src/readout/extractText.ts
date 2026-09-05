@@ -131,6 +131,46 @@ async function loadReader<T>(load: () => Promise<T>, what: string): Promise<T> {
 }
 
 /**
+ * Open a PDF, and say what is wrong with it in the reader's terms.
+ *
+ * pdf.js rejects with its own exception types, and their messages are written
+ * for the library's caller rather than for the person at the keyboard. A
+ * password-protected file rejects with **“No password given”**, which is what
+ * the Readout used to put on screen — and a locked PDF is not an edge case
+ * here: payroll providers and banks routinely deliver a W-2, a 1099 or a
+ * statement encrypted, often with the last four of an SSN as the password. So
+ * the most likely single reason a real tax document fails to open was answered
+ * with four words that name no cause, offer no next step, and do not say that
+ * this page has nowhere to type a password.
+ *
+ * The wording says what to do instead, and repeats the promise, because the
+ * suggestion is "open it somewhere else and come back" and the reason someone
+ * chose this page is that nothing leaves the device.
+ */
+async function openPdf<T>(open: () => Promise<T>): Promise<T> {
+  try {
+    return await open();
+  } catch (err) {
+    const name = (err as { name?: string }).name ?? "";
+    if (name === "PasswordException") {
+      throw new Error(
+        "This PDF is password-protected, and there is nowhere here to type the password — " +
+          "opening it would mean this page holding one. Open it in your usual PDF reader, save " +
+          "an unlocked copy, and drop that here instead. Pasting the text works too, and " +
+          "either way nothing you drop leaves this device.",
+      );
+    }
+    if (name === "InvalidPDFException") {
+      throw new Error(
+        "This file ends in .pdf but is not one a reader can open — it may be damaged, or saved " +
+          "from another format under that name. Try re-downloading it, or paste the text.",
+      );
+    }
+    throw err;
+  }
+}
+
+/**
  * Read a PDF entirely on the device, with no network access. A PDF with a text
  * layer is read from it directly; one without — a scan — is rendered page by
  * page and read by OCR instead.
@@ -148,7 +188,7 @@ async function extractPdf(file: File): Promise<ExtractedText> {
   const data = new Uint8Array(await file.arrayBuffer());
   // No cmap/standard-font URLs and isEvalSupported:false => no runtime fetch,
   // honoring `connect-src 'none'`.
-  const doc = await pdfjs.getDocument({ data, isEvalSupported: false }).promise;
+  const doc = await openPdf(() => pdfjs.getDocument({ data, isEvalSupported: false }).promise);
   const pages: string[] = [];
   for (let i = 1; i <= doc.numPages; i += 1) {
     const page = await doc.getPage(i);

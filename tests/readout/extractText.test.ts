@@ -138,3 +138,68 @@ describe("a heavy reader that cannot be loaded", () => {
     vi.resetModules();
   });
 });
+
+/**
+ * A locked PDF is the likeliest way a real tax document fails to open here.
+ *
+ * Payroll providers and banks routinely deliver a W-2, a 1099 or a statement
+ * encrypted — often with the last four of an SSN as the password. pdf.js
+ * rejects those with `PasswordException`, whose message is “No password
+ * given”, and the Readout put that on the screen: four words naming no cause,
+ * offering no next step, and not saying that this page has nowhere to type a
+ * password.
+ *
+ * Driven through a stubbed `pdfjs-dist` rather than a real encrypted PDF,
+ * because what is under test is the translation, and building a genuinely
+ * encrypted PDF by hand to assert a sentence would be testing pdf.js.
+ */
+describe("a PDF that will not open", () => {
+  async function readStubbedPdf(name: string, message: string): Promise<Error> {
+    vi.resetModules();
+    vi.doMock("pdfjs-dist", () => ({
+      GlobalWorkerOptions: { workerSrc: "" },
+      getDocument: () => ({
+        promise: Promise.reject(Object.assign(new Error(message), { name })),
+      }),
+    }));
+    vi.doMock("pdfjs-dist/build/pdf.worker.min.mjs?url", () => ({ default: "/worker.js" }));
+    const { extractTextFromFile } = await import("../../src/readout/extractText");
+    const file = new File([new Uint8Array([0x25, 0x50, 0x44, 0x46])], "w2.pdf", {
+      type: "application/pdf",
+    });
+    return extractTextFromFile(file).then(
+      () => {
+        throw new Error("expected the read to fail");
+      },
+      (e: Error) => e,
+    );
+  }
+
+  it("says a password-protected file is locked, and what to do instead", async () => {
+    const err = await readStubbedPdf("PasswordException", "No password given");
+    expect(err.message).toMatch(/password-protected/);
+    expect(err.message).toMatch(/nowhere here to type the password/);
+    expect(err.message).toMatch(/save an unlocked copy/i);
+    // The promise is repeated, because the suggestion is "open it somewhere
+    // else and come back" and the promise is why this page was chosen.
+    expect(err.message).toMatch(/nothing you drop leaves this device/);
+    expect(err.message).not.toMatch(/No password given/);
+    vi.doUnmock("pdfjs-dist");
+    vi.resetModules();
+  });
+
+  it("says a file that is not really a PDF is not one, rather than naming a structure", async () => {
+    const err = await readStubbedPdf("InvalidPDFException", "Invalid PDF structure.");
+    expect(err.message).toMatch(/not one a reader can open/);
+    expect(err.message).not.toMatch(/Invalid PDF structure/);
+    vi.doUnmock("pdfjs-dist");
+    vi.resetModules();
+  });
+
+  it("passes anything else through untouched, rather than guessing at it", async () => {
+    const err = await readStubbedPdf("UnexpectedResponseException", "something else entirely");
+    expect(err.message).toBe("something else entirely");
+    vi.doUnmock("pdfjs-dist");
+    vi.resetModules();
+  });
+});
