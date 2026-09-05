@@ -349,7 +349,10 @@ describe("what the audit says when the budget passes", () => {
       265,
     );
     expect(line).toContain("242.0 of 265 kB gzipped");
-    expect(line).toContain("23.0 kB free");
+    // The headroom CI will have, not the one this machine has: 265 − 242 − the
+    // half-kilobyte CI reads heavier. The local figure is what got quoted into
+    // the README and the checklist for a shell CI had less room for.
+    expect(line).toContain("22.5 kB free in CI");
     expect(line).toContain("2 assets");
     // Naming the biggest one is what turns the number into somewhere to look.
     expect(line).toContain("/assets/index-abc.js");
@@ -357,7 +360,7 @@ describe("what the audit says when the budget passes", () => {
 
   it("says a negative headroom rather than hiding it behind a zero", () => {
     const line = shellSummary([{ path: "/a.js", gzipBytes: kb(300) }], 265);
-    expect(line).toContain("-35.0 kB free");
+    expect(line).toContain("-35.5 kB free in CI");
   });
 
   it("does not fall over on an empty precache list", () => {
@@ -572,9 +575,14 @@ describe("checkBundleBudget", () => {
     // 284.4 on the same tree, and three commits went to `main` green here and
     // red there. A pass this machine cannot promise another machine will repeat
     // is not a pass.
+    //
+    // And it was then measured against the local figure, so it lasted one more
+    // raise: 1.0 kB free here is 0.5 in CI, which fails the same rule after the
+    // push. Eight commits went to `main` that way on 2026-09-05. The spread
+    // comes off before the rule is applied now.
     const [violation] = checkBundleBudget([{ path: "/assets/index.js", gzipBytes: kb(99.5) }], 100);
     expect(violation).toContain("99.5 kB gzipped");
-    expect(violation).toContain("by only 0.5 kB");
+    expect(violation).toContain("leaves 0.0 kB under its 100 kB budget");
     expect(violation).toContain(`less than the ${MIN_HEADROOM_KB} kB`);
     expect(violation).toContain("/assets/index.js 100 kB");
   });

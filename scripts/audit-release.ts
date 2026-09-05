@@ -391,8 +391,36 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * rather than after the push. The levers are unchanged and every one of them is
  * still rejected on the grounds written above; this raise is argued on the gate
  * being reproducible, which is the only property that made it worth having.
+ *
+ * **Raised 286 -> 288 on 2026-09-05, hours later, because the check that was
+ * supposed to prevent exactly this did not.** {@link MIN_HEADROOM_KB} was set
+ * to one kilobyte and compared against the LOCAL figure, which is the reading
+ * this comment had already established runs about half a kilobyte low. A shell
+ * measuring 285.0 here has 1.0 kB of local headroom, passes, and arrives in CI
+ * at 285.5 with 0.5 — under the same one-kilobyte rule, failing. Eight commits
+ * went to `main` that way, green locally and red in CI, on the failure this
+ * paragraph's own predecessor described one raise earlier. The rule was right
+ * and it was being applied to the wrong number.
+ *
+ * So the check subtracts the spread before it judges (see
+ * {@link MEASUREMENT_SPREAD_KB}), and a local pass now means CI passes with the
+ * same margin. That costs a kilobyte of nominal budget on its own, because the
+ * old 286 minus today's shell minus the spread is half a kilobyte and the rule
+ * asks for one.
+ *
+ * The other kilobyte is content, and it is the day's argument: the Readout
+ * naming the figure a second document replaced rather than replacing it in
+ * silence, the Report saying it cannot size two child credits rather than
+ * sizing them for a household it assumed childless, and My Plan asking about
+ * the employer match — two form fields and a step that tells zero from silence
+ * — rather than reporting a step satisfied that nobody had been asked about.
+ * Three answers about a reader's own money that the site used to give without
+ * having the input, now either asked for or declined out loud.
+ *
+ * The levers are unchanged and every one is still rejected on the grounds
+ * written above.
  */
-export const SHELL_GZIP_BUDGET_KB = 286;
+export const SHELL_GZIP_BUDGET_KB = 288;
 
 /**
  * The headroom this gate needs to be measuring the shell rather than the runner.
@@ -411,6 +439,29 @@ export const SHELL_GZIP_BUDGET_KB = 286;
  * only just covers the spread is the same mistake again.
  */
 export const MIN_HEADROOM_KB = 1;
+
+/**
+ * How much higher CI reads this number than a developer machine does.
+ *
+ * zlib does not produce identical output across versions, and the direction is
+ * consistent: every measurement recorded here has CI heavier. 2026-09-03 saw
+ * 281.7 local against 282.0, then 281.8 against 282.2; 2026-09-05 saw 285.0
+ * local against 285.4 and 285.5 in three separate runs.
+ *
+ * The paragraph on {@link SHELL_GZIP_BUDGET_KB} that introduced
+ * {@link MIN_HEADROOM_KB} stated the rule correctly — "the headroom must exceed
+ * the spread between environments" — and then compared the rule against the
+ * local figure, which is the one that is wrong by the spread. A shell at 285.0
+ * has a kilobyte of local headroom, passes here, and lands in CI at 285.5 with
+ * half of one, failing the identical rule. Eight commits went to `main` that
+ * way.
+ *
+ * Subtracting it first is what makes a local pass a prediction rather than an
+ * estimate. It is deliberately the observed spread rather than a rounder,
+ * safer number: an inflated one buys a quiet margin at the cost of the budget
+ * meaning what it says.
+ */
+export const MEASUREMENT_SPREAD_KB = 0.5;
 
 /** A precached asset and its gzipped size. */
 export interface ShellAsset {
@@ -464,14 +515,18 @@ export function checkBundleBudget(
       `the precached shell is ${totalKb.toFixed(1)} kB gzipped, over its ${budgetKb} kB budget ` +
         `(largest: ${biggest}). Trim it, or raise SHELL_GZIP_BUDGET_KB deliberately and say why.`,
     ];
-  // Inside the budget by less than the spread between two zlib versions is a
-  // pass this machine cannot promise CI will repeat. See MIN_HEADROOM_KB.
-  if (budgetKb - totalKb < MIN_HEADROOM_KB)
+  // Judge the headroom CI will have, not the one this machine has. A local
+  // reading runs about MEASUREMENT_SPREAD_KB low, so comparing the rule against
+  // it passes a shell that fails the identical rule after the push — which is
+  // exactly what happened for eight commits on 2026-09-05.
+  const ciHeadroomKb = budgetKb - totalKb - MEASUREMENT_SPREAD_KB;
+  if (ciHeadroomKb < MIN_HEADROOM_KB)
     return [
-      `the precached shell is ${totalKb.toFixed(1)} kB gzipped, inside its ${budgetKb} kB budget ` +
-        `by only ${(budgetKb - totalKb).toFixed(1)} kB — less than the ${MIN_HEADROOM_KB} kB this ` +
-        `check needs to mean the same thing on another machine (largest: ${biggest}). Trim it, or ` +
-        "raise SHELL_GZIP_BUDGET_KB deliberately and say why.",
+      `the precached shell is ${totalKb.toFixed(1)} kB gzipped, which leaves ` +
+        `${ciHeadroomKb.toFixed(1)} kB under its ${budgetKb} kB budget once the ` +
+        `${MEASUREMENT_SPREAD_KB} kB CI reads heavier is taken off — less than the ` +
+        `${MIN_HEADROOM_KB} kB this check needs to mean the same thing on another machine ` +
+        `(largest: ${biggest}). Trim it, or raise SHELL_GZIP_BUDGET_KB deliberately and say why.`,
     ];
   return [];
 }
@@ -567,12 +622,16 @@ export function shellSummary(
   budgetKb: number = SHELL_GZIP_BUDGET_KB,
 ): string {
   const totalKb = assets.reduce((sum, a) => sum + a.gzipBytes, 0) / 1024;
-  const freeKb = budgetKb - totalKb;
+  // The headroom CI will see, not the one this machine sees. This is the line
+  // people quote into the checklist and the README, and quoting the local
+  // figure is how "1.8 kB free" and "1.0 kB free" came to be written down for a
+  // shell that CI had half a kilobyte less room for. See MEASUREMENT_SPREAD_KB.
+  const freeKb = budgetKb - totalKb - MEASUREMENT_SPREAD_KB;
   const biggest = [...assets].sort((a, b) => b.gzipBytes - a.gzipBytes)[0];
   const largest = biggest ? `, largest ${biggest.path}` : "";
   return (
     `precached shell ${totalKb.toFixed(1)} of ${budgetKb} kB gzipped, ` +
-    `${freeKb.toFixed(1)} kB free across ${assets.length} assets${largest}`
+    `${freeKb.toFixed(1)} kB free in CI across ${assets.length} assets${largest}`
   );
 }
 
