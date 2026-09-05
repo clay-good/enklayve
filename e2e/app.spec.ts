@@ -312,3 +312,69 @@ test("a 2026 W-2 carries its tips and overtime into Take-Home", async ({ page })
   await expect(page.locator('input[name="tips"]').first()).toHaveValue("14000");
   await expect(page.locator('input[name="ot"]').first()).toHaveValue("3200");
 });
+
+/**
+ * The debt list reaches the Report, in the browser the Report is read in.
+ *
+ * `debts` was declared in My Situation, read by six surfaces, and written by
+ * none until 2026-09-05: the Debt Freedom Planner asked for the whole list —
+ * name, balance, rate — read the field to seed itself, and never wrote it back.
+ * The Report's "Net worth (savings − debts)" therefore subtracted nothing, so a
+ * household carrying real debt read its net worth as its savings, positive, in
+ * the one artifact this product asks it to keep.
+ *
+ * The unit suite holds each half. This holds the chain, in a real browser and
+ * across a route change, because a value that survives a happy-dom `set` and a
+ * happy-dom `get` has not yet proved it survives the app.
+ */
+test("debts entered in the planner reach the Report's net worth", async ({ page }) => {
+  // Both tiles are driven by pressing their own worked example, because that is
+  // what writes to My Situation: a deep link seeds the *form*, and only an edit
+  // or the example writes the profile the Report reads.
+  await page.goto("/#/paycheck-taxes?tool=take-home");
+  await page.waitForSelector(".tile-form");
+  await page.getByRole("button", { name: /try an example/i }).click();
+
+  await page.goto("/#/where-you-stand?tool=peace-of-mind");
+  await page.waitForSelector(".tile-form");
+  await page.getByRole("button", { name: /try an example/i }).click();
+
+  // Without any debts, net worth is the savings alone.
+  await page.goto("/#/report");
+  await page.waitForSelector(".report-body");
+  const netWorth = (): ReturnType<typeof page.locator> =>
+    page.locator(".report-table tr", { hasText: "Net worth" }).first();
+  await expect(netWorth()).toContainText("$12,000");
+
+  // Enter two debts and choose a payoff method, which is what a reader does.
+  await page.goto(
+    "/#/debt?tool=debt-freedom&k=2&c0=Visa&b0=6000&r0=20&m0=150&c1=Car&b1=4000&r1=6&m1=200&x=300",
+  );
+  await page.waitForSelector(".tile-form");
+  await page.getByRole("button", { name: /use the avalanche method/i }).click();
+
+  await page.goto("/#/report");
+  await page.waitForSelector(".report-body");
+  // $12,000 saved less the $10,000 owed.
+  await expect(netWorth()).toContainText("$2,000");
+
+  // My Plan still will not name a debt, and that is the *other* fix of the same
+  // day working: "capture the employer match" comes first in the ladder, and an
+  // unanswered match is a question now rather than an assumption that it is
+  // already captured.
+  await expect(page.locator(".report-body")).toContainText("Capture the full employer match");
+
+  // Answer it with zero — a real answer, "my employer offers none" — in the
+  // tile that asks. Editing a field is what writes the profile, so the age box
+  // is retyped after the deep link seeds the two match figures.
+  await page.goto("/#/retirement?tool=retirement-optimizer&m=0&mc=0");
+  await page.waitForSelector(".tile-form");
+  await page.locator('input[name="age"]').fill("40");
+
+  await page.goto("/#/report");
+  await page.waitForSelector(".report-body");
+  // Now the ladder reaches the step the debt list unlocked, and names the 20%
+  // card the avalanche picked.
+  await expect(page.locator(".report-body")).toContainText("Clear high-cost debt");
+  await expect(page.locator(".report-body")).toContainText("Visa");
+});
