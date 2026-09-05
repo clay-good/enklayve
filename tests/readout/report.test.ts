@@ -138,6 +138,41 @@ describe("Readout Report, model", () => {
     expect(ctc?.value).toMatch(/\$/);
   });
 
+  it("says the child credits are not estimated when nothing records the ages", () => {
+    // Both credits turn on a count of qualifying children, taken from `ages` —
+    // and nothing on the site writes `ages`. The Child Tax Estimator, the EITC
+    // tile and the screener each ask for a child count and each keep it. So
+    // this section computed a childless household's credits while the section
+    // above it drew the poverty line for a household of four: a family with two
+    // children was shown the smaller EITC and no CTC at all, in a document they
+    // keep. Inventing an age from a household size would be the inference this
+    // project refuses, so the gap is named instead.
+    const p = new SituationStore();
+    p.set("annualIncome", 38_000);
+    p.set("filingStatus", "married_jointly");
+    p.set("stateCode", "ca");
+    p.set("householdSize", 4);
+    const owed = buildReport(p, data).sections.find((s) => s.title === "What you may be owed")!;
+    const note = owed.lines.find((l) => l.label === "Child credits");
+    expect(note?.value).toMatch(/assume no qualifying children/);
+    expect(note?.value).toMatch(/What Am I Owed screener/);
+
+    // A one-person household cannot have a qualifying child, so the note there
+    // would be noise rather than honesty.
+    const solo = new SituationStore();
+    solo.set("annualIncome", 38_000);
+    solo.set("householdSize", 1);
+    const soloOwed = buildReport(solo, data).sections.find(
+      (s) => s.title === "What you may be owed",
+    )!;
+    expect(soloOwed.lines.some((l) => l.label === "Child credits")).toBe(false);
+
+    // And it goes away once the ages are there, because then the figures are real.
+    p.set("ages", [40, 38, 10, 8]);
+    const withAges = buildReport(p, data).sections.find((s) => s.title === "What you may be owed")!;
+    expect(withAges.lines.some((l) => l.label === "Child credits")).toBe(false);
+  });
+
   it("degrades gracefully when no income is entered", () => {
     const model = buildReport(new SituationStore(), data);
     expect(model.hasIncomeData).toBe(false);

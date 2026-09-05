@@ -308,6 +308,25 @@ export function buildReport(
       owedLines.push({ label: "Child Tax Credit (estimated)", value: usd(ctc.credit) });
       citations.push(eitcCtc.citation);
     }
+    // Both credits above turn on the number of qualifying children, which is
+    // counted from `ages` — and **nothing on this site writes `ages`**. The
+    // Child Tax Estimator, the EITC tile and the screener each ask for a child
+    // count and each keep it to themselves, so this section has always computed
+    // a childless household's credits while the section above it drew the
+    // poverty line for a household of four. A family with two children was told
+    // the smaller EITC and no CTC at all, in a document they keep.
+    //
+    // Saying so is the fix available here; inventing an age from a household
+    // size would be the inference this project does not make. It is asked only
+    // where a child is possible: a one-person household cannot have a
+    // qualifying one, and a note there would be noise rather than honesty.
+    if (qualifyingChildren === 0 && (householdSize === undefined || householdSize > 1)) {
+      owedLines.push({
+        label: "Child credits",
+        value:
+          "Not estimated here. Nothing on this device records your household's ages, so the figures above assume no qualifying children — the What Am I Owed screener asks, and sizes both.",
+      });
+    }
   }
   sections.push({
     title: "What you may be owed",
