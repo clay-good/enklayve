@@ -6,6 +6,7 @@ import { mountOwedScreener } from "../../src/tiles/owedScreener";
 import {
   acaCreditEligible,
   estimatePremiumTaxCredit,
+  estimateSnap,
   medicaidEligibility,
   fplPercent,
 } from "../../src/engine/benefits";
@@ -49,9 +50,20 @@ import type { TileContext } from "../../src/tiles/types";
  * is the last one to leave out. Its resource curve is now held to the same
  * standard as the other two.
  *
- * Both came back green, which is the outcome to want and not evidence the sweep
- * was unnecessary — the four bugs it was written for were found by hand, one at
- * a time, and each had been green in every other sense for as long as it stood.
+ * **And SNAP joined, the third program with more than one surface.** It is the
+ * only one the saved Report deliberately does not carry — it points at the
+ * screener instead — so the pair is the screener and the chart. Worth pinning
+ * because the chart reads SNAP's `monthlyBenefit` without checking `eligible`,
+ * which is the exact shape of the ACA bug fixed two lines above it in
+ * `resourcesAt`, and is correct today only because `estimateSnap` returns zero
+ * for an ineligible household where `estimatePremiumTaxCredit` returns a credit
+ * computed for display. That is a silent coupling between two engine functions
+ * that do not otherwise resemble each other, and nothing held it.
+ *
+ * All of it came back green, which is the outcome to want and not evidence the
+ * sweep was unnecessary — the four bugs it was written for were found by hand,
+ * one at a time, and each had been green in every other sense for as long as it
+ * stood.
  */
 let data: BundledData;
 beforeAll(async () => {
@@ -183,6 +195,27 @@ function explorerCredit(income: number, state: string, size: number): number {
   return resourcesAt(income, input, cliffData).acaPremiumCredit;
 }
 
+/** The same chart's SNAP term, in dollars a year. */
+function explorerSnap(income: number, state: string, size: number): number {
+  const input: CliffInput = {
+    filingStatus: "single",
+    householdSize: size,
+    qualifyingChildren: 0,
+    stateCode: state,
+    benchmarkMonthlyPremium: BENCHMARK_MONTHLY_PREMIUM,
+  };
+  const cliffData: CliffData = {
+    tax: { federal: data.federal()!, fica: data.fica()!, state: data.state(state) ?? undefined },
+    fpl: data.fpl("contiguous"),
+    eitcCtc: data.eitcCtc(),
+    aca: data.aca(),
+    snap: data.snap(),
+    medicaid: data.medicaid(),
+    snapRegionSupported: true,
+  };
+  return resourcesAt(income, input, cliffData).snapAllotment;
+}
+
 /** The Report's "what you may be owed" line labels for the same household. */
 function reportOwed(income: number, state: string, size: number): string[] {
   const section = buildReport(profileFor(income, state, size), data).sections.find(
@@ -267,6 +300,43 @@ describe("the screener and the saved Report answer one household the same way", 
           acaCreditEligible(pct, data.aca()!),
           `${label}: the chart pays a credit the band excludes`,
         ).toBe(true);
+      }
+    });
+
+    it(`the screener and the cliff chart agree about SNAP at ${label}`, () => {
+      // SNAP is the third program with more than one surface, and the only one
+      // the saved Report deliberately does not carry — it points at the
+      // screener instead, so the pair here is the screener and the chart.
+      //
+      // The chart reads `monthlyBenefit` without checking `eligible`, which is
+      // the exact shape of the ACA bug fixed two lines above it in
+      // `resourcesAt`. It is correct only because `estimateSnap` returns zero
+      // for an ineligible household, where `estimatePremiumTaxCredit` returns a
+      // credit computed for display and needs the gate applied by its caller.
+      // That difference is a silent coupling: the day SNAP's engine grows a
+      // display figure of its own, the chart starts inventing food assistance
+      // for households that fail the income test, flattening the very cliff it
+      // exists to draw, and nothing else in the suite would notice.
+      const snap = estimateSnap(
+        { householdSize: size, monthlyGrossIncome: income / 12 },
+        data.snap()!,
+        data.fpl("contiguous")!,
+      );
+      const screenerSaysSnap = screenerFindings(income, state, size).some((t) =>
+        t.includes("SNAP (food assistance)"),
+      );
+      expect(screenerSaysSnap, `${label}: screener disagrees with the engine on SNAP`).toBe(
+        snap.eligible,
+      );
+      expect(
+        explorerSnap(income, state, size),
+        `${label}: the chart's SNAP term disagrees with the engine`,
+      ).toBeCloseTo(snap.monthlyBenefit.toNumber() * 12, 2);
+      if (!snap.eligible) {
+        expect(
+          explorerSnap(income, state, size),
+          `${label}: the chart pays SNAP to a household that fails the income test`,
+        ).toBe(0);
       }
     });
   }
