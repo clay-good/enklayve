@@ -144,7 +144,20 @@ export interface PlanResult {
 }
 
 const usd = (n: number): string => Money.from(n).format("en-US");
-const ratePct = (n: number): string => `${n}%`;
+/**
+ * A rate in percentage points, grouped and trimmed.
+ *
+ * It was `` `${n}%` `` — a raw interpolation sitting one line under `usd`,
+ * which formats properly through `Money`. The rates here come from a debt list
+ * in My Situation rather than from a form, so nothing on the way in had rounded
+ * them: the Report printed "Attack your card next, $1,000,000,000,000,000.00 at
+ * 1000000000000000%". Trimmed rather than padded, so "24.99%" and "6%" both
+ * print as written.
+ */
+const ratePct = (n: number): string =>
+  Number.isFinite(n)
+    ? `${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}%`
+    : "(out of range)";
 const positiveGap = (target: number, have: number): number => Math.max(0, target - have);
 
 interface StepEval {

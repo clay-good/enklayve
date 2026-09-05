@@ -116,3 +116,64 @@ describe("Readout Report view", () => {
     });
   });
 });
+
+/**
+ * The Report is built from My Situation, and My Situation is not a form.
+ *
+ * Every hostile-input sweep in this repo drives a tile through its fields or its
+ * fragment. The Report has neither: it renders whatever the profile holds, which
+ * a restored file or a confirmed document put there. `plan.ts` formatted its
+ * dollar figures through `Money` and its rates with a bare `${n}%` one line
+ * below, so a debt list carrying a large rate printed "Attack your card next,
+ * $1,000,000,000,000,000.00 at 1000000000000000%" — one formatted figure and one
+ * not, in the same sentence.
+ */
+describe("the Report against a profile no form could have produced", () => {
+  const NON_FINITE = /\b(NaN|Infinity|-Infinity)\b|∞/;
+  const UNFORMATTED = /\$\d{7,}|\d{7,}(?:\.\d+)?\s*%/;
+
+  function hostileProfile(): SituationStore {
+    const store = new SituationStore();
+    store.load({
+      values: {
+        filingStatus: "single",
+        stateCode: "CA",
+        annualIncome: 1e308,
+        essentialMonthlyExpenses: 0.01,
+        liquidSavings: 1e308,
+        debts: Array.from({ length: 5_000 }, (_, i) => ({
+          name: `d${i}`,
+          balance: 1e308,
+          ratePct: 1e308,
+        })),
+      },
+      sources: {},
+    } as never);
+    return store;
+  }
+
+  it("renders without a non-finite or unformatted figure", () => {
+    const container = document.createElement("div");
+    expect(() =>
+      renderReport({ container, navigate: () => {}, profile: hostileProfile(), data }),
+    ).not.toThrow();
+    const text = (container.textContent ?? "").replace(/\s+/g, " ");
+    expect(text).not.toMatch(NON_FINITE);
+    const hit = UNFORMATTED.exec(text);
+    expect(
+      hit ? text.slice(Math.max(0, hit.index - 50), hit.index + 30) : null,
+      "the Report sent an unformatted figure to the screen",
+    ).toBeNull();
+  });
+
+  it("still prints a real rate the way it was entered", () => {
+    const store = new SituationStore();
+    store.set("annualIncome", 82_000);
+    store.set("essentialMonthlyExpenses", 3_200);
+    store.set("liquidSavings", 12_000);
+    store.set("debts", [{ name: "Card", balance: 4_200, ratePct: 24.99 }]);
+    const container = document.createElement("div");
+    renderReport({ container, navigate: () => {}, profile: store, data });
+    expect(container.textContent).toContain("24.99%");
+  });
+});

@@ -322,6 +322,74 @@ describe("every calculator in the catalog", () => {
 });
 
 /**
+ * The hubs, which every sweep above skips.
+ *
+ * `SUB_TOOLS` is the calculators; `TILES` is the twelve hubs that host them, and
+ * a hub is a mounted surface with readings of its own — the Peace of Mind
+ * dashboard is a hub, not a calculator. Nothing swept them, and two figures were
+ * reaching the screen through that gap: the "% of the way" line on the Safe
+ * Harbor dashboard read **-3300000000000000000%** for a household whose debts
+ * exceed its assets, because the progress reading was capped at 100 and never
+ * floored at 0.
+ *
+ * A hub is driven through the profile rather than a form, so this uses the
+ * hostile *restored* profile: it is the input a hub actually has.
+ */
+describe("every hub survives what its calculators are swept for", () => {
+  function hostileProfile(): SituationStore {
+    const store = new SituationStore();
+    store.load({
+      values: {
+        filingStatus: "single",
+        stateCode: "CA",
+        householdSize: 1e308,
+        annualIncome: 1e308,
+        preTaxContributions: 1e308,
+        essentialMonthlyExpenses: 0.01,
+        totalMonthlyExpenses: 0.01,
+        liquidSavings: 1e308,
+        ages: Array.from({ length: 5_000 }, () => 40),
+        debts: Array.from({ length: 5_000 }, (_, i) => ({
+          name: `d${i}`,
+          balance: 1e308,
+          ratePct: 1e308,
+        })),
+      },
+      sources: {},
+    } as never);
+    return store;
+  }
+
+  for (const tile of TILES.filter((t) => t.mount)) {
+    it(`${tile.id} paints nothing non-finite or unformatted`, () => {
+      const root = document.createElement("div");
+      const params = new URLSearchParams(HOSTILE);
+      expect(
+        () =>
+          tile.mount!({
+            root,
+            params,
+            setParams: () => {},
+            permalink: () => "https://enklayve.com/#/x",
+            navigate: () => {},
+            locale: "en-US",
+            data,
+            profile: hostileProfile(),
+          } as TileContext),
+        `${tile.id} threw`,
+      ).not.toThrow();
+      const text = (root.textContent ?? "").replace(/\s+/g, " ");
+      expect(text, `${tile.id} painted a non-finite value`).not.toMatch(NON_FINITE);
+      const hit = UNFORMATTED_READING.exec(text) ?? UNCLAMPED_HORIZON.exec(text);
+      expect(
+        hit ? text.slice(Math.max(0, hit.index - 40), hit.index + 30) : null,
+        `${tile.id} sent an unformatted figure to the screen`,
+      ).toBeNull();
+    }, 60_000);
+  }
+});
+
+/**
  * The other door into a tile (SPEC-3 §2.3, the half that had no sweep).
  *
  * Everything above drives a tile through its form and its fragment, which is

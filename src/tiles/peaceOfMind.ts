@@ -146,8 +146,15 @@ function compute(profile: SituationStore, config: Config): Readings {
     // Both netWorth and `enough` can overflow to Infinity on absurd inputs
     // (essentials near Number.MAX_VALUE), and Infinity / Infinity is NaN — guard
     // it so the "% of the way" copy and the progress bar never render NaN.
+    // Floored as well as capped. The ceiling was here from the start; the floor
+    // was not, and a household whose debts exceed its assets has a negative net
+    // worth, so the dashboard told one of them "You're -3300000000000000000% of
+    // the way, every step counts." Nobody is less than nowhere on a progress
+    // bar, and 0% is both the honest reading and the calm one.
     enoughProgressPct:
-      enough > 0 && Number.isFinite(netWorth) ? Math.min(100, (netWorth / enough) * 100) : 0,
+      enough > 0 && Number.isFinite(netWorth)
+        ? Math.max(0, Math.min(100, (netWorth / enough) * 100))
+        : 0,
     enoughGap,
     monthsToEnough,
   };
