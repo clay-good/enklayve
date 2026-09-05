@@ -59,9 +59,12 @@ beforeAll(async () => {
 });
 
 /**
- * Every enum-ish param name used anywhere in the catalog, each set to a value
- * that is syntactically plausible and semantically nonsense — the shape of a
- * link that was valid a year ago, or was hand-edited.
+ * Enum-ish param names shared across the catalog, each set to a value that is
+ * syntactically plausible and semantically nonsense — the shape of a link that
+ * was valid a year ago, or was hand-edited.
+ *
+ * It used to claim to be *every* such name and was six of about seventeen. The
+ * per-tile ones are derived instead; see {@link hostileFor}.
  */
 const HOSTILE = new URLSearchParams({
   st: "ZZ",
@@ -82,6 +85,39 @@ const HOSTILE = new URLSearchParams({
   d: "not-a-mode",
   view: "nope",
 });
+
+/**
+ * The same, plus every enum control the tile in question actually renders.
+ *
+ * The list above claims to be "every enum-ish param name used anywhere in the
+ * catalog" and was six of about seventeen. `age65`, `hsa`, `pf`, `pr`, `r`,
+ * `m`, `from`, `to`, `period`, `dm` and `age` are all `<select>` values a link
+ * carries, and none of them was ever sent a nonsense value — so the sweep whose
+ * whole subject is a stale link read as covering the catalog while exercising a
+ * third of it.
+ *
+ * Reading the names off the tile's own rendered form is what the numeric half
+ * of this file already does, for the reason its comment gives: a hand-kept list
+ * covers what somebody remembered, and the failure is silent because the list
+ * still passes. A tile added tomorrow brings its own controls with it.
+ *
+ * All 69 calculators and 12 hubs already fall back correctly on every one, so
+ * closing this was a lock rather than a fix — but the claim in the paragraph
+ * above it was not true when it was written down.
+ */
+function hostileFor(tile: TileDefinition): URLSearchParams {
+  const params = new URLSearchParams(HOSTILE);
+  let clean: HTMLElement;
+  try {
+    clean = mount(tile, new URLSearchParams());
+  } catch {
+    return params;
+  }
+  for (const select of clean.querySelectorAll<HTMLSelectElement>("select")) {
+    if (select.name) params.set(select.name, "no-such-value-42");
+  }
+  return params;
+}
 
 function mount(tile: TileDefinition, params: URLSearchParams): HTMLElement {
   const root = document.createElement("div");
@@ -189,12 +225,13 @@ describe("every calculator in the catalog", () => {
   for (const tile of CALCULATORS) {
     describe(tile.id, () => {
       it("mounts against a hostile deep link without throwing", () => {
-        expect(() => mount(tile, new URLSearchParams(HOSTILE))).not.toThrow();
+        expect(() => mount(tile, hostileFor(tile))).not.toThrow();
       });
 
       it("falls back to a value the reader can see on every enum control", () => {
-        const root = mount(tile, new URLSearchParams(HOSTILE));
-        const nonsense = new Set([...HOSTILE.values()]);
+        const hostile = hostileFor(tile);
+        const root = mount(tile, hostile);
+        const nonsense = new Set([...hostile.values()]);
         for (const select of root.querySelectorAll("select")) {
           const options = [...select.options].map((o) => o.value);
           if (options.length === 0) continue;
@@ -216,7 +253,7 @@ describe("every calculator in the catalog", () => {
       });
 
       it("paints no NaN or Infinity for a hostile deep link", () => {
-        const text = mount(tile, new URLSearchParams(HOSTILE)).textContent ?? "";
+        const text = mount(tile, hostileFor(tile)).textContent ?? "";
         expect(text, `${tile.id} painted a non-finite value`).not.toMatch(NON_FINITE);
       });
 
@@ -306,7 +343,7 @@ describe("every calculator in the catalog", () => {
           .filter((n) => n.length > 0);
 
         for (const magnitude of ["1e308", "-1e308", "9".repeat(309)]) {
-          const absurd = new URLSearchParams(HOSTILE);
+          const absurd = hostileFor(tile);
           for (const name of names) absurd.set(name, magnitude);
           let root: HTMLElement | null = null;
           expect(
@@ -731,7 +768,7 @@ describe("every hub in the catalog", () => {
     }, 30000);
 
     it(`${hub.id} mounts against a hostile deep link and paints nothing non-finite`, () => {
-      const root = mount(hub, new URLSearchParams(HOSTILE));
+      const root = mount(hub, hostileFor(hub));
       expect(root.textContent ?? "").not.toMatch(NON_FINITE);
       // A `?tool=` naming nothing must land on the hub's default calculator
       // rather than an empty page.
