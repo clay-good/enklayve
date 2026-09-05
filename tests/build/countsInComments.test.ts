@@ -21,12 +21,19 @@ import { resolve } from "node:path";
  * that `readmeCounts.test.ts` reads, or in a figure derived from the registry
  * at run time.
  *
- * Scoped to shipped and build code. `tests/` may narrate the past — a case
- * recording that the README once claimed 63 calculators against a real 68 is a
- * historical fact, and rewriting it would erase the evidence.
+ * Scoped to shipped and build code. `tests/` and `e2e/` may narrate the past — a
+ * case recording that the README once claimed 63 calculators against a real 68
+ * is a historical fact, and rewriting it would erase the evidence.
+ *
+ * `worker/` was missing from that scope until 2026-09-05, which is the same
+ * shape as the link sweep skipping the repository root: a list of directories
+ * that leaves out shipped code, while the sentence above it says "shipped and
+ * build code". Nothing had drifted there — it is one file — and the list said
+ * something it did not do, which is the part worth fixing before a second file
+ * arrives beside it.
  */
 const ROOT = resolve(__dirname, "..", "..");
-const SCANNED = ["src", "scripts"];
+const SCANNED = ["src", "scripts", "worker"];
 
 /** Nouns whose counts this repo has watched drift. */
 const COUNTED = /\b(\d{2,3})[- ](calculators?|tiles?|hubs?|shards?|datasets?|jurisdictions?)\b/g;
