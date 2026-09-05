@@ -7,7 +7,7 @@
  * assumptions, clearly labeled — never forecasts (§2.1).
  */
 import { Money } from "../engine/money";
-import { rentVsBuy } from "../engine/finance";
+import { clampYears, rentVsBuy } from "../engine/finance";
 import { el } from "../ui/dom";
 import {
   assumptionHints,
@@ -63,12 +63,18 @@ const EXAMPLE: Fields = {
   band: false,
 };
 
+/**
+ * The horizon and the loan term are clamped here because the verdict sentence
+ * and the card heading both quote the horizon — "Renting is cheaper by $X over
+ * 1000000000000000 years" was a comparison run over 100 of them. The engine
+ * already clamped both; only the sentence did not know.
+ */
 function readFields(p: URLSearchParams): Fields {
   return {
     homePrice: parseNonNegative(p.get("price"), 0),
     downPayment: parseNonNegative(p.get("dp"), 0),
     ratePct: parseNumber(p.get("rate"), 6.5),
-    termYears: Math.max(1, parseNonNegative(p.get("term"), 30)),
+    termYears: Math.max(1, clampYears(parseNonNegative(p.get("term"), 30))),
     ownershipMonthly: parseNonNegative(p.get("own"), 0),
     closingCost: parseNonNegative(p.get("cc"), 0),
     sellingCostPct: parseNonNegative(p.get("sell"), 6),
@@ -76,7 +82,7 @@ function readFields(p: URLSearchParams): Fields {
     monthlyRent: parseNonNegative(p.get("rent"), 0),
     rentGrowthPct: parseNumber(p.get("rg"), 3),
     investReturnPct: parseNumber(p.get("ir"), 6),
-    years: Math.max(1, parseNonNegative(p.get("y"), 7)),
+    years: Math.max(1, clampYears(parseNonNegative(p.get("y"), 7))),
     band: p.get("band") === "1",
   };
 }
@@ -242,7 +248,7 @@ export function mountRentVsBuy(ctx: TileContext): void {
       homePrice: parseNonNegative(priceInput.value, 0),
       downPayment: parseNonNegative(dpInput.value, 0),
       ratePct: parseNumber(rateInput.value, 6.5),
-      termYears: Math.max(1, parseNonNegative(termInput.value, 30)),
+      termYears: Math.max(1, clampYears(parseNonNegative(termInput.value, 30))),
       ownershipMonthly: parseNonNegative(ownInput.value, 0),
       closingCost: parseNonNegative(ccInput.value, 0),
       sellingCostPct: parseNonNegative(sellInput.value, 6),
@@ -250,7 +256,7 @@ export function mountRentVsBuy(ctx: TileContext): void {
       monthlyRent: parseNonNegative(rentInput.value, 0),
       rentGrowthPct: parseNumber(rgInput.value, 3),
       investReturnPct: parseNumber(irInput.value, 6),
-      years: Math.max(1, parseNonNegative(yearsInput.value, 7)),
+      years: Math.max(1, clampYears(parseNonNegative(yearsInput.value, 7))),
       band: bandToggle.querySelector("input")!.checked,
     };
     ctx.setParams(writeFields(fields));

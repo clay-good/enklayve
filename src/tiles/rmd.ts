@@ -86,7 +86,7 @@ export function mountRmd(ctx: TileContext): void {
     const lines: BreakdownLine[] = [
       { label: "Prior year-end balance", value: fmt(Money.from(fields.balance)) },
       {
-        label: `Distribution period at age ${fields.age}`,
+        label: `Distribution period at age ${result.lookupAge}`,
         value: String(result.distributionPeriod),
         citation: rmd!.citation,
       },

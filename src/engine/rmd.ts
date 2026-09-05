@@ -22,6 +22,14 @@ export interface RmdResult {
   required: boolean;
   /** The age RMDs begin (from the dataset). */
   beginAge: number;
+  /**
+   * The age the table was actually read at, which is not always the age passed
+   * in: below `beginAge` and above the table's top row the lookup is clamped.
+   * Reported so a caller can label the factor with the age it belongs to — the
+   * tile used to print "Distribution period at age 10000000000000002" beside
+   * the terminal factor for age 120.
+   */
+  lookupAge: number;
 }
 
 /** Highest age present in the table — ages beyond it reuse this factor. */
@@ -47,6 +55,7 @@ export function requiredMinimumDistribution(
       distributionPeriod: period ?? 0,
       required,
       beginAge: data.beginAge,
+      lookupAge: lookup,
     };
   }
 
@@ -56,5 +65,6 @@ export function requiredMinimumDistribution(
     distributionPeriod: period,
     required: true,
     beginAge: data.beginAge,
+    lookupAge: lookup,
   };
 }

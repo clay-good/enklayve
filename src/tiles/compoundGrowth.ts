@@ -6,7 +6,7 @@
  * the tile labels the assumption instead of linking a source.
  */
 import { Money } from "../engine/money";
-import { compoundGrowth } from "../engine/finance";
+import { clampYears, compoundGrowth } from "../engine/finance";
 import { el, option } from "../ui/dom";
 import {
   assumptionHint,
@@ -56,13 +56,26 @@ function perYearOf(freq: string): number {
   return FREQUENCIES.find((f) => f.value === freq)?.perYear ?? 12;
 }
 
+/**
+ * The horizon is clamped here rather than left to the engine, because the label
+ * above the answer quotes it.
+ *
+ * {@link compoundGrowth} caps `years × periodsPerYear` at `MAX_PERIODS`, not
+ * years at `MAX_YEARS`, so the ceiling moved with the contribution frequency:
+ * 5,000 years monthly, 60,000 annually. `?y=5000` computed a real 5,000-year
+ * projection under a heading that read "Projected balance in 5000 years", and
+ * `?y=1e15` computed a 5,000-year one under a heading that read
+ * "Projected balance in 1000000000000000 years". Clamping at the read makes the
+ * horizon on the label the horizon in the math, at the same 100 years every
+ * other projection in the catalog uses.
+ */
 function readFields(p: URLSearchParams): Fields {
   const freq = p.get("freq");
   return {
     principal: parseNonNegative(p.get("p"), 0),
     contribution: parseNonNegative(p.get("c"), 0),
     ratePct: parseNumber(p.get("r"), 6),
-    years: Math.max(0, parseNonNegative(p.get("y"), 0)),
+    years: clampYears(parseNonNegative(p.get("y"), 0)),
     freq: freq && FREQUENCIES.some((f) => f.value === freq) ? freq : "monthly",
     band: p.get("band") === "1",
   };
@@ -211,7 +224,7 @@ export function mountCompoundGrowth(ctx: TileContext): void {
       principal: parseNonNegative(pInput.value, 0),
       contribution: parseNonNegative(cInput.value, 0),
       ratePct: parseNumber(rInput.value, 6),
-      years: Math.max(0, parseNonNegative(yInput.value, 0)),
+      years: clampYears(parseNonNegative(yInput.value, 0)),
       freq: freqSelect.value,
       band: bandToggle.querySelector("input")!.checked,
     };

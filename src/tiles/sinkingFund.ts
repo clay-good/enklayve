@@ -6,7 +6,7 @@
  * made concrete for one goal at a time.
  */
 import { Money } from "../engine/money";
-import { requiredMonthlyContribution } from "../engine/finance";
+import { clampMonths, requiredMonthlyContribution } from "../engine/finance";
 import { el } from "../ui/dom";
 import {
   assumptionHint,
@@ -46,7 +46,7 @@ function readFields(p: URLSearchParams): Fields {
     goal: p.get("g") ?? "My goal",
     target: parseNonNegative(p.get("t"), 0),
     currentSaved: parseNonNegative(p.get("c"), 0),
-    months: Math.max(1, Math.round(parseNonNegative(p.get("m"), 12))),
+    months: Math.max(1, clampMonths(parseNonNegative(p.get("m"), 12))),
     returnPct: parseNumber(p.get("r"), 4),
   };
 }
@@ -162,7 +162,7 @@ export function mountSinkingFund(ctx: TileContext): void {
       goal: goalInput.value.trim() || "My goal",
       target: parseNonNegative(targetInput.value, 0),
       currentSaved: parseNonNegative(savedInput.value, 0),
-      months: Math.max(1, Math.round(parseNonNegative(monthsInput.value, 12))),
+      months: Math.max(1, clampMonths(parseNonNegative(monthsInput.value, 12))),
       returnPct: parseNumber(returnInput.value, 4),
     };
     ctx.setParams(writeFields(fields));
@@ -195,10 +195,17 @@ export function mountSinkingFund(ctx: TileContext): void {
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
-  // Disclose the months-to-goal floor clamp on a pasted link (SPEC-3 §2.3 / B1).
+  // Disclose the months-to-goal clamp on a pasted link (SPEC-3 §2.3 / B1). Both
+  // ends of it: the floor was disclosed from the start, and the ceiling was not
+  // there at all, so `?m=1e15` computed a contribution for 1,200 months and
+  // printed "Projected in 1000000000000000 months" over the top of it.
   const rawMonths = Math.round(parseNonNegative(ctx.params.get("m"), 12));
   const note = didClamp(ctx.params, "m", rawMonths, fields.months)
-    ? clampNote(root, [`the months-to-goal was raised to the ${fields.months}-month minimum`])
+    ? clampNote(root, [
+        rawMonths < fields.months
+          ? `the months-to-goal was raised to the ${fields.months}-month minimum`
+          : `the months-to-goal was capped at ${fields.months.toLocaleString("en-US")} months`,
+      ])
     : null;
 
   root.append(form, ...(note ? [note] : []), resultContainer);

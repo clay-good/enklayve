@@ -122,6 +122,32 @@ const NON_FINITE = /\b(NaN|Infinity|-Infinity)\b|∞/;
 const UNFORMATTED_READING = /\$\d{7,}|\d{7,}(?:\.\d+)?\s*%/;
 
 /**
+ * A horizon that reached the screen past every ceiling the engines enforce.
+ *
+ * The sibling check above covers currency and percent slots, which is where a
+ * formatter is obviously missing. It does not cover the third kind of reading
+ * this catalog prints — a span of time — and that turned out to be the one with
+ * real bugs behind it, because a horizon is not merely unformatted when it runs
+ * long: it is **clamped**, silently, and then quoted back at full length beside
+ * an answer computed from the clamp.
+ *
+ * Five tiles did exactly that. `?yrs=500` on the life-insurance tile multiplied
+ * an income by 100 years and headed the product "Income replacement (500 yr)";
+ * `rent-vs-buy` compared 100 years of renting and buying under "over
+ * 1000000000000000 years"; `college-cost`, `sinking-fund` and `peace-of-mind`
+ * each did the same with their own field. `compound-growth` was the odd one:
+ * it clamps `years × periodsPerYear` at `MAX_PERIODS` rather than years at
+ * `MAX_YEARS`, so its real ceiling moved with the contribution frequency —
+ * 5,000 years monthly, 60,000 annually — and neither is a horizon anyone should
+ * be shown.
+ *
+ * Five ungrouped digits, because `MAX_HORIZON_MONTHS` is 1,200 and `MAX_YEARS`
+ * is 100: no honest reading here reaches five digits, and a formatted one would
+ * carry a separator before it did.
+ */
+const UNCLAMPED_HORIZON = /(?<![.,\d])\d{5,}(?:\.\d+)?\s?(?:years?|yrs?|months?|mos?)/i;
+
+/**
  * Tiles that do this today, and what each one is.
  *
  * A description of the catalog rather than a list of debts — the distinction
@@ -200,7 +226,7 @@ describe("every calculator in the catalog", () => {
         expect(text, `${tile.id} painted a non-finite value`).not.toMatch(NON_FINITE);
       });
 
-      it("keeps a currency or percent reading formatted under mixed magnitudes", () => {
+      it("keeps a currency, percent or horizon reading in range under mixed magnitudes", () => {
         // Two blind spots, both found on 2026-09-05 by a bug that walked
         // through this sweep untouched.
         //
@@ -227,6 +253,7 @@ describe("every calculator in the catalog", () => {
         if (names.length < 2) return;
 
         const offenders: string[] = [];
+        const horizons: string[] = [];
         for (let i = 0; i < names.length; i++) {
           for (const [small, big] of [
             ["0.01", "1e15"],
@@ -242,10 +269,21 @@ describe("every calculator in the catalog", () => {
               continue;
             }
             const text = (root.textContent ?? "").replace(/\s+/g, " ");
+            const near = (at: number): string => text.slice(Math.max(0, at - 40), at + 30);
             const hit = UNFORMATTED_READING.exec(text);
-            if (hit) offenders.push(text.slice(Math.max(0, hit.index - 40), hit.index + 30));
+            if (hit) offenders.push(near(hit.index));
+            const horizon = UNCLAMPED_HORIZON.exec(text);
+            if (horizon) horizons.push(near(horizon.index));
           }
         }
+        // The horizon half is asserted outside the allowlist on purpose. The
+        // allowlist excuses a *tile*, not a pattern, and two of the four names
+        // on it — `rent-vs-buy` and `college-cost` — were quoting an unclamped
+        // horizon the whole time behind an excuse written about a percent echo.
+        expect(
+          horizons.slice(0, 1),
+          `${tile.id} quoted a horizon past the ceiling its engine computed with`,
+        ).toEqual([]);
         if (UNFORMATTED_ALLOWED[tile.id]) {
           // A tile on the list that has stopped offending should come off it,
           // for the same reason a dead allowlist entry anywhere else here does:
@@ -258,7 +296,7 @@ describe("every calculator in the catalog", () => {
         }
         expect(
           offenders.slice(0, 1),
-          `${tile.id} sent an unformatted figure to a currency or percent slot`,
+          `${tile.id} sent an unformatted figure to a currency, percent or horizon slot`,
         ).toEqual([]);
       });
 

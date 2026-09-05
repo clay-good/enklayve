@@ -9,6 +9,8 @@ import {
   capMonths,
   clampMonths,
 } from "../../src/engine/finance";
+import { lifeInsuranceNeed } from "../../src/engine/finance";
+import { requiredMinimumDistribution } from "../../src/engine/rmd";
 import { rothConversionLadder } from "../../src/engine/taxMoves";
 
 /**
@@ -115,5 +117,47 @@ describe("a computed horizon is capped without being rounded", () => {
     expect(capMonths(Number.NEGATIVE_INFINITY)).toBe(0);
     expect(capMonths(-1)).toBe(0);
     expect(capMonths(0)).toBe(0);
+  });
+});
+
+describe("a clamped horizon is reported, not just applied", () => {
+  /**
+   * Every cap above is correct and none of them was visible. A tile reads its
+   * own field back into the label above the answer, so `?yrs=500` on the
+   * life-insurance tile multiplied an income by **100** years and headed the
+   * product "Income replacement (500 yr)" — the clamp was right, the sentence
+   * beside it was not. The tiles clamp at the read now; these hold the two
+   * engine-side halves that a tile cannot see for itself.
+   */
+  it("replaces at most MAX_YEARS of income, whatever the caller asks for", () => {
+    const r = lifeInsuranceNeed({
+      annualIncome: 100_000,
+      yearsToReplace: 500,
+      debts: 0,
+      mortgageBalance: 0,
+      finalExpenses: 0,
+      futureObligations: 0,
+      existingCoverage: 0,
+      liquidAssets: 0,
+    });
+    expect(r.incomeReplacement.toNumber()).toBe(100_000 * MAX_YEARS);
+  });
+
+  it("says which age the RMD table was actually read at", () => {
+    // The Uniform Lifetime Table stops at a top row and ages beyond it reuse
+    // the terminal factor. The tile printed the age it was *given* beside that
+    // factor, which for a crafted link read "Distribution period at age
+    // 10000000000000002".
+    const table = {
+      beginAge: 73,
+      distributionPeriodByAge: { "73": 26.5, "74": 25.5, "120": 2.0 },
+      citation: { label: "IRS Pub 590-B", url: "https://www.irs.gov/publications/p590b" },
+    };
+    const past = requiredMinimumDistribution(1e16, 100_000, table as never);
+    expect(past.lookupAge).toBe(120);
+    expect(past.distributionPeriod).toBe(2.0);
+    // An age inside the table is reported as itself, so the label is unchanged
+    // for every reader who is not on a crafted link.
+    expect(requiredMinimumDistribution(74, 100_000, table as never).lookupAge).toBe(74);
   });
 });

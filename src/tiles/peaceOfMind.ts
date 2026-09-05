@@ -61,7 +61,7 @@ interface Config {
  */
 function readConfig(p: URLSearchParams, profile: SituationStore): Config {
   return {
-    targetMonths: Math.max(1, parseNonNegative(p.get("m"), 3)),
+    targetMonths: Math.max(1, capMonths(parseNonNegative(p.get("m"), 3))),
     withdrawalRatePct: Math.max(0.1, parseNumber(p.get("wr"), 4)),
     otherAssets: parseNonNegative(p.get("assets"), 0),
     monthlySavings: parseNonNegative(p.get("sav"), 0),
@@ -240,12 +240,17 @@ export function mountPeaceOfMind(ctx: TileContext): void {
   });
 
   // Disclose any deep-link clamp (SPEC-3 §2.3 / B1): the withdrawal-rate floor
-  // (0.1%) and the rainy-day minimum (1 month) silently rewrite an out-of-range
-  // fragment, so a pasted link wouldn't reproduce exactly without this note.
+  // (0.1%) and the rainy-day target's floor and ceiling silently rewrite an
+  // out-of-range fragment, so a pasted link wouldn't reproduce exactly without
+  // this note. The ceiling is the newer half — `?m=1e15` used to print "Target
+  // 1000000000000000 months" beside a cushion figure computed from it.
   const clampMessages: string[] = [];
-  if (didClamp(ctx.params, "m", parseNonNegative(ctx.params.get("m"), 3), config.targetMonths)) {
+  const rawTarget = parseNonNegative(ctx.params.get("m"), 3);
+  if (didClamp(ctx.params, "m", rawTarget, config.targetMonths)) {
     clampMessages.push(
-      `the rainy-day target was raised to the ${config.targetMonths}-month minimum`,
+      rawTarget < config.targetMonths
+        ? `the rainy-day target was raised to the ${config.targetMonths}-month minimum`
+        : `the rainy-day target was capped at ${config.targetMonths.toLocaleString("en-US")} months`,
     );
   }
   if (didClamp(ctx.params, "wr", parseNumber(ctx.params.get("wr"), 4), config.withdrawalRatePct)) {
@@ -420,7 +425,10 @@ export function mountPeaceOfMind(ctx: TileContext): void {
       input: (e) => {
         config = {
           ...config,
-          targetMonths: Math.max(1, parseNonNegative((e.target as HTMLInputElement).value, 3)),
+          targetMonths: Math.max(
+            1,
+            capMonths(parseNonNegative((e.target as HTMLInputElement).value, 3)),
+          ),
         };
         ctx.setParams(writeConfig(config));
         renderDashboard();

@@ -6,7 +6,7 @@
  * inputs, and explicitly information, not advice. Income defaults from My Situation.
  */
 import { Money } from "../engine/money";
-import { lifeInsuranceNeed } from "../engine/finance";
+import { clampYears, lifeInsuranceNeed } from "../engine/finance";
 import { el } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
@@ -36,13 +36,20 @@ const EXAMPLE: Fields = {
   liquidAssets: 50000,
 };
 
+/**
+ * Years-to-replace is clamped here, not just in the engine, because the
+ * breakdown line names it: {@link lifeInsuranceNeed} has always run
+ * `clampYears` over it, so `?yrs=500` multiplied the income by 100 and labelled
+ * the product "Income replacement (500 yr)" — a figure sitting right beside a
+ * number it does not describe.
+ */
 function readFields(p: URLSearchParams, profile: SituationStore): Fields {
   const debtsTotal = (profile.get("debts") ?? []).reduce((s, d) => s + d.balance, 0);
   return {
     annualIncome: p.has("inc")
       ? parseNonNegative(p.get("inc"), 0)
       : (profile.get("annualIncome") ?? 0),
-    yearsToReplace: Math.max(0, Math.round(parseNonNegative(p.get("yrs"), 10))),
+    yearsToReplace: clampYears(parseNonNegative(p.get("yrs"), 10)),
     debts: p.has("debt") ? parseNonNegative(p.get("debt"), 0) : debtsTotal,
     mortgageBalance: parseNonNegative(p.get("mort"), 0),
     finalExpenses: parseNonNegative(p.get("final"), 15000),
@@ -134,7 +141,7 @@ export function mountLifeInsurance(ctx: TileContext): void {
   function recompute(): void {
     fields = {
       annualIncome: parseNonNegative(incInput.value, 0),
-      yearsToReplace: Math.max(0, Math.round(parseNonNegative(yrsInput.value, 10))),
+      yearsToReplace: clampYears(parseNonNegative(yrsInput.value, 10)),
       debts: parseNonNegative(debtInput.value, 0),
       mortgageBalance: parseNonNegative(mortInput.value, 0),
       finalExpenses: parseNonNegative(finalInput.value, 0),

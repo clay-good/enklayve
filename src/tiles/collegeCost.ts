@@ -7,7 +7,7 @@
  * for the aid side. Information, not advice.
  */
 import { Money } from "../engine/money";
-import { collegeCostPlan } from "../engine/finance";
+import { clampYears, collegeCostPlan } from "../engine/finance";
 import { el } from "../ui/dom";
 import { assumptionHints, field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
@@ -43,11 +43,17 @@ const EXAMPLE: Fields = {
   band: false,
 };
 
+/**
+ * Both year counts are clamped here for the reason the projection line needs:
+ * it reads "Projected cost (4 yr, in 10 yr)" from these fields while
+ * {@link collegeCostPlan} projects from the clamped pair. `?yrs=1e15&dur=1e15`
+ * printed both horizons at full length over a 100-year answer.
+ */
 function readFields(p: URLSearchParams): Fields {
   return {
     annualCostToday: parseNonNegative(p.get("cost"), 0),
-    yearsUntilStart: Math.max(0, Math.round(parseNonNegative(p.get("yrs"), 10))),
-    yearsOfCollege: Math.max(1, Math.round(parseNonNegative(p.get("dur"), 4))),
+    yearsUntilStart: clampYears(parseNonNegative(p.get("yrs"), 10)),
+    yearsOfCollege: Math.max(1, clampYears(parseNonNegative(p.get("dur"), 4))),
     costInflationPct: parseNonNegative(p.get("ci"), 5),
     currentSavings: parseNonNegative(p.get("c"), 0),
     expectedReturnPct: parseNonNegative(p.get("r"), 5),
@@ -197,8 +203,8 @@ export function mountCollegeCost(ctx: TileContext): void {
   function recompute(): void {
     fields = {
       annualCostToday: parseNonNegative(costInput.value, 0),
-      yearsUntilStart: Math.max(0, Math.round(parseNonNegative(yrsInput.value, 10))),
-      yearsOfCollege: Math.max(1, Math.round(parseNonNegative(durInput.value, 4))),
+      yearsUntilStart: clampYears(parseNonNegative(yrsInput.value, 10)),
+      yearsOfCollege: Math.max(1, clampYears(parseNonNegative(durInput.value, 4))),
       costInflationPct: parseNonNegative(ciInput.value, 5),
       currentSavings: parseNonNegative(cInput.value, 0),
       expectedReturnPct: parseNonNegative(rInput.value, 5),
