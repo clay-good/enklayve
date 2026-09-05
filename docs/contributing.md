@@ -80,6 +80,8 @@ Run it after touching an adapter, and **read the diff rather than the outcome wo
 
 `check:advisories` is the one most likely to surprise you: it does **not** fail on an advisory, it fails on an advisory nobody has looked at — or on one somebody accepted while a fix was on the shelf. If it stops you, the fix is an upgrade where one exists, and a triage entry in [`scripts/advisory-triage.json`](../scripts/advisory-triage.json) naming the vulnerable entry point and what calls it where one does not. Both halves are checked now: an entry standing over an advisory npm reports as fixable fails the run, because "there is no fix" is a fact with an expiry date and npm already knows the answer. **Take the upgrade before writing the reason.**
 
+If you add a **third-party action** to a workflow, [`workflowPermissions.test.ts`](../tests/build/workflowPermissions.test.ts) will ask for a floor: a minimum major version, with a note saying which Node runtime the one below it ran on. A newer major passes, an older one fails. Fifty-eight workflow files share a handful of pins, so a bump applied to some of them is exactly the kind of thing that surfaces a year later in one scheduled job — and the same test refuses `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`, which sat in three workflows under a comment saying it silenced the Node 20 deprecation notice and never did: the flag changes which runtime executes an action, and the annotation is about what the action declares.
+
 ## Adding a tile (calculator)
 
 A tile is a self-contained module in [`src/tiles/`](../src/tiles) implementing the `TileDefinition` contract ([`src/tiles/types.ts`](../src/tiles/types.ts)). The shell knows tiles only through that interface, so adding one is registering data + a mount function — never editing the shell. Each tile must:
@@ -94,7 +96,7 @@ Register it in [`src/tiles/registry.ts`](../src/tiles/registry.ts). The static `
 
 ### What the gates will ask you for
 
-Registering the tile is one line; the suite will then stop you six more times, each with a message naming the file to edit. This is the order they fire in, written down after adding the 69th calculator, so the next person can do the work up front instead of discovering it one red test at a time.
+Registering the tile is one line; the suite will then stop you eight more times, each with a message naming the file to edit. This is the order they fire in, written down after adding the 69th calculator and extended as new gates landed, so the next person can do the work up front instead of discovering it one red test at a time.
 
 | The gate | What it wants | Where |
 |---|---|---|
@@ -103,7 +105,9 @@ Registering the tile is one line; the suite will then stop you six more times, e
 | `observeEngine` | If you added a file under `src/engine`: a probe that exercises it at and around the values its comparisons test. A boundary in an unprobed file cannot be classified. | `scripts/observe-engine.ts` |
 | `numericConstants` | A verdict for every new named numeric constant — a **bound** the code owns, a **figure** somebody legislates, or an **assumption** this site chose. | `tests/build/numericConstants.test.ts` |
 | `toolsIndex` | A `related` link must name a hub that exists and a tool that hub actually holds. A calculator is not a route: it lives at `#/<hub>?tool=<id>`. | your tile's `related` |
-| `audit` | The gzipped precached shell, still inside its budget. A tile with a long explainer and a shard with a long `sourceNote` both cost real bytes. | `npm run audit` |
+| `profileWrites` | If your tile **writes** a shared My Situation field: a row in the pinned map naming the tile, the field, and the control's own visible label. Read the row as a sentence — does that control hold that quantity *for this reader*? Two tiles were writing somebody else's income and household before this existed. | `tests/ui/profileWrites.test.ts` |
+| `situationFieldsWritten` | If you added a **field** to `SituationValues`: something must write it, not only read it. A field the site reads and nothing writes is a silent assumption — the reader gets an answer computed from a default they were never offered the chance to correct. | your tile, or an entry in that test's `EXEMPT` with the reason |
+| `audit` | The gzipped precached shell, still inside its budget — and inside it by a margin, since CI compresses about half a kilobyte heavier than your machine and the check subtracts that before it judges. A tile with a long explainer and a shard with a long `sourceNote` both cost real bytes. | `npm run audit` |
 
 A new shard is its own short chain, in this order: the JSON in `data/`, a schema in [`src/data/schemas.ts`](../src/data/schemas.ts) **and** an entry in the `SHARD_SCHEMAS` map beside it, a row in [`scripts/build-manifest.ts`](../scripts/build-manifest.ts), then `npm run data:manifest` to write the hash and the manifest, and finally an accessor on [`src/data/browser.ts`](../src/data/browser.ts) so a tile can read it. Miss the accessor and the tile compiles and shows its verify-before-relying banner forever.
 
