@@ -46,8 +46,30 @@ export interface SituationValues {
    */
   county: string;
   householdSize: number;
-  /** Ages of household members. */
+  /**
+   * Ages of household members.
+   *
+   * Written by nothing, and deliberately: no surface asks for a list of ages,
+   * and deriving one from a child count or a household size is the inference
+   * this project refuses. It survives because a restored file may carry it and
+   * because {@link SituationValues.qualifyingChildren} — the figure the credits
+   * actually turn on — is the thing worth asking for.
+   */
   ages: number[];
+  /**
+   * Children who meet the qualifying-child test, as a **count**.
+   *
+   * The EITC and the Child Tax Credit both turn on this number, four tiles ask
+   * for it, and until 2026-09-05 each of them kept it. The Readout Report
+   * counted children under 17 out of `ages` instead, which nothing writes — so
+   * it sized both credits for a childless household in the same document whose
+   * section above drew the poverty line for a household of four.
+   *
+   * A count rather than ages because a count is what the statutes take and what
+   * a person can answer; the age test is a question the tiles ask in their own
+   * words and this field does not second-guess.
+   */
+  qualifyingChildren: number;
   /** Gross annual income. */
   annualIncome: number;
   /**
@@ -163,6 +185,7 @@ export const SituationValuesSchema = z
     county: str,
     householdSize: num,
     ages: rows(z.array(bounded)),
+    qualifyingChildren: num,
     annualIncome: num,
     qualifiedTipsAnnual: num,
     qualifiedOvertimeAnnual: num,

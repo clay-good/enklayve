@@ -20,10 +20,11 @@ import { fileURLToPath } from "node:url";
  *     0 against 0, called itself satisfied, and stepped over the one move on
  *     the ladder that pays a guaranteed return, while the tile that was
  *     supposed to feed it said in its own header comment that it did.
- *   `ages` — the Report counts qualifying children out of it, so it sized the
+ *   `ages` — the Report counted qualifying children out of it, so it sized the
  *     EITC and the Child Tax Credit for a childless household in the same
  *     document whose section above drew the poverty line for a household of
- *     four.
+ *     four. Closed by asking: `qualifyingChildren` is a field now, and `ages`
+ *     stays exempt for the narrower reason recorded beside it.
  *   `debts` — read by six surfaces and written by none. The Report's net worth
  *     subtracted zero of it, so a household with $40,000 of debt and $12,000
  *     saved read its net worth as $12,000, positive; My Plan's "clear
@@ -49,17 +50,15 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
  */
 const EXEMPT: Record<string, string> = {
   ages:
-    "Nothing on the site asks for a list of household ages, and nothing should invent one. " +
-    "The three tiles that care about children — the Child Tax Estimator, the EITC tile and " +
-    "the screener — each ask for a *count* of qualifying children, and deriving an age from " +
-    "a count (or from a household size) is exactly the inference this project refuses. Both " +
-    "readers behave: `downshift` uses `ages[0]` only as the default starting age behind a " +
-    "field the reader can see and change, and the Report, which counts children under 17 " +
-    "out of it, now says in the section itself that the child credits are not estimated " +
-    "because nothing records the ages. Closing this properly means a `qualifyingChildren` " +
-    "field, which is a change to the portable-file and ledger formats and their versions " +
-    "rather than a line of wiring, so it is a decision rather than an oversight — which is " +
-    "what an entry here is for.",
+    "Nothing on the site asks for a list of household ages, and nothing should invent one: " +
+    "deriving an age from a child count, or from a household size, is exactly the inference " +
+    "this project refuses. The reason it was on this list — the Report sizing the EITC and " +
+    "the Child Tax Credit out of it — is gone: `qualifyingChildren` is a real field now, " +
+    "asked for by the four tiles that need it, and `ages` is only the fallback for a profile " +
+    "restored from a file written before it existed. The one remaining reader behaves: " +
+    "`downshift` uses `ages[0]` as the default starting age behind a field the reader can " +
+    "see and change. A field carried for backward compatibility and never written is the " +
+    "case this exemption is actually for.",
 };
 
 /** Declared but not yet read anywhere — the shard sweep's failure, one store over. */

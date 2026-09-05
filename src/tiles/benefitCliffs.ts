@@ -78,7 +78,9 @@ function readFields(p: URLSearchParams, defaultState: string, profile: Situation
       1,
       Math.round(parseNonNegative(p.get("size"), profile.get("householdSize") ?? 3)),
     ),
-    kids: Math.max(0, Math.round(parseNonNegative(p.get("kids"), 2))),
+    kids: p.has("kids")
+      ? Math.max(0, Math.round(parseNonNegative(p.get("kids"), 2)))
+      : (profile.get("qualifyingChildren") ?? 2),
     premium: parseNonNegative(p.get("prem"), 0),
     income: p.has("inc")
       ? parseNonNegative(p.get("inc"), 0)
@@ -408,6 +410,7 @@ export function mountCliffExplorer(ctx: TileContext): void {
       county: rememberableCounty(fields.st ? (data!.state(fields.st) ?? null) : null, fields.local),
     });
     ctx.profile.set("householdSize", fields.size);
+    ctx.profile.set("qualifyingChildren", fields.kids);
     compute();
   }
 
@@ -624,6 +627,7 @@ export function mountMarginalReality(ctx: TileContext): void {
       annualIncome: fields.income,
     });
     ctx.profile.set("householdSize", fields.size);
+    ctx.profile.set("qualifyingChildren", fields.kids);
     compute();
   }
 

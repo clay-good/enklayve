@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { SUB_TOOLS } from "../../src/tiles/registry";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
@@ -60,6 +62,7 @@ import type { TileContext, TileDefinition } from "../../src/tiles/types";
 const NUMERIC_FIELDS = [
   "annualIncome",
   "householdSize",
+  "qualifyingChildren",
   "qualifiedTipsAnnual",
   "qualifiedOvertimeAnnual",
   "preTaxContributions",
@@ -90,10 +93,13 @@ const EXPECTED = [
   "charity-care | annualIncome <- Household income",
   "charity-care | householdSize <- People in household",
   "cliff-explorer | householdSize <- People in household",
+  "cliff-explorer | qualifyingChildren <- Children who qualify for credits",
   "ctc | annualIncome <- Modified adjusted gross income",
+  "ctc | qualifyingChildren <- Qualifying children (under 17)",
   "disability-insurance | annualIncome <- Annual income",
   "education-credits | annualIncome <- Modified adjusted gross income (MAGI)",
   "eitc | annualIncome <- Earned income",
+  "eitc | qualifyingChildren <- Qualifying children",
   "federal-income-tax | annualIncome <- Wages and income",
   "fpl | annualIncome <- Annual household income",
   "fpl | householdSize <- Household size",
@@ -102,6 +108,7 @@ const EXPECTED = [
   "marginal-explorer | annualIncome <- Current income",
   "marginal-reality | annualIncome <- Current income",
   "marginal-reality | householdSize <- People in household",
+  "marginal-reality | qualifyingChildren <- Children who qualify for credits",
   "medicaid | annualIncome <- Annual household income",
   "medicaid | householdSize <- Household size",
   "paycheck-optimizer | annualIncome <- Gross annual wages",
@@ -118,6 +125,7 @@ const EXPECTED = [
   "savers-credit | retirementContributionsAnnual <- Retirement contributions this year",
   "screener | annualIncome <- Annual household income",
   "screener | householdSize <- Household size",
+  "screener | qualifyingChildren <- Qualifying children",
   "se-retirement | annualIncome <- Net business profit",
   "snap | householdSize <- Household size",
   "take-home | annualIncome <- Annual wages",
@@ -297,7 +305,33 @@ function enumWritesFrom(tile: TileDefinition): string[] {
   return found;
 }
 
+/**
+ * The two lists above, together, are every field the interface declares.
+ *
+ * They were hand-kept, which is the failure mode this file's own comments name
+ * everywhere else: `qualifyingChildren` was added to My Situation, written by
+ * four tiles, and the pinned map went on passing because the field was not on
+ * the list it walks. A sweep that silently stops covering a field is worse than
+ * no sweep, because the green tick is the thing people read.
+ */
+const DECLARED = (() => {
+  const src = readFileSync(resolve(__dirname, "../../src/profile/situation.ts"), "utf8");
+  const body = /export interface SituationValues \{([\s\S]*?)\n\}/.exec(src)?.[1] ?? "";
+  return [...body.matchAll(/^ {2}(\w+)[?]?:/gm)].map((m) => m[1]!);
+})();
+
 describe("what a calculator may write into My Situation", () => {
+  it("walks every field My Situation declares", () => {
+    const walked = new Set<string>([...NUMERIC_FIELDS, ...ENUM_FIELDS]);
+    // `ages` and `debts` are lists rather than scalars: neither can be driven
+    // by typing one value into one control, and both have their own coverage —
+    // `debts` in `expansionTiles.test.ts`, `ages` in the exemption recorded by
+    // `situationFieldsWritten.test.ts`, which is where the reason lives.
+    const unwalked = DECLARED.filter((f) => !walked.has(f) && f !== "ages" && f !== "debts");
+    expect(DECLARED.length).toBeGreaterThan(10);
+    expect(unwalked, "a field My Situation declares that neither sweep drives").toEqual([]);
+  });
+
   it("is exactly the pinned map of control to shared field", () => {
     const actual = [...new Set(CALCULATORS.flatMap(writesFrom))].sort();
     expect(

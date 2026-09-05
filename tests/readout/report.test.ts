@@ -138,7 +138,7 @@ describe("Readout Report, model", () => {
     expect(ctc?.value).toMatch(/\$/);
   });
 
-  it("says the child credits are not estimated when nothing records the ages", () => {
+  it("says the child credits are not estimated when nobody has been asked", () => {
     // Both credits turn on a count of qualifying children, taken from `ages` —
     // and nothing on the site writes `ages`. The Child Tax Estimator, the EITC
     // tile and the screener each ask for a child count and each keep it. So
@@ -154,7 +154,7 @@ describe("Readout Report, model", () => {
     p.set("householdSize", 4);
     const owed = buildReport(p, data).sections.find((s) => s.title === "What you may be owed")!;
     const note = owed.lines.find((l) => l.label === "Child credits");
-    expect(note?.value).toMatch(/assume no qualifying children/);
+    expect(note?.value).toMatch(/assume none/);
     expect(note?.value).toMatch(/What Am I Owed screener/);
 
     // A one-person household cannot have a qualifying child, so the note there
@@ -167,10 +167,30 @@ describe("Readout Report, model", () => {
     )!;
     expect(soloOwed.lines.some((l) => l.label === "Child credits")).toBe(false);
 
-    // And it goes away once the ages are there, because then the figures are real.
-    p.set("ages", [40, 38, 10, 8]);
-    const withAges = buildReport(p, data).sections.find((s) => s.title === "What you may be owed")!;
-    expect(withAges.lines.some((l) => l.label === "Child credits")).toBe(false);
+    // It goes away once somebody has answered, and a **zero** answer counts:
+    // "no qualifying children" is a fact about the household rather than an
+    // absence, the same distinction My Plan draws about the employer match.
+    p.set("qualifyingChildren", 0);
+    const none = buildReport(p, data).sections.find((s) => s.title === "What you may be owed")!;
+    expect(none.lines.some((l) => l.label === "Child credits")).toBe(false);
+
+    // And an answer above zero sizes both credits.
+    p.set("qualifyingChildren", 2);
+    const answered = buildReport(p, data).sections.find((s) => s.title === "What you may be owed")!;
+    expect(answered.lines.some((l) => l.label.startsWith("Child Tax Credit"))).toBe(true);
+    expect(answered.lines.some((l) => l.label === "Child credits")).toBe(false);
+
+    // A profile restored from a file written before the field existed carries
+    // `ages` and nothing else, and is answered from it rather than asked again.
+    const older = new SituationStore();
+    older.set("annualIncome", 38_000);
+    older.set("householdSize", 4);
+    older.set("ages", [40, 38, 10, 8]);
+    const fromAges = buildReport(older, data).sections.find(
+      (s) => s.title === "What you may be owed",
+    )!;
+    expect(fromAges.lines.some((l) => l.label === "Child credits")).toBe(false);
+    expect(fromAges.lines.some((l) => l.label.startsWith("Child Tax Credit"))).toBe(true);
   });
 
   it("degrades gracefully when no income is entered", () => {

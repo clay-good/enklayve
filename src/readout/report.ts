@@ -258,7 +258,13 @@ export function buildReport(
   // the household members under 17 (the CTC test); married follows filing status.
   const owedLines: ReportLine[] = [];
   const householdSize = profile.get("householdSize");
-  const qualifyingChildren = (profile.get("ages") ?? []).filter((a) => a < 17).length;
+  // The count the credits take, asked for by the four tiles that need it. The
+  // `ages` fallback is for a profile restored from a file written before the
+  // field existed — nothing has ever *written* `ages`, so it is a fallback for
+  // history rather than a second source of truth.
+  const childrenAsked = profile.get("qualifyingChildren");
+  const qualifyingChildren =
+    childrenAsked ?? (profile.get("ages") ?? []).filter((a) => a < 17).length;
   const married = filingStatus === "married_jointly";
   const fplData = data?.fpl(regionFromState(stateCode)) ?? null;
   const eitcCtc = data?.eitcCtc() ?? null;
@@ -320,11 +326,16 @@ export function buildReport(
     // size would be the inference this project does not make. It is asked only
     // where a child is possible: a one-person household cannot have a
     // qualifying one, and a note there would be noise rather than honesty.
-    if (qualifyingChildren === 0 && (householdSize === undefined || householdSize > 1)) {
+    // Only when nobody has been asked. A household that answered "none" gets no
+    // note, because zero is then an answer rather than an absence — the same
+    // distinction My Plan draws about the employer match.
+    const askedAboutChildren =
+      childrenAsked !== undefined || (profile.get("ages") ?? []).length > 0;
+    if (!askedAboutChildren && (householdSize === undefined || householdSize > 1)) {
       owedLines.push({
         label: "Child credits",
         value:
-          "Not estimated here. Nothing on this device records your household's ages, so the figures above assume no qualifying children — the What Am I Owed screener asks, and sizes both.",
+          "Not estimated here. Nothing on this device records whether you have qualifying children, so the figures above assume none — the What Am I Owed screener asks, and sizes both.",
       });
     }
   }

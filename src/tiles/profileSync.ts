@@ -10,6 +10,13 @@ import type { SituationStore } from "../profile/situation";
 
 export interface SharedFields {
   filingStatus?: FilingStatus;
+  /**
+   * Children meeting the qualifying-child test, as a count. Four tiles ask for
+   * it — the EITC tile, the Child Tax Estimator, the What Am I Owed screener
+   * and the cliff explorer — and each of them used to keep it, which is how the
+   * Report came to size both credits for a household it assumed had none.
+   */
+  qualifyingChildren?: number;
   stateCode?: string;
   /**
    * A `localAddOns` id for a mandatory residence-based local tax (Maryland,
@@ -45,6 +52,9 @@ export function rememberShared(profile: SituationStore, fields: SharedFields): v
   // clear the county, not leave Montgomery behind for the next tile to charge.
   if (fields.county !== undefined) profile.set("county", fields.county);
   if (fields.annualIncome !== undefined) profile.set("annualIncome", fields.annualIncome);
+  if (fields.qualifyingChildren !== undefined) {
+    profile.set("qualifyingChildren", fields.qualifyingChildren);
+  }
   if (fields.preTaxContributions !== undefined) {
     profile.set("preTaxContributions", fields.preTaxContributions);
   }

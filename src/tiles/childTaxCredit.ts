@@ -22,7 +22,9 @@ const EXAMPLE: Fields = { qualifyingChildren: 2, magi: 120000, married: true };
 
 function readFields(p: URLSearchParams, profile: SituationStore): Fields {
   return {
-    qualifyingChildren: Math.max(0, parseNonNegative(p.get("kids"), 0)),
+    qualifyingChildren: p.has("kids")
+      ? Math.max(0, parseNonNegative(p.get("kids"), 0))
+      : (profile.get("qualifyingChildren") ?? 0),
     magi: p.has("inc") ? parseNonNegative(p.get("inc"), 0) : (profile.get("annualIncome") ?? 0),
     married: p.has("mfj") ? p.get("mfj") === "1" : marriedDefault(profile),
   };
@@ -114,6 +116,7 @@ export function mountChildTaxCredit(ctx: TileContext): void {
     };
     ctx.setParams(writeFields(fields));
     profile.set("annualIncome", fields.magi);
+    profile.set("qualifyingChildren", fields.qualifyingChildren);
     compute();
   }
 

@@ -27,7 +27,9 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
     earnedIncome: p.has("inc")
       ? parseNonNegative(p.get("inc"), 0)
       : (profile.get("annualIncome") ?? 0),
-    qualifyingChildren: Math.max(0, parseNonNegative(p.get("kids"), 0)),
+    qualifyingChildren: p.has("kids")
+      ? Math.max(0, parseNonNegative(p.get("kids"), 0))
+      : (profile.get("qualifyingChildren") ?? 0),
     married: p.has("mfj") ? p.get("mfj") === "1" : marriedDefault(profile),
   };
 }
@@ -136,6 +138,7 @@ export function mountEitc(ctx: TileContext): void {
     };
     ctx.setParams(writeFields(fields));
     profile.set("annualIncome", fields.earnedIncome);
+    profile.set("qualifyingChildren", fields.qualifyingChildren);
     compute();
   }
 

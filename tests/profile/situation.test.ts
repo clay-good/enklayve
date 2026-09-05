@@ -26,6 +26,10 @@ const EVERY_FIELD: Required<SituationValues> = {
   county: "md-montgomery",
   householdSize: 3,
   ages: [41, 39, 8],
+  // The count the credits take. It agrees with the one child under 17 in
+  // `ages` above, because a fixture that disagreed with itself would teach the
+  // next reader that the two are independent — they describe one household.
+  qualifyingChildren: 1,
   annualIncome: 92_000,
   qualifiedTipsAnnual: 14_000,
   qualifiedOvertimeAnnual: 3200,

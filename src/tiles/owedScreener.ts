@@ -64,7 +64,9 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
       : (profile.get("householdSize") ?? 1),
     region: r && isRegion(r) ? r : "contiguous",
     income: p.has("inc") ? parseNonNegative(p.get("inc"), 0) : (profile.get("annualIncome") ?? 0),
-    children: Math.max(0, parseNonNegative(p.get("kids"), 0)),
+    children: p.has("kids")
+      ? Math.max(0, parseNonNegative(p.get("kids"), 0))
+      : (profile.get("qualifyingChildren") ?? 0),
     married: p.has("mfj") ? p.get("mfj") === "1" : marriedDefault(profile),
   };
 }
@@ -382,6 +384,7 @@ export function mountOwedScreener(ctx: TileContext): void {
     };
     ctx.setParams(writeFields(fields));
     profile.set("householdSize", fields.householdSize);
+    profile.set("qualifyingChildren", fields.children);
     profile.set("annualIncome", fields.income);
     render();
   }
