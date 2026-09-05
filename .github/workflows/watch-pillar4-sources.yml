@@ -32,8 +32,8 @@ jobs:
   watch:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
@@ -69,7 +69,7 @@ jobs:
           steps.watch.outputs.report != '' &&
           (steps.watch.outputs.changed != '0' ||
            steps.watch.outputs.unreachable != '0')
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const report = process.env.REPORT;

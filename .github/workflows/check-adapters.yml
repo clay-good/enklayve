@@ -29,8 +29,8 @@ jobs:
   adapters:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
@@ -91,7 +91,7 @@ jobs:
            steps.adapters.outputs.wouldChange != '0' ||
            steps.adapters.outputs.waitsOver != '0' ||
            steps.adapters.outputs.blindWaits != '0')
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const parts = [

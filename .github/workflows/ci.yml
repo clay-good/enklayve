@@ -14,17 +14,12 @@ on:
 permissions:
   contents: read
 
-# Run the bundled JS actions (checkout, setup-node) on Node 24 ahead of
-# GitHub's mid-2026 default switch, silencing the Node 20 deprecation notice.
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           # Node 24 runs the TypeScript build scripts (audit, manifest) directly
           # via native type stripping, and matches .nvmrc.
@@ -48,8 +43,8 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
