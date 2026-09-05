@@ -41,6 +41,43 @@ interface ContrastResult {
 /** A floor per view, low enough not to be brittle and high enough to catch a rule that never ran. */
 const MIN_EVALUATED = 40;
 
+/**
+ * Every hub, not four views.
+ *
+ * The four cases above were written to prove the rule could run at all, and one
+ * of them is a calculator. A hub is where this catalog's colour actually lives:
+ * the segmented tool picker, the verdict badges, the chart palettes and the
+ * stat cards are all painted inside one, and eleven of the twelve were never
+ * measured in a browser. That is where the good stat card's 4.38:1 hint had
+ * been sitting.
+ *
+ * Each is opened at its default tool and its worked example is pressed first,
+ * because an empty form has almost no coloured surface to judge — the reading,
+ * the chart and the badge only exist once there is an answer on the screen.
+ *
+ * Run once per hub rather than once per theme. The `data-theme` attribute the
+ * cases above set is **vestigial**: the dark and high-contrast themes were
+ * removed on 2026-06-01 for a single calm palette, and `src/styles.css` has no
+ * `[data-theme]` or `prefers-color-scheme` block to respond with. Those eight
+ * cases are four checks run twice, and doubling twelve more would buy twelve
+ * more of the same. The stylesheet's own pairs are swept separately, in the
+ * fast suite, by `tests/ui/contrastTokens.test.ts`.
+ */
+const HUBS = [
+  "paycheck-taxes",
+  "self-employed",
+  "investing",
+  "retirement",
+  "debt",
+  "budget-cashflow",
+  "home-purchases",
+  "protection",
+  "benefits",
+  "benefit-cliffs",
+  "when-money-is-tight",
+  "where-you-stand",
+] as const;
+
 for (const theme of ["light", "dark"] as const) {
   for (const [name, hash, marker] of [
     ["home", "/", "home-budget__select"],
@@ -96,4 +133,42 @@ for (const theme of ["light", "dark"] as const) {
       }
     });
   }
+}
+
+for (const hub of HUBS) {
+  test(`the ${hub} hub has no contrast violations, showing an answer`, async ({ page }) => {
+    await page.goto(`/#/${hub}`);
+    await page.waitForSelector("#content");
+    // The hub chrome, not the home page it falls back to when a hash names no
+    // route — the same trap the four cases above are guarded against.
+    await expect(page.locator(".segmented, .hub-tool").first()).toBeVisible({ timeout: 15_000 });
+    const example = page.getByRole("button", { name: /try an example/i }).first();
+    if (await example.isVisible().catch(() => false)) {
+      await example.click();
+      await page.waitForTimeout(200);
+    }
+    await page.addScriptTag({ path: AXE });
+
+    const result: ContrastResult = await page.evaluate(async () => {
+      // @ts-expect-error axe is injected into the page, not imported here
+      const res = await window.axe.run(document, {
+        runOnly: { type: "rule", values: ["color-contrast"] },
+      });
+      const describe = (list: { nodes: { target: unknown[]; any: { message?: string }[] }[] }[]) =>
+        list.flatMap((r) =>
+          r.nodes.map((n) => `${n.target.join(" ")} — ${(n.any[0]?.message ?? "").slice(0, 140)}`),
+        );
+      return {
+        passes: res.passes.reduce((n: number, r: { nodes: unknown[] }) => n + r.nodes.length, 0),
+        violations: describe(res.violations),
+        incomplete: describe(res.incomplete),
+      };
+    });
+
+    expect(
+      result.passes,
+      `axe evaluated ${result.passes} elements for contrast on ${hub}, which means the rule did not run`,
+    ).toBeGreaterThan(MIN_EVALUATED);
+    expect(result.violations.join("\n"), `${hub} fails WCAG 1.4.3`).toBe("");
+  });
 }

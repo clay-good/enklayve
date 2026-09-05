@@ -24,6 +24,16 @@
   --enk-accent-ink: #422006;
   --enk-good: #15803d;
   --enk-warn: #dc2626;
+  /* The same two colours, dark enough to be read *on their own tint*.
+     `--enk-good` and `--enk-warn` clear 4.5:1 on the plain surface and neither
+     of them clears it on a 9-16% wash of itself: green fell to 4.38 on the good
+     stat card, red to 4.19 on the warn one, 4.01 on the staleness banner and
+     3.71 on a badge over the page background. Nothing looked wrong, which is
+     the trouble with a contrast miss of a tenth of a point — it reads as a
+     slightly soft label rather than as a failure. Same pattern, and the same
+     reason, as `--enk-accent-ink`. */
+  --enk-good-ink: #166534;
+  --enk-warn-ink: #991b1b;
   --enk-focus: #8b5cf6;
   --enk-shadow: 0 1px 3px rgba(45, 27, 105, 0.08), 0 8px 24px rgba(45, 27, 105, 0.08);
   --enk-radius: 14px;
@@ -1146,7 +1156,7 @@ body {
   padding-right: max(1.1rem, env(safe-area-inset-right));
 }
 .stale-banner strong {
-  color: var(--enk-warn);
+  color: var(--enk-warn-ink);
 }
 /* An integrity failure is a different fact from an out-of-date one and reads as
    such — a heavier border and a stronger fill of the *same* warn red, rather
@@ -1835,7 +1845,7 @@ body {
 }
 .stat-card--good .stat-card__value,
 .stat-card--good .stat-card__hint {
-  color: var(--enk-good);
+  color: var(--enk-good-ink);
 }
 .stat-card--good {
   background: color-mix(in srgb, var(--enk-good) 10%, var(--enk-surface));
@@ -1845,7 +1855,7 @@ body {
 }
 .stat-card--warn .stat-card__value,
 .stat-card--warn .stat-card__hint {
-  color: var(--enk-warn);
+  color: var(--enk-warn-ink);
 }
 .stat-card--warn {
   background: color-mix(in srgb, var(--enk-warn) 9%, var(--enk-surface));
@@ -2003,12 +2013,12 @@ body {
 /* --- The Readout, live view (BUILD-SPEC-2 §2) ---------------------------- */
 .badge--good {
   background: color-mix(in srgb, var(--enk-good) 16%, transparent);
-  color: var(--enk-good);
+  color: var(--enk-good-ink);
   border: 1px solid var(--enk-good);
 }
 .badge--warn {
   background: color-mix(in srgb, var(--enk-warn) 14%, transparent);
-  color: var(--enk-warn);
+  color: var(--enk-warn-ink);
   border: 1px solid var(--enk-warn);
 }
 
