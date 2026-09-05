@@ -92,15 +92,57 @@ export const SCANNED_PDF_MESSAGE =
   "page (PNG or JPG) reads better than a photo of a screen. Pasting the text works too.";
 
 /**
+ * Load one of the heavy readers, and say what happened when it cannot be
+ * loaded.
+ *
+ * pdf.js, tesseract and mammoth are dynamically imported so a first visit does
+ * not pay for them, and a dynamic import is the one operation here that can
+ * fail for a reason that has nothing to do with the document. Two of them are
+ * ordinary:
+ *
+ *   - **Offline, first use.** A lazy chunk is runtime-cached the first time it
+ *     is fetched, so a reader who has never opened the Readout has never
+ *     cached it. The service worker used to answer that miss with the app
+ *     shell, and the browser reported a syntax error for parsing HTML as a
+ *     module; it returns a network error now, which is what it is.
+ *   - **The site was deployed while the page was open.** Every chunk name
+ *     carries a content hash and the host serves only the current build, so
+ *     the module this page will ask for stops existing the moment a new one
+ *     ships. Nothing is wrong with the reader's copy except that it is one
+ *     version behind.
+ *
+ * Both surface as "Failed to fetch dynamically imported module", which reads
+ * to a reader as *this site is broken*. It is the same distinction the service
+ * worker fix drew and stopped one layer short of: the message the reader
+ * actually sees. It names both causes because the page cannot tell them apart
+ * — `navigator.onLine` reports the interface, not reachability — and the
+ * action is the same either way.
+ */
+async function loadReader<T>(load: () => Promise<T>, what: string): Promise<T> {
+  try {
+    return await load();
+  } catch {
+    throw new Error(
+      `The ${what} could not be loaded. Either this device is offline and has not used it ` +
+        "before, or the site was updated while this page was open. Reload the page and try " +
+        "again — nothing you dropped here has gone anywhere.",
+    );
+  }
+}
+
+/**
  * Read a PDF entirely on the device, with no network access. A PDF with a text
  * layer is read from it directly; one without — a scan — is rendered page by
  * page and read by OCR instead.
  */
 async function extractPdf(file: File): Promise<ExtractedText> {
-  const pdfjs = await import("pdfjs-dist");
+  const pdfjs = await loadReader(() => import("pdfjs-dist"), "PDF reader");
   // The worker is bundled as a same-origin asset (CSP `worker-src 'self'`); it
   // is never fetched cross-origin.
-  const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
+  const worker = await loadReader(
+    () => import("pdfjs-dist/build/pdf.worker.min.mjs?url"),
+    "PDF reader",
+  );
   pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
 
   const data = new Uint8Array(await file.arrayBuffer());
@@ -170,7 +212,7 @@ async function ocrPdfPages(doc: {
   if (doc.numPages > MAX_OCR_PDF_PAGES) throw new Error(tooManyScannedPagesMessage(doc.numPages));
   if (typeof OffscreenCanvas === "undefined") throw new Error(SCANNED_PDF_MESSAGE);
 
-  const { createWorker } = await import("tesseract.js");
+  const { createWorker } = await loadReader(() => import("tesseract.js"), "text recognizer");
   const worker = await createWorker("eng", 1, {
     workerPath: `${OCR_ASSET_PATH}/worker.min.js`,
     corePath: OCR_ASSET_PATH,
@@ -215,7 +257,7 @@ async function ocrPdfPages(doc: {
  * `connect-src 'none'`. We take the raw text (not HTML), since the anchored
  * extractors read labels and box numbers, not markup. */
 async function extractDocx(file: File): Promise<ExtractedText> {
-  const mammoth = await import("mammoth");
+  const mammoth = await loadReader(() => import("mammoth"), "Word document reader");
   const arrayBuffer = await file.arrayBuffer();
   const result = await mammoth.extractRawText({ arrayBuffer });
   const text = result.value.replace(/\r\n/g, "\n").trim();
@@ -280,7 +322,7 @@ export function isImageFile(file: File): boolean {
  * review (§2.2).
  */
 async function extractImage(file: File): Promise<ExtractedText> {
-  const { createWorker } = await import("tesseract.js");
+  const { createWorker } = await loadReader(() => import("tesseract.js"), "text recognizer");
   const worker = await createWorker("eng", 1, {
     workerPath: `${OCR_ASSET_PATH}/worker.min.js`,
     corePath: OCR_ASSET_PATH,

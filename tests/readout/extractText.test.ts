@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import JSZip from "jszip";
 import { extractTextFromFile, isImageFile } from "../../src/readout/extractText";
 
@@ -91,5 +91,50 @@ describe("isImageFile — OCR routing", () => {
     expect(isImageFile(new File([""], "return.pdf", { type: "application/pdf" }))).toBe(false);
     expect(isImageFile(new File([""], "w2.docx", { type: "" }))).toBe(false);
     expect(isImageFile(new File([""], "notes.txt", { type: "text/plain" }))).toBe(false);
+  });
+});
+
+/**
+ * A reader that will not load is not a broken site.
+ *
+ * pdf.js, tesseract and mammoth are dynamically imported so a first visit does
+ * not pay for them, and a dynamic import fails for two reasons that have
+ * nothing to do with the document: the device is offline and has never cached
+ * that chunk, or the site was deployed while the page was open — every chunk
+ * name carries a content hash and the host serves only the current build, so
+ * the module an open page is about to ask for stops existing the moment a new
+ * one ships. This site deploys on every push to `main`.
+ *
+ * Both arrive as "Failed to fetch dynamically imported module", which the
+ * Readout used to put on the screen verbatim. That reads as *this site is
+ * broken* at the moment somebody has just dropped their tax document on it.
+ * The service worker fix drew this same distinction — a chunk that cannot be
+ * served is a network error, not the app shell parsed as a module — and
+ * stopped one layer short of the sentence the reader sees.
+ */
+describe("a heavy reader that cannot be loaded", () => {
+  it("says the page is behind, not that the document is bad", async () => {
+    vi.resetModules();
+    vi.doMock("mammoth", () => {
+      throw new Error("Failed to fetch dynamically imported module: /assets/lib-D_V-sbDv.js");
+    });
+    const { extractTextFromFile } = await import("../../src/readout/extractText");
+    const file = new File([await makeDocx(["anything"])], "w2.docx", {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    await expect(extractTextFromFile(file)).rejects.toThrow(
+      /Word document reader could not be loaded/,
+    );
+    // Both causes named, because the page cannot tell them apart —
+    // `navigator.onLine` reports the interface, not reachability — and the
+    // action is the same either way.
+    await expect(extractTextFromFile(file)).rejects.toThrow(/offline/);
+    await expect(extractTextFromFile(file)).rejects.toThrow(/updated while this page was open/);
+    await expect(extractTextFromFile(file)).rejects.toThrow(/Reload the page/);
+    // And it does not leak the module URL, which is the part that reads as a
+    // stack trace to somebody who just dropped their W-2 on the page.
+    await expect(extractTextFromFile(file)).rejects.not.toThrow(/assets\//);
+    vi.doUnmock("mammoth");
+    vi.resetModules();
   });
 });
