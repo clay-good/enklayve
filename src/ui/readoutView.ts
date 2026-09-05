@@ -11,7 +11,11 @@ import { el, clear, option } from "./dom";
 import { field } from "./form";
 import { extractDocument, labelFor } from "../readout/extract";
 import { applyToSituation, replacementNote } from "../readout/toSituation";
-import { extractTextFromFile, type TextExtractor } from "../readout/extractText";
+import {
+  extractTextFromFile,
+  PDF_PASSWORD_REQUIRED,
+  type TextExtractor,
+} from "../readout/extractText";
 import { importProfile, isEncrypted, readFileText } from "../profile/portable";
 import {
   diffLedger,
@@ -189,16 +193,77 @@ export function renderReadout(opts: RenderReadoutOptions): void {
       await handleRestore(file);
       return;
     }
+    await readDocument(file);
+  }
+
+  /**
+   * Read a dropped document, asking for a password if the file needs one.
+   *
+   * A locked PDF is the likeliest way a real tax document fails to open here:
+   * payroll providers and banks deliver W-2s, 1099s and statements encrypted,
+   * often with the last four of an SSN as the password. Telling the reader to
+   * go unlock it in another program was honest and was the wrong answer — the
+   * decryption happens in pdf.js, on this device, which is the one thing this
+   * page is for.
+   */
+  async function readDocument(file: File, password?: string): Promise<void> {
     status.textContent = "Reading on your device…";
     try {
-      const text = await extractor(file);
+      const text = await extractor(file, password);
       const result = extractDocument(text);
       if (result.recognized) session.push(result);
       status.textContent = "";
       renderResult(result);
     } catch (err) {
+      if ((err as Error).name === PDF_PASSWORD_REQUIRED) {
+        status.textContent = "";
+        renderPdfUnlock(file, (err as Error).message);
+        return;
+      }
       status.textContent = (err as Error).message;
     }
+  }
+
+  /**
+   * Ask for a locked PDF's password, and read it with what the reader types.
+   *
+   * The passphrase row the encrypted-profile path already uses, for the same
+   * reason: one shape for "this file needs a secret", so a reader meets the
+   * same control twice rather than two inventions. The value lives in the
+   * input and in the argument to one call — never written to storage, never
+   * put in the fragment, never logged, and gone with the page.
+   */
+  function renderPdfUnlock(file: File, why: string): void {
+    clear(resultRegion);
+    const pass = el("input", {
+      type: "password",
+      class: "portable-pass",
+      name: "pdf-password",
+      attrs: {
+        placeholder: "PDF password",
+        autocomplete: "off",
+        "aria-label": "Password for this PDF",
+      },
+    });
+    const open = el("button", {
+      type: "button",
+      class: "btn btn--accent",
+      text: "Unlock & read",
+      on: {
+        click: () => {
+          void readDocument(file, pass.value);
+        },
+      },
+    });
+    resultRegion.append(
+      el(
+        "div",
+        { class: "readout-fields" },
+        el("p", { class: "readout-note", attrs: { "aria-live": "polite" }, text: why }),
+        el("div", { class: "portable-actions" }, pass, open),
+      ),
+    );
+    pass.focus();
   }
 
   /**

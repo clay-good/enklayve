@@ -1,6 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import JSZip from "jszip";
-import { extractTextFromFile, isImageFile } from "../../src/readout/extractText";
+import {
+  extractTextFromFile,
+  isImageFile,
+  PDF_PASSWORD_REQUIRED,
+} from "../../src/readout/extractText";
 
 /**
  * I/O-boundary tests for on-device text extraction (BUILD-SPEC-2 §2). The
@@ -154,12 +158,12 @@ describe("a heavy reader that cannot be loaded", () => {
  * encrypted PDF by hand to assert a sentence would be testing pdf.js.
  */
 describe("a PDF that will not open", () => {
-  async function readStubbedPdf(name: string, message: string): Promise<Error> {
+  async function readStubbedPdf(name: string, message: string, code?: number): Promise<Error> {
     vi.resetModules();
     vi.doMock("pdfjs-dist", () => ({
       GlobalWorkerOptions: { workerSrc: "" },
       getDocument: () => ({
-        promise: Promise.reject(Object.assign(new Error(message), { name })),
+        promise: Promise.reject(Object.assign(new Error(message), { name, code })),
       }),
     }));
     vi.doMock("pdfjs-dist/build/pdf.worker.min.mjs?url", () => ({ default: "/worker.js" }));
@@ -175,15 +179,75 @@ describe("a PDF that will not open", () => {
     );
   }
 
-  it("says a password-protected file is locked, and what to do instead", async () => {
-    const err = await readStubbedPdf("PasswordException", "No password given");
+  it("asks for the password rather than sending the reader elsewhere", async () => {
+    const err = await readStubbedPdf("PasswordException", "No password given", 1);
+    expect(err.name).toBe(PDF_PASSWORD_REQUIRED);
     expect(err.message).toMatch(/password-protected/);
-    expect(err.message).toMatch(/nowhere here to type the password/);
-    expect(err.message).toMatch(/save an unlocked copy/i);
-    // The promise is repeated, because the suggestion is "open it somewhere
-    // else and come back" and the promise is why this page was chosen.
-    expect(err.message).toMatch(/nothing you drop leaves this device/);
+    expect(err.message).toMatch(/Type its password/);
+    // The promise is repeated where the ask is made, because being asked for a
+    // password is the moment a reader wonders where it goes.
+    expect(err.message).toMatch(/never stored/);
+    expect(err.message).toMatch(/never sent anywhere/);
     expect(err.message).not.toMatch(/No password given/);
+    vi.doUnmock("pdfjs-dist");
+    vi.resetModules();
+  });
+
+  it("tells a wrong password from one it has not asked for yet", async () => {
+    // One exception to pdf.js, two different sentences to a person: code 1 is
+    // "this needs a password", code 2 is "that one did not open it".
+    const err = await readStubbedPdf("PasswordException", "Incorrect Password", 2);
+    expect(err.name).toBe(PDF_PASSWORD_REQUIRED);
+    expect(err.message).toMatch(/did not open the file/);
+    // And it says where the password usually comes from, because the commonest
+    // sender of an encrypted W-2 is a payroll provider whose covering email
+    // says so and whose file arrives months later.
+    expect(err.message).toMatch(/last four of an SSN/);
+    vi.doUnmock("pdfjs-dist");
+    vi.resetModules();
+  });
+
+  it("passes the password it was given to pdf.js, and reads the file with it", async () => {
+    vi.resetModules();
+    const seen: (string | undefined)[] = [];
+    vi.doMock("pdfjs-dist", () => ({
+      GlobalWorkerOptions: { workerSrc: "" },
+      getDocument: (opts: { password?: string }) => {
+        seen.push(opts.password);
+        if (opts.password !== "hunter2") {
+          return {
+            promise: Promise.reject(
+              Object.assign(new Error("Incorrect Password"), {
+                name: "PasswordException",
+                code: opts.password === undefined ? 1 : 2,
+              }),
+            ),
+          };
+        }
+        return {
+          promise: Promise.resolve({
+            numPages: 1,
+            getPage: () =>
+              Promise.resolve({
+                getTextContent: () =>
+                  Promise.resolve({
+                    items: [{ str: "1 Wages, tips, other compensation 61000.00" }],
+                  }),
+              }),
+          }),
+        };
+      },
+    }));
+    vi.doMock("pdfjs-dist/build/pdf.worker.min.mjs?url", () => ({ default: "/worker.js" }));
+    const { extractTextFromFile } = await import("../../src/readout/extractText");
+    const file = new File([new Uint8Array([0x25, 0x50, 0x44, 0x46])], "w2.pdf", {
+      type: "application/pdf",
+    });
+    await expect(extractTextFromFile(file)).rejects.toThrow(/password-protected/);
+    await expect(extractTextFromFile(file, "nope")).rejects.toThrow(/did not open the file/);
+    const read = await extractTextFromFile(file, "hunter2");
+    expect(read.text).toContain("61000.00");
+    expect(seen).toEqual([undefined, "nope", "hunter2"]);
     vi.doUnmock("pdfjs-dist");
     vi.resetModules();
   });

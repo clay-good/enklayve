@@ -4,7 +4,7 @@ import { renderReadout } from "../../src/ui/readoutView";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import { serialize } from "../../src/profile/portable";
-import type { TextExtractor } from "../../src/readout/extractText";
+import { PDF_PASSWORD_REQUIRED, type TextExtractor } from "../../src/readout/extractText";
 
 let bundled: BundledData;
 beforeAll(async () => {
@@ -306,6 +306,61 @@ describe("Readout view, the four-part answer", () => {
     expect(profile.has("annualIncome")).toBe(false);
     // The count says what was written, so the skipped field is visible there too.
     expect(container.querySelector(".readout-note")?.textContent).not.toContain("Added 2 values");
+  });
+
+  it("asks for a locked PDF's password and reads the file with it", async () => {
+    // A locked PDF is the likeliest way a real tax document fails to open here
+    // — payroll providers and banks deliver W-2s and 1099s encrypted, often
+    // with the last four of an SSN as the password. Telling the reader to go
+    // unlock it in another program was honest and was the wrong answer: the
+    // decryption happens in pdf.js, on this device, which is what this page is
+    // for.
+    const asked: (string | undefined)[] = [];
+    const locked: TextExtractor = async (_file, password) => {
+      asked.push(password);
+      if (password !== "hunter2") {
+        const err = new Error(
+          password === undefined
+            ? "This PDF is password-protected. Type its password to open it here."
+            : "That password did not open the file.",
+        );
+        err.name = PDF_PASSWORD_REQUIRED;
+        throw err;
+      }
+      return { text: W2_TEXT, pages: [W2_TEXT], source: "typed" as const };
+    };
+    const { container, profile } = setup(locked);
+    await dropFile(container, "w2.pdf");
+
+    const field = container.querySelector<HTMLInputElement>('input[name="pdf-password"]')!;
+    expect(field).not.toBeNull();
+    // A password field, not a text one, and not offered to a password manager.
+    expect(field.type).toBe("password");
+    expect(field.getAttribute("autocomplete")).toBe("off");
+    expect(container.textContent).toContain("password-protected");
+
+    // A wrong one says so and asks again rather than dropping the file.
+    field.value = "nope";
+    container.querySelector<HTMLButtonElement>(".portable-actions .btn--accent")!.click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(container.textContent).toContain("did not open the file");
+
+    const retry = container.querySelector<HTMLInputElement>('input[name="pdf-password"]')!;
+    retry.value = "hunter2";
+    container.querySelector<HTMLButtonElement>(".portable-actions .btn--accent")!.click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(asked).toEqual([undefined, "nope", "hunter2"]);
+
+    // And the document is read: the confirm list is there to press.
+    container.querySelector<HTMLButtonElement>(".readout-actions .btn--accent")!.click();
+    expect(profile.get("annualIncome")).toBe(75000);
+
+    // The password went to one function call and nowhere else. The session's
+    // no-persistence promise is asserted end to end in Playwright; this holds
+    // the narrower thing a unit test can see — it is not in the fragment, and
+    // the field it was typed into is gone with the render that replaced it.
+    expect(window.location.hash).not.toContain("hunter2");
+    expect(container.querySelector('input[name="pdf-password"]')).toBeNull();
   });
 
   it("says which figure a second document replaced, and what it was", async () => {

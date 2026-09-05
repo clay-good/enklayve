@@ -52,7 +52,15 @@ export interface ExtractedText {
 }
 
 /** A function that turns a file into text — injectable so the UI is testable. */
-export type TextExtractor = (file: File) => Promise<ExtractedText>;
+export type TextExtractor = (file: File, password?: string) => Promise<ExtractedText>;
+
+/**
+ * The `name` an error carries when a PDF needs a password this page has not
+ * been given. `wrongPassword` distinguishes "we have not asked yet" from "what
+ * you typed did not open it", which are different sentences to the reader and
+ * the same exception to pdf.js.
+ */
+export const PDF_PASSWORD_REQUIRED = "PdfPasswordRequired";
 
 /**
  * Does this PDF carry no selectable text worth reading?
@@ -153,12 +161,19 @@ async function openPdf<T>(open: () => Promise<T>): Promise<T> {
   } catch (err) {
     const name = (err as { name?: string }).name ?? "";
     if (name === "PasswordException") {
-      throw new Error(
-        "This PDF is password-protected, and there is nowhere here to type the password — " +
-          "opening it would mean this page holding one. Open it in your usual PDF reader, save " +
-          "an unlocked copy, and drop that here instead. Pasting the text works too, and " +
-          "either way nothing you drop leaves this device.",
+      // pdf.js code 1 is "needs one", code 2 is "that one was wrong". They are
+      // one exception to the library and two different sentences to a person.
+      const wrong = (err as { code?: number }).code === 2;
+      const asking = new Error(
+        wrong
+          ? "That password did not open the file. Check it and try again — it is often the last " +
+              "four of an SSN, or a date of birth, and the sender's covering email usually says."
+          : "This PDF is password-protected. Type its password to open it here — it is used on " +
+              "this device to decrypt the file and is never stored, never put in the address bar, " +
+              "and never sent anywhere.",
       );
+      asking.name = PDF_PASSWORD_REQUIRED;
+      throw asking;
     }
     if (name === "InvalidPDFException") {
       throw new Error(
@@ -175,7 +190,7 @@ async function openPdf<T>(open: () => Promise<T>): Promise<T> {
  * layer is read from it directly; one without — a scan — is rendered page by
  * page and read by OCR instead.
  */
-async function extractPdf(file: File): Promise<ExtractedText> {
+async function extractPdf(file: File, password?: string): Promise<ExtractedText> {
   const pdfjs = await loadReader(() => import("pdfjs-dist"), "PDF reader");
   // The worker is bundled as a same-origin asset (CSP `worker-src 'self'`); it
   // is never fetched cross-origin.
@@ -188,7 +203,9 @@ async function extractPdf(file: File): Promise<ExtractedText> {
   const data = new Uint8Array(await file.arrayBuffer());
   // No cmap/standard-font URLs and isEvalSupported:false => no runtime fetch,
   // honoring `connect-src 'none'`.
-  const doc = await openPdf(() => pdfjs.getDocument({ data, isEvalSupported: false }).promise);
+  const doc = await openPdf(
+    () => pdfjs.getDocument({ data, isEvalSupported: false, password }).promise,
+  );
   const pages: string[] = [];
   for (let i = 1; i <= doc.numPages; i += 1) {
     const page = await doc.getPage(i);
@@ -390,11 +407,11 @@ async function extractImage(file: File): Promise<ExtractedText> {
  * that decision belongs to the PDF reader, which is the only thing that can
  * see whether the pages carry text.)
  */
-export const extractTextFromFile: TextExtractor = async (file) => {
+export const extractTextFromFile: TextExtractor = async (file, password) => {
   if (file.size > MAX_DOCUMENT_BYTES) throw new Error(tooLargeMessage(file.size));
   const name = file.name.toLowerCase();
   if (name.endsWith(".pdf") || file.type === "application/pdf") {
-    return extractPdf(file);
+    return extractPdf(file, password);
   }
   if (
     name.endsWith(".docx") ||
