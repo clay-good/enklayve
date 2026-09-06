@@ -21,6 +21,7 @@ import { type TileContext, type TileDefinition } from "../tiles/types";
 import { getTile, TILES, SUB_TOOLS } from "../tiles/registry";
 import { SituationStore } from "../profile/situation";
 import { resolveResidenceLocal } from "./residenceLocal";
+import { rememberShared, type SharedFields } from "../tiles/profileSync";
 
 /** Navigate to a tile/home, optionally deep-linking into a hub sub-tool. */
 type NavigateFn = (id: string | null, params?: URLSearchParams) => void;
@@ -243,7 +244,28 @@ const DEFAULT_BUDGET = {
   invest: { retirement: 500, brokerage: 200 },
 };
 
-function homeBudgetWidget(data: BundledData | null): HTMLElement {
+/**
+ * The home budget, wired to My Situation.
+ *
+ * This widget asks for the four things every tax tile asks for — income,
+ * filing status, state, and the county where a state makes a local income tax
+ * mandatory — and until now it shared none of them. It is the front door: the
+ * surface a first visit lands on and the one the README calls the plan in
+ * written form. So the reader who filled it in was met by a stranger's $5,000
+ * a month when they arrived from Take-Home, and had to retype their own income
+ * in the first tool they opened from it. Every calculator on the site has
+ * spoken this plumbing since SPEC-2 §3; the page in front of all of them did
+ * not, because it is not a tile and the map that pins the writers is derived
+ * from the tile registry.
+ *
+ * What it writes is what its controls hold and no more. The five living-expense
+ * rows sum to `totalMonthlyExpenses`, restated monthly whatever the pay
+ * frequency; `essentialMonthlyExpenses` is NOT written, because "All other
+ * expenses" is the opposite of essential and splitting a total nobody split is
+ * the inference this project refuses. Nothing is written on mount — only an
+ * edit writes, so the built-in defaults never become a claim about the reader.
+ */
+function homeBudgetWidget(data: BundledData | null, profile: SituationStore | null): HTMLElement {
   const fmt0 = (n: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -259,10 +281,24 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
   const fed = data?.federal() ?? null;
   const fica = data?.fica() ?? null;
 
-  let income = DEFAULT_BUDGET.income;
+  /**
+   * The reader's own annual income, exactly as another surface recorded it,
+   * held until they restate it here.
+   *
+   * The budget's income box is per-period and whole-dollar, so $85,000 a year
+   * prefills as $7,083 a month and multiplies back out to $84,996 — a silent
+   * $4 edit to a figure they typed somewhere else, triggered by touching an
+   * unrelated row. Keeping the exact annual figure means the write-back, the
+   * tax estimate and the "that's about" caption all use the number they gave.
+   * Any edit to the income box or the pay frequency clears it: at that point
+   * the box IS the statement.
+   */
+  let annualIncomeExact = profile?.get("annualIncome") ?? null;
+  let income =
+    annualIncomeExact !== null ? Math.round(annualIncomeExact / 12) : DEFAULT_BUDGET.income;
   let freq = "monthly";
-  let fs: FilingStatus = "single";
-  let stateCode = "";
+  let fs: FilingStatus = profile?.get("filingStatus") ?? "single";
+  let stateCode = profile?.get("stateCode") ?? "";
   /**
    * The county whose income tax this household also pays, in the two states
    * where that is not optional. The budget asks for four things on purpose, and
@@ -271,7 +307,7 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
    * budget that leaves it out is not asking one question fewer, it is answering
    * a different household's.
    */
-  let localIds: string[] = [];
+  let localIds: string[] = profile?.get("county") ? [profile.get("county")!] : [];
   const spend: Record<string, number> = { ...DEFAULT_BUDGET.spend };
   const invest: Record<string, number> = { ...DEFAULT_BUDGET.invest };
 
@@ -299,10 +335,13 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
   // number (the per-jurisdiction stale/corrupt gate, surfaced as a banner).
   const isModeled = (code: string): boolean => !!(code && data && data.state(code));
 
+  /** The income the budget is reasoning about, annualized. */
+  const annualIncome = (): number => annualIncomeExact ?? income * periodsFor(freq);
+
   /** Annual total tax (federal income + FICA + state) via the shared engine. */
   const annualTax = (): number => {
     if (!fed || !fica) return 0;
-    const annualWages = income * periodsFor(freq);
+    const annualWages = annualIncome();
     const stateJ = isModeled(stateCode) ? (data!.state(stateCode) ?? undefined) : undefined;
     const input: TaxInput = {
       filingStatus: fs,
@@ -318,7 +357,7 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
 
   const refreshChrome = (): void => {
     // The annualized-income caption: the same money, restated, for context.
-    const annual = income * periodsFor(freq);
+    const annual = annualIncome();
     incomeHint.textContent = income > 0 ? `That's about ${fmt0(annual)} a year` : "";
     // Every U.S. income-tax state and DC is now modeled, so there is no longer a
     // "state not modeled yet" case to disclose; `isModeled` still gates the tax
@@ -412,6 +451,38 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
       status,
       stats,
     );
+  };
+
+  /**
+   * Has the reader touched a living-expense row?
+   *
+   * The five rows open on built-in defaults summing to $3,300 a month, which is
+   * a plausible household and nobody's. Changing the pay frequency restates
+   * that total, so the frequency control has to re-write it — but only once the
+   * rows are the reader's own, or a stranger's $3,300 would land in the profile
+   * because someone said they are paid weekly.
+   */
+  let expensesStated = false;
+
+  /** The five living-expense rows, restated monthly whatever the pay frequency. */
+  const monthlyExpenses = (): number => {
+    const perPeriod = BUDGET_SPEND_ROWS.reduce((t, r) => t + Math.max(0, spend[r.key] ?? 0), 0);
+    return Math.round((perPeriod * periodsFor(freq)) / 12);
+  };
+
+  /**
+   * Write back the fields the control that just changed actually holds.
+   *
+   * Per-control rather than one sweep after every edit, because a sweep writes
+   * every default the reader never answered: editing the Housing row would
+   * declare them single, on $60,000, in no state.
+   */
+  const remember = (fields: SharedFields & { totalMonthlyExpenses?: number }): void => {
+    if (!profile) return;
+    rememberShared(profile, fields);
+    if (fields.totalMonthlyExpenses !== undefined) {
+      profile.set("totalMonthlyExpenses", fields.totalMonthlyExpenses);
+    }
   };
 
   // A whole-dollar input wrapped with a leading "$" so the money reads clearly.
@@ -509,6 +580,8 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
       el("span", { class: "home-budget__row-name", text: "Income" }),
       moneyInput(income, 100, "Income", (n) => {
         income = n;
+        annualIncomeExact = null;
+        remember({ annualIncome: annualIncome() });
       }),
       makeSelect(
         "How often you're paid",
@@ -517,6 +590,11 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
         "home-budget__select--freq",
         (v) => {
           freq = v;
+          annualIncomeExact = null;
+          remember({
+            annualIncome: annualIncome(),
+            totalMonthlyExpenses: expensesStated ? monthlyExpenses() : undefined,
+          });
         },
       ),
     ),
@@ -569,6 +647,7 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
         localIds[0]!,
         (v) => {
           localIds = [v];
+          remember({ county: v });
         },
       ),
     );
@@ -583,10 +662,16 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
     incomeBlock,
     selectRow("Filing status", BUDGET_FILING_STATUSES, fs, (v) => {
       fs = v as FilingStatus;
+      remember({ filingStatus: fs });
     }),
     selectRow("State", stateOptions, stateCode, (v) => {
       stateCode = v;
+      // The county goes with the state: `renderCounty` has just resolved it to
+      // the new state's default, or cleared it for a state that levies none,
+      // and an empty county is written through so leaving Maryland leaves
+      // Montgomery behind rather than charging it in Texas.
       renderCounty();
+      remember({ stateCode, county: localIds[0] ?? "" });
     }),
     countyRow,
     taxesRow,
@@ -595,6 +680,8 @@ function homeBudgetWidget(data: BundledData | null): HTMLElement {
     ...BUDGET_SPEND_ROWS.map((r) =>
       numRow(r.label, spend[r.key]!, color[r.key]!, 50, (n) => {
         spend[r.key] = n;
+        expensesStated = true;
+        remember({ totalMonthlyExpenses: monthlyExpenses() });
       }),
     ),
     groupLabel("Investing"),
@@ -661,6 +748,7 @@ function renderHome(
   container: HTMLElement,
   navigate: (id: string | null) => void,
   data: BundledData | null = null,
+  profile: SituationStore | null = null,
 ): void {
   clear(container);
   document.title = "enklayve";
@@ -675,7 +763,7 @@ function renderHome(
     }),
   );
 
-  container.append(hero, readoutDropzone(navigate), homeBudgetWidget(data), budgetWhy());
+  container.append(hero, readoutDropzone(navigate), homeBudgetWidget(data, profile), budgetWhy());
 }
 
 /** Trusted U.S. resources to learn the public rules behind the numbers. */
@@ -1020,7 +1108,7 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
 
   const renderRoute = (route: Route): void => {
     if (!route.tileId) {
-      renderHome(content, navigate, data);
+      renderHome(content, navigate, data, profile);
       return;
     }
     if (route.tileId === "all-tools") {
