@@ -18,6 +18,7 @@ import {
   shellSummary,
   mappedBytesBySource,
   MIN_HEADROOM_KB,
+  MEASUREMENT_SPREAD_KB,
   SHELL_GZIP_BUDGET_KB,
 } from "../../scripts/audit-release";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
@@ -385,7 +386,21 @@ describe("what the audit says when the budget passes", () => {
     expect(stated, "the README no longer states the precached shell's size").not.toBeNull();
     const kb = Number(stated![1]);
     expect(kb).toBeLessThanOrEqual(SHELL_GZIP_BUDGET_KB);
-    expect(SHELL_GZIP_BUDGET_KB - kb).toBeLessThanOrEqual(3);
+    // The tolerance is derived rather than picked. The gate keeps the shell
+    // under the budget by at least MIN_HEADROOM once MEASUREMENT_SPREAD_KB is
+    // taken off, so a truthful figure sits within about that much of the
+    // budget; one kilobyte of slack on top covers the build-to-build wobble
+    // that is not worth a doc edit. A flat 3 was the number before, and it was
+    // wide enough to miss the figure going stale by 0.6 kB inside a single day
+    // — which is exactly the drift this check exists for, and which it did
+    // miss on 2026-09-05. Tying it to the gate's own constants means a change
+    // to the budget or to the headroom rule moves this with it.
+    const slackKb = MIN_HEADROOM_KB + MEASUREMENT_SPREAD_KB + 1;
+    expect(
+      SHELL_GZIP_BUDGET_KB - kb,
+      `the README's shell figure is more than ${slackKb} kB under the budget, so it is stale — ` +
+        "re-measure it with `npm run build && npm run audit` rather than adjusting this",
+    ).toBeLessThanOrEqual(slackKb);
   });
 });
 
