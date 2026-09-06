@@ -54,6 +54,15 @@ async function dropFile(container: HTMLElement, name = "w2.pdf"): Promise<void> 
   await new Promise((r) => setTimeout(r, 0));
 }
 
+/** Drop a saved `.json` — a restore rather than a document to parse. */
+async function dropSituation(container: HTMLElement, content: string): Promise<void> {
+  const input = container.querySelector<HTMLInputElement>('input[type="file"]')!;
+  const file = new File([content], "my-situation.json", { type: "application/json" });
+  Object.defineProperty(input, "files", { value: { 0: file, length: 1 }, configurable: true });
+  input.dispatchEvent(new Event("change"));
+  await new Promise((r) => setTimeout(r, 0));
+}
+
 /** A text extractor that yields a different document on each successive read,
  * so a multi-document session (and its cross-document check) is testable. */
 function sequence(...texts: string[]): TextExtractor {
@@ -170,6 +179,95 @@ describe("Readout view", () => {
     expect(container.querySelector(".readout-status")?.textContent).toContain("Unsupported file");
   });
 
+  /**
+   * Every state this view can be in, not the one it was in when the check was
+   * written.
+   *
+   * The axe call below opens the Readout and drops a W-2, which is one of six
+   * states the view renders. The others appear only after a particular input —
+   * a confirm, a locked PDF, an encrypted profile file, a restore, a file the
+   * extractor rejects — and none of them was ever checked. That is the shape
+   * the three real-browser checks were caught in a week earlier: each opened
+   * the four views that existed when the first of them was written.
+   *
+   * It matters most here. This is the surface a person drops a tax document on,
+   * and two of the unchecked states are a **password field** and an error a
+   * screen reader has to be told about.
+   */
+  describe("every state the Readout renders", () => {
+    const AXE = { rules: { "color-contrast": { enabled: false } } };
+
+    async function noViolations(container: HTMLElement, state: string): Promise<void> {
+      const results = await axe.run(container, AXE);
+      expect(results.violations.map((v) => `${v.id} (${v.nodes.length})`).join(", "), state).toBe(
+        "",
+      );
+    }
+
+    it("the dropzone, before anything is dropped", async () => {
+      const { container } = setup();
+      await noViolations(container, "dropzone");
+    });
+
+    it("the summary, after a confirm", async () => {
+      const { container } = setup();
+      await dropFile(container);
+      container.querySelector<HTMLButtonElement>(".readout-actions .btn--accent")!.click();
+      await noViolations(container, "summary");
+    });
+
+    it("the password row for a locked PDF", async () => {
+      const locked: TextExtractor = async () => {
+        const err = new Error("This PDF is password-protected. Type its password to open it here.");
+        err.name = PDF_PASSWORD_REQUIRED;
+        throw err;
+      };
+      const { container } = setup(locked);
+      await dropFile(container, "w2.pdf");
+      expect(container.querySelector('input[name="pdf-password"]')).not.toBeNull();
+      await noViolations(container, "pdf password row");
+    });
+
+    it("the unlock row for an encrypted situation file", async () => {
+      const { container } = setup();
+      await dropSituation(
+        container,
+        JSON.stringify({
+          format: "enklayve.situation.encrypted",
+          version: 1,
+          kdf: "PBKDF2-SHA256",
+          iterations: 210000,
+          salt: "x",
+          iv: "y",
+          ciphertext: "z",
+        }),
+      );
+      await noViolations(container, "encrypted unlock row");
+    });
+
+    it("the restored view, after a saved file is read back", async () => {
+      const { container } = setup();
+      const saved = (() => {
+        const p = new SituationStore();
+        p.set("annualIncome", 88_000);
+        return serialize(p);
+      })();
+      await dropSituation(container, saved);
+      await noViolations(container, "restored");
+    });
+
+    it("the message for a file the extractor rejects", async () => {
+      const failing: TextExtractor = async () => {
+        throw new Error(
+          "Unsupported file. Drop a PDF, a Word (.docx) document, or paste the text.",
+        );
+      };
+      const { container } = setup(failing);
+      await dropFile(container, "photo.heic");
+      await noViolations(container, "unsupported file");
+    });
+  });
+
   it("has no axe violations after extraction", async () => {
     const { container } = setup();
     await dropFile(container);
@@ -179,14 +277,6 @@ describe("Readout view", () => {
 
   describe("restoring a saved situation (.json)", () => {
     /** Drop a saved-situation file (not a document) into the dropzone. */
-    async function dropSituation(container: HTMLElement, content: string): Promise<void> {
-      const input = container.querySelector<HTMLInputElement>('input[type="file"]')!;
-      const file = new File([content], "my-situation.json", { type: "application/json" });
-      Object.defineProperty(input, "files", { value: { 0: file, length: 1 }, configurable: true });
-      input.dispatchEvent(new Event("change"));
-      await new Promise((r) => setTimeout(r, 0));
-    }
-
     it("restores a dropped .json into the profile without running extraction", async () => {
       const { container, profile } = setup();
       const saved = (() => {
