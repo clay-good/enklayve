@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { SUB_TOOLS } from "../../src/tiles/registry";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
@@ -145,6 +145,30 @@ afterEach(() => {
 });
 
 const CALCULATORS = SUB_TOOLS.map(({ tile }) => tile).filter((t) => t.mount);
+
+/**
+ * Every module outside `src/tiles` that writes a shared field, and where its
+ * own map lives.
+ *
+ * The roster above is the tile registry, which is not the same thing as every
+ * writer on the site. The home anti-budget writes four shared fields and is not
+ * a tile — it lives in the shell — so nothing here ever had anything to say
+ * about it, and it went from launch to 2026-09-06 sharing none of the four
+ * questions every tax tile asks. It cannot join the sentinel sweep either, and
+ * for the sweep's own reason: its income box is per-period and its expense rows
+ * are a sum, so every figure it writes is *derived* from a control rather than
+ * equal to one, which is exactly what the sentinel exists to ignore.
+ *
+ * So a new writer outside `src/tiles` has to be listed here with the test that
+ * holds its controls, rather than quietly sitting outside a sweep that reads
+ * like it covers everything.
+ */
+const NON_TILE_WRITERS: Record<string, string> = {
+  "src/ui/shell.ts": "tests/ui/homeBudgetProfile.test.ts",
+  // The Readout writes confirmed *document* fields through `applyToSituation` —
+  // a document's values rather than a control's — and is covered in tests/readout.
+  "src/readout/toSituation.ts": "tests/readout",
+};
 
 /** The visible label of a control, which is the only statement of what it holds. */
 function labelOf(root: HTMLElement, control: HTMLElement): string {
@@ -321,6 +345,34 @@ const DECLARED = (() => {
 })();
 
 describe("what a calculator may write into My Situation", () => {
+  it("says which writers are outside this sweep, because the registry is not the site", () => {
+    const src = resolve(__dirname, "..", "..", "src");
+    const found: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = resolve(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (entry.name !== "tiles") walk(full);
+          continue;
+        }
+        if (!entry.name.endsWith(".ts")) continue;
+        const text = readFileSync(full, "utf8");
+        // Either door into My Situation: the store directly, or the shared writer.
+        if (/profile\.set\(|rememberShared\(|store\.set\(/.test(text)) {
+          found.push(`src${full.slice(src.length)}`.replace(/\\/g, "/"));
+        }
+      }
+    };
+    walk(src);
+    // A walk that finds nothing would make the check below vacuous.
+    expect(found.length).toBeGreaterThan(0);
+    expect(
+      found.filter((f) => !(f in NON_TILE_WRITERS)).sort(),
+      "these write My Situation from outside src/tiles, so the map above does not cover them —" +
+        " add the module to NON_TILE_WRITERS with the test that holds its controls",
+    ).toEqual([]);
+  });
+
   it("walks every field My Situation declares", () => {
     const walked = new Set<string>([...NUMERIC_FIELDS, ...ENUM_FIELDS]);
     // `ages` and `debts` are lists rather than scalars: neither can be driven
