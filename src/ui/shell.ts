@@ -15,12 +15,12 @@ import { applyStoredPreferences } from "./theme";
 import { el, clear, option } from "./dom";
 import { tileHowResources } from "./explainer";
 import { evaluateTaxes, type TaxInput } from "../engine/tax";
-import type { FilingStatus } from "../data/schemas";
+import type { FilingStatus, Jurisdiction } from "../data/schemas";
 import { loadBundledData, type BundledData } from "../data/browser";
 import { type TileContext, type TileDefinition } from "../tiles/types";
 import { getTile, TILES, SUB_TOOLS } from "../tiles/registry";
 import { SituationStore } from "../profile/situation";
-import { resolveResidenceLocal } from "./residenceLocal";
+import { resolveResidenceLocal, seedResidenceLocal, rememberableCounty } from "./residenceLocal";
 import { rememberShared, type SharedFields } from "../tiles/profileSync";
 
 /** Navigate to a tile/home, optionally deep-linking into a hub sub-tool. */
@@ -307,7 +307,15 @@ function homeBudgetWidget(data: BundledData | null, profile: SituationStore | nu
    * budget that leaves it out is not asking one question fewer, it is answering
    * a different household's.
    */
-  let localIds: string[] = profile?.get("county") ? [profile.get("county")!] : [];
+  /**
+   * Seeded below rather than here, through the shared module's own seeding
+   * rule. Reading `county` straight out of the profile is the one place a
+   * remembered id can ride into a state that does not levy it — the trap
+   * `seedResidenceLocal` was written for and documents — and the budget is now
+   * the fourth surface charging this tax, so it uses all three of the shared
+   * rules rather than two of them.
+   */
+  let localIds: string[] = [];
   const spend: Record<string, number> = { ...DEFAULT_BUDGET.spend };
   const invest: Record<string, number> = { ...DEFAULT_BUDGET.invest };
 
@@ -334,6 +342,9 @@ function homeBudgetWidget(data: BundledData | null, profile: SituationStore | nu
   // which case that resident falls back to federal + FICA rather than a wrong
   // number (the per-jurisdiction stale/corrupt gate, surfaced as a banner).
   const isModeled = (code: string): boolean => !!(code && data && data.state(code));
+  /** The loaded shard for a state code, or null when it is not one we have. */
+  const stateFor = (code: string): Jurisdiction | null =>
+    isModeled(code) ? (data!.state(code) ?? null) : null;
 
   /** The income the budget is reasoning about, annualized. */
   const annualIncome = (): number => annualIncomeExact ?? income * periodsFor(freq);
@@ -342,7 +353,7 @@ function homeBudgetWidget(data: BundledData | null, profile: SituationStore | nu
   const annualTax = (): number => {
     if (!fed || !fica) return 0;
     const annualWages = annualIncome();
-    const stateJ = isModeled(stateCode) ? (data!.state(stateCode) ?? undefined) : undefined;
+    const stateJ = stateFor(stateCode) ?? undefined;
     const input: TaxInput = {
       filingStatus: fs,
       wages: annualWages,
@@ -629,7 +640,7 @@ function homeBudgetWidget(data: BundledData | null, profile: SituationStore | nu
    * would quietly hand back a budget with three per cent too much in it.
    */
   function renderCounty(): void {
-    const state = isModeled(stateCode) ? (data!.state(stateCode) ?? null) : null;
+    const state = stateFor(stateCode);
     // The RULE comes from the shared module, so the budget cannot drift from
     // the five tiles that charge the same tax — it had its own copy for an
     // afternoon, and a fix to the shared one (dropping a county belonging to a
@@ -671,7 +682,7 @@ function homeBudgetWidget(data: BundledData | null, profile: SituationStore | nu
       // and an empty county is written through so leaving Maryland leaves
       // Montgomery behind rather than charging it in Texas.
       renderCounty();
-      remember({ stateCode, county: localIds[0] ?? "" });
+      remember({ stateCode, county: rememberableCounty(stateFor(stateCode), localIds) });
     }),
     countyRow,
     taxesRow,
@@ -703,6 +714,9 @@ function homeBudgetWidget(data: BundledData | null, profile: SituationStore | nu
     el("div", { class: "home-budget__grid" }, controls, viz),
   );
 
+  // The remembered county, through the shared seeding rule: only a state that
+  // levies a mandatory local may read it back.
+  if (profile) localIds = seedResidenceLocal(stateFor(stateCode), [], profile);
   renderCounty();
   render();
   return section;

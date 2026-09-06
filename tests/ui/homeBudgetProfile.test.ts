@@ -150,6 +150,31 @@ describe("the home budget and My Situation", () => {
     expect(profile.get("totalMonthlyExpenses")).toBe(weekly);
   });
 
+  /**
+   * The trap `seedResidenceLocal` exists for. A county is a fact about where
+   * someone lives, and the id is state-scoped — "Washington" is a county in
+   * Maryland, a county in Indiana, and a state — so a remembered Maryland
+   * county must not arrive with a Texas reader, where it would sit in the
+   * profile the budget writes back and in any link built from it.
+   */
+  it("does not carry a remembered county into a state that levies none", () => {
+    const profile = new SituationStore();
+    profile.set("stateCode", "tx");
+    profile.set("county", "md-montgomery");
+    const root = mountHome(profile);
+
+    expect(
+      [...root.querySelectorAll<HTMLSelectElement>("select")].some(
+        (s) => s.value === "md-montgomery",
+      ),
+      "a Maryland county is offered to a Texas reader",
+    ).toBe(false);
+
+    type(input(root, "Housing"), 1_500);
+    choose(select(root, "Filing status"), "single");
+    expect(profile.get("county")).toBe("md-montgomery"); // untouched, not re-asserted
+  });
+
   it("leaving a state leaves its county behind", () => {
     const profile = new SituationStore();
     const root = mountHome(profile);
