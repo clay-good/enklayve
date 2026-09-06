@@ -71,6 +71,18 @@ export interface BuildReportOptions {
   config?: PlanConfig;
 }
 
+/**
+ * Savings minus every debt — the household's worth, as this document states it.
+ *
+ * One derivation because two would drift, and they did: the snapshot printed
+ * "Net worth (savings − debts)" while the plan beside it counted liquid savings
+ * alone (see {@link planInputFrom}).
+ */
+function netWorthOf(profile: SituationStore): Money {
+  const debts = (profile.get("debts") ?? []).reduce((s, d) => s + d.balance, 0);
+  return Money.from(profile.get("liquidSavings") ?? 0).subtract(debts);
+}
+
 function planInputFrom(profile: SituationStore, data: BundledData | null): PlanInput {
   const limits = data?.retirementLimits() ?? null;
   return {
@@ -88,6 +100,23 @@ function planInputFrom(profile: SituationStore, data: BundledData | null): PlanI
     retirementLimitAnnual: limits?.limits.elective_deferral_401k ?? null,
     retirementLimitCitation: limits?.citation ?? null,
     sinkingGoals: [],
+    /**
+     * What the war chest counts, and what it counted until 2026-09-06.
+     *
+     * `PlanInput.netWorth` exists for this step and says so — "total net worth
+     * counted toward My Enough Number; defaults to liquidSavings" — and this,
+     * the only caller of `evaluatePlan` anywhere, never set it. So the step
+     * fell back to gross savings and ignored every debt, in the same document
+     * whose snapshot states "Net worth (savings − debts)" four lines up.
+     *
+     * The cost is not a rounding difference. A household with $900,000 saved,
+     * $400,000 of debt and $3,000 a month of essentials has an Enough Number of
+     * $900,000 and a net worth of $500,000 — and My Plan marked the last step
+     * on the ladder **satisfied**, which is this product telling somebody that
+     * work is now optional when they are $400,000 short of the figure printed
+     * above it.
+     */
+    netWorth: netWorthOf(profile).toNumber(),
   };
 }
 
@@ -125,8 +154,7 @@ export function buildReport(
   const income = profile.get("annualIncome") ?? 0;
   const essential = profile.get("essentialMonthlyExpenses") ?? 0;
   const savings = profile.get("liquidSavings") ?? 0;
-  const debts = (profile.get("debts") ?? []).reduce((s, d) => s + d.balance, 0);
-  const netWorth = Money.from(savings).subtract(debts);
+  const netWorth = netWorthOf(profile);
 
   const federal = data?.federal() ?? null;
   const fica = data?.fica() ?? null;
