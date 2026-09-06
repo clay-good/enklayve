@@ -8,6 +8,8 @@ import {
   renderReport,
   mountApp,
 } from "../../src/ui/shell";
+import { CommandPalette } from "../../src/ui/commandPalette";
+import { staleBanner } from "../../src/ui/staleBanner";
 import { mountTakeHome } from "../../src/tiles/takeHome";
 import { mountFederalIncomeTax } from "../../src/tiles/federalIncomeTax";
 import { mountMarginalExplorer } from "../../src/tiles/marginalExplorer";
@@ -268,5 +270,66 @@ describe("accessibility (axe-core)", () => {
     const handle = await mountApp(root);
     await expectNoViolations(document.body);
     handle.destroy();
+  }, 30000);
+
+  /**
+   * The two things the shell shows that a default mount never renders.
+   *
+   * The check above mounts the app and looks at it. Neither of these is on the
+   * screen at that moment, and both are the kind that go wrong: the command
+   * palette is a **hand-built ARIA combobox** — the primary browse path, and
+   * the widget where the roles are easiest to get subtly wrong — and the
+   * staleness banner appears only when a dataset lapses, which is to say on the
+   * day the site is least trustworthy and most needs to say so out loud.
+   *
+   * Both are constructed directly rather than provoked through the shell,
+   * because that is what makes them reachable at all: a lapsed dataset cannot
+   * be arranged without moving the clock.
+   */
+  it("the command palette, open, with results and with none", async () => {
+    const palette = new CommandPalette(() => {});
+    document.body.append(palette.element);
+    palette.show();
+    const field = palette.element.querySelector<HTMLInputElement>(".palette-input")!;
+
+    expect(palette.element.querySelectorAll(".palette-opt").length).toBeGreaterThan(0);
+    await expectNoViolations(palette.element);
+
+    field.value = "take home";
+    field.dispatchEvent(new Event("input"));
+    await expectNoViolations(palette.element);
+
+    // The empty state is its own rendering, and a listbox with no options is
+    // exactly where a combobox's `aria-activedescendant` points at nothing.
+    field.value = "zzzzzzzz";
+    field.dispatchEvent(new Event("input"));
+    expect(palette.element.querySelectorAll(".palette-opt").length).toBe(0);
+    await expectNoViolations(palette.element);
+
+    palette.element.remove();
+  }, 30000);
+
+  it("the staleness banner, which only a lapsed dataset renders", async () => {
+    // Both shapes, because they are different renderings and the louder one is
+    // the one nobody sees in a healthy build: a lapsed dataset is old, an
+    // invalid one did not match the hash the manifest pins.
+    const stale = staleBanner({
+      ...data,
+      staleDatasets: () => [
+        { id: "enrollment-windows-2026", effectiveYear: 2026 },
+        { id: "garnishment-limits-2026", effectiveYear: 2026 },
+      ],
+    } as BundledData);
+    expect(stale, "the banner no longer renders for a lapsed dataset").not.toBeNull();
+    document.body.append(stale!);
+    await expectNoViolations(stale!);
+
+    const invalid = staleBanner({
+      ...data,
+      invalidDatasets: () => [{ id: "federal-income-tax-2024", problems: ["hash mismatch"] }],
+    } as BundledData);
+    expect(invalid, "the banner no longer renders for a failed integrity gate").not.toBeNull();
+    document.body.append(invalid!);
+    await expectNoViolations(invalid!);
   }, 30000);
 });

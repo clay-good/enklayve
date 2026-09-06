@@ -15,6 +15,8 @@ export class CommandPalette {
   readonly element: HTMLElement;
   private readonly input: HTMLInputElement;
   private readonly list: HTMLElement;
+  /** The "nothing matched" line, a live region beside the listbox rather than in it. */
+  private readonly empty: HTMLElement;
   private results: SearchEntry[] = [];
   private activeIndex = 0;
   private open = false;
@@ -49,6 +51,27 @@ export class CommandPalette {
       attrs: { role: "listbox", "aria-label": "Search results" },
     });
 
+    /**
+     * "No matching tools", outside the listbox.
+     *
+     * It used to be an `<li>` appended to the list, and that is two violations
+     * at once: `role="listbox"` on a `<ul>` replaces the list semantics, so a
+     * bare `<li>` inside it is a list item with no list — and a listbox may
+     * only contain options, which a roleless `<li>` is not. Both fire, and the
+     * moment they fire is the moment somebody's search found nothing, which is
+     * exactly when the message is the only thing on the screen worth hearing.
+     *
+     * A sibling with `aria-live="polite"` is announced when it appears without
+     * moving focus, which is what a search result count wants. Empty rather
+     * than hidden, so the region exists before it has anything to say — a live
+     * region added to the DOM at the same moment as its text is frequently not
+     * announced at all.
+     */
+    this.empty = el("p", {
+      class: "palette-empty",
+      attrs: { "aria-live": "polite" },
+    });
+
     const panel = el(
       "div",
       {
@@ -57,6 +80,7 @@ export class CommandPalette {
       },
       this.input,
       this.list,
+      this.empty,
     );
 
     this.element = el(
@@ -133,10 +157,11 @@ export class CommandPalette {
   private renderList(): void {
     clear(this.list);
     if (this.results.length === 0) {
-      this.list.append(el("li", { class: "palette-empty", text: "No matching tools." }));
+      this.empty.textContent = "No matching tools.";
       this.input.setAttribute("aria-activedescendant", "");
       return;
     }
+    this.empty.textContent = "";
     this.results.forEach((entry, i) => {
       const active = i === this.activeIndex;
       const item = el(

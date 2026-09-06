@@ -1005,9 +1005,16 @@ body {
   align-self: center;
 }
 
+/* The "nothing matched" line lives beside the listbox rather than inside it (a
+   listbox may only hold options), and it is a live region that exists before it
+   has anything to say — so it must take up no room while it is empty. */
 .palette-empty {
-  padding: 1rem 0.8rem;
+  margin: 0;
   color: var(--enk-text-muted);
+}
+
+.palette-empty:not(:empty) {
+  padding: 1rem 0.8rem;
 }
 
 /* --- Reduced motion: no non-essential animation (§10, §11). --- */
