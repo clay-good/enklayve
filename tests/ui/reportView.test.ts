@@ -62,6 +62,67 @@ describe("Readout Report view", () => {
     );
   });
 
+  /**
+   * Every state this view can be in, not the one it was in when the check was
+   * written.
+   *
+   * The call below mounts a funded profile, which is the Report at its most
+   * populated. The state a **first-time visitor** actually sees is the other
+   * one — an empty profile, where the snapshot reads "Add your income" instead
+   * of a figure — and it had never been checked. Nor had the two the restore
+   * flow renders: the passphrase row an encrypted file reveals, and the
+   * re-render after a plain file is read back.
+   *
+   * Same finding as the Readout's, one surface over, and the same shape the
+   * three real-browser checks were caught in: a check opens the view it was
+   * written against and stops covering the ones added later.
+   */
+  describe("every state the Report renders", () => {
+    const AXE = { rules: { "color-contrast": { enabled: false } } };
+
+    async function noViolations(container: HTMLElement, state: string): Promise<void> {
+      const results = await axe.run(container, AXE);
+      expect(results.violations.map((v) => `${v.id} (${v.nodes.length})`).join(", "), state).toBe(
+        "",
+      );
+    }
+
+    it("the empty profile, which is what a first visit shows", async () => {
+      const { container } = mount(new SituationStore());
+      expect(container.textContent).toContain("Add your income");
+      await noViolations(container, "empty profile");
+    });
+
+    it("the passphrase row an encrypted file reveals", async () => {
+      const { container } = mount(new SituationStore());
+      const envelope = JSON.stringify({
+        format: "enklayve.situation.encrypted",
+        version: 1,
+        kdf: "PBKDF2-SHA256",
+        iterations: 210000,
+        salt: "x",
+        iv: "y",
+        ciphertext: "z",
+      });
+      setFiles(container.querySelector<HTMLInputElement>(".portable-file")!, [
+        new File([envelope], "my-situation.encrypted.json"),
+      ]);
+      await tick();
+      await noViolations(container, "encrypted unlock row");
+    });
+
+    it("the re-render after a saved file is read back", async () => {
+      const empty = new SituationStore();
+      const { container } = mount(empty);
+      setFiles(container.querySelector<HTMLInputElement>(".portable-file")!, [
+        new File([serialize(fundedProfile())], "my-situation.json", { type: "application/json" }),
+      ]);
+      await tick();
+      expect(empty.get("annualIncome")).toBe(95000);
+      await noViolations(container, "restored");
+    });
+  });
+
   it("has no axe violations", async () => {
     const { container } = mount(fundedProfile());
     const results = await axe.run(container, { rules: { "color-contrast": { enabled: false } } });
