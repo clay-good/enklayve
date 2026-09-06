@@ -181,6 +181,95 @@ describe("the README's counts are reproducible from the repo", () => {
     });
   }
 
+  /**
+   * The mirror of the list above, and the reason it exists.
+   *
+   * Everything before this pins a *remembered sentence*: someone writes a
+   * claim, someone adds the phrasing to `CLAIMS`, and the phrasing is then
+   * checked forever. What that cannot see is a sentence nobody remembered —
+   * and on 2026-09-06 the README had one. The accessibility paragraph said the
+   * axe sweep covers "every one of the 68 calculators and 12 hubs" against a
+   * real 69: written after the pattern list, in words no pattern matched, so
+   * the check whose entire job is this had nothing to say about it. Six other
+   * statements of the same number, in six phrasings that *were* listed, were
+   * all correct.
+   *
+   * So this asks the question from the other end: find every count-shaped claim
+   * in the prose and require it to be right, rather than requiring each
+   * remembered sentence to be right. Three things are not claims about today
+   * and are skipped with a rule rather than by name — a number that is part of
+   * a label (`Pillar 4 shards`, `SPEC-3`, `Phase 23b`), a number inside
+   * quotation marks (a quotation is a quotation, and the page about figures
+   * going stale quotes several stale ones on purpose), and the one plain
+   * historical sentence, which is exempt by an exact fragment with its reason.
+   *
+   * `tiles` is deliberately not a noun here: it means the 69 calculators in one
+   * sentence and the 81 static pages in another, and a check that has to guess
+   * which is a check that will be wrong.
+   */
+  const CATALOG_NOUNS: { what: string; noun: string; value: number }[] = [
+    { what: "calculators", noun: "calculators?", value: SUB_TOOLS.length },
+    { what: "topic hubs", noun: "(?:topic )?hubs", value: TILES.length },
+    { what: "cited shards", noun: "shards", value: manifest.datasets.length },
+    { what: "search entries", noun: "search entries", value: TILES.length + SUB_TOOLS.length },
+  ];
+
+  /** Numbers that name a thing rather than count one. */
+  const LABEL_BEFORE = /(?:Pillar|SPEC-|Phase|Wave|§|Path)\s*$/;
+
+  /**
+   * Historical statements, quoted verbatim so that rewriting one to today's
+   * number is a deliberate act. Each was true when it was written and is
+   * evidence of a drift that happened; the sentence around it says so.
+   */
+  const HISTORICAL = [
+    // The launch checklist's entry on counts written into comments, recording
+    // what the README itself once claimed.
+    "once claimed 63 calculators against a real 68",
+  ];
+
+  const PROSE_FILES = [
+    "README.md",
+    "docs/data-sources.md",
+    "docs/launch-checklist.md",
+    "docs/adding-a-state.md",
+    "docs/contributing.md",
+    "docs/annual-roll.md",
+  ];
+
+  /** True when the match sits inside a pair of double quotes on its own line. */
+  function isQuoted(line: string, index: number): boolean {
+    let open = false;
+    for (let i = 0; i < index; i += 1) if (line[i] === '"') open = !open;
+    return open;
+  }
+
+  for (const { what, noun, value } of CATALOG_NOUNS) {
+    it(`every count-shaped claim about ${what} reads ${value}`, () => {
+      const pattern = new RegExp(`(\\d[\\d,]*)[- ](?:deterministic )?(?:${noun})\\b`, "g");
+      const wrong: string[] = [];
+      let checked = 0;
+      for (const file of PROSE_FILES) {
+        const lines = readFileSync(resolve(ROOT, file), "utf8").split("\n");
+        lines.forEach((line, n) => {
+          for (const m of line.matchAll(pattern)) {
+            const at = m.index!;
+            if (LABEL_BEFORE.test(line.slice(Math.max(0, at - 12), at))) continue;
+            if (isQuoted(line, at)) continue;
+            if (HISTORICAL.some((h) => line.includes(h))) continue;
+            checked += 1;
+            if (Number(m[1]!.replace(/,/g, "")) !== value) {
+              wrong.push(`${file}:${n + 1} — "${m[0]}"`);
+            }
+          }
+        });
+      }
+      // A sweep that finds nothing to check has stopped being a sweep.
+      expect(checked, `no prose states a count of ${what}`).toBeGreaterThan(0);
+      expect(wrong.join("\n")).toBe("");
+    });
+  }
+
   it("has at least one Playwright spec behind the e2e claim", () => {
     // The e2e *test* count is not derivable without running the suite, so this
     // asserts the weaker but still useful thing: the specs the claim rests on
