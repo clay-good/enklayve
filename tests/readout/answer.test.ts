@@ -525,6 +525,32 @@ describe("Readout v2, the No Surprises balance-billing screen", () => {
     expect(flags.find((f) => f.checkId === "eob-out-of-network-balance-bill")).toBeUndefined();
   });
 
+  /**
+   * Through `buildAnswer`, which is the only way the app ever reaches it.
+   *
+   * Every other case in this block calls `runChecks` directly with a context it
+   * builds itself, so the check was fully covered and had never once fired in
+   * the product: `buildAnswer` handed `options.noSurprises` to the "what you
+   * may be owed" section and left it out of the `CheckContext`, so `ctx.
+   * noSurprises` was undefined on every real document and the check returned
+   * null before looking at anything. A reader who dropped an out-of-network EOB
+   * got the pointer and never the flag — the one that names the dollar amount
+   * on them and the free federal Help Desk to ask about it.
+   */
+  it("reaches a real document through buildAnswer, not only through runChecks", () => {
+    const answer = buildAnswer(outOfNetwork, { noSurprises: NO_SURPRISES });
+    const flag = answer.flags.find((f) => f.checkId === "eob-out-of-network-balance-bill");
+    expect(flag, "the balance-billing check does not fire on the path the app uses").toBeTruthy();
+    expect(flag?.citation).toBe(NO_SURPRISES.citation);
+    expect(flag?.askWho).toContain("Help Desk");
+
+    // And without the shard it stays silent rather than claiming a protection
+    // it cannot cite, which is the behaviour the `if (!ns)` guard is for.
+    expect(
+      buildAnswer(outOfNetwork).flags.find((f) => f.checkId === "eob-out-of-network-balance-bill"),
+    ).toBeUndefined();
+  });
+
   it("fires on an out-of-network claim and carries the shard's own citation", () => {
     const flags = runChecks({
       primary: outOfNetwork,

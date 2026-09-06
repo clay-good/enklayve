@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { evaluatePlan, type PlanInput } from "../../src/engine/plan";
 
 /**
- * Every field the plan engine reads is a field its caller sets.
+ * Every field an engine declares is a field its caller sets.
  *
  * `situationFieldsWritten.test.ts` holds that no field of My Situation is read
  * by the site and written by nothing. This is the same rule one layer in, on
@@ -27,16 +27,32 @@ import { evaluatePlan, type PlanInput } from "../../src/engine/plan";
  * An optional field with a fallback is exactly the shape that goes unnoticed:
  * nothing crashes, nothing is blank, and the number is merely wrong. So the
  * check is on the names rather than on the types.
+ *
+ * **The Readout had the same shape and the worse consequence.** `CheckContext`
+ * declares `noSurprises`, the shard that carries the No Surprises Act's own
+ * citation, and the balance-billing check reads it and returns `null` without
+ * it — "a rule we cannot cite is a rule we do not state". `buildAnswer` passed
+ * it to the "what you may be owed" section and left it out of the context it
+ * built for `runChecks`, so on every real document `ctx.noSurprises` was
+ * undefined and the check had never fired in the product. It has six unit
+ * cases. All six call `runChecks` themselves.
  */
 const ROOT = resolve(__dirname, "..", "..");
 const PLAN_SRC = readFileSync(resolve(ROOT, "src", "engine", "plan.ts"), "utf8");
 const REPORT_SRC = readFileSync(resolve(ROOT, "src", "readout", "report.ts"), "utf8");
+const CHECKS_SRC = readFileSync(resolve(ROOT, "src", "readout", "checks.ts"), "utf8");
+const ANSWER_SRC = readFileSync(resolve(ROOT, "src", "readout", "answer.ts"), "utf8");
+
+/** The declared fields of an exported interface, read off the source. */
+function fieldsOf(source: string, name: string): string[] {
+  const body = source.match(new RegExp(`export interface ${name} \\{([\\s\\S]*?)\\n\\}`))?.[1];
+  expect(body, `${name} is no longer declared where this test looks`).toBeTruthy();
+  return [...body!.matchAll(/^ {2}(\w+)\??:/gm)].map((m) => m[1]!);
+}
 
 /** The declared fields of `PlanInput`, read off the interface itself. */
 function planInputFields(): string[] {
-  const body = PLAN_SRC.match(/export interface PlanInput \{([\s\S]*?)\n\}/)?.[1];
-  expect(body, "PlanInput is no longer declared where this test looks").toBeTruthy();
-  return [...body!.matchAll(/^ {2}(\w+)\??:/gm)].map((m) => m[1]!);
+  return fieldsOf(PLAN_SRC, "PlanInput");
 }
 
 describe("the plan engine's input", () => {
@@ -59,7 +75,7 @@ describe("the plan engine's input", () => {
   it("is fully supplied by that caller", () => {
     const supplier = REPORT_SRC.match(/function planInputFrom\([\s\S]*?\n\}/)?.[0] ?? "";
     expect(supplier, "planInputFrom is no longer where this test looks").not.toBe("");
-    const missing = planInputFields().filter((f) => !new RegExp(`\\b${f}:`).test(supplier));
+    const missing = planInputFields().filter((f) => !new RegExp(`\\b${f}\\s*[:,}]`).test(supplier));
     expect(
       missing,
       "these are read by a plan step and set by nobody — an optional field with a" +
@@ -115,5 +131,27 @@ describe("the plan engine's input", () => {
     );
     expect(net?.satisfied).toBe(false);
     expect(net?.action).toContain("$400,000.00");
+  });
+});
+
+describe("the Readout's check context", () => {
+  it("is an interface this test can still read", () => {
+    const fields = fieldsOf(CHECKS_SRC, "CheckContext");
+    expect(fields).toContain("primary");
+    expect(fields).toContain("noSurprises");
+  });
+
+  it("is fully supplied by buildAnswer, the only path the app takes", () => {
+    const call = ANSWER_SRC.match(/runChecks\(([\s\S]*?)\n {2}\);/)?.[1] ?? "";
+    expect(call, "the runChecks call is no longer where this test looks").not.toBe("");
+    // `name:` or the shorthand `name,` — both are the field being supplied.
+    const missing = fieldsOf(CHECKS_SRC, "CheckContext").filter(
+      (f) => !new RegExp(`\\b${f}\\s*[:,}]`).test(call),
+    );
+    expect(
+      missing,
+      "a check that reads one of these cannot fire in the product, and nothing says so —" +
+        " every unit case for such a check builds its own context and passes",
+    ).toEqual([]);
   });
 });

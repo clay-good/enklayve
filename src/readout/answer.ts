@@ -273,7 +273,17 @@ export function buildAnswer(
 ): ReadoutAnswer {
   const documents = options.documents ?? [result];
   const says = saysFor(result);
-  const flags = runChecks({ primary: result, documents, plan: options.plan }, options.registry);
+  const flags = runChecks(
+    // Every field of `CheckContext`, because a check that reads one this call
+    // drops cannot fire and nothing says so. `noSurprises` was missing from the
+    // day the balance-billing check shipped: it went to the "what you may be
+    // owed" section two lines down and not into the context, so `ctx.
+    // noSurprises` was undefined on every real document, the check returned
+    // null before looking at anything, and its six unit cases all passed
+    // because every one of them calls `runChecks` itself.
+    { primary: result, documents, plan: options.plan, noSurprises: options.noSurprises },
+    options.registry,
+  );
   const owed = owedFor(result, options.noSurprises);
   const next = nextFor(result);
 
