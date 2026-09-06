@@ -22,11 +22,11 @@ That asymmetry is the hazard. The manifest's `effectiveYear` drives the stalenes
    | `proseYears.test.ts` | A sentence still names last year beside a figure that moved. The numbers rolled; the words explaining them did not. |
    | `states.test.ts`, `federal.test.ts`, and the rest of `tests/golden/` | Hand-computed expectations, which must be **recomputed by hand** against the new schedules. Regenerating them is not an option; that is the point of them. |
    | `snapshot.test.ts` | The drift guard. Once the hand-verified cases above are right, `npm run golden:regen` and read the diff line by line. |
-   | `readmeCounts.test.ts` | A count in the README moved. |
+   | `readmeCounts.test.ts` | A count moved — in the README, or in this page: the shard count and the zero-window count above are both read out of this file and compared against the manifest. |
 
 5. **Repoint the parked adapters.** Five wait on a document their state has not published — `npm run check:adapters` lists them under "Settled" with the year each is waiting for. A parked adapter pointed at a closed year reports agreement forever, which is worse than being parked.
 
-6. **Check the zero-window shards.** Six carry `staleAfterYears: 0` (the Pillar 4 group and free filing): they lapse the instant their year does, and they are the highest-harm figures here — a COBRA election window that is wrong is coverage that is simply gone. They want their own sourcing pass, not a copy-forward.
+6. **Check the zero-window shards.** **6** carry `staleAfterYears: 0` (the Pillar 4 group and free filing): they lapse the instant their year does, and they are the highest-harm figures here — a COBRA election window that is wrong is coverage that is simply gone. They want their own sourcing pass, not a copy-forward.
 
 ## What the roll cannot tell you
 

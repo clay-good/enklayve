@@ -50,6 +50,11 @@ const PROSE = [
   "docs/launch-checklist.md",
   "docs/adding-a-state.md",
   "docs/contributing.md",
+  // `annual-roll.md` was missing from this list until 2026-09-05, which is the
+  // funniest omission available: it is the page whose entire subject is figures
+  // going quietly stale, it states the shard count three times in two
+  // sentences, and not one of those was watched.
+  "docs/annual-roll.md",
 ].map((f) => readFileSync(resolve(ROOT, f), "utf8"));
 const baseline = JSON.parse(
   readFileSync(resolve(ROOT, "scripts", "refresh", "adapter-baseline.json"), "utf8"),
@@ -109,7 +114,25 @@ const CLAIMS: Claim[] = [
   {
     what: "cited dataset shards",
     value: manifest.datasets.length,
-    patterns: [/Cited dataset shards \| \*\*([\d,]+)\*\*/g],
+    prose: true,
+    patterns: [
+      /Cited dataset shards \| \*\*([\d,]+)\*\*/g,
+      // The roll page states it three times in two sentences, because the whole
+      // hazard it describes is that one of the two places the year lives takes
+      // a three-line edit and the other takes eighty-one.
+      /Each of the (\d+) shards states its own year/g,
+      /inside its citations — (\d+) files/g,
+      /bumping all (\d+) manifest entries/g,
+    ],
+  },
+  {
+    what: "zero-staleness-window shards",
+    value: manifest.datasets.filter((d) => d.staleAfterYears === 0).length,
+    prose: true,
+    // The highest-harm figures on the site: they lapse the instant their year
+    // does. A roll that copies them forward instead of re-sourcing them is the
+    // failure this count exists to make somebody count.
+    patterns: [/\*\*(\d+)\*\* carry `staleAfterYears: 0`/g],
   },
   {
     what: "crawlable tool pages",
