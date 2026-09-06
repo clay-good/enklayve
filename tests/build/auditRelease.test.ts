@@ -19,6 +19,7 @@ import {
   mappedBytesBySource,
   MIN_HEADROOM_KB,
   MEASUREMENT_SPREAD_KB,
+  spreadToApplyKb,
   SHELL_GZIP_BUDGET_KB,
 } from "../../scripts/audit-release";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
@@ -348,6 +349,7 @@ describe("what the audit says when the budget passes", () => {
         { path: "/index.html", gzipBytes: kb(2) },
       ],
       265,
+      MEASUREMENT_SPREAD_KB,
     );
     expect(line).toContain("242.0 of 265 kB gzipped");
     // The headroom CI will have, not the one this machine has: 265 − 242 − the
@@ -360,7 +362,7 @@ describe("what the audit says when the budget passes", () => {
   });
 
   it("says a negative headroom rather than hiding it behind a zero", () => {
-    const line = shellSummary([{ path: "/a.js", gzipBytes: kb(300) }], 265);
+    const line = shellSummary([{ path: "/a.js", gzipBytes: kb(300) }], 265, MEASUREMENT_SPREAD_KB);
     expect(line).toContain("-35.5 kB free in CI");
   });
 
@@ -595,7 +597,11 @@ describe("checkBundleBudget", () => {
     // raise: 1.0 kB free here is 0.5 in CI, which fails the same rule after the
     // push. Eight commits went to `main` that way on 2026-09-05. The spread
     // comes off before the rule is applied now.
-    const [violation] = checkBundleBudget([{ path: "/assets/index.js", gzipBytes: kb(99.5) }], 100);
+    const [violation] = checkBundleBudget(
+      [{ path: "/assets/index.js", gzipBytes: kb(99.5) }],
+      100,
+      MEASUREMENT_SPREAD_KB,
+    );
     expect(violation).toContain("99.5 kB gzipped");
     expect(violation).toContain("leaves 0.0 kB under its 100 kB budget");
     expect(violation).toContain(`less than the ${MIN_HEADROOM_KB} kB`);
@@ -604,6 +610,48 @@ describe("checkBundleBudget", () => {
 
   it("passes a shell with headroom to spare", () => {
     expect(checkBundleBudget([{ path: "/assets/index.js", gzipBytes: kb(90) }], 100)).toEqual([]);
+  });
+
+  /**
+   * And the correction is a *prediction*, so it must not be applied by the run
+   * that is being predicted.
+   *
+   * Taking the spread off inside CI subtracts something that has already
+   * happened, and judges the same tree half a kilobyte more harshly there than
+   * the rule says — the verdict depending on where it ran, which is the one
+   * property the whole spread mechanism exists to remove. It happened on
+   * 2026-09-06: a shell measuring 286.1 locally reported 1.4 kB free, passed,
+   * arrived in CI at 286.6 exactly as modelled, and failed at 0.9 — twice, on
+   * `main`. The rule was right for the third time and applied to the wrong
+   * number for the third time.
+   */
+  it("does not take the spread off a reading that is already CI's", () => {
+    const assets = [{ path: "/assets/index.js", gzipBytes: kb(98.6) }];
+    // Predicting from a developer machine: 98.6 here is 99.1 there, so 0.9 free.
+    expect(checkBundleBudget(assets, 100, MEASUREMENT_SPREAD_KB)).not.toEqual([]);
+    // Measured in CI, 98.6 is 98.6, and 1.4 kB of headroom is a pass.
+    expect(checkBundleBudget(assets, 100, 0)).toEqual([]);
+    expect(shellSummary(assets, 100, 0)).toContain("1.4 kB free in CI");
+    expect(shellSummary(assets, 100, MEASUREMENT_SPREAD_KB)).toContain("0.9 kB free in CI");
+  });
+
+  it("applies the correction everywhere but CI, and the environment says which", () => {
+    const before = process.env.CI;
+    try {
+      delete process.env.CI;
+      expect(spreadToApplyKb()).toBe(MEASUREMENT_SPREAD_KB);
+      process.env.CI = "true";
+      expect(spreadToApplyKb()).toBe(0);
+      // An unset variable arrives as the empty string on some runners, and
+      // "false" is what a workflow writes to turn it off. Neither is CI.
+      process.env.CI = "";
+      expect(spreadToApplyKb()).toBe(MEASUREMENT_SPREAD_KB);
+      process.env.CI = "false";
+      expect(spreadToApplyKb()).toBe(MEASUREMENT_SPREAD_KB);
+    } finally {
+      if (before === undefined) delete process.env.CI;
+      else process.env.CI = before;
+    }
   });
 
   it("keeps the headroom rule wider than the spread it exists for", () => {

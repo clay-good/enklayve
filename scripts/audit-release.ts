@@ -463,6 +463,42 @@ export const MIN_HEADROOM_KB = 1;
  */
 export const MEASUREMENT_SPREAD_KB = 0.5;
 
+/**
+ * Whether this run *is* the heavy reading rather than predicting it.
+ *
+ * The correction above is a prediction: it turns a developer machine's number
+ * into the one CI will report. Applying it **in CI** subtracts a spread that
+ * has already happened, so the same tree is judged half a kilobyte stricter
+ * there than the rule says — and the verdict once again depends on where it
+ * ran, which is the property both paragraphs above were written to remove.
+ *
+ * That is not hypothetical. On 2026-09-06 a shell measuring 286.1 here
+ * reported 1.4 kB free, passed, and arrived in CI at 286.6 — a spread of
+ * exactly 0.5, precisely as modelled — where the gate took the 0.5 off again,
+ * found 0.9, and failed two pushes in a row on `main`. Three raises in, the
+ * rule has still never been applied to the right number in both places at once.
+ *
+ * `CI` is set by GitHub Actions and by essentially every other runner. When it
+ * is absent the correction applies and the local figure predicts CI; when it is
+ * present the measurement *is* CI and stands on its own.
+ */
+export function measuringInCi(): boolean {
+  return process.env.CI !== undefined && process.env.CI !== "" && process.env.CI !== "false";
+}
+
+/**
+ * How much to add to a reading to get CI's, for wherever this is running.
+ *
+ * A parameter rather than a call to {@link measuringInCi} inside the two pure
+ * functions below, so that their tests state which environment they are
+ * describing instead of inheriting it: a check whose unit tests answer
+ * differently depending on whether `CI` happens to be set is the same disease
+ * one level up.
+ */
+export function spreadToApplyKb(): number {
+  return measuringInCi() ? 0 : MEASUREMENT_SPREAD_KB;
+}
+
 /** A precached asset and its gzipped size. */
 export interface ShellAsset {
   path: string;
@@ -501,6 +537,7 @@ export function checkPrecacheContents(paths: readonly string[]): string[] {
 export function checkBundleBudget(
   assets: ShellAsset[],
   budgetKb: number = SHELL_GZIP_BUDGET_KB,
+  spreadKb: number = spreadToApplyKb(),
 ): string[] {
   if (assets.length === 0)
     return ["no precached assets found, run `npm run build` before the audit"];
@@ -519,12 +556,12 @@ export function checkBundleBudget(
   // reading runs about MEASUREMENT_SPREAD_KB low, so comparing the rule against
   // it passes a shell that fails the identical rule after the push — which is
   // exactly what happened for eight commits on 2026-09-05.
-  const ciHeadroomKb = budgetKb - totalKb - MEASUREMENT_SPREAD_KB;
+  const ciHeadroomKb = budgetKb - totalKb - spreadKb;
   if (ciHeadroomKb < MIN_HEADROOM_KB)
     return [
       `the precached shell is ${totalKb.toFixed(1)} kB gzipped, which leaves ` +
         `${ciHeadroomKb.toFixed(1)} kB under its ${budgetKb} kB budget once the ` +
-        `${MEASUREMENT_SPREAD_KB} kB CI reads heavier is taken off — less than the ` +
+        `${spreadKb} kB CI reads heavier is taken off — less than the ` +
         `${MIN_HEADROOM_KB} kB this check needs to mean the same thing on another machine ` +
         `(largest: ${biggest}). Trim it, or raise SHELL_GZIP_BUDGET_KB deliberately and say why.`,
     ];
@@ -620,13 +657,14 @@ export function mappedBytesBySource(mapJson: string): number[] {
 export function shellSummary(
   assets: readonly ShellAsset[],
   budgetKb: number = SHELL_GZIP_BUDGET_KB,
+  spreadKb: number = spreadToApplyKb(),
 ): string {
   const totalKb = assets.reduce((sum, a) => sum + a.gzipBytes, 0) / 1024;
   // The headroom CI will see, not the one this machine sees. This is the line
   // people quote into the checklist and the README, and quoting the local
   // figure is how "1.8 kB free" and "1.0 kB free" came to be written down for a
   // shell that CI had half a kilobyte less room for. See MEASUREMENT_SPREAD_KB.
-  const freeKb = budgetKb - totalKb - MEASUREMENT_SPREAD_KB;
+  const freeKb = budgetKb - totalKb - spreadKb;
   const biggest = [...assets].sort((a, b) => b.gzipBytes - a.gzipBytes)[0];
   const largest = biggest ? `, largest ${biggest.path}` : "";
   return (
