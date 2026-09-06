@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import axe from "axe-core";
+import { readdirSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
   renderHome,
   renderAbout,
@@ -29,7 +31,7 @@ import { mountFreedomDate } from "../../src/tiles/freedomDate";
 import { mountDownshift } from "../../src/tiles/downshift";
 import { mountSabbatical } from "../../src/tiles/sabbatical";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
-import { getTile } from "../../src/tiles/registry";
+import { getTile, SUB_TOOLS } from "../../src/tiles/registry";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
 
@@ -48,6 +50,8 @@ import type { TileContext } from "../../src/tiles/types";
  * and axe-checks every calculator and every hub. These lists having drifted to
  * eighteen of sixty-eight tiles and ten of twelve hubs is why that exists.
  */
+const TILES_DIR = resolve(__dirname, "../../src/tiles");
+
 const AXE_OPTIONS: axe.RunOptions = {
   rules: { "color-contrast": { enabled: false } },
 };
@@ -308,6 +312,85 @@ describe("accessibility (axe-core)", () => {
 
     palette.element.remove();
   }, 30000);
+
+  /**
+   * The one required control nothing had ever axe-checked.
+   *
+   * Every Maryland resident pays a county income tax and every Indiana resident
+   * pays their county's, up to 3.3% and 3.0% of the same taxable income the
+   * state rate uses — so on six surfaces the county dropdown is not an option,
+   * it is a question that must be answered before the figure is theirs. It is
+   * built by a shared helper rather than by each tile, which is what kept it
+   * out of every axe sweep on the site: the tile cases above pick New York,
+   * `catalogInvariants.test.ts` mounts the catalog on its defaults, and the
+   * home budget's check runs with no dataset loaded, so the control renders in
+   * none of them. Roughly 13M people use a control nobody had ever looked at.
+   *
+   * The roster is derived, not listed: mount every calculator as a Maryland
+   * resident and check whichever ones grew the control. A tile that starts
+   * charging the tax brings its own coverage, and one that stops rendering it
+   * shrinks a count this asserts is not zero.
+   */
+  it("the mandatory county select, on every surface that charges it", async () => {
+    const withCounty: string[] = [];
+    for (const { tile } of SUB_TOOLS) {
+      if (!tile.mount) continue;
+      const main = document.createElement("main");
+      tile.mount({
+        root: main,
+        params: new URLSearchParams({ st: "md" }),
+        setParams: () => {},
+        permalink: () => "https://enklayve.com/#/x",
+        navigate: () => {},
+        locale: "en-US",
+        data,
+        profile: new SituationStore(),
+      } as TileContext);
+      if (!main.querySelector('select[name="loc-select"]')) continue;
+      withCounty.push(tile.id);
+      document.body.append(main);
+      await expectNoViolations(main);
+      main.remove();
+    }
+    // Derived rather than pinned to a number: every place a calculator calls the
+    // shared helper is a place a Maryland resident sees the control, so the
+    // sweep above has to have reached all of them. A tile that imports it and
+    // then fails to render it for Maryland fails here rather than going dark.
+    const callSites = readdirSync(TILES_DIR)
+      .filter((f) => f.endsWith(".ts"))
+      .reduce(
+        (n, f) =>
+          n +
+          (readFileSync(resolve(TILES_DIR, f), "utf8").match(/residenceLocalField\(/g) ?? [])
+            .length,
+        0,
+      );
+    expect(callSites, "no calculator calls residenceLocalField at all").toBeGreaterThan(0);
+    expect(withCounty.length, `rendered by ${withCounty.join(", ")}`).toBe(callSites);
+
+    // And the two surfaces that are not calculators: the home budget, which
+    // asks the same four questions every tax tile asks, and the Report, which
+    // charges the county without asking because a tile already did.
+    const profile = new SituationStore();
+    profile.set("stateCode", "md");
+    profile.set("county", "md-montgomery");
+    profile.set("annualIncome", 95000);
+
+    const home = document.createElement("main");
+    renderHome(home, () => {}, data, profile);
+    document.body.append(home);
+    expect(
+      home.querySelector('select[aria-label="State"]')?.parentElement?.parentElement,
+      "the home budget did not render for a Maryland reader",
+    ).toBeTruthy();
+    await expectNoViolations(home);
+    home.remove();
+
+    const report = document.createElement("main");
+    renderReport({ container: report, navigate: () => {}, profile, data });
+    document.body.append(report);
+    await expectNoViolations(report);
+  }, 60000);
 
   it("the staleness banner, which only a lapsed dataset renders", async () => {
     // Both shapes, because they are different renderings and the louder one is
