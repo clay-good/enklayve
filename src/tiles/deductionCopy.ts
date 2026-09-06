@@ -63,3 +63,41 @@ const CONFORMITY =
 
 /** Take-home: wage composition is an input, charitable giving is not. */
 export const OBBBA_DEDUCTIONS_HOW_NO_GIVING = `${SENIOR}\n\n${TIPS_OVERTIME}\n\nTwo other 2026 deductions are not modeled here, so if one applies to you your real tax is lower than this: $1,000 of cash giving without itemizing, $2,000 jointly (§170(p)), and up to $10,000 of car loan interest (§163(h)(4)). The Federal Income Tax tool asks for both and applies them.\n\n${CONFORMITY}`;
+
+/**
+ * "a", "a and b", "a, b, and c" — the serial comma, which the fixed copy in
+ * this file already used, so a list built at runtime has to read the same way.
+ */
+const ENGLISH_LIST = new Intl.ListFormat("en-US", { style: "long", type: "conjunction" });
+
+const COUNT_WORD: Record<number, string> = { 1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five" };
+
+/**
+ * The same disclosure, for the two surfaces that apply *some* of the five.
+ *
+ * The Readout Report and the home budget compute tax from My Situation rather
+ * than from their own fields, so what they can deduct is not a property of the
+ * surface — it is whatever the reader has already answered somewhere else. A
+ * W-2 read on this device carries box 12 codes TP and TT, and from the moment
+ * those reach the engine, a sentence saying tips and overtime are "not in these
+ * figures" is false, and telling the reader to go and enter them is telling
+ * them to answer a question they have answered.
+ *
+ * So the list is built from what was actually passed. Shared rather than
+ * written twice for the reason the constants above are: the fixed version of
+ * this sentence already existed in both files, word for word.
+ */
+export function obbbaDeductionsMissing(covered: { tips: boolean; overtime: boolean }): string {
+  const missing = [
+    covered.tips ? null : "tips",
+    covered.overtime ? null : "overtime",
+    "car loan interest",
+    "being 65",
+    "giving without itemizing",
+  ].filter((x): x is string => x !== null);
+  return (
+    `${COUNT_WORD[missing.length] ?? String(missing.length)} deductions new for 2026 — ` +
+    `${ENGLISH_LIST.format(missing)} — are not in these figures, so your real tax may be lower.` +
+    " Take-Home and Federal Income Tax ask for them and apply them."
+  );
+}

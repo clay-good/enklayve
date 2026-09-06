@@ -2,6 +2,8 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { buildReport } from "../../src/readout/report";
+import { renderHome } from "../../src/ui/shell";
+import { getTile } from "../../src/tiles/registry";
 import { mountOwedScreener } from "../../src/tiles/owedScreener";
 import {
   acaCreditEligible,
@@ -340,5 +342,110 @@ describe("the screener and the saved Report answer one household the same way", 
         ).toBe(0);
       }
     });
+  }
+});
+
+/**
+ * The tax picture, on the three surfaces that compute it from My Situation.
+ *
+ * Everything above is about a benefit program's rule written twice. This is the
+ * same failure one layer down: a single rule (the tax engine) called correctly
+ * from three places, and two of them not passing it what the profile holds.
+ *
+ * `TaxInput` takes three figures beyond income, status and state that My
+ * Situation carries and no calculator has to be opened to produce — "Pre-tax
+ * adjustments" in Take-Home, and W-2 box 12 codes TP and TT off a document the
+ * Readout read on the device. Take-Home passed all three. **The Readout Report
+ * and the home budget passed none**, so on 2026-09-06 a single filer on
+ * $85,000 with $10,000 of pre-tax contributions, $18,000 of qualified tips and
+ * $6,000 of qualified overtime read $13,370.07 of tax in Take-Home and
+ * $20,185.48 in the Report — $6,815 apart, in the document this product asks
+ * the household to keep, with the effective rate, the marginal rate and the
+ * annual take-home all wrong alongside it.
+ *
+ * No figure sweep finds that either: each surface's arithmetic is right on the
+ * inputs it chose to pass. What is wrong is that they chose differently. So the
+ * question is the same one this file asks about benefits — one household, every
+ * surface, one answer — with the household carrying each field in turn, since a
+ * plain wage earner agrees no matter how many fields a surface drops.
+ */
+const TAX_HOUSEHOLDS = [
+  { label: "wages alone", fields: {} },
+  { label: "pre-tax adjustments", fields: { preTaxContributions: 10_000 } },
+  { label: "qualified tips", fields: { qualifiedTipsAnnual: 18_000 } },
+  { label: "qualified overtime", fields: { qualifiedOvertimeAnnual: 6_000 } },
+  {
+    label: "all three at once",
+    fields: {
+      preTaxContributions: 10_000,
+      qualifiedTipsAnnual: 18_000,
+      qualifiedOvertimeAnnual: 6_000,
+    },
+  },
+] as const;
+
+/** The state matters: Maryland brings the mandatory county tax in with it. */
+const TAX_STATES = ["ca", "md", "tx"];
+
+function taxProfile(state: string, fields: Record<string, number>): SituationStore {
+  const p = new SituationStore();
+  p.set("filingStatus", "single");
+  p.set("stateCode", state);
+  p.set("annualIncome", 85_000);
+  for (const [k, v] of Object.entries(fields)) p.set(k as never, v as never);
+  return p;
+}
+
+/** Whatever a surface printed after the words "Total tax", as a number. */
+function dollarsAfter(text: string, label: string): number {
+  const m = text.slice(text.indexOf(label)).match(/\$([\d,]+(?:\.\d+)?)/);
+  expect(m, `no figure after "${label}"`).not.toBeNull();
+  return Number(m![1]!.replace(/,/g, ""));
+}
+
+function takeHomeTax(profile: SituationStore): number {
+  const root = document.createElement("div");
+  getTile("paycheck-taxes")!.mount!({
+    root,
+    params: new URLSearchParams({ tool: "take-home" }),
+    setParams: () => {},
+    permalink: () => "https://enklayve.com/#/x",
+    navigate: () => {},
+    locale: "en-US",
+    data,
+    profile,
+  } as TileContext);
+  return dollarsAfter(root.textContent ?? "", "Total tax");
+}
+
+function reportTax(profile: SituationStore): number {
+  const line = buildReport(profile, data)
+    .sections.flatMap((s) => s.lines)
+    .find((l) => l.label === "Total tax");
+  expect(line, "the Report has no total-tax line").toBeTruthy();
+  return Number(line!.value.replace(/[$,]/g, ""));
+}
+
+/** The budget shows one period's tax, rounded to the dollar. */
+function homeBudgetAnnualTax(profile: SituationStore): number {
+  const main = document.createElement("main");
+  renderHome(main, () => {}, data, profile);
+  const shown = main.querySelector(".home-budget__derived-value")?.textContent ?? "";
+  return Number(shown.replace(/[$,]/g, "")) * 12;
+}
+
+describe("the three surfaces that price a household's taxes agree", () => {
+  for (const state of TAX_STATES) {
+    for (const { label, fields } of TAX_HOUSEHOLDS) {
+      it(`${state} with ${label}`, () => {
+        const tile = takeHomeTax(taxProfile(state, fields));
+        expect(reportTax(taxProfile(state, fields))).toBeCloseTo(tile, 2);
+        // The budget rounds its per-period figure to the dollar before it is
+        // shown, so twelve of them can sit up to $12 from the annual total.
+        const budget = homeBudgetAnnualTax(taxProfile(state, fields));
+        expect(Math.abs(budget - tile), `budget ${budget} vs tile ${tile}`).toBeLessThanOrEqual(12);
+        document.body.replaceChildren();
+      });
+    }
   }
 });

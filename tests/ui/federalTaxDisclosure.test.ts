@@ -58,6 +58,11 @@ const DISCLOSURES = [
   "OBBBA_DEDUCTIONS_HOW",
   "OBBBA_DEDUCTIONS_HOW_NO_GIVING",
   "OBBBA_DEDUCTIONS_NOT_MODELED",
+  // The two surfaces that compute from My Situation rather than from their own
+  // fields, so which of the five they can apply depends on what the reader has
+  // already answered elsewhere. They disclose the remainder, built from what
+  // they actually passed.
+  "obbbaDeductionsMissing",
 ];
 
 describe("every tile that computes federal income tax", () => {

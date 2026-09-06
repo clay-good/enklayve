@@ -175,6 +175,38 @@ describe("the home budget and My Situation", () => {
     expect(profile.get("county")).toBe("md-montgomery"); // untouched, not re-asserted
   });
 
+  /**
+   * The budget asks four questions on purpose, so it will never have a field
+   * for pre-tax adjustments or for W-2 box 12. It can still *read* them, and
+   * the note under the tax row is the honest half of doing so: a figure that
+   * moved because of an input the widget does not show has to say which input,
+   * and telling someone to go enter tips they have already entered is worse
+   * than saying nothing.
+   */
+  it("names what it used, and stops naming what it no longer needs", () => {
+    const bare = new SituationStore();
+    const plain = mountHome(bare).textContent ?? "";
+    expect(plain).toContain("from your income, filing status and state alone");
+    expect(plain).toContain(
+      "Five deductions new for 2026 — tips, overtime, car loan interest, being 65, and giving without itemizing",
+    );
+
+    document.body.replaceChildren();
+    const known = new SituationStore();
+    known.set("annualIncome", 85_000);
+    known.set("preTaxContributions", 10_000);
+    known.set("qualifiedTipsAnnual", 18_000);
+    const text = mountHome(known).textContent ?? "";
+    expect(text).toContain(
+      "plus the $10,000 of pre-tax contributions and $18,000 of qualified tips already in My Situation",
+    );
+    // Overtime is still unanswered, so it stays on the list; tips leave it.
+    expect(text).toContain(
+      "Four deductions new for 2026 — overtime, car loan interest, being 65, and giving without itemizing",
+    );
+    expect(text).not.toContain("2026 — tips");
+  });
+
   it("leaving a state leaves its county behind", () => {
     const profile = new SituationStore();
     const root = mountHome(profile);

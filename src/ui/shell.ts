@@ -22,6 +22,7 @@ import { getTile, TILES, SUB_TOOLS } from "../tiles/registry";
 import { SituationStore } from "../profile/situation";
 import { resolveResidenceLocal, seedResidenceLocal, rememberableCounty } from "./residenceLocal";
 import { rememberShared, type SharedFields } from "../tiles/profileSync";
+import { obbbaDeductionsMissing } from "../tiles/deductionCopy";
 
 /** Navigate to a tile/home, optionally deep-linking into a hub sub-tool. */
 type NavigateFn = (id: string | null, params?: URLSearchParams) => void;
@@ -238,6 +239,9 @@ const US_STATES: { code: string; name: string }[] = [
  * follows is that a number nobody can look up is a number nobody can argue
  * with — the same reason the engine's bounds carry verdicts.
  */
+/** The serial comma, matching the fixed deduction copy this note sits beside. */
+const ENGLISH_LIST = new Intl.ListFormat("en-US", { style: "long", type: "conjunction" });
+
 const DEFAULT_BUDGET = {
   income: 5000,
   spend: { housing: 1500, transport: 400, food: 600, debt: 300, other: 500 },
@@ -346,6 +350,21 @@ function homeBudgetWidget(data: BundledData | null, profile: SituationStore | nu
   const stateFor = (code: string): Jurisdiction | null =>
     isModeled(code) ? (data!.state(code) ?? null) : null;
 
+  /**
+   * The three tax inputs the profile already holds and the budget cannot ask
+   * for.
+   *
+   * The widget asks four questions on purpose, so it will never have a field
+   * for "Pre-tax adjustments" or for W-2 box 12 codes TP and TT. But the
+   * profile carries all three the moment a reader uses Take-Home or drops a
+   * W-2 into the Readout, the engine this line calls takes all three, and the
+   * note under the tax row used to send people off to answer questions they
+   * had already answered. Read once at mount: nothing here edits them.
+   */
+  const adjustments = profile?.get("preTaxContributions") ?? 0;
+  const tips = profile?.get("qualifiedTipsAnnual") ?? 0;
+  const overtime = profile?.get("qualifiedOvertimeAnnual") ?? 0;
+
   /** The income the budget is reasoning about, annualized. */
   const annualIncome = (): number => annualIncomeExact ?? income * periodsFor(freq);
 
@@ -357,6 +376,9 @@ function homeBudgetWidget(data: BundledData | null, profile: SituationStore | nu
     const input: TaxInput = {
       filingStatus: fs,
       wages: annualWages,
+      adjustments,
+      qualifiedTips: tips,
+      qualifiedOvertime: overtime,
       localJurisdictionIds: localIds,
     };
     return evaluateTaxes(input, { federal: fed, fica, state: stateJ }).totals.totalTax.toNumber();
@@ -626,9 +648,18 @@ function homeBudgetWidget(data: BundledData | null, profile: SituationStore | nu
   // those makes the tax slice above smaller than the one a reader actually owes.
   // The four calculators that run this same engine say so; the surface most
   // people see first said nothing, which is the wrong way round.
+  const applied = [
+    adjustments > 0 ? `${fmt0(adjustments)} of pre-tax contributions` : null,
+    tips > 0 ? `${fmt0(tips)} of qualified tips` : null,
+    overtime > 0 ? `${fmt0(overtime)} of qualified overtime` : null,
+  ].filter((x): x is string => x !== null);
   const taxesNote = el("p", {
     class: "home-budget__hint",
-    text: "This estimate is from your income, filing status and state alone. Five deductions new for 2026 — tips, overtime, car loan interest, being 65, and giving without itemizing — would make it smaller. Take-Home and Federal Income Tax ask for them.",
+    text:
+      (applied.length === 0
+        ? "This estimate is from your income, filing status and state alone. "
+        : `This estimate is from your income, filing status and state, plus the ${ENGLISH_LIST.format(applied)} already in My Situation. `) +
+      obbbaDeductionsMissing({ tips: tips > 0, overtime: overtime > 0 }),
   });
 
   const countyRow = el("div");

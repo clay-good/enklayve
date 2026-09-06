@@ -13,6 +13,7 @@
  */
 import { Money, allocateRounded } from "../engine/money";
 import { evaluateTaxes, type TaxInput, type TaxResult } from "../engine/tax";
+import { obbbaDeductionsMissing } from "../tiles/deductionCopy";
 import { resolveResidenceLocal } from "../ui/residenceLocal";
 import { evaluatePlan, DEFAULT_CONFIG, type PlanConfig, type PlanInput } from "../engine/plan";
 import {
@@ -153,6 +154,23 @@ export function buildReport(
     const input: TaxInput = {
       filingStatus,
       wages: income,
+      /**
+       * The three tax inputs My Situation already holds, and this document
+       * ignored until 2026-09-06.
+       *
+       * Every one of them is written by a surface the reader has already used:
+       * "Pre-tax adjustments" in Take-Home, and box 12 codes TP and TT off a
+       * W-2 the Readout read on this device. Every one is taken by the same
+       * engine this line calls. And this is the document a household keeps, so
+       * the disagreement outlived the session that produced it: a single filer
+       * on $85,000 with $10,000 of pre-tax contributions, $18,000 of qualified
+       * tips and $6,000 of qualified overtime read **$13,370.07** of tax in
+       * Take-Home and **$20,185.48** here — $6,815 apart, with the effective
+       * rate, the marginal rate and the annual take-home all moving with it.
+       */
+      adjustments: profile.get("preTaxContributions") ?? 0,
+      qualifiedTips: profile.get("qualifiedTipsAnnual") ?? 0,
+      qualifiedOvertime: profile.get("qualifiedOvertimeAnnual") ?? 0,
       deductionMode: "auto",
       localJurisdictionIds: county,
     };
@@ -237,8 +255,14 @@ export function buildReport(
         // carry its own caveat; there is no tile beside it to explain.
         {
           label: "What this does not include",
-          value:
-            "Five deductions new for 2026 — tips, overtime, car loan interest, being 65, and giving without itemizing — are not in these figures, so your real tax may be lower. Take-Home and Federal Income Tax ask for them and apply them.",
+          // Whichever of the five My Situation has not answered. Tips and
+          // overtime reach the engine above when a W-2 read on this device put
+          // them in the profile, and a saved document that still calls them
+          // missing is telling the household to go and re-answer them.
+          value: obbbaDeductionsMissing({
+            tips: (profile.get("qualifiedTipsAnnual") ?? 0) > 0,
+            overtime: (profile.get("qualifiedOvertimeAnnual") ?? 0) > 0,
+          }),
         },
       ],
     });

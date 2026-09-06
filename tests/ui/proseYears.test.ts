@@ -139,6 +139,9 @@ const NOT_A_TAX_YEAR: Record<string, Record<string, string>> = {
     "2024": "the loan must be taken out after this year — a lien date, not a figure",
   },
   "tiles/deductionCopy.ts": {
+    // Also the home budget's and the saved Report's "deductions new for 2026",
+    // which both files wrote out word for word until the sentence became one
+    // built from what each surface actually deducted and moved here.
     "2026": "when §170(p) took effect, a statutory date rather than the year of an amount",
     "2017": "the last year §68 applied before it was suspended",
     "2024": "the same §163(h)(4) lien date",
@@ -148,8 +151,6 @@ const NOT_A_TAX_YEAR: Record<string, Record<string, string>> = {
     "2026":
       "the first year §414(v)(7)'s Roth catch-up requirement binds — Notice 2023-62 gave an administrative transition through 2025, so this is a fixed date in history rather than the shard's tax year, and it stays 2026 when the shard rolls",
   },
-  "readout/report.ts": { "2026": "the same effective date, in the saved report" },
-  "ui/shell.ts": { "2026": "the same effective date, on the home page" },
   "tiles/eobChecker.ts": { "2022": "when the No Surprises Act took effect" },
   "tiles/garnishment.ts": { "2009": "when the federal minimum wage last moved" },
   "data/statutes.ts": {
