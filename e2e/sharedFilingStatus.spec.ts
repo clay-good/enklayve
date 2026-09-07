@@ -59,3 +59,65 @@ test("checking married filing jointly there does reach Take-Home", async ({ page
   await page.goto(TAKE_HOME);
   await expect(page.locator("select[name='fs']")).toHaveValue("married_jointly");
 });
+
+/**
+ * A link beats the profile, in every dropdown the catalog asks with.
+ *
+ * The unit suite gained a sweep on 2026-09-07 asking that a shared link mean
+ * the same thing to two readers whose My Situation differs. It can hold every
+ * text and number control and **no dropdown at all**: happy-dom lands a freshly
+ * built `<select>` on its second option whatever any option's `selected` says,
+ * so what a fragment restores into a filing status or a state is a question no
+ * unit test in this repository can ask. `app.spec.ts` asked it of one tile.
+ *
+ * Filing status and state are the two fields that reprice everything — a wrong
+ * state is a wrong tax, a wrong status is a wrong schedule and a wrong standard
+ * deduction — and they are the two the profile is most likely to disagree with,
+ * because every tax tile writes them. So it is asked of a spread of the tiles
+ * that ask with a dropdown, in the browser where a select behaves like one.
+ */
+const DROPDOWN_LINKS: { name: string; url: string; expect: Record<string, string> }[] = [
+  {
+    name: "Take-Home",
+    url: `${TAKE_HOME}&fs=married_jointly&st=tx&w=90000`,
+    expect: { fs: "married_jointly", st: "tx" },
+  },
+  {
+    name: "the federal income tax tile",
+    url: "/#/paycheck-taxes?tool=federal-income-tax&fs=single&inc=90000",
+    expect: { fs: "single" },
+  },
+  {
+    name: "the Marginal Rate Explorer",
+    url: "/#/paycheck-taxes?tool=marginal-explorer&fs=head_of_household&st=tx&inc=90000",
+    expect: { fs: "head_of_household", st: "tx" },
+  },
+  {
+    name: "the Medicaid threshold",
+    url: "/#/benefits?tool=medicaid&st=OH&hh=1&inc=18000",
+    expect: { st: "OH" },
+  },
+];
+
+for (const { name, url, expect: wanted } of DROPDOWN_LINKS) {
+  test(`a link into ${name} beats a profile that disagrees`, async ({ page }) => {
+    // Chosen rather than deep-linked, because a tile writes the shared profile
+    // when the reader edits it: this is a reader who has already told the site
+    // they are a married Californian.
+    await page.goto(`${TAKE_HOME}&w=60000`);
+    await page.locator("select[name='fs']").first().selectOption("married_jointly");
+    await page.locator("select[name='st']").first().selectOption("ca");
+
+    await page.goto(url);
+    await page.waitForSelector(".tile-form");
+    for (const [control, value] of Object.entries(wanted)) {
+      await expect(
+        page.locator(`select[name='${control}']`).first(),
+        `${name} answered its own link's ${control} with the reader's profile`,
+      ).toHaveValue(value);
+    }
+    // And the answer is on screen, so this is the tile computing rather than a
+    // control set beside an empty panel.
+    await expect(page.locator(".tile-result").first()).toBeVisible();
+  });
+}
