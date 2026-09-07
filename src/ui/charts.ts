@@ -177,8 +177,18 @@ export interface TimelineOptions {
   goesNegative: boolean;
   locale: string;
   ariaLabel: string;
-  /** Day income lands; that column gets a payday marker so timing reads at a glance. */
-  payday?: number;
+  /**
+   * The days income lands; each gets a payday marker so timing reads at a
+   * glance.
+   *
+   * A list rather than one day, and passed rather than declared. It was
+   * `payday?: number`, read by the chart, styled by `.balance-col--payday`,
+   * described in this file's own prose -- and set by nobody, so the marker had
+   * never once been drawn. The single day was part of why: this tile's own
+   * worked example is two paychecks, and a chart marking the 3rd and not the
+   * 17th reads as a bug rather than as a feature.
+   */
+  paydays?: number[];
 }
 
 /**
@@ -199,7 +209,7 @@ export function balanceTimeline(opts: TimelineOptions): HTMLElement {
 
   const cols = points.map((p) => {
     const isLow = p.day === opts.minDay && opts.minDay !== 0;
-    const isPayday = opts.payday !== undefined && p.day === opts.payday;
+    const isPayday = opts.paydays?.includes(p.day) ?? false;
     const neg = p.balance < 0;
     const h = (Math.abs(p.balance) / range) * 100;
     const bar = el("div", {

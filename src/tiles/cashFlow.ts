@@ -136,6 +136,14 @@ export function mountCashFlow(ctx: TileContext): void {
         balanceTimeline({
           points: r.days.map((d) => ({ day: d.day, balance: d.balance })),
           minDay: r.minDay,
+          // Every day money arrives, which is the other half of the squeeze the
+          // chart is drawn to show: a bill on the 1st is a different month
+          // depending on whether the paycheck lands on the 3rd or the 17th.
+          paydays: [
+            ...new Set(
+              fields.events.filter((e) => e.type === "income" && e.amount > 0).map((e) => e.day),
+            ),
+          ],
           goesNegative: r.goesNegative,
           locale: ctx.locale,
           ariaLabel: r.goesNegative

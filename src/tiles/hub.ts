@@ -26,9 +26,6 @@ export interface HubConfig {
   description: string;
   /** The calculators this hub hosts (their existing tile definitions). */
   tools: TileDefinition[];
-  /** Sub-tool id shown first; defaults to the first tool. Plan deep-links rely
-   *  on this matching the step's target (e.g. debt → debt-freedom). */
-  defaultTool?: string;
 }
 
 /** Reserved URL key that selects the active sub-tool within a hub. */
@@ -40,7 +37,12 @@ function pickActive(raw: string | null, tools: TileDefinition[], fallback: strin
 
 export function defineHub(config: HubConfig): TileDefinition {
   const { id, title, pillar, description, tools } = config;
-  const fallback = config.defaultTool ?? tools[0]!.id;
+  // The first tool a hub lists is the one it opens on. There was a
+  // `defaultTool` override here, declared and read and set by no hub, under a
+  // comment saying plan deep-links relied on it -- they do not: a plan step
+  // carries its own `tool` and the link is built with `?tool=` explicitly. An
+  // option nobody passes is a second answer to a question that already has one.
+  const fallback = tools[0]!.id;
 
   // A hub inherits the *strictest* harm tier among the calculators it hosts, and
   // the union of their channels (SPEC-4 §3.2). A hub is a container, but it is
