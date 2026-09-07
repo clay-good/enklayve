@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { resolve, join, dirname, normalize } from "node:path";
+import { execFileSync } from "node:child_process";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
 import { toolPages } from "../../scripts/tool-pages";
 import { ManifestSchema } from "../../src/data/schemas";
@@ -19,7 +20,12 @@ import { ADAPTERS } from "../../scripts/refresh/adapters";
  * A number in a document is a claim, and a claim nothing checks is a claim that
  * will be wrong eventually. This checks them.
  *
- * The corollary is why the README no longer states a test *count*. That was the
+ * The e2e test count WAS in that category and is not: `playwright test --list`
+ * enumerates the suite in under two seconds without running a test, starting a
+ * server, or needing a browser, so the "+89 Playwright e2e" in the table is
+ * checked below like every other number here.
+ *
+ * The corollary is why the README no longer states a unit test *count*. That was the
  * one number in the table nothing here could derive, and on 2026-08-30 it was
  * corrected by hand four times in a morning — each time only because the file
  * count happened to move with it, so tests added to an existing file would have
@@ -89,6 +95,38 @@ function e2eSpecCount(): number {
   return readdirSync(resolve(ROOT, "e2e")).filter((f) => f.endsWith(".spec.ts")).length;
 }
 
+/**
+ * How many Playwright tests there are, asked of Playwright.
+ *
+ * This file said for a year that the e2e count "is not derivable without
+ * running the suite". It is: `playwright test --list` enumerates the suite
+ * without executing a test, without starting the preview server, and without a
+ * browser binary — which matters, because the unit job installs the package and
+ * never runs `playwright install`. It costs under two seconds.
+ *
+ * The reason `vitest list --json` was ruled out does not apply: that would be
+ * this suite asking itself, from inside itself, and it deadlocks. This is a
+ * different binary reading a different config.
+ *
+ * The parse is asserted rather than defaulted. A silent 0 here would make the
+ * check pass by matching nothing, which is the failure mode every other claim
+ * in this file is written to avoid.
+ */
+function e2eTestCount(): number {
+  const bin = resolve(ROOT, "node_modules", ".bin", "playwright");
+  const out = execFileSync(bin, ["test", "--list", "--reporter=list"], {
+    cwd: ROOT,
+    encoding: "utf8",
+    timeout: 120_000,
+    // `--list` reads the config and the spec files only, but say so out loud:
+    // nothing here may reach for a browser that the unit job has not installed.
+    env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: "0" },
+  });
+  const total = /Total: (\d+) tests? in \d+ files?/.exec(out);
+  expect(total, `playwright test --list printed no total:\n${out.slice(-400)}`).toBeTruthy();
+  return Number(total![1]);
+}
+
 const CLAIMS: Claim[] = [
   {
     what: "calculators",
@@ -143,6 +181,12 @@ const CLAIMS: Claim[] = [
     what: "test files",
     value: testFileCount(),
     patterns: [/unit\/golden across \*\*(\d+)\*\* files/g, /golden suite across (\d+) files/g],
+  },
+  {
+    what: "Playwright e2e tests",
+    value: e2eTestCount(),
+    prose: true,
+    patterns: [/\*\*\+(\d+)\*\* Playwright e2e/g, /plus (\d+) Playwright e2e tests/g],
   },
   {
     what: "adapters watching their shard",
@@ -270,12 +314,13 @@ describe("the README's counts are reproducible from the repo", () => {
     });
   }
 
-  it("has at least one Playwright spec behind the e2e claim", () => {
-    // The e2e *test* count is not derivable without running the suite, so this
-    // asserts the weaker but still useful thing: the specs the claim rests on
-    // exist. The unit-test total is likewise left as prose — a check that fails
-    // on every added test is a check that gets deleted.
+  it("has the Playwright specs the e2e claim rests on", () => {
+    // The count itself is a claim like any other now, checked above against
+    // `playwright test --list`. This stays because a config that stopped
+    // matching `e2e/**` would report a happy zero, and zero tests in zero files
+    // is not a green suite.
     expect(e2eSpecCount()).toBeGreaterThan(0);
+    expect(e2eTestCount()).toBeGreaterThanOrEqual(e2eSpecCount());
     expect(README).toMatch(/\d+ Playwright e2e/);
   });
 
