@@ -260,7 +260,7 @@ export function mountBillTriage(ctx: TileContext): void {
 
   const addRow = el("button", {
     type: "button",
-    class: "row-add",
+    class: "btn btn--ghost plan-add-debt",
     text: "Add a bill",
     on: {
       click: () => {

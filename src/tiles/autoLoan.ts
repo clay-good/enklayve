@@ -147,7 +147,7 @@ export function mountAutoLoan(ctx: TileContext): void {
       // year, and this tile is the one that knows what that is.
       el("button", {
         type: "button",
-        class: "btn-secondary",
+        class: "btn btn--ghost",
         text: "Deduct this interest",
         on: {
           click: () =>

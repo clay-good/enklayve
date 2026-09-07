@@ -107,7 +107,7 @@ export function mountPell(ctx: TileContext): void {
       { class: "tile-form-actions" },
       el("button", {
         type: "button",
-        class: "btn-secondary",
+        class: "btn btn--ghost",
         text: "Estimate my SAI",
         on: { click: () => ctx.navigate("fafsa-sai") },
       }),
