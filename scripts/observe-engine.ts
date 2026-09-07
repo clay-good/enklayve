@@ -30,6 +30,16 @@
  * Deterministic by construction: fixed inputs, no clock, no randomness. The
  * values come from the shipped shards, so a data refresh moves the probe with
  * the thresholds rather than leaving it pointed at last year's numbers.
+ *
+ * The grain of "reaches" is the FUNCTION, not the file. `PROBED_FILES` said
+ * `contributionLimits.ts` was covered while `selfEmployedPlanCeilings` in it was
+ * called by nothing here, and the classifier's own calibration only caught that
+ * because the comparison inside it happens to be held by a test -- a boundary
+ * nobody holds, in a function nobody calls, would have been reported as "no
+ * observed difference" for the sole reason that nothing looked. So
+ * `observeEngine.test.ts` walks src/engine's call graph from the entry points
+ * named below and fails on a function holding a comparison that none of them
+ * can reach.
  */
 import { Money } from "../src/engine/money";
 import { amtScreen } from "../src/engine/amt";
@@ -75,6 +85,7 @@ import {
   electiveDeferralCatchUp,
   electiveDeferralLimit,
   inEnhancedCatchUpWindow,
+  selfEmployedPlanCeilings,
 } from "../src/engine/contributionLimits";
 import { iraDeductibility } from "../src/engine/iraDeduction";
 import { evaluatePlan, DEFAULT_CONFIG, type PlanInput } from "../src/engine/plan";
@@ -362,6 +373,32 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
       // is what makes the two differ, so the probe reported a boundary a test
       // holds as invisible, and the calibration refused the whole report.
       inWindow: inEnhancedCatchUpWindow(age, deferralLimits),
+    });
+  }
+
+  // The solo 401(k) changeover, which this probe could not see until 2026-09-07.
+  //
+  // `selfEmployedPlanCeilings` was imported by nothing here, so its `additions
+  // >= compensation` was invisible — and because that comparison IS held by a
+  // test, the calibration caught it and the whole report said so: "the probe is
+  // too weak", which invalidates every *no observed difference* verdict beside
+  // it. A probe that cannot see a boundary a test holds cannot be trusted about
+  // one no test holds.
+  //
+  // The line is where compensation equals the additions the two §415(c) limbs
+  // would otherwise allow, and net earnings equal to the §402(g) deferral is
+  // exactly that point: the deferral alone reaches compensation, so limb (B)
+  // binds and there is no employer share worth making. Either side of it is a
+  // different sentence on the tile.
+  const deferral = deferralLimits.elective_deferral_401k;
+  for (const net of [deferral - 1, deferral, deferral + 1, 9_294, 83_642]) {
+    const c = selfEmployedPlanCeilings(net, 45, deferralLimits);
+    put(`soloCeilings(${net})`, {
+      sep: c.sep,
+      solo: c.solo,
+      employerShare: c.employerShare,
+      employeeDeferral: c.employeeDeferral,
+      cappedByCompensation: c.cappedByCompensation,
     });
   }
 
