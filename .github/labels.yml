@@ -55,6 +55,9 @@ labels:
   - name: alert
     color: "B91C1C"
     description: A refresh could not fetch or parse its source; the shard is untouched
+  - name: check-blocked
+    color: "78350F"
+    description: A scheduled check was refused before it could look; nothing was learned
   - name: bug
     color: "d73a4a"
     description: Something isn't working

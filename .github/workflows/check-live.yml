@@ -58,10 +58,23 @@ jobs:
       # literal ends the literal — the issue step would fail with a syntax error
       # on exactly the run that had something to report. `check-links` had this
       # right already; this is the same shape.
+      # Two different sentences, and filing the first for the second is how a
+      # real failure stops being read. On 2026-09-07 the edge answered this
+      # runner 403 before the Worker ran -- a browser, and the same script from a
+      # laptop, got a clean 200 and the full header contract -- and the run filed
+      # "Production is not serving what the repository promises" pointing at
+      # `wrangler.toml`, which had nothing to do with it. The script says which
+      # of the two happened, in `blocked`.
+      #
+      # Two steps rather than one with a ternary, because the label has to be a
+      # literal: `issueTemplates.test.ts` sweeps this directory for the labels it
+      # names and fails on one `labels.yml` does not declare, and a label built
+      # by an expression is a label that sweep cannot read.
       - name: Open an issue when production does not match the promise
         if: >-
           steps.live.outputs.report != '' &&
-          steps.live.outputs.findings != '0'
+          steps.live.outputs.findings != '0' &&
+          steps.live.outputs.blocked != '1'
         uses: actions/github-script@v8
         with:
           script: |
@@ -75,6 +88,21 @@ jobs:
         env:
           REPORT: ${{ steps.live.outputs.report }}
           FINDINGS: ${{ steps.live.outputs.findings }}
+
+      - name: Open an issue when the check itself was turned away
+        if: steps.live.outputs.blocked == '1'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "The live check was refused at the edge before it could look",
+              body: process.env.REPORT,
+              labels: ["check-blocked"],
+            });
+        env:
+          REPORT: ${{ steps.live.outputs.report }}
 
       - name: Fail the run so the schedule is visibly red
         if: >-

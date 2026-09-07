@@ -26,11 +26,14 @@ import { appendFileSync } from "node:fs";
 
 const DEFAULT_ORIGIN = "https://enklayve.com";
 const TIMEOUT_MS = 20_000;
+const USER_AGENT = "enklayve-check-live (+https://github.com/clay-good/enklayve)";
 
 /** One thing production must be true about, and what it was instead. */
 interface Finding {
   path: string;
   problem: string;
+  /** The edge refused the checker, so nothing was learned about the site. */
+  blocked?: true;
 }
 
 async function head(url: string): Promise<Response> {
@@ -41,13 +44,50 @@ async function head(url: string): Promise<Response> {
     // before a deploy is exactly what would hide the failure this check exists
     // for. GET rather than HEAD: some edges answer HEAD from a different path.
     return await fetch(url, {
-      headers: { "cache-control": "no-cache", pragma: "no-cache" },
+      headers: {
+        "cache-control": "no-cache",
+        pragma: "no-cache",
+        // Say who is knocking. Node's fetch sends no user agent, and an
+        // unidentified client from a datacenter address is what a bot-detection
+        // rule is built to stop -- which is exactly what happened on
+        // 2026-09-07, when the edge answered the GitHub runner 403 and this
+        // check reported the site as broken. A robot that names itself and
+        // links to its own source is both likelier to be let through and the
+        // honest thing to send.
+        "user-agent": USER_AGENT,
+      },
       signal: controller.signal,
       redirect: "manual",
     });
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * Whether the response came from the edge's bouncer rather than from the site.
+ *
+ * A status this check cannot interpret is a statement about the *checker*, not
+ * about production. On 2026-09-07 the scheduled run was answered 403 before the
+ * Worker ever ran, and the report said "production is not serving what this
+ * repository promises" and pointed at `wrangler.toml` -- while a browser, and
+ * the same script from a laptop, got a clean 200 and the full header contract.
+ * A check that cries wolf about the thing nothing else can see is worse than no
+ * check, because the next red run is the one nobody opens.
+ *
+ * Cloudflare says so about itself when it blocks or challenges: `cf-mitigated`
+ * on a managed challenge, and otherwise its own interstitial, which is HTML and
+ * names itself in the body. Both are required alongside a refusal status, so a
+ * genuine 403 from the site is still a finding.
+ */
+export function edgeRefused(status: number, headers: Headers, body: string): boolean {
+  if (![401, 403, 429, 503].includes(status)) return false;
+  if (headers.has("cf-mitigated")) return true;
+  const cloudflare =
+    (headers.get("server") ?? "").toLowerCase().includes("cloudflare") || headers.has("cf-ray");
+  return (
+    cloudflare && /attention required|just a moment|you have been blocked|cf-error/i.test(body)
+  );
 }
 
 const bust = (origin: string, path: string): string =>
@@ -75,6 +115,15 @@ export async function checkOrigin(origin: string): Promise<Finding[]> {
   // 1. The header family, on a page.
   const home = await head(bust(origin, "/"));
   if (home.status !== 200) {
+    const body = await home.text().catch(() => "");
+    if (edgeRefused(home.status, home.headers, body)) {
+      findings.push({
+        path: "/",
+        problem: `answered ${home.status} from the edge, before the site was reached`,
+        blocked: true,
+      });
+      return findings;
+    }
     findings.push({ path: "/", problem: `answered ${home.status}, so nothing below was checked` });
     return findings;
   }
@@ -121,6 +170,24 @@ export function renderLiveReport(origin: string, findings: Finding[]): string {
   if (findings.length === 0) {
     return `${origin} serves the header contract, and a missing chunk is a miss. Nothing to do.`;
   }
+  // A refusal at the edge is not a report about the site, and must not be
+  // dressed as one: the wrangler.toml lead below is a wrong turn, and the whole
+  // point of this check is that it is the only one anybody trusts about
+  // production.
+  if (findings.every((f) => f.blocked)) {
+    return [
+      `${origin} refused this check before it reached the site:`,
+      "",
+      ...findings.map((f) => `- \`${f.path}\` — ${f.problem}`),
+      "",
+      "Nothing was learned about production either way. The client is what was",
+      "refused: an unattended request from a datacenter address, which is what a",
+      "bot rule is for. Run `npm run check:live` from a laptop to see what the site",
+      "is actually serving, and if the schedule keeps being turned away, let the",
+      "`enklayve-check-live` user agent through at the edge rather than loosening",
+      "the rule for everyone.",
+    ].join("\n");
+  }
   return [
     `${origin} does not serve what this repository promises:`,
     "",
@@ -147,6 +214,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const out = process.env.GITHUB_OUTPUT;
   if (out) {
     appendFileSync(out, `findings=${findings.length}\n`);
+    // The workflow titles its issue from this: "production is broken" and "the
+    // check was turned away at the door" are different sentences, and filing
+    // the first for the second is how a real failure stops being read.
+    appendFileSync(
+      out,
+      `blocked=${findings.length > 0 && findings.every((f) => f.blocked) ? 1 : 0}\n`,
+    );
     appendFileSync(out, `report<<EOF\n${report}\nEOF\n`);
   }
   if (findings.length > 0) process.exitCode = 1;
