@@ -12,6 +12,13 @@ import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { balanceTimeline } from "../ui/charts";
 import type { TileContext, TileDefinition } from "./types";
 
+/** "day 3", "days 3 and 17", "days 3, 17 and 27" — a list a screen reader reads. */
+function listOfDays(days: readonly number[]): string {
+  const noun = days.length === 1 ? "day" : "days";
+  if (days.length === 1) return `${noun} ${days[0]}`;
+  return `${noun} ${days.slice(0, -1).join(", ")} and ${days[days.length - 1]}`;
+}
+
 interface Event {
   day: number;
   label: string;
@@ -132,23 +139,33 @@ export function mountCashFlow(ctx: TileContext): void {
 
     clear(chartContainer);
     if (r.days.length > 0) {
+      // Every day money arrives, which is the other half of the squeeze the
+      // chart is drawn to show: a bill on the 1st is a different month
+      // depending on whether the paycheck lands on the 3rd or the 17th.
+      const paydays = [
+        ...new Set(
+          fields.events.filter((e) => e.type === "income" && e.amount > 0).map((e) => e.day),
+        ),
+      ].sort((a, b) => a - b);
+      // The marker is a coloured column and a word, both `aria-hidden`, so it
+      // says nothing to a reader who cannot see it. The label carries the same
+      // fact in words: a chart whose whole subject is timing owes both readers
+      // the timing.
+      const arrivals =
+        paydays.length > 0
+          ? `, with income arriving on ${listOfDays(paydays)}`
+          : ", with no income in the month";
       chartContainer.append(
         balanceTimeline({
           points: r.days.map((d) => ({ day: d.day, balance: d.balance })),
           minDay: r.minDay,
-          // Every day money arrives, which is the other half of the squeeze the
-          // chart is drawn to show: a bill on the 1st is a different month
-          // depending on whether the paycheck lands on the 3rd or the 17th.
-          paydays: [
-            ...new Set(
-              fields.events.filter((e) => e.type === "income" && e.amount > 0).map((e) => e.day),
-            ),
-          ],
+          paydays,
           goesNegative: r.goesNegative,
           locale: ctx.locale,
-          ariaLabel: r.goesNegative
-            ? `Running balance through the month, dipping to its lowest on day ${r.minDay}`
-            : "Running balance through the month",
+          ariaLabel:
+            (r.goesNegative
+              ? `Running balance through the month, dipping to its lowest on day ${r.minDay}`
+              : "Running balance through the month") + arrivals,
         }),
       );
     }

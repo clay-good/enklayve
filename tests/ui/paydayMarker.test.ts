@@ -66,6 +66,15 @@ describe("the cash-flow chart marks the days money arrives", () => {
     ).toBe(true);
   });
 
+  it("says the same thing to a reader who cannot see it", () => {
+    // The column tint and the word are both `aria-hidden`, so without this the
+    // chart's whole subject -- timing -- reaches only one of its two audiences.
+    const label =
+      openCashFlow().querySelector(".chart--timeline")?.getAttribute("aria-label") ?? "";
+    expect(label).toContain("income arriving on days 3 and 17");
+    expect(label).toContain("Running balance through the month");
+  });
+
   it("puts the marker where a reader can see it", () => {
     const root = openCashFlow();
     const flags = [...root.querySelectorAll(".balance-flag")];
