@@ -2068,6 +2068,19 @@ body {
   color: var(--enk-warn);
   font-weight: 600;
 }
+/* A figure the reader gave was superseded by another figure the reader gave.
+   Not an error, so not the warning colour -- but the paragraph exists BECAUSE
+   the overwrite would otherwise be silent, and it was written in the same muted
+   grey as the calm note above it, which is a quiet way of saying something
+   loud. Full-strength text on a tinted card: read before it is read past. */
+.readout-note--replaced {
+  color: var(--enk-text);
+  font-weight: 600;
+  background: var(--enk-primary-soft);
+  border-left: 3px solid var(--enk-primary);
+  border-radius: 0 6px 6px 0;
+  padding: 0.5rem 0.75rem;
+}
 .readout-fields {
   margin-top: 0.5rem;
 }
