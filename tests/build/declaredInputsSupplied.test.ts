@@ -48,12 +48,22 @@ function sourceFiles(dir: string): string[] {
 }
 
 const FILES = sourceFiles(resolve(ROOT, "src"));
-const INTERFACE = /export interface (\w+)\s*\{([\s\S]*?)\n\}/g;
 
-/** Everything in `src` except the interface declarations themselves. */
-const CONSTRUCTION_SITES = FILES.map((f) =>
-  readFileSync(f, "utf8").replace(/export interface \w+\s*\{[\s\S]*?\n\}/g, ""),
-).join("\n");
+/**
+ * Every object shape declared in `src`: `interface X {`, exported or not, and
+ * `type X = {`.
+ *
+ * Not only the exported ones. The three bugs were all on exported interfaces,
+ * but a tile's private `interface Fields` is the same shape with the same
+ * consequence, and the narrower sweep would have been a rule about visibility
+ * rather than about the bug.
+ */
+const DECLARATION = /(?:export )?(?:interface (\w+)\s*\{|type (\w+) = \{)([\s\S]*?)\n\}/g;
+
+/** Everything in `src` except the declarations themselves. */
+const CONSTRUCTION_SITES = FILES.map((f) => readFileSync(f, "utf8").replace(DECLARATION, "")).join(
+  "\n",
+);
 
 /**
  * Whether anything anywhere builds an object carrying this field.
@@ -72,9 +82,9 @@ describe("every declared field has somewhere it comes from", () => {
   const declared: { file: string; iface: string; field: string }[] = [];
   for (const file of FILES) {
     const rel = file.slice(ROOT.length + 1).replace(/\\/g, "/");
-    for (const m of readFileSync(file, "utf8").matchAll(INTERFACE)) {
-      for (const f of m[2]!.matchAll(/^ {2}(\w+)\??:/gm)) {
-        declared.push({ file: rel, iface: m[1]!, field: f[1]! });
+    for (const m of readFileSync(file, "utf8").matchAll(DECLARATION)) {
+      for (const f of m[3]!.matchAll(/^ {2}(\w+)\??:/gm)) {
+        declared.push({ file: rel, iface: (m[1] ?? m[2])!, field: f[1]! });
       }
     }
   }
@@ -83,6 +93,10 @@ describe("every declared field has somewhere it comes from", () => {
     expect(declared.length).toBeGreaterThan(200);
     expect(declared.some((d) => d.iface === "PlanInput" && d.field === "netWorth")).toBe(true);
     expect(declared.some((d) => d.iface === "TimelineOptions" && d.field === "paydays")).toBe(true);
+    // A private declaration, to prove the sweep is not only about exports.
+    expect(declared.some((d) => d.file === "src/tiles/cashFlow.ts" && d.iface === "Event")).toBe(
+      true,
+    );
   });
 
   it("recognizes a field that is supplied, and one that is not", () => {
