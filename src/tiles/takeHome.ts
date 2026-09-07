@@ -125,10 +125,16 @@ function writeFields(f: Fields): URLSearchParams {
   p.set("st", f.st);
   p.set("w", String(f.wages));
   if (f.other > 0) p.set("oi", String(f.other));
-  if (f.adjustments > 0) p.set("adj", String(f.adjustments));
   if (f.seniors > 0) p.set("age65", String(f.seniors));
-  if (f.tips > 0) p.set("tips", String(f.tips));
-  if (f.overtime > 0) p.set("ot", String(f.overtime));
+  // Written whether or not they are zero, unlike the fields above them. Each of
+  // these three falls back to My Situation when the link is silent, so dropping
+  // a zero does not restore a zero -- it hands the question to the READER's
+  // profile, and a link that says "no tips, no overtime, no pre-tax
+  // adjustments" reopens with the reader's own three figures and a smaller
+  // take-home than the sender computed. A zero is an answer here.
+  p.set("adj", String(f.adjustments));
+  p.set("tips", String(f.tips));
+  p.set("ot", String(f.overtime));
   if (f.local.length > 0) p.set("loc", f.local.join(","));
   return p;
 }

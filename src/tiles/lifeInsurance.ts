@@ -64,12 +64,18 @@ function writeFields(f: Fields): URLSearchParams {
   const p = new URLSearchParams();
   p.set("inc", String(f.annualIncome));
   if (f.yearsToReplace !== 10) p.set("yrs", String(f.yearsToReplace));
-  if (f.debts > 0) p.set("debt", String(f.debts));
+  // Written at zero for the same reason `assets` is, below: it falls back to
+  // the debts recorded in My Situation, so a sender with none hands the
+  // question to whatever the reader owes.
+  p.set("debt", String(f.debts));
   if (f.mortgageBalance > 0) p.set("mort", String(f.mortgageBalance));
   if (f.finalExpenses !== 15000) p.set("final", String(f.finalExpenses));
   if (f.futureObligations > 0) p.set("edu", String(f.futureObligations));
   if (f.existingCoverage > 0) p.set("cov", String(f.existingCoverage));
-  if (f.liquidAssets > 0) p.set("assets", String(f.liquidAssets));
+  // "No liquid assets to offset the gap" is an answer, and the only way to say
+  // it: an absent `assets` is answered by the reader's `liquidSavings`, which
+  // subtracts savings the sender never had from the coverage they were shown.
+  p.set("assets", String(f.liquidAssets));
   return p;
 }
 

@@ -77,7 +77,11 @@ function writeFields(f: Fields): URLSearchParams {
   if (f.region !== "contiguous") p.set("region", f.region);
   p.set("inc", String(f.income));
   p.set("kids", String(f.children));
-  if (f.married) p.set("mfj", "1");
+  // Written whether or not the box is ticked. A link is the sender's answer,
+  // and "not a joint return" is an answer: dropping it lets the READER's My
+  // Situation answer instead, so the same link opens joint for a married
+  // reader and single for everyone else.
+  p.set("mfj", f.married ? "1" : "0");
   return p;
 }
 
