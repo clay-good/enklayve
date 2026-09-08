@@ -220,6 +220,11 @@ describe("amortization summary", () => {
     expect(r.monthsSaved).toBe(0);
     expect(r.interestSaved.isZero()).toBe(true);
     expect(r.payoffMonths).toBe(r.baselineMonths);
+    // The whole result, not only the two derived figures: with no extra payment
+    // the "with extra" schedule IS the baseline, which is what licenses
+    // `amortizationSummary` to reuse it rather than walk 360 months of decimal
+    // arithmetic a second time to arrive at a number it subtracts from itself.
+    expect(r.totalInterest.equals(r.baselineInterest)).toBe(true);
   });
 
   it("an extra payment saves interest and time", () => {
