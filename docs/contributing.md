@@ -51,6 +51,7 @@ npm run check:adapters       # every refresh adapter still finds its figure, mon
 npm run check:advisories     # every npm advisory has a reviewed reason, monthly
 npm run check:boundaries     # which comparisons a test actually holds, monthly
 npm run check:boundaries -- --help   # it rewrites src/engine in place; read this first
+npm run check:lapses         # which bundled figures expire soon, monthly
 node scripts/refresh/watch-sources.ts   # the hand-authored + statutory sources, quarterly
 ```
 

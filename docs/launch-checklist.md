@@ -15,7 +15,7 @@ npm run deploy:dry
 npm run test:e2e      # Playwright, its own CI job
 ```
 
-Five more run on a schedule rather than per-commit — three because they need the network and a flaky government site must not fail a build, two because they are slow:
+Six more run on a schedule rather than per-commit — three because they need the network and a flaky government site must not fail a build, two because they are slow:
 
 ```sh
 npm run check:links                        # every external link, monthly
@@ -24,6 +24,7 @@ npm run check:advisories                   # every npm advisory has a reviewed r
 node scripts/refresh/watch-sources.ts      # the hand-authored Pillar 4 sources, quarterly
 npm run check:boundaries                   # which inclusive/exclusive comparisons any test holds, monthly
 npm run check:boundaries:classify          # and, for each survivor, whether a test COULD hold it
+npm run check:lapses                       # which bundled figures expire soon, monthly
 ```
 
 The links that point *inside* the repository need none of that and were checked by nothing: **383 relative links across 20 markdown files, 71 of them carrying a heading anchor.** A relative path is exactly the kind of link that rots without anyone touching it — rename a test file, move a spec section, and the prose goes on pointing at where it used to be. These documents make their argument almost entirely by pointing at the file that proves each claim, so a link resolving to nothing turns an argument into an assertion. [`checkLinks.test.ts`](../tests/build/checkLinks.test.ts) holds both halves in the fast suite; all 383 resolve today. Writing it cost one lesson: **GitHub's heading slug does not collapse runs of whitespace** — "Determinism & verification" is `determinism--verification`, with two hyphens where the ampersand was — and a slugifier that collapses them reports the README's own anchors as four failures that are not.

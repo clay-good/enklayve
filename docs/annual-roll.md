@@ -6,6 +6,19 @@ Every figure on this site is annual, so the roll is the one recurring task that 
 
 That asymmetry is the hazard. The manifest's `effectiveYear` drives the staleness gate, so changing those three lines alone tells the app every figure is current while all 81 shards still hold last year's numbers — last year's figures reported as fresh, with no banner. A test now blocks exactly that (see step 4), and it is the reason to run the suite *before* believing a green build.
 
+## When
+
+`npm run check:lapses` answers it, and a monthly workflow
+([`check-lapses.yml`](../.github/workflows/check-lapses.yml)) asks on the 15th and
+opens an issue when anything expires within 90 days. That is the trigger this page
+did not have: the lapse itself was always handled — the loader marks the shard
+stale and the tile shows its verify banner rather than a confident wrong number —
+but nothing said anything *beforehand*, so the first signal that the six
+zero-window shards had gone to banners would have been a reader seeing one on
+January 1st. Ninety days puts the first warning in early October, by which time the
+IRS has normally published the next year's revenue procedure, and leaves a quarter
+to read documents in.
+
 ## Steps
 
 1. **Roll each shard.** New figures, new `effectiveYear`, new `dateRetrieved`, and — where the document changed — a new `sourceUrl` and `sourceDocument`. Read the agency's own document, never a summary of it; [`data-sources.md`](data-sources.md#source-audits) records the eight wrong figures that pass found.
