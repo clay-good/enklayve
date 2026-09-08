@@ -19,7 +19,7 @@
 import { resolveSequences, type Sequence, type SequenceStep } from "../engine/sequences";
 import { el, option } from "../ui/dom";
 import { field, tryExampleButton } from "../ui/form";
-import { renderDeadline } from "../ui/deadline";
+import { renderDeadline, todayIso } from "../ui/deadline";
 import { citationLink } from "../ui/resultCard";
 import type { TileContext, TileDefinition } from "./types";
 
@@ -60,8 +60,14 @@ export function mountLifeEvents(ctx: TileContext): void {
     event: sequences.some((s) => s.id === ctx.params.get("ev"))
       ? ctx.params.get("ev")!
       : (sequences[0]?.id ?? EXAMPLE.event),
-    trigger: readDate(ctx.params.get("trig"), EXAMPLE.trigger),
-    asOf: readDate(ctx.params.get("as"), EXAMPLE.asOf),
+    // Both seeded from today on a fresh visit, never from the worked example.
+    // The box for `asOf` is labelled "Today's date" and defaulted to a date six
+    // months behind it; a reader whose job ended this week was shown a sequence
+    // of clocks counted from February. The clock is still an input -- shown,
+    // editable, and written into every link -- which is the property the tile
+    // promises, and seeding it is not reading it in the engine.
+    trigger: readDate(ctx.params.get("trig"), todayIso()),
+    asOf: readDate(ctx.params.get("as"), todayIso()),
   };
 
   const eventSelect = el(
@@ -156,7 +162,7 @@ export function mountLifeEvents(ctx: TileContext): void {
       el("p", { class: "lev-lede", text: seq.lede }),
       el("p", {
         class: "lev-clock",
-        text: `${dated === 0 ? "No step here" : dated === 1 ? "One step here has" : `${dated} steps here have`} a clock on ${dated === 1 ? "it" : "them"}, counted from ${seq.triggerLabel.toLowerCase()} (${fields.trigger}) against ${fields.asOf}, which you set above.`,
+        text: `${dated === 0 ? "No step here" : dated === 1 ? "One step here has" : `${dated} steps here have`} a clock on ${dated === 1 ? "it" : "them"}, counted from ${seq.triggerLabel.toLowerCase()} (${fields.trigger}) against ${fields.asOf}, both in the boxes above.`,
       }),
       el("ol", { class: "lev-steps" }, ...seq.steps.map(stepBlock)),
       el("p", {

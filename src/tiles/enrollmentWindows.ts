@@ -17,7 +17,7 @@
 import { enrollmentWindows, programsIn, type EnrollmentWindow } from "../engine/sequences";
 import { el, option } from "../ui/dom";
 import { field, tryExampleButton } from "../ui/form";
-import { renderDeadline } from "../ui/deadline";
+import { renderDeadline, todayIso } from "../ui/deadline";
 import type { EnrollmentWindowsData } from "../data/schemas";
 import { citationLink } from "../ui/resultCard";
 import type { TileContext, TileDefinition } from "./types";
@@ -42,8 +42,23 @@ function readDate(raw: string | null, fallback: string): string {
 function readFields(p: URLSearchParams, programs: string[]): Fields {
   const program = p.get("prog");
   return {
-    asOf: readDate(p.get("as"), EXAMPLE.asOf),
-    trigger: readDate(p.get("trig"), EXAMPLE.trigger),
+    // A fresh visit opens on TODAY, not on the worked example's date. The
+    // clock stays an input -- displayed, editable, and always written into the
+    // link by `writeFields`, so a shared permalink still pins its own date and
+    // reopens identically. What changed is only the seed: this defaulted to the
+    // example's 2026-03-02, so a reader who lost coverage in September was
+    // shown a COBRA election "58 days left" counted from a March that had long
+    // gone, under a sentence telling them it was a date they had set. The
+    // determinism check already names `ui/deadline.ts` as a place the clock may
+    // be read, for exactly this: "the default `asOf` a deadline view opens on,
+    // which the reader then sets".
+    asOf: readDate(p.get("as"), todayIso()),
+    // Seeded to today for the same reason and one of its own: with `asOf` on
+    // today and the trigger left in the past, every window would open already
+    // expired, which is the more alarming way to be wrong. "The event happened
+    // today" is the honest opening position, and it is the one that shows a
+    // reader the full window they actually have.
+    trigger: readDate(p.get("trig"), todayIso()),
     program: program && programs.includes(program) ? program : (programs[0] ?? EXAMPLE.program),
   };
 }
@@ -125,7 +140,7 @@ export function mountEnrollmentWindows(ctx: TileContext): void {
     resultContainer.replaceChildren(
       el("p", {
         class: "enw-lede",
-        text: `Every date below is counted from ${fields.asOf}, which you set above. Change it and the whole page recomputes — the clock is an input here, so a link you paste or save shows the same thing tomorrow that it shows today.`,
+        text: `Every date below is counted from ${fields.asOf}, the date in the box above — today’s, until you change it. Change it and the whole page recomputes — the clock is an input here, so a link you paste or save shows the same thing tomorrow that it shows today.`,
       }),
       el("div", { class: "enw-windows" }, ...mine.map(windowBlock)),
       el("h3", { class: "enw-heading", text: "Clocks your state sets, which we will not guess" }),

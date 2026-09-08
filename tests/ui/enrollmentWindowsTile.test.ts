@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import axe from "axe-core";
 import { mountEnrollmentWindows, enrollmentWindowsTile } from "../../src/tiles/enrollmentWindows";
 import { resolveDueDate } from "../../src/engine/deadline";
+import { todayIso } from "../../src/ui/deadline";
 import { enrollmentWindows, programsIn } from "../../src/engine/sequences";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
@@ -259,5 +260,44 @@ describe("finding this page by the name of a program it carries", () => {
         ),
     );
     expect(unreachable, "a program named on this page that search cannot reach").toEqual([]);
+  });
+});
+
+describe("what a first visit opens on", () => {
+  /**
+   * The date the clocks are counted from, when the reader has said nothing.
+   *
+   * Every case above supplies `as` and `trig`, which is right for pinning what
+   * the tile computes and is exactly why nothing noticed what it opens on: the
+   * seed was the worked example's `2026-03-02`, frozen when the tile was
+   * written. On 2026-09-08 a reader who had just lost coverage was shown "Elect
+   * COBRA continuation coverage — Due Apr 29, 2026, 58 days left", counted from
+   * a March six months gone, under a sentence telling them it was a date they
+   * had set.
+   *
+   * The clock stays an input: displayed, editable, and written into the link by
+   * `writeFields`, so a shared permalink still pins its own date. Only the seed
+   * moved — which is what `determinism.test.ts` already licenses `ui/deadline`
+   * to read the clock for: "the default `asOf` a deadline view opens on, which
+   * the reader then sets".
+   */
+  it("counts from today, not from the worked example", () => {
+    const root = mount(new URLSearchParams());
+    const text = (root.textContent ?? "").replace(/\s+/g, " ");
+    expect(text).toContain(`counted from ${todayIso()}`);
+    expect(text).not.toContain("2026-03-02");
+  });
+
+  it("says whose date it is, truthfully, before the reader has touched it", () => {
+    const text = (mount(new URLSearchParams()).textContent ?? "").replace(/\s+/g, " ");
+    expect(text).not.toContain("which you set above");
+    expect(text).toContain("the date in the box above");
+  });
+
+  it("still lets a link pin its own date", () => {
+    // The property the seed must not cost: a permalink reopens on the sender's
+    // date however long it sits in an inbox.
+    const text = (mount(COBRA).textContent ?? "").replace(/\s+/g, " ");
+    expect(text).toContain("counted from 2026-03-02");
   });
 });

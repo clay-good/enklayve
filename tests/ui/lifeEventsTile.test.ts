@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
+import { todayIso } from "../../src/ui/deadline";
 import axe from "axe-core";
 import { mountLifeEvents, lifeEventsTile } from "../../src/tiles/lifeEvents";
 import { resolveSequences, danglingWindowIds } from "../../src/engine/sequences";
@@ -198,4 +199,25 @@ describe("Life-Event Sequences", () => {
     expect(results.violations.map((v) => v.id).join(", ")).toBe("");
     document.body.replaceChildren();
   }, 30000);
+});
+
+describe("what a first visit opens on", () => {
+  /**
+   * The same seed bug as the Enrollment Windows tile, in the tile beside it.
+   * The box is labelled "Today's date, the date every clock is counted from"
+   * and defaulted to `2026-03-02`, the worked example's date, so a reader whose
+   * job ended this week was shown a whole sequence of clocks counted from a
+   * February that had gone. Every case above passes `trig` and `as`, which is
+   * why the seed went unexamined.
+   */
+  it("counts from today, not from the worked example", () => {
+    const text = (mount(new URLSearchParams()).textContent ?? "").replace(/\s+/g, " ");
+    expect(text).toContain(todayIso());
+    expect(text).not.toContain("2026-03-02");
+  });
+
+  it("does not tell the reader they set a date they have not touched", () => {
+    const text = (mount(new URLSearchParams()).textContent ?? "").replace(/\s+/g, " ");
+    expect(text).not.toContain("which you set above");
+  });
 });
