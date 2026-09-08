@@ -971,6 +971,23 @@ export function extractDocument(t: ExtractedText): ExtractionResult {
   }
 
   let fields = extractor.extract(t);
+
+  // `field()` states the rule -- "a field we could not read is omitted entirely
+  // -- we never ship a guessed 0" -- and enforces it by returning null for a
+  // non-finite value. Fifteen fields are built as object literals instead, and
+  // those bypass it, so the rule held everywhere except where a value is
+  // *computed*: the pay stub's annualized gross checks that the figure it read
+  // is finite and then multiplies it by the period count, which overflows.
+  // A stub reading "Bi-Weekly Gross Pay 1e307" shipped a field whose value was
+  // `Infinity` under a note three hundred digits long -- reachable from a
+  // corrupt text layer, and from exactly the OCR noise this module already
+  // treats as lower confidence.
+  //
+  // Applied here rather than at each of the fifteen, so the contract is true by
+  // construction for the sixteenth as well. It sits ABOVE the check below on
+  // purpose: a document left with nothing readable must say so.
+  fields = fields.filter((f) => typeof f.value !== "number" || Number.isFinite(f.value));
+
   if (fields.length === 0) {
     warnings.push(
       "We recognized the document but couldn't read its fields, please enter them by hand.",
