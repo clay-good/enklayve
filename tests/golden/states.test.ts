@@ -1671,57 +1671,57 @@ describe("Nebraska (LB 754 three-bracket schedule; per-status thresholds, federa
   // from the official 2025 Tax Calculation Schedule: single 4.55% over $24,120,
   // MFJ over $48,250, HoH over $38,590. Standard deduction $8,600 / $17,200 /
   // $12,600. The ~$171 per-person exemption credit is omitted (conservative).
-  it("single $60k → $2,045.54 (taxable 60,000 − 8,600 = 51,400, into the 4.55% band)", () => {
+  it("single $60k → $2,026.46 (taxable 60,000 − 8,850 = 51,150, into the 4.55% band)", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 60000 },
       { federal: ds.federal, state: ds.state("ne"), fica: ds.fica },
     );
     // 2.46%·4,030 + 3.51%·(24,120 − 4,030) + 4.55%·(51,400 − 24,120) = 99.138 + 705.159 + 1,241.24.
-    expect(cents(r.state!.incomeTax)).toBe("2045.54");
+    expect(cents(r.state!.incomeTax)).toBe("2026.46");
   });
 
-  it("single $20k stays in the 3.51% band → $357.83 (taxable 11,400)", () => {
+  it("single $20k stays in the 3.51% band → $348.00 (taxable 11,150)", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 20000 },
       { federal: ds.federal, state: ds.state("ne"), fica: ds.fica },
     );
     // taxable 20,000 − 8,600 = 11,400 (< 24,120): 2.46%·4,030 + 3.51%·(11,400 − 4,030).
-    expect(cents(r.state!.incomeTax)).toBe("357.83");
+    expect(cents(r.state!.incomeTax)).toBe("348");
   });
 
-  it("single $100k climbs well into the 4.55% top band → $3,865.54", () => {
+  it("single $100k climbs well into the 4.55% top band → $3,846.46", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 100000 },
       { federal: ds.federal, state: ds.state("ne"), fica: ds.fica },
     );
     // taxable 91,400: 804.297 + 4.55%·(91,400 − 24,120).
-    expect(cents(r.state!.incomeTax)).toBe("3865.54");
+    expect(cents(r.state!.incomeTax)).toBe("3846.46");
   });
 
-  it("married jointly $60k stays in the 3.51% band (threshold $48,250) → $1,417.86", () => {
+  it("married jointly $60k stays in the 3.51% band (threshold $49,530) → $1,398.11", () => {
     const r = evaluateTaxes(
       { filingStatus: "married_jointly", wages: 60000 },
       { federal: ds.federal, state: ds.state("ne"), fica: ds.fica },
     );
     // taxable 60,000 − 17,200 = 42,800 (< 48,250): 2.46%·8,040 + 3.51%·(42,800 − 8,040).
-    expect(cents(r.state!.incomeTax)).toBe("1417.86");
+    expect(cents(r.state!.incomeTax)).toBe("1398.11");
   });
 
-  it("head of household $60k uses the $38,590 threshold → $1,676.51", () => {
+  it("head of household $60k uses the $39,620 threshold → $1,647.88", () => {
     const r = evaluateTaxes(
       { filingStatus: "head_of_household", wages: 60000 },
       { federal: ds.federal, state: ds.state("ne"), fica: ds.fica },
     );
     // taxable 60,000 − 12,600 = 47,400: 2.46%·7,510 + 3.51%·(38,590 − 7,510) + 4.55%·(47,400 − 38,590).
-    expect(cents(r.state!.incomeTax)).toBe("1676.51");
+    expect(cents(r.state!.incomeTax)).toBe("1647.88");
   });
 
-  it("married filing separately maps to single exactly → $60k = $2,045.54", () => {
+  it("married filing separately maps to single exactly → $60k = $2,026.46", () => {
     const mfs = evaluateTaxes(
       { filingStatus: "married_separately", wages: 60000 },
       { federal: ds.federal, state: ds.state("ne"), fica: ds.fica },
     );
-    expect(cents(mfs.state!.incomeTax)).toBe("2045.54");
+    expect(cents(mfs.state!.incomeTax)).toBe("2026.46");
   });
 
   it("single owes more than married jointly at equal income (the 2× joint thresholds)", () => {
