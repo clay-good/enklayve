@@ -469,6 +469,44 @@ describe("Saver's Credit tile", () => {
 });
 
 describe("SNAP tile", () => {
+  /**
+   * SPEC-3-hardening §B3 applied the "not estimated here" answer to the owed
+   * screener only, on the reasoning that the standalone tile "takes no region
+   * input (contiguous-only by construction)" and so had no way to know. It
+   * takes household size and income from My Situation, which also holds the
+   * reader's state, so it has known all along — and printed a lower-48 dollar
+   * figure to an Alaskan household deciding whether it could eat.
+   */
+  it("declines to estimate for a household outside the lower 48 (SPEC-3 §B3)", () => {
+    const params = new URLSearchParams({ hh: "3", inc: "2200", earn: "2200" });
+    const lower48 = mount(mountSnap, params);
+    expect(rowValue(lower48, "Estimated monthly benefit")).toContain("$");
+
+    for (const [state, place] of [
+      ["ak", "Alaska"],
+      ["hi", "Hawaii"],
+    ] as const) {
+      const profile = new SituationStore();
+      profile.set("stateCode", state);
+      const root = mount(mountSnap, new URLSearchParams(params), profile);
+      const note = root.querySelector(".coming-soon-note")?.textContent ?? "";
+      expect(note, `${place} was handed a lower-48 estimate`).toContain(place);
+      expect(rowValue(root, "Estimated monthly benefit")).toBeUndefined();
+      // No invented number of any kind, not just no benefit line.
+      expect(root.textContent).not.toMatch(/\$[\d,]/);
+    }
+  });
+
+  it("carries the region on the link, so the sender's answer is what opens", () => {
+    // A field the fragment omits is handed to the READER's My Situation, so a
+    // link built in the lower 48 would say "not estimated here" to an Alaskan.
+    const alaskan = new SituationStore();
+    alaskan.set("stateCode", "ak");
+    const link = new URLSearchParams({ hh: "3", inc: "2200", earn: "2200", rg: "contiguous" });
+    const root = mount(mountSnap, link, alaskan);
+    expect(rowValue(root, "Estimated monthly benefit")).toContain("$");
+  });
+
   it("does not tell an elderly household it is ineligible on a test that skips them", () => {
     // 7 CFR §273.9(a), verbatim: "Households which contain an elderly or
     // disabled member shall meet the net income eligibility standards for
