@@ -493,8 +493,18 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * growth in a week exceeds what a first visit on a slow connection can absorb
  * (about 300 kB is the number to argue against, not 292). Until one of those,
  * a correction that costs a sentence is the cheapest thing this project buys.
+ *
+ * **292 → 293 on 2026-09-09**, and this one is the clearest case of that
+ * argument yet: **Arkansas cut its top rate** to 3.7% in Act 2 of the 2026
+ * First Extraordinary Session, approved 6 May, and this repo was still charging
+ * every Arkansas filer 3.9%. The bytes are the sentences that say so — which
+ * act, which date, and the warning that DFA's own 2026 AR1000ES is stamped
+ * *before* the cut and still prints the old rate, so the next person to check
+ * does not "correct" the shard back. A wrong rate found by reading the statute
+ * is exactly what the `sourceNote` prose is for, and it is why the previous
+ * entry's test — a raise that buys a feature — has still not been met.
  */
-export const SHELL_GZIP_BUDGET_KB = 292;
+export const SHELL_GZIP_BUDGET_KB = 293;
 
 /**
  * The headroom this gate needs to be measuring the shell rather than the runner.
