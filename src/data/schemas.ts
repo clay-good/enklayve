@@ -95,6 +95,17 @@ export const LocalAddOnSchema = z.object({
   flatRate: z.number().gte(0).lte(1).optional(),
   brackets: z.array(TaxBracketSchema).optional(),
   /**
+   * A share of the STATE's income tax rather than of income — a surcharge.
+   *
+   * Yonkers is the shape: N.Y. Tax Law §1321 authorizes a surcharge "not to
+   * exceed nineteen and one-quarter percent of the net state tax", and the city
+   * levies 16.75%. Form IT-201 line 55 takes it from line 46, "Total New York
+   * State taxes", less the refundable credits listed in the IT-201-I Yonkers
+   * worksheet — so the base is a tax figure, and no rate on income can express
+   * it. `nyc` next door is brackets on income; the same state needs both.
+   */
+  shareOfStateTax: z.number().gt(0).lte(1).optional(),
+  /**
    * A local exemption the locality subtracts for itself, when its taxable
    * income is **not** the state's.
    *

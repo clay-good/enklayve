@@ -383,6 +383,12 @@ function computeState(
       tax = bracketTax(base, addOn.brackets);
     } else if (addOn.flatRate !== undefined) {
       tax = base.multiply(addOn.flatRate);
+    } else if (addOn.shareOfStateTax !== undefined) {
+      // A surcharge on the state's tax, not a rate on income (Yonkers). The
+      // state figure is complete by here — recapture, taxpayer credit and the
+      // federal-tax deduction have all been applied — so this is the same
+      // ordering Form IT-201 uses: line 55 comes off line 46.
+      tax = incomeTax.multiply(addOn.shareOfStateTax);
     }
     localLines.push({ id: addOn.id, name: addOn.name, tax });
   }

@@ -153,6 +153,34 @@ describe("graduated states", () => {
     expect(cents(r.local.total)).toBe("3441.09");
   });
 
+  it("a Yonkers resident pays 16.75% of the state tax, not a rate on income", () => {
+    // The one locality here that is a SURCHARGE. N.Y. Tax Law §1321 authorizes
+    // one "not to exceed nineteen and one-quarter percent of the net state
+    // tax" and the city levies 16.75%: Form IT-201 line 55 takes it from line
+    // 46, "Total New York State taxes". Every other add-on this engine carries
+    // is a rate or a bracket schedule on income, and no rate on income can
+    // express this one — which is why New York was described in three places
+    // as shipping Yonkers while the shard carried only NYC.
+    const bare = evaluateTaxes(
+      { filingStatus: "single", wages: 100000 },
+      { federal: ds.federal, state: ds.state("ny"), fica: ds.fica },
+    );
+    const r = evaluateTaxes(
+      { filingStatus: "single", wages: 100000, localJurisdictionIds: ["ny-yonkers"] },
+      { federal: ds.federal, state: ds.state("ny"), fica: ds.fica },
+    );
+    expect(r.local.lines).toHaveLength(1);
+    expect(r.local.lines[0]!.id).toBe("ny-yonkers");
+    // 4,859.75 × 0.1675 = 814.008125.
+    expect(cents(r.local.lines[0]!.tax)).toBe("814.01");
+    expect(r.local.lines[0]!.tax.toNumber()).toBeCloseTo(
+      bare.state!.incomeTax.toNumber() * 0.1675,
+      6,
+    );
+    // The state figure itself is untouched: a surcharge sits beside it.
+    expect(cents(r.state!.incomeTax)).toBe(cents(bare.state!.incomeTax));
+  });
+
   it("DC single $60k → $2,453.50", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 60000 },
