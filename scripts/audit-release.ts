@@ -524,8 +524,38 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * this rate reaches it, and the honest reading is that this is the last stretch
  * where a raise can be waved through on "it is only a correction". The next one
  * should come with a trim that is not a sentence somebody wrote today.
+ *
+ * **294 → 300 on 2026-09-09, and this is the last raise this number gets.**
+ *
+ * Six corrections landed that day — a state a reader could not turn off, a tool
+ * that decided where they lived while they typed an income, a Medicaid tile
+ * that never asked where they lived, a lower-48 SNAP figure handed to an
+ * Alaskan household, a joint filer measured against §86's single base amounts,
+ * and a 1099-NEC taxed as a wage — and their prose left **1.0 kB** free, which
+ * is exactly the minimum this check accepts. The first test still passes:
+ * every byte bought a correction and none bought a feature.
+ *
+ * The jump is to **300 in one step rather than another +1**, because 300 is the
+ * number the two entries above named as the one to argue against, and going
+ * straight to it converts a run of unargued single-kilobyte raises into one
+ * argued ceiling. **There is no next entry.** A change that does not fit under
+ * 300 does not get a bigger number; it gets a trim, or it does not ship.
+ *
+ * The previous entry asked this raise to come with a trim that is not a
+ * sentence somebody wrote today, and it does not. Two trims were taken and both
+ * were same-day prose (Delaware's audit trail, the 1099-NEC's note). The trim
+ * that WAS found and deliberately not taken is worth recording so it can be
+ * argued with rather than rediscovered: **4.3 kB across 95 `sourceNote`s is
+ * date-stamped "Verified against <page> on <date>" sentences**, a fact
+ * `docs/data-sources.md` already owns and `check:audits` derives staleness
+ * from. Two copies of one fact can disagree, and Delaware's now do. Removing
+ * them would free roughly 1.5–2 kB gzipped — but it takes prose off the screen
+ * under a figure, and whether a reader is owed "a person checked this against
+ * the agency's page on this date" is a question about what this site is for.
+ * That deserves its own decision with its own evidence, not to be carried along
+ * because somebody needed a kilobyte.
  */
-export const SHELL_GZIP_BUDGET_KB = 294;
+export const SHELL_GZIP_BUDGET_KB = 300;
 
 /**
  * The headroom this gate needs to be measuring the shell rather than the runner.
@@ -639,6 +669,47 @@ export function checkPrecacheContents(paths: readonly string[]): string[] {
  * 7. The eager shell stays inside its budget. Reported with the breakdown, so a
  * failure names the chunk that grew rather than only the total.
  */
+/**
+ * The README's stated shell size against the shell that was actually built.
+ *
+ * The README carries a paragraph explaining why the shell costs what it costs,
+ * and it once opened with "280 kB gzipped" while the budget had been raised to
+ * 284 underneath it — two raises out of date, in the one place a reader goes to
+ * understand the number.
+ *
+ * The unit suite held it against `SHELL_GZIP_BUDGET_KB`, on a premise that was
+ * true for as long as every raise was a single kilobyte taken the moment it was
+ * needed: *the shell is always just under its budget by construction, so a
+ * figure far below the budget is stale.* The raise to 300 on 2026-09-09 ended
+ * that. 300 is a ceiling with room under it rather than a number tracking the
+ * build, so "how far under the budget" stopped being evidence of anything, and
+ * a check resting on a premise its own subject has abandoned should move rather
+ * than have its tolerance widened until it passes.
+ *
+ * So the exact comparison lives here, where the build exists and the real
+ * figure is already being measured, and the unit suite keeps the half of the
+ * claim that survives without a build: the README may not state a size the
+ * budget forbids.
+ */
+export function checkReadmeShellFigure(
+  readme: string,
+  totalKb: number,
+  toleranceKb = MEASUREMENT_SPREAD_KB + 0.5,
+): string[] {
+  const stated = /\*\*([\d.]+) kB gzipped\*\* across the whole precached shell/.exec(readme);
+  if (!stated) return ["the README no longer states the precached shell's size"];
+  const kb = Number(stated[1]);
+  // Half a kilobyte of build-to-build wobble on top of the local-versus-CI
+  // spread, because a doc edit per rebuild would teach people to edit the
+  // number without re-measuring, which is the drift itself.
+  if (Math.abs(kb - totalKb) <= toleranceKb) return [];
+  return [
+    `the README says the precached shell is ${kb} kB gzipped and this build measures ` +
+      `${totalKb.toFixed(1)} kB. Re-measure the prose with \`npm run build && npm run audit\` ` +
+      "rather than widening this tolerance.",
+  ];
+}
+
 export function checkBundleBudget(
   assets: ShellAsset[],
   budgetKb: number = SHELL_GZIP_BUDGET_KB,
@@ -1043,6 +1114,12 @@ function runCli(): void {
   const shell = precachedAssets(root);
   violations.push(...checkPrecacheContents(shell.map((a) => a.path)));
   violations.push(...checkBundleBudget(shell));
+  violations.push(
+    ...checkReadmeShellFigure(
+      readFileSync(join(root, "README.md"), "utf8"),
+      shell.reduce((sum, a) => sum + a.gzipBytes, 0) / 1024,
+    ),
+  );
 
   if (violations.length > 0) {
     console.error("✗ Release audit failed:");

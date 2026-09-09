@@ -21,6 +21,7 @@ import {
   MEASUREMENT_SPREAD_KB,
   spreadToApplyKb,
   SHELL_GZIP_BUDGET_KB,
+  checkReadmeShellFigure,
 } from "../../scripts/audit-release";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
 import { CORE_SHELL } from "../../scripts/service-worker";
@@ -410,39 +411,49 @@ describe("what the audit says when the budget passes", () => {
     expect(() => shellSummary([], SHELL_GZIP_BUDGET_KB)).not.toThrow();
   });
 
-  it("keeps the README's shell figure with the budget it is measured against", () => {
+  it("does not let the README state a shell size the budget forbids", () => {
     // The README has a paragraph explaining why the shell costs what it costs,
     // and it opened with "280 kB gzipped" while the budget had been raised to
     // 284 underneath it — two raises out of date, in the one place a reader
-    // goes to understand the number. It is a claim about the build, so it
-    // drifts exactly the way a count in a comment does, and nothing was
-    // watching it.
+    // goes to understand the number.
     //
-    // Held against the pinned budget rather than against a build, so this stays
-    // in the unit suite: the shell is always just under its budget by
-    // construction — that is what the gate enforces — so a figure far below it
-    // is stale and a figure above it is impossible. Raising the budget without
-    // re-measuring the prose fails here.
+    // This used to hold the figure against the budget from BELOW as well, on a
+    // premise that was true while every raise was a single kilobyte taken the
+    // moment it was needed: the shell is always just under its budget by
+    // construction, so a figure far below it is stale. The raise to 300 on
+    // 2026-09-09 ended that — 300 is a ceiling with room under it rather than a
+    // number tracking the build — so the exact comparison moved to
+    // `checkReadmeShellFigure`, which runs where the build exists and compares
+    // the prose against what was actually measured. What survives without a
+    // build is the half below.
     const readme = readFileSync(resolve(__dirname, "..", "..", "README.md"), "utf8");
     const stated = /\*\*([\d.]+) kB gzipped\*\* across the whole precached shell/.exec(readme);
     expect(stated, "the README no longer states the precached shell's size").not.toBeNull();
-    const kb = Number(stated![1]);
-    expect(kb).toBeLessThanOrEqual(SHELL_GZIP_BUDGET_KB);
-    // The tolerance is derived rather than picked. The gate keeps the shell
-    // under the budget by at least MIN_HEADROOM once MEASUREMENT_SPREAD_KB is
-    // taken off, so a truthful figure sits within about that much of the
-    // budget; one kilobyte of slack on top covers the build-to-build wobble
-    // that is not worth a doc edit. A flat 3 was the number before, and it was
-    // wide enough to miss the figure going stale by 0.6 kB inside a single day
-    // — which is exactly the drift this check exists for, and which it did
-    // miss on 2026-09-05. Tying it to the gate's own constants means a change
-    // to the budget or to the headroom rule moves this with it.
-    const slackKb = MIN_HEADROOM_KB + MEASUREMENT_SPREAD_KB + 1;
-    expect(
-      SHELL_GZIP_BUDGET_KB - kb,
-      `the README's shell figure is more than ${slackKb} kB under the budget, so it is stale — ` +
-        "re-measure it with `npm run build && npm run audit` rather than adjusting this",
-    ).toBeLessThanOrEqual(slackKb);
+    expect(Number(stated![1])).toBeLessThanOrEqual(SHELL_GZIP_BUDGET_KB);
+  });
+
+  describe("the README figure against the build that was measured", () => {
+    const prose = (kb: string): string =>
+      `The shell is **${kb} kB gzipped** across the whole precached shell, and here is why.`;
+
+    it("passes when the prose matches the build", () => {
+      expect(checkReadmeShellFigure(prose("292.5"), 292.5)).toEqual([]);
+    });
+
+    it("allows the build-to-build wobble a doc edit is not worth", () => {
+      expect(checkReadmeShellFigure(prose("292.5"), 292.9)).toEqual([]);
+    });
+
+    it("catches a figure that went stale by more than that, in either direction", () => {
+      expect(checkReadmeShellFigure(prose("289.0"), 292.5)[0]).toContain("289 kB gzipped");
+      expect(checkReadmeShellFigure(prose("296.0"), 292.5)[0]).toContain("296 kB gzipped");
+    });
+
+    it("says so when the prose stops stating a size at all", () => {
+      expect(checkReadmeShellFigure("no figure here", 292.5)).toEqual([
+        "the README no longer states the precached shell's size",
+      ]);
+    });
   });
 
   it("keeps the README's shard-prose figures with the shards themselves", () => {
@@ -740,11 +751,18 @@ describe("checkBundleBudget", () => {
     expect(checkBundleBudget([])[0]).toContain("run `npm run build`");
   });
 
-  it("keeps the budget close enough to today's shell to be meaningful", () => {
-    // A budget with unlimited headroom is not a budget. This pins the intent:
-    // enough room for routine growth, not enough to absorb a new dependency.
-    expect(SHELL_GZIP_BUDGET_KB).toBeGreaterThan(200);
-    expect(SHELL_GZIP_BUDGET_KB).toBeLessThan(320);
+  it("holds the budget at the ceiling its own docstring says is the last one", () => {
+    // A budget with unlimited headroom is not a budget, and the pair of bounds
+    // that used to stand here — greater than 200, less than 320 — caught a typo
+    // and nothing else. Six raises in five days went through them untouched.
+    //
+    // The 2026-09-09 raise to 300 says, in the docstring beside the constant,
+    // that there is no next entry: a change that does not fit gets a trim or
+    // does not ship. A promise in prose that nothing enforces is the exact
+    // shape of thing this file keeps finding somewhere else, so it is a gate.
+    // Raising it means editing this line and saying why here too, which is the
+    // deliberate act the audit's own error message asks for.
+    expect(SHELL_GZIP_BUDGET_KB).toBe(300);
   });
 });
 
