@@ -35,6 +35,47 @@ describe("iraDeductibility (IRC §219(g), 2026)", () => {
     expect(r.nondeductibleBasis.toNumber()).toBe(0);
   });
 
+  it("gives a qualifying surviving spouse the §219(g)(3)(B)(ii) range, not the joint one", () => {
+    // The statute enumerates three cases and only three: "(i) a taxpayer filing
+    // a joint return", "(ii) any other taxpayer (other than a married
+    // individual filing a separate return)", and (iii) that separate filer. A
+    // QSS files at joint RATES without filing a joint return, so (ii) governs.
+    // At $95,000 the joint range ($129k–$149k) had not started and the whole
+    // contribution was called deductible; the single range ended at $91,000.
+    const qss = iraDeductibility(
+      {
+        ...baseIra,
+        filingStatus: "qualifying_surviving_spouse" as FilingStatus,
+        magi: 95_000,
+        coveredByPlan: true,
+      },
+      LIMITS,
+      data.iraDeduction()!,
+    );
+    const single = iraDeductibility(
+      { ...baseIra, filingStatus: "single" as FilingStatus, magi: 95_000, coveredByPlan: true },
+      LIMITS,
+      data.iraDeduction()!,
+    );
+    expect(qss.deductible.toNumber()).toBe(single.deductible.toNumber());
+    expect(qss.deductible.toNumber()).toBe(0);
+
+    // And a spouse's plan coverage cannot reach a filer with no spouse on the
+    // return: that branch was handing them the higher spouse range.
+    const spouseCovered = iraDeductibility(
+      {
+        ...baseIra,
+        filingStatus: "qualifying_surviving_spouse" as FilingStatus,
+        magi: 245_000,
+        coveredByPlan: false,
+        spouseCoveredByPlan: true,
+      },
+      LIMITS,
+      data.iraDeduction()!,
+    );
+    expect(spouseCovered.status).toBe("no-limit");
+  });
+
   it("phases out linearly inside the single-covered range ($81k–$91k)", () => {
     const r = iraDeductibility(
       { ...baseIra, magi: 86000, coveredByPlan: true },

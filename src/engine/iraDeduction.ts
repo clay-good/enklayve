@@ -65,16 +65,20 @@ function applicableRange(input: IraDeductionInput, data: IraDeductionData): Rang
   if (filingStatus === "married_separately") {
     return coveredByPlan || spouseCoveredByPlan ? p.marriedSeparatelyCovered : null;
   }
+  // §219(g)(3)(B) enumerates three cases and only three: "(i) a taxpayer filing
+  // a joint return", "(ii) any other taxpayer (other than a married individual
+  // filing a separate return)", and (iii) that separate filer. A qualifying
+  // surviving spouse files at joint RATES without filing a joint return, so
+  // clause (ii) governs and the single range applies — the reading deductions.ts
+  // took for §170(p) and the cliff sweep now takes for §32(b)(2)(B).
+  const joint = filingStatus === "married_jointly";
   if (coveredByPlan) {
-    return filingStatus === "married_jointly" || filingStatus === "qualifying_surviving_spouse"
-      ? p.marriedJointlyCovered
-      : p.singleCovered;
+    return joint ? p.marriedJointlyCovered : p.singleCovered;
   }
-  // You are not covered. Only a joint-filing spouse's coverage can still limit you.
-  if (
-    spouseCoveredByPlan &&
-    (filingStatus === "married_jointly" || filingStatus === "qualifying_surviving_spouse")
-  ) {
+  // You are not covered. Only a joint-filing spouse's coverage can still limit
+  // you — and a qualifying surviving spouse has no spouse on the return at all,
+  // so the higher spouse range was being applied to a filer it cannot describe.
+  if (spouseCoveredByPlan && joint) {
     return p.marriedJointlySpouseCovered;
   }
   return null;

@@ -57,8 +57,14 @@ function isFilingStatus(v: string): v is FilingStatus {
   return FILING_STATUSES.some((f) => f.value === v);
 }
 
+/**
+ * Whether a spouse's plan coverage can reach this filer, which is the only
+ * thing the spouse question is for. §219(g)(3)(B) knows a joint return and
+ * "any other taxpayer"; a qualifying surviving spouse has no spouse on the
+ * return, so the question does not apply to them and the field stays hidden.
+ */
 function isJoint(fs: FilingStatus): boolean {
-  return fs === "married_jointly" || fs === "qualifying_surviving_spouse";
+  return fs === "married_jointly";
 }
 
 function readFields(

@@ -179,8 +179,13 @@ export function agedStandardDeductionFor(
   // surviving spouse takes it too, by name.
   const unmarried = status === "single" || status === "head_of_household";
   const per = unmarried ? amounts.perPersonUnmarried : amounts.perPersonMarried;
-  // Only a joint return can have two qualifying individuals on it.
-  const cap = status === "married_jointly" || status === "qualifying_surviving_spouse" ? 2 : 1;
+  // Only a joint return can have two qualifying individuals on it — and a
+  // qualifying surviving spouse is not filing one. §63(f)(1)(B) allows the
+  // second amount only where "an additional exemption is allowable to the
+  // taxpayer for such spouse under section 151(b)", which a spouse who died in
+  // a prior year is not. `seniorDeductionFor` in deductions.ts already caps a
+  // QSS at one; this line said two, and the two files were about the same filer.
+  const cap = status === "married_jointly" ? 2 : 1;
   return per * Math.min(n, cap);
 }
 

@@ -64,6 +64,12 @@ describe("who gets it, and how much", () => {
     // A single filer cannot have a spouse on the return, whatever is passed.
     expect(agedStandardDeductionFor(ds.federal, "single", 2)).toBe(2050);
     expect(agedStandardDeductionFor(ds.federal, "married_separately", 2)).toBe(1650);
+    // Nor can a qualifying surviving spouse: §63(f)(1)(B) allows the second
+    // amount only where "an additional exemption is allowable ... for such
+    // spouse under section 151(b)", and a spouse who died in a prior year is
+    // not. `seniorDeductionFor` had capped a QSS at one all along; this
+    // function said two, about the same filer.
+    expect(agedStandardDeductionFor(ds.federal, "qualifying_surviving_spouse", 2)).toBe(1650);
   });
 
   it("is nothing for a jurisdiction that does not legislate it", () => {
