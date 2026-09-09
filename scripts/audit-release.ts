@@ -815,8 +815,12 @@ const PERSISTENCE = [
  * Scanned rather than replaced, because `//` is not only a comment: it is also
  * the middle of every `https://` URL, and this repo's source is dense with them
  * — every citation carries one. Two regexes deleted from the first `//` on a
- * line to its end, so `const u = "https://irs.gov/x"; localStorage.setItem(...)`
- * became `const u = "https:` and the persistence gate saw nothing. A check that
+ * line to its end, so `const u = "https://example.gov/x"; localStorage.setItem(...)`
+ * became `const u = "https:` and the persistence gate saw nothing. (The host in
+ * that example is RFC 2606's reserved one, not a real agency's, because the
+ * link sweep reads this file: a URL written to illustrate a parser is not a
+ * citation, and it spent a month in the monthly report as a redirect for
+ * somebody to go and fix.) A check that
  * a URL can blind is a check that passes on a broken tree, which is the shape
  * this repo has now found three times (the dead-export gate counting a test as
  * a caller, the boundary checker reading a sentence as a comparison, and this).

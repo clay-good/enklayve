@@ -168,7 +168,7 @@ describe("audit: the client-storage boundary", () => {
     // Two regexes deleted from the first `//` on a line to the end of it, and
     // every citation in this repo carries an https:// — so one URL ahead of a
     // write hid the write. The gate returned nothing on the line below.
-    const line = 'const u = "https://irs.gov/x";\nlocalStorage.setItem("income", i);';
+    const line = 'const u = "https://example.gov/x";\nlocalStorage.setItem("income", i);';
     expect(withoutComments(line)).toContain("localStorage");
     expect(checkClientStorage([{ path: "src/tiles/takeHome.ts", content: line }])).not.toEqual([]);
 
@@ -177,7 +177,7 @@ describe("audit: the client-storage boundary", () => {
       checkClientStorage([
         {
           path: "src/tiles/takeHome.ts",
-          content: 'const u = "https://irs.gov/x"; sessionStorage.setItem("x", 1);',
+          content: 'const u = "https://example.gov/x"; sessionStorage.setItem("x", 1);',
         },
       ]),
     ).not.toEqual([]);
