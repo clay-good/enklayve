@@ -77,7 +77,7 @@ export function amtScreen(input: AmtScreenInput, data: AmtData): AmtScreenResult
     verdict = "none";
   } else if (owed.greaterThan(0)) {
     verdict = "likely";
-  } else if (tmtNum >= input.regularTax * 0.85) {
+  } else if (tmtNum >= regularTax.toNumber() * 0.85) {
     // Within 15% below regular tax: a better AMTI estimate could flip it.
     verdict = "maybe";
   } else {

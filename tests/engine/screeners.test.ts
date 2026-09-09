@@ -261,6 +261,25 @@ describe("amtScreen (IRC §55, 2026)", () => {
     expect(nearly.exemption.toNumber()).toBeGreaterThan(0);
   });
 
+  it("reads a negative regular tax as zero everywhere, verdict included", () => {
+    // `regularTax` is clamped at the top of the function and every use goes
+    // through the clamp — except the 'maybe' band, which compared against the
+    // raw input. A negative regular tax there would widen the band by its own
+    // magnitude rather than treating it as the zero the rest of the function
+    // already does.
+    const negative = amtScreen(
+      { filingStatus: "single", amtIncome: 50_000, regularTax: -1_000_000 },
+      data.amt()!,
+    );
+    const zero = amtScreen(
+      { filingStatus: "single", amtIncome: 50_000, regularTax: 0 },
+      data.amt()!,
+    );
+    expect(negative.regularTax.toNumber()).toBe(0);
+    expect(negative.verdict).toBe(zero.verdict);
+    expect(negative.amtOwed.toNumber()).toBe(zero.amtOwed.toNumber());
+  });
+
   it("flags 'maybe' near the crossover and 'none' well below it", () => {
     const maybe = amtScreen(
       { filingStatus: "married_jointly", amtIncome: 580000, regularTax: 130000 },
