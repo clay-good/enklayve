@@ -406,16 +406,6 @@ export type SteppedIncomeDeductionData = z.infer<typeof SteppedIncomeDeductionSc
  * it, so there is no conformity question to answer there.
  */
 export const FederalDeductionConformitySchema = z.object({
-  /**
-   * §63(f), the aged additional standard deduction, which is part of the §63(c)
-   * standard deduction rather than a §63(b) paragraph of its own — so a state
-   * inherits it either by starting from federal taxable income (Colorado,
-   * Iowa, Montana, North Dakota) or by defining its own standard deduction as
-   * "the standard deduction as defined in section 63" (Idaho). A state that
-   * substitutes its own figure answers false, whether or not it legislates an
-   * age addition of its own.
-   */
-  agedAdditional: z.boolean(),
   /** §63(b)(4), IRC §170(p): giving deducted without itemizing. */
   nonItemizerCharitable: z.boolean(),
   /** §63(b)(2), IRC §151(d)(5)(C): the deduction at 65. */
@@ -625,6 +615,24 @@ export const JurisdictionSchema = z.object({
       perPersonUnmarried: z.number().gte(0),
     })
     .optional(),
+  /**
+   * Whether this jurisdiction's standard deduction carries the FEDERAL §63(f)
+   * amounts above.
+   *
+   * A separate question from {@link FederalDeductionConformitySchema}, which is
+   * about §63(b): §63(f) is inside the §63(c) standard deduction rather than
+   * beside it, so a state reaches it by a different door and a different set of
+   * states walks through. Colorado, Iowa, Montana and North Dakota inherit it by
+   * starting from federal taxable income; Idaho starts from AGI and defines its
+   * deduction as "the standard deduction as defined in section 63" (Idaho Code
+   * §63-3022(j)), which is the same §63(c) and therefore the same answer — and
+   * that second door is why this cannot live in the §63(b) block, since a state
+   * can take it while conforming to nothing in §63(b) at all.
+   *
+   * Absent is false: a state that legislates its own figures uses the amounts
+   * block above instead, and most states have neither.
+   */
+  conformsToFederalAgedAdditional: z.boolean().optional(),
   personalExemptionByFilingStatus: amountByStatus.optional(),
   /** AGI-based phase-out of the standard deduction (South Carolina SCIAD). */
   standardDeductionPhaseOut: StandardDeductionPhaseOutSchema.optional(),

@@ -161,16 +161,34 @@ describe("states that start from federal taxable income", () => {
     }
   });
 
-  it("changes nothing for a state that starts from adjusted gross income", () => {
-    // New Mexico looks like conformity — it even uses the federal standard
-    // deduction figures — and subtracts only §63(c), so nothing here reaches it.
-    // California is the ordinary case: its own deduction, its own starting point.
-    for (const code of ["nm", "ca", "ny"]) {
+  it("changes nothing in §63(b) for a state that starts from adjusted gross income", () => {
+    // California is the ordinary case: its own deduction, its own starting
+    // point, and nothing in §63 reaches it.
+    for (const code of ["ca", "ny"]) {
       const ctx = { federal: ds.federal, state: state(code), fica: ds.fica };
       const bare = evaluateTaxes({ filingStatus: "single", wages: 62_000 }, ctx);
       const withAll = evaluateTaxes(FILER, ctx);
       expect(withAll.state!.taxableIncome.toNumber()).toBe(bare.state!.taxableIncome.toNumber());
       expect(withAll.state!.deduction.qualifiedTips.toNumber()).toBe(0);
+    }
+
+    // New Mexico and DC are the halfway case, and the reason §63(f) cannot live
+    // in the §63(b) block. Neither starts from federal taxable income, so none
+    // of the five reaches them — but both define their deduction as the one in
+    // §63 ("an amount equal to the standard deduction allowed ... by Section
+    // 63", NMSA 1978 §7-2-2(N)(1); "the standard deduction as prescribed in
+    // section 63(c)", DC Code §47-1801.04(44)(A)), and §63(f) is inside §63(c).
+    // The 2026 D-40ES prints the $1,650/$2,050 figures on the form itself.
+    for (const code of ["nm", "dc"]) {
+      const ctx = { federal: ds.federal, state: state(code), fica: ds.fica };
+      const bare = evaluateTaxes({ filingStatus: "single", wages: 62_000 }, ctx);
+      const withAll = evaluateTaxes(FILER, ctx);
+      expect(withAll.state!.deduction.qualifiedTips.toNumber(), code).toBe(0);
+      // Moved by the aged additional and by nothing else.
+      expect(
+        bare.state!.taxableIncome.subtract(withAll.state!.taxableIncome).toNumber(),
+        code,
+      ).toBe(2050);
     }
   });
 

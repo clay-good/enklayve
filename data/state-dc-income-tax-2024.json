@@ -100,6 +100,7 @@
       }
     ]
   },
+  "conformsToFederalAgedAdditional": true,
   "standardDeductionByFilingStatus": {
     "single": 16100,
     "married_jointly": 32200,

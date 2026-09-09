@@ -40,13 +40,13 @@
       }
     ]
   },
+  "conformsToFederalAgedAdditional": true,
   "standardDeductionByFilingStatus": {
     "single": 16100,
     "married_jointly": 32200,
     "head_of_household": 24150
   },
   "federalDeductionConformity": {
-    "agedAdditional": true,
     "nonItemizerCharitable": true,
     "senior": true,
     "qualifiedTips": true,

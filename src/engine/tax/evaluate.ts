@@ -252,13 +252,14 @@ function computeState(
   // from a figure the rule has already been applied to.
   let standard = Money.from(
     standardDeductionFor(state, input.filingStatus) +
-      (state.federalDeductionConformity?.agedAdditional
-        ? agedStandardDeductionFor(
-            federalJurisdiction,
-            input.filingStatus,
-            input.seniorsAge65Plus ?? 0,
-          )
-        : 0),
+      agedStandardDeductionFor(
+        // A conforming state carries the FEDERAL amounts, unrecomputed — the
+        // same reason the §63(b) figures are the federal ones. A state that
+        // legislated its own would carry them itself; none does yet.
+        state.conformsToFederalAgedAdditional ? federalJurisdiction : state,
+        input.filingStatus,
+        input.seniorsAge65Plus ?? 0,
+      ),
   );
   // Sliding standard deduction: the deduction phases down linearly with AGI in
   // one of two equivalent forms (see StandardDeductionPhaseOutSchema):

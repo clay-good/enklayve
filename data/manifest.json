@@ -234,7 +234,7 @@
       "sourceUrl": "https://otr.cfo.dc.gov/page/dc-individual-and-fiduciary-income-tax-rates",
       "sourceDocument": "DC Office of Tax and Revenue, individual income tax rates (effective 2026)",
       "dateRetrieved": "2026-06-02",
-      "contentHash": "a737c1d4ad85602ac6209698967365c9b4ee78f948cb0cd36840c96f66958250"
+      "contentHash": "c2c73af1af587ce35ef2dce5bd3420ae68d0cd6bffcaff469a478a869a9c8537"
     },
     {
       "id": "state-ak-income-tax-2024",
@@ -351,7 +351,7 @@
       "sourceUrl": "https://tax.colorado.gov/sites/tax/files/documents/Individual_Income_Tax_Guide_January_2026.pdf",
       "sourceDocument": "Colorado DOR Individual Income Tax Guide (revised January 2026) — 4.4% flat rate on federal taxable income",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "d0228097216d886f305e3d64e61e090d896b6c9d7b8f05917e70de9d88731da0"
+      "contentHash": "dc5138bb431b2a17a45624c5e7ee48b279a37d0b6aea2e21d90e1f5d594b99eb"
     },
     {
       "id": "state-in-income-tax-2024",
@@ -416,7 +416,7 @@
       "sourceUrl": "https://tax.idaho.gov/taxes/income-tax/individual-income/individual-income-tax-rate-schedule/",
       "sourceDocument": "Idaho State Tax Commission Individual Income Tax Rate Schedule — 0% to $4,811 / $9,622, then 5.3% of the excess (HB 40, 2025)",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "af353f34cd14cf5ffc371981c802254a04ba562e27511dfc9921567eee63e1e4"
+      "contentHash": "ceada9db0a3741b86be355b1f0c633efdb642c18049b1dc0c6219a5f04e5dc5d"
     },
     {
       "id": "state-ut-income-tax-2024",
@@ -455,7 +455,7 @@
       "sourceUrl": "https://revenue.iowa.gov/press-release/2025-10-21/idr-announces-2026-individual-income-tax-and-interest-rates",
       "sourceDocument": "Iowa Department of Revenue, flat 3.8% individual income tax for tax years 2025 and after (Senate File 2442, 2024)",
       "dateRetrieved": "2026-06-05",
-      "contentHash": "8df5ce9a0a7fa387114aebe5eb6f239b6a33f311d2c04aaf71d6f467b653e294"
+      "contentHash": "383112f599108b5577846ea04ab1d1fadc2a45e0ab8953cc4efb44d848bded37"
     },
     {
       "id": "state-va-income-tax-2024",
@@ -546,7 +546,7 @@
       "sourceUrl": "https://www.tax.newmexico.gov/all-nm-taxes/current-historic-tax-rates-overview/personal-income-tax-rates/",
       "sourceDocument": "New Mexico Taxation & Revenue PIT rate schedules (7-2-7 NMSA, HB 252 / Laws 2024 ch. 67); federal-conformity standard deduction",
       "dateRetrieved": "2026-06-06",
-      "contentHash": "10d1d1a85642240347ebf91539b79b14a71ef2fb644f08e1e7c3c81564da7f49"
+      "contentHash": "5890f386b4359c354d6fbe7a85a79079da437a1605ade52bfe98037ca5937734"
     },
     {
       "id": "state-ri-income-tax-2024",
@@ -637,7 +637,7 @@
       "sourceUrl": "https://revenue.mt.gov/taxes/individual-income-tax/",
       "sourceDocument": "Montana DOR 2026 rate schedule (HB 337, 2025; MCA §15-30-2103): 4.70% / 5.65% over federal taxable income; conforms to the federal standard deduction",
       "dateRetrieved": "2026-06-06",
-      "contentHash": "ae44d6e76e951d25fc20631ca01e9bc5a68f7ccb7cb276c49592aa6646dbfdc9"
+      "contentHash": "1551c9819384fdc51a532f8c30079eb00d418c8960344b5c7340268e94de6e90"
     },
     {
       "id": "state-me-income-tax-2024",
@@ -663,7 +663,7 @@
       "sourceUrl": "https://www.tax.nd.gov/individual-income-tax",
       "sourceDocument": "North Dakota Tax Commissioner, 2026 ND-1/ND-EZ Tax Rate Schedules (SB 2034): 0% / 1.95% / 2.50% over federal taxable income",
       "dateRetrieved": "2026-06-06",
-      "contentHash": "cdd81948a9732d985087e6b6179606b13d23e44a20d77c192f680d92287e5ded"
+      "contentHash": "e7276d7d4edef250248ef861a86ee3c237d9060277af2d601703cf882f413414"
     },
     {
       "id": "state-vt-income-tax-2024",
@@ -702,7 +702,7 @@
       "sourceUrl": "https://www.oregon.gov/dor/forms/FormsPubs/form-or-40-inst_101-040-1_2025.pdf",
       "sourceDocument": "Oregon DOR Form OR-40 (2025): 4.75%–9.9% rate charts, federal-tax subtraction (cap $8,500, AGI-phased), standard deduction (ORS §316.037/.680/.695)",
       "dateRetrieved": "2026-06-08",
-      "contentHash": "4aad27f58b5446c97ed49ff87a4424de0d0640fd340b4bc2d4851ff73fb44310"
+      "contentHash": "f4d2cf56fc6cf5777a58274a5cc7fe6ee58203583920a6a50bcd38a5b1db1411"
     },
     {
       "id": "state-ne-income-tax-2024",
