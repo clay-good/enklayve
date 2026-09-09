@@ -381,6 +381,31 @@ describe("Saver's Credit tile", () => {
     expect(rowValue(root, "Estimated Saver's Credit")).toContain("$1,000");
     expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/irs\.gov/);
   });
+
+  it("caps each spouse's column at $2,000 and asks for the second one", () => {
+    // §25B's $2,000 is per eligible individual, which is why Form 8880 has a
+    // column each. One field capped at $4,000 credited an empty column.
+    const oneColumn = mount(
+      mountSaversCredit,
+      new URLSearchParams({ fs: "married_jointly", agi: "45000", c: "5000" }),
+    );
+    expect(rowValue(oneColumn, "Contributions counted")).toContain("$2,000");
+    expect(rowValue(oneColumn, "Estimated Saver's Credit")).toContain("$1,000");
+
+    const bothColumns = mount(
+      mountSaversCredit,
+      new URLSearchParams({ fs: "married_jointly", agi: "45000", c: "2500", sc: "2500" }),
+    );
+    expect(rowValue(bothColumns, "Contributions counted")).toContain("$4,000");
+
+    // And a single filer is never asked about a spouse.
+    const single = mount(
+      mountSaversCredit,
+      new URLSearchParams({ fs: "single", agi: "21000", c: "2000" }),
+    );
+    const spouseRow = single.querySelector<HTMLElement>('input[name="sc"]')?.closest(".field");
+    expect(spouseRow?.hidden).toBe(true);
+  });
 });
 
 describe("SNAP tile", () => {

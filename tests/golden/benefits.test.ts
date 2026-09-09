@@ -205,14 +205,39 @@ describe("Saver's Credit (2026)", () => {
     expect(r.credit.toNumber()).toBe(0);
   });
 
-  it("counts both spouses' contributions up to $4,000 for MFJ", () => {
-    const r = estimateSaversCredit(
+  it("counts each spouse's contributions up to $2,000, in two columns", () => {
+    // §25B(a) allows the credit on "the qualified retirement savings
+    // contributions of the eligible individual ... as do not exceed $2,000" —
+    // per individual, which is why Form 8880 has a column each. This asserted
+    // $4,000 against a single $5,000 figure, so a household where one spouse
+    // saved everything was credited for the other spouse's empty column.
+    const oneSpouseSavedItAll = estimateSaversCredit(
       { agi: 45000, filingStatus: "married_jointly", contributions: 5000 },
       savers,
     );
-    expect(r.rate).toBe(0.5);
-    expect(r.eligibleContributions.toNumber()).toBe(4000);
-    expect(r.credit.toNumber()).toBe(2000);
+    expect(oneSpouseSavedItAll.rate).toBe(0.5);
+    expect(oneSpouseSavedItAll.eligibleContributions.toNumber()).toBe(2000);
+    expect(oneSpouseSavedItAll.credit.toNumber()).toBe(1000);
+
+    // Both columns filled is where $4,000 is right.
+    const both = estimateSaversCredit(
+      {
+        agi: 45000,
+        filingStatus: "married_jointly",
+        contributions: 2500,
+        spouseContributions: 2500,
+      },
+      savers,
+    );
+    expect(both.eligibleContributions.toNumber()).toBe(4000);
+    expect(both.credit.toNumber()).toBe(2000);
+
+    // A spouse column on a return that has no spouse is ignored.
+    const single = estimateSaversCredit(
+      { agi: 20000, filingStatus: "single", contributions: 2000, spouseContributions: 2000 },
+      savers,
+    );
+    expect(single.eligibleContributions.toNumber()).toBe(2000);
   });
 
   it("uses the head-of-household column", () => {

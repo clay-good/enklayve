@@ -168,12 +168,24 @@ export interface SaversCreditResult {
  * Estimate the Saver's Credit (§4.2). The credit rate steps down (50% → 20% →
  * 10% → 0) as AGI rises through the filing-status ceilings, applied to up to a
  * capped contribution amount. Non-refundable (it can only offset tax owed),
- * which the tile notes. Married-filing-jointly counts each spouse's cap; head of
- * household uses its own column; everyone else uses the single column (the
- * Form 8880 grouping).
+ * which the tile notes. Head of household uses its own AGI column; everyone
+ * else uses the single column (the Form 8880 grouping).
+ *
+ * §25B(a) allows the credit on "the qualified retirement savings contributions
+ * of the eligible individual ... as do not exceed $2,000" — **per individual**,
+ * which is why Form 8880 has a column for you and a column for your spouse. A
+ * joint return therefore caps each spouse at $2,000 separately, and $4,000 into
+ * one spouse's account counts $2,000, not $4,000. `spouseContributions` is that
+ * second column; on any other return it is ignored.
  */
 export function estimateSaversCredit(
-  input: { agi: number; filingStatus: FilingStatus; contributions: number },
+  input: {
+    agi: number;
+    filingStatus: FilingStatus;
+    contributions: number;
+    /** The other Form 8880 column. Only read on a joint return. */
+    spouseContributions?: number;
+  },
   data: SaversCreditData,
 ): SaversCreditResult {
   const agi = Math.max(0, input.agi);
@@ -195,8 +207,10 @@ export function estimateSaversCredit(
     }
   }
 
-  const maxConsidered = data.maxContributionPerPerson * (married ? 2 : 1);
-  const eligible = Math.min(Math.max(0, input.contributions), maxConsidered);
+  const perPerson = data.maxContributionPerPerson;
+  const own = Math.min(Math.max(0, input.contributions), perPerson);
+  const spouse = married ? Math.min(Math.max(0, input.spouseContributions ?? 0), perPerson) : 0;
+  const eligible = own + spouse;
   return {
     credit: Money.from(eligible).multiply(rate),
     rate,

@@ -281,7 +281,15 @@ export function mountOwedScreener(ctx: TileContext): void {
         findings.push({
           program: "Saver's Credit",
           estimate: fmt(sc.credit),
-          note: "A credit on your retirement contributions, from the amount in My Situation.",
+          // My Situation holds one contribution figure, and §25B counts each
+          // spouse's column separately, so a joint return whose spouse also
+          // contributed can be owed more than this. Understating is the safe
+          // direction for a screener; saying so is what makes it honest.
+          note:
+            "A credit on your retirement contributions, from the amount in My Situation." +
+            (fields.married
+              ? " Your spouse's own contributions count too, in a column of their own — the Saver's Credit tool asks for both."
+              : ""),
           citation: savers.citation,
         });
       }

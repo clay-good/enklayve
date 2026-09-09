@@ -27,9 +27,11 @@ interface Fields {
   fs: FilingStatus;
   agi: number;
   contributions: number;
+  /** The other Form 8880 column. Only asked, and only read, on a joint return. */
+  spouseContributions: number;
 }
 
-const EXAMPLE: Fields = { fs: "single", agi: 21000, contributions: 2000 };
+const EXAMPLE: Fields = { fs: "single", agi: 21000, contributions: 2000, spouseContributions: 0 };
 
 function isFilingStatus(v: string): v is FilingStatus {
   return FILING_STATUSES.some((f) => f.value === v);
@@ -43,6 +45,7 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
     contributions: p.has("c")
       ? parseNonNegative(p.get("c"), 0)
       : (profile.get("retirementContributionsAnnual") ?? 0),
+    spouseContributions: parseNonNegative(p.get("sc"), 0),
   };
 }
 
@@ -51,6 +54,7 @@ function writeFields(f: Fields): URLSearchParams {
   p.set("fs", f.fs);
   p.set("agi", String(f.agi));
   p.set("c", String(f.contributions));
+  p.set("sc", String(f.spouseContributions));
   return p;
 }
 
@@ -91,14 +95,32 @@ export function mountSaversCredit(ctx: TileContext): void {
     value: fields.contributions,
     attrs: { "aria-label": "Retirement contributions this year", inputmode: "decimal" },
   });
+  const scInput = el("input", {
+    type: "number",
+    name: "sc",
+    min: 0,
+    step: 500,
+    value: fields.spouseContributions,
+    attrs: { "aria-label": "Your spouse's retirement contributions", inputmode: "decimal" },
+  });
+  const spouseField = field("Your spouse's contributions this year", scInput);
 
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
   function compute(): void {
     const r = estimateSaversCredit(
-      { agi: fields.agi, filingStatus: fields.fs, contributions: fields.contributions },
+      {
+        agi: fields.agi,
+        filingStatus: fields.fs,
+        contributions: fields.contributions,
+        spouseContributions: fields.spouseContributions,
+      },
       savers!,
     );
+    // §25B caps each spouse's column separately, so the question only exists on
+    // a joint return — and hiding it there is what keeps a single filer from
+    // being asked about a spouse.
+    spouseField.hidden = fields.fs !== "married_jointly";
     const fmt = (m: Money): string => m.format(ctx.locale);
     const lines: BreakdownLine[] = [
       {
@@ -140,6 +162,7 @@ export function mountSaversCredit(ctx: TileContext): void {
       fs: isFilingStatus(fsSelect.value) ? fsSelect.value : "single",
       agi: parseNonNegative(agiInput.value, 0),
       contributions: parseNonNegative(cInput.value, 0),
+      spouseContributions: parseNonNegative(scInput.value, 0),
     };
     ctx.setParams(writeFields(fields));
     rememberShared(profile, { filingStatus: fields.fs, annualIncome: fields.agi });
@@ -148,13 +171,14 @@ export function mountSaversCredit(ctx: TileContext): void {
   }
 
   fsSelect.addEventListener("change", recompute);
-  for (const i of [agiInput, cInput]) i.addEventListener("input", recompute);
+  for (const i of [agiInput, cInput, scInput]) i.addEventListener("input", recompute);
 
   const tryExample = tryExampleButton(() => {
     fields = { ...EXAMPLE };
     fsSelect.value = fields.fs;
     agiInput.value = String(fields.agi);
     cInput.value = String(fields.contributions);
+    scInput.value = String(fields.spouseContributions);
     recompute();
   });
 
@@ -164,6 +188,7 @@ export function mountSaversCredit(ctx: TileContext): void {
     field("Filing status", fsSelect),
     field("Adjusted gross income", agiInput),
     field("Retirement contributions this year", cInput),
+    spouseField,
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
@@ -178,7 +203,7 @@ export const saversCreditTile: TileDefinition = {
   description: "Eligibility and amount for retirement savers.",
   keywords: ["savers credit", "retirement", "credit", "form 8880", "8880"],
   status: "ready",
-  how: "The Saver's Credit rewards retirement contributions if your income is modest. The credit is 50%, 20%, or 10% of up to $2,000 of contributions ($4,000 if married filing jointly), and the rate steps down as your adjusted gross income rises through the limits for your filing status. We use the published 2026 figures.\n\nIt's non-refundable, so it reduces tax you owe but won't pay out beyond that. You also must be at least 18, not a full-time student, and not claimed as someone's dependent.",
+  how: "The Saver's Credit rewards retirement contributions if your income is modest. The credit is 50%, 20%, or 10% of up to $2,000 of contributions, and the rate steps down as your adjusted gross income rises through the limits for your filing status. The $2,000 is per person, not per return — Form 8880 has a column for each of you — so a joint return asks for both figures and caps each at $2,000 rather than counting $4,000 into one account. We use the published 2026 figures.\n\nIt's non-refundable, so it reduces tax you owe but won't pay out beyond that. You also must be at least 18, not a full-time student, and not claimed as someone's dependent.",
   resources: [
     {
       label: "IRS, Retirement Savings Contributions Credit",
