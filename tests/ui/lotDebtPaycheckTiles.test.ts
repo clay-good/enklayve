@@ -84,6 +84,27 @@ describe("Cost-Basis Lot Picker", () => {
     expect(rowValue(root, "Total realized gain")).toContain("$7,000");
   });
 
+  it("says so when the lots cannot cover the sale that was asked for", () => {
+    // FIFO stops when the lots run out. Until then the card answered a
+    // different transaction than the one typed, with an accurate share count
+    // beside a headline gain for a smaller sale.
+    const { root } = mount(
+      mountLotPicker,
+      new URLSearchParams({ px: "60", n: "150", k: "1", s0: "100", b0: "10", lt0: "1" }),
+    );
+    expect(rowValue(root, "Shares sold")).toBe("100");
+    expect(rowValue(root, "Short of the sale you asked for")).toContain("100 of 150");
+    expect(dollars(rowValue(root, "Total realized gain"))).toBe(5000);
+  });
+
+  it("says nothing about a shortfall when the lots cover the sale", () => {
+    const { root } = mount(
+      mountLotPicker,
+      new URLSearchParams({ px: "60", n: "100", k: "1", s0: "100", b0: "10", lt0: "1" }),
+    );
+    expect(rowValue(root, "Short of the sale you asked for")).toBeFalsy();
+  });
+
   it("names the wash-sale rule when a lot sells below its basis", () => {
     // This tile's own "How this works" recommends specific identification
     // "often to harvest losses", and said nothing about §1091 — the rule that

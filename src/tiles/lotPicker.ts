@@ -134,6 +134,15 @@ export function mountLotPicker(ctx: TileContext): void {
     // replaced, so a sale can net to a gain and still contain a washed loss.
     const anyLossLot = sales.some((s) => fields.salePrice < s.lot.costPerShare);
 
+    // What was asked for, which is not always what the lots can cover: FIFO
+    // stops when the lots run out, and a specific-lot row is capped at its own
+    // lot. Either way the gain below is for a smaller sale than the one typed.
+    const requested =
+      fields.method === "fifo"
+        ? fields.sharesToSell
+        : fields.lots.reduce((n, l) => n + l.sellShares, 0);
+    const short = Math.max(0, requested - r.sharesSold);
+
     const lines: BreakdownLine[] = [
       { label: "Shares sold", value: String(r.sharesSold) },
       { label: "Proceeds", value: fmt(r.totalProceeds) },
@@ -143,6 +152,13 @@ export function mountLotPicker(ctx: TileContext): void {
       lines.push({ label: "Short-term gain (taxed as ordinary)", value: fmt(r.shortTermGain) });
     if (!r.longTermGain.isZero())
       lines.push({ label: "Long-term gain (preferential rate)", value: fmt(r.longTermGain) });
+    if (short > 0)
+      lines.push({
+        label: "Short of the sale you asked for",
+        value:
+          `Your lots cover ${r.sharesSold} of ${requested} shares, so everything below is ` +
+          "for that smaller sale. Add the missing lot, or lower the number of shares.",
+      });
     lines.push({ label: "Total realized gain", value: fmt(r.totalGain), emphasis: true });
     // This tile's own "How this works" recommends specific identification
     // "often to harvest losses", and until 2026-09-03 said nothing about the
