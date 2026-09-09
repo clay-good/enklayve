@@ -130,7 +130,7 @@ export function mountSnap(ctx: TileContext): void {
 
     const lines: BreakdownLine[] = [
       {
-        label: "Gross income test (≤130% FPL)",
+        label: `Gross income test (≤${snap!.grossIncomeLimitPctFpl}% FPL)`,
         value: r.grossTestApplies
           ? `${fmt(r.grossMonthlyIncome)} vs ${fmt(r.grossLimit)}: ${yesno(r.passedGrossTest)}`
           : "Does not apply — a household with a member 60 or older, or with a disability, meets the net standard only",
@@ -147,7 +147,7 @@ export function mountSnap(ctx: TileContext): void {
         citation: snap!.citation,
       },
       {
-        label: "Net income test (≤100% FPL)",
+        label: `Net income test (≤${snap!.netIncomeLimitPctFpl}% FPL)`,
         value: `${fmt(r.netMonthlyIncome)} vs ${fmt(r.netLimit)}: ${yesno(r.passedNetTest)}`,
         citation: fpl!.citation,
       },

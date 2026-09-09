@@ -431,6 +431,19 @@ describe("SNAP tile", () => {
     expect(rowValue(withElderly, "Estimated monthly benefit")).not.toContain("Not eligible");
   });
 
+  it("reads its two test percentages off the shard, not out of its own labels", () => {
+    // The labels said "≤130% FPL" and "≤100% FPL" while `estimateSnap` used
+    // `grossIncomeLimitPctFpl` / `netIncomeLimitPctFpl`. They agree today, so
+    // this is a lock rather than a fix — and it is the shape of the SALT
+    // constant that sat in the deduction code for months: a figure the code
+    // owns, written a second time where nothing compares them.
+    const s = data.snap()!;
+    const root = mount(mountSnap, new URLSearchParams({ hh: "3", inc: "2200", earn: "2200" }));
+    const labels = Array.from(root.querySelectorAll(".bd-label")).map((n) => n.textContent ?? "");
+    expect(labels).toContain(`Gross income test (≤${s.grossIncomeLimitPctFpl}% FPL)`);
+    expect(labels).toContain(`Net income test (≤${s.netIncomeLimitPctFpl}% FPL)`);
+  });
+
   it("asks how much of the income is from work, and does not assume all of it", () => {
     // The 20% deduction is against earned income only, and the engine defaulted
     // it to the whole income — so the household most likely to be living on

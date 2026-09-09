@@ -189,8 +189,13 @@ export type TaxpayerCreditData = z.infer<typeof TaxpayerCreditSchema>;
  * standard-deduction chart): the deduction slides down but never below a
  * filing-status minimum — $5,000 married-jointly, $2,500 single/MFS/head-of-family
  * — rather than to zero. Every status phases over the same $25,500→$35,500 AGI
- * band, each at its own `reductionRate` (single 5%, MFS 17.5%, head-of-family
- * 27%, joint 35% of AGI over $25,500), reaching its floor at exactly $35,500.
+ * band, each at its own `reductionRate` (single 5%, head-of-family 27%, joint
+ * 35% of AGI over $25,500), reaching its floor at exactly $35,500. This
+ * sentence read "MFS 17.5%" until 2026-09-09, and the shard carries no
+ * married-filing-separately entry: that status falls back to single through
+ * `fallbackChain`, as the shard's own `sourceNote` says. A doc claiming
+ * coverage the data does not have is the same drift as a note claiming an
+ * omission the engine does not make.
  *
  * `secondSegment` carries the **two-segment** variant — Wisconsin's head-of-household
  * schedule (Wis. Stat. §71.05(23)(a)3., printed as the "Schedule for Head of
