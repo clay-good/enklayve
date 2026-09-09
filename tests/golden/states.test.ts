@@ -1286,58 +1286,58 @@ describe("Vermont (four-rate graduated schedule over a standard-deduction + exem
   // $49,400/$119,700/$249,700; MFJ over $82,500/$199,450/$304,000; HoH over
   // $66,200/$171,000/$276,850. Standard deduction $7,650/$15,300/$11,450; the
   // exemption is $5,300/person (one single/HoH, two joint).
-  it("single $60k → $1,576.18 (taxable 60,000 − 7,650 − 5,300 = 47,050, all in 3.35%)", () => {
+  it("single $60k → $1,572.83 (taxable 60,000 − 7,650 − 5,400 = 46,950, all in 3.35%)", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 60000 },
       { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
     );
-    expect(cents(r.state!.incomeTax)).toBe("1576.18"); // 3.35%·47,050 = 1,576.175
+    expect(cents(r.state!.incomeTax)).toBe("1572.83"); // 3.35%·47,050 = 1,576.175
   });
 
-  it("single $120k crosses into the 6.60% band → $5,459.80", () => {
+  it("single $120k crosses into the 6.60% band → $5,453.20", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 120000 },
       { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
     );
     // taxable 107,050: 3.35%·49,400 + 6.60%·(107,050 − 49,400) = 1,654.90 + 3,804.90.
-    expect(cents(r.state!.incomeTax)).toBe("5459.8");
+    expect(cents(r.state!.incomeTax)).toBe("5453.2");
   });
 
-  it("single $200k reaches the 7.60% band → $11,413.30", () => {
+  it("single $200k reaches the 7.60% band → $11,405.70", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 200000 },
       { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
     );
     // taxable 187,050: 1,654.90 + 6.60%·70,300 + 7.60%·(187,050 − 119,700)
     //               = 1,654.90 + 4,639.80 + 5,118.60.
-    expect(cents(r.state!.incomeTax)).toBe("11413.3");
+    expect(cents(r.state!.incomeTax)).toBe("11405.7");
   });
 
-  it("married jointly $60k → $1,142.35 (doubled deduction + exemption, all in 3.35%)", () => {
+  it("married jointly $60k → $1,135.65 (doubled deduction + exemption, all in 3.35%)", () => {
     const r = evaluateTaxes(
       { filingStatus: "married_jointly", wages: 60000 },
       { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
     );
-    expect(cents(r.state!.incomeTax)).toBe("1142.35"); // 3.35%·(60,000 − 15,300 − 10,600)
+    expect(cents(r.state!.incomeTax)).toBe("1135.65"); // 3.35%·(60,000 − 15,300 − 10,600)
   });
 
-  it("married jointly $400k reaches the 8.75% top band → $24,562.00", () => {
+  it("married jointly $400k reaches the 8.75% top band → $24,544.50", () => {
     const r = evaluateTaxes(
       { filingStatus: "married_jointly", wages: 400000 },
       { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
     );
     // taxable 374,100: 2,763.75 + 6.60%·116,950 + 7.60%·104,550 + 8.75%·(374,100 − 304,000)
     //               = 2,763.75 + 7,718.70 + 7,945.80 + 6,133.75.
-    expect(cents(r.state!.incomeTax)).toBe("24562");
+    expect(cents(r.state!.incomeTax)).toBe("24544.5");
   });
 
-  it("head of household $100k uses the $66,200 threshold → $3,343.00", () => {
+  it("head of household $100k uses the $66,200 threshold → $3,336.40", () => {
     const r = evaluateTaxes(
       { filingStatus: "head_of_household", wages: 100000 },
       { federal: ds.federal, state: ds.state("vt"), fica: ds.fica },
     );
     // taxable 83,250: 3.35%·66,200 + 6.60%·(83,250 − 66,200) = 2,217.70 + 1,125.30.
-    expect(cents(r.state!.incomeTax)).toBe("3343");
+    expect(cents(r.state!.incomeTax)).toBe("3336.4");
   });
 
   it("single owes more than married jointly at equal income (the wider joint brackets)", () => {
