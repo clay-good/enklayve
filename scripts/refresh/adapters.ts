@@ -50,8 +50,13 @@
  * data-only step (the rate is the legislatively-fixed figure the parser anchors).
  *
  * The tenth set adds Iowa — a flat 3.8% tax (SF 2442 2024) over the federal
- * standard deduction (the Idaho pattern), so the flat parser is reused again; the
- * federal-conformity deduction rolls with the IRS refresh, not Iowa's.
+ * standard deduction (the Idaho pattern), so the flat parser is reused again.
+ * This adapter watches Iowa's RATE. Its deduction is the federal one and no
+ * adapter watches the revenue procedure for it: a shard gets one adapter, and
+ * four of the nine conformity states spend theirs on the IRS document while
+ * five spend it on a state rate that can move by statute. Named in
+ * `dataRefresh.test.ts` so the trade is a list with reasons rather than a
+ * sentence claiming a watch that is not there.
  *
  * The eleventh set lands the two "federal tax deduction" states the engine was
  * extended for — Alabama (uncapped, Ala. Code §40-18-15(a)(1), a sliding
@@ -3821,7 +3826,8 @@ export const ADAPTERS: RefreshAdapter[] = [
     // Missouri's eight tiers are the same for every filing status, so the
     // graduated parser (OH/MS pattern) overlays one anchored schedule onto all
     // — anchoring the indexed thresholds and any SB 3 trigger-based rate cut.
-    // The federal-conformity standard deduction rolls with the IRS refresh.
+    // The standard deduction here is the federal one and this adapter does not
+    // watch it; see the header note on the conformity trade.
     parse: parseMissouriWithholdingFormula,
   },
   {

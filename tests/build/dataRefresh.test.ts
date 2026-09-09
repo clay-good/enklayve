@@ -399,6 +399,65 @@ describe("adapters: the federal standard deduction (IRS revenue procedure)", () 
     expect(adapter.parse("no dollar figures in this layout", current).ok).toBe(false);
   });
 
+  /**
+   * The conformity states whose one adapter is spent on a state RATE rather
+   * than on the revenue procedure that sets their deduction.
+   *
+   * A shard gets exactly one adapter. Four of the nine states that carry the
+   * federal standard deduction verbatim point theirs at the IRS document; these
+   * five point theirs at a rate that can move by statute, so their deduction is
+   * unwatched. That is a trade rather than an oversight — but it was being made
+   * silently, and two comments in `adapters.ts` said the opposite in so many
+   * words ("the federal-conformity deduction rolls with the IRS refresh"), for
+   * shards where nothing was watching it.
+   */
+  const RATE_WATCHED_INSTEAD: Record<string, string> = {
+    "state-az-income-tax-2024": "watches Arizona's 2.5% flat rate",
+    "state-co-income-tax-2024": "watches Colorado's 4.4% flat rate",
+    "state-id-income-tax-2024":
+      "watches Idaho's 5.3% rate and its 0% band, which HB 40 moved in 2025",
+    "state-ia-income-tax-2024": "watches Iowa's 3.8% flat rate",
+    "state-mo-income-tax-2024":
+      "watches Missouri's indexed bracket schedule and its SB 3 trigger-based rate cuts",
+  };
+
+  it("names every conformity state's watch, and none of them silently", () => {
+    // Derived from the data: a shard whose standard deduction equals the
+    // federal one either watches the revenue procedure or is named above with
+    // the reason it does not. A tenth conformity state cannot arrive quietly.
+    const federal = readShard("federal-income-tax-2024.json") as {
+      standardDeductionByFilingStatus: Record<string, number>;
+    };
+    const conformity = ADAPTERS.filter((a) => /^state-[a-z]{2}-income-tax-/.test(a.id)).filter(
+      (a) => {
+        const own = (
+          readShard(`${a.id}.json`) as {
+            standardDeductionByFilingStatus?: Record<string, number>;
+          }
+        ).standardDeductionByFilingStatus;
+        if (!own) return false;
+        return ["single", "married_jointly", "head_of_household"].every(
+          (k) => own[k] === federal.standardDeductionByFilingStatus[k],
+        );
+      },
+    );
+    expect(conformity.length).toBeGreaterThan(5);
+    const unexplained = conformity
+      .filter((a) => !a.sourceUrl.includes("rp-25-32") && !(a.id in RATE_WATCHED_INSTEAD))
+      .map((a) => a.id)
+      .sort();
+    expect(
+      unexplained,
+      "a state carrying the federal standard deduction whose adapter neither watches the " +
+        "revenue procedure nor says what it watches instead",
+    ).toEqual([]);
+    // And the list does not outlive its entries.
+    const stale = Object.keys(RATE_WATCHED_INSTEAD)
+      .filter((id) => !conformity.some((a) => a.id === id))
+      .sort();
+    expect(stale, "a named exception that is no longer a conformity state").toEqual([]);
+  });
+
   it("also serves the states that conform to the federal deduction", () => {
     // DC, New Mexico, Montana and North Dakota do not publish a standard
     // deduction — they use the federal one, which their own shard notes say.
