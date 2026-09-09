@@ -548,7 +548,10 @@ describe("Medicaid tile", () => {
     const root = mount(mountMedicaid, new URLSearchParams({ st: "CA", hh: "1", inc: "18000" }));
     expect(rowValue(root, "Medicaid expansion")).toContain("expanded Medicaid");
     expect(rowValue(root, "Likely eligible")).toContain("Yes");
-    expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/medicaid\.gov/);
+    // The shard cites what its figures were verified against: KFF's tracker for
+    // the 51-state map, and the statute for 138%. It had cited Medicaid.gov's
+    // enrollment-data highlights, which state neither.
+    expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/kff\.org/);
   });
 
   it("explains the limited coverage in a non-expansion state", () => {

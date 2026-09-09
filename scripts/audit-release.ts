@@ -503,8 +503,29 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * does not "correct" the shard back. A wrong rate found by reading the statute
  * is exactly what the `sourceNote` prose is for, and it is why the previous
  * entry's test — a raise that buys a feature — has still not been met.
+ *
+ * **293 → 294 on 2026-09-09**, and it is worth saying what this one is NOT.
+ * It buys one sentence on the Medicaid screener: thirteen of the forty-one
+ * states that expanded — AR, AZ, IA, ID, IL, IN, MT, NC, NH, NM, OH, UT, VA —
+ * have a **trigger law** that would end or curtail expansion coverage
+ * automatically if the enhanced federal matching rate drops, with no new vote
+ * required. The note already told the reader a state can change its position
+ * "by ballot measure or legislation", which names the wrong mechanism for those
+ * thirteen and understates the risk to the reader most exposed to it. Listing
+ * the states is most of the cost and is the part that makes the sentence
+ * actionable rather than atmospheric: a reader needs to know whether it is
+ * theirs.
+ *
+ * Measured against the previous entry's test — *what would make the answer no?*
+ * — this is still a correction rather than a feature, so the answer is still
+ * yes. But the entry above set a second condition, a week's growth exceeding
+ * what a slow first visit can absorb, with **300 kB** named as the number to
+ * argue against. The shell has gone 286 → 294 in five days. Six more raises at
+ * this rate reaches it, and the honest reading is that this is the last stretch
+ * where a raise can be waved through on "it is only a correction". The next one
+ * should come with a trim that is not a sentence somebody wrote today.
  */
-export const SHELL_GZIP_BUDGET_KB = 293;
+export const SHELL_GZIP_BUDGET_KB = 294;
 
 /**
  * The headroom this gate needs to be measuring the shell rather than the runner.
