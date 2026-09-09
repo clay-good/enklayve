@@ -542,14 +542,40 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
   form1099nec: {
     citation: f1099Citation("NEC"),
     extract: (t) => {
-      const nec = field(
-        "1099nec-box1",
-        "Nonemployee compensation (box 1)",
-        amountAfter(t.text, /1\s*nonemployee compensation/i),
-        "annualIncome",
-        "Self-employment income: feeds Take-Home, Self-Employment Tax, and Quarterly Taxes.",
-      );
-      return nec ? [nec] : [];
+      /**
+       * Box 1 is self-employment income, so it goes to the slot that means
+       * that.
+       *
+       * It went to `annualIncome` until 2026-09-09, and that field means
+       * **wages** — every surface reading it hands the engine `wages`. So a
+       * contractor who dropped in a 1099-NEC and pressed confirm had their
+       * receipts charged §3101's withheld 7.65% in Take-Home and in the saved
+       * Report, and taxed as if an employer were withholding on money nobody
+       * withholds on. The same conflation was split out of the profile's own
+       * key and out of the three tools that ask for profit earlier the same
+       * day; this was the third door into it, and the worst of the three,
+       * because the reader does not type it.
+       *
+       * Marked for review rather than shipped as high confidence, because box
+       * 1 is **gross receipts** and the slot is net profit: the form cannot
+       * know what the contractor spent to earn it. Erring high is the
+       * conservative direction for a figure whose job is to size a set-aside,
+       * and the note says which direction it errs in so a reader can correct
+       * it rather than discover it.
+       */
+      const box1 = amountAfter(t.text, /1\s*nonemployee compensation/i);
+      if (!Number.isFinite(box1)) return [];
+      return [
+        {
+          id: "1099nec-box1",
+          label: "Nonemployee compensation (box 1)",
+          value: box1,
+          confidence: "needs-review",
+          needsReview: true,
+          target: "selfEmploymentProfitAnnual",
+          note: "Feeds Self-Employment Tax, Quarterly Taxes and the retirement optimizer. Gross receipts before business expenses, so it reads high until you take those off.",
+        },
+      ];
     },
   },
   form1099b: {

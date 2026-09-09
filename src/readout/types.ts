@@ -37,6 +37,7 @@ export type DocKind =
  * narrow (not all of {@link SituationKey}) so the mapping stays type-safe. */
 export type ReadoutTarget =
   | "annualIncome"
+  | "selfEmploymentProfitAnnual"
   | "retirementContributionsAnnual"
   | "filingStatus"
   | "qualifiedTipsAnnual"

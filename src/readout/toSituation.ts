@@ -84,6 +84,7 @@ export function applyToSituation(store: SituationStore, fields: ExtractedField[]
 /** What each replaceable slot is called in a sentence a reader reads. */
 const TARGET_NAMES: Record<ReadoutTarget, string> = {
   annualIncome: "Annual income",
+  selfEmploymentProfitAnnual: "Self-employment profit",
   retirementContributionsAnnual: "Retirement contributions",
   filingStatus: "Filing status",
   qualifiedTipsAnnual: "Qualified tips",

@@ -482,25 +482,48 @@ describe("Readout view, the four-part answer", () => {
 
   it("says which figure a second document replaced, and what it was", async () => {
     // The summary's own "Read another document" button makes this a first-class
-    // path: a freelancer with a job confirms a W-2 and then a 1099-NEC, and both
-    // target `annualIncome`. Last write wins — summing would double-count a
-    // 1040's AGI against the W-2 it came from — but it used to win in silence,
-    // under a line reading "Added 1 value to My Situation".
-    const NEC_TEXT =
-      "Form 1099-NEC Nonemployee Compensation 2024 1 Nonemployee compensation 30000.00";
-    const { container, profile } = setup(sequence(W2_TEXT, NEC_TEXT));
+    // path: someone confirms a W-2 and then a payslip from the same job, and
+    // both target `annualIncome`. Last write wins — summing would double-count
+    // a 1040's AGI against the W-2 it came from — but it used to win in
+    // silence, under a line reading "Added 1 value to My Situation".
+    //
+    // The pair was a W-2 and a 1099-NEC until 2026-09-09, when box 1 stopped
+    // being written into the field that means wages. Two documents that really
+    // do answer the same question replaced it.
+    const PAYSLIP_TEXT =
+      "ABC Payroll Earnings Statement Pay Period 06/01/2024 Bi-Weekly Gross Pay 1153.85 Net Pay 900.00";
+    const { container, profile } = setup(sequence(W2_TEXT, PAYSLIP_TEXT));
 
     await dropFile(container, "w2.pdf");
     container.querySelector<HTMLButtonElement>(".readout-actions .btn--accent")!.click();
     expect(profile.get("annualIncome")).toBe(75000);
     expect(container.querySelector(".readout-note--replaced")).toBeNull();
 
-    await dropFile(container, "1099nec.pdf");
+    await dropFile(container, "payslip.pdf");
     container.querySelector<HTMLButtonElement>(".readout-actions .btn--accent")!.click();
     expect(profile.get("annualIncome")).toBe(30000);
     const note = container.querySelector(".readout-note--replaced")?.textContent ?? "";
     expect(note).toContain("Annual income was $75,000 from a document read earlier");
     expect(note).toContain("is now $30,000");
+  });
+
+  it("keeps a wage and a contract fee apart, so neither replaces the other", async () => {
+    // A freelancer with a job has two figures, not one, and they are taxed
+    // under different statutes. Until 2026-09-09 the 1099-NEC overwrote the
+    // W-2's wage and the reader was told, calmly and wrongly, that their
+    // annual income was now the smaller number.
+    const NEC_TEXT =
+      "Form 1099-NEC Nonemployee Compensation 2024 1 Nonemployee compensation 30000.00";
+    const { container, profile } = setup(sequence(W2_TEXT, NEC_TEXT));
+
+    await dropFile(container, "w2.pdf");
+    container.querySelector<HTMLButtonElement>(".readout-actions .btn--accent")!.click();
+    await dropFile(container, "1099nec.pdf");
+    container.querySelector<HTMLButtonElement>(".readout-actions .btn--accent")!.click();
+
+    expect(profile.get("annualIncome")).toBe(75000);
+    expect(profile.get("selfEmploymentProfitAnnual")).toBe(30000);
+    expect(container.querySelector(".readout-note--replaced")).toBeNull();
   });
 
   it("points a medical bill at the hospital financial-assistance rule, with its source", async () => {

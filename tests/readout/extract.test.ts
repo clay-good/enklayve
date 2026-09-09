@@ -268,11 +268,22 @@ describe("Readout, 1099 extraction", () => {
     expect(value(r, "1099div-box2a")).toBe(540);
   });
 
-  it("reads 1099-NEC nonemployee compensation and targets income", () => {
+  it("sends 1099-NEC box 1 to self-employment profit, not to wages", () => {
+    // It went to `annualIncome` until 2026-09-09, and that field means wages:
+    // every surface reading it hands the engine `wages`. So a contractor who
+    // dropped this in and pressed confirm had their receipts charged §3101's
+    // withheld 7.65% in Take-Home and in the saved Report. Flagged for review
+    // because box 1 is gross receipts and the slot is net profit — the form
+    // cannot know what they spent to earn it.
     const r = extractDocument(FORM_1099NEC);
     expect(r.kind).toBe("form1099nec");
     expect(value(r, "1099nec-box1")).toBe(48000);
-    expect(r.fields.find((f) => f.id === "1099nec-box1")?.target).toBe("annualIncome");
+    const box1 = r.fields.find((f) => f.id === "1099nec-box1");
+    expect(box1?.target).toBe("selfEmploymentProfitAnnual");
+    expect(box1?.needsReview).toBe(true);
+    expect(box1?.note).toMatch(/gross receipts before business expenses/i);
+    // And which way it errs, so a reader corrects it rather than discovers it.
+    expect(box1?.note).toMatch(/reads high/i);
   });
 
   it("reads 1099-B proceeds and basis and computes the realized gain", () => {
@@ -435,7 +446,13 @@ describe("a second document landing on a field the first one filled", () => {
   const W2 =
     "Form W-2 Wage and Tax Statement 2024 1 Wages, tips, other compensation 75000.00 " +
     "2 Federal income tax withheld 9200.00";
-  const NEC = "Form 1099-NEC Nonemployee Compensation 2024 1 Nonemployee compensation 30000.00";
+  // A paystub rather than the 1099-NEC this used until 2026-09-09: box 1 is
+  // self-employment income and lands in the profit slot now, so a W-2 and a
+  // 1099-NEC no longer collide at all — a reader with a job and contract work
+  // keeps both figures, each under the statute that taxes it. Two documents
+  // that really do answer the same question are a W-2 and a payslip.
+  const PAYSLIP =
+    "ABC Payroll Earnings Statement Pay Period 06/01/2024 Bi-Weekly Gross Pay 1153.85 Net Pay 900.00";
 
   function confirm(store: SituationStore, text: string) {
     return applyToSituation(
@@ -447,11 +464,27 @@ describe("a second document landing on a field the first one filled", () => {
   it("reports what it replaced, and with what", () => {
     const store = new SituationStore();
     expect(confirm(store, W2).replaced).toEqual([]);
-    const second = confirm(store, NEC);
+    const second = confirm(store, PAYSLIP);
+    // 1153.85 × 26 = 30,000.1 → 30,000.
     expect(store.get("annualIncome")).toBe(30000);
     expect(second.replaced).toEqual([
       { target: "annualIncome", previous: 75000, previousSource: "extracted", next: 30000 },
     ]);
+  });
+
+  it("does not treat contract work as a replacement for a wage", () => {
+    // The two are different quantities under different statutes, and a reader
+    // with both keeps both. This was a replacement until 2026-09-09, so a
+    // W-2 employee's $75,000 vanished the moment they confirmed a 1099-NEC.
+    const store = new SituationStore();
+    confirm(store, W2);
+    const nec = confirm(
+      store,
+      "Form 1099-NEC Nonemployee Compensation 2024 1 Nonemployee compensation 30000.00",
+    );
+    expect(nec.replaced).toEqual([]);
+    expect(store.get("annualIncome")).toBe(75000);
+    expect(store.get("selfEmploymentProfitAnnual")).toBe(30000);
   });
 
   it("skips a field the reader cleared rather than writing zero", () => {

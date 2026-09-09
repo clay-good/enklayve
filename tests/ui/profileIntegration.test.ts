@@ -5,6 +5,7 @@ import { mountEducationCredits } from "../../src/tiles/educationCredits";
 import { mountQuarterlyTaxes } from "../../src/tiles/quarterlyTaxes";
 import { mountPaycheckOptimizer } from "../../src/tiles/paycheckOptimizer";
 import { mountMedicaid } from "../../src/tiles/medicaid";
+import { mountSelfEmploymentTax } from "../../src/tiles/selfEmploymentTax";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import { extractDocument } from "../../src/readout/extract";
@@ -216,5 +217,43 @@ describe("the tile whose answer turns on the state", () => {
     st.value = "OH";
     st.dispatchEvent(new Event("change"));
     expect(profile.get("stateCode")).toBe("oh");
+  });
+});
+
+/**
+ * The counterpart of the W-2 case at the top of this file, and the one that was
+ * wrong in both directions at once.
+ *
+ * A 1099-NEC's box 1 was written into `annualIncome`, which means wages: so a
+ * contractor who dropped one in had their receipts charged §3101's withheld
+ * 7.65% in Take-Home and in the saved Report — a tax nobody was withholding —
+ * while the three tools that ask about §1401 money never saw the figure at all.
+ * The document's own note promised it fed Quarterly Taxes, and it did not.
+ */
+describe("a 1099-NEC read by the Readout reaches the tools that tax it", () => {
+  const NEC = "Form 1099-NEC Nonemployee Compensation 2026 1 Nonemployee compensation 48000.00";
+
+  it("lands in self-employment profit and nowhere near wages", () => {
+    const profile = new SituationStore();
+    const fields = extractDocument({ text: NEC, pages: [NEC], source: "typed" }).fields;
+    expect(applyToSituation(profile, fields).applied).toBe(1);
+    expect(profile.get("selfEmploymentProfitAnnual")).toBe(48000);
+    expect(profile.has("annualIncome")).toBe(false);
+
+    const se = mount(mountSelfEmploymentTax, new URLSearchParams(), profile);
+    expect(se.querySelector<HTMLInputElement>('input[name="np"]')?.value).toBe("48000");
+
+    // Take-Home asks for wages, and a contractor has none of them.
+    const takeHome = mount(mountTakeHome, new URLSearchParams({ st: "ca" }), profile);
+    expect(takeHome.querySelector<HTMLInputElement>('input[name="w"]')?.value).toBe("0");
+  });
+
+  it("leaves a W-2 wage standing beside it", () => {
+    const profile = new SituationStore();
+    const w2 = "Form W-2 Wage and Tax Statement 2026 1 Wages, tips, other compensation 75000.00";
+    applyToSituation(profile, extractDocument({ text: w2, pages: [w2], source: "typed" }).fields);
+    applyToSituation(profile, extractDocument({ text: NEC, pages: [NEC], source: "typed" }).fields);
+    expect(profile.get("annualIncome")).toBe(75000);
+    expect(profile.get("selfEmploymentProfitAnnual")).toBe(48000);
   });
 });
