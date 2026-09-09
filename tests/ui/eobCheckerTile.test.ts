@@ -22,7 +22,11 @@ beforeAll(async () => {
   data = await loadBundledData();
 });
 
-function mount(params: URLSearchParams, bundled: BundledData | null = data): HTMLElement {
+function mount(
+  params: URLSearchParams,
+  bundled: BundledData | null = data,
+  locale = "en-US",
+): HTMLElement {
   const root = document.createElement("div");
   mountEobChecker({
     root,
@@ -30,7 +34,7 @@ function mount(params: URLSearchParams, bundled: BundledData | null = data): HTM
     setParams: () => {},
     permalink: (p) => `https://enklayve.com/#/x?${(p ?? params).toString()}`,
     navigate: () => {},
-    locale: "en-US",
+    locale,
     data: bundled,
     profile: new SituationStore(),
   } as TileContext);
@@ -123,6 +127,19 @@ describe("Medical Bill & EOB Checker", () => {
     expect(text).toContain("worth asking your plan about");
     // The gap never stands alone: the innocent explanations sit beside it.
     expect(text).toContain("A gap does not mean the plan is wrong");
+  });
+
+  it("formats every figure in the reader's locale, not three of them in en-US", () => {
+    // Two figures in this block went through `Money.format(ctx.locale)` and the
+    // three in the sentence below them were pinned to en-US, so the same
+    // paragraph could read "1.240,00 $" and "$1,240" one line apart.
+    const root = mount(MISMATCH, data, "de-DE");
+    const block = root.querySelector(".eob-block")!.textContent ?? "";
+    // de-DE puts the symbol last, so the tell is the en-US prefix.
+    expect(block).not.toMatch(/\$[0-9]/);
+    expect(block).toContain("1.600,00");
+    expect(block).toContain("950,00");
+    expect(block).toContain("650,00");
   });
 
   it("says so plainly when the notice reconciles, with no caveat block", () => {

@@ -2,7 +2,11 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import axe from "axe-core";
 import { SUB_TOOLS, TILES } from "../../src/tiles/registry";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
-import { SituationStore, type SituationValues } from "../../src/profile/situation";
+import {
+  SituationStore,
+  SituationValuesSchema,
+  type SituationValues,
+} from "../../src/profile/situation";
 import type { TileContext, TileDefinition } from "../../src/tiles/types";
 
 /**
@@ -466,8 +470,10 @@ describe("every hub survives what its calculators are swept for", () => {
  * suite died rather than finishing the mount.
  */
 describe("every calculator survives a restored profile", () => {
+  /** Every numeric value a restored file can carry, driven to the magnitude. */
   const KEYS = [
     "householdSize",
+    "qualifyingChildren",
     "annualIncome",
     "preTaxContributions",
     "retirementContributionsAnnual",
@@ -480,12 +486,16 @@ describe("every calculator survives a restored profile", () => {
     "qualifiedOvertimeAnnual",
   ] as const;
 
+  /** The rest, each set by `restored` in a shape of its own below. */
+  const NON_NUMERIC = ["filingStatus", "stateCode", "county", "ages", "debts"] as const;
+
   /** A profile as a hostile file would leave it, restored through the real path. */
   function restored(value: number, rows: number): SituationStore {
     const store = new SituationStore();
     const values: Record<string, unknown> = {
       filingStatus: "single",
       stateCode: "CA",
+      county: "\u0000".repeat(500),
       ages: Array.from({ length: rows }, () => 40),
       debts: Array.from({ length: rows }, (_, i) => ({
         name: `d${i}`,
@@ -497,6 +507,18 @@ describe("every calculator survives a restored profile", () => {
     store.load({ values, sources: {} } as never);
     return store;
   }
+
+  it("drives every value the store declares, not a list somebody kept", () => {
+    // `KEYS` was hand-kept and had stopped covering the store: it named eleven
+    // values while the schema declared thirteen, so `qualifyingChildren` and
+    // `county` reached the child-credit, EITC, poverty and cliff tiles through
+    // this door with nothing hostile ever put in them. A sweep that quietly
+    // narrows is worse than no sweep, because the green tick is what people
+    // read — the same failure as the pinned write map and the enum-param list.
+    expect([...KEYS, ...NON_NUMERIC].sort()).toEqual(
+      Object.keys(SituationValuesSchema.removeCatch().shape).sort(),
+    );
+  });
 
   for (const [label, value, rows] of [
     ["magnitudes that overflow a product", 1e308, 4],
@@ -568,6 +590,18 @@ describe("every calculator meets the tile bar", () => {
         ).toBeGreaterThan(200);
         expect(tile.description.trim().length).toBeGreaterThan(10);
         expect(tile.keywords.length, `${tile.id} is unfindable in search`).toBeGreaterThan(1);
+      });
+
+      it("does not promise a tool that has already shipped", () => {
+        // "is on the way" belongs to the placeholder for a tile that has no
+        // engine yet. Capital Gains carried it about the FIFO lot picker for as
+        // long as the lot picker has been registered, `status: "ready"`, and
+        // pointing back at Capital Gains from its own explainer — a link that
+        // existed in one direction while the other told the reader the feature
+        // did not exist.
+        expect(tile.how ?? "", `${tile.id} promises something it ships`).not.toMatch(
+          /is on the way/i,
+        );
       });
 
       it("points somewhere authoritative to learn more", () => {

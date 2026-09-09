@@ -21,6 +21,7 @@
  * We do not price-benchmark and we do not adjudicate medical necessity.
  */
 import { claimPatientResponsibility } from "../engine/finance";
+import { Money } from "../engine/money";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { citationLink } from "../ui/resultCard";
@@ -179,9 +180,14 @@ export function mountEobChecker(ctx: TileContext): void {
       ),
       el("p", {
         class: matches ? "eob-screen eob-screen--ok" : "eob-screen",
+        // Through `Money` and the reader's locale, like the two figures in the
+        // paragraph above: these three were pinned to en-US, so a reader whose
+        // plan's share read "1.240,00 $" was told the notice showed "$1,240"
+        // in the next sentence. Rounding is gone with it — the comparison
+        // above uses the cents, so the sentence has to show them.
         text: matches
-          ? `The notice shows ${Math.round(fields.billed).toLocaleString("en-US", { style: "currency", currency: "USD" })}, which reconciles with your plan's terms.`
-          : `The notice shows ${Math.round(fields.billed).toLocaleString("en-US", { style: "currency", currency: "USD" })} — ${Math.abs(Math.round(gap)).toLocaleString("en-US", { style: "currency", currency: "USD" })} ${gap > 0 ? "more" : "less"} than your plan's terms produce. That is worth asking your plan about.`,
+          ? `The notice shows ${Money.from(fields.billed).format(ctx.locale)}, which reconciles with your plan's terms.`
+          : `The notice shows ${Money.from(fields.billed).format(ctx.locale)} — ${Money.from(Math.abs(gap)).format(ctx.locale)} ${gap > 0 ? "more" : "less"} than your plan's terms produce. That is worth asking your plan about.`,
       }),
       matches ? null : el("p", { class: "eob-caveat", text: MISMATCH_CAVEATS }),
     );
