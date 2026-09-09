@@ -441,7 +441,7 @@ describe("SNAP tile", () => {
     const benefits = mount(mountSnap, new URLSearchParams({ hh: "3", inc: "2200", earn: "0" }));
     expect(rowValue(working, "Counted as earned")).toContain("$2,200");
     expect(rowValue(benefits, "Counted as earned")).toContain("$0");
-    const num = (v: string): number => Number(v.replace(/[^0-9.]/g, ""));
+    const num = (v: string | undefined): number => Number((v ?? "").replace(/[^0-9.]/g, ""));
     expect(num(rowValue(benefits, "Net income after deductions"))).toBeGreaterThan(
       num(rowValue(working, "Net income after deductions")),
     );
