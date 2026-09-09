@@ -842,10 +842,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "medicaid-2024.json",
-      "sourceUrl": "https://www.kff.org/status-of-state-medicaid-expansion-decisions/",
+      "sourceUrl": "https://www.kff.org/medicaid/status-of-state-medicaid-expansion-decisions/",
       "sourceDocument": "KFF, Status of State Medicaid Expansion Decisions (2026-08-21); 42 U.S.C. §1396a(a)(10)(A)(i)(VIII) and (e)(14)(I)",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "ff7df8f071b6045cbdce450417f1d6ea3a20c0bdc6b37495768d3275a3bc99a5"
+      "contentHash": "720ef8fb98d574f251fe972ad2f937df77eb3d7eec0ed0140903d16b754959da"
     },
     {
       "id": "aca-2024",
