@@ -431,6 +431,26 @@ describe("SNAP tile", () => {
     expect(rowValue(withElderly, "Estimated monthly benefit")).not.toContain("Not eligible");
   });
 
+  it("asks how much of the income is from work, and does not assume all of it", () => {
+    // The 20% deduction is against earned income only, and the engine defaulted
+    // it to the whole income — so the household most likely to be living on
+    // Social Security or SSI (the one that ticks the box on this very tile)
+    // was given a deduction it does not get.
+    const link = new URLSearchParams({ hh: "3", inc: "2200", earn: "2200", ed: "0" });
+    const working = mount(mountSnap, link);
+    const benefits = mount(mountSnap, new URLSearchParams({ hh: "3", inc: "2200", earn: "0" }));
+    expect(rowValue(working, "Counted as earned")).toContain("$2,200");
+    expect(rowValue(benefits, "Counted as earned")).toContain("$0");
+    const num = (v: string): number => Number(v.replace(/[^0-9.]/g, ""));
+    expect(num(rowValue(benefits, "Net income after deductions"))).toBeGreaterThan(
+      num(rowValue(working, "Net income after deductions")),
+    );
+
+    // A link with no answer in it does not invent one.
+    const unanswered = mount(mountSnap, new URLSearchParams({ hh: "3" }));
+    expect(rowValue(unanswered, "Counted as earned")).toContain("$0");
+  });
+
   it("still applies the net test to a household the gross test skips", () => {
     // Skipping the gross test can only reveal eligibility, never invent a
     // benefit: the net standard still governs, and a household over it is

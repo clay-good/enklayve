@@ -240,7 +240,15 @@ export function mountOwedScreener(ctx: TileContext): void {
     const snap = bundled.snap();
     if (snap && fields.region === "contiguous") {
       const snapResult = estimateSnap(
-        { householdSize: fields.householdSize, monthlyGrossIncome: fields.income / 12 },
+        {
+          householdSize: fields.householdSize,
+          monthlyGrossIncome: fields.income / 12,
+          // The screener asks for earned income (it is the same figure it hands
+          // the EITC, which §32 measures on earnings), so the 20% deduction
+          // applies to all of it. A household living on benefits gets a smaller
+          // deduction than this and should use the SNAP tool, which asks.
+          monthlyEarnedIncome: fields.income / 12,
+        },
         snap,
         fpl,
       );

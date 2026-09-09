@@ -233,6 +233,8 @@ export interface SnapResult {
   /** Estimated monthly benefit (0 when ineligible). */
   monthlyBenefit: Money;
   grossMonthlyIncome: Money;
+  /** The part the 20% deduction was taken on, after the cap at gross. */
+  earnedMonthlyIncome: Money;
   netMonthlyIncome: Money;
   grossLimit: Money;
   netLimit: Money;
@@ -289,7 +291,17 @@ export function estimateSnap(
   input: {
     householdSize: number;
     monthlyGrossIncome: number;
-    monthlyEarnedIncome?: number;
+    /**
+     * The part of that income that is EARNED — wages and self-employment.
+     *
+     * Required, and not defaulted to the gross figure. 7 CFR §273.9(d)(2)
+     * allows the 20% deduction against earned income only, and defaulting it
+     * to gross handed the deduction to a household living on Social Security
+     * or SSI: a lower net income, a net test that could flip, and a larger
+     * allotment, in the one direction this engine is not allowed to err. No
+     * caller ever passed it, so every shipped surface was that household.
+     */
+    monthlyEarnedIncome: number;
     /** A member aged 60+ or with a disability, per 7 CFR §273.9(a) and §271.2. */
     elderlyOrDisabled?: boolean;
   },
@@ -298,7 +310,10 @@ export function estimateSnap(
 ): SnapResult {
   const size = Math.max(1, Math.floor(input.householdSize));
   const gross = Money.from(Math.max(0, input.monthlyGrossIncome));
-  const earned = Money.from(Math.max(0, input.monthlyEarnedIncome ?? input.monthlyGrossIncome));
+  // Never more than the gross: the deduction is a share of income the household
+  // actually has, whatever two figures a crafted link carries.
+  const earnedNum = Math.min(Math.max(0, input.monthlyEarnedIncome), gross.toNumber());
+  const earned = Money.from(earnedNum);
 
   const monthlyLine = povertyLine(size, fpl).divide(12);
   const grossLimit = monthlyLine.multiply(data.grossIncomeLimitPctFpl / 100);
@@ -333,6 +348,7 @@ export function estimateSnap(
     grossTestApplies,
     monthlyBenefit,
     grossMonthlyIncome: gross,
+    earnedMonthlyIncome: earned,
     netMonthlyIncome: net,
     grossLimit,
     netLimit,

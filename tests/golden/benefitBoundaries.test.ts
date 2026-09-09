@@ -62,7 +62,11 @@ describe("SNAP, at exactly the income limit", () => {
     // not fail. The limit is still read back from the engine rather than
     // recomputed, so the case is on the engine's line and not on one of ours.
     const size = 1;
-    const probe = estimateSnap({ householdSize: size, monthlyGrossIncome: 1 }, snap, fpl);
+    const probe = estimateSnap(
+      { householdSize: size, monthlyGrossIncome: 1, monthlyEarnedIncome: 1 },
+      snap,
+      fpl,
+    );
     const grossLimit = probe.grossLimit.toNumber();
     expect(Number.isInteger(grossLimit), "pick a size whose limit lands on a cent").toBe(true);
     expect(grossLimit).toBeCloseTo(
@@ -73,9 +77,17 @@ describe("SNAP, at exactly the income limit", () => {
       2,
     );
 
-    const at = estimateSnap({ householdSize: size, monthlyGrossIncome: grossLimit }, snap, fpl);
+    const at = estimateSnap(
+      { householdSize: size, monthlyGrossIncome: grossLimit, monthlyEarnedIncome: grossLimit },
+      snap,
+      fpl,
+    );
     const over = estimateSnap(
-      { householdSize: size, monthlyGrossIncome: grossLimit + CENT },
+      {
+        householdSize: size,
+        monthlyGrossIncome: grossLimit + CENT,
+        monthlyEarnedIncome: grossLimit + CENT,
+      },
       snap,
       fpl,
     );

@@ -321,7 +321,12 @@ describe("the screener and the saved Report answer one household the same way", 
       // flattening the very cliff it exists to draw. This is where that shows
       // up.
       const snap = estimateSnap(
-        { householdSize: size, monthlyGrossIncome: income / 12 },
+        {
+          householdSize: size,
+          monthlyGrossIncome: income / 12,
+          // The screener and the sweep both treat their income as earnings.
+          monthlyEarnedIncome: income / 12,
+        },
         data.snap()!,
         data.fpl("contiguous")!,
       );

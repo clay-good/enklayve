@@ -354,7 +354,14 @@ export function resourcesAt(income: number, input: CliffInput, data: CliffData):
   let snapAllotment = 0;
   if (data.snap && data.fpl && data.snapRegionSupported) {
     const snap = estimateSnap(
-      { householdSize: input.householdSize, monthlyGrossIncome: gross / 12 },
+      {
+        householdSize: input.householdSize,
+        monthlyGrossIncome: gross / 12,
+        // This sweep's income is wages — it is a curve of what one more dollar
+        // of EARNINGS does — so all of it is earned, and 7 CFR §273.9(d)(2)'s
+        // 20% deduction applies to all of it.
+        monthlyEarnedIncome: gross / 12,
+      },
       data.snap,
       data.fpl,
     );

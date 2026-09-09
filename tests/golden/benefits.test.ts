@@ -255,13 +255,62 @@ describe("SNAP eligibility (FY2026, contiguous)", () => {
     // Poverty line(3) = 27,320/yr → 2,276.67/mo. Gross 2,200 ≤ 130% (2,959.67).
     // Net = 2,200 − 209 standard − 440 earned (20%) = 1,551 ≤ 100% (2,276.67).
     // Benefit = 785 max − 30% × 1,551 = 785 − 465.30 = 319.70.
-    const r = estimateSnap({ householdSize: 3, monthlyGrossIncome: 2200 }, snap, fpl);
+    const r = estimateSnap(
+      { householdSize: 3, monthlyGrossIncome: 2200, monthlyEarnedIncome: 2200 },
+      snap,
+      fpl,
+    );
     expect(r.eligible).toBe(true);
     expect(r.monthlyBenefit.roundToCents().toNumber()).toBeCloseTo(319.7, 2);
   });
 
+  it("takes the 20% deduction on earnings only (7 CFR §273.9(d)(2))", () => {
+    // The parameter existed and no caller passed it, and it defaulted to the
+    // WHOLE income — so a household living on Social Security or SSI was given
+    // a deduction the regulation allows against earned income only: a lower
+    // net income, a net test that could flip, and a larger allotment, in the
+    // one direction this engine says it never errs.
+    const working = estimateSnap(
+      { householdSize: 3, monthlyGrossIncome: 2200, monthlyEarnedIncome: 2200 },
+      snap,
+      fpl,
+    );
+    const onBenefits = estimateSnap(
+      { householdSize: 3, monthlyGrossIncome: 2200, monthlyEarnedIncome: 0 },
+      snap,
+      fpl,
+    );
+    // 20% of $2,200 is $440 of net income, and 30% of that is the benefit.
+    expect(onBenefits.netMonthlyIncome.subtract(working.netMonthlyIncome).toNumber()).toBeCloseTo(
+      440,
+      2,
+    );
+    expect(onBenefits.monthlyBenefit.toNumber()).toBeLessThan(working.monthlyBenefit.toNumber());
+    expect(onBenefits.earnedMonthlyIncome.isZero()).toBe(true);
+
+    // Half earned is half the deduction — it is a share, not a switch.
+    const half = estimateSnap(
+      { householdSize: 3, monthlyGrossIncome: 2200, monthlyEarnedIncome: 1100 },
+      snap,
+      fpl,
+    );
+    expect(half.netMonthlyIncome.subtract(working.netMonthlyIncome).toNumber()).toBeCloseTo(220, 2);
+
+    // And earnings past the gross figure are not a bigger deduction.
+    const overstated = estimateSnap(
+      { householdSize: 3, monthlyGrossIncome: 2200, monthlyEarnedIncome: 9_999_999 },
+      snap,
+      fpl,
+    );
+    expect(overstated.netMonthlyIncome.toNumber()).toBe(working.netMonthlyIncome.toNumber());
+  });
+
   it("fails the gross income test at high income", () => {
-    const r = estimateSnap({ householdSize: 1, monthlyGrossIncome: 3000 }, snap, fpl);
+    const r = estimateSnap(
+      { householdSize: 1, monthlyGrossIncome: 3000, monthlyEarnedIncome: 3000 },
+      snap,
+      fpl,
+    );
     expect(r.passedGrossTest).toBe(false);
     expect(r.eligible).toBe(false);
     expect(r.monthlyBenefit.isZero()).toBe(true);
@@ -269,7 +318,11 @@ describe("SNAP eligibility (FY2026, contiguous)", () => {
 
   it("floors an eligible small household at the minimum benefit", () => {
     // hh1, $1,500/mo: passes both tests, computed benefit rounds below the $24 floor.
-    const r = estimateSnap({ householdSize: 1, monthlyGrossIncome: 1500 }, snap, fpl);
+    const r = estimateSnap(
+      { householdSize: 1, monthlyGrossIncome: 1500, monthlyEarnedIncome: 1500 },
+      snap,
+      fpl,
+    );
     expect(r.eligible).toBe(true);
     expect(r.monthlyBenefit.toNumber()).toBe(24);
   });
