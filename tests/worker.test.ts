@@ -184,4 +184,24 @@ describe("a sub-resource the asset server could not find", () => {
     };
     expect((await get("/assets/gone.js", missing)).status).toBe(404);
   });
+
+  it("does not cache a real error, whatever the path would have earned", async () => {
+    // The cache policy is chosen from the path, so a genuine 404 on a hashed
+    // asset was `immutable` for a year — the same permanence the fallback
+    // branch refuses, reached from the other side — and an error anywhere else
+    // was cached for an hour.
+    const missing: Env = {
+      ASSETS: { fetch: async () => new Response("nope", { status: 404 }) },
+    };
+    expect((await get("/assets/gone.js", missing)).headers.get("Cache-Control")).toBe("no-store");
+    expect((await get("/data/gone.json", missing)).headers.get("Cache-Control")).toBe("no-store");
+
+    const broken: Env = {
+      ASSETS: { fetch: async () => new Response("boom", { status: 500 }) },
+    };
+    expect((await get("/index.html", broken)).headers.get("Cache-Control")).toBe("no-store");
+
+    // And the security headers still ride along, because an error is a response.
+    expect((await get("/assets/gone.js", missing)).headers.get("X-Frame-Options")).toBe("DENY");
+  });
 });

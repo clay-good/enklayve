@@ -161,7 +161,13 @@ export default {
     for (const [key, value] of Object.entries(securityHeaders(url.pathname))) {
       headers.set(key, value);
     }
-    headers.set("Cache-Control", cacheControlFor(url.pathname));
+    // A cache policy is a statement about a document, and an error is not the
+    // document. The path decides the policy here, so a genuine 404 on
+    // `/assets/x.js` earned `immutable` for a year — the same permanence the
+    // fallback branch above refuses, arrived at from the other direction — and
+    // an error on any other path was cached for an hour. Only a response that
+    // is actually the asset gets the asset's policy.
+    headers.set("Cache-Control", assetResponse.ok ? cacheControlFor(url.pathname) : "no-store");
 
     return new Response(assetResponse.body, {
       status: assetResponse.status,

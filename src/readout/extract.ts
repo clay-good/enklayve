@@ -411,11 +411,16 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
       // directly, and only when the page names exactly one. See
       // {@link detectFilingStatuses}: the form prints all five, so a window
       // holding several is the option list rather than the answer, and the
-      // checked box is a glyph the text layer does not carry. Reported without
-      // a `target`, the way an un-annualized pay stub is, so confirming it
-      // cannot write a guess into My Situation — the tiles ask with a
-      // five-option select, which is a better place to be asked than a field
-      // that looks already read.
+      // checked box is a glyph the text layer does not carry.
+      //
+      // The two branches below answer differently on purpose. Exactly one
+      // status named is a status that was read, and it carries a `target` so
+      // confirming it fills My Situation like any other field. Several is the
+      // option list, and it carries **no** target and no value — the way an
+      // un-annualized pay stub is reported — so confirming cannot write a guess
+      // into a field that decides which bracket schedule every tile uses. The
+      // tiles ask with a five-option select, which is a better place to be
+      // asked than a field that looks already read.
       const statuses = detectFilingStatuses(text);
       if (statuses.length === 1) {
         fields.push({
