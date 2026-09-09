@@ -4208,7 +4208,7 @@ export const ADAPTERS: RefreshAdapter[] = [
         "Repoint it at the 2026 instructions the day they appear",
     ),
     awaiting: {
-      what: "Oregon's 2026 Form OR-40 instructions (the indexed standard deduction, the per-status rate charts, and the Table 4 federal-subtraction phase-out)",
+      what: "Oregon's 2026 Form OR-40 instructions — for the head-of-household standard deduction, the one 2026 figure Oregon has not published; the rest were taken from the 2026 withholding formulas on 2026-09-09",
       // The booklet's URL carries the tax year, so its answering at all is the
       // whole signal. Nothing is read: arrival means a person repoints the
       // adapter and reads the diff.
@@ -4241,14 +4241,16 @@ export const ADAPTERS: RefreshAdapter[] = [
     parse: refuseUntilTheStatePublishes(
       parseStandardDeductions,
       "Nebraska has not published its 2026 Tax Calculation Schedule — the newest is 2025 " +
-        "(the 2026 URL 404s, and the 2026 final-forms page lists only the payment voucher and " +
-        "1040N-EB), and this shard is on 2026. Its 2026 Circular EN states withholding tables " +
-        "and no standard deduction at all. The shard deliberately carries the 2025 indexed " +
-        "figures forward, which its own note records; the 2025 schedule is a closed year and " +
-        "would report agreement forever. Repoint this adapter the day the 2026 schedule appears",
+        "(the 2026 URL 404s), and this shard is on 2026. The figures themselves are NOT " +
+        "waiting on it: the 2026 indexed thresholds and standard deduction were taken from " +
+        "the 2026 Form 1040N-ES rate schedule and the Tax Rate Chronologies (Rev. 2-2026) on " +
+        "2026-09-09. What this adapter waits for is a document it can PARSE — the Circular EN " +
+        "withholding tables state no standard deduction and run a six-bracket structure whose " +
+        "4.60% top deliberately exceeds the statutory 4.55%. Repoint it the day the 2026 " +
+        "schedule appears",
     ),
     awaiting: {
-      what: "Nebraska's 2026 Tax Calculation Schedule (the indexed standard deduction and the LB 754 bracket thresholds)",
+      what: "Nebraska's 2026 Tax Calculation Schedule — a parseable source for figures the shard already carries from the 2026 1040N-ES",
       arrived: {
         url: "https://revenue.nebraska.gov/about/forms/individual-income-tax-forms",
         match: /2026[^<]{0,60}Tax Calculation Schedule/i,
@@ -4303,7 +4305,7 @@ export const ADAPTERS: RefreshAdapter[] = [
         "2026 forms appear",
     ),
     awaiting: {
-      what: "Arkansas DFA's 2026 individual income tax forms (the indexed AR1000F standard deduction and the bracket-adjustment recapture band)",
+      what: "Arkansas DFA's 2026 individual income tax forms — a parseable source; the 3.7% rate and the narrowed adjustment band came from Act 2 (approved 2026-05-06) on 2026-09-09, and the 2026 AR1000ES predates the cut and still prints 3.9%",
       arrived: {
         url: "https://www.dfa.arkansas.gov/office/taxes/income-tax-administration/individual-income-tax/",
         match: /2026 Tax Forms/i,
