@@ -275,7 +275,7 @@ export const freeFilingTile: TileDefinition = {
     },
     {
       label: "MilTax, for the military community",
-      url: "https://www.militaryonesource.mil/financial-legal/tax-resource-center/",
+      url: "https://www.militaryonesource.mil/financial-legal/taxes/miltax-military-tax-services/",
     },
   ],
   related: [

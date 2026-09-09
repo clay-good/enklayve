@@ -49,8 +49,8 @@
       "minAge": null,
       "requiresMilitary": true,
       "alsoQualifies": [],
-      "note": "Run by the Department of Defense. Free electronic filing of a federal return plus up to three state returns, with no income limit.",
-      "url": "https://www.militaryonesource.mil/financial-legal/tax-resource-center/"
+      "note": "Run by the Department of Defense. Free electronic filing of a federal return plus up to five state returns, with no income limit.",
+      "url": "https://www.militaryonesource.mil/financial-legal/taxes/miltax-military-tax-services/"
     }
   ],
   "omitted": [
@@ -64,7 +64,7 @@
   "citation": {
     "sourceUrl": "https://www.irs.gov/newsroom/2026-tax-filing-season-opens-with-several-free-filing-options-available",
     "sourceDocument": "IRS, 2026 tax filing season opens with several free filing options available",
-    "sourceNote": "Free File guided-software AGI limit of $89,000 for tax year 2025 and the Free File Fillable Forms no-income-limit option are taken from the IRS 2026 filing-season release. The VITA figure (generally $69,000 or less, plus people with disabilities and taxpayers with limited English proficiency) and the TCE age-60-and-older criterion with no income limit come from the IRS Free tax return preparation for qualifying taxpayers page. Direct File is recorded under omitted: the IRS notified states it will not be available in filing season 2026 and set no launch date, and it appears in neither IRS page above. Every figure here is a filing-season threshold that moves annually, so this shard carries no grace year.",
+    "sourceNote": "Free File guided-software AGI limit of $89,000 for tax year 2025 and the Free File Fillable Forms no-income-limit option are taken from the IRS 2026 filing-season release. The VITA figure (generally $69,000 or less, plus people with disabilities and taxpayers with limited English proficiency) and the TCE age-60-and-older criterion with no income limit come from the IRS Free tax return preparation for qualifying taxpayers page. Direct File is recorded under omitted: the IRS notified states it will not be available in filing season 2026 and set no launch date, it appears in neither IRS page above, and its own page now 404s. MilTax's five-state figure is from Military OneSource's MilTax comparison table; it read three until 2026-09-09. Every figure here is a filing-season threshold that moves annually, so this shard carries no grace year.",
     "effectiveYear": 2026,
     "dateRetrieved": "2026-08-28"
   }

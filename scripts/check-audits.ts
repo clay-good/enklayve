@@ -151,6 +151,7 @@ export const SUBJECTS: Record<string, string[]> = {
   "Uniform Lifetime Table": ["rmd-uniform-lifetime-2024"],
   "Series I savings bonds": ["treasury-bonds-2024"],
   Medicaid: ["medicaid-2024"],
+  "Free filing": ["free-filing-2026"],
 };
 
 /**
