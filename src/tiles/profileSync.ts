@@ -53,7 +53,16 @@ export interface SharedFields {
 /** Write the shared fields back to the profile, marked as typed by the user. */
 export function rememberShared(profile: SituationStore, fields: SharedFields): void {
   if (fields.filingStatus !== undefined) profile.set("filingStatus", fields.filingStatus);
-  if (fields.stateCode) profile.set("stateCode", fields.stateCode);
+  // An empty state is written through for the same reason an empty county is,
+  // and for a bigger number. Every state dropdown on the site offers "Federal
+  // and FICA only (no state)", `SituationValues.stateCode` reads `""` as that
+  // choice, and every tile resolves the profile with `?? default` so `""`
+  // survives. This line tested truthiness from Phase 12 -- written before the
+  // blank option meant anything -- so the choice reached the screen and never
+  // reached the profile: once any state was remembered it was permanent for the
+  // session, and the next tile, My Situation, My Plan and the Report all went
+  // on charging a state the reader had explicitly deselected.
+  if (fields.stateCode !== undefined) profile.set("stateCode", fields.stateCode);
   // An empty county is written through: moving from Maryland to Texas must
   // clear the county, not leave Montgomery behind for the next tile to charge.
   if (fields.county !== undefined) profile.set("county", fields.county);

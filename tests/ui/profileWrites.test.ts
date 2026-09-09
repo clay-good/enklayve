@@ -410,6 +410,70 @@ describe("what a calculator may write into My Situation", () => {
     ).toEqual(EXPECTED_ENUMS);
   });
 
+  /**
+   * The sweep above walks `.filter(Boolean)` — every option of every select
+   * except the blank one. For `stateCode` the blank one is not an absence: it
+   * is "Federal and FICA only (no state)", a real answer five calculators
+   * offer, and `SituationValues.stateCode` reads `""` as that answer. So the
+   * one option a reader could not make stick was the one option the map never
+   * tried, and `rememberShared` suppressed it from Phase 12 until 2026-09-09.
+   *
+   * Widening the walk would not have caught it, either: the row it produces is
+   * the same string a real state produces, so the pin stays green whether or
+   * not the blank is written. The clearing has to be asserted as clearing.
+   *
+   * Derived from the catalog rather than listed, so a sixth state dropdown is
+   * covered the day it mounts.
+   */
+  it("lets a reader take their state back off, everywhere it can be put on", () => {
+    const swept: string[] = [];
+    for (const tile of CALCULATORS) {
+      const root = document.createElement("div");
+      const profile = new SituationStore();
+      tile.mount!({
+        root,
+        params: new URLSearchParams(),
+        setParams: () => {},
+        permalink: () => "https://enklayve.com/#/x",
+        navigate: () => {},
+        locale: "en-US",
+        data,
+        profile,
+      } as TileContext);
+
+      for (const select of root.querySelectorAll<HTMLSelectElement>("select")) {
+        const options = [...select.options].map((o) => o.value);
+        if (!options.includes("")) continue;
+        const state = options.find((v) => v === "md") ?? options.find(Boolean);
+        if (state === undefined) continue;
+
+        select.value = state;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+        select.dispatchEvent(new Event("input", { bubbles: true }));
+        if (profile.get("stateCode") !== state) continue;
+
+        select.value = "";
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+        select.dispatchEvent(new Event("input", { bubbles: true }));
+        swept.push(tile.id);
+        expect(
+          profile.get("stateCode"),
+          `${tile.id}'s "${labelOf(root, select)}" put a state into My Situation and could ` +
+            "not take it back out — every tile the reader opens next still charges it",
+        ).toBe("");
+      }
+    }
+    // A sweep that reached no dropdown would assert nothing.
+    expect(swept.sort()).toEqual([
+      "cliff-explorer",
+      "marginal-explorer",
+      "marginal-reality",
+      "paycheck-optimizer",
+      "quarterly-taxes",
+      "take-home",
+    ]);
+  });
+
   it("asks about somebody else's money without writing it down", () => {
     // The two fixes above, stated as behavior rather than as an absence from a
     // list, so they survive a rewrite of the map.

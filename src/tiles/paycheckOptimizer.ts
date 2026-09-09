@@ -212,7 +212,7 @@ export function mountPaycheckOptimizer(ctx: TileContext): void {
     ctx.setParams(writeFields(fields));
     rememberShared(profile, {
       filingStatus: fields.fs,
-      stateCode: fields.state || undefined,
+      stateCode: fields.state,
       county: rememberableCounty(
         fields.state ? (data?.state(fields.state) ?? null) : null,
         fields.local,

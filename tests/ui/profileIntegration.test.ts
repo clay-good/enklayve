@@ -2,6 +2,8 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { mountTakeHome } from "../../src/tiles/takeHome";
 import { mountFederalIncomeTax } from "../../src/tiles/federalIncomeTax";
 import { mountEducationCredits } from "../../src/tiles/educationCredits";
+import { mountQuarterlyTaxes } from "../../src/tiles/quarterlyTaxes";
+import { mountPaycheckOptimizer } from "../../src/tiles/paycheckOptimizer";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import { extractDocument } from "../../src/readout/extract";
@@ -127,5 +129,57 @@ describe("a two-value control writing a five-value field", () => {
     mfj.checked = false;
     mfj.dispatchEvent(new Event("change"));
     expect(profile.get("filingStatus")).toBe("single");
+  });
+});
+
+/**
+ * `stateCode` is the one shared enum with a meaningful empty value: every state
+ * dropdown on the site offers "Federal and FICA only (no state)", and `""` is
+ * what that choice is. `rememberShared` tested it for truthiness, so the choice
+ * was the only answer on the site a reader could not give — once any state had
+ * been remembered, deselecting it changed the tile in front of them and nothing
+ * else. The next tile, My Situation, My Plan and the Report all went on
+ * charging the state they had just turned off.
+ *
+ * Both call shapes are pinned, because the two that wrote `fields.state ||
+ * undefined` were suppressing the same value a second time, one layer up.
+ */
+describe("a reader who deselects their state", () => {
+  it("clears it from the profile, from a tile that passes the select through", () => {
+    const profile = new SituationStore();
+    const root = mount(mountTakeHome, new URLSearchParams({ st: "md" }), profile);
+    const st = root.querySelector<HTMLSelectElement>('select[name="st"]')!;
+    st.dispatchEvent(new Event("change"));
+    expect(profile.get("stateCode")).toBe("md");
+
+    st.value = "";
+    st.dispatchEvent(new Event("change"));
+    expect(profile.get("stateCode")).toBe("");
+  });
+
+  it("clears it from a tile that used to convert the blank to undefined", () => {
+    for (const mountFn of [mountQuarterlyTaxes, mountPaycheckOptimizer]) {
+      const profile = new SituationStore();
+      const root = mount(mountFn, new URLSearchParams({ st: "md" }), profile);
+      const st = root.querySelector<HTMLSelectElement>('select[name="st"]')!;
+      st.value = "md";
+      st.dispatchEvent(new Event("change"));
+      expect(profile.get("stateCode")).toBe("md");
+
+      st.value = "";
+      st.dispatchEvent(new Event("change"));
+      expect(profile.get("stateCode")).toBe("");
+    }
+  });
+
+  it("carries the empty state to the next tile rather than a stale one", () => {
+    const profile = new SituationStore();
+    const root = mount(mountTakeHome, new URLSearchParams({ st: "md" }), profile);
+    const st = root.querySelector<HTMLSelectElement>('select[name="st"]')!;
+    st.value = "";
+    st.dispatchEvent(new Event("change"));
+
+    const next = mount(mountTakeHome, new URLSearchParams(), profile);
+    expect(next.querySelector<HTMLSelectElement>('select[name="st"]')?.value).toBe("");
   });
 });
