@@ -52,9 +52,22 @@ jobs:
       # `--with-deps` runs `apt-get update`, which fails hard if ANY configured
       # repository is inconsistent — and the runner image ships Google's Chrome
       # repo, which on 2026-09-09 served a Release file whose hashes did not
-      # match its own Packages.gz for hours. That took `main` red twice on a
-      # docs-only commit. Nothing here needs that repo: Playwright downloads its
-      # own Chromium build, and the OS packages it wants come from Ubuntu's.
-      - run: sudo rm -f /etc/apt/sources.list.d/google-chrome.list
+      # match its own Packages.gz for hours. That took `main` red on a docs-only
+      # commit. Nothing here needs that repo: Playwright downloads its own
+      # Chromium build, and the OS packages it wants come from Ubuntu's.
+      #
+      # Matched by CONTENT rather than by filename: the first attempt removed
+      # `google-chrome.list` and the job failed identically, because the image
+      # declares it somewhere else (deb822 `.sources` among them). Anything
+      # naming dl.google.com goes; nothing else is touched, and the step prints
+      # what it removed so a future failure is not a mystery.
+      - name: Drop the Chrome apt repo (not needed; broke apt-get update)
+        run: |
+          set -euo pipefail
+          grep -rl 'dl\.google\.com' /etc/apt/sources.list.d/ /etc/apt/sources.list 2>/dev/null |
+            tee /dev/stderr |
+            xargs -r sudo rm -f
+          echo "remaining apt sources:"
+          ls -1 /etc/apt/sources.list.d/ 2>/dev/null || true
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
