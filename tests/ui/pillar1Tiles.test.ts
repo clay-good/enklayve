@@ -544,6 +544,17 @@ describe("Treasury I Bond tile", () => {
     );
   });
 
+  it("names the annual purchase limit when the amount is over it", () => {
+    const rates = data.treasuryBonds()!.rates;
+    const period = rates[rates.length - 3]!.period;
+    const over = mount(mountSavingsBond, new URLSearchParams({ amt: "50000", period })).root;
+    expect(labels(over)).toContain("More than one person may buy in a year");
+    expect(over.textContent).toContain("$10,000");
+
+    const within = mount(mountSavingsBond, new URLSearchParams({ amt: "10000", period })).root;
+    expect(labels(within)).not.toContain("More than one person may buy in a year");
+  });
+
   it("only offers purchase periods present in the dataset", () => {
     const { root } = mount(mountSavingsBond, new URLSearchParams());
     const opts = Array.from(

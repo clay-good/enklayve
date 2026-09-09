@@ -99,6 +99,15 @@ export function mountSavingsBond(ctx: TileContext): void {
 
     const lines: BreakdownLine[] = [
       { label: "Purchase amount", value: fmt(result.purchaseAmount) },
+      ...(result.purchaseAmount.greaterThan(bonds!.annualPurchaseLimit)
+        ? [
+            {
+              label: "More than one person may buy in a year",
+              value: `The limit is ${fmt(Money.from(bonds!.annualPurchaseLimit))} per person per calendar year, and since 2025 electronic is the only way to buy. Valued as entered — a couple's combined holding is a real figure.`,
+              citation: cite,
+            },
+          ]
+        : []),
       {
         label: "Fixed rate (locked at purchase)",
         value: pct(result.fixedRate),

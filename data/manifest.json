@@ -78,7 +78,7 @@
       "sourceUrl": "https://www.treasurydirect.gov/savings-bonds/i-bonds/i-bonds-interest-rates/",
       "sourceDocument": "U.S. Treasury (TreasuryDirect), Series I Savings Bond fixed rate and semiannual inflation rate by rate period (through May 2026)",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "14aa16dc3b21921a2bd2290bd8d2b0ec71973997265e079900f8aecfd887c91e"
+      "contentHash": "d9866d6ebb17a438105158c5805e95540246310a07d0546c72585cd0e410a8d3"
     },
     {
       "id": "cpi-u-annual",
@@ -897,7 +897,7 @@
       "sourceUrl": "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
       "sourceDocument": "IRS Notice 2025-67 (2026 IRA deduction phase-out ranges); IRC §219(g)",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "4e640063bb1547f5d82b5f1700383be693b0005020950c73c88d1cde772c986b"
+      "contentHash": "7056cd088473786f49d1a3a6c9211cbd1ad8332bb73818169a30b908b481efdb"
     },
     {
       "id": "social-security-taxation-2024",

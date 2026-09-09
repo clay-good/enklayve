@@ -762,6 +762,11 @@ export type RmdData = z.infer<typeof RmdSchema>;
 
 /** Treasury I-bond / savings-bond fixed and inflation rates (TreasuryDirect). */
 export const TreasuryBondsSchema = z.object({
+  /**
+   * What one person may buy in a calendar year, electronically — since
+   * 2025-01-01 the only way to buy an I bond at all.
+   */
+  annualPurchaseLimit: z.number().gt(0),
   rates: z
     .array(
       z.object({

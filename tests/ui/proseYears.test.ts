@@ -152,6 +152,10 @@ const NOT_A_TAX_YEAR: Record<string, Record<string, string>> = {
       "the first year §414(v)(7)'s Roth catch-up requirement binds — Notice 2023-62 gave an administrative transition through 2025, so this is a fixed date in history rather than the shard's tax year, and it stays 2026 when the shard rolls",
   },
   "tiles/eobChecker.ts": { "2022": "when the No Surprises Act took effect" },
+  "tiles/savingsBond.ts": {
+    "2025":
+      "when paper I bonds ended and electronic became the only way to buy — history, not a figure that rolls",
+  },
   "tiles/garnishment.ts": { "2009": "when the federal minimum wage last moved" },
   "data/statutes.ts": {
     "2026": "the tax year box 14b of the W-2 was added for",
