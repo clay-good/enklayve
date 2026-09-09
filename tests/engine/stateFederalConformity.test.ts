@@ -71,6 +71,46 @@ describe("states that start from federal taxable income", () => {
     expect(ds.federal.federalDeductionConformity).toBeUndefined();
   });
 
+  it("carries the §63(f) flag on every state whose deduction IS the federal one", () => {
+    // The §63(b) block above is pinned to a hand-kept roster, and the §63(c)
+    // flag beside it was pinned to nothing — so it could be added to a state or
+    // missed on one silently, and it was missed: seven shards carry the federal
+    // standard deduction verbatim and got the flag, and two more carry the same
+    // three figures and did not.
+    //
+    // Derived rather than listed: a shard whose standard deduction equals the
+    // federal one, figure for figure, is either conforming to §63(c) or
+    // coinciding with it by accident in the same year — and the second needs a
+    // reason written down, not silence.
+    const federalStd = ds.federal.standardDeductionByFilingStatus;
+    const copiesFederal = codes
+      .filter((c) => {
+        const own = state(c).standardDeductionByFilingStatus;
+        return (["single", "married_jointly", "head_of_household"] as const).every(
+          (k) => own[k] !== undefined && own[k] === federalStd[k],
+        );
+      })
+      .sort();
+    // Arizona is the coincidence the rule needs an exception for, and it is why
+    // "copies the figures" cannot be the whole test. A.R.S. §43-1041(A) sets
+    // Arizona's OWN amounts and subsection (H) indexes them "in the same manner
+    // in which the federal BASIC standard deduction is adjusted" — so they
+    // track the federal figures without being them, and "basic" is the term of
+    // art that excludes §63(f). Arizona gives its own age allowance instead:
+    // $2,100 a person on Form 140 line 38, which this engine does not model.
+    const COINCIDENCE: Record<string, string> = {
+      az: "sets its own amounts under §43-1041(A), indexed by §63's method for the BASIC deduction, and gives a separate $2,100 age-65 exemption instead of §63(f)",
+    };
+    const flagged = codes.filter((c) => state(c).conformsToFederalAgedAdditional).sort();
+    expect(copiesFederal.length).toBeGreaterThan(5);
+    expect(
+      flagged,
+      "a shard copying the federal deduction that neither answers §63(f) nor says why it only looks like it does",
+    ).toEqual(copiesFederal.filter((c) => !(c in COINCIDENCE)));
+    // And the excuse cannot outlive the state it was written for.
+    expect(Object.keys(COINCIDENCE).filter((c) => !copiesFederal.includes(c))).toEqual([]);
+  });
+
   it("deducts all five in North Dakota, Montana, Idaho, and Iowa", () => {
     for (const code of ["nd", "mt", "id", "ia"]) {
       const r = evaluateTaxes(FILER, { federal: ds.federal, state: state(code), fica: ds.fica });
@@ -172,14 +212,16 @@ describe("states that start from federal taxable income", () => {
       expect(withAll.state!.deduction.qualifiedTips.toNumber()).toBe(0);
     }
 
-    // New Mexico and DC are the halfway case, and the reason §63(f) cannot live
-    // in the §63(b) block. Neither starts from federal taxable income, so none
-    // of the five reaches them — but both define their deduction as the one in
-    // §63 ("an amount equal to the standard deduction allowed ... by Section
-    // 63", NMSA 1978 §7-2-2(N)(1); "the standard deduction as prescribed in
-    // section 63(c)", DC Code §47-1801.04(44)(A)), and §63(f) is inside §63(c).
-    // The 2026 D-40ES prints the $1,650/$2,050 figures on the form itself.
-    for (const code of ["nm", "dc"]) {
+    // New Mexico, DC and Missouri are the halfway case, and the reason §63(f)
+    // cannot live in the §63(b) block. None of them starts from federal taxable
+    // income, so none of the five reaches them — but each defines its deduction
+    // as the one in §63 ("an amount equal to the standard deduction allowed ...
+    // by Section 63", NMSA 1978 §7-2-2(N)(1); "the standard deduction as
+    // prescribed in section 63(c)", DC Code §47-1801.04(44)(A); "the Missouri
+    // standard deduction shall be the allowable federal standard deduction",
+    // §143.131.2 RSMo), and §63(f) is inside §63(c). Both the 2026 D-40ES and
+    // the MO-1040 instructions print the aged additional on the form itself.
+    for (const code of ["nm", "dc", "mo"]) {
       const ctx = { federal: ds.federal, state: state(code), fica: ds.fica };
       const bare = evaluateTaxes({ filingStatus: "single", wages: 62_000 }, ctx);
       const withAll = evaluateTaxes(FILER, ctx);
