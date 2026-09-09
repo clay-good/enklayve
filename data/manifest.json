@@ -520,7 +520,7 @@
       "sourceUrl": "https://www.ksrevenue.gov/incomebook25.html",
       "sourceDocument": "Kansas DOR 2025 income tax (SB 1, 2024 special session): two rates 5.20%/5.58%, standard deduction & exemption",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "9a55cefed9fa4e53b3e4df51b0d49fb7d7c2612bd9d469e91c7f432ec407ed1e"
+      "contentHash": "8a1f56057e18d0baa722813d3355201b3df9d805cb6decf5d3bc9b7575565847"
     },
     {
       "id": "state-de-income-tax-2024",
@@ -611,7 +611,7 @@
       "sourceUrl": "https://www.revenue.wi.gov/TaxForms2026/2026-Form1-ES-Inst.pdf",
       "sourceDocument": "Wisconsin DOR 2026 Form 1-ES Instructions, D-101A (R. 1-26) — 2026 Tax Rate Schedules + 2026 Standard Deduction schedules (Wis. Stat. §§71.05(23), 71.06)",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "3a2882e99cff01133188d97ec3564fb566288adab13b1b246c3cbfaa4eaa084b"
+      "contentHash": "b033e25702ef385f383fb6319c929161586783343309ea2755ccd295955f79cc"
     },
     {
       "id": "state-hi-income-tax-2024",
@@ -689,7 +689,7 @@
       "sourceUrl": "https://www.revenue.alabama.gov/wp-content/uploads/2026/01/25f40bk.pdf",
       "sourceDocument": "Alabama DOR Form 40 (2025): 2%/4%/5% brackets, sliding standard deduction, $1,500/$3,000 exemption, federal-tax deduction (Ala. Code §40-18-5/-15/-19)",
       "dateRetrieved": "2026-06-08",
-      "contentHash": "0881ccf574fbfb7656019b3ac91966441e8560504f759ec5dded8572167cdaa3"
+      "contentHash": "1f7004b1cbe40d795f6936686ab6e812a20d6c1a411da150a4e2e8bc1d64e5e5"
     },
     {
       "id": "state-or-income-tax-2024",
@@ -754,7 +754,7 @@
       "sourceUrl": "https://portal.ct.gov/drs/individuals/resident-income-tax/tax-information",
       "sourceDocument": "Connecticut DRS Form CT-1040 Tax Calculation Schedule (2025), Tables A–E: brackets, exemption phase-out, recapture, personal credit (Conn. Gen. Stat. §12-700)",
       "dateRetrieved": "2026-06-08",
-      "contentHash": "bd0a7f97156801d5bb66508e5751d2579fb695689f2594a4382b32d616fa103c"
+      "contentHash": "eeb70dffcc4267acf05c633259dc4f1111f4797743c7e3b4b3a60dfae74bbbd8"
     },
     {
       "id": "federal-poverty-level-2024-contiguous",

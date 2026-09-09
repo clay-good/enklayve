@@ -287,7 +287,7 @@ function computeState(
   // one of two equivalent forms (see StandardDeductionPhaseOutSchema):
   //  • divisor (South Carolina's SCIAD, S.C. Code §12-6-1140(15)): reduce by
   //    `standard × (AGI − threshold) / divisor`, proportional to the deduction.
-  //  • reductionRate (Wisconsin, Wis. Stat. §71.05(23)(a)): reduce by
+  //  • reductionRate (Wisconsin, Wis. Stat. §71.05(22)(dp)): reduce by
   //    `rate × (AGI − threshold)`, a flat percentage of income above the
   //    threshold (single 12%, joint 19.778%), independent of the deduction.
   // Both are full at/below the threshold; above it the deduction slides toward
@@ -297,7 +297,7 @@ function computeState(
   // A `secondSegment` adds Wisconsin's two-line head-of-household schedule: a higher
   // base sliding faster until it meets the flatter single line, which then carries it
   // to zero. Both lines run from the same threshold, so "whichever gives more" is the
-  // schedule exactly (Wis. Stat. §71.05(23)(a)3.).
+  // schedule exactly (Wis. Stat. §71.05(22)(dp)3.).
   const phaseOut = standardDeductionPhaseOutFor(state, input.filingStatus);
   if (phaseOut) {
     const over = agi.toNumber() - phaseOut.agiThreshold;

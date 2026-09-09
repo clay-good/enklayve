@@ -830,6 +830,7 @@ describe("adapters: Wisconsin (a deduction inside a phase-out schedule)", () => 
       single: 13960,
       married_jointly: 25840,
       head_of_household: 18030,
+      married_separately: 12280,
     });
     // Married filing SEPARATELY sits directly under joint, and $12,280 never
     // reaches the joint slot.

@@ -206,7 +206,7 @@ export type TaxpayerCreditData = z.infer<typeof TaxpayerCreditSchema>;
  *    `standardDeduction × (AGI − agiThreshold) / divisor`, reaching zero once AGI
  *    exceeds the threshold by `divisor` (the fraction reaches one). The reduction
  *    is proportional to the deduction. Statutory cite: S.C. Code §12-6-1140(15).
- *  - **`reductionRate`** (Wisconsin Wis. Stat. §71.05(23)(a)): the deduction is
+ *  - **`reductionRate`** (Wisconsin Wis. Stat. §71.05(22)(dp)): the deduction is
  *    reduced by `reductionRate × (AGI − agiThreshold)` — a flat percentage of
  *    income above the threshold, *independent* of the deduction's size — reaching
  *    zero once that reduction equals the deduction (single 12%, joint 19.778%).
@@ -229,7 +229,7 @@ export type TaxpayerCreditData = z.infer<typeof TaxpayerCreditSchema>;
  * omission the engine does not make.
  *
  * `secondSegment` carries the **two-segment** variant — Wisconsin's head-of-household
- * schedule (Wis. Stat. §71.05(23)(a)3., printed as the "Schedule for Head of
+ * schedule (Wis. Stat. §71.05(22)(dp)3., printed as the "Schedule for Head of
  * Household" table in the DOR's Form 1-ES instructions). Head of household starts
  * from a *higher* base ($18,030 for 2026) and slides *faster* (22.515%) until the
  * curve meets the single schedule ($13,960 sliding at 12% from the same threshold),

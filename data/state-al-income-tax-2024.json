@@ -3,7 +3,7 @@
   "name": "Alabama",
   "taxYear": 2026,
   "hasIncomeTax": true,
-  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household", "married_separately"],
   "bracketsByFilingStatus": {
     "single": [
       { "lowerBound": 0, "rate": 0.02 },
@@ -24,7 +24,8 @@
   "standardDeductionByFilingStatus": {
     "single": 3000,
     "married_jointly": 8500,
-    "head_of_household": 5200
+    "head_of_household": 5200,
+    "married_separately": 4250
   },
   "personalExemptionByFilingStatus": {
     "single": 1500,
@@ -33,6 +34,11 @@
   },
   "standardDeductionPhaseOut": {
     "byFilingStatus": {
+      "married_separately": {
+        "agiThreshold": 12750,
+        "reductionRate": 0.352,
+        "floor": 2500
+      },
       "single": { "agiThreshold": 25500, "reductionRate": 0.05, "floor": 2500 },
       "married_jointly": { "agiThreshold": 25500, "reductionRate": 0.35, "floor": 5000 },
       "head_of_household": { "agiThreshold": 25500, "reductionRate": 0.27, "floor": 2500 }

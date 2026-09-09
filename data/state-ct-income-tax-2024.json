@@ -3,7 +3,7 @@
   "name": "Connecticut",
   "taxYear": 2026,
   "hasIncomeTax": true,
-  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household"],
+  "supportedFilingStatuses": ["single", "married_jointly", "head_of_household", "married_separately"],
   "bracketsByFilingStatus": {
     "single": [
       { "lowerBound": 0, "rate": 0.02 },
@@ -36,10 +36,15 @@
   "standardDeductionByFilingStatus": {
     "single": 15000,
     "married_jointly": 24000,
-    "head_of_household": 19000
+    "head_of_household": 19000,
+    "married_separately": 12000
   },
   "standardDeductionPhaseOut": {
     "byFilingStatus": {
+      "married_separately": {
+        "agiThreshold": 24000,
+        "reductionRate": 1
+      },
       "single": { "agiThreshold": 30000, "reductionRate": 1 },
       "married_jointly": { "agiThreshold": 48000, "reductionRate": 1 },
       "head_of_household": { "agiThreshold": 38000, "reductionRate": 1 }

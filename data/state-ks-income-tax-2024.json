@@ -6,7 +6,8 @@
   "supportedFilingStatuses": [
     "single",
     "married_jointly",
-    "head_of_household"
+    "head_of_household",
+    "married_separately"
   ],
   "bracketsByFilingStatus": {
     "single": [
@@ -43,7 +44,8 @@
   "standardDeductionByFilingStatus": {
     "single": 3605,
     "married_jointly": 8240,
-    "head_of_household": 6180
+    "head_of_household": 6180,
+    "married_separately": 4120
   },
   "personalExemptionByFilingStatus": {
     "single": 9160,

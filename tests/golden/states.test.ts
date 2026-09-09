@@ -181,6 +181,43 @@ describe("graduated states", () => {
     expect(cents(r.state!.incomeTax)).toBe(cents(bare.state!.incomeTax));
   });
 
+  it("gives a separate filer their own schedule where the state writes one", () => {
+    // `fallbackChain` maps married-filing-separately to SINGLE, which is this
+    // engine's documented convention for a status a shard does not carry — and
+    // four shards did not carry it while their statutes wrote one. A separate
+    // filer got the single figures: too LOW in Alabama and Kansas, where MFS is
+    // half the joint amount and joint is more than double single, and too HIGH
+    // in Connecticut and Wisconsin, where MFS is the smallest schedule of all.
+    const cases = [
+      // Ala. Code §40-18-15(b)(4)b.: $4,250, sliding from $12,750, floor $2,500.
+      { code: "al", mfs: 4250, single: 3000 },
+      // K.S.A. 79-32,119(d), on the separate-federal-return basis: $4,120.
+      { code: "ks", mfs: 4120, single: 3605 },
+      // Conn. Gen. Stat. §12-702(a)(1)(A): a $12,000 personal exemption.
+      { code: "ct", mfs: 12000, single: 15000 },
+      // Wis. Stat. §71.05(22)(dp)2., the schedule this shard's own note stated
+      // and did not seed: $12,280, sliding from $13,779 at 19.778%.
+      { code: "wi", mfs: 12280, single: 13960 },
+    ] as const;
+    for (const { code, mfs, single } of cases) {
+      const j = ds.state(code);
+      expect(j.standardDeductionByFilingStatus.married_separately, code).toBe(mfs);
+      expect(j.standardDeductionByFilingStatus.single, code).toBe(single);
+      expect(j.supportedFilingStatuses, code).toContain("married_separately");
+      // And the engine reaches it rather than falling back. Measured on the
+      // deduction rather than on taxable income, which several of these states
+      // clamp to zero at an income low enough to sit under every phase-out —
+      // the deduction is the figure under test either way.
+      const ctx = { federal: ds.federal, state: j, fica: ds.fica };
+      const sep = evaluateTaxes({ filingStatus: "married_separately", wages: 12_000 }, ctx);
+      const sng = evaluateTaxes({ filingStatus: "single", wages: 12_000 }, ctx);
+      expect(
+        sep.state!.deduction.amount.subtract(sng.state!.deduction.amount).toNumber(),
+        code,
+      ).toBeCloseTo(mfs - single, 2);
+    }
+  });
+
   it("DC single $60k → $2,453.50", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 60000 },
