@@ -99,15 +99,38 @@ export interface CtcResult {
   credit: Money;
   /** Refundable portion available even with no tax liability (the ACTC), capped. */
   refundable: Money;
+  /**
+   * True when §24(d)(1)(B)(i) — 15% of earned income over $2,500 — is what caps
+   * the refundable portion, rather than the per-child cap. At low earnings this
+   * is the binding rule and the difference is most of the money.
+   */
+  refundableLimitedByEarnedIncome: boolean;
 }
 
 /**
  * Estimate the Child Tax Credit and its refundable portion (§4.2). The credit is
  * `perChild` per qualifying child, reduced by `phaseOutPerThousand` for every
  * $1,000 (or fraction) of MAGI above the filing-status threshold.
+ *
+ * The refundable portion (the ACTC) is the smallest of three things: the credit
+ * itself, the per-child refundable cap, and §24(d)(1)(B)(i)'s **15% of earned
+ * income over $2,500**. That third limb is the one that binds at low earnings,
+ * which is exactly where the refundable portion is the whole point — so
+ * `earnedIncome` is asked for rather than assumed. Omitting it reports the
+ * per-child cap, which is a ceiling and not an estimate.
+ *
+ * Not modeled: §24(d)(1)(B)(ii), the alternative for three or more qualifying
+ * children (social security taxes over the earned income credit). It can only
+ * raise the refundable amount, so this is a floor for those households.
  */
 export function estimateCtc(
-  input: { qualifyingChildren: number; magi: number; married: boolean },
+  input: {
+    qualifyingChildren: number;
+    magi: number;
+    married: boolean;
+    /** Earned income for §24(d)(1)(B)(i). Absent reports the per-child cap. */
+    earnedIncome?: number;
+  },
   data: EitcCtcData,
 ): CtcResult {
   const kids = Math.max(0, Math.floor(input.qualifyingChildren));
@@ -118,8 +141,18 @@ export function estimateCtc(
   const steps = Math.ceil(excess / 1000);
   const reduction = steps * ctc.phaseOutPerThousand;
   const credit = Math.max(0, base - reduction);
-  const refundable = Math.min(credit, ctc.refundableCap * kids);
-  return { credit: Money.from(credit), refundable: Money.from(refundable) };
+  const capped = Math.min(credit, ctc.refundableCap * kids);
+  const phaseIn =
+    input.earnedIncome === undefined
+      ? Infinity
+      : Math.max(0, Math.max(0, input.earnedIncome) - ctc.refundableEarnedIncomeThreshold) *
+        ctc.refundablePhaseInRate;
+  const refundable = Math.min(capped, phaseIn);
+  return {
+    credit: Money.from(credit),
+    refundable: Money.from(refundable),
+    refundableLimitedByEarnedIncome: phaseIn < capped,
+  };
 }
 
 export interface SaversCreditResult {

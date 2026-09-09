@@ -217,12 +217,11 @@ const ALWAYS_UNMODELED = [
   "LIHEAP (energy assistance)",
   "TANF (cash assistance)",
   "State-only credits and programs, including state EITCs",
-  // The refundable CTC phases in with earned income (a share of earnings above a
-  // floor). The bundled shard carries the cap but not the phase-in, and we will
-  // not hard-code a statutory literal to fill the gap (SPEC §2 principle 5, "no
-  // orphan numbers"), so the refundable credit is shown at its cap. That
-  // overstates resources at very low earnings; it is disclosed, not silent.
-  "The refundable Child Tax Credit's phase-in with earned income — shown at its cap, so resources below roughly $15,000 of earnings read high",
+  // §24(d)(1)(B)(ii), the alternative refundable formula for three or more
+  // qualifying children, is the one piece of the refundable CTC still unmodeled.
+  // It can only raise the refundable amount, so the curve is a floor for those
+  // households rather than reading high, which is the safe direction here.
+  "The §24(d)(1)(B)(ii) alternative refundable Child Tax Credit for three or more children — it can only raise the figure, so this curve is a floor for those households",
 ];
 
 function clamp(value: number, min: number, max: number): number {
@@ -308,7 +307,13 @@ export function resourcesAt(income: number, input: CliffInput, data: CliffData):
       data.eitcCtc,
     );
     const ctc = estimateCtc(
-      { qualifyingChildren: input.qualifyingChildren, magi: gross, married },
+      {
+        qualifyingChildren: input.qualifyingChildren,
+        magi: gross,
+        married,
+        // The sweep's income is wages, which is what §24(d)(1)(B)(i) measures.
+        earnedIncome: gross,
+      },
       data.eitcCtc,
     );
     credits = finite(eitc.credit.toNumber()) + finite(ctc.refundable.toNumber());

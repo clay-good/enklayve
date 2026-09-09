@@ -433,8 +433,28 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * is 0.3 kB gzipped — the raise is a kilobyte because the budget is stated in
  * them, and the rest is headroom this file has spent three entries explaining
  * the need for. The levers below are unchanged and all still rejected.
+ *
+ * **289 → 290 on 2026-09-09**, for two federal credits that were each reported
+ * at a ceiling rather than an answer. §32(i) allows **no** EITC once investment
+ * income passes $12,200, and §24(d)(1)(B)(i) refunds at most **15% of earned
+ * income over $2,500** — the rule that binds at exactly the earnings where a
+ * refundable credit is the whole point. Both figures were already written down
+ * in this repo: the first in the `eitc-ctc` shard's own `sourceNote`, under
+ * "Omitted", and the second in a comment in `cliffs.ts` explaining that the
+ * shard carried the cap but not the phase-in and that a statutory literal would
+ * not be hard-coded to fill the gap. The shard carries both now, so neither is
+ * an orphan number, and a household earning $12,000 is told it can refund
+ * $1,425 rather than $3,400.
+ *
+ * The bytes are two shard fields, two `sourceNote` sentences (inlined by
+ * `connect-src 'none'` like every other shard byte), two form fields and the
+ * lines that explain them. The levers below are unchanged and all still
+ * rejected — and the cheapest of them, trimming `sourceNote` prose, is the one
+ * this raise is partly spent on, deliberately: a citation nobody can read is
+ * not a citation, and a figure the note calls omitted while the engine needs it
+ * is worse.
  */
-export const SHELL_GZIP_BUDGET_KB = 289;
+export const SHELL_GZIP_BUDGET_KB = 290;
 
 /**
  * The headroom this gate needs to be measuring the shell rather than the runner.

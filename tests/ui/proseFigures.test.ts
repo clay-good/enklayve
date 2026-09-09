@@ -158,6 +158,11 @@ const BOUND: Bound[] = [
   {
     file: "tiles/childTaxCredit.ts",
     shard: "eitc-ctc-2024",
+    path: ".childTaxCredit.refundableEarnedIncomeThreshold",
+  },
+  {
+    file: "tiles/childTaxCredit.ts",
+    shard: "eitc-ctc-2024",
     path: ".childTaxCredit.phaseOutPerThousand",
   },
   {
@@ -480,12 +485,6 @@ const NOT_A_FIGURE: Record<string, Record<string, string>> = {
   },
   "tiles/paycheckOptimizer.ts": { "$1,000": "the illustrative next dollars into each account" },
   "readout/report.ts": { "$1,000": "the same illustrative next-dollar line, in the saved report" },
-  "engine/cliffs.ts": {
-    // The refundable Child Tax Credit's phase-in is shown at its cap, and this
-    // is the earnings below which that reads high. It is a rounded "roughly",
-    // deliberately, so it is not the arithmetic of any field.
-    "$15,000": "a rounded 'roughly', in the disclosure of a modelling limit",
-  },
 };
 
 describe("a figure in the prose is the figure in the shard", () => {

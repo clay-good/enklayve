@@ -131,6 +131,35 @@ describe("Child Tax Credit (2026)", () => {
     expect(r.refundable.toNumber()).toBe(3400);
   });
 
+  it("refunds at most 15% of earned income over $2,500 (§24(d)(1)(B)(i))", () => {
+    // The per-child cap is a ceiling, not the answer. It was reported as the
+    // answer, so a household earning $12,000 was told $3,400 of a $4,400 credit
+    // could come back when the statute allows $1,425.
+    const low = estimateCtc(
+      { qualifyingChildren: 2, magi: 12_000, married: false, earnedIncome: 12_000 },
+      eitcCtc,
+    );
+    // (12,000 − 2,500) × 15% = 1,425.
+    expect(low.refundable.toNumber()).toBeCloseTo(1425, 2);
+    expect(low.refundableLimitedByEarnedIncome).toBe(true);
+
+    // Nothing earned above the floor refunds nothing, whatever the credit is.
+    const none = estimateCtc(
+      { qualifyingChildren: 2, magi: 2_500, married: false, earnedIncome: 2_500 },
+      eitcCtc,
+    );
+    expect(none.refundable.toNumber()).toBe(0);
+    expect(none.credit.toNumber()).toBe(4400);
+
+    // High enough up, the per-child cap binds again and the figure is unchanged.
+    const high = estimateCtc(
+      { qualifyingChildren: 2, magi: 100_000, married: true, earnedIncome: 100_000 },
+      eitcCtc,
+    );
+    expect(high.refundable.toNumber()).toBe(3400);
+    expect(high.refundableLimitedByEarnedIncome).toBe(false);
+  });
+
   it("phases out $50 per $1,000 over the threshold", () => {
     // MFJ threshold 400k; 410k → 10 steps × $50 = $500 off 2 × $2,200.
     const r = estimateCtc({ qualifyingChildren: 2, magi: 410000, married: true }, eitcCtc);

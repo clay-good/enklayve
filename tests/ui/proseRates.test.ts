@@ -206,6 +206,12 @@ const BOUND: RateBound[] = [
     path: ".netIncomeLimitPctFpl",
     derive: asPoints,
   },
+  {
+    file: "tiles/childTaxCredit.ts",
+    shard: "eitc-ctc-2024",
+    path: ".childTaxCredit.refundablePhaseInRate",
+  },
+
   { file: "tiles/snap.ts", shard: "snap-fy2024-contiguous", path: ".earnedIncomeDeductionRate" },
   { file: "tiles/snap.ts", shard: "snap-fy2024-contiguous", path: ".expectedContributionRate" },
 

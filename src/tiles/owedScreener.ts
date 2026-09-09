@@ -218,7 +218,12 @@ export function mountOwedScreener(ctx: TileContext): void {
     }
 
     const ctc = estimateCtc(
-      { qualifyingChildren: fields.children, magi: fields.income, married: fields.married },
+      {
+        qualifyingChildren: fields.children,
+        magi: fields.income,
+        married: fields.married,
+        earnedIncome: fields.income,
+      },
       eitcCtc,
     );
     if (ctc.credit.greaterThan(0)) {

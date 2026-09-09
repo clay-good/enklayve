@@ -70,6 +70,28 @@ describe("EITC tile", () => {
   });
 });
 
+describe("the Child Tax Credit tile and §24(d)(1)(B)(i)", () => {
+  it("refunds a share of earnings, not the per-child cap, at low earnings", () => {
+    const root = mount(
+      mountChildTaxCredit,
+      new URLSearchParams({ kids: "2", inc: "12000", earn: "12000", mfj: "0" }),
+    );
+    expect(rowValue(root, "Estimated Child Tax Credit")).toContain("$4,400");
+    // (12,000 − 2,500) × 15% = 1,425, not the 2 × $1,700 cap.
+    expect(rowValue(root, "Refundable portion (ACTC)")).toContain("$1,425");
+    expect(rowValue(root, "What caps the refundable portion")).toContain("Your earnings");
+  });
+
+  it("still reports the per-child cap when earnings clear it", () => {
+    const root = mount(
+      mountChildTaxCredit,
+      new URLSearchParams({ kids: "2", inc: "100000", earn: "100000", mfj: "1" }),
+    );
+    expect(rowValue(root, "Refundable portion (ACTC)")).toContain("$3,400");
+    expect(rowValue(root, "What caps the refundable portion")).toContain("per-child cap");
+  });
+});
+
 describe("the EITC tile and §32(i)", () => {
   it("zeroes the credit and says why when investment income is over the limit", () => {
     // The shard priced this cutoff in its own sourceNote while listing it as

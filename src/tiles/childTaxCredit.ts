@@ -16,9 +16,16 @@ interface Fields {
   qualifyingChildren: number;
   magi: number;
   married: boolean;
+  /** Earned income, which is what §24(d)(1)(B)(i) measures the refund against. */
+  earnedIncome: number;
 }
 
-const EXAMPLE: Fields = { qualifyingChildren: 2, magi: 120000, married: true };
+const EXAMPLE: Fields = {
+  qualifyingChildren: 2,
+  magi: 120000,
+  married: true,
+  earnedIncome: 120000,
+};
 
 function readFields(p: URLSearchParams, profile: SituationStore): Fields {
   return {
@@ -27,6 +34,15 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
       : (profile.get("qualifyingChildren") ?? 0),
     magi: p.has("inc") ? parseNonNegative(p.get("inc"), 0) : (profile.get("annualIncome") ?? 0),
     married: p.has("mfj") ? p.get("mfj") === "1" : marriedDefault(profile),
+    // Most households' MAGI is their earnings, so it is the default rather than
+    // a second thing to type — but it is a field, because the refundable
+    // portion is measured against earnings and a household living on investment
+    // income has none.
+    earnedIncome: p.has("earn")
+      ? parseNonNegative(p.get("earn"), 0)
+      : p.has("inc")
+        ? parseNonNegative(p.get("inc"), 0)
+        : (profile.get("annualIncome") ?? 0),
   };
 }
 
@@ -39,6 +55,7 @@ function writeFields(f: Fields): URLSearchParams {
   // Situation answer instead, so the same link opens joint for a married
   // reader and single for everyone else.
   p.set("mfj", f.married ? "1" : "0");
+  p.set("earn", String(f.earnedIncome));
   return p;
 }
 
@@ -76,13 +93,26 @@ export function mountChildTaxCredit(ctx: TileContext): void {
     value: fields.magi,
     attrs: { "aria-label": "Modified adjusted gross income", inputmode: "decimal" },
   });
+  const earnInput = el("input", {
+    type: "number",
+    name: "earn",
+    min: 0,
+    step: 1000,
+    value: fields.earnedIncome,
+    attrs: { "aria-label": "Earned income", inputmode: "decimal" },
+  });
   const mfj = marriedCheckbox(fields.married);
 
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
   function compute(): void {
     const r = estimateCtc(
-      { qualifyingChildren: fields.qualifyingChildren, magi: fields.magi, married: fields.married },
+      {
+        qualifyingChildren: fields.qualifyingChildren,
+        magi: fields.magi,
+        married: fields.married,
+        earnedIncome: fields.earnedIncome,
+      },
       eitcCtc,
     );
     const fmt = (m: Money): string => m.format(ctx.locale);
@@ -97,6 +127,13 @@ export function mountChildTaxCredit(ctx: TileContext): void {
       {
         label: "Refundable portion (ACTC)",
         value: `up to ${fmt(r.refundable)}`,
+        citation: eitcCtc.citation,
+      },
+      {
+        label: "What caps the refundable portion",
+        value: r.refundableLimitedByEarnedIncome
+          ? `Your earnings: §24(d)(1)(B)(i) refunds 15% of earned income over ${fmt(Money.from(eitcCtc.childTaxCredit.refundableEarnedIncomeThreshold))}.`
+          : "The per-child cap; your earnings clear the §24(d)(1)(B)(i) share.",
         citation: eitcCtc.citation,
       },
     ];
@@ -117,6 +154,7 @@ export function mountChildTaxCredit(ctx: TileContext): void {
       qualifyingChildren: Math.max(0, parseNonNegative(kidsInput.value, 0)),
       magi: parseNonNegative(incInput.value, 0),
       married: mfj.checked,
+      earnedIncome: parseNonNegative(earnInput.value, 0),
     };
     ctx.setParams(writeFields(fields));
     profile.set("annualIncome", fields.magi);
@@ -125,12 +163,13 @@ export function mountChildTaxCredit(ctx: TileContext): void {
   }
 
   mfj.addEventListener("change", recompute);
-  for (const i of [kidsInput, incInput]) i.addEventListener("input", recompute);
+  for (const i of [kidsInput, incInput, earnInput]) i.addEventListener("input", recompute);
 
   const tryExample = tryExampleButton(() => {
     fields = { ...EXAMPLE };
     kidsInput.value = String(fields.qualifyingChildren);
     incInput.value = String(fields.magi);
+    earnInput.value = String(fields.earnedIncome);
     mfj.checked = fields.married;
     recompute();
   });
@@ -140,6 +179,7 @@ export function mountChildTaxCredit(ctx: TileContext): void {
     { class: "tile-form", on: { submit: (e) => e.preventDefault() } },
     field("Qualifying children (under 17)", kidsInput),
     field("Modified adjusted gross income", incInput),
+    field("Earned income (wages and self-employment)", earnInput),
     el("label", { class: "checkbox" }, mfj, el("span", { text: "Married filing jointly" })),
     el("div", { class: "tile-form-actions" }, tryExample),
   );
@@ -155,7 +195,7 @@ export const childTaxCreditTile: TileDefinition = {
   description: "Child Tax Credit and the refundable Additional CTC.",
   keywords: ["ctc", "child tax credit", "actc", "dependents"],
   status: "ready",
-  how: "The Child Tax Credit is $2,200 per qualifying child under 17. It's reduced by $50 for every $1,000 (or part of $1,000) of income above $200,000 (single or head of household) or $400,000 (married filing jointly).\n\nUp to $1,700 per child is refundable, the Additional Child Tax Credit, so part of it can come back even if you owe little or no tax.",
+  how: "The Child Tax Credit is $2,200 per qualifying child under 17. It's reduced by $50 for every $1,000 (or part of $1,000) of income above $200,000 (single or head of household) or $400,000 (married filing jointly).\n\nUp to $1,700 per child is refundable, the Additional Child Tax Credit, so part of it can come back even if you owe little or no tax. That per-child figure is a ceiling, not the answer: §24(d)(1)(B)(i) refunds at most 15% of earned income over $2,500, which is what binds at lower earnings. Not modeled: §24(d)(1)(B)(ii), an alternative for three or more children that can only raise the figure, so treat this as a floor there.",
   resources: [
     {
       label: "IRS, Child Tax Credit",

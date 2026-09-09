@@ -369,7 +369,10 @@ export function buildReport(
       });
       citations.push(eitcCtc.citation);
     }
-    const ctc = estimateCtc({ qualifyingChildren, magi: income, married }, eitcCtc);
+    const ctc = estimateCtc(
+      { qualifyingChildren, magi: income, married, earnedIncome: income },
+      eitcCtc,
+    );
     if (ctc.credit.greaterThan(0)) {
       owedLines.push({ label: "Child Tax Credit (estimated)", value: usd(ctc.credit) });
       citations.push(eitcCtc.citation);

@@ -806,6 +806,10 @@ export const EitcCtcSchema = z.object({
     perChild: z.number().gte(0),
     /** Refundable portion cap per child (the Additional Child Tax Credit). */
     refundableCap: z.number().gte(0),
+    /** §24(d)(1)(B)(i): earned income below this refunds nothing. */
+    refundableEarnedIncomeThreshold: z.number().gte(0),
+    /** §24(d)(1)(B)(i): the share of earned income above that threshold. */
+    refundablePhaseInRate: z.number().gt(0).lte(1),
     /** MAGI above which the credit phases out (single / head of household). */
     phaseOutThresholdSingle: z.number().gte(0),
     /** MAGI above which the credit phases out (married filing jointly). */
