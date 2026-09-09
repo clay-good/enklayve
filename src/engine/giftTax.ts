@@ -52,7 +52,7 @@ export function giftTaxImpact(input: GiftTaxInput, data: GiftTaxData): GiftTaxRe
       annualExclusion: Money.from(data.annualExclusion),
       exclusionApplied: Money.from(gift),
       taxableGift: Money.zero(),
-      lifetimeExemptionRemaining: Money.from(data.lifetimeExemption - usedBefore),
+      lifetimeExemptionRemaining: Money.from(Math.max(0, data.lifetimeExemption - usedBefore)),
       form709Required: false,
       estimatedTaxDue: Money.zero(),
       maritalDeduction: true,
@@ -67,7 +67,10 @@ export function giftTaxImpact(input: GiftTaxInput, data: GiftTaxData): GiftTaxRe
   const taxableGift = Math.max(0, gift - exclusionNum);
 
   const usedAfter = usedBefore + taxableGift;
-  const remaining = data.lifetimeExemption - usedAfter;
+  // An exhausted exemption has none left, not a negative amount of it: the
+  // overage is what `estimatedTaxDue` is for, and reporting it twice — once as
+  // tax, once as a negative balance — reads as two separate problems.
+  const remaining = Math.max(0, data.lifetimeExemption - usedAfter);
   const overExemption = Math.max(0, usedAfter - data.lifetimeExemption);
 
   return {

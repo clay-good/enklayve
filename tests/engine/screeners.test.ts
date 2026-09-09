@@ -111,6 +111,34 @@ describe("giftTaxImpact (IRC §2503(b), §2010, 2026)", () => {
     expect(r.lifetimeExemptionRemaining.toNumber()).toBe(15000000 - 31000);
   });
 
+  it("never reports a negative lifetime exemption remaining", () => {
+    const ex = data.giftTax()!.lifetimeExemption;
+    const r = giftTaxImpact(
+      {
+        giftAmount: 1000000,
+        recipientIsSpouse: false,
+        spouseIsUSCitizen: false,
+        lifetimeExemptionUsed: ex,
+      },
+      data.giftTax()!,
+    );
+    // The overage is reported once, as tax due — not a second time as a
+    // negative amount of exemption left.
+    expect(r.lifetimeExemptionRemaining.toNumber()).toBe(0);
+    expect(r.estimatedTaxDue.toNumber()).toBeGreaterThan(0);
+
+    const spouse = giftTaxImpact(
+      {
+        giftAmount: 1000000,
+        recipientIsSpouse: true,
+        spouseIsUSCitizen: true,
+        lifetimeExemptionUsed: ex * 2,
+      },
+      data.giftTax()!,
+    );
+    expect(spouse.lifetimeExemptionRemaining.toNumber()).toBe(0);
+  });
+
   it("needs no return for a gift within the annual exclusion", () => {
     const r = giftTaxImpact(
       {
@@ -165,9 +193,10 @@ describe("giftTaxImpact (IRC §2503(b), §2010, 2026)", () => {
       data.giftTax()!,
     );
     // taxable 81,000 → used 15,071,000 → 71,000 over the $15M exemption → 40%.
+    // The 71,000 shows up as tax due, and the exemption is simply spent.
     expect(r.taxableGift.toNumber()).toBe(81000);
     expect(r.estimatedTaxDue.toNumber()).toBeCloseTo(28400, 2);
-    expect(r.lifetimeExemptionRemaining.toNumber()).toBe(-71000);
+    expect(r.lifetimeExemptionRemaining.toNumber()).toBe(0);
   });
 });
 
