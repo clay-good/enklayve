@@ -80,22 +80,6 @@ function computeFederal(
     standardDeductionFor(federal, input.filingStatus) +
       agedStandardDeductionFor(federal, input.filingStatus, input.seniorsAge65Plus ?? 0),
   );
-  const deduction = chooseFederalDeduction(
-    input.deductionMode ?? "auto",
-    standard,
-    input.itemized ?? {},
-    agi,
-    saltCapFor(federal.saltLimitation, input.filingStatus, agi),
-    nonItemizerCharitableFor(
-      federal.nonItemizerCharitable,
-      input.filingStatus,
-      input.itemized ?? {},
-    ),
-    // §170(b)(1)(I) reaches the itemized side only. §170(p) says so itself,
-    // computing its figure "without regard to ... (b)(1)(I)", which is why the
-    // floor is passed here and not into `nonItemizerCharitableFor`.
-    federal.charitableFloor?.rate ?? 0,
-  );
   // §63(b)(4): a non-itemizer subtracts the standard deduction AND §170(p).
   // §151(d)(5)(C) comes off either way — §63(a) for an itemizer, §63(b)(2) for
   // one who is not — so it is subtracted outside that choice.
@@ -127,6 +111,44 @@ function computeFederal(
     input.filingStatus,
     input.vehicleLoanInterest ?? 0,
     agi,
+  );
+  const deduction = chooseFederalDeduction(
+    input.deductionMode ?? "auto",
+    standard,
+    input.itemized ?? {},
+    agi,
+    saltCapFor(federal.saltLimitation, input.filingStatus, agi),
+    nonItemizerCharitableFor(
+      federal.nonItemizerCharitable,
+      input.filingStatus,
+      input.itemized ?? {},
+    ),
+    // §170(b)(1)(I) reaches the itemized side only. §170(p) says so itself,
+    // computing its figure "without regard to ... (b)(1)(I)", which is why the
+    // floor is passed here and not into `nonItemizerCharitableFor`.
+    federal.charitableFloor?.rate ?? 0,
+    // §68 decides which package is larger, so "auto" has to see it. The four
+    // deductions above come off either way, which is why they can be computed
+    // before the choice and subtracted from §68's base here.
+    (itemizedAmount) =>
+      itemizedLimitationFor(
+        federal.itemizedLimitation,
+        federal.itemizedLimitation
+          ? bracketStartForRate(
+              federal,
+              input.filingStatus,
+              federal.itemizedLimitation.thresholdRate,
+            )
+          : undefined,
+        itemizedAmount,
+        clampZero(
+          agi
+            .subtract(senior)
+            .subtract(qualifiedTips)
+            .subtract(qualifiedOvertime)
+            .subtract(vehicleLoanInterest),
+        ),
+      ),
   );
   // §68, applied last because §68(b) says so: "after the application of any
   // other limitation on the allowance of any itemized deduction". Clause (2)'s

@@ -183,6 +183,17 @@ export function chooseFederalDeduction(
   saltCap: number,
   nonItemizedCharitable: Money = Money.zero(),
   charitableFloorRate = 0,
+  /**
+   * §68's cut for a given itemized total, so "auto" compares what each package
+   * is actually worth.
+   *
+   * Without it the comparison was raw itemized against standard + §170(p), and
+   * §68 then shaved 2/37 off the itemized side only — so a filer whose itemized
+   * total edged past the standard package could be routed to itemizing and end
+   * with the SMALLER net deduction. The engine choosing the worse of two things
+   * it can both compute, on the one filer §68 reaches.
+   */
+  itemizedLimitationOf: (itemizedAmount: Money) => Money = () => Money.zero(),
 ): DeductionResult {
   const itemizedAmount = itemizedTotal(itemized, agi, saltCap, charitableFloorRate);
   // `senior` is filled in by the caller: §151(d)(5)(C) does not depend on this
@@ -209,7 +220,10 @@ export function chooseFederalDeduction(
   });
   if (mode === "standard") return takeStandard();
   if (mode === "itemized") return takeItemized();
-  return itemizedAmount.greaterThan(standardDeduction.add(nonItemizedCharitable))
+  // Net against net. A tie goes to the standard deduction, as it did before:
+  // it is the simpler filing, and §170(p) rides with it.
+  const netItemized = itemizedAmount.subtract(itemizedLimitationOf(itemizedAmount));
+  return netItemized.greaterThan(standardDeduction.add(nonItemizedCharitable))
     ? takeItemized()
     : takeStandard();
 }

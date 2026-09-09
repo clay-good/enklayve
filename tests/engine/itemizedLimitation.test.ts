@@ -80,6 +80,47 @@ describe("the 35% cap on what an itemized deduction is worth", () => {
     );
   });
 
+  it("does not let 'auto' choose the package that is worth less", () => {
+    // The choice compared RAW itemized against standard + §170(p), and §68 then
+    // shaved 2/37 off the itemized side only. So a filer whose itemized total
+    // edged past the standard package was routed to itemizing and could end
+    // with the smaller net deduction — the engine picking the worse of two
+    // things it can both compute, on the one filer §68 reaches.
+    const itemized = { mortgageInterest: 16_800 };
+    const auto = evaluateTaxes(
+      { filingStatus: "single", wages: 700_000, itemized, deductionMode: "auto" },
+      ctx(),
+    );
+    const asStandard = evaluateTaxes(
+      { filingStatus: "single", wages: 700_000, itemized, deductionMode: "standard" },
+      ctx(),
+    );
+    const asItemized = evaluateTaxes(
+      { filingStatus: "single", wages: 700_000, itemized, deductionMode: "itemized" },
+      ctx(),
+    );
+    // `amount` is already net of §68 — `itemizedLimitation` is reported beside
+    // it so the arithmetic on screen adds up, not so it can be subtracted twice.
+    const net = (r: typeof auto): number => r.federal.deduction.amount.toNumber();
+    // The itemized package really is the worse one here, which is what makes
+    // this a case rather than a hypothetical.
+    expect(net(asItemized)).toBeLessThan(net(asStandard));
+    expect(net(auto)).toBe(Math.max(net(asStandard), net(asItemized)));
+    expect(auto.federal.deduction.kind).toBe("standard");
+
+    // And far enough past the standard package, itemizing is still right.
+    const clearly = evaluateTaxes(
+      {
+        filingStatus: "single",
+        wages: 700_000,
+        itemized: { mortgageInterest: 90_000 },
+        deductionMode: "auto",
+      },
+      ctx(),
+    );
+    expect(clearly.federal.deduction.kind).toBe("itemized");
+  });
+
   it("uses the joint schedule's own threshold for a joint return", () => {
     // $768,700 for 2026, not the single figure. A couple at $700,000 is below
     // their threshold while a single filer at the same income is above theirs.
