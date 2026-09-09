@@ -29,10 +29,21 @@ interface Fields {
 
 const EXAMPLE: Fields = { stateCode: "OH", householdSize: 1, income: 18000 };
 
+/** A state code this tile can render, or `undefined` — case-insensitively. */
+function knownState(code: string | null | undefined): string | undefined {
+  const upper = code?.toUpperCase();
+  return upper && US_STATES.some((s) => s.code === upper) ? upper : undefined;
+}
+
 function readFields(p: URLSearchParams, profile: SituationStore): Fields {
-  const st = p.get("st");
   return {
-    stateCode: st && US_STATES.some((s) => s.code === st.toUpperCase()) ? st.toUpperCase() : "CA",
+    // Household size and income came from My Situation from the day this tile
+    // was built; the state did not, and it is the field the answer turns on --
+    // whether the reader's state expanded Medicaid at all. Somebody who had
+    // told the site where they live five tiles ago opened this one and was
+    // shown California. My Situation stores the code lowercase, this tile
+    // renders it upper, so the comparison is case-insensitive.
+    stateCode: knownState(p.get("st")) ?? knownState(profile.get("stateCode")) ?? "CA",
     householdSize: p.has("hh")
       ? Math.max(1, parseNonNegative(p.get("hh"), 1))
       : (profile.get("householdSize") ?? 1),
@@ -63,12 +74,26 @@ export function mountMedicaid(ctx: TileContext): void {
     return;
   }
   let fields = readFields(ctx.params, profile);
+  /**
+   * Whether the state on screen is the reader's answer or this tile's fallback.
+   *
+   * Same shape as Charity Care: this dropdown lists the 51 by name and has no
+   * "no state" entry, so a reader who chose that answer elsewhere has to be
+   * seeded with something, and writing that something back would decide where
+   * they live because they typed an income.
+   */
+  let stateIsReaders = knownState(ctx.params.get("st") ?? profile.get("stateCode")) !== undefined;
 
   const stSelect = el(
     "select",
     { name: "st", attrs: { "aria-label": "State" } },
     ...US_STATES.map((s) => option(s.code, s.name, s.code === fields.stateCode)),
   );
+  // The element's value is authoritative for the intended state, the same way
+  // Take-Home's and Charity Care's are: `recompute()` reads `stSelect.value`,
+  // so leaving the choice to the options' `selected` attributes lets a later
+  // read pick up a default the tile never intended.
+  stSelect.value = fields.stateCode;
   const hhInput = el("input", {
     type: "number",
     name: "hh",
@@ -160,15 +185,20 @@ export function mountMedicaid(ctx: TileContext): void {
       income: parseNonNegative(incInput.value, 0),
     };
     ctx.setParams(writeFields(fields));
+    if (stateIsReaders) profile.set("stateCode", fields.stateCode.toLowerCase());
     profile.set("householdSize", fields.householdSize);
     profile.set("annualIncome", fields.income);
     compute();
   }
 
-  stSelect.addEventListener("change", recompute);
+  stSelect.addEventListener("change", () => {
+    stateIsReaders = true;
+    recompute();
+  });
   for (const i of [hhInput, incInput]) i.addEventListener("input", recompute);
 
   const tryExample = tryExampleButton(() => {
+    stateIsReaders = true;
     fields = { ...EXAMPLE };
     stSelect.value = fields.stateCode;
     hhInput.value = String(fields.householdSize);

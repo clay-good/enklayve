@@ -4,6 +4,7 @@ import { mountFederalIncomeTax } from "../../src/tiles/federalIncomeTax";
 import { mountEducationCredits } from "../../src/tiles/educationCredits";
 import { mountQuarterlyTaxes } from "../../src/tiles/quarterlyTaxes";
 import { mountPaycheckOptimizer } from "../../src/tiles/paycheckOptimizer";
+import { mountMedicaid } from "../../src/tiles/medicaid";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import { extractDocument } from "../../src/readout/extract";
@@ -181,5 +182,39 @@ describe("a reader who deselects their state", () => {
 
     const next = mount(mountTakeHome, new URLSearchParams(), profile);
     expect(next.querySelector<HTMLSelectElement>('select[name="st"]')?.value).toBe("");
+  });
+});
+
+/**
+ * The Medicaid tile took household size and income from My Situation from the
+ * day it was built and did not take the state, which is the field its answer
+ * turns on — whether the reader's state expanded Medicaid at all. Somebody who
+ * had told the site where they live five tiles ago opened this one and was
+ * shown California. It renders codes upper and My Situation stores them lower,
+ * so the two ends have to meet case-insensitively, in both directions.
+ */
+describe("the tile whose answer turns on the state", () => {
+  it("opens on the state the reader already gave, whatever its case", () => {
+    const profile = new SituationStore();
+    profile.set("stateCode", "tx");
+    const root = mount(mountMedicaid, new URLSearchParams(), profile);
+    expect(root.querySelector<HTMLSelectElement>("select")?.value).toBe("TX");
+  });
+
+  it("still lets a link win", () => {
+    const profile = new SituationStore();
+    profile.set("stateCode", "tx");
+    const root = mount(mountMedicaid, new URLSearchParams({ st: "oh" }), profile);
+    expect(root.querySelector<HTMLSelectElement>("select")?.value).toBe("OH");
+  });
+
+  it("hands the state it was given back in the case the profile stores", () => {
+    const profile = new SituationStore();
+    profile.set("stateCode", "tx");
+    const root = mount(mountMedicaid, new URLSearchParams(), profile);
+    const st = root.querySelector<HTMLSelectElement>("select")!;
+    st.value = "OH";
+    st.dispatchEvent(new Event("change"));
+    expect(profile.get("stateCode")).toBe("oh");
   });
 });

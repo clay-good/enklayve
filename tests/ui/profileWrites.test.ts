@@ -268,6 +268,7 @@ const EXPECTED_ENUMS = [
   'marginal-explorer | stateCode <- select "State"',
   'marginal-reality | filingStatus <- select "Filing status"',
   'marginal-reality | stateCode <- select "State"',
+  'medicaid | stateCode <- select "State"',
   'paycheck-optimizer | filingStatus <- select "Filing status"',
   'paycheck-optimizer | stateCode <- select "State"',
   'quarterly-taxes | filingStatus <- select "Filing status"',
@@ -314,7 +315,11 @@ function enumWritesFrom(tile: TileDefinition): string[] {
       select.dispatchEvent(new Event("change", { bubbles: true }));
       select.dispatchEvent(new Event("input", { bubbles: true }));
       for (const field of ENUM_FIELDS) {
-        if (profile.get(field) === option) {
+        // Case-insensitively, because a tile is entitled to normalize on the
+        // way in: the Medicaid tile renders state codes upper and My Situation
+        // documents them lower, so an exact compare read that writer as no
+        // writer at all and the map went on claiming to pin every one of them.
+        if (profile.get(field)?.toLowerCase() === option.toLowerCase()) {
           found.push(`${tile.id} | ${field} <- select "${labelOf(root, select)}"`);
         }
       }
