@@ -152,6 +152,8 @@ export const SUBJECTS: Record<string, string[]> = {
   "Series I savings bonds": ["treasury-bonds-2024"],
   Medicaid: ["medicaid-2024"],
   "Free filing": ["free-filing-2026"],
+  "CPI-U": ["cpi-u-annual"],
+  "Garnishment limits": ["garnishment-limits-2026"],
 };
 
 /**
