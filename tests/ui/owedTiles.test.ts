@@ -502,6 +502,23 @@ describe("ACA Premium Tax Credit", () => {
     expect(root.querySelector(".ph-empty")).not.toBeNull();
   });
 
+  it("does not offer a 0% expected contribution to the household that pays it all", () => {
+    // Past 400% FPL no band matches and the engine reports the absence as 0, so
+    // the card read "Expected contribution: 0% of income · $0.00/mo" three
+    // lines above a "Heads up" saying the whole premium is yours. A missing
+    // rate is not a rate of zero.
+    const root = mount(mountAcaPtc, new URLSearchParams({ hh: "1", inc: "70000", bm: "600" }));
+    const contribution = rowValue(root, "Expected contribution") ?? "";
+    expect(contribution).not.toContain("0.00%");
+    expect(contribution).toContain("The whole premium");
+    expect(contribution).toContain("400%");
+    expect(rowValue(root, "Heads up")).toContain("no premium tax credit");
+
+    // Inside the table it still states the rate.
+    const inside = mount(mountAcaPtc, new URLSearchParams({ hh: "1", inc: "31920", bm: "600" }));
+    expect(rowValue(inside, "Expected contribution")).toContain("6.60%");
+  });
+
   it("flags income below the Medicaid floor, and stops printing a credit there", () => {
     // $10,000 for a household of one is 63% FPL. The tile used to lead with
     // "$X/mo" — the benchmark minus 2.1% of income, about $482 a month — beside

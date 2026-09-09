@@ -163,7 +163,14 @@ export function mountAcaPtc(ctx: TileContext): void {
       },
       {
         label: "Expected contribution",
-        value: `${pct(r.applicablePercent / 100)} of income · ${fmt(r.expectedMonthlyContribution)}/mo`,
+        // Outside the table there is no applicable percentage, and the engine
+        // reports that absence as `0` — which printed as "0% of income ·
+        // $0.00/mo" to the one household that pays the entire premium, three
+        // lines above a "Heads up" saying exactly that. A missing rate is not
+        // a rate of zero.
+        value: r.aboveSubsidyCap
+          ? `The whole premium — the applicable-percentage table stops at ${aca!.applicablePercentage[aca!.applicablePercentage.length - 1]!.fplHigh}% of the poverty line, and this income is past it.`
+          : `${pct(r.applicablePercent / 100)} of income · ${fmt(r.expectedMonthlyContribution)}/mo`,
         citation: aca!.citation,
       },
       {

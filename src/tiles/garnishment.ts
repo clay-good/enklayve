@@ -186,9 +186,17 @@ export function mountGarnishment(ctx: TileContext): void {
     locale: string,
   ): string {
     const floor = r.protectedFloor.format(locale);
+    // §1673(a)(2) states the floor per WEEK — thirty times the minimum hourly
+    // wage — and the engine scales it to the pay period. The sentence used to
+    // put "30 times $7.25" next to the scaled figure, so a monthly reader was
+    // told $942.50 was 30 × $7.25, which is $217.50. Both figures now appear,
+    // each as what it is; on a weekly period they are the same number and the
+    // clause collapses to one.
+    const weekly = r.protectedFloorWeekly.format(locale);
+    const perPeriod = weekly === floor ? "" : `, or ${floor} over this pay period`;
     switch (r.binding) {
       case "protected-floor":
-        return `Federal law protects ${floor} of every pay period outright — ${limits.protectedHoursMultiple} times the ${limits.federalMinimumHourlyWage.toLocaleString(locale, { style: "currency", currency: "USD" })} federal minimum hourly wage — and only earnings above that can be reached, which is less here than the ${pct(limits.ordinaryDebtMaxShare, 0)} share.`;
+        return `Federal law protects ${limits.protectedHoursMultiple} times the ${limits.federalMinimumHourlyWage.toLocaleString(locale, { style: "currency", currency: "USD" })} federal minimum hourly wage each week — ${weekly}${perPeriod} — and only earnings above that can be reached, which is less here than the ${pct(limits.ordinaryDebtMaxShare, 0)} share.`;
       case "percentage":
         return `${pct(limits.ordinaryDebtMaxShare, 0)} of disposable earnings is the lower of the two federal tests here; the other protects ${floor} a pay period outright.`;
       case "support-share":

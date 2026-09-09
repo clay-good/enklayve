@@ -64,6 +64,13 @@ export interface GarnishmentResult {
   remaining: Money | null;
   /** The §1673(a)(2) floor for this pay period — earnings below it are untouchable. */
   protectedFloor: Money;
+  /**
+   * The same floor as the statute states it: thirty times the federal minimum
+   * hourly wage, **per week**. Reported alongside the scaled figure because a
+   * sentence naming "30 times $7.25" beside a monthly $942.50 is describing a
+   * different number than the one printed next to it.
+   */
+  protectedFloorWeekly: Money;
   /** Which test produced the ceiling, so the tile can show its work. */
   binding: "percentage" | "protected-floor" | "support-share" | "no-federal-ceiling";
   /** The share applied, for the "show the math" line. Zero when none applies. */
@@ -80,12 +87,15 @@ function at(value: number): number {
  * cannot reach: thirty times the federal minimum hourly wage per week, scaled to
  * the pay period.
  */
-export function protectedFloor(limits: GarnishmentLimitsData, payPeriod: PayPeriod): Money {
-  const weekly = Money.from(at(limits.protectedHoursMultiple)).multiply(
+export function protectedFloorWeekly(limits: GarnishmentLimitsData): Money {
+  return Money.from(at(limits.protectedHoursMultiple)).multiply(
     at(limits.federalMinimumHourlyWage),
   );
+}
+
+export function protectedFloor(limits: GarnishmentLimitsData, payPeriod: PayPeriod): Money {
   const { periodsPerYear } = WEEKS_PER_PERIOD[payPeriod] ?? WEEKS_PER_PERIOD.weekly;
-  return weekly.multiply(WEEKS_PER_YEAR).divide(periodsPerYear);
+  return protectedFloorWeekly(limits).multiply(WEEKS_PER_YEAR).divide(periodsPerYear);
 }
 
 /**
@@ -103,12 +113,14 @@ export function garnishmentCeiling(
 ): GarnishmentResult {
   const disposable = at(input.disposableEarnings);
   const floor = protectedFloor(limits, input.payPeriod);
+  const weekly = protectedFloorWeekly(limits);
 
   if (input.kind === "tax" || input.kind === "bankruptcy") {
     return {
       federalMaximum: null,
       remaining: null,
       protectedFloor: floor,
+      protectedFloorWeekly: weekly,
       binding: "no-federal-ceiling",
       shareApplied: 0,
     };
@@ -127,6 +139,7 @@ export function garnishmentCeiling(
       federalMaximum: max,
       remaining: Money.from(disposable).subtract(max),
       protectedFloor: floor,
+      protectedFloorWeekly: weekly,
       binding: "support-share",
       shareApplied: share,
     };
@@ -140,6 +153,7 @@ export function garnishmentCeiling(
     federalMaximum: Money.from(max),
     remaining: Money.from(disposable - max),
     protectedFloor: floor,
+    protectedFloorWeekly: weekly,
     // Ties go to the floor: at the crossover the two tests agree, and naming the
     // floor is the more useful half of the sentence for someone at that income.
     binding: aboveFloor <= byPercentage ? "protected-floor" : "percentage",

@@ -87,6 +87,25 @@ describe("Wage Garnishment Limits", () => {
     expect(text).toContain("30 times the $7.25 federal minimum hourly wage");
   });
 
+  it("does not call a monthly figure thirty times the hourly minimum wage", () => {
+    // §1673(a)(2) states the floor per WEEK and the engine scales it to the pay
+    // period, so the sentence put "30 times $7.25" — which is $217.50 — beside
+    // a monthly $942.50. Only the weekly case was ever mounted here, and it is
+    // the one case where the two figures agree.
+    const monthly = new URLSearchParams({ dis: "1000", per: "monthly", kind: "ordinary" });
+    const text = mount(monthly).textContent ?? "";
+    expect(text).toContain("$942.50");
+    expect(text).toContain("30 times the $7.25 federal minimum hourly wage each week");
+    expect(text).toContain("$217.50");
+    // The claim and the figure are no longer adjacent in the wrong order.
+    expect(text).not.toMatch(/\$942\.50[^.]*30 times/);
+
+    // On a weekly period there is one figure and the clause does not repeat it.
+    const weekly = mount(LOW).textContent ?? "";
+    expect(weekly).toContain("$217.50");
+    expect(weekly).not.toContain("over this pay period");
+  });
+
   it("applies the support-order share and says it is exempt from the ordinary ceiling", () => {
     const text = mount(SUPPORT).textContent ?? "";
     expect(text).toContain("$500.00");
