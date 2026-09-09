@@ -34,6 +34,14 @@ export interface EitcResult {
   qualifyingChildren: number;
   /** True when income is past the point the credit fully phases out. */
   phasedOut: boolean;
+  /**
+   * True when §32(i) disallows the credit outright: investment income over the
+   * year's limit ends it whatever the earnings are. A cutoff, not a phase-out,
+   * so it is reported separately from {@link phasedOut}.
+   */
+  disqualifiedByInvestmentIncome: boolean;
+  /** The §32(i) limit the investment income was measured against. */
+  investmentIncomeLimit: Money;
 }
 
 /**
@@ -41,15 +49,34 @@ export interface EitcResult {
  * `maxCredit`, holds on a plateau, then phases out at `phaseOutRate` above the
  * filing-status threshold. Uses earned income as the income measure (the common
  * case; the statute uses the greater of earned income or AGI).
+ *
+ * §32(i) comes first: investment income over the year's limit disallows the
+ * credit entirely, at any level of earnings, so a filer over that line gets zero
+ * rather than the figure the phase-in would have produced.
  */
 export function estimateEitc(
-  input: { earnedIncome: number; qualifyingChildren: number; married: boolean },
+  input: {
+    earnedIncome: number;
+    qualifyingChildren: number;
+    married: boolean;
+    /** Aggregate §32(i) investment income. Absent means none. */
+    investmentIncome?: number;
+  },
   data: EitcCtcData,
 ): EitcResult {
   const qc = Math.max(0, Math.min(3, Math.floor(input.qualifyingChildren)));
+  const limit = Money.from(data.disqualifyingInvestmentIncome);
+  const disqualified =
+    Math.max(0, input.investmentIncome ?? 0) > data.disqualifyingInvestmentIncome;
   const params = data.eitc.find((e) => e.qualifyingChildren === qc) ?? data.eitc[0];
-  if (!params) {
-    return { credit: Money.zero(), qualifyingChildren: qc, phasedOut: false };
+  if (!params || disqualified) {
+    return {
+      credit: Money.zero(),
+      qualifyingChildren: qc,
+      phasedOut: false,
+      disqualifiedByInvestmentIncome: disqualified,
+      investmentIncomeLimit: limit,
+    };
   }
   const income = Math.max(0, input.earnedIncome);
   const phaseIn = Math.min(params.maxCredit, income * params.phaseInRate);
@@ -62,6 +89,8 @@ export function estimateEitc(
     credit: Money.from(credit),
     qualifyingChildren: qc,
     phasedOut: income > 0 && credit === 0 && income > threshold,
+    disqualifiedByInvestmentIncome: false,
+    investmentIncomeLimit: limit,
   };
 }
 

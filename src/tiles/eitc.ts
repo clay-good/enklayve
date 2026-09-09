@@ -18,9 +18,16 @@ interface Fields {
   earnedIncome: number;
   qualifyingChildren: number;
   married: boolean;
+  /** Aggregate investment income, the §32(i) cutoff's input. */
+  investmentIncome: number;
 }
 
-const EXAMPLE: Fields = { earnedIncome: 30000, qualifyingChildren: 1, married: false };
+const EXAMPLE: Fields = {
+  earnedIncome: 30000,
+  qualifyingChildren: 1,
+  married: false,
+  investmentIncome: 0,
+};
 
 function readFields(p: URLSearchParams, profile: SituationStore): Fields {
   return {
@@ -31,6 +38,7 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
       ? Math.max(0, parseNonNegative(p.get("kids"), 0))
       : (profile.get("qualifyingChildren") ?? 0),
     married: p.has("mfj") ? p.get("mfj") === "1" : marriedDefault(profile),
+    investmentIncome: parseNonNegative(p.get("inv"), 0),
   };
 }
 
@@ -43,6 +51,7 @@ function writeFields(f: Fields): URLSearchParams {
   // Situation answer instead, so the same link opens joint for a married
   // reader and single for everyone else.
   p.set("mfj", f.married ? "1" : "0");
+  p.set("inv", String(f.investmentIncome));
   return p;
 }
 
@@ -80,6 +89,14 @@ export function mountEitc(ctx: TileContext): void {
     value: fields.qualifyingChildren,
     attrs: { "aria-label": "Qualifying children", inputmode: "numeric" },
   });
+  const invInput = el("input", {
+    type: "number",
+    name: "inv",
+    min: 0,
+    step: 100,
+    value: fields.investmentIncome,
+    attrs: { "aria-label": "Investment income", inputmode: "decimal" },
+  });
   const mfj = marriedCheckbox(fields.married);
 
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
@@ -90,6 +107,7 @@ export function mountEitc(ctx: TileContext): void {
         earnedIncome: fields.earnedIncome,
         qualifyingChildren: fields.qualifyingChildren,
         married: fields.married,
+        investmentIncome: fields.investmentIncome,
       },
       eitcCtc,
     );
@@ -99,12 +117,19 @@ export function mountEitc(ctx: TileContext): void {
         label: "Qualifying children",
         value: `${r.qualifyingChildren}${fields.qualifyingChildren > 3 ? " (capped at 3+)" : ""}`,
       },
+      {
+        label: "Investment income limit",
+        value: `${fmt(r.investmentIncomeLimit)} — above it the credit is gone entirely.`,
+        citation: eitcCtc.citation,
+      },
       { label: "Estimated EITC", value: fmt(r.credit), emphasis: true, citation: eitcCtc.citation },
       {
         label: "Note",
-        value: r.phasedOut
-          ? "Income is past the phase-out, no credit at this level."
-          : "A refundable credit. Eligibility also depends on investment income and (for no children) age 25–64.",
+        value: r.disqualifiedByInvestmentIncome
+          ? `Investment income over ${fmt(r.investmentIncomeLimit)} ends the credit outright, whatever you earn.`
+          : r.phasedOut
+            ? "Income is past the phase-out, no credit at this level."
+            : "A refundable credit. Eligibility also depends on the qualifying-child tests and (for no children) age 25–64.",
       },
     ];
     // My Situation says married filing separately, and the schedule above has no
@@ -139,6 +164,7 @@ export function mountEitc(ctx: TileContext): void {
       earnedIncome: parseNonNegative(incInput.value, 0),
       qualifyingChildren: Math.max(0, parseNonNegative(kidsInput.value, 0)),
       married: mfj.checked,
+      investmentIncome: parseNonNegative(invInput.value, 0),
     };
     ctx.setParams(writeFields(fields));
     profile.set("annualIncome", fields.earnedIncome);
@@ -147,12 +173,13 @@ export function mountEitc(ctx: TileContext): void {
   }
 
   mfj.addEventListener("change", recompute);
-  for (const i of [incInput, kidsInput]) i.addEventListener("input", recompute);
+  for (const i of [incInput, kidsInput, invInput]) i.addEventListener("input", recompute);
 
   const tryExample = tryExampleButton(() => {
     fields = { ...EXAMPLE };
     incInput.value = String(fields.earnedIncome);
     kidsInput.value = String(fields.qualifyingChildren);
+    invInput.value = String(fields.investmentIncome);
     mfj.checked = fields.married;
     recompute();
   });
@@ -162,6 +189,7 @@ export function mountEitc(ctx: TileContext): void {
     { class: "tile-form", on: { submit: (e) => e.preventDefault() } },
     field("Earned income", incInput),
     field("Qualifying children", kidsInput),
+    field("Investment income (interest, dividends, capital gains)", invInput),
     el("label", { class: "checkbox" }, mfj, el("span", { text: "Married filing jointly" })),
     el("div", { class: "tile-form-actions" }, tryExample),
   );
@@ -177,7 +205,7 @@ export const eitcTile: TileDefinition = {
   description: "EITC from the published phase-in and phase-out.",
   keywords: ["eitc", "earned income", "credit", "refundable"],
   status: "ready",
-  how: "The Earned Income Tax Credit phases in as a percentage of your earned income, rises to a maximum, holds on a plateau, then phases out above an income threshold. The rates, maximum, and thresholds all depend on your number of qualifying children and whether you file jointly. We use the published 2026 figures.\n\nIt's refundable, it can pay out even if you owe no tax. Real eligibility also depends on investment income and, for filers with no children, being age 25–64.",
+  how: "The Earned Income Tax Credit phases in as a percentage of your earned income, rises to a maximum, holds on a plateau, then phases out above an income threshold. The rates, maximum, and thresholds all depend on your number of qualifying children and whether you file jointly. We use the published 2026 figures.\n\nIt's refundable, it can pay out even if you owe no tax. One rule is a cliff rather than a curve: §32(i) allows no credit at all once your aggregate investment income — interest, dividends, capital gains, rents and royalties — passes the year's limit, whatever you earned, so that figure is a field here. Real eligibility also depends on the qualifying-child tests and, for filers with no children, being age 25–64.",
   resources: [
     {
       label: "IRS, Earned Income Tax Credit",

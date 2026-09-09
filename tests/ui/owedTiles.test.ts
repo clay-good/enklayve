@@ -70,6 +70,23 @@ describe("EITC tile", () => {
   });
 });
 
+describe("the EITC tile and §32(i)", () => {
+  it("zeroes the credit and says why when investment income is over the limit", () => {
+    // The shard priced this cutoff in its own sourceNote while listing it as
+    // omitted, and the tile printed a confident figure beside a sentence about
+    // investment income "also" mattering. It is a cliff, and it has a field.
+    const root = mount(mountEitc, new URLSearchParams({ inc: "15000", kids: "1", inv: "20000" }));
+    expect(rowValue(root, "Estimated EITC")).toContain("$0");
+    expect(rowValue(root, "Note")).toContain("ends the credit outright");
+    expect(rowValue(root, "Investment income limit")).toContain("$12,200");
+  });
+
+  it("leaves the credit alone at the limit exactly", () => {
+    const root = mount(mountEitc, new URLSearchParams({ inc: "15000", kids: "1", inv: "12200" }));
+    expect(rowValue(root, "Estimated EITC")).toContain("$4,427");
+  });
+});
+
 describe("the EITC tile and a separate return", () => {
   it("names §32(d) beside the figure instead of leaving it unqualified", () => {
     const profile = new SituationStore();

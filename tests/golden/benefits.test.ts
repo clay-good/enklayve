@@ -80,6 +80,29 @@ describe("Earned Income Tax Credit (2026)", () => {
     expect(r.credit.toNumber()).toBeCloseTo(612, 0);
   });
 
+  it("allows no credit at all above the §32(i) investment-income limit", () => {
+    // Rev. Proc. 2025-32 §2.06(2): "the earned income tax credit is not allowed
+    // under § 32(i) if the aggregate amount of certain investment income
+    // exceeds $12,200" for taxable years beginning in 2026. A cliff, not a
+    // curve — the filer below is on the plateau and gets nothing.
+    expect(eitcCtc.disqualifyingInvestmentIncome).toBe(12200);
+    const over = estimateEitc(
+      { earnedIncome: 15000, qualifyingChildren: 1, married: false, investmentIncome: 12201 },
+      eitcCtc,
+    );
+    expect(over.credit.toNumber()).toBe(0);
+    expect(over.disqualifiedByInvestmentIncome).toBe(true);
+    // "Exceeds" — at the limit exactly, the credit is untouched.
+    const at = estimateEitc(
+      { earnedIncome: 15000, qualifyingChildren: 1, married: false, investmentIncome: 12200 },
+      eitcCtc,
+    );
+    expect(at.credit.toNumber()).toBeCloseTo(4427, 0);
+    expect(at.disqualifiedByInvestmentIncome).toBe(false);
+    // Being disqualified is not being phased out; they are different sentences.
+    expect(over.phasedOut).toBe(false);
+  });
+
   it("fully phases out for childless filers by $20,000", () => {
     const r = estimateEitc({ earnedIncome: 20000, qualifyingChildren: 0, married: false }, eitcCtc);
     expect(r.credit.toNumber()).toBe(0);

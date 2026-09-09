@@ -797,6 +797,11 @@ export const EitcCtcSchema = z.object({
       phaseOutThresholdMarried: z.number().gte(0),
     }),
   ),
+  /**
+   * §32(i): the aggregate investment income above which no credit is allowed at
+   * all, whatever the earnings. A cutoff, not a phase-out.
+   */
+  disqualifyingInvestmentIncome: z.number().gt(0),
   childTaxCredit: z.object({
     perChild: z.number().gte(0),
     /** Refundable portion cap per child (the Additional Child Tax Credit). */
