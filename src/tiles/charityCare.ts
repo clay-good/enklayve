@@ -45,7 +45,16 @@ function readFields(p: URLSearchParams, ctx: TileContext): Fields {
       1,
       Math.round(parseNonNegative(p.get("size"), ctx.profile.get("householdSize") ?? EXAMPLE.size)),
     ),
-    state: p.get("st") ?? ctx.profile.get("stateCode") ?? EXAMPLE.state,
+    // `||` rather than `??`, and it is the one state seed on the site that
+    // wants truthiness. Every other state dropdown offers "Federal and FICA
+    // only (no state)" and stores that answer as `""`; this one asks only to
+    // pick a poverty-guideline region (Alaska, Hawaii, or the other 49), so it
+    // has no such option and no way to render `""`. Left as `??`, an empty
+    // shared state marked no option selected, the browser fell back to whatever
+    // sat first in the list, and the tile computed — and wrote back — a state
+    // it was not showing as chosen. Its own example state is the answer for a
+    // profile that has none.
+    state: p.get("st") || ctx.profile.get("stateCode") || EXAMPLE.state,
   };
 }
 
@@ -69,6 +78,17 @@ const ASK = [
 export function mountCharityCare(ctx: TileContext): void {
   const { root, data } = ctx;
   root.replaceChildren();
+  /**
+   * Whether the state on screen is the reader's answer or this tile's fallback.
+   *
+   * The other five state dropdowns can render "no state" and store it as `""`.
+   * This one asks which poverty-guideline region applies, not which tax, so it
+   * lists the 51 by name and offers no blank -- and a profile that says "no
+   * state" has to be seeded with something. Writing that something back would
+   * decide where the reader lives because they typed an income, and every tile
+   * they opened next would charge it.
+   */
+  let stateIsReaders = Boolean(ctx.params.get("st") ?? ctx.profile.get("stateCode"));
   let fields = readFields(ctx.params, ctx);
 
   const incInput = el("input", {
@@ -91,6 +111,11 @@ export function mountCharityCare(ctx: TileContext): void {
     { attrs: { "aria-label": "State" } },
     ...codes.map((c) => option(c, data?.state(c)?.name ?? c.toUpperCase(), c === fields.state)),
   );
+  // The element's value is authoritative for the intended state, the same way
+  // Take-Home's is: `collect()` reads `stSelect.value`, so leaving the choice
+  // to the options' `selected` attributes lets a later read pick up a default
+  // the tile never intended and write it into My Situation.
+  stSelect.value = fields.state;
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
   function compute(): void {
@@ -160,16 +185,23 @@ export function mountCharityCare(ctx: TileContext): void {
       state: stSelect.value,
     };
     ctx.setParams(writeFields(fields));
-    rememberShared(ctx.profile, { stateCode: fields.state, annualIncome: fields.income });
+    rememberShared(ctx.profile, {
+      stateCode: stateIsReaders ? fields.state : undefined,
+      annualIncome: fields.income,
+    });
     ctx.profile.set("householdSize", fields.size);
     compute();
   }
 
   incInput.addEventListener("input", recompute);
   sizeInput.addEventListener("input", recompute);
-  stSelect.addEventListener("change", recompute);
+  stSelect.addEventListener("change", () => {
+    stateIsReaders = true;
+    recompute();
+  });
 
   const tryExample = tryExampleButton(() => {
+    stateIsReaders = true;
     fields = { ...EXAMPLE };
     incInput.value = String(fields.income);
     sizeInput.value = String(fields.size);

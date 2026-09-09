@@ -474,6 +474,49 @@ describe("what a calculator may write into My Situation", () => {
     ]);
   });
 
+  /**
+   * The other half of the same answer: having said "no state", nothing may
+   * quietly decide otherwise.
+   *
+   * Five state dropdowns can render `""`. Charity Care's cannot — it asks only
+   * to pick a poverty-guideline region and so offers the 51 by name and no
+   * blank — and it seeded with `??`, so an empty shared state marked no option
+   * selected, the browser fell back to whatever sat first in the list, and
+   * typing an income wrote that state into My Situation. The reader never saw
+   * it chosen and never chose it; every tile they opened next charged it.
+   *
+   * Typing a number is the least state-shaped act on the site, which is what
+   * makes it the right probe: a tool that decides where you live while you
+   * answer a question about money is wrong whatever the mechanism.
+   */
+  it("does not decide where a reader lives while they type a number", () => {
+    for (const tile of CALCULATORS) {
+      const root = document.createElement("div");
+      const profile = new SituationStore();
+      profile.set("stateCode", "");
+      tile.mount!({
+        root,
+        params: new URLSearchParams(),
+        setParams: () => {},
+        permalink: () => "https://enklayve.com/#/x",
+        navigate: () => {},
+        locale: "en-US",
+        data,
+        profile,
+      } as TileContext);
+
+      for (const input of root.querySelectorAll<HTMLInputElement>('input[type="number"]')) {
+        input.value = "1000";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      expect(
+        profile.get("stateCode"),
+        `${tile.id} put a state into My Situation that the reader never chose`,
+      ).toBe("");
+    }
+  });
+
   it("asks about somebody else's money without writing it down", () => {
     // The two fixes above, stated as behavior rather than as an absence from a
     // list, so they survive a rewrite of the map.
