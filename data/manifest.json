@@ -117,7 +117,7 @@
       "sourceUrl": "https://www.tax.ny.gov/pit/file/tax_tables.htm",
       "sourceDocument": "NYS Tax & Finance — 2026 rate schedule, the FY2026 budget's 0.1-point cut to the bottom five brackets (3.9% lowest)",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "36a2fc9ffe574a1bab00401f8b91d7a286a7c3adc399c340ea277d79dc62065a"
+      "contentHash": "500bc20c100f0c3058e29c147db41ed04b19992b4630d0479794077d32bd4408"
     },
     {
       "id": "state-tx-income-tax-2024",
@@ -182,7 +182,7 @@
       "sourceUrl": "https://codes.ohio.gov/ohio-revised-code/section-5747.02",
       "sourceDocument": "Ohio Rev. Code §5747.02(A)(3)(c) — for taxable years beginning in 2026 and thereafter, $332.00 plus 2.75% of the amount in excess of $26,050",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "93db409d0423381cbd2bf2bc1c5bc48fc4516273f5e3878e1fb63be5bebba00a"
+      "contentHash": "ba42ad578f9b79979f4b7f11e9afcb2d61ba126a4adcf3d7201b3660e8db86b2"
     },
     {
       "id": "state-ga-income-tax-2024",

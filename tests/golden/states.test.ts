@@ -205,6 +205,43 @@ describe("graduated states", () => {
     expect(cents(withCity.local.total)).toBe("1500"); // 2.5%·60,000
   });
 
+  it("charges Columbus on earnings, not on the interest Ohio taxes", () => {
+    // ORC §718.01(C)(2)(a) exempts "intangible income" — §718.01(S)'s interest,
+    // dividends and capital gains — and §718.01(B)(1)(a) reaches a resident's
+    // "income, salaries, qualifying wages, commissions, and other
+    // compensation". Columbus's IR-25 starts at "W-2 Box 5, Medicare wages and
+    // tips". The city rate ran on the STATE's taxable income here, so a
+    // retiree living on $60,000 of interest was charged $1,500 of municipal tax
+    // Ohio law does not impose — a figure the state tax beside it makes look
+    // deliberate.
+    const ctx = { federal: ds.federal, state: ds.state("oh"), fica: ds.fica };
+    const noWages = evaluateTaxes(
+      {
+        filingStatus: "single",
+        wages: 0,
+        otherIncome: 60000,
+        localJurisdictionIds: ["oh-columbus"],
+      },
+      ctx,
+    );
+    expect(cents(noWages.local.total)).toBe("0");
+    // Ohio itself still taxes it — the two answers differ on purpose.
+    expect(cents(noWages.state!.incomeTax)).toBe("1265.63");
+
+    // Half and half: the city sees the wages only.
+    const mixed = evaluateTaxes(
+      {
+        filingStatus: "single",
+        wages: 30000,
+        otherIncome: 30000,
+        localJurisdictionIds: ["oh-columbus"],
+      },
+      ctx,
+    );
+    expect(cents(mixed.local.total)).toBe("750"); // 2.5%·30,000
+    expect(cents(mixed.state!.incomeTax)).toBe("1265.63");
+  });
+
   it("Ohio's $332 base is a cliff at $26,050, exactly as the statute writes it", () => {
     // The statute exempts a balance "equal to or less than twenty-six thousand
     // fifty dollars" outright, then charges the full $332 on the next dollar. This

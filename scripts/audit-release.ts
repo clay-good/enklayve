@@ -475,8 +475,26 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * genuinely conflict, and the honest note to leave for that day is that the
  * three raises here were each spent on prose that the audit's own principles
  * say belongs in the shell.
+ *
+ * **291 → 292 on 2026-09-09**, the fourth in a day, for two local taxes that
+ * needed a base of their own: the Yonkers surcharge (16.75% of the state tax,
+ * named in four places and carried in none) and Ohio's municipal base, which is
+ * qualifying wages rather than the state's taxable income — the old base
+ * charged a Columbus retiree 2.5% on interest that ORC §718.01(C)(2)(a)
+ * exempts. Trimming came first this time and got about 0.2 kB back; the notes
+ * were already down to their citations.
+ *
+ * **Four raises in one day is itself the finding.** The gate stopped every
+ * change and asked, and the answer was yes every time, which means the number
+ * is now tracking growth rather than constraining it. So the useful thing to
+ * write down is not another kilobyte but the question the next raise has to
+ * answer: *what would make the answer no?* Two candidates, neither reached yet
+ * — a raise that buys a **feature** rather than a correction, and a shell whose
+ * growth in a week exceeds what a first visit on a slow connection can absorb
+ * (about 300 kB is the number to argue against, not 292). Until one of those,
+ * a correction that costs a sentence is the cheapest thing this project buys.
  */
-export const SHELL_GZIP_BUDGET_KB = 291;
+export const SHELL_GZIP_BUDGET_KB = 292;
 
 /**
  * The headroom this gate needs to be measuring the shell rather than the runner.

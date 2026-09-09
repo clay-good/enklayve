@@ -95,6 +95,26 @@ export const LocalAddOnSchema = z.object({
   flatRate: z.number().gte(0).lte(1).optional(),
   brackets: z.array(TaxBracketSchema).optional(),
   /**
+   * True where the locality taxes EARNINGS rather than the state's taxable
+   * income — Ohio's ~600 municipalities.
+   *
+   * ORC §718.01(B)(1)(a) makes a resident's municipal income "all income,
+   * salaries, qualifying wages, commissions, and other compensation from
+   * whatever source earned or received", and §718.01(C)(2)(a) exempts
+   * "intangible income", which §718.01(S) defines as "income yield, interest,
+   * capital gains, dividends, or other income arising from the ownership, sale,
+   * exchange, or other disposition of intangible property". Columbus's IR-25
+   * starts at "W-2 Box 5, Medicare wages and tips". So a municipality reaches
+   * none of the interest, dividends or capital gains that the state's taxable
+   * income contains, and allows none of the state's own subtractions.
+   *
+   * This engine's `wages` is that base. A resident's net profits belong in it
+   * too and are not reachable here — `otherIncome` is one field carrying both
+   * profit and interest, and the Ohio shard already discloses that business
+   * income is outside this wage engine.
+   */
+  leviedOnQualifyingWages: z.boolean().optional(),
+  /**
    * A share of the STATE's income tax rather than of income — a surcharge.
    *
    * Yonkers is the shape: N.Y. Tax Law §1321 authorizes a surcharge "not to

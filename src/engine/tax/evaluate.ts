@@ -376,8 +376,17 @@ function computeState(
     // subtracts $5,900, so using the state's base would understate the city tax
     // by $127.20 and err LOW, the one direction this engine does not.
     const localExemption = localExemptionFor(addOn, input.filingStatus);
-    const base =
-      localExemption === undefined ? taxableIncome : clampZero(agi.subtract(localExemption));
+    // Ohio is the third base. ORC §718.01(C)(2)(a) exempts "intangible income"
+    // — interest, dividends, capital gains — and §718.01(B)(1)(a) reaches
+    // earnings; Columbus's IR-25 starts at W-2 box 5. Charging a municipality's
+    // rate on the state's taxable income taxes a retiree's interest at 2.5% for
+    // a city that may not touch it, and allows the state's subtractions that a
+    // city does not.
+    const base = addOn.leviedOnQualifyingWages
+      ? Money.from(Math.max(0, input.wages))
+      : localExemption === undefined
+        ? taxableIncome
+        : clampZero(agi.subtract(localExemption));
     let tax = Money.zero();
     if (addOn.brackets && addOn.brackets.length > 0) {
       tax = bracketTax(base, addOn.brackets);
