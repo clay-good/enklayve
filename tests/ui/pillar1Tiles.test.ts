@@ -593,13 +593,18 @@ describe("Treasury I Bond tile", () => {
 });
 
 describe("Required Minimum Distribution tile", () => {
-  it("computes the RMD from the Uniform Lifetime Table, cited to the IRS", () => {
+  it("computes the RMD from the Uniform Lifetime Table, cited to the regulation", () => {
     const { root } = mount(mountRmd, new URLSearchParams({ age: "75", bal: "500000" }));
     expect(root.querySelector(".result-label")?.textContent).toBe(
       "Your required minimum distribution this year",
     );
     expect(labels(root)).toContain("Required minimum distribution");
-    expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/irs\.gov/);
+    // The table is 26 CFR §1.401(a)(9)-9(c), which moves only by rulemaking. Pub.
+    // 590-B restates it and is reissued every year at the same address, so the
+    // citation points at the document that governs rather than the one that repeats.
+    expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(
+      /ecfr\.gov.*1\.401\(a\)\(9\)-9/,
+    );
   });
 
   it("says no RMD is due below the begin age, with no number invented", () => {

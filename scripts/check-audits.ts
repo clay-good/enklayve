@@ -148,6 +148,8 @@ export const SUBJECTS: Record<string, string[]> = {
   "Retirement limits": ["retirement-limits-2024"],
   "Enrollment windows": ["enrollment-windows-2026"],
   "No Surprises": ["no-surprises-2026"],
+  "Uniform Lifetime Table": ["rmd-uniform-lifetime-2024"],
+  "Series I savings bonds": ["treasury-bonds-2024"],
 };
 
 /**

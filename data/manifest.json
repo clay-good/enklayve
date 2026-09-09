@@ -62,10 +62,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "rmd-uniform-lifetime-2024.json",
-      "sourceUrl": "https://www.irs.gov/publications/p590b",
-      "sourceDocument": "IRS Publication 590-B, Appendix B, Uniform Lifetime Table (effective 2022, current for 2026)",
+      "sourceUrl": "https://www.ecfr.gov/current/title-26/chapter-I/subchapter-A/part-1/subject-group-ECFR6f8c3724b50e44d/section-1.401(a)(9)-9",
+      "sourceDocument": "26 CFR §1.401(a)(9)-9(c), Uniform Lifetime Table (effective 2022, current for 2026)",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "39672902246bdc4962027958caa183d3da0904f6d6880f6cf5ffcacb2d796009"
+      "contentHash": "1a9a015e1426b4027fb52712d9d313aba6cc68590b29ad2ec5045acef4c2706b"
     },
     {
       "id": "treasury-bonds-2024",
@@ -78,7 +78,7 @@
       "sourceUrl": "https://www.treasurydirect.gov/savings-bonds/i-bonds/i-bonds-interest-rates/",
       "sourceDocument": "U.S. Treasury (TreasuryDirect), Series I Savings Bond fixed rate and semiannual inflation rate by rate period (through May 2026)",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "d9866d6ebb17a438105158c5805e95540246310a07d0546c72585cd0e410a8d3"
+      "contentHash": "3b40055938aa85975940a84f396fbb2925e190e5bdb5f110357fba0e51c885db"
     },
     {
       "id": "cpi-u-annual",
