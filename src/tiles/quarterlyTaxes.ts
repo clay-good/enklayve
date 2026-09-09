@@ -88,7 +88,17 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
   return {
     fs: fs && isFilingStatus(fs) ? fs : (profile.get("filingStatus") ?? "single"),
     state: st !== null ? st : (profile.get("stateCode") ?? ""),
-    profit: p.has("np") ? parseNonNegative(p.get("np"), 0) : (profile.get("annualIncome") ?? 0),
+    // `selfEmploymentProfitAnnual`, not `annualIncome`. The two were one key
+    // until 2026-09-09, when the WRITE side was split because business profit
+    // was being stored in the field every surface reads as wages -- and this,
+    // the read side, went on seeding a NET PROFIT box from those wages. A W-2
+    // employee who had used Take-Home opened this tool and found their salary
+    // in a box that owes §1401's 15.3% rather than §3101's withheld 7.65%. It
+    // falls back to zero rather than to wages: an empty box a reader can fill
+    // is better than a filled one that is the wrong quantity.
+    profit: p.has("np")
+      ? parseNonNegative(p.get("np"), 0)
+      : (profile.get("selfEmploymentProfitAnnual") ?? 0),
     other: parseNonNegative(p.get("oth"), 0),
     lastYearTax: parseNonNegative(p.get("ly"), 0),
     lastYearAgi: parseNonNegative(p.get("lya"), 0),

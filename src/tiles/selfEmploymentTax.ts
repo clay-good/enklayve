@@ -47,7 +47,12 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
   const fs = p.get("fs");
   return {
     fs: fs && isFilingStatus(fs) ? fs : (profile.get("filingStatus") ?? "single"),
-    netProfit: parseNonNegative(p.get("np"), 0),
+    // The shared figure the other two self-employment tools already write.
+    // Reading it here is what makes "enter it once" true of this quantity: it
+    // was written by two tiles and read by none of the three that ask for it.
+    netProfit: p.has("np")
+      ? parseNonNegative(p.get("np"), 0)
+      : (profile.get("selfEmploymentProfitAnnual") ?? 0),
   };
 }
 

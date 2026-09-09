@@ -565,6 +565,54 @@ describe("what a calculator may write into My Situation", () => {
     expect(seen).toBe(16);
   });
 
+  /**
+   * A profit box may not be filled with wages.
+   *
+   * `annualIncome` and `selfEmploymentProfitAnnual` were one key until
+   * 2026-09-09, when the WRITE side was split because business profit was
+   * being stored in the field every surface reads as wages. The read side was
+   * not: two of the three tools that ask for net self-employment profit went on
+   * seeding that box from `annualIncome`, so a W-2 employee who had used
+   * Take-Home opened Quarterly Taxes and found their salary in a box that owes
+   * §1401's 15.3% — about $9,000 of estimated tax on money their employer
+   * already withholds on.
+   *
+   * Driven by two different sentinels rather than one, because the failure is
+   * not "the box is empty", it is "the box holds the OTHER quantity".
+   */
+  it("never fills a profit control with the reader's wages", () => {
+    const WAGES = 61234;
+    const PROFIT = 20567;
+    let seen = 0;
+    for (const tile of CALCULATORS) {
+      const root = document.createElement("div");
+      const profile = new SituationStore();
+      profile.set("annualIncome", WAGES);
+      profile.set("selfEmploymentProfitAnnual", PROFIT);
+      tile.mount!({
+        root,
+        params: new URLSearchParams(),
+        setParams: () => {},
+        permalink: () => "https://enklayve.com/#/x",
+        navigate: () => {},
+        locale: "en-US",
+        data,
+        profile,
+      } as TileContext);
+
+      for (const input of root.querySelectorAll<HTMLInputElement>('input[type="number"]')) {
+        const label = labelOf(root, input);
+        if (!/profit/i.test(label)) continue;
+        seen += 1;
+        expect(
+          Number(input.value),
+          `${tile.id}'s "${label}" opened on the reader's wages`,
+        ).not.toBe(WAGES);
+      }
+    }
+    expect(seen).toBe(3);
+  });
+
   it("asks about somebody else's money without writing it down", () => {
     // The two fixes above, stated as behavior rather than as an absence from a
     // list, so they survive a rewrite of the map.

@@ -4,6 +4,7 @@ import { mountQuarterlyTaxes } from "../../src/tiles/quarterlyTaxes";
 import { mountFreelanceRate } from "../../src/tiles/freelanceRate";
 import { mountSelfEmployedRetirement } from "../../src/tiles/selfEmployedRetirement";
 import { mountContractVsSalary } from "../../src/tiles/contractVsSalary";
+import { mountSelfEmploymentTax } from "../../src/tiles/selfEmploymentTax";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
@@ -246,5 +247,49 @@ describe("self-employed tiles accessibility", () => {
       const results = await axe.run(root, { rules: { "color-contrast": { enabled: false } } });
       expect(results.violations.map((v) => v.id).join(", ")).toBe("");
     }, 30000);
+  }
+});
+
+/**
+ * The read side of the split that landed on 2026-09-09.
+ *
+ * `annualIncome` and `selfEmploymentProfitAnnual` were one key until the write
+ * side was separated, because business profit was being stored in the field
+ * every surface reads as wages. Two of the three tools that ask for net profit
+ * went on *seeding* that box from `annualIncome` — so a W-2 employee who had
+ * used Take-Home opened Quarterly Taxes and found their salary in a box that
+ * owes §1401's 15.3% rather than the §3101 half their employer withholds.
+ */
+describe("the three tools that ask for net self-employment profit", () => {
+  const tools = [
+    ["Quarterly Taxes", mountQuarterlyTaxes],
+    ["Self-Employed Retirement", mountSelfEmployedRetirement],
+    ["Self-Employment Tax", mountSelfEmploymentTax],
+  ] as const;
+
+  for (const [name, mountFn] of tools) {
+    it(`${name} opens on the reader's profit, not their wages`, () => {
+      const profile = new SituationStore();
+      profile.set("annualIncome", 61234);
+      profile.set("selfEmploymentProfitAnnual", 20567);
+      const { root } = mount(mountFn, new URLSearchParams(), profile);
+      expect(root.querySelector<HTMLInputElement>('input[name="np"]')?.value).toBe("20567");
+    });
+
+    it(`${name} leaves the box empty for a reader with no profit recorded`, () => {
+      // Zero rather than wages: an empty box a reader can fill is better than a
+      // filled one holding the wrong quantity.
+      const profile = new SituationStore();
+      profile.set("annualIncome", 61234);
+      const { root } = mount(mountFn, new URLSearchParams(), profile);
+      expect(root.querySelector<HTMLInputElement>('input[name="np"]')?.value).toBe("0");
+    });
+
+    it(`${name} still lets the link win`, () => {
+      const profile = new SituationStore();
+      profile.set("selfEmploymentProfitAnnual", 20567);
+      const { root } = mount(mountFn, new URLSearchParams({ np: "31000" }), profile);
+      expect(root.querySelector<HTMLInputElement>('input[name="np"]')?.value).toBe("31000");
+    });
   }
 });
