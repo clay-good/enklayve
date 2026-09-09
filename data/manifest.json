@@ -689,7 +689,7 @@
       "sourceUrl": "https://www.revenue.alabama.gov/wp-content/uploads/2026/01/25f40bk.pdf",
       "sourceDocument": "Alabama DOR Form 40 (2025): 2%/4%/5% brackets, sliding standard deduction, $1,500/$3,000 exemption, federal-tax deduction (Ala. Code §40-18-5/-15/-19)",
       "dateRetrieved": "2026-06-08",
-      "contentHash": "1f7004b1cbe40d795f6936686ab6e812a20d6c1a411da150a4e2e8bc1d64e5e5"
+      "contentHash": "94369deed3a9a2f66e3eef2d07522bd6fa4d39518b78fec6dd831f37a8ea0ce0"
     },
     {
       "id": "state-or-income-tax-2024",
@@ -754,7 +754,7 @@
       "sourceUrl": "https://portal.ct.gov/drs/individuals/resident-income-tax/tax-information",
       "sourceDocument": "Connecticut DRS Form CT-1040 Tax Calculation Schedule (2025), Tables A–E: brackets, exemption phase-out, recapture, personal credit (Conn. Gen. Stat. §12-700)",
       "dateRetrieved": "2026-06-08",
-      "contentHash": "eeb70dffcc4267acf05c633259dc4f1111f4797743c7e3b4b3a60dfae74bbbd8"
+      "contentHash": "96713d5fc42b388989c95c00d3f5a332d4b5aef2be9dc7b38f9de853d43ab5e5"
     },
     {
       "id": "federal-poverty-level-2024-contiguous",
