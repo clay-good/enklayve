@@ -163,6 +163,46 @@ describe("audit: the client-storage boundary", () => {
     ).toEqual([]);
     expect(withoutComments("/* a */ code // b")).toBe(" code ");
   });
+
+  it("does not go blind at the // in a URL", () => {
+    // Two regexes deleted from the first `//` on a line to the end of it, and
+    // every citation in this repo carries an https:// — so one URL ahead of a
+    // write hid the write. The gate returned nothing on the line below.
+    const line = 'const u = "https://irs.gov/x";\nlocalStorage.setItem("income", i);';
+    expect(withoutComments(line)).toContain("localStorage");
+    expect(checkClientStorage([{ path: "src/tiles/takeHome.ts", content: line }])).not.toEqual([]);
+
+    // Same line, which is how it would really be written.
+    expect(
+      checkClientStorage([
+        {
+          path: "src/tiles/takeHome.ts",
+          content: 'const u = "https://irs.gov/x"; sessionStorage.setItem("x", 1);',
+        },
+      ]),
+    ).not.toEqual([]);
+
+    // And the reason the stripper exists still holds: prose is not a write.
+    expect(
+      checkClientStorage([
+        {
+          path: "src/ui/shell.ts",
+          content: "// see https://example.com/a — never sessionStorage\nconst x = 1;",
+        },
+      ]),
+    ).toEqual([]);
+  });
+
+  it("keeps a string's contents, and is not derailed by an apostrophe", () => {
+    // Blanking strings would hide `window["localStorage"]`, so they are kept.
+    expect(withoutComments('const k = "localStorage";')).toContain("localStorage");
+    // A lone apostrophe inside a double-quoted string, and an unterminated one,
+    // both stop at their own boundary rather than swallowing the file.
+    expect(withoutComments('const a = "it\'s fine"; const b = 1;')).toContain("const b = 1;");
+    expect(withoutComments("const a = 'oops\nconst b = 1;")).toContain("const b = 1;");
+    // A template literal spans lines on purpose.
+    expect(withoutComments("const a = `one\ntwo`; // gone\nconst b = 2;")).toContain("two");
+  });
 });
 
 /**

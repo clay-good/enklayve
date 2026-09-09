@@ -738,9 +738,64 @@ const PERSISTENCE = [
   { pattern: /\bnavigator\.storage\b/, name: "navigator.storage", allowed: null },
 ] as const;
 
-/** Source with comments removed, so prose about storage is not read as storage. */
+/**
+ * Source with comments removed, so prose about storage is not read as storage.
+ *
+ * Scanned rather than replaced, because `//` is not only a comment: it is also
+ * the middle of every `https://` URL, and this repo's source is dense with them
+ * — every citation carries one. Two regexes deleted from the first `//` on a
+ * line to its end, so `const u = "https://irs.gov/x"; localStorage.setItem(...)`
+ * became `const u = "https:` and the persistence gate saw nothing. A check that
+ * a URL can blind is a check that passes on a broken tree, which is the shape
+ * this repo has now found three times (the dead-export gate counting a test as
+ * a caller, the boundary checker reading a sentence as a comparison, and this).
+ *
+ * String contents are kept rather than blanked: `withoutComments` is used to
+ * find identifiers, and blanking a string would hide a `localStorage` written
+ * as `window["localStorage"]`.
+ */
 export function withoutComments(source: string): string {
-  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+  let out = "";
+  let i = 0;
+  while (i < source.length) {
+    const c = source[i]!;
+    const next = source[i + 1];
+    if (c === "/" && next === "*") {
+      const end = source.indexOf("*/", i + 2);
+      i = end < 0 ? source.length : end + 2;
+      continue;
+    }
+    if (c === "/" && next === "/") {
+      const end = source.indexOf("\n", i);
+      i = end < 0 ? source.length : end;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === "`") {
+      const quote = c;
+      out += c;
+      i++;
+      while (i < source.length) {
+        const ch = source[i]!;
+        out += ch;
+        i++;
+        if (ch === "\\") {
+          if (i < source.length) {
+            out += source[i]!;
+            i++;
+          }
+          continue;
+        }
+        if (ch === quote) break;
+        // An unterminated ordinary string ends at the newline, so a stray quote
+        // cannot swallow the rest of the file.
+        if (quote !== "`" && ch === "\n") break;
+      }
+      continue;
+    }
+    out += c;
+    i++;
+  }
+  return out;
 }
 
 export function checkClientStorage(files: { path: string; content: string }[]): string[] {
