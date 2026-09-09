@@ -18,8 +18,8 @@
       "shard": "enrollment-windows-2026",
       "url": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-E/section-155.420",
       "why": "Eleven clocks across four titles of the CFR, each cited to its own section. A missed enrollment window costs a household its coverage, so a human reads every change.",
-      "fingerprint": "0d7adafa5f848d6795990b2f3ce0f8e7f62a73a415ca704f6345215a180dff57",
-      "checkedOn": "2026-09-01"
+      "fingerprint": "7cb9bd058228c48a5148330d19a164783abb568c7ae390e3d0fa6759f108dd0b",
+      "checkedOn": "2026-09-09"
     },
     {
       "shard": "free-filing-2026",
@@ -46,8 +46,8 @@
       "shard": "state-de-income-tax-2024",
       "url": "https://delcode.delaware.gov/title30/c011/sc02/index.html",
       "why": "Delaware's standard deduction is statutory and does not index: 30 Del. C. §1108 has set it at $3,250 / $6,500 for every taxable period beginning after December 31, 1999. There is no annual figure to parse, and the section states the amounts as a history of periods without ever using a filing-status label a parser knows — it says \"resident spouses ... if they file a joint return\". A value adapter is the wrong instrument; a change here is an amendment, and an amendment must be read.",
-      "fingerprint": "6f5bf1351571fac8dc9a39c4e0836126031b0c1c58a2ec90b7befd0b743bdad9",
-      "checkedOn": "2026-08-30"
+      "fingerprint": "9ad60e1dfffb1bab412dbcd75551d529637de431f0538cab3425260fcd7e491b",
+      "checkedOn": "2026-09-09"
     },
     {
       "shard": "medicaid-2024",
@@ -74,8 +74,8 @@
       "shard": "rmd-uniform-lifetime-2024",
       "url": "https://www.ecfr.gov/current/title-26/chapter-I/subchapter-A/part-1/subject-group-ECFR6f8c3724b50e44d/section-1.401(a)(9)-9",
       "why": "The Uniform Lifetime Table is a regulation, not an indexed figure. Treasury last reissued it effective 2022, on revised mortality assumptions, and it moves only when they are revised again — a rulemaking, which is exactly the kind of change that must be read rather than parsed. Watched at the regulation that contains the table rather than at Pub 590-B, which restates it and is reissued every year.",
-      "fingerprint": "1894fb4214cfa0decbed544778c2b2527cc6069de9e0f98d25f4fe212380739d",
-      "checkedOn": "2026-09-01"
+      "fingerprint": "a22da5a1ebc7aae62f59800ba3a195ef6239ab2cf3f3b908cd0141763d899e00",
+      "checkedOn": "2026-09-09"
     },
     {
       "shard": "social-security-2024",

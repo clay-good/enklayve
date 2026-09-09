@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+  extractRuleBodies,
   looksLikeInterstitial,
   acceptChanges,
   fingerprint,
@@ -83,6 +84,69 @@ describe("normalizing a source page", () => {
 
   it("does not ignore a change to the words themselves", () => {
     expect(fingerprint("<p>25 per centum</p>")).not.toBe(fingerprint("<p>30 per centum</p>"));
+  });
+});
+
+/**
+ * The chrome-stripping list could not keep up with eCFR.
+ *
+ * Its title-currency banner was removed on 2026-09-01 and the RMD watch fired
+ * again on 2026-09-09 with the regulation untouched — eCFR's versioner reports
+ * no 2026 version of either section on that page, while the page itself
+ * carries twenty-two "Enhanced Content" blocks, a feedback panel, a
+ * drafting-site notice and a nav tree. So where a source marks the rule off,
+ * the fingerprint is taken of the marking rather than of the page.
+ */
+describe("a source that says which part of the page is the rule", () => {
+  const ecfr = (body: string): string =>
+    `<html><body><div class="banner">Displaying title 26, up to date as of 9/08/2026.</div>` +
+    `<div class="section" id="1.401(a)(9)-9">${body}</div>` +
+    `<div class="site-footer">Enhanced Content Reader Aids</div></body></html>`;
+
+  it("fingerprints the marked-off rule and not the furniture around it", () => {
+    const text = normalizeSourceText(ecfr("<p>The applicable denominator is 27.4.</p>"));
+    expect(text).toBe("The applicable denominator is 27.4.");
+  });
+
+  it("is unmoved when only the furniture changes", () => {
+    const body = "<p>The applicable denominator is 27.4.</p>";
+    const noisier = ecfr(body).replace("Reader Aids", "Reader Aids Recent Updates Corrections");
+    expect(fingerprint(noisier)).toBe(fingerprint(ecfr(body)));
+  });
+
+  it("still moves when the rule does", () => {
+    expect(fingerprint(ecfr("<p>27.4</p>"))).not.toBe(fingerprint(ecfr("<p>26.5</p>")));
+  });
+
+  it("keeps a rule whose own body is divided, rather than cutting it at the first close", () => {
+    // A regulation nests a div per lettered paragraph. A lazy match to the
+    // first `</div>` would fingerprint the opening sentence and call every
+    // later table unchanged forever.
+    const text = normalizeSourceText(
+      ecfr("<div>( a ) In general.</div><div>( c ) Uniform Lifetime Table. 27.4</div>"),
+    );
+    expect(text).toContain("Uniform Lifetime Table");
+  });
+
+  it("takes every marked section on a page that carries more than one", () => {
+    const html =
+      '<html><body><div class="section" id="1.401(a)(9)-5"><p>five</p></div>' +
+      '<div class="nav">chrome</div>' +
+      '<div class="section" id="1.401(a)(9)-9"><p>nine</p></div></body></html>';
+    expect(normalizeSourceText(html)).toBe("five nine");
+  });
+
+  it("falls back to the whole page where a source marks nothing", () => {
+    // Delaware's code site has no such container, and its fingerprint must not
+    // move because this was added.
+    const html = "<html><body><p>The standard deduction shall be $3,250.</p></body></html>";
+    expect(extractRuleBodies(html)).toBeNull();
+    expect(normalizeSourceText(html)).toBe("The standard deduction shall be $3,250.");
+  });
+
+  it("falls back rather than swallowing the page when the markup is unbalanced", () => {
+    const html = '<html><body><div class="section" id="x"><p>rule</p></body></html>';
+    expect(extractRuleBodies(html)).toBeNull();
   });
 });
 

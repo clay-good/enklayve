@@ -103,13 +103,69 @@ const SOURCE_CHROME: RegExp[] = [
 ];
 
 /**
+ * Where a source hands us the rule in a container of its own.
+ *
+ * Stripping chrome phrase by phrase is a losing game on a site that renders as
+ * much furniture as eCFR. The title-currency banner above was removed on
+ * 2026-09-01, and on 2026-09-09 the RMD watch fired again with the regulation
+ * untouched: eCFR's own versioner reports **no 2026 version** of either
+ * §1.401(a)(9)-9 or §1.401(a)(9)-5, which are the only two sections the page
+ * contains, while the same page carries twenty-two "Enhanced Content" blocks, a
+ * feedback panel, a drafting-site notice and a navigation tree — every one of
+ * them inside the fingerprint. Chasing them one phrase at a time means the
+ * alarm keeps firing until somebody stops reading it, and these are the ACA
+ * special-enrollment window and the Uniform Lifetime Table.
+ *
+ * So the fingerprint is taken of the container instead. eCFR wraps each section
+ * in `<div class="section" id="<section number>">`, which holds the regulation
+ * and nothing else — the same markup the site's own "print section" uses. A
+ * page with no marker is fingerprinted whole, exactly as before, so this
+ * narrows what is watched only where a source has said which part is the rule.
+ */
+const RULE_BODY_MARKER = /<div\s+class="section"\s+id="[^"]*"\s*>/i;
+
+/**
+ * The marked-off rule bodies in a page, or `null` if it marks none.
+ *
+ * Balanced rather than lazy: a regulation's body contains `<div>`s of its own —
+ * eCFR nests one per lettered paragraph — so a non-greedy match to the first
+ * `</div>` would cut the rule off at its first subdivision and fingerprint the
+ * opening sentence. Counting is the whole of it.
+ */
+export function extractRuleBodies(html: string): string | null {
+  const out: string[] = [];
+  let from = 0;
+  for (;;) {
+    const rest = html.slice(from);
+    const start = RULE_BODY_MARKER.exec(rest);
+    if (!start) break;
+    const bodyFrom = from + start.index;
+    let depth = 0;
+    let i = bodyFrom;
+    const tag = /<\/?div\b[^>]*>/gi;
+    tag.lastIndex = bodyFrom;
+    let m: RegExpExecArray | null;
+    while ((m = tag.exec(html))) {
+      depth += m[0].startsWith("</") ? -1 : 1;
+      i = m.index + m[0].length;
+      if (depth === 0) break;
+    }
+    // An unbalanced document would otherwise take the rest of the page with it.
+    if (depth !== 0) return null;
+    out.push(html.slice(bodyFrom, i));
+    from = i;
+  }
+  return out.length > 0 ? out.join(" ") : null;
+}
+
+/**
  * Reduce an HTML page to the visible text a reader would see, so a fingerprint
  * tracks *content* rather than markup. Scripts, styles, and chrome are dropped;
  * whitespace is collapsed. A CMS template tweak should not read as a rule
  * change, and a rule change should not hide behind one.
  */
 export function normalizeSourceText(html: string): string {
-  let text = html
+  let text = (extractRuleBodies(html) ?? html)
     .replace(/<(script|style|svg|nav|footer|header)\b[^>]*>[\s\S]*?<\/\1>/gi, " ")
     .replace(/<!--[\s\S]*?-->/g, " ")
     .replace(/<[^>]+>/g, " ")
