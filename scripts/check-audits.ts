@@ -16,6 +16,15 @@
  * changed, the shard's year had not lapsed, and the audit table recorded a tick
  * with no expiry.
  *
+ * The roster is **every shard**, not only the 51 states. The federal figures are
+ * the most-read on this site and they move on the same annual cycle, so scoping
+ * the question to `state-*.json` would have been the narrowing this project keeps
+ * finding one directory over. States resolve to the table by name or postal code;
+ * everything else resolves through {@link SUBJECTS}, which maps the phrase a row
+ * writes ("Federal benefits and screeners") to the shards it covers. A shard no
+ * route reaches has never been audited, and the check says so rather than
+ * omitting it.
+ *
  * So this check gives an audit a shelf life. {@link STALE_DAYS} is half a year,
  * chosen not from any legislature's calendar — they vary from a 45-day session
  * to a permanent one — but because half a year is long enough that a session's
@@ -37,18 +46,20 @@ const ROOT = resolve(import.meta.dirname, "..");
 /** How long an audit stands before it wants re-reading. See the note above. */
 export const STALE_DAYS = 180;
 
-/** One jurisdiction the site ships figures for. */
-export interface Jurisdiction {
-  /** Postal code, from the shard id (`US-AR` → `AR`). */
-  code: string;
-  /** The shard's own `name`, which is how the audit table writes it. */
-  name: string;
+/** One shard the site ships figures for, and how the audit table names it. */
+export interface Subject {
+  /** The manifest dataset id. */
+  id: string;
+  /** What to call it in the report — a state's name, or the dataset id. */
+  label: string;
+  /** The phrases in a Jurisdiction cell that count as naming this shard. */
+  aliases: string[];
 }
 
-/** A jurisdiction and when it was last read against its own document. */
+/** A shard and when it was last read against its own document. */
 export interface AuditAge {
-  code: string;
-  name: string;
+  id: string;
+  label: string;
   /** ISO date of the most recent audit, or `undefined` if never audited. */
   lastAudited?: string;
   /** Days since that audit; `Infinity` when never audited. */
@@ -99,18 +110,72 @@ export function auditRows(doc: string): { date: string; named: string[] }[] {
     });
 }
 
-/** The state and DC shards the site ships, derived from `data/`. */
-export function jurisdictions(dataDir: string): Jurisdiction[] {
-  return readdirSync(dataDir)
-    .filter((f) => /^state-[a-z]{2}-income-tax-.*\.json$/.test(f))
-    .map((f) => {
-      const shard = JSON.parse(readFileSync(resolve(dataDir, f), "utf8")) as {
-        id: string;
-        name: string;
-      };
-      return { code: shard.id.replace(/^US-/, ""), name: shard.name };
-    })
-    .sort((a, b) => a.code.localeCompare(b.code));
+/**
+ * What a row's subject phrase covers, for the shards a state name cannot reach.
+ *
+ * The table writes a federal row by its topic — "Federal benefits and
+ * screeners", "Enrollment windows" — because that is what a person reading the
+ * record wants to see. This is the one place that says which shards each of
+ * those phrases is a claim about, and it is held to the table from both
+ * directions by `checkAudits.test.ts`: every id here exists in the manifest, and
+ * every phrase here appears in a real row. A dead key would grant an audit to a
+ * shard nobody has read, which is the failure mode a stale allowlist has.
+ *
+ * A shard reached by no route is not an error here — it is a shard nobody has
+ * audited, and the report is where that belongs.
+ */
+export const SUBJECTS: Record<string, string[]> = {
+  Federal: ["federal-income-tax-2024", "fica-2024", "capital-gains-2024"],
+  "Federal benefits and screeners": [
+    "amt-2024",
+    "gift-tax-2024",
+    "eitc-ctc-2024",
+    "child-tax-2024",
+    "education-credits-2024",
+    "ira-deduction-2024",
+    "savers-credit-2024",
+  ],
+  "Federal poverty level": [
+    "federal-poverty-level-2024-contiguous",
+    "federal-poverty-level-2024-alaska",
+    "federal-poverty-level-2024-hawaii",
+  ],
+  ACA: ["aca-2024"],
+  SNAP: ["snap-fy2024-contiguous"],
+  "Social Security claiming": ["social-security-2024"],
+  AMT: ["amt-2024"],
+  "Social Security benefit taxation": ["social-security-taxation-2024"],
+  "Retirement limits": ["retirement-limits-2024"],
+  "Enrollment windows": ["enrollment-windows-2026"],
+  "No Surprises": ["no-surprises-2026"],
+};
+
+/**
+ * Every shard the site ships, with the phrases that count as naming it.
+ *
+ * A state shard is named by its own `name` or its postal code, both derived
+ * from the shard. Everything else is named by whichever {@link SUBJECTS}
+ * phrases point at it — possibly none, which is how a never-audited shard
+ * reaches the report instead of falling out of the roster.
+ */
+export function subjects(dataDir: string, datasetIds: string[]): Subject[] {
+  const states = new Map<string, { name: string; code: string }>();
+  for (const f of readdirSync(dataDir)) {
+    if (!/^state-[a-z]{2}-income-tax-.*\.json$/.test(f)) continue;
+    const shard = JSON.parse(readFileSync(resolve(dataDir, f), "utf8")) as {
+      id: string;
+      name: string;
+    };
+    states.set(f.replace(/\.json$/, ""), { name: shard.name, code: shard.id.replace(/^US-/, "") });
+  }
+  return datasetIds.map((id) => {
+    const state = states.get(id);
+    if (state) return { id, label: state.name, aliases: [state.name, state.code] };
+    const aliases = Object.entries(SUBJECTS)
+      .filter(([, ids]) => ids.includes(id))
+      .map(([phrase]) => phrase);
+    return { id, label: id, aliases };
+  });
 }
 
 /** Days between two ISO dates, whole days, UTC. */
@@ -121,23 +186,23 @@ function daysBetween(fromIso: string, today: Date): number {
 }
 
 /**
- * Each jurisdiction's most recent audit. A row naming a jurisdiction by either
- * its name or its postal code counts, since the table uses both.
+ * Each shard's most recent audit. A row counts when it names any of the
+ * shard's aliases — its state name, its postal code, or a subject phrase.
  */
 export function auditAges(
-  places: Jurisdiction[],
+  places: Subject[],
   rows: { date: string; named: string[] }[],
   today: Date,
 ): AuditAge[] {
   return places.map((place) => {
     const dates = rows
-      .filter((row) => row.named.some((n) => n === place.name || n === place.code))
+      .filter((row) => row.named.some((n) => place.aliases.includes(n)))
       .map((row) => row.date)
       .sort();
     const lastAudited = dates[dates.length - 1];
     return {
-      code: place.code,
-      name: place.name,
+      id: place.id,
+      label: place.label,
       lastAudited,
       daysSince: lastAudited === undefined ? Infinity : daysBetween(lastAudited, today),
     };
@@ -148,46 +213,46 @@ export function auditAges(
 export function staleAudits(ages: AuditAge[], days: number): AuditAge[] {
   return ages
     .filter((a) => a.daysSince > days)
-    .sort((a, b) => b.daysSince - a.daysSince || a.code.localeCompare(b.code));
+    .sort((a, b) => b.daysSince - a.daysSince || a.id.localeCompare(b.id));
 }
 
 /** The report a person reads. */
 export function renderAuditReport(stale: AuditAge[], total: number, days: number): string {
   if (stale.length === 0) {
-    return `All ${total} jurisdictions were read against their own document within the last ${days} days. Nothing to do.`;
+    return `All ${total} shards were read against their own document within the last ${days} days. Nothing to do.`;
   }
+  // A state carries a name and an id; everything else is only its id, and
+  // printing that twice reads like a bug in the report.
+  const naming = (a: AuditAge): string =>
+    a.label === a.id ? `\`${a.id}\`` : `**${a.label}** (\`${a.id}\`)`;
   const never = stale.filter((a) => a.lastAudited === undefined);
   const old = stale.filter((a) => a.lastAudited !== undefined);
   const out: string[] = [];
   if (never.length > 0) {
     out.push(
-      `${never.length} jurisdiction(s) have never been read against their own document:`,
+      `${never.length} shard(s) have never been read against their own document:`,
       "",
-      ...never.map((a) => `- **${a.name}** (\`${a.code}\`) — no row in the Source audits table`),
+      ...never.map((a) => `- ${naming(a)} — no row in the Source audits table`),
       "",
     );
   }
   if (old.length > 0) {
     out.push(
-      `${old.length} jurisdiction(s) were last read more than ${days} days ago:`,
+      `${old.length} shard(s) were last read more than ${days} days ago:`,
       "",
-      ...old.map(
-        (a) =>
-          `- **${a.name}** (\`${a.code}\`) — last audited ${a.lastAudited}, ${a.daysSince} days ago`,
-      ),
+      ...old.map((a) => `- ${naming(a)} — last audited ${a.lastAudited}, ${a.daysSince} days ago`),
       "",
     );
   }
   out.push(
-    "A source audit is a reading task: the state's own withholding guide or",
-    "estimated-tax instructions for the tax year, never a summary of one, and never",
-    "an adapter's agreement — an adapter watches a page for movement and cannot see",
-    "a figure transcribed wrong or a rate its legislature cut in May. Arkansas is the",
-    "case: Act 2 of the 2026 First Extraordinary Session cut the top rate on May 6,",
-    "and the state's own 2026 AR1000ES, printed the previous October, still says the",
-    "old one. Record the result in the Source audits table in",
-    "[docs/data-sources.md](docs/data-sources.md#source-audits) — including the audits",
-    "that change nothing, which are most of them and are still audits.",
+    "A source audit is a reading task: the agency's own document for the year, never",
+    "a summary of one, and never an adapter's agreement — an adapter watches a page",
+    "for movement and cannot see a figure transcribed wrong or a rate its legislature",
+    "cut in May. Arkansas is the case: Act 2 of the 2026 First Extraordinary Session",
+    "cut the top rate on May 6, and the state's own 2026 AR1000ES, printed the",
+    "previous October, still says the old one. Record the result in the Source audits",
+    "table in [docs/data-sources.md](docs/data-sources.md#source-audits) — including",
+    "the audits that change nothing, which are most of them and are still audits.",
   );
   return out.join("\n");
 }
@@ -204,7 +269,13 @@ function main(): void {
   const today = todayArg ? new Date(`${todayArg}T00:00:00Z`) : new Date();
 
   const doc = readFileSync(resolve(ROOT, "docs", "data-sources.md"), "utf8");
-  const places = jurisdictions(resolve(ROOT, "data"));
+  const manifest = JSON.parse(readFileSync(resolve(ROOT, "data", "manifest.json"), "utf8")) as {
+    datasets: { id: string }[];
+  };
+  const places = subjects(
+    resolve(ROOT, "data"),
+    manifest.datasets.map((d) => d.id),
+  );
   const stale = staleAudits(auditAges(places, auditRows(doc), today), days);
   const report = renderAuditReport(stale, places.length, days);
   process.stdout.write(`${report}\n`);

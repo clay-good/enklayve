@@ -4,11 +4,12 @@ import { resolve } from "node:path";
 import {
   auditAges,
   auditRows,
-  jurisdictions,
   jurisdictionsNamedBy,
   renderAuditReport,
   staleAudits,
   STALE_DAYS,
+  SUBJECTS,
+  subjects,
 } from "../../scripts/check-audits";
 
 /**
@@ -83,78 +84,80 @@ describe("reading the Source audits table", () => {
   });
 });
 
-describe("how old each jurisdiction's audit is", () => {
+describe("how old each shard's audit is", () => {
   const places = [
-    { code: "AR", name: "Arkansas" },
-    { code: "KS", name: "Kansas" },
-    { code: "CO", name: "Colorado" },
+    { id: "state-ar-income-tax-2024", label: "Arkansas", aliases: ["Arkansas", "AR"] },
+    { id: "state-ks-income-tax-2024", label: "Kansas", aliases: ["Kansas", "KS"] },
+    { id: "amt-2024", label: "amt-2024", aliases: ["Federal benefits and screeners", "AMT"] },
   ];
 
-  it("takes the most recent row naming a jurisdiction, by name or by code", () => {
+  it("takes the most recent row naming a shard, by any of its aliases", () => {
     const rows = [
       { date: "2026-01-10", named: ["Arkansas"] },
-      { date: "2026-05-06", named: ["Arkansas"] },
-      { date: "2026-03-01", named: ["CO"] },
+      { date: "2026-05-06", named: ["AR"] },
+      { date: "2026-03-01", named: ["Federal benefits and screeners"] },
+      { date: "2026-04-02", named: ["AMT"] },
     ];
     const ages = auditAges(places, rows, day("2026-05-16"));
-    expect(ages.find((a) => a.code === "AR")?.lastAudited).toBe("2026-05-06");
-    expect(ages.find((a) => a.code === "AR")?.daysSince).toBe(10);
-    // Named by its postal code, which is how one row of the real table is written.
-    expect(ages.find((a) => a.code === "CO")?.lastAudited).toBe("2026-03-01");
+    // Named once by name and once by postal code; the later one is the answer.
+    expect(ages.find((a) => a.id.startsWith("state-ar"))?.lastAudited).toBe("2026-05-06");
+    expect(ages.find((a) => a.id.startsWith("state-ar"))?.daysSince).toBe(10);
+    // A federal shard reached by two different subject phrases, one of them the
+    // second pass that found the wrong phase-out rate.
+    expect(ages.find((a) => a.id === "amt-2024")?.lastAudited).toBe("2026-04-02");
   });
 
-  it("reports a jurisdiction no row names as never audited", () => {
+  it("reports a shard no row names as never audited", () => {
     const ages = auditAges(
       places,
       [{ date: "2026-05-06", named: ["Arkansas"] }],
       day("2026-05-16"),
     );
-    const ks = ages.find((a) => a.code === "KS");
+    const ks = ages.find((a) => a.label === "Kansas");
     expect(ks?.lastAudited).toBeUndefined();
     expect(ks?.daysSince).toBe(Infinity);
   });
 
   it("counts never-audited as stale at every threshold", () => {
     const ages = auditAges(places, [], day("2026-05-16"));
-    expect(
-      staleAudits(ages, 100_000)
-        .map((a) => a.code)
-        .sort(),
-    ).toEqual(["AR", "CO", "KS"]);
+    expect(staleAudits(ages, 100_000)).toHaveLength(3);
   });
 
   it("reports the oldest reading first, and only past the threshold", () => {
     const rows = [
       { date: "2026-01-01", named: ["Arkansas"] },
       { date: "2026-05-01", named: ["Kansas"] },
-      { date: "2025-06-01", named: ["Colorado"] },
+      { date: "2025-06-01", named: ["AMT"] },
     ];
     const ages = auditAges(places, rows, day("2026-06-01"));
-    // Colorado 365 days, Arkansas 151, Kansas 31.
-    expect(staleAudits(ages, 180).map((a) => a.code)).toEqual(["CO"]);
-    expect(staleAudits(ages, 100).map((a) => a.code)).toEqual(["CO", "AR"]);
+    // AMT 365 days, Arkansas 151, Kansas 31.
+    expect(staleAudits(ages, 180).map((a) => a.label)).toEqual(["amt-2024"]);
+    expect(staleAudits(ages, 100).map((a) => a.label)).toEqual(["amt-2024", "Arkansas"]);
     expect(staleAudits(ages, 400)).toEqual([]);
   });
 });
 
 describe("the report a person reads", () => {
-  it("says so plainly when every jurisdiction is current", () => {
-    expect(renderAuditReport([], 51, 180)).toContain("All 51 jurisdictions");
-    expect(renderAuditReport([], 51, 180)).toContain("Nothing to do");
+  it("says so plainly when every shard is current", () => {
+    expect(renderAuditReport([], 81, 180)).toContain("All 81 shards");
+    expect(renderAuditReport([], 81, 180)).toContain("Nothing to do");
   });
 
   it("separates the never-read from the long-unread, and says what to do", () => {
     const report = renderAuditReport(
       [
-        { code: "KS", name: "Kansas", daysSince: Infinity },
-        { code: "AR", name: "Arkansas", lastAudited: "2025-06-01", daysSince: 365 },
+        { id: "state-ks-income-tax-2024", label: "Kansas", daysSince: Infinity },
+        { id: "amt-2024", label: "amt-2024", lastAudited: "2025-06-01", daysSince: 365 },
       ],
-      51,
+      81,
       180,
     );
     expect(report).toContain("never been read");
-    expect(report).toContain("**Kansas** (`KS`)");
+    expect(report).toContain("**Kansas** (`state-ks-income-tax-2024`)");
     expect(report).toContain("last audited 2025-06-01, 365 days ago");
+    // A shard whose only name is its id is printed once, not twice.
+    expect(report).toContain("- `amt-2024` — last audited");
+    expect(report).not.toContain("**amt-2024** (`amt-2024`)");
     // The instruction is the point of the issue body: an adapter agreeing is
     // not an audit, and the state's own form can be older than its own law.
     expect(report).toContain("Act 2 of the 2026 First Extraordinary Session");
@@ -162,18 +165,65 @@ describe("the report a person reads", () => {
   });
 });
 
-describe("the shipped state of the record", () => {
-  it("shipped 51 jurisdictions, every one of them audited", () => {
-    const places = jurisdictions(resolve(ROOT, "data"));
-    expect(places.length).toBe(51);
-    const rows = auditRows(readFileSync(resolve(ROOT, "docs", "data-sources.md"), "utf8"));
-    const never = auditAges(places, rows, day("2026-09-09")).filter(
-      (a) => a.lastAudited === undefined,
+describe("the roster is every shard, not only the states", () => {
+  const ids = (
+    JSON.parse(readFileSync(resolve(ROOT, "data", "manifest.json"), "utf8")) as {
+      datasets: { id: string }[];
+    }
+  ).datasets.map((d) => d.id);
+  const roster = subjects(resolve(ROOT, "data"), ids);
+
+  it("covers every dataset the manifest ships", () => {
+    // The federal figures are the most-read on this site and move on the same
+    // annual cycle, so scoping the question to `state-*.json` would have been
+    // the narrowing this project keeps finding one directory over.
+    expect(roster).toHaveLength(ids.length);
+    expect(roster.filter((r) => r.id.startsWith("state-"))).toHaveLength(51);
+  });
+
+  it("names a state by its own name and postal code, from the shard", () => {
+    const ar = roster.find((r) => r.id === "state-ar-income-tax-2024");
+    expect(ar?.label).toBe("Arkansas");
+    expect(ar?.aliases).toEqual(["Arkansas", "AR"]);
+  });
+
+  it("routes a federal shard through every subject phrase that covers it", () => {
+    // The AMT shard is reached twice: once by the sweep of the seven benefit
+    // shards, and once by the second pass that found §55(d)(4)(A)(ii)(IV).
+    expect(roster.find((r) => r.id === "amt-2024")?.aliases.sort()).toEqual([
+      "AMT",
+      "Federal benefits and screeners",
+    ]);
+  });
+});
+
+describe("the subject map is held to the table from both directions", () => {
+  const doc = readFileSync(resolve(ROOT, "docs", "data-sources.md"), "utf8");
+  const cellPhrases = new Set(auditRows(doc).flatMap((r) => r.named));
+  const manifestIds = new Set(
+    (
+      JSON.parse(readFileSync(resolve(ROOT, "data", "manifest.json"), "utf8")) as {
+        datasets: { id: string }[];
+      }
+    ).datasets.map((d) => d.id),
+  );
+
+  it("points at no shard the manifest does not ship", () => {
+    // A phantom id silently drops a real shard out of the freshness question.
+    const phantom = Object.entries(SUBJECTS).flatMap(([phrase, ids]) =>
+      ids.filter((id) => !manifestIds.has(id)).map((id) => `${phrase} → ${id}`),
     );
+    expect(phantom).toEqual([]);
+  });
+
+  it("has no key that no row writes", () => {
+    // The stale-allowlist failure: a dead key grants an audit to a shard nobody
+    // has read, and reads as coverage forever.
+    const dead = Object.keys(SUBJECTS).filter((phrase) => !cellPhrases.has(phrase));
     expect(
-      never.map((a) => a.name),
-      "a jurisdiction nobody has audited — add a row to the Source audits table in " +
-        "docs/data-sources.md saying what was checked, even when nothing changed",
+      dead,
+      "these subject phrases appear in no Source audits row — the row was reworded and the map " +
+        "still claims its shards were audited",
     ).toEqual([]);
   });
 
