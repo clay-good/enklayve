@@ -3,10 +3,10 @@
   "categories": [
     {
       "id": "housing",
-      "label": "Rent or mortgage",
+      "label": "Rent, mortgage, or property taxes",
       "group": "housing",
       "rank": 1,
-      "consequence": "Late fees, and eventually the loss of your home. Missing rent risks eviction; missing a mortgage starts the road to foreclosure.",
+      "consequence": "Late fees, and eventually the loss of your home. Missing rent risks eviction; missing a mortgage starts the road to foreclosure; unpaid property taxes become a lien and, in most states, a tax sale — which can move faster than foreclosure.",
       "timing": "state",
       "timingNote": "Notice periods and how long the process takes are set by your state, and in some places by your city.",
       "relief": [
@@ -141,7 +141,7 @@
   "citation": {
     "sourceUrl": "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_prioritizing-bills_tool.pdf",
     "sourceDocument": "CFPB, Your Money Your Goals: Prioritizing bills",
-    "sourceNote": "The ordering and the consequence language follow the CFPB tool's own framing: identify what you need to pay to protect your housing and income, keep your insurance, and meet court-ordered obligations, then weigh the risk of not paying each one. The CFPB publishes no numeric ranking, so the default order here is our reading of that framing and is adjustable by the user. Consequences for transportation, housing, utilities, credit cards, and court-ordered obligations are taken from the tool's own CONSIDER column. Timing for eviction, utility shutoff, and repossession is set by state law and is deliberately carried as a pointer rather than a number.",
+    "sourceNote": "The ordering and the consequence language follow the CFPB tool's own framing: identify what you need to pay to protect your housing and income, keep your insurance, and meet court-ordered obligations, then weigh the risk of not paying each one. The CFPB publishes no numeric ranking, so the default order here is our reading of that framing and is adjustable by the user. Consequences for transportation, housing, utilities, credit cards, and court-ordered obligations are taken from the tool's own CONSIDER column. Timing for eviction, utility shutoff, and repossession is set by state law and is deliberately carried as a pointer rather than a number. Two categories here are NOT in the CFPB tool and are ours: tax debt and medical bills. Property taxes are in it — its housing line reads \"Rent, mortgage, or property taxes\" — and this shard listed only the first two until 2026-09-09, leaving a homeowner facing a tax lien with no row.",
     "effectiveYear": 2026,
     "dateRetrieved": "2026-08-28"
   }

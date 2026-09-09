@@ -196,11 +196,23 @@ export interface PellResult {
 
 /**
  * Estimate the Pell Grant from the SAI: a student receives the maximum Pell less
- * their SAI (a positive SAI reduces the award dollar-for-dollar), with an
- * otherwise-eligible student floored at the minimum Pell, and no award once the
- * SAI reaches the maximum Pell. (The new methodology also guarantees the maximum
- * or minimum Pell directly from income relative to the poverty line for some
- * families; that income-based guarantee can only raise this estimate.)
+ * their SAI (a positive SAI reduces the award dollar-for-dollar), floored at the
+ * minimum Pell, and no award once the SAI reaches the maximum Pell.
+ *
+ * That floor is an **assumption**, and it used to be described as though it were
+ * not. ED's 2026-27 letter is explicit that an SAI-calculated award below the
+ * minimum makes the student ineligible for an SAI-calculated award — they get
+ * the minimum only if they separately qualify for it on income relative to the
+ * poverty line, which this engine does not ask. So between an SAI of $6,656 and
+ * $7,394 the figure here is the minimum Pell supplied by exactly the guarantee
+ * the old note said "can only raise this estimate": in that band it is the whole
+ * of it. Modelling the income-based criteria (family size, filing requirement,
+ * poverty guideline, state) would settle it and is a feature rather than a fix.
+ *
+ * The cutoff is deliberately the maximum Pell rather than the statutory bar.
+ * OBBBA (Pub. L. 119-21) prohibits any Pell where the SAI is at least twice the
+ * maximum — $14,790 for 2026-27 — so this stops well short of it and cannot
+ * promise an award the statute forbids.
  */
 export function estimatePell(sai: number, data: FafsaData): PellResult {
   if (sai >= data.maxPellGrant) {

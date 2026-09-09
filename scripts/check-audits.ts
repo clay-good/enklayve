@@ -154,6 +154,10 @@ export const SUBJECTS: Record<string, string[]> = {
   "Free filing": ["free-filing-2026"],
   "CPI-U": ["cpi-u-annual"],
   "Garnishment limits": ["garnishment-limits-2026"],
+  "Trump accounts": ["trump-accounts-2026"],
+  FAFSA: ["fafsa-2024-2025"],
+  "Life events": ["life-events-2026"],
+  "Bill triage": ["bill-triage-2026"],
 };
 
 /**
