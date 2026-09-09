@@ -72,6 +72,7 @@ const NUMERIC_FIELDS = [
   "essentialMonthlyExpenses",
   "totalMonthlyExpenses",
   "liquidSavings",
+  "planDeductible",
 ] as const satisfies readonly SituationKey[];
 
 /**
@@ -100,6 +101,7 @@ const EXPECTED = [
   "education-credits | annualIncome <- Modified adjusted gross income (MAGI)",
   "eitc | annualIncome <- Earned income",
   "eitc | qualifyingChildren <- Qualifying children",
+  "eob-checker | planDeductible <- Your plan's deductible",
   "federal-income-tax | annualIncome <- Wages and income",
   "fpl | annualIncome <- Annual household income",
   "fpl | householdSize <- Household size",

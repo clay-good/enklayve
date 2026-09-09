@@ -27,6 +27,7 @@ import {
 import { renderLedgerDiff } from "./ledgerView";
 import { buildReport } from "../readout/report";
 import { buildAnswer } from "../readout/answer";
+import type { PlanParameters } from "../readout/checks";
 import { citationLink } from "./resultCard";
 import type {
   CheckOutcome,
@@ -107,6 +108,16 @@ function summaryLine(fields: ExtractedField[]): string {
   return parts.length > 0
     ? `Here's where you stand: ${parts.join(", ")}.`
     : "Your values are ready to review.";
+}
+
+/**
+ * The plan parameters a check may read, from the answers the reader has already
+ * given elsewhere. Absent stays absent: a plan-math check with no plan behind it
+ * says nothing rather than assuming one.
+ */
+function planFrom(profile: SituationStore): PlanParameters | undefined {
+  const deductible = profile.get("planDeductible");
+  return deductible === undefined ? undefined : { deductible };
 }
 
 export function renderReadout(opts: RenderReadoutOptions): void {
@@ -551,6 +562,13 @@ export function renderReadout(opts: RenderReadoutOptions): void {
         buildAnswer(result, {
           documents: session,
           noSurprises: data?.noSurprises() ?? undefined,
+          // Every field of `CheckContext`. `buildAnswer`'s own comment says a
+          // check reading a field this call drops cannot fire and nothing says
+          // so — and that fix went into `buildAnswer` while its one production
+          // caller went on dropping `plan`, so the whole plan-math family had
+          // never run in the app. Its unit cases passed throughout, because
+          // each builds a context of its own.
+          plan: planFrom(profile),
         }),
       ),
       el("div", { class: "readout-actions" }, confirm),

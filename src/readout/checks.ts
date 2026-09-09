@@ -96,9 +96,27 @@ function usd(n: number): string {
   return Money.from(n).format("en-US");
 }
 
-/** The first document of `kind` in the session, or null. */
+/**
+ * The document of `kind` these checks are about, or null.
+ *
+ * The one being read wins: `ctx.primary` is the document the answer on screen
+ * is for, and a check that computed on a different one would quote dollars the
+ * reader is not looking at. This took the **first** match in the session, and
+ * "Read another document" is an advertised flow — so a second EOB was restated
+ * on screen ("What this says") while "What looks wrong" was still checking the
+ * first, silent about a broken second bill because the first one reconciled.
+ *
+ * For the other side of a cross-check — the medical bill beside the EOB — the
+ * most recent one is the answer for the same reason: it is the one the reader
+ * has just handed over.
+ */
 function doc(ctx: CheckContext, kind: DocKind): ExtractionResult | null {
-  return ctx.documents.find((d) => d.kind === kind) ?? null;
+  if (ctx.primary.kind === kind) return ctx.primary;
+  for (let i = ctx.documents.length - 1; i >= 0; i--) {
+    const d = ctx.documents[i]!;
+    if (d.kind === kind) return d;
+  }
+  return null;
 }
 
 /** A numeric extracted field by id, or null when it was not read. */

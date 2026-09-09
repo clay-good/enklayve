@@ -41,6 +41,7 @@ const EVERY_FIELD: Required<SituationValues> = {
   essentialMonthlyExpenses: 3400,
   totalMonthlyExpenses: 4800,
   liquidSavings: 11_000,
+  planDeductible: 11_000,
 };
 
 /**

@@ -414,6 +414,7 @@ describe("every hub survives what its calculators are swept for", () => {
     essentialMonthlyExpenses: 0.01,
     totalMonthlyExpenses: 0.01,
     liquidSavings: 1e308,
+    planDeductible: 1e308,
   };
 
   function hostileProfile(): SituationStore {
@@ -482,6 +483,7 @@ describe("every calculator survives a restored profile", () => {
     "essentialMonthlyExpenses",
     "totalMonthlyExpenses",
     "liquidSavings",
+    "planDeductible",
     "qualifiedTipsAnnual",
     "qualifiedOvertimeAnnual",
   ] as const;

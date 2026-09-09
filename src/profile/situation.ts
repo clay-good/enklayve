@@ -102,6 +102,15 @@ export interface SituationValues {
   totalMonthlyExpenses: number;
   /** Liquid savings / cash on hand. */
   liquidSavings: number;
+  /**
+   * The reader's own health-plan deductible, typed into the EOB Checker.
+   *
+   * A plan parameter rather than a household figure, and here for the reason
+   * every other shared value is: the Readout's plan-math check asks whether a
+   * notice's deductible figure exceeds the reader's own, and had no way to know
+   * it. Nothing infers this one.
+   */
+  planDeductible: number;
 }
 
 export type SituationKey = keyof SituationValues;
@@ -205,6 +214,14 @@ export const SituationValuesSchema = z
     essentialMonthlyExpenses: num,
     totalMonthlyExpenses: num,
     liquidSavings: num,
+    /**
+     * The reader's own health-plan deductible, typed into the EOB Checker.
+     *
+     * A plan parameter rather than a household figure, and here for the same
+     * reason every other shared value is: the Readout's plan-math check needs
+     * a number the reader has already given another surface. Nothing infers it.
+     */
+    planDeductible: num,
   })
   .catch({});
 

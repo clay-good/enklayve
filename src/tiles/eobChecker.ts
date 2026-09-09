@@ -302,6 +302,11 @@ export function mountEobChecker(ctx: TileContext): void {
       setting: settingSelect.value,
     };
     ctx.setParams(writeFields(fields));
+    // The Readout's plan-math check asks whether an EOB's deductible figure
+    // exceeds the reader's own, and had no way to know it: this is the surface
+    // where that number is typed, so it goes to the shared profile like every
+    // other answer a tile collects.
+    ctx.profile.set("planDeductible", fields.deductible);
     compute();
   }
 

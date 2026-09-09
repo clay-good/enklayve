@@ -365,6 +365,33 @@ describe("Readout view, the four-part answer", () => {
     expect(links.some((h) => h.includes("cms.gov/medical-bill-rights"))).toBe(true);
   });
 
+  it("runs the plan-math family against the deductible the reader already typed", async () => {
+    // `buildAnswer`'s own comment says a check reading a field the call drops
+    // cannot fire and nothing says so — and that fix went into `buildAnswer`
+    // while its one production caller went on dropping `plan`. So the whole
+    // plan-math family had never run in the app, and its unit cases all passed,
+    // because each of them builds a context of its own. The number exists: the
+    // EOB Checker asks for it, and now keeps it where the Readout can see it.
+    const { container, profile } = setup(sequence(EOB_TEXT + " Deductible Applied 2,400.00"));
+    profile.set("planDeductible", 1500);
+    await dropFile(container, "eob.pdf");
+    const flags = Array.from(container.querySelectorAll(".readout-flag-q")).map(
+      (n) => n.textContent ?? "",
+    );
+    expect(flags.some((f) => f.includes("more to your deductible than your deductible is"))).toBe(
+      true,
+    );
+  });
+
+  it("says nothing about a deductible nobody has given it", async () => {
+    const { container } = setup(sequence(EOB_TEXT + " Deductible Applied 2,400.00"));
+    await dropFile(container, "eob.pdf");
+    const flags = Array.from(container.querySelectorAll(".readout-flag-q")).map(
+      (n) => n.textContent ?? "",
+    );
+    expect(flags.some((f) => f.includes("your deductible is"))).toBe(false);
+  });
+
   it("fires the EOB × medical-bill cross-check once both are read in one session", async () => {
     const { container } = setup(sequence(EOB_TEXT, BILL_TEXT));
     await dropFile(container, "eob.pdf");

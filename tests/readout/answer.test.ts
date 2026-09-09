@@ -234,6 +234,23 @@ describe("Readout v2, what the checks do and do not say", () => {
     expect(flags.find((f) => f.checkId === "eob-allowed-splits")).toBeUndefined();
   });
 
+  it("checks the document being read, not the first one of its kind", () => {
+    // "Read another document" is an advertised flow, and a session keeps every
+    // extraction. The checks took the FIRST document of a kind, so a second EOB
+    // was restated on screen while the findings below it were still about the
+    // first: silence on a broken second notice because the first reconciled,
+    // and dollars quoted from a page the reader had moved on from.
+    const clean = extractDocument(typed(EOB_CLEAN));
+    const second = runChecks({ primary: eob, documents: [clean, eob] });
+    const split = second.find((f) => f.checkId === "eob-allowed-splits");
+    expect(split).toBeDefined();
+    expect(split?.detail).toContain("$150.00");
+
+    // And the other way round: the clean one read second says nothing.
+    const back = runChecks({ primary: clean, documents: [eob, clean] });
+    expect(back.find((f) => f.checkId === "eob-allowed-splits")).toBeUndefined();
+  });
+
   it("runs a plan-math check only against a deductible the user supplied", () => {
     const withoutPlan = runChecks({ primary: eob, documents: [eob] });
     expect(
