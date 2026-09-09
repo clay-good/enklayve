@@ -17,6 +17,7 @@ beforeAll(async () => {
 function mount(
   params: URLSearchParams,
   bundled: BundledData | null = data,
+  profile: SituationStore = new SituationStore(),
 ): { root: HTMLElement; lastParams: () => URLSearchParams | null } {
   const root = document.createElement("div");
   let captured: URLSearchParams | null = null;
@@ -30,7 +31,7 @@ function mount(
     navigate: () => {},
     locale: "en-US",
     data: bundled,
-    profile: new SituationStore(),
+    profile,
   });
   return { root, lastParams: () => captured };
 }
@@ -89,6 +90,51 @@ describe("Social Security Taxation tile", () => {
       (o) => o.textContent ?? "",
     );
     expect(options).toContain("Married filing separately, lived with spouse");
+  });
+
+  /**
+   * Every other calculator with a "Filing status" control pre-fills it from My
+   * Situation. This one defaulted to single and asked again — and its whole
+   * answer is a pair of base amounts, so a joint filer who had told the site so
+   * was measured against $25,000/$34,000 instead of $32,000/$44,000 and read a
+   * taxable portion that was not theirs.
+   */
+  it("opens on the filing status the reader already gave", () => {
+    const profile = new SituationStore();
+    profile.set("filingStatus", "married_jointly");
+    const params = new URLSearchParams({ ss: "24000", oi: "30000" });
+    const { root } = mount(params, data, profile);
+    expect(root.querySelector<HTMLSelectElement>('select[name="fs"]')?.value).toBe(
+      "married_jointly",
+    );
+    // Provisional income is unchanged at 42,000; the joint bases put it between
+    // 32,000 and 44,000, so half the excess is carried rather than 85% of it.
+    expect(rowValue(root, "Provisional income")).toBe("$42,000.00");
+    expect(rowValue(root, "Taxable portion")).toBe("$5,000.00");
+  });
+
+  it("lets the link win over the profile, like every other shared field", () => {
+    const profile = new SituationStore();
+    profile.set("filingStatus", "married_jointly");
+    const { root } = mount(
+      new URLSearchParams({ fs: "single", ss: "24000", oi: "30000" }),
+      data,
+      profile,
+    );
+    expect(rowValue(root, "Taxable portion")).toBe("$11,300.00");
+  });
+
+  it("puts a qualifying surviving spouse on the single amounts, not a fifth option", () => {
+    // §86(c)(1)(A) gives them the $25,000/$34,000 bases, which is what the four
+    // entries in the select already cover — so the tile computes the right
+    // money and writes nothing back, because a four-value control narrowing a
+    // five-value field is the bug Education Credits was fixed out of.
+    const profile = new SituationStore();
+    profile.set("filingStatus", "qualifying_surviving_spouse");
+    const { root } = mount(new URLSearchParams({ ss: "24000", oi: "30000" }), data, profile);
+    expect(root.querySelector<HTMLSelectElement>('select[name="fs"]')?.value).toBe("single");
+    expect(rowValue(root, "Taxable portion")).toBe("$11,300.00");
+    expect(profile.get("filingStatus")).toBe("qualifying_surviving_spouse");
   });
 
   it("shows the verify banner when data is missing and stays finite on junk input", () => {

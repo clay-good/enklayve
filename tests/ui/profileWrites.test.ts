@@ -522,6 +522,49 @@ describe("what a calculator may write into My Situation", () => {
     }
   });
 
+  /**
+   * Reading is the other half, and nothing was holding it.
+   *
+   * "A tile pre-fills from any shared field it likes" is true of most fields
+   * and not of the two that decide which schedule a reader is on. The Social
+   * Security Taxation tile defaulted to single and asked again, and its whole
+   * answer is a pair of base amounts: a joint filer who had told the site so
+   * was measured against $25,000/$34,000 instead of $32,000/$44,000. Fifteen
+   * of the sixteen filing-status dropdowns in the catalog already pre-filled.
+   *
+   * Derived from the controls rather than listed: any select offering the
+   * value has to open on it.
+   */
+  it("opens every filing-status dropdown on the status the reader already gave", () => {
+    let seen = 0;
+    for (const tile of CALCULATORS) {
+      const root = document.createElement("div");
+      const profile = new SituationStore();
+      profile.set("filingStatus", "married_jointly");
+      tile.mount!({
+        root,
+        params: new URLSearchParams(),
+        setParams: () => {},
+        permalink: () => "https://enklayve.com/#/x",
+        navigate: () => {},
+        locale: "en-US",
+        data,
+        profile,
+      } as TileContext);
+
+      for (const select of root.querySelectorAll<HTMLSelectElement>("select")) {
+        if (![...select.options].some((o) => o.value === "married_jointly")) continue;
+        seen += 1;
+        expect(
+          select.value,
+          `${tile.id}'s "${labelOf(root, select)}" asked again for an answer My Situation held`,
+        ).toBe("married_jointly");
+      }
+    }
+    // A sweep that reached no dropdown would assert nothing.
+    expect(seen).toBe(16);
+  });
+
   it("asks about somebody else's money without writing it down", () => {
     // The two fixes above, stated as behavior rather than as an absence from a
     // list, so they survive a rewrite of the map.

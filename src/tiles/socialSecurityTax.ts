@@ -12,6 +12,7 @@ import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
 
 // Single / head of household / qualifying surviving spouse share the $25k/$34k
@@ -52,10 +53,34 @@ function isStatus(v: string): v is Fields["fs"] {
   return STATUSES.some((s) => s.value === v);
 }
 
-function readFields(p: URLSearchParams): Fields {
+/**
+ * The filing status this tile opens on: the link, then My Situation, then single.
+ *
+ * Every other calculator with a "Filing status" control pre-fills it from the
+ * shared profile; this one defaulted to single and asked again. That is not a
+ * missing convenience on a tile whose whole answer is a pair of base amounts:
+ * a joint filer who had told the site so was measured against $25,000/$34,000
+ * instead of $32,000/$44,000, so the tile's headline -- how much of the benefit
+ * is taxable -- was wrong by default for the reader who had already answered.
+ *
+ * Qualifying surviving spouse is the fifth status and has no entry in the
+ * four-value select: §86(c)(1)(A) puts it on the single base amounts, which is
+ * what the comment above STATUSES says, so it seeds "Single" and computes the
+ * right money. Nothing is written back -- this tile reads the shared field and
+ * does not assert one, so a four-value control can never narrow a five-value
+ * field the way Education Credits' two-value checkbox once did.
+ */
+function seedStatus(p: URLSearchParams, profile: SituationStore): Fields["fs"] {
   const fs = p.get("fs");
+  if (fs && isStatus(fs)) return fs;
+  const stored = profile.get("filingStatus");
+  if (stored && isStatus(stored)) return stored;
+  return "single";
+}
+
+function readFields(p: URLSearchParams, profile: SituationStore): Fields {
   return {
-    fs: fs && isStatus(fs) ? fs : "single",
+    fs: seedStatus(p, profile),
     ss: parseNonNegative(p.get("ss"), 0),
     other: parseNonNegative(p.get("oi"), 0),
     exempt: parseNonNegative(p.get("ti"), 0),
@@ -86,13 +111,17 @@ export function mountSocialSecurityTax(ctx: TileContext): void {
     return;
   }
   const ssTax = params;
-  let fields = readFields(ctx.params);
+  let fields = readFields(ctx.params, ctx.profile);
 
   const fsSelect = el(
     "select",
     { name: "fs", attrs: { "aria-label": "Filing status" } },
     ...STATUSES.map((s) => option(s.value, s.label, s.value === fields.fs)),
   );
+  // The element's value is authoritative for the intended status: `recompute()`
+  // reads `fsSelect.value`, so leaving it to the options' `selected` attributes
+  // lets a later read pick up a default the tile never intended.
+  fsSelect.value = fields.fs;
   fsSelect.value = fields.fs;
   const mkNum = (name: string, label: string, value: number): HTMLInputElement =>
     el("input", {
