@@ -45,6 +45,28 @@ describe("self-employment tax (2026)", () => {
     expect(cents(r.additionalMedicare)).toBe("277.88");
   });
 
+  it("keeps the §1401(b)(2) surtax out of the deductible half", () => {
+    // §164(f)(1) allows one-half of the §1401 taxes "other than the taxes
+    // imposed by section 1401(b)(2)". The surtax was being halved with
+    // everything else, over-deducting 0.45% of the excess base — and it never
+    // reaches Schedule SE line 12, which is where the deduction comes from.
+    const r = selfEmploymentTax(Money.from(250000), "single", ds.fica);
+    expect(r.additionalMedicare.isZero()).toBe(false);
+    expect(cents(r.deductibleHalf)).toBe(cents(r.socialSecurity.add(r.medicare).divide(2)));
+    // Which is not half of the total, once the surtax is in play.
+    expect(r.deductibleHalf.toNumber()).toBeLessThan(r.total.toNumber() / 2);
+    expect(r.total.toNumber() / 2 - r.deductibleHalf.toNumber()).toBeCloseTo(
+      r.additionalMedicare.toNumber() / 2,
+      6,
+    );
+  });
+
+  it("is still exactly half below the surtax threshold", () => {
+    const r = selfEmploymentTax(Money.from(50000), "single", ds.fica);
+    expect(r.additionalMedicare.isZero()).toBe(true);
+    expect(cents(r.deductibleHalf)).toBe(cents(r.total.divide(2)));
+  });
+
   it("is zero on no profit and never negative", () => {
     expect(selfEmploymentTax(Money.from(0), "single", ds.fica).total.isZero()).toBe(true);
     const r = selfEmploymentTax(Money.from(-5000), "single", ds.fica);

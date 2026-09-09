@@ -42,7 +42,12 @@ export interface SelfEmploymentTaxResult {
   additionalMedicare: Money;
   /** Total self-employment tax. */
   total: Money;
-  /** The deductible half (the employer-equivalent portion), an adjustment to income. */
+  /**
+   * The deductible half (the employer-equivalent portion), an adjustment to
+   * income. §164(f)(1) allows one-half of the §1401 taxes "other than the taxes
+   * imposed by section 1401(b)(2)" — so the 0.9% Additional Medicare surtax is
+   * outside it, as Schedule SE line 12 and Form 8959 already have it.
+   */
   deductibleHalf: Money;
   citation: CitationData;
 }
@@ -66,7 +71,9 @@ export const SE_TAX_BASE_RATE = 0.9235;
  * combined rate applied to 92.35% of net earnings (the factor that excludes the
  * employer-equivalent share from the base), with Social Security capped at the
  * wage base and the 0.9% Additional Medicare surtax on earnings over the
- * filing-status threshold. Half of the total is deductible above the line.
+ * filing-status threshold. Half is deductible above the line — of the Social
+ * Security and Medicare halves only, since §164(f)(1) excludes the §1401(b)(2)
+ * surtax from what it halves.
  *
  * @param netEarnings net profit from self-employment (Schedule C)
  */
@@ -92,6 +99,11 @@ export function selfEmploymentTax(
   const additionalMedicare = over.multiply(fica.additionalMedicareRate);
 
   const total = socialSecurity.add(medicare).add(additionalMedicare);
+  // §164(f)(1): one-half of the §1401 taxes "other than the taxes imposed by
+  // section 1401(b)(2)". §1401(b)(2) is the 0.9% surtax, so it is not halved
+  // and not deducted — it never reaches Schedule SE line 12, which is the
+  // figure the deduction is taken from; it lives on Form 8959 instead.
+  const deductibleHalf = socialSecurity.add(medicare).divide(2);
   return {
     netEarnings: net,
     taxableBase,
@@ -99,7 +111,7 @@ export function selfEmploymentTax(
     medicare,
     additionalMedicare,
     total,
-    deductibleHalf: total.divide(2),
+    deductibleHalf,
     citation: fica.citation,
   };
 }
