@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { withoutComments } from "../../scripts/audit-release";
 
 /**
  * The clock is an input, not something the code reads.
@@ -29,11 +30,7 @@ const ROOT = resolve(__dirname, "..", "..");
 /** Where reading the clock is the answer rather than a leak of one. */
 const CLOCK_IS_THE_ANSWER: Record<string, string> = {
   "src/ui/deadline.ts":
-    "the default `asOf` a deadline view opens on, which the reader then sets — the render takes it as a parameter",
-  "src/ui/readoutView.ts":
-    "the default snapshot date offered in the ledger form, shown on screen and editable before anything is computed",
-  "src/ui/reportView.ts":
-    "the date stamped on a saved report, which records when the document was made rather than feeding any figure",
+    "the default `asOf` a deadline view opens on, which the reader then sets — the render takes it as a parameter. `todayIso` is the ONE clock read in the UI now: the ledger form's snapshot date and the saved report's stamp each had their own `new Date().toISOString()`, three copies of one rule, and the copies were the two that got UTC wrong",
   "src/data/loader.ts":
     "the current year the staleness gate measures a shard's effective year against — the one place the calendar is genuinely the question",
 };
@@ -45,9 +42,15 @@ const CLOCK_IS_THE_ANSWER: Record<string, string> = {
  * is an input, never `Date.now()`" — which contains the same characters as the
  * call. Stripping only `//` lines flagged all four, which is the check calling
  * its own documentation a violation.
+ *
+ * It is `withoutComments` from the release audit rather than a second regex,
+ * because the second regex had the bug the first one was just fixed for: `//`
+ * is also the middle of every `https://`, and deleting from it to the end of
+ * the line hides whatever follows a URL — here, a `new Date()` on the same
+ * line as a citation. Two copies of one rule is how that happens twice.
  */
 export function stripComments(source: string): string {
-  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+  return withoutComments(source);
 }
 
 /** A no-argument `new Date()` or `Date.now()`. Constructing from an argument is not a clock read. */

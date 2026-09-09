@@ -43,16 +43,30 @@ function formatIso(iso: string, locale: string): string {
  * can be tested at a chosen date instead of only on the days the bug shows.
  */
 /**
- * Today, as an ISO date, for the tiles that project a horizon forward from now.
+ * Today, as an ISO date, in the reader's own timezone.
  *
- * A deadline never comes through here — `renderDeadline` takes its `asOf` from
- * the user, because a statutory clock the machine set is a number nobody can
- * check (SPEC-4 §7.3). A payoff horizon is the other case: "when am I clear"
- * genuinely starts today, and the only thing that must not happen is each tile
- * spelling that out differently.
+ * `toISOString()` is **UTC**, and this used it. From about 5 p.m. Pacific
+ * onward — 8 p.m. Eastern — UTC has already rolled over, so "today" was
+ * tomorrow for the whole west coast evening. That is a rounding error on a
+ * payoff horizon and something worse on a deadline: `enrollmentWindows`
+ * defaults its `asOf` to this, `deadlineStatus` calls a window past at
+ * `daysRemaining < 0`, and the last evening of a COBRA election or an ACA
+ * special-enrollment period is exactly when somebody opens the page. Being
+ * told a still-open window has closed is the highest-harm direction Pillar 4
+ * has.
+ *
+ * (The paragraph this replaces said "a deadline never comes through here",
+ * which had stopped being true: the enrollment tiles take their default `asOf`
+ * from it. A statutory clock the machine set is still a number nobody can
+ * check — which is why the field stays editable and the link carries it.)
+ *
+ * Built from the local calendar fields rather than by shifting a UTC instant,
+ * so it is the date on the reader's own wall.
  */
 export function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const pad = (n: number): string => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
 export function monthsAheadLabel(monthsAhead: number, locale: string, fromIso: string): string {

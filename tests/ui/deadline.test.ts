@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { renderDeadline, renderDeadlineList } from "../../src/ui/deadline";
+import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
+import { renderDeadline, renderDeadlineList, todayIso } from "../../src/ui/deadline";
 import type { Deadline } from "../../src/engine/deadline";
 import type { CitationData } from "../../src/data/schemas";
 
@@ -99,6 +99,60 @@ describe("renderDeadlineList", () => {
     expect(nodes.length).toBe(3);
     for (const node of nodes) {
       expect(node.querySelector("a.cite-link")).not.toBeNull();
+    }
+  });
+});
+
+describe("today, on the reader's own wall", () => {
+  // CI runs in UTC, where local and UTC dates never differ — so a test that
+  // takes the runner's zone as given would have passed on the broken code in
+  // the only place it actually runs. Node re-reads `process.env.TZ`, so the
+  // zone is an input here rather than an inheritance: this is the same rule
+  // the shell-budget gate had to learn, one directory over.
+  const REAL_TZ = process.env.TZ;
+  beforeEach(() => {
+    process.env.TZ = "America/Los_Angeles";
+  });
+  afterEach(() => {
+    if (REAL_TZ === undefined) delete process.env.TZ;
+    else process.env.TZ = REAL_TZ;
+    vi.useRealTimers();
+  });
+
+  it("is the local date, not the UTC one", () => {
+    // `toISOString()` is UTC, and this used it: from about 5 p.m. Pacific
+    // onward — 8 p.m. Eastern — UTC has already rolled over, so "today" was
+    // tomorrow for the whole west-coast evening. On a payoff horizon that is a
+    // rounding error; on the last evening of a COBRA election or an ACA
+    // special-enrollment window, `deadlineStatus` calls the window past and
+    // tells somebody a door that is open has closed.
+    //
+    // 04:00 UTC on 2 March is 8 p.m. on 1 March in Los Angeles.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-02T04:00:00Z"));
+    const now = new Date();
+    const local = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+      now.getDate(),
+    ).padStart(2, "0")}`;
+    expect(todayIso()).toBe(local);
+    // The whole point: at this instant the two answers differ, and the UTC one
+    // is tomorrow.
+    expect(new Date().toISOString().slice(0, 10)).toBe("2026-03-02");
+    expect(todayIso()).toBe("2026-03-01");
+  });
+
+  it("agrees with the platform's own local-date formatting, wherever it runs", () => {
+    // en-CA formats as YYYY-MM-DD, so this is the same question asked of Intl
+    // rather than of arithmetic — and it holds in any timezone the suite runs
+    // in, including UTC, where the old implementation also happened to pass.
+    vi.useFakeTimers();
+    for (const instant of [
+      "2026-03-02T04:00:00Z",
+      "2026-12-31T23:30:00Z",
+      "2026-07-04T12:00:00Z",
+    ]) {
+      vi.setSystemTime(new Date(instant));
+      expect(todayIso(), instant).toBe(new Date().toLocaleDateString("en-CA"));
     }
   });
 });

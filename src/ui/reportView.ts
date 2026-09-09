@@ -6,6 +6,7 @@
  * dataset versions always produce the same document.
  */
 import { el, clear } from "./dom";
+import { todayIso } from "./deadline";
 import {
   triggerDownload,
   exportProfile,
@@ -338,7 +339,7 @@ function ledgerBlock(
     try {
       // The date the file was made is a record, not an input to any figure in
       // it: every answer inside was already computed above.
-      const takenOn = new Date().toISOString().slice(0, 10);
+      const takenOn = todayIso();
       const snapshot = takeSnapshot(profile, data, answers, [], takenOn);
       const content = await exportLedger(snapshot, pass || undefined);
       triggerDownload(pass ? "my-ledger.encrypted.json" : "my-ledger.json", content);

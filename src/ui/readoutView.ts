@@ -29,6 +29,7 @@ import { buildReport } from "../readout/report";
 import { buildAnswer } from "../readout/answer";
 import type { PlanParameters } from "../readout/checks";
 import { citationLink } from "./resultCard";
+import { todayIso } from "./deadline";
 import type {
   CheckOutcome,
   ExtractedField,
@@ -305,7 +306,7 @@ export function renderReadout(opts: RenderReadoutOptions): void {
 
   /** Today, as the default clock for the deadline view. Displayed and editable —
    * the figures above it are pure; only "days remaining" needs a date. */
-  let ledgerAsOf = new Date().toISOString().slice(0, 10);
+  let ledgerAsOf = todayIso();
 
   /**
    * Recompute the answers in a dropped ledger against the data bundled today and
