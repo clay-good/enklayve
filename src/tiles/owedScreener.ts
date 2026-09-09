@@ -25,6 +25,7 @@ import {
   marriedDefault,
 } from "./owedShared";
 import type { CitationData } from "../data/schemas";
+import { fplRegionFor } from "../data/usStates";
 import type { FplRegion } from "../data/browser";
 import type { SituationStore } from "../profile/situation";
 import { EITC_JOINT_RETURN_CITATION } from "../data/statutes";
@@ -62,7 +63,14 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
     householdSize: p.has("hh")
       ? Math.max(1, parseNonNegative(p.get("hh"), 1))
       : (profile.get("householdSize") ?? 1),
-    region: r && isRegion(r) ? r : "contiguous",
+    // Every other surface that draws a poverty line derives the region from the
+    // reader's state — the ACA tile, Medicaid, the cliff explorer, charity care
+    // and the saved Report all do. This one defaulted to the lower 48, so an
+    // Alaskan household was measured against a line about 25% below its own,
+    // and the SNAP row's `region === "contiguous"` gate handed them a
+    // contiguous allotment figure where the honest answer, which the spec says
+    // is the shipped one, is that Alaska and Hawaii are not estimated here.
+    region: r && isRegion(r) ? r : fplRegionFor(profile.get("stateCode") ?? ""),
     income: p.has("inc") ? parseNonNegative(p.get("inc"), 0) : (profile.get("annualIncome") ?? 0),
     children: p.has("kids")
       ? Math.max(0, parseNonNegative(p.get("kids"), 0))

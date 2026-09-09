@@ -12,6 +12,7 @@ import { mountFafsaSai } from "../../src/tiles/fafsaSai";
 import { mountPell } from "../../src/tiles/pell";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
+import { fplPercent } from "../../src/engine/benefits";
 import type { TileContext } from "../../src/tiles/types";
 
 /**
@@ -358,6 +359,48 @@ describe("What Am I Owed screener", () => {
     expect(snap).toBeDefined();
     expect(snap?.querySelector(".screener-estimate")?.textContent).toBe("Not estimated here");
     expect(snap?.textContent).toContain("Hawaii");
+  });
+
+  it("takes the poverty-line region from the reader's state, like every other surface", () => {
+    // The ACA tile, Medicaid, the cliff explorer, charity care and the saved
+    // Report all derive it; this one defaulted to the lower 48, so an Alaskan
+    // household was measured against a line about 25% below its own — and the
+    // SNAP row's region gate handed them a contiguous allotment figure where
+    // the spec's shipped answer is "not estimated here". The Hawaii case above
+    // passes the region as a PARAM, so it never touched this path.
+    const profile = new SituationStore();
+    profile.set("stateCode", "ak");
+    const root = mount(
+      mountOwedScreener,
+      new URLSearchParams({ hh: "4", inc: "38000", kids: "2", mfj: "1" }),
+      profile,
+    );
+    // Asserted on what the card says rather than on the `<select>`: happy-dom
+    // does not reflect a select's initial value, and "alaska" is its second
+    // option — an assertion there would pass whatever the code did.
+    const own = data.fpl("alaska")!;
+    expect(root.querySelector(".screener-summary")?.textContent).toContain(
+      `${Math.round(fplPercent(38000, 4, own))}% of the federal poverty line`,
+    );
+    const snap = Array.from(root.querySelectorAll(".screener-item")).find((li) =>
+      (li.querySelector(".screener-program")?.textContent ?? "").startsWith("SNAP"),
+    );
+    expect(snap?.querySelector(".screener-estimate")?.textContent).toBe("Not estimated here");
+
+    // An uppercase code is the same state. The ACA tile kept its own copy of
+    // this rule and compared against lowercase only, so "AK" fell to the lower
+    // 48 there; both read `fplRegionFor` now.
+    const upper = new SituationStore();
+    upper.set("stateCode", "AK");
+    const aca = mount(
+      mountAcaPtc,
+      new URLSearchParams({ hh: "1", inc: "31920", bm: "600" }),
+      upper,
+    );
+    // Alaska's line is higher, so the same income is a smaller share of it.
+    expect(rowValue(aca, "Income vs poverty line")).toContain(
+      `${Math.round(fplPercent(31920, 1, data.fpl("alaska")!))}%`,
+    );
     // Named USA.gov since 2026-09-03: benefits.gov redirects there, and a
     // sentence sending someone to a site that no longer serves the page is a
     // dead end dressed as a next step. What the assertion is for is unchanged —

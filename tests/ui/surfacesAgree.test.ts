@@ -238,6 +238,57 @@ describe("the screener and the saved Report answer one household the same way", 
     expect(pcts.some((p) => p === 400)).toBe(true);
   });
 
+  // The grid is three contiguous states, which is a grid that cannot see the
+  // question of WHICH poverty line a surface drew. It could not: the screener
+  // took the lower-48 line for every household while the ACA tile, Medicaid,
+  // the cliff explorer and the Report each derived the region from the reader's
+  // state, so an Alaskan was measured against a line about 25% below their own
+  // and told a SNAP figure the spec says is not estimated for them. Two states
+  // rather than two more grid dimensions, because the question is regional and
+  // one household answers it.
+  for (const [state, region] of [
+    ["ak", "alaska"],
+    ["hi", "hawaii"],
+  ] as const) {
+    it(`draws ${state.toUpperCase()}'s own poverty line on every surface`, () => {
+      const size = 4;
+      const income = Math.round(lineFor(size) * 1.3);
+      const profile = profileFor(income, state, size);
+      const root = document.createElement("div");
+      mountOwedScreener({
+        root,
+        params: new URLSearchParams({ hh: String(size), inc: String(income) }),
+        setParams: () => {},
+        permalink: () => "https://enklayve.com/#/x",
+        navigate: () => {},
+        locale: "en-US",
+        data,
+        profile,
+      } as TileContext);
+      // NOT asserted through the `<select>`: happy-dom does not reflect a
+      // select's initial value, and "alaska" is its second option, so an
+      // assertion there passes for Alaska whatever the code does. The figure on
+      // screen is the evidence.
+      //
+      // The line the screener quotes is the state's, not the lower 48's — the
+      // two differ by enough to move a household across a threshold.
+      const own = data.fpl(region)!;
+      const lower48 = data.fpl("contiguous")!;
+      expect(own.base).toBeGreaterThan(lower48.base);
+      const shown = root.querySelector(".screener-summary")?.textContent ?? "";
+      expect(shown).toContain(
+        `${Math.round(fplPercent(income, size, own))}% of the federal poverty line`,
+      );
+
+      // And SNAP is the row the spec says it is for these two, rather than a
+      // contiguous allotment in dollars.
+      const snap = Array.from(root.querySelectorAll(".screener-item")).find((li) =>
+        (li.querySelector(".screener-program")?.textContent ?? "").startsWith("SNAP"),
+      );
+      expect(snap?.querySelector(".screener-estimate")?.textContent).toBe("Not estimated here");
+    });
+  }
+
   for (const { label, income, state, size } of grid()) {
     it(`agrees about the premium tax credit at ${label}`, () => {
       const pct = fplPercent(income, size, data.fpl("contiguous")!);

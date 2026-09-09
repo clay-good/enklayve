@@ -14,6 +14,7 @@ import { el, option } from "../ui/dom";
 import { field, fplPercentText, parseNonNegative, pct, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import type { FplRegion } from "../data/browser";
+import { fplRegionFor } from "../data/usStates";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
 
@@ -40,12 +41,6 @@ const EXAMPLE: Fields = {
 function isRegion(v: string): v is FplRegion {
   return REGIONS.some((r) => r.value === v);
 }
-function regionFromState(code: string | undefined): FplRegion {
-  if (code === "ak") return "alaska";
-  if (code === "hi") return "hawaii";
-  return "contiguous";
-}
-
 function readFields(p: URLSearchParams, profile: SituationStore): Fields {
   const r = p.get("region");
   return {
@@ -55,7 +50,10 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
         p.has("hh") ? parseNonNegative(p.get("hh"), 1) : (profile.get("householdSize") ?? 1),
       ),
     ),
-    region: r && isRegion(r) ? r : regionFromState(profile.get("stateCode")),
+    // `fplRegionFor` rather than a local copy: this file had one, and it
+    // compared against lowercase only, so a profile carrying "AK" got the
+    // lower-48 poverty line. One rule, one implementation.
+    region: r && isRegion(r) ? r : fplRegionFor(profile.get("stateCode") ?? ""),
     income: p.has("inc") ? parseNonNegative(p.get("inc"), 0) : (profile.get("annualIncome") ?? 0),
     benchmarkMonthly: parseNonNegative(p.get("bm"), 0),
   };
