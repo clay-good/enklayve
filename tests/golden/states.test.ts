@@ -73,14 +73,14 @@ describe("states that start from federal taxable income", () => {
     // Oregon starts at federal taxable income and adds back exactly one of the
     // Act's deductions — qualified passenger vehicle loan interest, enrolled
     // SB 1507 (2026, ch. 142) §2 — while subtracting the filer's federal income
-    // tax (ORS 316.680, capped at $8,500). So the car loan deduction cuts the
+    // tax (ORS 316.695(3), capped at $8,750). So the car loan deduction cuts the
     // federal tax by $240, which SHRINKS Oregon's subtraction by $240, which
     // raises Oregon taxable income by $240 and Oregon's tax by 8.75% of it.
     //
     // Single, $60,000, $8,000 of tips. Without the car loan: federal taxable
-    // 35,900, federal tax 4,060, Oregon taxable 60,000 − 2,835 − 4,060 − 8,000
-    // = 45,105 → 3,636.69. With $2,000 of car loan interest: federal taxable
-    // 33,900, federal tax 3,820, Oregon taxable 45,345 → 3,657.69. Twenty-one
+    // 35,900, federal tax 4,060, Oregon taxable 60,000 − 2,910 − 4,060 − 8,000
+    // = 45,030 → 3,621.13. With $2,000 of car loan interest: federal taxable
+    // 33,900, federal tax 3,820, Oregon taxable 45,270 → 3,642.13. Twenty-one
     // dollars more in Oregon against two hundred and forty less federally.
     const ctx = { federal: ds.federal, state: ds.state("or"), fica: ds.fica };
     const base = { filingStatus: "single" as const, wages: 60000, qualifiedTips: 8000 };
@@ -88,15 +88,15 @@ describe("states that start from federal taxable income", () => {
     const withLoan = evaluateTaxes({ ...base, vehicleLoanInterest: 2000 }, ctx);
 
     expect(cents(without.federal.incomeTax)).toBe("4060");
-    expect(cents(without.state!.taxableIncome)).toBe("45105");
-    expect(cents(without.state!.incomeTax)).toBe("3636.69");
+    expect(cents(without.state!.taxableIncome)).toBe("45030");
+    expect(cents(without.state!.incomeTax)).toBe("3621.13");
 
     expect(cents(withLoan.federal.incomeTax)).toBe("3820");
     // The tips came through; the car loan interest did not.
     expect(cents(withLoan.state!.deduction.qualifiedTips)).toBe("8000");
     expect(cents(withLoan.state!.deduction.vehicleLoanInterest)).toBe("0");
-    expect(cents(withLoan.state!.taxableIncome)).toBe("45345");
-    expect(cents(withLoan.state!.incomeTax)).toBe("3657.69");
+    expect(cents(withLoan.state!.taxableIncome)).toBe("45270");
+    expect(cents(withLoan.state!.incomeTax)).toBe("3642.13");
   });
 
   it("the same worker in Colorado keeps the tips and loses the overtime", () => {
@@ -1832,47 +1832,47 @@ describe("Oregon (graduated; CAPPED + AGI-phased federal-tax subtraction)", () =
   // Chart S (single/MFS) thresholds $4,400/$11,100/$125,000; Chart J (joint/HoH/
   // QSS) doubles the lower two to $8,800/$22,200, top $250,000. Standard deduction
   // $2,835 single, $5,670 joint, $4,560 HoH. The exemption credit is omitted.
-  it("single $60k → $4,252.69 (full $8,500 cap; subtracts the $5,020 federal tax)", () => {
+  it("single $60k → $4,237.13 (full $8,750 cap; subtracts the $5,020 federal tax)", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 60000 },
       { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
     );
     // AGI 60,000 < 125,000 ⇒ full cap; subtract min(5,020, 8,500) = 5,020.
     // taxable 60,000 − 2,835 − 5,020 = 52,145: 4.75%·4,400 + 6.75%·6,700 + 8.75%·41,045.
-    expect(cents(r.state!.incomeTax)).toBe("4252.69");
+    expect(cents(r.state!.incomeTax)).toBe("4237.13");
   });
 
-  it("married jointly $60k uses Chart J and the $5,670 deduction → $3,885.38", () => {
+  it("married jointly $60k uses Chart J and the $5,820 deduction → $3,854.25", () => {
     const r = evaluateTaxes(
       { filingStatus: "married_jointly", wages: 60000 },
       { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
     );
     // Federal tax = $2,840. taxable 60,000 − 5,670 − 2,840 = 51,490:
     // 4.75%·8,800 + 6.75%·13,400 + 8.75%·(51,490 − 22,200).
-    expect(cents(r.state!.incomeTax)).toBe("3885.38");
+    expect(cents(r.state!.incomeTax)).toBe("3854.25");
   });
 
-  it("head of household uses Chart J with the $4,560 deduction → $3,885.55", () => {
+  it("head of household uses Chart J with the $4,560 deduction → $3,867.55", () => {
     const r = evaluateTaxes(
       { filingStatus: "head_of_household", wages: 60000 },
       { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
     );
     // Federal tax (HoH) = $3,948. taxable 60,000 − 4,560 − 3,948 = 51,492:
     // 4.75%·8,800 + 6.75%·13,400 + 8.75%·(51,492 − 22,200).
-    expect(cents(r.state!.incomeTax)).toBe("3885.55");
+    expect(cents(r.state!.incomeTax)).toBe("3867.55");
   });
 
-  it("low income: the subtraction is the federal tax itself, not the cap → single $30k = $1,942.69", () => {
+  it("low income: the subtraction is the federal tax itself, not the cap → single $30k = $1,927.13", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 30000 },
       { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
     );
     // Federal tax $1,420 < $8,500 cap ⇒ subtract $1,420.
     // taxable 30,000 − 2,835 − 1,420 = 25,745: 209 + 452.25 + 8.75%·(25,745 − 11,100).
-    expect(cents(r.state!.incomeTax)).toBe("1942.69");
+    expect(cents(r.state!.incomeTax)).toBe("1927.13");
   });
 
-  it("the cap phases out: single $135k (mid-band) gets a halved $4,250 cap → $10,916.09", () => {
+  it("the cap phases out: single $135k (mid-band) gets a halved $4,375 cap → $10,887.29", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 135000 },
       { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
@@ -1880,27 +1880,27 @@ describe("Oregon (graduated; CAPPED + AGI-phased federal-tax subtraction)", () =
     // AGI 135,000 halfway through 125k→145k ⇒ cap 8,500·0.5 = 4,250; fed tax exceeds it.
     // taxable 135,000 − 2,835 − 4,250 = 127,915 (crosses 9.9% over 125,000):
     // 209 + 452.25 + 8.75%·113,900 + 9.9%·(127,915 − 125,000).
-    expect(cents(r.state!.incomeTax)).toBe("10916.09");
+    expect(cents(r.state!.incomeTax)).toBe("10887.29");
   });
 
-  it("above $145k the subtraction is fully phased out → single $160k = $13,811.84", () => {
+  it("above $145k the subtraction is fully phased out → single $160k = $13,795.41", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 160000 },
       { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
     );
     // AGI 160,000 > 145,000 ⇒ no federal-tax subtraction at all.
     // taxable 160,000 − 2,835 = 157,165: 209 + 452.25 + 8.75%·113,900 + 9.9%·(157,165 − 125,000).
-    expect(cents(r.state!.incomeTax)).toBe("13811.84");
+    expect(cents(r.state!.incomeTax)).toBe("13795.41");
   });
 
-  it("married filing separately is capped at $4,250, binding below the federal tax → $60k = $4,320.06", () => {
+  it("married filing separately is capped at $4,375, binding below the federal tax → $60k = $4,293.56", () => {
     const r = evaluateTaxes(
       { filingStatus: "married_separately", wages: 60000 },
       { federal: ds.federal, state: ds.state("or"), fica: ds.fica },
     );
     // MFS cap $4,250 < federal tax $5,020 ⇒ subtract only $4,250 (Chart S, $2,835 std).
     // taxable 60,000 − 2,835 − 4,250 = 52,915: 209 + 452.25 + 8.75%·(52,915 − 11,100).
-    expect(cents(r.state!.incomeTax)).toBe("4320.06");
+    expect(cents(r.state!.incomeTax)).toBe("4293.56");
   });
 
   it("a qualifying surviving spouse falls back to the married-jointly schedule and $8,500 cap", () => {
