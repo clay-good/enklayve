@@ -286,9 +286,13 @@ export function planSweep(
 /** Compute one income point. Pure, and every field is guaranteed finite. */
 export function resourcesAt(income: number, input: CliffInput, data: CliffData): ResourcePoint {
   const gross = Math.max(0, finite(income));
-  const married =
-    input.filingStatus === "married_jointly" ||
-    input.filingStatus === "qualifying_surviving_spouse";
+  // Only a joint return, for the credits below. §32(b)(2)(B)'s marriage-penalty
+  // increase and §24(b)(2)'s $400,000 both say "in the case of a joint return",
+  // and a qualifying surviving spouse files at joint RATES without filing a
+  // joint return — the call `deductions.ts` already made for §170(p), and the
+  // one every Pillar 2 tile makes through `marriedDefault`. The tax computation
+  // above takes `filingStatus` itself, so the joint rates are unaffected.
+  const married = input.filingStatus === "married_jointly";
 
   const tax = evaluateTaxes(
     {

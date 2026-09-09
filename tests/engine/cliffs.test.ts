@@ -115,6 +115,28 @@ describe("resourcesAt: every field is finite, for every household", () => {
   });
 });
 
+describe("a qualifying surviving spouse does not file a joint return", () => {
+  it("uses the non-joint EITC threshold, as every other surface does", () => {
+    // §32(b)(2)(B)'s marriage-penalty increase and §24(b)(2)'s $400,000 both
+    // say "in the case of a joint return". A QSS files at joint RATES without
+    // filing a joint return — the call `deductions.ts` made for §170(p) and the
+    // one `marriedDefault` makes for every Pillar 2 tile. This sweep was the
+    // lone surface reading it the other way, so the credit it added to the
+    // household's resources was the joint one.
+    const base: CliffInput = { ...family, filingStatus: "qualifying_surviving_spouse" };
+    const asHoh: CliffInput = { ...family, filingStatus: "head_of_household" };
+    const d = cliffData();
+    // At $30,000 the joint threshold ($31,160) would still be paying the
+    // plateau while the everyone-else threshold ($23,890) has been phasing out
+    // for $6,110 — so the two readings differ, and only one of them is a joint
+    // return.
+    expect(resourcesAt(30_000, base, d).credits).toBeCloseTo(
+      resourcesAt(30_000, asHoh, d).credits,
+      6,
+    );
+  });
+});
+
 describe("golden case 1: the SNAP gross-income-test edge", () => {
   /** The gross test is a hard cutoff at a percentage of the poverty line: one
    *  dollar over and the entire allotment goes to zero. */
