@@ -1241,11 +1241,15 @@ export function retirementDrawdown(
     }
   }
 
-  const lastsToMaxAge = depletedAtAge === null;
+  // A start age past the ceiling projects nothing, and an empty projection is
+  // not a funded one: "your savings outlast this" over zero rows is the most
+  // reassuring thing this engine could say and the least supported.
+  const lastsToMaxAge = depletedAtAge === null && timeline.length > 0;
   return {
     timeline,
     depletedAtAge,
-    yearsLasting: depletedAtAge === null ? maxAge - startAge : depletedAtAge - startAge + 1,
+    yearsLasting:
+      depletedAtAge === null ? Math.max(0, maxAge - startAge) : depletedAtAge - startAge + 1,
     firstRmdAge,
     totalWithdrawn,
     lastsToMaxAge,

@@ -8,7 +8,7 @@
  * markets (§2.1). Tone frames progress, never "behind" (§5.3).
  */
 import { Money } from "../engine/money";
-import { coastFireProjection } from "../engine/finance";
+import { MAX_YEARS, coastFireProjection } from "../engine/finance";
 import { el } from "../ui/dom";
 import {
   assumptionHint,
@@ -49,11 +49,25 @@ function enoughFromProfile(profile: SituationStore): number {
   return essential > 0 ? Math.round((essential * 12) / 0.04) : 0;
 }
 
+/**
+ * The projection runs for `targetAge - currentAge` years and `coastFireProjection`
+ * clamps that at `MAX_YEARS`, so a target age further off than the projection
+ * reaches is clamped here, where it is read — the label beside the balance names
+ * the age the math actually ran to rather than the one that was typed.
+ */
+function clampTargetAge(currentAge: number, targetAge: number): number {
+  return Math.min(targetAge, currentAge + MAX_YEARS);
+}
+
 function readFields(p: URLSearchParams, profile: SituationStore): Fields {
   const ages = profile.get("ages") ?? [];
+  const currentAge = Math.max(0, Math.round(parseNonNegative(p.get("age"), ages[0] ?? 40)));
   return {
-    currentAge: Math.max(0, Math.round(parseNonNegative(p.get("age"), ages[0] ?? 40))),
-    targetAge: Math.max(1, Math.round(parseNonNegative(p.get("ret"), 65))),
+    currentAge,
+    targetAge: clampTargetAge(
+      currentAge,
+      Math.max(1, Math.round(parseNonNegative(p.get("ret"), 65))),
+    ),
     currentBalance: p.has("bal")
       ? parseNonNegative(p.get("bal"), 0)
       : (profile.get("liquidSavings") ?? 0),
@@ -160,9 +174,13 @@ export function mountDownshift(ctx: TileContext): void {
   }
 
   function recompute(): void {
+    const currentAge = Math.max(0, Math.round(parseNonNegative(ageInput.value, 40)));
     fields = {
-      currentAge: Math.max(0, Math.round(parseNonNegative(ageInput.value, 40))),
-      targetAge: Math.max(1, Math.round(parseNonNegative(retInput.value, 65))),
+      currentAge,
+      targetAge: clampTargetAge(
+        currentAge,
+        Math.max(1, Math.round(parseNonNegative(retInput.value, 65))),
+      ),
       currentBalance: parseNonNegative(balInput.value, 0),
       realReturnPct: parseNumber(rInput.value, 5),
       target: parseNonNegative(tInput.value, 0),

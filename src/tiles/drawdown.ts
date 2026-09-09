@@ -49,7 +49,9 @@ const EXAMPLE: Fields = {
 function readFields(p: URLSearchParams): Fields {
   return {
     balance: parseNonNegative(p.get("bal"), 0),
-    age: Math.round(parseNonNegative(p.get("age"), 65)),
+    // The projection stops at MAX_AGE, so an age past it is clamped where it is
+    // read: the headline subtracts from MAX_AGE and the label names the age.
+    age: Math.min(MAX_AGE, Math.round(parseNonNegative(p.get("age"), 65))),
     withdrawal: parseNonNegative(p.get("w"), 0),
     realReturnPct: parseNumber(p.get("r"), 4),
     band: p.get("band") === "1",
@@ -209,7 +211,7 @@ export function mountDrawdown(ctx: TileContext): void {
   function recompute(): void {
     fields = {
       balance: parseNonNegative(balInput.value, 0),
-      age: Math.round(parseNonNegative(ageInput.value, 65)),
+      age: Math.min(MAX_AGE, Math.round(parseNonNegative(ageInput.value, 65))),
       withdrawal: parseNonNegative(wInput.value, 0),
       realReturnPct: parseNumber(rInput.value, 4),
       band: bandToggle.querySelector("input")!.checked,

@@ -168,6 +168,24 @@ describe("a balance that has exactly reached its coast number", () => {
 });
 
 describe("the final year of a retirement drawdown", () => {
+  it("projects nothing, and says nothing reassuring, past the ceiling age", () => {
+    const r = retirementDrawdown(
+      {
+        currentBalance: 500_000,
+        currentAge: 120,
+        annualWithdrawal: 40_000,
+        realReturnPct: 4,
+        maxAge: 100,
+      },
+      data.rmd(),
+    );
+    expect(r.timeline).toHaveLength(0);
+    // Nobody's savings last a negative number of years, and an empty
+    // projection is not a funded one.
+    expect(r.yearsLasting).toBe(0);
+    expect(r.lastsToMaxAge).toBe(false);
+  });
+
   it("projects through the last age, not up to it", () => {
     // `age <= maxAge` decides whether the projection includes the age the user
     // asked about. Flipped, the timeline stops a year early and "lasts to 90"

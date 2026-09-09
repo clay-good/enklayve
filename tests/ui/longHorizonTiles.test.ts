@@ -65,6 +65,18 @@ describe("Retirement Drawdown & RMD Timeline", () => {
     expect(rowValue(root, "Total withdrawn")).toContain("$100,000");
   });
 
+  it("never heads the card with a negative run of years", () => {
+    // `?age=120` ran a projection with no rows: the card read "-20+ years"
+    // over "Still funded at age 100: your savings outlast the projection."
+    const { root } = mount(
+      mountDrawdown,
+      new URLSearchParams({ bal: "500000", age: "120", w: "40000", r: "4" }),
+    );
+    const card = root.querySelector(".result-card")!.textContent ?? "";
+    expect(card).not.toMatch(/-\s?\d+\+? years/);
+    expect(root.querySelector<HTMLInputElement>('input[name="age"]')?.value).toBe("100");
+  });
+
   it("surfaces the first required distribution from the cited RMD table", () => {
     const { root } = mount(
       mountDrawdown,

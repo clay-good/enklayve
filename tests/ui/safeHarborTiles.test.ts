@@ -241,6 +241,22 @@ describe("Downshift Point tile", () => {
     expect(texts(root, ".bd-value").some((v) => v.includes("your assumption"))).toBe(true);
   });
 
+  it("labels the projection with the age the math actually reached", () => {
+    // `coastFireProjection` clamps the horizon at MAX_YEARS. The tile printed
+    // the unclamped figure twice: "Years until your target age: 190" over a
+    // balance grown for 100 — the same disagreement six other tiles had.
+    const { root } = mount(
+      mountDownshift,
+      new URLSearchParams({ age: "30", ret: "220", bal: "150000", r: "5", t: "1000000" }),
+    );
+    const labels = texts(root, ".bd-label");
+    expect(labels.some((l) => l.includes("at age 130"))).toBe(true);
+    expect(labels.some((l) => l.includes("at age 220"))).toBe(false);
+    const years = texts(root, ".bd-value");
+    expect(years).toContain("100");
+    expect(root.querySelector<HTMLInputElement>('input[name="ret"]')?.value).toBe("130");
+  });
+
   it("celebrates calmly once the Downshift Point is reached", () => {
     const { root } = mount(
       mountDownshift,
