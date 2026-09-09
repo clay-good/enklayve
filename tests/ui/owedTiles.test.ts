@@ -134,6 +134,10 @@ describe("What Am I Owed screener", () => {
     expect(programs).toContain("Child Tax Credit");
     // Every listed program carries a citation.
     expect(root.querySelectorAll(".screener-item a.cite-link").length).toBeGreaterThanOrEqual(2);
+    // The screener has no investment-income field, so the §32(i) cliff is named
+    // beside the figure rather than left for the reader to not know about.
+    expect(root.textContent).toContain("$12,200");
+    expect(root.textContent).toContain("ends it entirely");
   });
 
   it("uses DC's 215% threshold, which the hardcoded 138 could not see", () => {

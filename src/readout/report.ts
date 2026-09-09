@@ -359,6 +359,14 @@ export function buildReport(
     const eitc = estimateEitc({ earnedIncome: income, qualifyingChildren, married }, eitcCtc);
     if (eitc.credit.greaterThan(0)) {
       owedLines.push({ label: "Earned Income Tax Credit (estimated)", value: usd(eitc.credit) });
+      // §32(i) is a cliff, and nothing on this device records investment
+      // income, so it is named rather than applied — the same shape as the
+      // child-credit gap below. A kept document that prints a credit without
+      // saying what ends it is the reassuring half of the answer on its own.
+      owedLines.push({
+        label: "— if your investment income is under the limit",
+        value: `Interest, dividends and capital gains over ${usd(Money.from(eitcCtc.disqualifyingInvestmentIncome))} end this credit entirely, whatever you earn. Not recorded here; the EITC tool asks.`,
+      });
       citations.push(eitcCtc.citation);
     }
     const ctc = estimateCtc({ qualifyingChildren, magi: income, married }, eitcCtc);

@@ -201,11 +201,17 @@ export function mountOwedScreener(ctx: TileContext): void {
       findings.push({
         program: "Earned Income Tax Credit",
         estimate: fmt(eitc.credit),
-        note: separately
-          ? "A refundable credit based on your earned income and children — but it generally " +
-            "requires a joint return, and My Situation says married filing separately. It " +
-            "reaches you only if you lived apart from your spouse and with a qualifying child."
-          : "A refundable credit based on your earned income and children.",
+        // The screener has no investment-income field, so §32(i) is named
+        // rather than applied: over the limit there is no credit at all, and a
+        // figure with no mention of the cliff reads as a promise. The EITC tile
+        // asks for the number and answers it.
+        note:
+          (separately
+            ? "A refundable credit based on your earned income and children — but it generally " +
+              "requires a joint return, and My Situation says married filing separately. It " +
+              "reaches you only if you lived apart from your spouse and with a qualifying child. "
+            : "A refundable credit based on your earned income and children. ") +
+          `Investment income over ${fmt(Money.from(eitcCtc.disqualifyingInvestmentIncome))} ends it entirely — not asked here; the EITC tool asks.`,
         citation: eitcCtc.citation,
         caveat: separately ? { label: "§32(d)", citation: EITC_JOINT_RETURN_CITATION } : undefined,
       });

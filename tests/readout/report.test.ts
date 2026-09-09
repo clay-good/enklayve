@@ -138,6 +138,22 @@ describe("Readout Report, model", () => {
     expect(ctc?.value).toMatch(/\$/);
   });
 
+  it("names the §32(i) cliff beside the EITC it prints", () => {
+    // The document a household keeps printed a credit and nothing about the
+    // one rule that ends it outright. Nothing on this device records
+    // investment income, so it is named rather than applied — the same shape
+    // as the child-credit gap below.
+    const p = new SituationStore();
+    p.set("annualIncome", 22_000);
+    p.set("filingStatus", "single");
+    p.set("qualifyingChildren", 1);
+    const owed = buildReport(p, data).sections.find((s) => s.title === "What you may be owed")!;
+    expect(owed.lines.some((l) => l.label.startsWith("Earned Income Tax Credit"))).toBe(true);
+    const cliff = owed.lines.find((l) => l.label.includes("investment income"));
+    expect(cliff?.value).toMatch(/\$12,200/);
+    expect(cliff?.value).toMatch(/end this credit entirely/);
+  });
+
   it("says the child credits are not estimated when nobody has been asked", () => {
     // Both credits turn on a count of qualifying children, taken from `ages` —
     // and nothing on the site writes `ages`. The Child Tax Estimator, the EITC
