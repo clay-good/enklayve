@@ -114,6 +114,48 @@ describe("command palette", () => {
     field.value = "zzzzzzz";
     field.dispatchEvent(new Event("input"));
     expect(palette.element.querySelector(".palette-empty")).not.toBeNull();
+    // The combobox said `aria-expanded="true"` for its whole life and set
+    // `aria-activedescendant=""` — an idref pointing at nothing — so a screen
+    // reader was told a popup with an active option was open at the moment the
+    // only content was "No matching tools." axe cannot see this: it checks the
+    // attributes are well formed, not that they describe the page.
+    expect(field.getAttribute("aria-expanded")).toBe("false");
+    expect(field.hasAttribute("aria-activedescendant")).toBe(false);
+    expect(palette.element.querySelectorAll('[role="option"]')).toHaveLength(0);
+
+    // And it opens again when there is something to open.
+    field.value = "tax";
+    field.dispatchEvent(new Event("input"));
+    expect(field.getAttribute("aria-expanded")).toBe("true");
+    expect(field.getAttribute("aria-activedescendant")).toBe("palette-opt-0");
+    expect(
+      palette.element.querySelector(`#${field.getAttribute("aria-activedescendant")}`),
+    ).not.toBeNull();
+    palette.element.remove();
+  });
+
+  it("keeps the same option nodes when only the highlight moves", () => {
+    // Hovering re-rendered the whole list, so a click whose cursor crossed a
+    // row boundary between mousedown and mouseup released on an <li> that no
+    // longer existed and did nothing. The rows do not change when the
+    // highlight does.
+    const palette = new CommandPalette(() => {});
+    document.body.append(palette.element);
+    palette.show();
+    const field = input(palette);
+    field.value = "tax";
+    field.dispatchEvent(new Event("input"));
+    const first = palette.element.querySelectorAll<HTMLElement>('[role="option"]');
+    expect(first.length).toBeGreaterThan(1);
+    const second = first[1]!;
+
+    second.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }));
+    const after = palette.element.querySelectorAll<HTMLElement>('[role="option"]');
+    // The same nodes, not replacements that merely look the same.
+    expect(after[1]).toBe(second);
+    expect(second.getAttribute("aria-selected")).toBe("true");
+    expect(after[0]!.getAttribute("aria-selected")).toBe("false");
+    expect(field.getAttribute("aria-activedescendant")).toBe("palette-opt-1");
     palette.element.remove();
   });
 

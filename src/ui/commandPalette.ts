@@ -33,7 +33,12 @@ export class CommandPalette {
       placeholder: "Search any tool or question…",
       attrs: {
         role: "combobox",
-        "aria-expanded": "true",
+        // Set from the results, not hardcoded: the listbox is empty whenever
+        // nothing matches, and announcing an open popup with an active option
+        // over "No matching tools." tells a screen-reader user the opposite of
+        // what is on screen. `axe` cannot see this — it checks that the
+        // attributes are well formed, not that they describe the page.
+        "aria-expanded": "false",
         "aria-controls": "palette-list",
         "aria-autocomplete": "list",
         "aria-label": "Search tools",
@@ -158,10 +163,15 @@ export class CommandPalette {
     clear(this.list);
     if (this.results.length === 0) {
       this.empty.textContent = "No matching tools.";
-      this.input.setAttribute("aria-activedescendant", "");
+      // Removed rather than emptied: `aria-activedescendant=""` is an idref
+      // pointing at nothing, which is a different claim from "there is no
+      // active option".
+      this.input.removeAttribute("aria-activedescendant");
+      this.input.setAttribute("aria-expanded", "false");
       return;
     }
     this.empty.textContent = "";
+    this.input.setAttribute("aria-expanded", "true");
     this.results.forEach((entry, i) => {
       const active = i === this.activeIndex;
       const item = el(
@@ -175,7 +185,7 @@ export class CommandPalette {
             mousemove: () => {
               if (this.activeIndex !== i) {
                 this.activeIndex = i;
-                this.renderList();
+                this.paintActive();
               }
             },
           },
@@ -185,6 +195,28 @@ export class CommandPalette {
       );
       this.list.append(item);
     });
+    this.paintActive();
+  }
+
+  /**
+   * Move the highlight without rebuilding the list.
+   *
+   * `renderList` clears and re-creates every `<li>`, and moving the mouse
+   * called it: a click whose cursor crossed a row boundary between mousedown
+   * and mouseup landed on a node that no longer existed, and did nothing. The
+   * rows do not change when the highlight does, so only the highlight changes.
+   */
+  private paintActive(): void {
+    const options = Array.from(this.list.querySelectorAll<HTMLElement>('[role="option"]'));
+    options.forEach((node, i) => {
+      const active = i === this.activeIndex;
+      node.className = active ? "palette-opt palette-opt--active" : "palette-opt";
+      node.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    if (options.length === 0) {
+      this.input.removeAttribute("aria-activedescendant");
+      return;
+    }
     this.input.setAttribute("aria-activedescendant", `palette-opt-${this.activeIndex}`);
   }
 
@@ -224,7 +256,7 @@ export class CommandPalette {
     if (this.results.length === 0) return;
     const n = this.results.length;
     this.activeIndex = (this.activeIndex + delta + n) % n;
-    this.renderList();
+    this.paintActive();
   }
 
   private choose(index: number): void {
