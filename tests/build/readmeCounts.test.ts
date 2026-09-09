@@ -579,47 +579,18 @@ describe("the README's worked results are the corpus's", () => {
 });
 
 /**
- * Every jurisdiction has been through a source audit, and the table says so.
+ * Every jurisdiction has been through a source audit — asked elsewhere now.
  *
- * `docs/data-sources.md`'s Source audits table is the record of which shards
- * anybody has re-read against the state's own document. On 2026-09-09 it held
- * 39 rows and the two income-tax states it had never named — **Arkansas and
- * Oregon** — turned out to be the two that were wrong: Arkansas had been
- * charging a rate its legislature cut in May, and Oregon was a year behind on
- * every indexed figure. The un-audited list was a to-do list nobody was
- * reading, so it is a test now.
+ * This check lived here for a day, and it matched a jurisdiction's name against
+ * the table as a **substring**. "Kansas" is inside "Arkansas" and "Virginia"
+ * inside "West Virginia", so a row about one state reported the other as
+ * audited: a coverage check that silently grants coverage, which is worse than
+ * not having one. Nothing was passing that way today, which is exactly how it
+ * would have stayed until it mattered.
  *
- * Names rather than codes, because that is how the table is written, and a
- * two-letter code is a bad thing to grep for in prose ("or", "in", "ma").
+ * It is `tests/build/checkAudits.test.ts` now, over the parser in
+ * `scripts/check-audits.ts`, which splits a cell into the jurisdictions it names
+ * and compares them whole — and which asks the question that outlives this one:
+ * every jurisdiction is audited once, so coverage is answered forever, and what
+ * is left to ask is how old the answer is.
  */
-describe("every jurisdiction has been audited at least once", () => {
-  it("names each state and DC somewhere in the Source audits table", () => {
-    const doc = readFileSync(resolve(ROOT, "docs", "data-sources.md"), "utf8");
-    const start = doc.indexOf("### Source audits");
-    expect(start, "the Source audits table is gone").toBeGreaterThan(-1);
-    const table = doc.slice(start);
-    const rows = table.split("\n").filter((l) => /^\| 20\d\d-/.test(l));
-    expect(rows.length, "the audit table lost its rows").toBeGreaterThan(20);
-    const named = rows
-      .map((r) => r.split("|")[2] ?? "")
-      .join(" ")
-      .toLowerCase();
-
-    const missing = readdirSync(resolve(ROOT, "data"))
-      .filter((f) => /^state-[a-z]{2}-income-tax-.*\.json$/.test(f))
-      .map((f) => {
-        const shard = JSON.parse(readFileSync(resolve(ROOT, "data", f), "utf8")) as {
-          name: string;
-        };
-        return shard.name;
-      })
-      .filter((name) => !named.includes(name.toLowerCase()))
-      .sort();
-
-    expect(
-      missing,
-      "a jurisdiction nobody has audited — add a row to the Source audits table in " +
-        "docs/data-sources.md saying what was checked, even when nothing changed",
-    ).toEqual([]);
-  });
-});

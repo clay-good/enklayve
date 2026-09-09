@@ -26,6 +26,7 @@
     "check:links": "node scripts/check-links.ts",
     "check:live": "node scripts/check-live.ts",
     "check:lapses": "node scripts/check-lapses.ts",
+    "check:audits": "node scripts/check-audits.ts",
     "check:adapters": "node scripts/check-adapters.ts",
     "check:advisories": "node scripts/check-advisories.ts",
     "check:boundaries": "node scripts/check-boundaries.ts",

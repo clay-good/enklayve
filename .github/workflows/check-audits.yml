@@ -1,0 +1,88 @@
+# How long since anybody re-read a jurisdiction against its own document.
+#
+# Every jurisdiction now appears in the Source audits table at least once, and a
+# unit test keeps it that way — so the coverage question is answered forever and
+# the useful question became a different one: how old is that answer?
+#
+# Arkansas is why. Act 2 of the 2026 First Extraordinary Session cut the top rate
+# on May 6, and the state's own 2026 AR1000ES — printed the previous October —
+# still says 3.9%. An audit against that form was correct on the day and wrong by
+# summer, and nothing here would have said so: the adapter watched a page that
+# had not changed, the shard's year had not lapsed, and the audit table recorded
+# a tick with no expiry.
+#
+# Monthly, against a shelf life of half a year, so the reminder lands twice in
+# the two windows that matter: after the spring sessions adjourn, and again in
+# the autumn once the special sessions are done. Out of the unit CI for the
+# reason peculiar to the two calendar checks — a test that starts failing on a
+# date turns `main` red for work that has nothing to do with it.
+name: Check for stale source audits
+
+on:
+  schedule:
+    - cron: "0 13 1 * *" # the 1st of each month, 13:00 UTC
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "How old an audit may be before it is reported (default 180)"
+        required: false
+        default: "180"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  audits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - id: audits
+        continue-on-error: true
+        env:
+          DAYS: ${{ inputs.days || '180' }}
+        run: node scripts/check-audits.ts --days "$DAYS"
+
+      # The same reasoning as every other scheduled check here: the count this
+      # job gates on is read out of `$GITHUB_OUTPUT`, an unset output is the
+      # empty string, and `'' != '0'` is true — so a crash before that block
+      # would open an issue with an empty body off the back of a check that had
+      # not run. A red scheduled run reaches the owner; a green one that checked
+      # nothing does not.
+      - name: Fail loudly if the check never reported
+        if: steps.audits.outputs.report == ''
+        run: |
+          echo "::error::scripts/check-audits.ts exited without writing its report."
+          exit 1
+
+      - name: Open an issue when an audit has gone stale
+        if: >-
+          steps.audits.outputs.report != '' &&
+          steps.audits.outputs.stale != '0'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Source audits are stale: ${process.env.STALE} jurisdiction(s) want re-reading`,
+              body: process.env.REPORT,
+              labels: ["data-review"],
+            });
+        env:
+          REPORT: ${{ steps.audits.outputs.report }}
+          STALE: ${{ steps.audits.outputs.stale }}
+
+      # Visibly red, like the other five. A figure nobody has re-read since a
+      # legislature sat is not housekeeping.
+      - name: Fail the run so the schedule is visibly red
+        if: >-
+          steps.audits.outputs.report != '' &&
+          steps.audits.outputs.stale != '0'
+        run: exit 1
