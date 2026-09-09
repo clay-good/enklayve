@@ -49,5 +49,12 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # `--with-deps` runs `apt-get update`, which fails hard if ANY configured
+      # repository is inconsistent — and the runner image ships Google's Chrome
+      # repo, which on 2026-09-09 served a Release file whose hashes did not
+      # match its own Packages.gz for hours. That took `main` red twice on a
+      # docs-only commit. Nothing here needs that repo: Playwright downloads its
+      # own Chromium build, and the OS packages it wants come from Ubuntu's.
+      - run: sudo rm -f /etc/apt/sources.list.d/google-chrome.list
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
