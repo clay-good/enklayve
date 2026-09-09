@@ -238,6 +238,8 @@ The links that point *inside* the repository need none of that and were checked 
 
 - [ ] **The IRA shard listed a rule as omitted that the engine had been applying all along.** `ira-deduction`’s note ended its omitted list with *“the partial-deduction rounding rule that rounds up to the next $10 with a $200 floor”* — which [`iraDeduction.ts`](../src/engine/iraDeduction.ts) implements, named constants and all, and which the tile’s own explainer describes as something it does. A reader shown a $200 partial deduction was simultaneously told the $200 floor had not been applied. The note says it is applied now. Nothing computed changed; what changed is the sentence beside the number, which on this site is the number’s evidence.
 
+- [ ] **Two advisories were sitting untriaged, and both were upgrades rather than judgements.** `npm run check:advisories` runs monthly and reported a moderate path-traversal in **vitest** (≤ 4.1.10) and a high in **sharp** (< 0.35.4), reached through `wrangler → miniflare`. The triage file’s bar for an accepted entry is *“an upgrade is not available or breaks the app, AND the vulnerable path is not reachable”* — both halves, written down — and neither of these clears the first half: `npm audit --json` reported `fixAvailable: true` for vitest, which is the exact signal the check learned to read after the `@xmldom/xmldom` entry was accepted on a “no upgrade exists” that was false. So no entries were written: **vitest 4.1.7 → 4.1.11**, and an **override pinning `sharp` to ^0.35.4** inside miniflare’s range, which clears the `sharp`, `miniflare` and `wrangler` rows together without the semver-major wrangler downgrade npm proposed. `advisory-triage.json` stays empty, which is the state it wants to be in.
+
 
 ## Deploy
 
