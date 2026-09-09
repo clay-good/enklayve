@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { compositeRate, projectIBond, ratePeriods } from "../../src/engine/savingsBond";
+import {
+  MIN_HOLD_PERIODS,
+  compositeRate,
+  projectIBond,
+  ratePeriods,
+} from "../../src/engine/savingsBond";
 import { loadDatasets, type Datasets } from "../helpers/datasets";
 
 /**
@@ -75,6 +80,24 @@ describe("I-bond projection", () => {
     // Nothing is forfeited on a redemption that cannot happen.
     expect(newest.earlyRedemptionPenalty.isZero()).toBe(true);
     expect(newest.redemptionValue.toNumber()).toBe(newest.currentValue.toNumber());
+  });
+
+  it("becomes redeemable at exactly twelve months, not a period later", () => {
+    // `npm run check:boundaries` flags a comparison no test sits on, and this
+    // one — `periods.length >= MIN_HOLD_PERIODS` — arrived today with a case at
+    // one period and a case at three. `>=` against `>` is the difference
+    // between a bond you can cash on its first anniversary and one you cannot,
+    // so the boundary is the case.
+    const rates = ds.treasuryBonds.rates;
+    const justOneShort = projectIBond(10000, rates[rates.length - 1]!.period, ds.treasuryBonds)!;
+    const exactlyTwelve = projectIBond(10000, rates[rates.length - 2]!.period, ds.treasuryBonds)!;
+    expect(justOneShort.periodsHeld).toBe(1);
+    expect(exactlyTwelve.periodsHeld).toBe(MIN_HOLD_PERIODS);
+    expect(justOneShort.redeemable).toBe(false);
+    expect(exactlyTwelve.redeemable).toBe(true);
+    // And the penalty starts applying the moment redemption does.
+    expect(justOneShort.earlyRedemptionPenalty.isZero()).toBe(true);
+    expect(exactlyTwelve.earlyRedemptionPenalty.isZero()).toBe(false);
   });
 
   it("forfeits the last three months of interest before five years", () => {
