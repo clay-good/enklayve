@@ -94,6 +94,14 @@ describe("Cost-Basis Lot Picker", () => {
     );
     expect(rowValue(root, "Shares sold")).toBe("100");
     expect(rowValue(root, "Short of the sale you asked for")).toContain("100 of 150");
+    // It says "everything below", so it has to be above what it qualifies.
+    const labels = Array.from(root.querySelectorAll(".bd-label")).map((n) => n.textContent ?? "");
+    expect(labels.indexOf("Short of the sale you asked for")).toBeLessThan(
+      labels.indexOf("Total realized gain"),
+    );
+    expect(labels.indexOf("Short of the sale you asked for")).toBeLessThan(
+      labels.findIndex((l) => l.startsWith("Proceeds")),
+    );
     expect(dollars(rowValue(root, "Total realized gain"))).toBe(5000);
   });
 
