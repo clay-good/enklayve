@@ -43,7 +43,10 @@ function ofOnePercent(numer: number, denom: number): Decimal {
 /**
  * Estimated monthly benefit when claiming at `claimAgeYears` (whole years),
  * given the PIA and birth year. Early claiming reduces the benefit; claiming
- * after FRA earns delayed-retirement credits, capped at the dataset's max age.
+ * after FRA earns delayed-retirement credits. The claiming age is clamped to
+ * the dataset's window — you cannot claim before `earliestClaimAge`, and
+ * credits stop at `delayedCreditMaxAge` — so every returned field describes an
+ * age you could actually claim at.
  */
 export function socialSecurityBenefit(
   pia: number,
@@ -52,7 +55,13 @@ export function socialSecurityBenefit(
   data: SocialSecurityData,
 ): SocialSecurityResult {
   const fraMonths = fullRetirementAgeMonths(bornYear, data);
-  const claimAgeMonths = Math.round(claimAgeYears * 12);
+  // Claiming is only possible between the earliest age and the age at which
+  // delayed credits stop accruing, so an age outside that window is reported
+  // (and paid) as the nearest age inside it — not extrapolated past either end.
+  const claimAgeMonths = Math.min(
+    Math.max(Math.round(claimAgeYears * 12), data.earliestClaimAge * 12),
+    data.delayedCreditMaxAge * 12,
+  );
   const monthsFromFra = fraMonths - claimAgeMonths; // positive = early, negative = late
   const piaMoney = Money.from(Math.max(0, pia));
 
@@ -74,9 +83,8 @@ export function socialSecurityBenefit(
       );
     adjustment = reduction.negated();
   } else if (monthsFromFra < 0) {
-    // Late: delayed-retirement credits, capped at the max claiming age.
-    const cappedMonths = Math.min(claimAgeMonths, data.delayedCreditMaxAge * 12);
-    const monthsLate = Math.max(0, cappedMonths - fraMonths);
+    // Late: delayed-retirement credits. The age is already capped above.
+    const monthsLate = claimAgeMonths - fraMonths;
     adjustment = ofOnePercent(
       data.delayedCreditPerMonthNumer,
       data.delayedCreditPerMonthDenom,

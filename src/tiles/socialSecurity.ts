@@ -7,6 +7,7 @@
  * credits to age 70) does. Every figure cites the SSA rule. Information, not
  * advice — it does not estimate your earnings record.
  */
+import type { SocialSecurityData } from "../data/schemas";
 import { Money } from "../engine/money";
 import { socialSecurityBenefit } from "../engine/socialSecurity";
 import { el, option } from "../ui/dom";
@@ -22,11 +23,16 @@ interface Fields {
 
 const EXAMPLE: Fields = { pia: 2000, bornYear: 1965, claimAge: 62 };
 
-function readFields(p: URLSearchParams): Fields {
+function readFields(p: URLSearchParams, ss: SocialSecurityData): Fields {
   return {
     pia: parseNonNegative(p.get("pia"), 0),
     bornYear: Math.round(parseNonNegative(p.get("born"), 1965)),
-    claimAge: Math.round(parseNonNegative(p.get("age"), 67)),
+    // A deep link can name any age; the tile only offers the ages you could
+    // actually claim at, so clamp into that window before anything is labelled.
+    claimAge: Math.min(
+      Math.max(Math.round(parseNonNegative(p.get("age"), 67)), ss.earliestClaimAge),
+      ss.delayedCreditMaxAge,
+    ),
   };
 }
 
@@ -60,7 +66,7 @@ export function mountSocialSecurity(ctx: TileContext): void {
     return;
   }
 
-  let fields = readFields(ctx.params);
+  let fields = readFields(ctx.params, ss);
 
   const piaInput = el("input", {
     type: "number",

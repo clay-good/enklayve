@@ -83,6 +83,28 @@ describe("bounds", () => {
     expect(at72.monthlyBenefit.toNumber()).toBe(at70.monthlyBenefit.toNumber());
   });
 
+  it("never reduces past the earliest claiming age", () => {
+    const at62 = socialSecurityBenefit(2000, 1965, 62, ds.socialSecurity);
+    const at40 = socialSecurityBenefit(2000, 1965, 40, ds.socialSecurity);
+    expect(at40.monthlyBenefit.toNumber()).toBe(at62.monthlyBenefit.toNumber());
+    expect(at40.claimAgeMonths).toBe(at62.claimAgeMonths);
+    expect(at40.monthsFromFra).toBe(at62.monthsFromFra);
+  });
+
+  it("a benefit is never negative at any claiming age", () => {
+    for (let age = 0; age <= 120; age++) {
+      const r = socialSecurityBenefit(2000, 1965, age, ds.socialSecurity);
+      expect(r.monthlyBenefit.isNegative(), `age ${age}`).toBe(false);
+    }
+  });
+
+  it("reports the capped claiming age past the max", () => {
+    const at70 = socialSecurityBenefit(2000, 1960, 70, ds.socialSecurity);
+    const at72 = socialSecurityBenefit(2000, 1960, 72, ds.socialSecurity);
+    expect(at72.claimAgeMonths).toBe(at70.claimAgeMonths);
+    expect(at72.monthsFromFra).toBe(at70.monthsFromFra);
+  });
+
   it("a zero PIA pays zero at every age", () => {
     expect(socialSecurityBenefit(0, 1960, 62, ds.socialSecurity).monthlyBenefit.isZero()).toBe(
       true,

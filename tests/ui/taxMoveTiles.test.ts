@@ -137,6 +137,24 @@ describe("Social Security Claiming Age", () => {
     expect(root.querySelector<HTMLInputElement>('input[name="pia"]')?.value).toBe("2000");
     expect(lastParams()?.get("born")).toBe("1965");
   });
+
+  it("clamps a deep-linked age outside the claiming window", () => {
+    const ss = data.socialSecurity()!;
+    const below = mount(
+      mountSocialSecurity,
+      new URLSearchParams({ pia: "2000", born: "1965", age: "40" }),
+    ).root.textContent!;
+    const above = mount(
+      mountSocialSecurity,
+      new URLSearchParams({ pia: "2000", born: "1965", age: "95" }),
+    ).root.textContent!;
+    // No headline promises an age you could not claim at, and none is negative.
+    expect(below).toContain(`age ${ss.earliestClaimAge}`);
+    expect(below).not.toContain("age 40");
+    expect(above).toContain(`age ${ss.delayedCreditMaxAge}`);
+    expect(above).not.toContain("age 95");
+    for (const text of [below, above]) expect(text).not.toMatch(/-\s?\$/);
+  });
 });
 
 describe("tax-move + claiming tiles accessibility", () => {
