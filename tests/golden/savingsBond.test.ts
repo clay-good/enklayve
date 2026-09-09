@@ -67,6 +67,43 @@ describe("I-bond projection", () => {
     expect(r.periodsHeld).toBe(1);
   });
 
+  it("cannot be cashed in the first 12 months", () => {
+    const rates = ds.treasuryBonds.rates;
+    const newest = projectIBond(10000, rates[rates.length - 1]!.period, ds.treasuryBonds)!;
+    expect(newest.periodsHeld).toBe(1);
+    expect(newest.redeemable).toBe(false);
+    // Nothing is forfeited on a redemption that cannot happen.
+    expect(newest.earlyRedemptionPenalty.isZero()).toBe(true);
+    expect(newest.redemptionValue.toNumber()).toBe(newest.currentValue.toNumber());
+  });
+
+  it("forfeits the last three months of interest before five years", () => {
+    const rates = ds.treasuryBonds.rates;
+    const r = projectIBond(10000, rates[rates.length - 3]!.period, ds.treasuryBonds)!;
+    expect(r.periodsHeld).toBe(3);
+    expect(r.redeemable).toBe(true);
+    // Three months is half of the most recent six-month period's accrual.
+    const lastInterest = r.periods[r.periods.length - 1]!.interest;
+    expect(r.earlyRedemptionPenalty.toNumber()).toBe(
+      Math.round((lastInterest.toNumber() / 2) * 100) / 100,
+    );
+    expect(r.redemptionValue.toNumber()).toBeCloseTo(
+      r.currentValue.toNumber() - r.earlyRedemptionPenalty.toNumber(),
+      2,
+    );
+    // The penalty never eats into what you paid.
+    expect(r.redemptionValue.toNumber()).toBeGreaterThanOrEqual(r.purchaseAmount.toNumber());
+  });
+
+  it("never charges a penalty on a bond held five years", () => {
+    const rates = ds.treasuryBonds.rates;
+    if (rates.length < 10) return;
+    const r = projectIBond(10000, rates[rates.length - 10]!.period, ds.treasuryBonds)!;
+    expect(r.periodsHeld).toBeGreaterThanOrEqual(10);
+    expect(r.earlyRedemptionPenalty.isZero()).toBe(true);
+    expect(r.redemptionValue.toNumber()).toBe(r.currentValue.toNumber());
+  });
+
   it("returns null for an unknown purchase period (never guesses)", () => {
     expect(projectIBond(1000, "1999-05", ds.treasuryBonds)).toBeNull();
   });

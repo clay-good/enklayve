@@ -518,9 +518,30 @@ describe("Treasury I Bond tile", () => {
       new URLSearchParams({ amt: "10000", period: "2022-05" }),
     );
     expect(root.querySelector(".result-card")).not.toBeNull();
-    expect(labels(root)).toContain("Value now");
+    expect(labels(root)).toContain("Value now (accrued)");
     expect(labels(root)).toContain("Fixed rate (locked at purchase)");
     expect(root.querySelector("a.cite-link")?.getAttribute("href")).toMatch(/treasurydirect\.gov/);
+  });
+
+  it("headlines what cashing the bond pays, not the gross accrual", () => {
+    // Bought in the latest published period: inside the 12-month lock.
+    const rates = data.treasuryBonds()!.rates;
+    const locked = mount(
+      mountSavingsBond,
+      new URLSearchParams({ amt: "10000", period: rates[rates.length - 1]!.period }),
+    ).root;
+    expect(locked.textContent).toContain("No — locked for 12 months.");
+
+    // Bought three periods back: redeemable, and three months short.
+    const early = mount(
+      mountSavingsBond,
+      new URLSearchParams({ amt: "10000", period: rates[rates.length - 3]!.period }),
+    ).root;
+    expect(labels(early)).toContain("If you cash it now");
+    const num = (v: string): number => Number(v.replace(/[^0-9.]/g, ""));
+    expect(num(rowValue(early, "If you cash it now"))).toBeLessThan(
+      num(rowValue(early, "Value now (accrued)")),
+    );
   });
 
   it("only offers purchase periods present in the dataset", () => {

@@ -117,6 +117,10 @@ const VERDICTS: Record<string, string> = {
   MAX_YEARS: "bound — a ceiling on a user-entered horizon",
   MAX_HORIZON_MONTHS: "bound — the same ceiling in months",
   MAX_PERIODS: "bound — a compounding-loop ceiling",
+  MIN_HOLD_PERIODS:
+    "legislated — 31 U.S.C. §3105, the 12-month minimum holding period on a Series I bond, in six-month periods",
+  PENALTY_FREE_PERIODS:
+    "legislated — the five years after which the three-month interest penalty stops, in six-month periods",
   // --- outside the engine: readout, profile, tiles, ui ---
   MAX_PROFILE_ROWS: "bound — how many rows a restored list may carry",
   FORMAT_VERSION: "bound — the situation file's format number",

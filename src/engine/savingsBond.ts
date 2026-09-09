@@ -57,7 +57,22 @@ export interface IBondProjection {
   interestEarned: Money;
   /** The composite rate the most recent published period earns (annualized). */
   latestCompositeRate: number;
+  /** False for the first 12 months, when the bond cannot be cashed at all. */
+  redeemable: boolean;
+  /**
+   * The last three months of interest, forfeited when cashing before five
+   * years. Zero once the bond is five years old, and while it is still locked
+   * (nothing is forfeited on a redemption that cannot happen).
+   */
+  earlyRedemptionPenalty: Money;
+  /** What cashing the bond today actually pays: value now, less the penalty. */
+  redemptionValue: Money;
 }
+
+/** Six-month periods a bond must be held before it can be cashed at all. */
+export const MIN_HOLD_PERIODS = 2;
+/** Six-month periods after which the three-month interest penalty stops. */
+export const PENALTY_FREE_PERIODS = 10;
 
 /** Available rate periods, oldest first (the order the dataset stores them in). */
 export function ratePeriods(data: TreasuryBondsData): BondRate[] {
@@ -69,7 +84,10 @@ export function ratePeriods(data: TreasuryBondsData): BondRate[] {
  * rate period. The fixed rate is taken from the purchase period and locked; the
  * inflation component rotates through each subsequent published period. Each
  * six-month period applies half the composite rate and rounds to the cent, the
- * way the Treasury accrues. Returns null if the purchase period is unknown.
+ * way the Treasury accrues. The two redemption rules are reported alongside the
+ * accrued value: a bond cannot be cashed in its first 12 months, and cashing
+ * before five years forfeits the last three months of interest. Returns null if
+ * the purchase period is unknown.
  */
 export function projectIBond(
   purchaseAmount: number,
@@ -101,6 +119,15 @@ export function projectIBond(
   }
 
   const latest = rates[rates.length - 1]!;
+  // Cashing before five years gives up the last three months of interest.
+  // Each period here accrues at one constant rate, so three months of it is
+  // exactly half the most recent period's interest.
+  const redeemable = periods.length >= MIN_HOLD_PERIODS;
+  const penalty =
+    redeemable && periods.length < PENALTY_FREE_PERIODS
+      ? periods[periods.length - 1]!.interest.multiply(0.5).roundToCents()
+      : Money.zero();
+
   return {
     fixedRate,
     purchaseAmount: purchase,
@@ -109,5 +136,8 @@ export function projectIBond(
     currentValue: balance,
     interestEarned: balance.subtract(purchase),
     latestCompositeRate: compositeRate(fixedRate, latest.inflationRate),
+    redeemable,
+    earlyRedemptionPenalty: penalty,
+    redemptionValue: balance.subtract(penalty),
   };
 }

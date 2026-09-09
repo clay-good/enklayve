@@ -90,6 +90,7 @@ import {
 import { iraDeductibility } from "../src/engine/iraDeduction";
 import { evaluatePlan, DEFAULT_CONFIG, type PlanInput } from "../src/engine/plan";
 import { requiredMinimumDistribution } from "../src/engine/rmd";
+import { projectIBond } from "../src/engine/savingsBond";
 import { socialSecurityBenefit, fullRetirementAgeMonths } from "../src/engine/socialSecurity";
 import { socialSecurityBenefitTaxation } from "../src/engine/socialSecurityTax";
 import {
@@ -122,6 +123,7 @@ export const PROBED_FILES = [
   "src/engine/iraDeduction.ts",
   "src/engine/plan.ts",
   "src/engine/rmd.ts",
+  "src/engine/savingsBond.ts",
   "src/engine/socialSecurity.ts",
   "src/engine/socialSecurityTax.ts",
   "src/engine/tax/brackets.ts",
@@ -510,8 +512,30 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
   const ss = data.socialSecurity()!;
   for (const born of [1937, 1954, 1955, 1960, 1961])
     put(`fra(${born})`, fullRetirementAgeMonths(born, ss));
-  for (const claim of [62, 67, 70]) {
-    put(`ssBenefit(${claim})`, socialSecurityBenefit(2_000, 1960, claim, ss).monthlyBenefit);
+  // 61 and 71 are outside the claiming window, so they read as the clamp.
+  for (const claim of [61, 62, 67, 70, 71]) {
+    const r = socialSecurityBenefit(2_000, 1960, claim, ss);
+    put(`ssBenefit(${claim})`, r.monthlyBenefit);
+    put(`ssClaimAgeMonths(${claim})`, r.claimAgeMonths);
+  }
+
+  // --- savingsBond: the holding period and the five-year penalty ------------
+  const bonds = data.treasuryBonds();
+  if (bonds) {
+    const periods = bonds.rates.map((r) => r.period);
+    // Newest first: 1 period held (locked), 2 (just redeemable), 3, and 10 (no
+    // penalty) — the two boundaries this file owns, from either side.
+    for (const back of [1, 2, 3, 10]) {
+      const period = periods[periods.length - back];
+      if (!period) continue;
+      const r = projectIBond(10_000, period, bonds);
+      put(`iBond(${back})`, {
+        periodsHeld: r?.periodsHeld ?? null,
+        redeemable: r?.redeemable ?? null,
+        penalty: r?.earlyRedemptionPenalty.toNumber() ?? null,
+        redemptionValue: r?.redemptionValue.toNumber() ?? null,
+      });
+    }
   }
 
   // --- fafsa ----------------------------------------------------------------

@@ -114,13 +114,31 @@ export function mountSavingsBond(ctx: TileContext): void {
         value: String(result.periodsHeld),
       },
       { label: "Interest earned", value: fmt(result.interestEarned), citation: cite },
-      { label: "Value now", value: fmt(result.currentValue), emphasis: true, citation: cite },
+      { label: "Value now (accrued)", value: fmt(result.currentValue), citation: cite },
+      {
+        label: "Can you cash it yet?",
+        value: result.redeemable ? "Yes — past the 12-month lock." : "No — locked for 12 months.",
+        citation: cite,
+      },
+      {
+        label: "Given up by cashing before 5 years",
+        value: result.earlyRedemptionPenalty.isZero()
+          ? "None"
+          : `−${fmt(result.earlyRedemptionPenalty)}`,
+        citation: cite,
+      },
+      {
+        label: result.redeemable ? "If you cash it now" : "If you could cash it now",
+        value: fmt(result.redemptionValue),
+        emphasis: true,
+        citation: cite,
+      },
     ];
 
     resultContainer.replaceChildren(
       resultCard({
-        label: `A ${fmt(result.purchaseAmount)} I bond bought ${periodLabel(fields.period)}, valued ${periodLabel(latestPeriod)}`,
-        value: result.currentValue,
+        label: `A ${fmt(result.purchaseAmount)} I bond bought ${periodLabel(fields.period)}, ${result.redeemable ? "cashed" : "valued"} ${periodLabel(latestPeriod)}`,
+        value: result.redemptionValue,
         locale: ctx.locale,
         breakdown: lines,
         permalink: () => ctx.permalink(writeFields(fields)),
@@ -170,7 +188,7 @@ export const savingsBondTile: TileDefinition = {
   description: "What a Series I savings bond earns and is worth.",
   keywords: ["i bond", "ibond", "savings bond", "series i", "treasury", "inflation bond", "tips"],
   status: "ready",
-  how: "A Series I savings bond earns a composite rate that combines a fixed rate, set when you buy and locked for the life of the bond, with a semiannual inflation rate the Treasury resets every six months.\n\nThe composite (annualized) rate is fixed + (2 × the semiannual inflation rate) + (fixed × the semiannual inflation rate), floored at zero. We grow your purchase one six-month period at a time, applying half the composite rate each period, straight from the bundled TreasuryDirect rates.\n\nThis is a measured value through the last published rate period, never a forecast: we don't guess a future inflation rate. I bonds can't be cashed for the first 12 months, and cashing before 5 years gives up the last 3 months of interest. The interest is subject to federal income tax but exempt from state and local tax. Verify any figure on TreasuryDirect.",
+  how: "A Series I savings bond earns a composite rate that combines a fixed rate, set when you buy and locked for the life of the bond, with a semiannual inflation rate the Treasury resets every six months.\n\nThe composite (annualized) rate is fixed + (2 × the semiannual inflation rate) + (fixed × the semiannual inflation rate), floored at zero. We grow your purchase one six-month period at a time, applying half the composite rate each period, straight from the bundled TreasuryDirect rates.\n\nThis is a measured value through the last published rate period, never a forecast: we don't guess a future inflation rate. The headline is what cashing today would pay: an I bond can't be cashed in its first 12 months, and cashing before 5 years gives up the last 3 months of interest — half of the latest six-month period here. The interest is subject to federal income tax but exempt from state and local tax. Verify any figure on TreasuryDirect.",
   resources: [
     {
       label: "TreasuryDirect, I bonds",

@@ -419,8 +419,22 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  *
  * The levers are unchanged and every one is still rejected on the grounds
  * written above.
+ *
+ * **288 → 289 on 2026-09-09**, for the two rules an I bond has that the tile
+ * had only ever described. The Treasury I Bond card headlined the gross accrued
+ * value and called it "Value now", while its own "How this works" paragraph —
+ * and the shard's `sourceNote`, which listed both as *not modeled* — said a bond
+ * cannot be cashed for twelve months and that cashing before five years gives up
+ * the last three months of interest. A reader deciding whether to cash was being
+ * shown a number they could not get. The headline is the redemption value now,
+ * with the lock and the forfeited interest on their own lines above it.
+ *
+ * The bytes are three breakdown labels and a shorter explainer paragraph, which
+ * is 0.3 kB gzipped — the raise is a kilobyte because the budget is stated in
+ * them, and the rest is headroom this file has spent three entries explaining
+ * the need for. The levers below are unchanged and all still rejected.
  */
-export const SHELL_GZIP_BUDGET_KB = 288;
+export const SHELL_GZIP_BUDGET_KB = 289;
 
 /**
  * The headroom this gate needs to be measuring the shell rather than the runner.
