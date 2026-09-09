@@ -403,7 +403,9 @@ describe("Saver's Credit tile", () => {
       mountSaversCredit,
       new URLSearchParams({ fs: "single", agi: "21000", c: "2000" }),
     );
-    const spouseRow = single.querySelector<HTMLElement>('input[name="sc"]')?.closest(".field");
+    const spouseRow = single
+      .querySelector<HTMLElement>('input[name="sc"]')
+      ?.closest<HTMLElement>(".field");
     expect(spouseRow?.hidden).toBe(true);
   });
 });
