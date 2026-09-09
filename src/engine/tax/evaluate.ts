@@ -218,6 +218,7 @@ function computeState(
   input: TaxInput,
   agi: Money,
   state: Jurisdiction,
+  federalJurisdiction: Jurisdiction,
   federalDeductionResult: DeductionResult,
   federalIncomeTax: Money,
 ): { computation: JurisdictionComputation; localLines: LocalTaxLine[] } {
@@ -243,7 +244,22 @@ function computeState(
     };
   }
 
-  let standard = Money.from(standardDeductionFor(state, input.filingStatus));
+  // §63(f) is part of the §63(c) standard deduction, not a §63(b) paragraph, so
+  // it does not travel with `conformedFederalDeductions` — it belongs to the
+  // deduction figure itself. A state whose conformity block says so takes the
+  // FEDERAL amount, unrecomputed, for the same reason the block's other five
+  // are federal amounts: the state is not applying the rule, it is starting
+  // from a figure the rule has already been applied to.
+  let standard = Money.from(
+    standardDeductionFor(state, input.filingStatus) +
+      (state.federalDeductionConformity?.agedAdditional
+        ? agedStandardDeductionFor(
+            federalJurisdiction,
+            input.filingStatus,
+            input.seniorsAge65Plus ?? 0,
+          )
+        : 0),
+  );
   // Sliding standard deduction: the deduction phases down linearly with AGI in
   // one of two equivalent forms (see StandardDeductionPhaseOutSchema):
   //  • divisor (South Carolina's SCIAD, S.C. Code §12-6-1140(15)): reduce by
@@ -412,7 +428,14 @@ function computeBreakdown(input: TaxInput, ctx: TaxContext): Breakdown {
   let state: JurisdictionComputation | null = null;
   let localLines: LocalTaxLine[] = [];
   if (ctx.state) {
-    const s = computeState(input, agi, ctx.state, federal.deduction, federal.incomeTax);
+    const s = computeState(
+      input,
+      agi,
+      ctx.state,
+      ctx.federal,
+      federal.deduction,
+      federal.incomeTax,
+    );
     state = s.computation;
     localLines = s.localLines;
   }

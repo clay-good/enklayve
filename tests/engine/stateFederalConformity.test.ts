@@ -129,13 +129,36 @@ describe("states that start from federal taxable income", () => {
       .add(d.vehicleLoanInterest)
       .toNumber();
     expect(inherited).toBe(1000 + 4800 + 4000 + 2000 + 1500);
+    // §63(f) rides on the standard deduction rather than being a §63(b)
+    // paragraph, so it is not in `inherited` above — but it is inherited all
+    // the same, and `FILER` is 65. Two thousand and fifty dollars of it.
+    const aged = 2050;
     expect(bare.state!.taxableIncome.subtract(withAll.state!.taxableIncome).toNumber()).toBe(
-      inherited,
+      inherited + aged,
     );
     expect(bare.state!.incomeTax.subtract(withAll.state!.incomeTax).toNumber()).toBeCloseTo(
-      inherited * 0.0195,
+      (inherited + aged) * 0.0195,
       2,
     );
+  });
+
+  it("puts a federal-taxable-income state's base exactly on the federal one", () => {
+    // The invariant behind every case above, and the one that would have caught
+    // §63(f): a state whose return begins at federal taxable income and adds
+    // nothing back has, by construction, the federal figure. Asserting the five
+    // §63(b) line items stopped one step short of it, and §63(f) — which lives
+    // in §63(c), inside the standard deduction rather than beside it — fell
+    // through the gap, leaving a 65-year-old's state base $2,050 too high.
+    //
+    // Colorado is excluded because it really does differ: it adds the overtime
+    // deduction back (C.R.S. §39-22-104(3)). Idaho is excluded because it
+    // starts from federal AGI and rebuilds the deduction from §63 by reference
+    // rather than inheriting the whole figure, so the equality is not the thing
+    // its shard is claiming.
+    for (const code of ["nd", "mt", "ia"]) {
+      const r = evaluateTaxes(FILER, { federal: ds.federal, state: state(code), fica: ds.fica });
+      expect(r.state!.taxableIncome.toNumber(), code).toBe(r.federal.taxableIncome.toNumber());
+    }
   });
 
   it("changes nothing for a state that starts from adjusted gross income", () => {

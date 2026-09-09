@@ -406,6 +406,16 @@ export type SteppedIncomeDeductionData = z.infer<typeof SteppedIncomeDeductionSc
  * it, so there is no conformity question to answer there.
  */
 export const FederalDeductionConformitySchema = z.object({
+  /**
+   * §63(f), the aged additional standard deduction, which is part of the §63(c)
+   * standard deduction rather than a §63(b) paragraph of its own — so a state
+   * inherits it either by starting from federal taxable income (Colorado,
+   * Iowa, Montana, North Dakota) or by defining its own standard deduction as
+   * "the standard deduction as defined in section 63" (Idaho). A state that
+   * substitutes its own figure answers false, whether or not it legislates an
+   * age addition of its own.
+   */
+  agedAdditional: z.boolean(),
   /** §63(b)(4), IRC §170(p): giving deducted without itemizing. */
   nonItemizerCharitable: z.boolean(),
   /** §63(b)(2), IRC §151(d)(5)(C): the deduction at 65. */

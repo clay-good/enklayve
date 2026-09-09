@@ -94,6 +94,7 @@
     }
   },
   "federalDeductionConformity": {
+    "agedAdditional": false,
     "nonItemizerCharitable": true,
     "senior": true,
     "qualifiedTips": true,

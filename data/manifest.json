@@ -351,7 +351,7 @@
       "sourceUrl": "https://tax.colorado.gov/sites/tax/files/documents/Individual_Income_Tax_Guide_January_2026.pdf",
       "sourceDocument": "Colorado DOR Individual Income Tax Guide (revised January 2026) — 4.4% flat rate on federal taxable income",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "aad0a6ce3b26ecbccebe317d7fd986c9b37aacfe9a6ac1d9a2ef01174a709544"
+      "contentHash": "d0228097216d886f305e3d64e61e090d896b6c9d7b8f05917e70de9d88731da0"
     },
     {
       "id": "state-in-income-tax-2024",
@@ -416,7 +416,7 @@
       "sourceUrl": "https://tax.idaho.gov/taxes/income-tax/individual-income/individual-income-tax-rate-schedule/",
       "sourceDocument": "Idaho State Tax Commission Individual Income Tax Rate Schedule — 0% to $4,811 / $9,622, then 5.3% of the excess (HB 40, 2025)",
       "dateRetrieved": "2026-08-29",
-      "contentHash": "7f83425504e5600ea1302655bc6ce1c1eeaa33035aefd4cb922b33d0f1482a14"
+      "contentHash": "af353f34cd14cf5ffc371981c802254a04ba562e27511dfc9921567eee63e1e4"
     },
     {
       "id": "state-ut-income-tax-2024",
@@ -455,7 +455,7 @@
       "sourceUrl": "https://revenue.iowa.gov/press-release/2025-10-21/idr-announces-2026-individual-income-tax-and-interest-rates",
       "sourceDocument": "Iowa Department of Revenue, flat 3.8% individual income tax for tax years 2025 and after (Senate File 2442, 2024)",
       "dateRetrieved": "2026-06-05",
-      "contentHash": "a3ef1cf81894db1dde98c2e7802e519bf484a80e04755d105e5bfc3e40262a06"
+      "contentHash": "8df5ce9a0a7fa387114aebe5eb6f239b6a33f311d2c04aaf71d6f467b653e294"
     },
     {
       "id": "state-va-income-tax-2024",
@@ -637,7 +637,7 @@
       "sourceUrl": "https://revenue.mt.gov/taxes/individual-income-tax/",
       "sourceDocument": "Montana DOR 2026 rate schedule (HB 337, 2025; MCA §15-30-2103): 4.70% / 5.65% over federal taxable income; conforms to the federal standard deduction",
       "dateRetrieved": "2026-06-06",
-      "contentHash": "05d074e088dd6024c01fb40c815b46ed9a3c4030cd8eab1fa110806f89707730"
+      "contentHash": "ae44d6e76e951d25fc20631ca01e9bc5a68f7ccb7cb276c49592aa6646dbfdc9"
     },
     {
       "id": "state-me-income-tax-2024",
@@ -663,7 +663,7 @@
       "sourceUrl": "https://www.tax.nd.gov/individual-income-tax",
       "sourceDocument": "North Dakota Tax Commissioner, 2026 ND-1/ND-EZ Tax Rate Schedules (SB 2034): 0% / 1.95% / 2.50% over federal taxable income",
       "dateRetrieved": "2026-06-06",
-      "contentHash": "6988b22d0105e47d816e5151427d0d249ec4067c46d45dce507d434d0987be39"
+      "contentHash": "cdd81948a9732d985087e6b6179606b13d23e44a20d77c192f680d92287e5ded"
     },
     {
       "id": "state-vt-income-tax-2024",
@@ -702,7 +702,7 @@
       "sourceUrl": "https://www.oregon.gov/dor/forms/FormsPubs/form-or-40-inst_101-040-1_2025.pdf",
       "sourceDocument": "Oregon DOR Form OR-40 (2025): 4.75%–9.9% rate charts, federal-tax subtraction (cap $8,500, AGI-phased), standard deduction (ORS §316.037/.680/.695)",
       "dateRetrieved": "2026-06-08",
-      "contentHash": "f4d2cf56fc6cf5777a58274a5cc7fe6ee58203583920a6a50bcd38a5b1db1411"
+      "contentHash": "4aad27f58b5446c97ed49ff87a4424de0d0640fd340b4bc2d4851ff73fb44310"
     },
     {
       "id": "state-ne-income-tax-2024",
