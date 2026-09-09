@@ -24,7 +24,7 @@ import {
 } from "../../scripts/audit-release";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
 import { CORE_SHELL } from "../../scripts/service-worker";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 /**
@@ -443,6 +443,40 @@ describe("what the audit says when the budget passes", () => {
       `the README's shell figure is more than ${slackKb} kB under the budget, so it is stale — ` +
         "re-measure it with `npm run build && npm run audit` rather than adjusting this",
     ).toBeLessThanOrEqual(slackKb);
+  });
+
+  it("keeps the README's shard-prose figures with the shards themselves", () => {
+    // The same paragraph states two more numbers — how much shard JSON goes
+    // into the shell, and how much of it is `sourceNote` prose — and it says in
+    // its own text that it has carried stale figures twice before. Those two
+    // come from the shards on disk rather than from a build, so unlike the
+    // shell figure they can be checked exactly, and every day that adds a
+    // sentence to a note moves them. Today added three.
+    const readme = readFileSync(resolve(__dirname, "..", "..", "README.md"), "utf8");
+    const stated =
+      /\*\*([\d.]+) kB of shard JSON, of which ([\d.]+) kB — (\d+)% — is `sourceNote` prose\*\*/.exec(
+        readme,
+      );
+    expect(stated, "the README no longer states the shard/sourceNote split").not.toBeNull();
+
+    // Measured the way `npm run audit -- --breakdown` measures it — every
+    // `.json` under data/, kB of 1024, and `sourceNoteBytes` walking for the
+    // key wherever it sits — so the figure the README quotes and the figure the
+    // command prints are the same figure rather than two derivations of it.
+    const dir = resolve(__dirname, "..", "..", "data");
+    let bytes = 0;
+    let note = 0;
+    for (const name of readdirSync(dir)) {
+      if (!name.endsWith(".json")) continue;
+      const raw = readFileSync(resolve(dir, name), "utf8");
+      bytes += Buffer.byteLength(raw);
+      note += sourceNoteBytes(raw);
+    }
+    // A tenth of a kB of slack: the README rounds to one decimal, and the whole
+    // point is that a sentence added to a note shows up here.
+    expect(Number(stated![1]), "shard JSON total").toBeCloseTo(bytes / 1024, 0);
+    expect(Number(stated![2]), "sourceNote prose total").toBeCloseTo(note / 1024, 0);
+    expect(Number(stated![3]), "the stated percentage").toBe(Math.round((note / bytes) * 100));
   });
 });
 
