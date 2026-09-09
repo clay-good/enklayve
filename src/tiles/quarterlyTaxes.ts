@@ -367,7 +367,11 @@ export function mountQuarterlyTaxes(ctx: TileContext): void {
         fields.state ? (data?.state(fields.state) ?? null) : null,
         fields.local,
       ),
-      annualIncome: fields.profit,
+      // Profit, not wages: `annualIncome` is what Take-Home, the W-4 estimator
+      // and the saved Report hand the engine as `wages`, and this money owes
+      // §1401 rather than §3101. Writing it there had the Report charging the
+      // employee's 7.65% on it.
+      selfEmploymentProfitAnnual: fields.profit,
     });
     compute();
   }

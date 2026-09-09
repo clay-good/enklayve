@@ -31,6 +31,7 @@ const EVERY_FIELD: Required<SituationValues> = {
   // next reader that the two are independent — they describe one household.
   qualifyingChildren: 1,
   annualIncome: 92_000,
+  selfEmploymentProfitAnnual: 92_000,
   qualifiedTipsAnnual: 14_000,
   qualifiedOvertimeAnnual: 3200,
   preTaxContributions: 8000,

@@ -209,6 +209,7 @@ describe("the Report against a profile no form could have produced", () => {
     ages: Array.from({ length: 5_000 }, () => 40),
     qualifyingChildren: 1e308,
     annualIncome: 1e308,
+    selfEmploymentProfitAnnual: 1e308,
     qualifiedTipsAnnual: 1e308,
     qualifiedOvertimeAnnual: 1e308,
     preTaxContributions: 1e308,

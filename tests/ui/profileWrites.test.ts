@@ -61,6 +61,7 @@ import type { TileContext, TileDefinition } from "../../src/tiles/types";
  */
 const NUMERIC_FIELDS = [
   "annualIncome",
+  "selfEmploymentProfitAnnual",
   "householdSize",
   "qualifyingChildren",
   "qualifiedTipsAnnual",
@@ -120,7 +121,7 @@ const EXPECTED = [
   "peace-of-mind | essentialMonthlyExpenses <- Essential monthly expenses",
   "peace-of-mind | liquidSavings <- Liquid savings",
   "peace-of-mind | totalMonthlyExpenses <- Total monthly spending",
-  "quarterly-taxes | annualIncome <- Net business profit",
+  "quarterly-taxes | selfEmploymentProfitAnnual <- Net business profit",
   "retirement-optimizer | elective401kAnnual <- 401(k) so far this year",
   "retirement-optimizer | employerMatchAnnual <- Full employer match offered this year",
   "retirement-optimizer | employerMatchCaptured <- Employer match captured so far",
@@ -131,7 +132,7 @@ const EXPECTED = [
   "screener | annualIncome <- Annual household income",
   "screener | householdSize <- Household size",
   "screener | qualifyingChildren <- Qualifying children",
-  "se-retirement | annualIncome <- Net business profit",
+  "se-retirement | selfEmploymentProfitAnnual <- Net business profit",
   "snap | householdSize <- Household size",
   "take-home | annualIncome <- Annual wages",
   "take-home | preTaxContributions <- Pre-tax adjustments",

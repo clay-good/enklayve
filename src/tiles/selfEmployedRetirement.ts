@@ -193,7 +193,11 @@ export function mountSelfEmployedRetirement(ctx: TileContext): void {
       age: Math.min(120, parseNonNegative(ageInput.value, 45)),
     };
     ctx.setParams(writeFields(fields));
-    rememberShared(profile, { filingStatus: fields.fs, annualIncome: fields.profit });
+    // See `SituationValues.selfEmploymentProfitAnnual`: profit is not wages.
+    rememberShared(profile, {
+      filingStatus: fields.fs,
+      selfEmploymentProfitAnnual: fields.profit,
+    });
     compute();
   }
 

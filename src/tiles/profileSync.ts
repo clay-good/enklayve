@@ -27,6 +27,12 @@ export interface SharedFields {
   county?: string;
   annualIncome?: number;
   /**
+   * Net self-employment profit. A different quantity from `annualIncome`,
+   * which every reader of it treats as wages — see `SituationValues`. The two
+   * tiles that ask for profit wrote it there until 2026-09-09.
+   */
+  selfEmploymentProfitAnnual?: number;
+  /**
    * Annual pre-tax contributions (401(k), HSA, and the rest) — the number
    * Take-Home asks for as "Pre-tax adjustments".
    *
@@ -52,6 +58,9 @@ export function rememberShared(profile: SituationStore, fields: SharedFields): v
   // clear the county, not leave Montgomery behind for the next tile to charge.
   if (fields.county !== undefined) profile.set("county", fields.county);
   if (fields.annualIncome !== undefined) profile.set("annualIncome", fields.annualIncome);
+  if (fields.selfEmploymentProfitAnnual !== undefined) {
+    profile.set("selfEmploymentProfitAnnual", fields.selfEmploymentProfitAnnual);
+  }
   if (fields.qualifyingChildren !== undefined) {
     profile.set("qualifyingChildren", fields.qualifyingChildren);
   }

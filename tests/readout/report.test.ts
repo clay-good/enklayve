@@ -138,6 +138,40 @@ describe("Readout Report, model", () => {
     expect(ctc?.value).toMatch(/\$/);
   });
 
+  it("does not tax business profit as wages, and says where it is taxed", () => {
+    // Quarterly Taxes and the Solo-401(k) tile both wrote net profit into
+    // `annualIncome`, which every figure in this document reads as wages — so
+    // the report charged the employee's 7.65% FICA on money that owes §1401 at
+    // roughly twice that, understating the total by about 6.5% of the profit,
+    // in a document a household keeps.
+    const p = new SituationStore();
+    p.set("annualIncome", 0);
+    p.set("selfEmploymentProfitAnnual", 80_000);
+    p.set("filingStatus", "single");
+    const sections = buildReport(p, data).sections;
+    // No wages, so no tax picture invented from profit.
+    expect(sections.some((s) => s.title === "My tax picture")).toBe(false);
+
+    // With wages beside it the picture is about the wages, and the profit is
+    // named rather than folded in.
+    const both = new SituationStore();
+    both.set("annualIncome", 50_000);
+    both.set("selfEmploymentProfitAnnual", 80_000);
+    both.set("filingStatus", "single");
+    const tax = buildReport(both, data).sections.find((s) => s.title === "My tax picture")!;
+    const line = tax.lines.find((l) => l.label.startsWith("Self-employment profit"));
+    expect(line?.value).toContain("$80,000");
+    expect(line?.value).toContain("§1401");
+    // The FICA figure is the one for $50,000 of wages, not $130,000.
+    const wagesOnly = new SituationStore();
+    wagesOnly.set("annualIncome", 50_000);
+    wagesOnly.set("filingStatus", "single");
+    const bare = buildReport(wagesOnly, data).sections.find((s) => s.title === "My tax picture")!;
+    const fica = (s: typeof tax): string | undefined =>
+      s.lines.find((l) => l.label.startsWith("Social Security"))?.value;
+    expect(fica(tax)).toBe(fica(bare));
+  });
+
   it("names the §32(i) cliff beside the EITC it prints", () => {
     // The document a household keeps printed a credit and nothing about the
     // one rule that ends it outright. Nothing on this device records

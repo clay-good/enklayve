@@ -70,8 +70,24 @@ export interface SituationValues {
    * words and this field does not second-guess.
    */
   qualifyingChildren: number;
-  /** Gross annual income. */
+  /**
+   * Gross annual income — **wages**, as every surface that reads it treats it:
+   * Take-Home, the W-4 estimator and the saved Report all hand it to the tax
+   * engine as `wages`.
+   *
+   * Which is why net self-employment profit does not go here. It did, from two
+   * tiles, and the Report then charged the employee's 7.65% FICA on money that
+   * owes self-employment tax at roughly twice that — understating the total by
+   * about 6.5% of the profit, in a document a household keeps.
+   */
   annualIncome: number;
+  /**
+   * Net profit from self-employment (Schedule C), which is a different
+   * quantity from wages and taxed under a different rule (§1401 rather than
+   * §3101). Kept so the surfaces that ask for it can share it, and named so
+   * nothing mistakes it for a paycheck.
+   */
+  selfEmploymentProfitAnnual: number;
   /**
    * Cash tips reported to the employer for the year — W-2 box 12, code TP.
    *
@@ -214,6 +230,7 @@ export const SituationValuesSchema = z
     ages: rows(z.array(bounded)),
     qualifyingChildren: num,
     annualIncome: num,
+    selfEmploymentProfitAnnual: num,
     qualifiedTipsAnnual: num,
     qualifiedOvertimeAnnual: num,
     preTaxContributions: num,

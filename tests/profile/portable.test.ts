@@ -47,6 +47,7 @@ const EVERY_FIELD: SituationValues = {
   ages: [41, 39, 9, 6],
   qualifyingChildren: 2,
   annualIncome: 142_000,
+  selfEmploymentProfitAnnual: 142_000,
   qualifiedTipsAnnual: 1_234,
   qualifiedOvertimeAnnual: 2_345,
   preTaxContributions: 3_456,

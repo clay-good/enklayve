@@ -156,6 +156,7 @@ export function buildReport(
   const usd = (m: Money): string => m.format(locale);
 
   const income = profile.get("annualIncome") ?? 0;
+  const selfEmploymentProfit = profile.get("selfEmploymentProfitAnnual") ?? 0;
   const essential = profile.get("essentialMonthlyExpenses") ?? 0;
   const savings = profile.get("liquidSavings") ?? 0;
   const netWorth = netWorthOf(profile);
@@ -296,6 +297,20 @@ export function buildReport(
             overtime: (profile.get("qualifiedOvertimeAnnual") ?? 0) > 0,
           }),
         },
+        // Profit is not wages. Two tiles used to write it into `annualIncome`,
+        // which every figure above reads as wages, so this document charged the
+        // employee's 7.65% on money that owes §1401 at roughly twice that.
+        // It has a key of its own now, and this line names it rather than
+        // taxing it: sizing SE tax here would need the deductible half fed back
+        // into the income tax above, which is Quarterly Taxes' whole job.
+        ...(selfEmploymentProfit > 0
+          ? [
+              {
+                label: "Self-employment profit — taxed elsewhere",
+                value: `${usd(Money.from(selfEmploymentProfit))} of net business profit is recorded, and every figure above is about wages. Profit owes self-employment tax under §1401 instead of the FICA line above; Quarterly Taxes & Set-Aside sizes it.`,
+              },
+            ]
+          : []),
       ],
     });
   } else {
