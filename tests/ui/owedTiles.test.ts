@@ -82,6 +82,21 @@ describe("the Child Tax Credit tile and §24(d)(1)(B)(i)", () => {
     expect(rowValue(root, "What caps the refundable portion")).toContain("Your earnings");
   });
 
+  it("shares the earnings figure, not the MAGI one", () => {
+    // `annualIncome` is what Take-Home, the W-4 estimator and the saved Report
+    // hand the engine as wages. A reader with pre-tax contributions has a MAGI
+    // below their wages, so writing MAGI here sized the rest of the site off a
+    // smaller paycheck than they have.
+    const profile = new SituationStore();
+    const root = mount(
+      mountChildTaxCredit,
+      new URLSearchParams({ kids: "2", inc: "90000", earn: "100000", mfj: "0" }),
+      profile,
+    );
+    root.querySelector<HTMLInputElement>('input[name="earn"]')!.dispatchEvent(new Event("input"));
+    expect(profile.get("annualIncome")).toBe(100000);
+  });
+
   it("still reports the per-child cap when earnings clear it", () => {
     const root = mount(
       mountChildTaxCredit,

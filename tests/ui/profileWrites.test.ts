@@ -98,7 +98,7 @@ const EXPECTED = [
   "charity-care | householdSize <- People in household",
   "cliff-explorer | householdSize <- People in household",
   "cliff-explorer | qualifyingChildren <- Children who qualify for credits",
-  "ctc | annualIncome <- Modified adjusted gross income",
+  "ctc | annualIncome <- Earned income (wages and self-employment)",
   "ctc | qualifyingChildren <- Qualifying children (under 17)",
   "disability-insurance | annualIncome <- Annual income",
   "education-credits | annualIncome <- Modified adjusted gross income (MAGI)",

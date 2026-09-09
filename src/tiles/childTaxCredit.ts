@@ -157,7 +157,13 @@ export function mountChildTaxCredit(ctx: TileContext): void {
       earnedIncome: parseNonNegative(earnInput.value, 0),
     };
     ctx.setParams(writeFields(fields));
-    profile.set("annualIncome", fields.magi);
+    // The EARNED figure, not the MAGI one. `annualIncome` is what Take-Home,
+    // the W-4 estimator and the saved Report hand the engine as wages, and a
+    // reader with pre-tax contributions has a MAGI below their wages — so
+    // writing MAGI here sized the rest of the site off a smaller paycheck than
+    // they have. This tile asks for earnings in their own field precisely
+    // because §24(d)(1)(B)(i) measures against them.
+    profile.set("annualIncome", fields.earnedIncome);
     profile.set("qualifyingChildren", fields.qualifyingChildren);
     compute();
   }

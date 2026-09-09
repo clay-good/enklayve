@@ -292,6 +292,8 @@ The links that point *inside* the repository need none of that and were checked 
 
 - [ ] **Maryland's note described the world before the residence-local work.** It said *“the marginal-rate and optimizer tiles (which omit all local taxes, like NYC for New York) show Maryland state + federal only, while the take-home tile includes the county tax”* — untrue since the mandatory residence-based county tax landed: the marginal-rate explorer, the paycheck optimizer, quarterly taxes and the cliff explorer all carry the county now, and [`residenceLocal.ts`](../src/ui/residenceLocal.ts) says so at the top of the file. Fourth stale `sourceNote` today, and this one is rendered under the result card — a reader was being told the figure in front of them omitted a tax it included.
 
+- [ ] **The Child Tax Estimator shared a MAGI where the rest of the site expects a paycheck.** `annualIncome` is what Take-Home, the W-4 estimator and the saved Report hand the engine as **wages**, and this tile wrote its *“Modified adjusted gross income”* box into it. A reader with pre-tax contributions has a MAGI **below** their wages, so every other surface was sized off a smaller paycheck than they have. The tile already asks for earnings in a field of their own — §24(d)(1)(B)(i) measures the refundable portion against them — so that is the figure it shares. Fourth of this shape today, and each was visible in the pinned write map as a sentence: *“ctc | annualIncome ← Modified adjusted gross income”*.
+
 
 ## Deploy
 
