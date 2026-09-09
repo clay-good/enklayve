@@ -5,6 +5,7 @@ import { buildReport } from "../../src/readout/report";
 import { renderHome } from "../../src/ui/shell";
 import { getTile } from "../../src/tiles/registry";
 import { mountOwedScreener } from "../../src/tiles/owedScreener";
+import { mountSnap } from "../../src/tiles/snap";
 import {
   acaCreditEligible,
   estimatePremiumTaxCredit,
@@ -286,6 +287,27 @@ describe("the screener and the saved Report answer one household the same way", 
         (li.querySelector(".screener-program")?.textContent ?? "").startsWith("SNAP"),
       );
       expect(snap?.querySelector(".screener-estimate")?.textContent).toBe("Not estimated here");
+
+      // "Every surface" has to mean every surface. The standalone SNAP tile
+      // was outside this claim until 2026-09-09 and printed a lower-48 dollar
+      // figure to the same household, because SPEC-3-hardening §B3 was applied
+      // on the reasoning that it had no way to know the region -- while it read
+      // household size and income out of the very profile that holds the state.
+      const tile = document.createElement("div");
+      mountSnap({
+        root: tile,
+        params: new URLSearchParams({ hh: String(size), inc: String(Math.round(income / 12)) }),
+        setParams: () => {},
+        permalink: () => "https://enklayve.com/#/x",
+        navigate: () => {},
+        locale: "en-US",
+        data,
+        profile,
+      } as TileContext);
+      expect(tile.querySelector(".coming-soon-note")?.textContent ?? "").toContain(
+        region === "alaska" ? "Alaska" : "Hawaii",
+      );
+      expect(tile.textContent).not.toMatch(/\$[\d,]/);
     });
   }
 
