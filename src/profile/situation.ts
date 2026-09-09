@@ -111,6 +111,8 @@ export interface SituationValues {
    * it. Nothing infers this one.
    */
   planDeductible: number;
+  /** The reader's own out-of-pocket maximum, the deductible's twin. */
+  planOopMax: number;
 }
 
 export type SituationKey = keyof SituationValues;
@@ -222,6 +224,7 @@ export const SituationValuesSchema = z
      * a number the reader has already given another surface. Nothing infers it.
      */
     planDeductible: num,
+    planOopMax: num,
   })
   .catch({});
 

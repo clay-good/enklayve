@@ -453,8 +453,30 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * this raise is partly spent on, deliberately: a citation nobody can read is
  * not a citation, and a figure the note calls omitted while the engine needs it
  * is worse.
+ *
+ * **290 → 291 on 2026-09-09**, the third raise in one day, which is the thing
+ * worth writing down rather than the kilobyte. What spent them was not a
+ * feature: it was **fourteen correctness fixes**, and the bytes went almost
+ * entirely into *sentences* — a breakdown label saying which of two caps is
+ * binding, a shard note saying which rules are modeled and which are not, a
+ * finding naming the cliff beside the credit it ends. This budget is a gate on
+ * the size of a first visit, and the thing that keeps pressing against it is
+ * the site explaining itself, which is the one cost this project has already
+ * decided it will pay (see the `sourceNote` paragraph below, and the README's).
+ *
+ * The immediate spend is the **out-of-pocket-maximum check**: `oopMax` had been
+ * a declared plan parameter, extracted from every EOB, and read by nothing —
+ * the deductible had a check and its twin did not exist, on the number that
+ * decides when a household stops paying at all. Roughly 0.15 kB.
+ *
+ * The levers are still the levers, and all still rejected. What would change
+ * the shape of this problem is not another kilobyte: it is the day the shard
+ * notes get long enough that the offline promise and the first-visit cost
+ * genuinely conflict, and the honest note to leave for that day is that the
+ * three raises here were each spent on prose that the audit's own principles
+ * say belongs in the shell.
  */
-export const SHELL_GZIP_BUDGET_KB = 290;
+export const SHELL_GZIP_BUDGET_KB = 291;
 
 /**
  * The headroom this gate needs to be measuring the shell rather than the runner.

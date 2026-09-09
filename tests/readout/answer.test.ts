@@ -53,6 +53,13 @@ const EOB_MISMATCH =
   "Amount Billed 4,000.00 Allowed Amount 2,000.00 Plan Paid 1,200.00 " +
   "Patient Responsibility 950.00 Applied to deductible 3,500.00";
 
+/** A notice applying more to the out-of-pocket maximum than the cap itself. */
+const EOB_OOP_OVER =
+  "Explanation of Benefits — This is not a bill. Claim Number: CLM-90115 " +
+  "Date of Service 09/12/2026 In-Network " +
+  "Amount Billed 9,000.00 Allowed Amount 7,200.00 Plan Paid 0.00 " +
+  "Patient Responsibility 7,200.00 Applied to out-of-pocket maximum 7,200.00";
+
 /** An itemized bill whose charge lines sum to its total. */
 const BILL_CLEAN =
   "Riverside Clinic Itemized Statement Patient Account 44120 " +
@@ -260,6 +267,31 @@ describe("Readout v2, what the checks do and do not say", () => {
     const flag = withPlan.find((f) => f.checkId === "eob-deductible-over-plan-deductible");
     expect(flag?.kind).toBe("plan-math");
     expect(flag?.detail).toContain("If your deductible is $1,500.00");
+  });
+
+  it("asks the same question about the out-of-pocket maximum", () => {
+    // `PlanParameters.oopMax` was declared, the figure was extracted from the
+    // notice, and nothing read either of them — the deductible had a plan-math
+    // check and its twin did not exist. A cap is a cap.
+    const notice = extractDocument(typed(EOB_OOP_OVER));
+    const withPlan = runChecks({
+      primary: notice,
+      documents: [notice],
+      plan: { oopMax: 6000 },
+    });
+    const flag = withPlan.find((f) => f.checkId === "eob-oop-over-plan-oop-max");
+    expect(flag?.kind).toBe("plan-math");
+    expect(flag?.question.endsWith("?")).toBe(true);
+    expect(flag?.detail).toContain("$6,000.00");
+    expect(flag?.detail).toContain("$1,200.00");
+
+    // No figure from the reader, no question.
+    const withoutPlan = runChecks({ primary: notice, documents: [notice] });
+    expect(withoutPlan.find((f) => f.checkId === "eob-oop-over-plan-oop-max")).toBeUndefined();
+
+    // At or under the cap it says nothing either.
+    const under = runChecks({ primary: notice, documents: [notice], plan: { oopMax: 9000 } });
+    expect(under.find((f) => f.checkId === "eob-oop-over-plan-oop-max")).toBeUndefined();
   });
 
   it("counts every repeat, rather than stopping at the second one", () => {

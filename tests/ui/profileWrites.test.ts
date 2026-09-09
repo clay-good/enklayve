@@ -73,6 +73,7 @@ const NUMERIC_FIELDS = [
   "totalMonthlyExpenses",
   "liquidSavings",
   "planDeductible",
+  "planOopMax",
 ] as const satisfies readonly SituationKey[];
 
 /**
@@ -102,6 +103,7 @@ const EXPECTED = [
   "eitc | annualIncome <- Earned income",
   "eitc | qualifyingChildren <- Qualifying children",
   "eob-checker | planDeductible <- Your plan's deductible",
+  "eob-checker | planOopMax <- Your plan's out-of-pocket maximum",
   "federal-income-tax | annualIncome <- Wages and income",
   "fpl | annualIncome <- Annual household income",
   "fpl | householdSize <- Household size",

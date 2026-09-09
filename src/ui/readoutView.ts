@@ -117,7 +117,9 @@ function summaryLine(fields: ExtractedField[]): string {
  */
 function planFrom(profile: SituationStore): PlanParameters | undefined {
   const deductible = profile.get("planDeductible");
-  return deductible === undefined ? undefined : { deductible };
+  const oopMax = profile.get("planOopMax");
+  if (deductible === undefined && oopMax === undefined) return undefined;
+  return { deductible, oopMax };
 }
 
 export function renderReadout(opts: RenderReadoutOptions): void {

@@ -92,6 +92,10 @@ export interface CheckDefinition {
  * plan's own statement is routine; a dollar is not. */
 const NOISE_FLOOR = 1;
 
+/** Where an accumulator question goes, for the two checks that ask one. */
+const ACCUMULATOR_ASK =
+  "Your health plan's member services line — ask them to walk through the accumulator.";
+
 function usd(n: number): string {
   return Money.from(n).format("en-US");
 }
@@ -229,8 +233,32 @@ export const CHECKS: CheckDefinition[] = [
       return {
         question: "Is this applying more to your deductible than your deductible is?",
         detail: `If your deductible is ${usd(plan)}, this notice applying ${usd(applied)} to it does not reconcile — ${usd(applied - plan)} more than the whole deductible.`,
-        askWho:
-          "Your health plan's member services line — ask them to walk through the accumulator.",
+        askWho: ACCUMULATOR_ASK,
+      };
+    },
+  },
+  {
+    // The deductible check's twin, and the reason `PlanParameters.oopMax`
+    // existed: it was declared, the figure was extracted from the notice, and
+    // nothing read either of them. A cap is a cap — a notice applying more to
+    // it than the whole of it is the same question as the deductible one, and
+    // the out-of-pocket maximum is the number that decides when a household
+    // stops paying at all.
+    id: "eob-oop-over-plan-oop-max",
+    kind: "plan-math",
+    appliesTo: ["eobHealth"],
+    falsePositive:
+      "A family out-of-pocket maximum, or one that reset partway through the year, can legitimately exceed the individual figure you entered.",
+    suppressOnOcr: false,
+    run: (ctx) => {
+      const applied = amount(doc(ctx, "eobHealth"), "eob-oop-applied");
+      const plan = ctx.plan?.oopMax;
+      if (applied === null || plan === undefined || !Number.isFinite(plan)) return null;
+      if (applied - plan <= NOISE_FLOOR) return null;
+      return {
+        question: "Is this applying more to your out-of-pocket maximum than your maximum is?",
+        detail: `If your out-of-pocket maximum is ${usd(plan)}, this notice applying ${usd(applied)} to it does not reconcile — ${usd(applied - plan)} past the cap.`,
+        askWho: ACCUMULATOR_ASK,
       };
     },
   },

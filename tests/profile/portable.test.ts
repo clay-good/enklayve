@@ -58,6 +58,7 @@ const EVERY_FIELD: SituationValues = {
   totalMonthlyExpenses: 4_321,
   liquidSavings: 54_321,
   planDeductible: 54_321,
+  planOopMax: 54_321,
 };
 
 /** The fields the interface declares, read off the source rather than listed. */

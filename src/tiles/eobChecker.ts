@@ -307,6 +307,7 @@ export function mountEobChecker(ctx: TileContext): void {
     // where that number is typed, so it goes to the shared profile like every
     // other answer a tile collects.
     ctx.profile.set("planDeductible", fields.deductible);
+    ctx.profile.set("planOopMax", fields.oopMax);
     compute();
   }
 
