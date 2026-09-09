@@ -14,6 +14,7 @@ import {
   type CliffInput,
   type ResourcePoint,
 } from "../../src/engine/cliffs";
+import { estimateCtc, estimateEitc } from "../../src/engine/benefits";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 
 /**
@@ -126,14 +127,58 @@ describe("a qualifying surviving spouse does not file a joint return", () => {
     const base: CliffInput = { ...family, filingStatus: "qualifying_surviving_spouse" };
     const asHoh: CliffInput = { ...family, filingStatus: "head_of_household" };
     const d = cliffData();
-    // At $30,000 the joint threshold ($31,160) would still be paying the
-    // plateau while the everyone-else threshold ($23,890) has been phasing out
-    // for $6,110 — so the two readings differ, and only one of them is a joint
-    // return.
-    expect(resourcesAt(30_000, base, d).credits).toBeCloseTo(
-      resourcesAt(30_000, asHoh, d).credits,
+    // $24,000, where both statuses owe no federal income tax — so the credits
+    // term is the refundable one alone and this compares the EITC rather than
+    // the tax the nonrefundable Child Tax Credit offsets, which legitimately
+    // differs between joint rates and head-of-household ones. The joint EITC
+    // threshold ($31,160) would still be paying the plateau here while the
+    // everyone-else threshold ($23,890) has begun to phase out, so the two
+    // readings differ, and only one of them is a joint return.
+    expect(resourcesAt(24_000, base, d).credits).toBeCloseTo(
+      resourcesAt(24_000, asHoh, d).credits,
       6,
     );
+  });
+});
+
+describe("the Child Tax Credit a household can actually use", () => {
+  it("counts the nonrefundable part it offsets tax with, not only the refundable one", () => {
+    // A nonrefundable credit is money the household keeps — it is tax they do
+    // not pay — and this curve counted only `refundable`, so a family with
+    // children was shown resources short by at least $500 a child ($2,200
+    // against a $1,700 refundable cap). It also moved the §24 phase-out on the
+    // chart, which began where `refundable` started falling rather than at the
+    // $200,000 threshold where the credit does.
+    const d = cliffData();
+    const withKids: CliffInput = { ...family, qualifyingChildren: 2 };
+    const withoutKids: CliffInput = { ...family, qualifyingChildren: 0 };
+
+    // $70,000: enough federal income tax for the nonrefundable part to land.
+    // Two children are worth the WHOLE $4,400 credit here, not the $3,400 the
+    // refundable cap allows — the extra $1,000 is tax this household does not
+    // pay, and counting only the refundable part left it out.
+    const kids = resourcesAt(70_000, withKids, d);
+    const none = resourcesAt(70_000, withoutKids, d);
+    const ctc = estimateCtc(
+      { qualifyingChildren: 2, magi: 70_000, married: false, earnedIncome: 70_000 },
+      d.eitcCtc!,
+    );
+    expect(ctc.refundable.toNumber()).toBe(3_400);
+    expect(ctc.credit.toNumber()).toBe(4_400);
+    expect(kids.credits - none.credits).toBeCloseTo(ctc.credit.toNumber(), 6);
+
+    // It never pays out beyond the tax it offsets: at an income with no
+    // federal income tax, the refundable part is the whole of it.
+    const low = resourcesAt(20_000, withKids, d);
+    const ctcLow = estimateCtc(
+      { qualifyingChildren: 2, magi: 20_000, married: false, earnedIncome: 20_000 },
+      d.eitcCtc!,
+    );
+    const eitcLow = estimateEitc(
+      { earnedIncome: 20_000, qualifyingChildren: 2, married: false },
+      d.eitcCtc!,
+    );
+    expect(low.credits).toBeCloseTo(eitcLow.credit.toNumber() + ctcLow.refundable.toNumber(), 6);
   });
 });
 

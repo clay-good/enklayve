@@ -13,7 +13,9 @@
  *
  *     total resources = wages
  *                     − federal income tax − FICA − state income tax
- *                     + EITC + refundable CTC
+ *                     + EITC + the Child Tax Credit it can actually use
+ *                       (all of the refundable part, and the rest up to the
+ *                        federal income tax it offsets)
  *                     + ACA premium tax credit
  *                     + SNAP
  *
@@ -320,7 +322,21 @@ export function resourcesAt(income: number, input: CliffInput, data: CliffData):
       },
       data.eitcCtc,
     );
-    credits = finite(eitc.credit.toNumber()) + finite(ctc.refundable.toNumber());
+    // The NONREFUNDABLE part of the Child Tax Credit is money the household
+    // keeps too — it is tax they do not pay — and this counted only the
+    // refundable part, so a family with children was shown resources short by
+    // at least $500 a child ($2,200 against a $1,700 refundable cap). It also
+    // moved the §24 phase-out on the chart: the visible bend started where
+    // `refundable` began to fall rather than at the $200,000 threshold where
+    // the credit does.
+    //
+    // Capped at the federal income tax computed above, because a nonrefundable
+    // credit cannot pay out — the refundable part is the part that can, and it
+    // is already counted, so the two never overlap.
+    const nonRefundable = Math.max(0, ctc.credit.toNumber() - ctc.refundable.toNumber());
+    const usedAgainstTax = Math.min(nonRefundable, finite(tax.federal.incomeTax.toNumber()));
+    credits =
+      finite(eitc.credit.toNumber()) + finite(ctc.refundable.toNumber()) + finite(usedAgainstTax);
   }
 
   let acaPremiumCredit = 0;

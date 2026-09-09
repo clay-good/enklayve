@@ -681,7 +681,7 @@ export const cliffExplorerTile: TileDefinition = {
   status: "ready",
   mount: mountCliffExplorer,
   how:
-    "Most calculators answer what you owe or what you're owed. This one answers something else: what a household actually has, across a whole range of incomes.\n\nFor each income we compute your pay after federal income tax, FICA, and state income tax, then add the EITC, the refundable Child Tax Credit, your ACA premium tax credit, and your estimated SNAP allotment. That sum is your total resources. Plotting it against gross income shows something a bracket table can't: the stretches where earning more leaves you with the same or less, because a credit phases out or an eligibility line is crossed faster than your wage grows." +
+    "Most calculators answer what you owe or what you're owed. This one answers something else: what a household actually has, across a whole range of incomes.\n\nFor each income we compute your pay after federal income tax, FICA, and state income tax, then add the EITC, the Child Tax Credit you can actually use (all of the refundable part, and the rest up to the federal income tax it cancels), your ACA premium tax credit, and your estimated SNAP allotment. That sum is your total resources. Plotting it against gross income shows something a bracket table can't: the stretches where earning more leaves you with the same or less, because a credit phases out or an eligibility line is crossed faster than your wage grows." +
     SHARED_HOW_TAIL,
   related: [
     {
