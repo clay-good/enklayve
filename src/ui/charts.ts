@@ -46,7 +46,19 @@ function currency(locale: string, n: number): string {
  */
 export function allocatePercents(values: readonly number[], total: number, target = 100): number[] {
   if (total <= 0 || target <= 0) return values.map(() => 0);
-  const exact = values.map((v) => (v / total) * target);
+  // The denominator is never smaller than what is being divided by it. A caller
+  // whose slices sum past `total` would otherwise get floors that already
+  // exceed `target`, a negative residual, and a loop that breaks on its first
+  // test — returning a column adding to MORE than the whole, which is the one
+  // thing this function exists to prevent. Both callers pass the slice sum
+  // today, so it has never happened; `target` is already a stated figure rather
+  // than a slice sum for the quarterly donut, and the day `total` becomes one
+  // too, this is what keeps the legend honest. Taking the larger denominator
+  // states each share of what is actually there, which is the only reading of
+  // "percent of total" available when the parts outrun the total.
+  const sum = values.reduce((acc, v) => acc + Math.max(0, v), 0);
+  const denominator = Math.max(total, sum);
+  const exact = values.map((v) => (v / denominator) * target);
   const out = exact.map((p) => Math.floor(p));
   let residual = target - out.reduce((sum, p) => sum + p, 0);
   const order = exact

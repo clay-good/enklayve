@@ -39,6 +39,31 @@ describe("allocatePercents", () => {
     expect(allocatePercents([50, 30, 20], 100)).toEqual([50, 30, 20]);
   });
 
+  it("never returns a column adding to more than the whole", () => {
+    // The mirror case the loop could not reach: when the values sum past
+    // `total`, the floors already exceed `target`, the residual is negative and
+    // the loop breaks on its first test — returning percents adding to more
+    // than 100, which is the one thing this function exists to prevent. Both
+    // callers pass the slice sum as `total` today, so it has never happened;
+    // `target` is already a stated figure rather than a slice sum for the
+    // quarterly donut, and the day `total` becomes one too, this is live.
+    // The denominator is never smaller than what is divided by it, so two equal
+    // slices are still half each — and they add to the whole.
+    expect(allocatePercents([60, 60], 100)).toEqual([50, 50]);
+
+    for (const values of [[70, 70, 70], [101], [1000, 1, 1], [33.4, 33.4, 33.4, 33.4]]) {
+      const p = allocatePercents(values, 100);
+      expect(
+        p.reduce((a, b) => a + b, 0),
+        values.join("/"),
+      ).toBe(100);
+      expect(
+        p.every((n) => n >= 0),
+        values.join("/"),
+      ).toBe(true);
+    }
+  });
+
   it("claims nothing when there is no whole to divide", () => {
     expect(allocatePercents([0, 0], 0)).toEqual([0, 0]);
   });
