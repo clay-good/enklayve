@@ -179,6 +179,22 @@ export function buildReport(
   const citations: CitationData[] = [];
   const sections: ReportSection[] = [];
 
+  /**
+   * Profit is not wages. Two tiles used to write it into `annualIncome`, which
+   * every figure in the tax picture reads as wages, so this document charged
+   * the employee's 7.65% on money that owes §1401 at roughly twice that. It has
+   * a key of its own now, and this line names it rather than taxing it: sizing
+   * SE tax here would need the deductible half fed back into the income tax
+   * above, which is Quarterly Taxes' whole job.
+   */
+  const selfEmploymentLine = (besideWages: boolean): ReportLine => ({
+    label: "Self-employment profit — taxed elsewhere",
+    value:
+      `${usd(Money.from(profile.get("selfEmploymentProfitAnnual") ?? 0))} of net business profit is recorded` +
+      (besideWages ? ", and every figure above is about wages." : ".") +
+      " Profit owes self-employment tax under §1401 rather than through payroll; Quarterly Taxes & Set-Aside sizes it.",
+  });
+
   const hasIncomeData = income > 0 && federal !== null && fica !== null;
 
   // --- Snapshot + tax picture (only when we can run the tax engine) ---
@@ -297,20 +313,34 @@ export function buildReport(
             overtime: (profile.get("qualifiedOvertimeAnnual") ?? 0) > 0,
           }),
         },
-        // Profit is not wages. Two tiles used to write it into `annualIncome`,
-        // which every figure above reads as wages, so this document charged the
-        // employee's 7.65% on money that owes §1401 at roughly twice that.
-        // It has a key of its own now, and this line names it rather than
-        // taxing it: sizing SE tax here would need the deductible half fed back
-        // into the income tax above, which is Quarterly Taxes' whole job.
-        ...(selfEmploymentProfit > 0
-          ? [
-              {
-                label: "Self-employment profit — taxed elsewhere",
-                value: `${usd(Money.from(selfEmploymentProfit))} of net business profit is recorded, and every figure above is about wages. Profit owes self-employment tax under §1401 instead of the FICA line above; Quarterly Taxes & Set-Aside sizes it.`,
-              },
-            ]
-          : []),
+        ...(selfEmploymentProfit > 0 ? [selfEmploymentLine(true)] : []),
+      ],
+    });
+  } else if (selfEmploymentProfit > 0) {
+    /**
+     * Somebody who earns their living on 1099s, who has told this site so.
+     *
+     * The gate above is `annualIncome > 0`, which is wages, and it was written
+     * when profit could only arrive by being written into that same key — so
+     * every contractor had one. Splitting the two on 2026-09-09 made this
+     * branch reachable for the first time, and it said "Add your income in My
+     * Situation" to a reader who had just dropped in a 1099-NEC and confirmed
+     * it. Trading a wrong answer for a blank one is only half the repair.
+     *
+     * The tax picture still does not run on profit, for the reason the line
+     * below gives, so what belongs here is the truth: no wages, so no
+     * take-home, and the figure they did record, named with the statute that
+     * taxes it and the tool that sizes it.
+     */
+    sections.push({
+      title: "Snapshot",
+      lines: [
+        {
+          label: "Status",
+          value:
+            "No wages are recorded, so there is no paycheck to break down here. What you did record is below.",
+        },
+        selfEmploymentLine(false),
       ],
     });
   } else {

@@ -250,6 +250,43 @@ describe("Readout Report, model", () => {
     expect(snapshot.lines[0]?.value).toMatch(/Add your income/);
   });
 
+  /**
+   * The snapshot gates on `annualIncome`, which is wages. That was every
+   * earner's figure until 2026-09-09, because a 1099-NEC and the two
+   * self-employment tools all wrote profit into the same key — so splitting
+   * them made this branch reachable for the first time, and it told somebody
+   * who had just dropped in a 1099-NEC and confirmed it to "add your income".
+   */
+  it("does not tell a contractor to add the income they just recorded", () => {
+    const profile = new SituationStore();
+    profile.set("selfEmploymentProfitAnnual", 48000);
+    const snapshot = buildReport(profile, data).sections.find((s) => s.title === "Snapshot")!;
+    expect(snapshot.lines[0]?.value).not.toMatch(/Add your income/);
+    expect(snapshot.lines[0]?.value).toMatch(/No wages are recorded/);
+
+    // And the figure they did record is named, with the statute that taxes it
+    // and the tool that sizes it -- the tax picture above still does not run on
+    // profit, so the document has to say where it is answered instead.
+    const profit = snapshot.lines.find((l) => l.label.startsWith("Self-employment profit"))!;
+    expect(profit.value).toContain("$48,000");
+    expect(profit.value).toContain("§1401");
+    expect(profit.value).toContain("Quarterly Taxes");
+    // It is not claiming to be about wages, because there are none.
+    expect(profit.value).not.toContain("every figure above is about wages");
+  });
+
+  it("still says the figures above are wages when there are wages too", () => {
+    // Beside a paycheck the line sits under the tax picture, which IS about
+    // wages; a contractor has no tax picture, so it sits in the snapshot and
+    // must not claim to be qualifying figures that are not there.
+    const profile = fundedProfile();
+    profile.set("selfEmploymentProfitAnnual", 48000);
+    const picture = buildReport(profile, data).sections.find((s) => s.title === "My tax picture")!;
+    const profit = picture.lines.find((l) => l.label.startsWith("Self-employment profit"))!;
+    expect(profit.value).toContain("every figure above is about wages");
+    expect(profit.value).toContain("§1401");
+  });
+
   it("is reproducible: same profile + datasets → identical model and HTML", () => {
     const a = buildReport(fundedProfile(), data);
     const b = buildReport(fundedProfile(), data);
