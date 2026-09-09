@@ -88,8 +88,24 @@ export interface SituationValues {
   qualifiedOvertimeAnnual: number;
   /** Annual pre-tax contributions (401k/HSA/etc.). */
   preTaxContributions: number;
-  /** Annual contributions to tax-advantaged retirement accounts (401k/IRA). */
+  /**
+   * Annual contributions to tax-advantaged retirement accounts (401k/IRA).
+   *
+   * All of them, which is what §25B's Saver's Credit measures — and the reason
+   * the §402(g) figure below is a separate key. One key carried both for a
+   * while: the optimizer wrote its 401(k) box here and the Saver's Credit tile
+   * wrote 401(k) + IRA + 403(b), so whichever tile the reader opened second
+   * decided what the number meant.
+   */
   retirementContributionsAnnual: number;
+  /**
+   * The §402(g) elective deferral alone — what goes into a 401(k)/403(b)
+   * through payroll, without the IRA beside it.
+   *
+   * My Plan's retirement step sizes the gap to the elective limit, and an IRA
+   * contribution does not close it.
+   */
+  elective401kAnnual: number;
   /** Full annual employer match available if you contribute enough to capture it. */
   employerMatchAnnual: number;
   /** Annual employer match you are currently capturing. */
@@ -202,6 +218,7 @@ export const SituationValuesSchema = z
     qualifiedOvertimeAnnual: num,
     preTaxContributions: num,
     retirementContributionsAnnual: num,
+    elective401kAnnual: num,
     employerMatchAnnual: num,
     employerMatchCaptured: num,
     debts: rows(

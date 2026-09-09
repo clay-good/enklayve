@@ -70,7 +70,7 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
     priorWages: parseNonNegative(p.get("pw"), 0),
     contrib401k: p.has("k")
       ? parseNonNegative(p.get("k"), 0)
-      : (profile.get("retirementContributionsAnnual") ?? 0),
+      : (profile.get("elective401kAnnual") ?? 0),
     contribIra: parseNonNegative(p.get("ira"), 0),
     hsaCoverage: cov && isCoverage(cov) ? cov : "none",
     contribHsa: parseNonNegative(p.get("h"), 0),
@@ -266,8 +266,13 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
   function recompute(): void {
     collect();
     ctx.setParams(writeFields(fields));
-    // Feed My Plan's retirement step with the 401(k) contribution.
-    ctx.profile.set("retirementContributionsAnnual", fields.contrib401k);
+    // Two quantities, two keys. My Plan's step sizes the gap to the §402(g)
+    // elective limit, which an IRA contribution does not close; §25B counts
+    // every retirement dollar. This wrote only the 401(k) figure into the key
+    // that means both, so the Saver's Credit tile and the screener were told
+    // the reader's IRA did not exist.
+    ctx.profile.set("elective401kAnnual", fields.contrib401k);
+    ctx.profile.set("retirementContributionsAnnual", fields.contrib401k + fields.contribIra);
     // The two the plan had no other way of learning.
     ctx.profile.set("employerMatchAnnual", fields.matchAvailable);
     ctx.profile.set("employerMatchCaptured", fields.matchCaptured);

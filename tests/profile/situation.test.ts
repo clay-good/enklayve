@@ -35,6 +35,7 @@ const EVERY_FIELD: Required<SituationValues> = {
   qualifiedOvertimeAnnual: 3200,
   preTaxContributions: 8000,
   retirementContributionsAnnual: 7000,
+  elective401kAnnual: 7000,
   employerMatchAnnual: 4600,
   employerMatchCaptured: 3000,
   debts: [{ name: "card", balance: 4200, ratePct: 22.99 }],

@@ -404,6 +404,7 @@ describe("every hub survives what its calculators are swept for", () => {
     qualifiedOvertimeAnnual: 1e308,
     preTaxContributions: 1e308,
     retirementContributionsAnnual: 1e308,
+    elective401kAnnual: 1e308,
     employerMatchAnnual: 1e308,
     employerMatchCaptured: 0.01,
     debts: Array.from({ length: 5_000 }, (_, i) => ({
@@ -479,6 +480,7 @@ describe("every calculator survives a restored profile", () => {
     "annualIncome",
     "preTaxContributions",
     "retirementContributionsAnnual",
+    "elective401kAnnual",
     "employerMatchAnnual",
     "employerMatchCaptured",
     "essentialMonthlyExpenses",

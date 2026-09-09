@@ -94,7 +94,11 @@ function planInputFrom(profile: SituationStore, data: BundledData | null): PlanI
     employerMatchAnnual: profile.get("employerMatchAnnual") ?? null,
     employerMatchCaptured: profile.get("employerMatchCaptured") ?? 0,
     debts: profile.get("debts") ?? [],
-    retirementContributionsAnnual: profile.get("retirementContributionsAnnual") ?? 0,
+    // The elective deferral, because the limit below is §402(g)'s. The key
+    // beside it counts every retirement dollar including an IRA, which does not
+    // close a 401(k) gap — measuring the gap against it marked the step
+    // satisfied for somebody who had never deferred.
+    retirementContributionsAnnual: profile.get("elective401kAnnual") ?? 0,
     // No fallback figure. When the shard is unavailable the plan says so; see
     // PlanInput.retirementLimitAnnual.
     retirementLimitAnnual: limits?.limits.elective_deferral_401k ?? null,

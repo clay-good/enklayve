@@ -56,6 +56,12 @@ export interface PlanInput {
   employerMatchAnnual: number | null;
   employerMatchCaptured: number;
   debts: Debt[];
+  /**
+   * The §402(g) elective deferral, which is what `retirementLimitAnnual`
+   * limits. Not every retirement dollar: an IRA contribution is a real
+   * contribution and does not close a 401(k) gap, and the profile carries the
+   * two figures separately for that reason.
+   */
   retirementContributionsAnnual: number;
   /** The cited annual tax-advantaged contribution limit (e.g. the 401(k)
    * elective-deferral limit). Carries the IRS citation so the step is sourced. */

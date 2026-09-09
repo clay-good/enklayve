@@ -422,15 +422,35 @@ describe("Retirement Contribution Optimizer tile", () => {
 
   it("reads the 401(k) from the profile and writes edits back", () => {
     const profile = new SituationStore();
-    profile.set("retirementContributionsAnnual", 8000);
+    profile.set("elective401kAnnual", 8000);
     const { root } = mount(mountRetirementOptimizer, new URLSearchParams({ age: "40" }), profile);
     expect(root.querySelector<HTMLInputElement>('input[name="k"]')?.value).toBe("8000");
     const k = root.querySelector<HTMLInputElement>('input[name="k"]')!;
     k.value = "15000";
     k.dispatchEvent(new Event("input"));
-    expect(profile.get("retirementContributionsAnnual")).toBe(15000);
+    expect(profile.get("elective401kAnnual")).toBe(15000);
     // Under 50 → no catch-up annotation.
     expect(labels(root).some((l) => l.includes("catch-up"))).toBe(false);
+  });
+
+  it("keeps the deferral and the total apart, because two rules measure them", () => {
+    // One key carried both for a while. The optimizer wrote its 401(k) box
+    // into `retirementContributionsAnnual`, whose own doc says "401k/IRA" and
+    // whose readers are §25B's Saver's Credit and the screener — so a reader
+    // who told this tile about a $3,000 IRA had it disappear on the way. The
+    // Saver's Credit tile wrote the combined figure into the same key, and My
+    // Plan sized the gap to the §402(g) elective limit against it, which an
+    // IRA contribution does not close.
+    const profile = new SituationStore();
+    const { root } = mount(
+      mountRetirementOptimizer,
+      new URLSearchParams({ age: "40", k: "12000", ira: "3000" }),
+      profile,
+    );
+    const k = root.querySelector<HTMLInputElement>('input[name="k"]')!;
+    k.dispatchEvent(new Event("input"));
+    expect(profile.get("elective401kAnnual")).toBe(12000);
+    expect(profile.get("retirementContributionsAnnual")).toBe(15000);
   });
 });
 
