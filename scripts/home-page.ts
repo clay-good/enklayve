@@ -106,7 +106,8 @@ export function renderHomeFallback(): string {
       <ul>
 ${areas}
       </ul>
-      <p><a href="/tools.html">See all ${TOOL_COUNT} calculators →</a></p>
+      <p><a href="/tools.html">See all ${TOOL_COUNT} calculators →</a> ·
+        <a href="/about.html">Why enklayve is free and private →</a></p>
     </div>`;
 }
 

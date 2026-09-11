@@ -166,7 +166,7 @@ export function renderToolsIndex(): string {
     </style>
   </head>
   <body>
-    <nav><a href="/">← enklayve home</a></nav>
+    <nav><a href="/">← enklayve home</a> · <a href="/about.html">Why enklayve</a></nav>
     <h1>All ${TOOL_COUNT} free calculators</h1>
     <p class="lede">
       ${escapeHtml(CATALOG_SUMMARY)} Every one runs entirely on your device, nothing is ever

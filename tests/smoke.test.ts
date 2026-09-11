@@ -3,30 +3,29 @@ import { renderHome, renderAbout, renderAllTools, renderReadout, mountApp } from
 import { loadBundledData, type BundledData } from "../src/data/browser";
 import { SituationStore } from "../src/profile/situation";
 import { TILES, SUB_TOOLS } from "../src/tiles/registry";
-import { HOME_TITLE } from "../src/ui/seo";
+import { HOME_TITLE, CATALOG_SUMMARY } from "../src/ui/seo";
 
 describe("shell home view (redesigned 2026-06-01)", () => {
-  it("leads with hero, dropzone, and the budget, then names every tool", () => {
+  it("leads with hero, dropzone, and the budget (no tool grid, no search box)", () => {
     const root = document.createElement("main");
     renderHome(root, () => {});
     expect(root.querySelector(".hero-title")?.textContent).toContain("made simple");
     // The Readout dropzone (BUILD-SPEC-2 §1.1) and the budget remain.
     expect(root.querySelector(".readout-dropzone")).not.toBeNull();
     expect(root.querySelector(".home-budget")).not.toBeNull();
-    // The home search box is still gone (⌘K and the All Tools index do that job).
+    // The home search box and the tool grid are both gone; tools are reached via
+    // the All Tools index (footer) and the ⌘K palette. The catalog belongs on
+    // that index and on "Why enklayve", not on the front page.
     expect(root.querySelector(".home-search")).toBeNull();
-    // The catalog came back, below the calm part: a front page that never named
-    // what it offered advertised none of it to a reader or a search engine.
-    // Every calculator in the registry is listed by name.
-    expect(root.querySelector(".home-catalog")).not.toBeNull();
-    expect(root.querySelectorAll(".tile-link-title").length).toBe(SUB_TOOLS.length);
-    expect(root.querySelectorAll(".all-tools-hub").length).toBe(TILES.length);
+    expect(root.querySelector(".home-tools-group")).toBeNull();
+    expect(root.querySelectorAll(".tile-link-title").length).toBe(0);
   });
 
   it("titles the home with what it offers, not just the brand", () => {
     const root = document.createElement("main");
     renderHome(root, () => {});
     // The one line a search result shows has to carry a word people search for.
+    // The head of index.html is built from the same constant.
     expect(document.title).toBe(HOME_TITLE);
     expect(document.title).toContain("Free");
   });
@@ -283,6 +282,34 @@ describe("Why enklayve (about) view", () => {
     root.querySelector<HTMLButtonElement>(".back-link")?.click();
     expect(navigate).toHaveBeenCalledWith(null);
   });
+
+  /**
+   * The page argued the site was free and private without ever saying what it
+   * was free and private *about*. It names the areas and the count now — read
+   * off the registry, so the claim cannot outlive the catalog — and sends the
+   * reader to All Tools for the calculators themselves.
+   */
+  it("names every topic area and the size of the catalog", () => {
+    const root = document.createElement("main");
+    renderAbout(root, () => {});
+    const areas = Array.from(root.querySelectorAll(".about-areas .all-tools-hub"));
+    expect(areas.length).toBe(TILES.length);
+    expect(root.textContent).toContain(`${SUB_TOOLS.length} calculators, in ${TILES.length} areas`);
+    for (const hub of TILES) {
+      expect(root.textContent).toContain(hub.title);
+    }
+  });
+
+  it("sends the reader on to All Tools for the calculators themselves", () => {
+    const root = document.createElement("main");
+    const navigate = vi.fn();
+    renderAbout(root, navigate);
+    const link = Array.from(root.querySelectorAll<HTMLButtonElement>("button")).find((b) =>
+      b.textContent?.includes("See all tools"),
+    );
+    link?.click();
+    expect(navigate).toHaveBeenCalledWith("all-tools");
+  });
 });
 
 describe("All Tools index view", () => {
@@ -301,6 +328,31 @@ describe("All Tools index view", () => {
     expect(tools).toContain("Earned Income Tax Credit");
     expect(tools).toContain("Roth Conversion Ladder");
     expect(new Set(tools).size).toBe(tools.length);
+  });
+
+  /**
+   * This view mirrors the static tools.html a search engine lands on, so the
+   * two say the same thing: how many calculators there are, and what they
+   * cover. "All tools" alone said neither.
+   */
+  it("states the catalog's size in its heading and its document title", () => {
+    const root = document.createElement("main");
+    renderAllTools(root, () => {});
+    expect(root.querySelector("h1.tile-title")?.textContent).toBe(
+      `All ${SUB_TOOLS.length} free calculators`,
+    );
+    expect(document.title).toContain(`All ${SUB_TOOLS.length} free calculators`);
+    expect(root.querySelector(".tile-desc")?.textContent).toBe(CATALOG_SUMMARY);
+  });
+
+  it("gives each hub its one-line summary, so the areas can be told apart", () => {
+    const root = document.createElement("main");
+    renderAllTools(root, () => {});
+    const descs = Array.from(root.querySelectorAll(".all-tools-hub-desc")).map(
+      (n) => n.textContent,
+    );
+    expect(descs.length).toBe(TILES.length);
+    for (const hub of TILES) expect(descs).toContain(hub.description);
   });
 });
 

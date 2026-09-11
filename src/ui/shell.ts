@@ -20,6 +20,7 @@ import { loadBundledData, type BundledData } from "../data/browser";
 import { type TileContext, type TileDefinition } from "../tiles/types";
 import { getTile, TILES, SUB_TOOLS } from "../tiles/registry";
 import { HOME_TITLE, CATALOG_SUMMARY } from "./seo";
+import { ABOUT_LEDE, ABOUT_POINTS, WHERE_IT_WORKS, US_RESOURCES } from "./aboutCopy";
 import { SituationStore } from "../profile/situation";
 import { resolveResidenceLocal, seedResidenceLocal, rememberableCounty } from "./residenceLocal";
 import { rememberShared, type SharedFields } from "../tiles/profileSync";
@@ -809,64 +810,14 @@ function renderHome(
     }),
   );
 
-  container.append(
-    hero,
-    readoutDropzone(navigate),
-    homeBudgetWidget(data, profile),
-    budgetWhy(),
-    homeCatalog(navigate),
-  );
+  container.append(hero, readoutDropzone(navigate), homeBudgetWidget(data, profile), budgetWhy());
 }
-
-/**
- * The home's catalog of everything enklayve offers, named.
- *
- * The home deliberately leads with one calm column, and for a while that meant
- * the front page never said what was behind it: the tools were reachable only
- * from the footer index and the ⌘K palette, so a first-time reader — and every
- * crawler, which reads the rendered page exactly as a first-time reader does —
- * saw a budget widget and an essay and had no way to learn that sixty-nine
- * calculators were a click away. Breadth that is only discoverable by searching
- * for something you already know the name of is breadth nobody finds.
- *
- * So the full list sits at the foot of the home, after the calm part: every
- * topic hub as a heading and every calculator under it by name. The counts are
- * read off the registry rather than written down, so they cannot drift.
- */
-function homeCatalog(navigate: NavigateFn): HTMLElement {
-  return el(
-    "section",
-    { class: "home-catalog" },
-    el("h2", {
-      class: "home-catalog__title",
-      text: `${SUB_TOOLS.length} free calculators, in ${TILES.length} areas`,
-    }),
-    el("p", {
-      class: "home-catalog__lede",
-      text: CATALOG_SUMMARY,
-    }),
-    hubSections(navigate),
-  );
-}
-
-/** Trusted U.S. resources to learn the public rules behind the numbers. */
-const US_RESOURCES: { label: string; url: string }[] = [
-  { label: "IRS, federal taxes", url: "https://www.irs.gov/" },
-  { label: "USA.gov, federal benefits", url: "https://www.usa.gov/benefit-finder" },
-  { label: "HealthCare.gov, ACA marketplace", url: "https://www.healthcare.gov/" },
-  {
-    label: "Consumer Financial Protection Bureau",
-    url: "https://www.consumerfinance.gov/consumer-tools/",
-  },
-  { label: "Social Security Administration", url: "https://www.ssa.gov/" },
-  { label: "Federal Student Aid (FAFSA)", url: "https://studentaid.gov/" },
-];
 
 /**
  * The home "how this works / why you can trust it" section: warm, plain-English,
  * US-only, and pointing to the public sources behind every number.
  */
-function homeExplainer(): HTMLElement {
+function homeExplainer(navigate: NavigateFn): HTMLElement {
   const point = (title: string, body: string): HTMLElement =>
     el(
       "div",
@@ -878,44 +829,15 @@ function homeExplainer(): HTMLElement {
   return el(
     "section",
     { class: "home-explainer" },
-    el("p", {
-      class: "home-explainer-lede",
-      text: "There are a thousand budgeting apps, tax calculators, and money coaches. Almost all of them want your email, your data, your attention, or your money. enklayve wants none of it. Here is what makes it different.",
-    }),
+    el("p", { class: "home-explainer-lede", text: ABOUT_LEDE }),
     el("h2", { class: "explainer-subhead", text: "What makes it different" }),
-    el(
-      "div",
-      { class: "explainer-points" },
-      point(
-        "Free, forever",
-        "No accounts, no ads, no cookie banner, no upsell, no premium tier, ever. The finance celebrities sell this; we think knowing where you stand should be a public good, free for everyone.",
-      ),
-      point(
-        "Truly private",
-        "Every number is computed on your device. There is no server to send your data to, so it cannot leak, be sold, or train anything. Your money stays yours.",
-      ),
-      point(
-        "Shows its work",
-        "Every figure shows the exact math and links the public rule behind it. You never have to trust a personality. You can verify it yourself, down to the citation.",
-      ),
-      point(
-        "Genuinely useful",
-        "Your real take-home pay, federal and state taxes, the benefits and credits you may be owed, debt payoff, and your next right step, all in one calm place.",
-      ),
-      point(
-        "No dark patterns",
-        "No streaks, no guilt, no fear-of-missing-out, no notifications begging you back. It respects your time and never tries to manipulate you. Just answers.",
-      ),
-      point(
-        "Built to last",
-        "Open source, deterministic, and reproducible from public data. It works offline, installs like an app, and will still give the same honest answer years from now.",
-      ),
-    ),
+    el("div", { class: "explainer-points" }, ...ABOUT_POINTS.map((p) => point(p.title, p.body))),
+    // What the six claims are claims *about*, before the page moves on to where
+    // the rules apply. A reader who is being told the site is free and private
+    // should learn what there is of it in the same breath.
+    aboutCatalog(navigate),
     el("h2", { class: "explainer-subhead", text: "Where it works" }),
-    el("p", {
-      class: "home-explainer-lede",
-      text: "enklayve covers U.S. federal and state taxes and benefits today. Support for more places, starting with Europe, India, China, and Russia, is on the roadmap as we learn each one's rules properly. We would rather be right than everywhere.",
-    }),
+    el("p", { class: "home-explainer-lede", text: WHERE_IT_WORKS }),
     el("h2", { class: "explainer-subhead", text: "Trusted resources" }),
     el(
       "ul",
@@ -936,12 +858,63 @@ function homeExplainer(): HTMLElement {
 }
 
 /**
+ * What the site actually holds, named on the page that argues for it.
+ *
+ * "Why enklayve" made six claims and never said what they were claims *about*.
+ * A reader who found this page — and a crawler, which finds it by the same
+ * link — learned that the tools were free and private without learning that
+ * there were sixty-nine of them or what any of them did. The areas go here, with
+ * the count read off the registry; the calculators themselves are named one
+ * click away on All Tools, which is the page for that.
+ */
+function aboutCatalog(navigate: NavigateFn): HTMLElement {
+  return el(
+    "section",
+    { class: "about-catalog" },
+    el("h2", {
+      class: "explainer-subhead",
+      text: `What is inside: ${SUB_TOOLS.length} calculators, in ${TILES.length} areas`,
+    }),
+    el("p", { class: "home-explainer-lede", text: CATALOG_SUMMARY }),
+    el(
+      "ul",
+      { class: "about-areas" },
+      ...TILES.map((hub) =>
+        el(
+          "li",
+          {},
+          el(
+            "button",
+            { type: "button", class: "all-tools-hub", on: { click: () => navigate(hub.id) } },
+            `${hub.title} (${SUB_TOOLS.filter((s) => s.hubId === hub.id).length})`,
+          ),
+          el("span", { class: "about-area-desc", text: hub.description }),
+        ),
+      ),
+    ),
+    el(
+      "p",
+      {},
+      el(
+        "button",
+        {
+          type: "button",
+          class: "btn btn--ghost",
+          on: { click: () => navigate("all-tools") },
+        },
+        "See all tools →",
+      ),
+    ),
+  );
+}
+
+/**
  * The "Why enklayve" page (route `#/about`): the trust story — free forever,
  * truly private, shows its work — used to crowd the home. It now lives on its
  * own calm page, reachable from the footer, so the home can lead with the
  * journey instead of a wall of value propositions.
  */
-function renderAbout(container: HTMLElement, navigate: (id: string | null) => void): void {
+function renderAbout(container: HTMLElement, navigate: NavigateFn): void {
   clear(container);
   document.title = "Why enklayve · enklayve";
 
@@ -957,7 +930,7 @@ function renderAbout(container: HTMLElement, navigate: (id: string | null) => vo
     back,
     el("h1", { class: "tile-title", text: "Why enklayve" }),
   );
-  container.append(el("article", { class: "tile" }, head, homeExplainer()));
+  container.append(el("article", { class: "tile" }, head, homeExplainer(navigate)));
 }
 
 /**
@@ -967,7 +940,7 @@ function renderAbout(container: HTMLElement, navigate: (id: string | null) => vo
  */
 function renderAllTools(container: HTMLElement, navigate: NavigateFn): void {
   clear(container);
-  document.title = "All tools · enklayve";
+  document.title = `All ${SUB_TOOLS.length} free calculators · enklayve`;
 
   const back = el(
     "button",
@@ -979,11 +952,8 @@ function renderAllTools(container: HTMLElement, navigate: NavigateFn): void {
     "div",
     { class: "tile-head" },
     back,
-    el("h1", { class: "tile-title", text: "All tools" }),
-    el("p", {
-      class: "tile-desc",
-      text: "Every enklayve calculator, grouped by topic. Each runs entirely on your device.",
-    }),
+    el("h1", { class: "tile-title", text: `All ${SUB_TOOLS.length} free calculators` }),
+    el("p", { class: "tile-desc", text: CATALOG_SUMMARY }),
   );
 
   // One section per topic hub (the unit the app actually navigates to); each

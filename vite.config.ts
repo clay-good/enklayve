@@ -6,6 +6,7 @@ import { renderToolsIndex } from "./scripts/tools-index";
 import { toolPages } from "./scripts/tool-pages";
 import { renderSitemap, renderRobots, SITE_ORIGIN } from "./scripts/sitemap";
 import { injectHomeSeo } from "./scripts/home-page";
+import { renderAboutPage, ABOUT_PAGE_PATH } from "./scripts/about-page";
 import { CORE_SHELL, renderServiceWorker, renderWebManifest } from "./scripts/service-worker";
 
 const REPO_ROOT = resolve(__dirname);
@@ -58,8 +59,17 @@ function staticSeo(): Plugin {
       for (const page of pages) {
         this.emitFile({ type: "asset", fileName: page.fileName, source: page.source });
       }
-      // Indexable URLs: the home, the All Tools index, and every tool shell.
-      const paths = ["/", "/tools.html", ...pages.map((p) => `/${p.fileName}`)];
+      // "Why enklayve" lived only at the fragment route `#/about`, which no
+      // crawler can index, so the page that explains what the site is had no
+      // URL of its own while every calculator had one.
+      this.emitFile({ type: "asset", fileName: ABOUT_PAGE_PATH, source: renderAboutPage() });
+      // Indexable URLs: the home, the two site-wide pages, and every tool shell.
+      const paths = [
+        "/",
+        "/tools.html",
+        `/${ABOUT_PAGE_PATH}`,
+        ...pages.map((p) => `/${p.fileName}`),
+      ];
       this.emitFile({
         type: "asset",
         fileName: "sitemap.xml",

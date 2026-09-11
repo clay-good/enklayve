@@ -5,6 +5,8 @@ import { renderToolPage, toolPages, toolPagePath } from "../../scripts/tool-page
 import { escapeHtml } from "../../scripts/tools-index";
 import { renderSitemap, renderRobots, SITE_ORIGIN } from "../../scripts/sitemap";
 import { injectHomeSeo, HEAD_MARKER, FALLBACK_MARKER } from "../../scripts/home-page";
+import { renderAboutPage, ABOUT_PAGE_PATH } from "../../scripts/about-page";
+import { ABOUT_POINTS, US_RESOURCES } from "../../src/ui/aboutCopy";
 import { HOME_TITLE } from "../../src/ui/seo";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
 
@@ -179,24 +181,71 @@ describe("home index.html SEO head", () => {
   });
 });
 
+/**
+ * "Why enklayve" is the page that answers "is this free?" and "where does my
+ * data go?", and it lived only at the fragment route `#/about` — a URL no
+ * crawler can index. The static page mirrors it from the same copy.
+ */
+describe("static Why enklayve page", () => {
+  const html = renderAboutPage();
+
+  it("renders the same argument the in-app view makes, from the same strings", () => {
+    expect(html).toContain("<!doctype html>");
+    expect(html).toContain("<h1>Why enklayve</h1>");
+    for (const point of ABOUT_POINTS) {
+      expect(html).toContain(escapeHtml(point.title));
+    }
+    for (const r of US_RESOURCES) {
+      expect(html).toContain(`href="${escapeHtml(r.url)}"`);
+    }
+  });
+
+  it("names every topic area, and links All Tools for the calculators", () => {
+    for (const hub of TILES) {
+      expect(html).toContain(`href="/${toolPagePath(hub.id)}"`);
+      expect(html).toContain(escapeHtml(hub.title));
+    }
+    expect(html).toContain('href="/tools.html"');
+    expect(html).toContain(`${SUB_TOOLS.length} calculators, in ${TILES.length} areas`);
+  });
+
+  it("carries a canonical, an AboutPage that states the price, and a breadcrumb", () => {
+    expect(html).toContain(`<link rel="canonical" href="${SITE_ORIGIN}/${ABOUT_PAGE_PATH}" />`);
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+    expect(blocks.length).toBe(2);
+    const [about, crumbs] = blocks.map((m) => JSON.parse(m[1]!));
+    expect(about["@type"]).toBe("AboutPage");
+    expect(about.mainEntity.isAccessibleForFree).toBe(true);
+    expect(about.mainEntity.offers.price).toBe("0");
+    expect(crumbs["@type"]).toBe("BreadcrumbList");
+  });
+
+  it("loads nothing cross-origin (the resource links are anchors)", () => {
+    expect(/<script[^>]+src\s*=\s*"https?:\/\//i.test(html)).toBe(false);
+    expect(/<link[^>]+href\s*=\s*"https?:\/\/(?!enklayve\.com\/)/i.test(html)).toBe(false);
+    expect(/<img[^>]+src\s*=\s*"https?:\/\//i.test(html)).toBe(false);
+  });
+});
+
 describe("sitemap.xml", () => {
   const pages = toolPages();
-  const paths = ["/", "/tools.html", ...pages.map((p) => `/${p.fileName}`)];
+  const paths = ["/", "/tools.html", `/${ABOUT_PAGE_PATH}`, ...pages.map((p) => `/${p.fileName}`)];
   const xml = renderSitemap(SITE_ORIGIN, paths);
 
-  it("is a valid urlset listing the home, the index, and every tool shell", () => {
+  it("is a valid urlset listing the home, both site pages, and every tool shell", () => {
     expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
     expect(xml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
     expect(xml).toContain(`<loc>${SITE_ORIGIN}/</loc>`);
     expect(xml).toContain(`<loc>${SITE_ORIGIN}/tools.html</loc>`);
+    expect(xml).toContain(`<loc>${SITE_ORIGIN}/${ABOUT_PAGE_PATH}</loc>`);
     for (const tile of TILES) {
       expect(xml).toContain(`<loc>${SITE_ORIGIN}/${toolPagePath(tile.id)}</loc>`);
     }
   });
 
-  it("has exactly one <loc> per indexable URL (home + index + every tool page)", () => {
+  it("has exactly one <loc> per indexable URL (home + both pages + every tool page)", () => {
     const locs = xml.match(/<loc>/g) ?? [];
-    expect(locs.length).toBe(PAGE_COUNT + 2);
+    expect(locs.length).toBe(PAGE_COUNT + 3);
   });
 });
 

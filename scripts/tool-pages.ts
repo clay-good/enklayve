@@ -159,7 +159,7 @@ export function renderToolPage(tile: TileDefinition, hubId?: string): string {
     </style>
   </head>
   <body>
-    <nav><a href="/">← enklayve home</a> · <a href="/tools.html">All tools</a></nav>
+    <nav><a href="/">← enklayve home</a> · <a href="/tools.html">All tools</a> · <a href="/about.html">Why enklayve</a></nav>
     <h1>${escapeHtml(tile.title)}</h1>
     <p class="lede">${escapeHtml(tile.description)}</p>
 ${covers}    <a class="open" href="${appUrl}">Open the ${escapeHtml(tile.title)} tool →</a>

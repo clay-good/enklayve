@@ -531,48 +531,32 @@ body {
   margin-right: auto;
 }
 
-/* The home tool grid was retired as a grid of cards, but the catalog came back
-   as a plain list at the foot of the home: a front page that never named what
-   it offered was invisible to anyone who had not already been told. It reuses
-   the All Tools index's own `.all-tools*` styles below. */
-/* The pre-boot home: the static catalog injected into #app at build time
-   (scripts/home-page.ts), which the shell replaces the moment it mounts. It is
-   the first paint for a person and the entire page for a crawler that does not
-   run JavaScript, so it is worth not looking broken for the half-second it is
-   on screen. */
-.boot-fallback {
-  max-width: 46rem;
-  margin: 0 auto;
-  padding: 2rem 1.25rem;
+/* The home tool grid stays retired: the home is one calm column, and the
+   catalog it used to hold lives on the All Tools index and "Why enklayve",
+   which are the pages for it (and are crawlable in their own right). */
+
+/* "Why enklayve" names the twelve areas and how many calculators each holds —
+   the page argues the site is worth using, so it should say what there is. The
+   calculators themselves are named on All Tools, one click away. */
+.about-catalog {
+  margin-top: 2rem;
+  text-align: center;
 }
-.boot-fallback h1 {
-  font-size: 1.6rem;
+.about-areas {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto 1rem;
+  max-width: 44rem;
 }
-.boot-fallback p {
+.about-areas li {
+  padding: 0.2rem 0;
+}
+.about-area-desc {
+  display: block;
   color: var(--enk-text-muted);
-}
-.boot-fallback ul {
-  padding-left: 1.1rem;
-}
-.boot-fallback li {
-  margin-bottom: 0.5rem;
+  font-size: 0.92rem;
 }
 
-.home-catalog {
-  width: 100%;
-  max-width: 46rem;
-  margin: 2.5rem auto 0;
-  border-top: 1px solid var(--enk-border);
-  padding-top: 1.5rem;
-}
-.home-catalog__title {
-  margin: 0 0 0.4rem;
-  font-size: 1.25rem;
-}
-.home-catalog__lede {
-  margin: 0 0 1.5rem;
-  color: var(--enk-text-muted);
-}
 /* The hub's own one-line summary, under its heading in the catalog and the
    All Tools index — the words a reader (and a crawler) uses to tell the twelve
    areas apart before opening any of them. */
