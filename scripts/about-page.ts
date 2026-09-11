@@ -16,18 +16,30 @@
 import { TILES, SUB_TOOLS } from "../src/tiles/registry";
 import { ABOUT_LEDE, ABOUT_POINTS, WHERE_IT_WORKS, US_RESOURCES } from "../src/ui/aboutCopy";
 import { CATALOG_SUMMARY } from "../src/ui/seo";
-import { escapeHtml, PAGE_STYLE, breadcrumb, TOOL_COUNT, HUB_COUNT } from "./tools-index";
-import { toolPagePath } from "./tool-pages";
+import {
+  escapeHtml,
+  PAGE_STYLE,
+  breadcrumb,
+  TOOL_COUNT,
+  HUB_COUNT,
+  INDEX_PAGE_URL,
+} from "./tools-index";
+import { toolPageUrl } from "./tool-pages";
 import { SITE_ORIGIN } from "./sitemap";
 
-/** The build path (and URL path, sans leading slash) for this page. */
+/** The build path for this page — the file the bundle emits. */
 export const ABOUT_PAGE_PATH = "about.html";
 
-export const ABOUT_TITLE = "Why enklayve · Free, private personal finance tools";
+/** Its public URL: the host serves it clean, without the extension (see
+ *  toolPageUrl in tool-pages.ts for why the two differ). */
+export const ABOUT_PAGE_URL = "about";
+
+/** Subject first, brand last, and short enough to survive a search result's cut
+ *  — the same shape every other page here uses. */
+export const ABOUT_TITLE = "Why enklayve is free, private, and shows its work · enklayve";
 export const ABOUT_DESCRIPTION =
-  `Why enklayve is free forever, why nothing you type ever leaves your device, and what the ` +
-  `${TOOL_COUNT} calculators cover. No account, no ads, no tracking, and every number links the ` +
-  "public rule behind it.";
+  "Why enklayve is free forever, why nothing you type ever leaves your device, and what its " +
+  `${TOOL_COUNT} calculators cover. No account, no ads, no tracking.`;
 
 const EXTRA_STYLE = `
       .points { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
@@ -37,7 +49,7 @@ const EXTRA_STYLE = `
 
 /** Render the static "Why enklayve" document. */
 export function renderAboutPage(): string {
-  const canonical = `${SITE_ORIGIN}/${ABOUT_PAGE_PATH}`;
+  const canonical = `${SITE_ORIGIN}/${ABOUT_PAGE_URL}`;
 
   const points = ABOUT_POINTS.map(
     (p) =>
@@ -48,7 +60,7 @@ export function renderAboutPage(): string {
   const areas = TILES.map((hub) => {
     const count = SUB_TOOLS.filter((s) => s.hubId === hub.id).length;
     return (
-      `        <li><a href="/${toolPagePath(hub.id)}">${escapeHtml(hub.title)}</a> ` +
+      `        <li><a href="/${toolPageUrl(hub.id)}">${escapeHtml(hub.title)}</a> ` +
       `<span class="d">(${count}), ${escapeHtml(hub.description)}</span></li>`
     );
   }).join("\n");
@@ -107,7 +119,7 @@ export function renderAboutPage(): string {
     </style>
   </head>
   <body>
-    <nav><a href="/">← enklayve home</a> · <a href="/tools.html">All tools</a></nav>
+    <nav><a href="/">← enklayve home</a> · <a href="/${INDEX_PAGE_URL}">All tools</a></nav>
     <h1>Why enklayve</h1>
     <p class="lede">${escapeHtml(ABOUT_LEDE)}</p>
     <h2>What makes it different</h2>
@@ -119,7 +131,7 @@ ${points}
     <ul class="tools">
 ${areas}
     </ul>
-    <p><a href="/tools.html">See all ${TOOL_COUNT} calculators →</a></p>
+    <p><a href="/${INDEX_PAGE_URL}">See all ${TOOL_COUNT} calculators →</a></p>
     <h2>Where it works</h2>
     <p>${escapeHtml(WHERE_IT_WORKS)}</p>
     <h2>Trusted resources</h2>

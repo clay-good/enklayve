@@ -1,11 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { renderToolPage, toolPages, toolPagePath } from "../../scripts/tool-pages";
+import { renderToolPage, toolPages, toolPagePath, toolPageUrl } from "../../scripts/tool-pages";
 import { escapeHtml } from "../../scripts/tools-index";
 import { renderSitemap, renderRobots, SITE_ORIGIN } from "../../scripts/sitemap";
+import { indexablePaths } from "../../scripts/indexable";
 import { injectHomeSeo, HEAD_MARKER, FALLBACK_MARKER } from "../../scripts/home-page";
-import { renderAboutPage, ABOUT_PAGE_PATH } from "../../scripts/about-page";
+import { renderAboutPage, ABOUT_PAGE_PATH, ABOUT_PAGE_URL } from "../../scripts/about-page";
+import { renderToolsIndex, INDEX_PAGE_URL } from "../../scripts/tools-index";
 import { ABOUT_POINTS, US_RESOURCES } from "../../src/ui/aboutCopy";
 import { HOME_TITLE } from "../../src/ui/seo";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
@@ -45,10 +47,10 @@ describe("per-tile static shells", () => {
       expect(html).toContain(`href="/#/${tile.id}"`);
       // A self-referential canonical for search engines.
       expect(html).toContain(
-        `<link rel="canonical" href="${SITE_ORIGIN}/${toolPagePath(tile.id)}" />`,
+        `<link rel="canonical" href="${SITE_ORIGIN}/${toolPageUrl(tile.id)}" />`,
       );
       // Navigation back to the home and the index.
-      expect(html).toContain('href="/tools.html"');
+      expect(html).toContain(`href="/${INDEX_PAGE_URL}"`);
     }
   });
 
@@ -80,13 +82,13 @@ describe("per-tile static shells", () => {
       const siblings = SUB_TOOLS.filter((s) => s.hubId === hubId && s.tile.id !== tile.id);
       const html = renderToolPage(tile, hubId);
       for (const s of siblings) {
-        expect(html).toContain(`href="/${toolPagePath(s.tile.id)}"`);
+        expect(html).toContain(`href="/${toolPageUrl(s.tile.id)}"`);
       }
     }
     for (const hub of TILES) {
       const html = renderToolPage(hub);
       for (const s of SUB_TOOLS.filter((s) => s.hubId === hub.id)) {
-        expect(html).toContain(`href="/${toolPagePath(s.tile.id)}"`);
+        expect(html).toContain(`href="/${toolPageUrl(s.tile.id)}"`);
       }
     }
   });
@@ -137,9 +139,9 @@ describe("home index.html SEO head", () => {
     // is an empty <div> to anything that does not execute JavaScript.
     for (const hub of TILES) {
       expect(html).toContain(escapeHtml(hub.title));
-      expect(html).toContain(`href="/${toolPagePath(hub.id)}"`);
+      expect(html).toContain(`href="/${toolPageUrl(hub.id)}"`);
     }
-    expect(html).toContain('href="/tools.html"');
+    expect(html).toContain(`href="/${INDEX_PAGE_URL}"`);
   });
 
   it("carries Open Graph and Twitter card tags for social previews", () => {
@@ -202,15 +204,15 @@ describe("static Why enklayve page", () => {
 
   it("names every topic area, and links All Tools for the calculators", () => {
     for (const hub of TILES) {
-      expect(html).toContain(`href="/${toolPagePath(hub.id)}"`);
+      expect(html).toContain(`href="/${toolPageUrl(hub.id)}"`);
       expect(html).toContain(escapeHtml(hub.title));
     }
-    expect(html).toContain('href="/tools.html"');
+    expect(html).toContain(`href="/${INDEX_PAGE_URL}"`);
     expect(html).toContain(`${SUB_TOOLS.length} calculators, in ${TILES.length} areas`);
   });
 
   it("carries a canonical, an AboutPage that states the price, and a breadcrumb", () => {
-    expect(html).toContain(`<link rel="canonical" href="${SITE_ORIGIN}/${ABOUT_PAGE_PATH}" />`);
+    expect(html).toContain(`<link rel="canonical" href="${SITE_ORIGIN}/${ABOUT_PAGE_URL}" />`);
     const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
     expect(blocks.length).toBe(2);
     const [about, crumbs] = blocks.map((m) => JSON.parse(m[1]!));
@@ -228,24 +230,78 @@ describe("static Why enklayve page", () => {
 });
 
 describe("sitemap.xml", () => {
-  const pages = toolPages();
-  const paths = ["/", "/tools.html", `/${ABOUT_PAGE_PATH}`, ...pages.map((p) => `/${p.fileName}`)];
-  const xml = renderSitemap(SITE_ORIGIN, paths);
+  // The build's own list, not a second copy of it.
+  const xml = renderSitemap(SITE_ORIGIN, indexablePaths());
 
   it("is a valid urlset listing the home, both site pages, and every tool shell", () => {
     expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
     expect(xml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
     expect(xml).toContain(`<loc>${SITE_ORIGIN}/</loc>`);
-    expect(xml).toContain(`<loc>${SITE_ORIGIN}/tools.html</loc>`);
-    expect(xml).toContain(`<loc>${SITE_ORIGIN}/${ABOUT_PAGE_PATH}</loc>`);
+    expect(xml).toContain(`<loc>${SITE_ORIGIN}/${INDEX_PAGE_URL}</loc>`);
+    expect(xml).toContain(`<loc>${SITE_ORIGIN}/${ABOUT_PAGE_URL}</loc>`);
     for (const tile of TILES) {
-      expect(xml).toContain(`<loc>${SITE_ORIGIN}/${toolPagePath(tile.id)}</loc>`);
+      expect(xml).toContain(`<loc>${SITE_ORIGIN}/${toolPageUrl(tile.id)}</loc>`);
     }
   });
 
   it("has exactly one <loc> per indexable URL (home + both pages + every tool page)", () => {
     const locs = xml.match(/<loc>/g) ?? [];
     expect(locs.length).toBe(PAGE_COUNT + 3);
+  });
+
+  /**
+   * A sitemap of redirects. Every entry named the `.html` file rather than the
+   * URL the host answers with a 200, so all eighty-four pointed a crawler at a
+   * 307 — and each page's canonical named that same redirecting URL.
+   */
+  it("lists no URL ending in .html, because none of those are served", () => {
+    expect(xml).not.toMatch(/\.html/);
+  });
+});
+
+/**
+ * What a search result actually shows.
+ *
+ * Google renders roughly the first 160 characters of a description and cuts the
+ * rest mid-word. The home's ran to 204 and the All Tools index's to 220, which
+ * meant the clause carrying the whole argument — free, and computed on your
+ * device — was cut from the only line most people ever read about this site.
+ * Every page's description has to fit in the window it is shown in.
+ */
+describe("every page's description fits a search result", () => {
+  const pages: [string, string][] = [
+    ["home", injectHomeSeo(readFileSync(resolve(__dirname, "../../index.html"), "utf8"))],
+    ["tools.html", renderToolsIndex()],
+    [ABOUT_PAGE_PATH, renderAboutPage()],
+    ...toolPages().map(({ fileName, source }) => [fileName, source] as [string, string]),
+  ];
+
+  it("says enough to be worth clicking, and not so much that it is cut off", () => {
+    const wrong: string[] = [];
+    for (const [name, html] of pages) {
+      const d = html.match(/<meta name="description" content="([^"]*)"/)?.[1];
+      if (!d) {
+        wrong.push(`${name}: no description`);
+        continue;
+      }
+      // Measured as rendered, not as source: "&amp;" is one character on screen.
+      const shown = d.replace(/&amp;/g, "&").replace(/&quot;/g, '"');
+      if (shown.length < 70 || shown.length > 170) {
+        wrong.push(`${name}: ${shown.length} characters`);
+      }
+    }
+    expect(wrong).toEqual([]);
+  });
+
+  it("leads every title with the page's own subject, not the brand", () => {
+    // The first words are the half a search engine weighs and the half a
+    // searcher scans, so "enklayve" belongs at the end of all of them.
+    for (const [name, html] of pages) {
+      const t = html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "";
+      expect(t.length, name).toBeGreaterThan(10);
+      expect(t.startsWith("enklayve"), name).toBe(false);
+      expect(t.endsWith("enklayve"), name).toBe(true);
+    }
   });
 });
 

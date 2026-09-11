@@ -33,9 +33,10 @@ const BROKEN = /NaN|Infinity|\$NaN|undefined|null%|∞/;
 
 test("no tool hangs or renders NaN/Infinity for absurd inputs", async ({ page, request }) => {
   const sitemap = await (await request.get("/sitemap.xml")).text();
-  const ids = [
-    ...new Set([...sitemap.matchAll(/\/tools\/([^.<]+)\.html/g)].map((m) => m[1])).values(),
-  ];
+  // The sitemap names the URLs the host serves, which carry no extension; the
+  // files behind them do, and `vite preview` serves the files — so the id is
+  // read from the clean URL and the `.html` is added back when fetching.
+  const ids = [...new Set([...sitemap.matchAll(/\/tools\/([^<]+)</g)].map((m) => m[1])).values()];
   expect(ids.length, "expected the sitemap to list many tools").toBeGreaterThan(40);
 
   await page.setViewportSize({ width: 390, height: 900 });

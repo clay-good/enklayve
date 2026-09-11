@@ -32,11 +32,16 @@ export function escapeHtml(s: string): string {
 }
 
 /** This page's own title and description, shared with the JSON-LD below. */
+/** The public URL of this page: the host serves it clean, without the
+ *  extension its file carries (see toolPageUrl in tool-pages.ts). */
+export const INDEX_PAGE_URL = "tools";
+
 export const INDEX_TITLE = `All ${TOOL_COUNT} free personal finance calculators · enklayve`;
+/** Kept inside the ~160 characters a search result actually shows (see
+ *  HOME_DESCRIPTION); at 220 the "free" and the privacy promise were cut off. */
 export const INDEX_DESCRIPTION =
-  `Every enklayve calculator, grouped into ${HUB_COUNT} topic areas: pay and taxes, ` +
-  "self-employment, investing, retirement, debt, budgeting, home buying, insurance, " +
-  "and the benefits you may be owed. Free, and computed on your device.";
+  `Every free enklayve calculator, in ${HUB_COUNT} topic areas: pay and taxes, self-employment, ` +
+  "investing, retirement, debt, budgeting, insurance, and benefits you may be owed.";
 
 /**
  * Shared page furniture for the static pages: a readable measure, system fonts,
@@ -107,13 +112,13 @@ export function renderToolsIndex(): string {
     const items = subs
       .map(
         (t) =>
-          `        <li><a href="/tools/${encodeURIComponent(t.id)}.html">${escapeHtml(t.title)}</a>` +
+          `        <li><a href="/tools/${encodeURIComponent(t.id)}">${escapeHtml(t.title)}</a>` +
           `<span class="d">, ${escapeHtml(t.description)}</span></li>`,
       )
       .join("\n");
     return (
       `      <section>\n` +
-      `        <h2><a href="/tools/${encodeURIComponent(hub.id)}.html">${escapeHtml(hub.title)}</a></h2>\n` +
+      `        <h2><a href="/tools/${encodeURIComponent(hub.id)}">${escapeHtml(hub.title)}</a></h2>\n` +
       `        <p class="hubdesc">${escapeHtml(hub.description)} ` +
       `<a href="/#/${encodeURIComponent(hub.id)}">Open ${escapeHtml(hub.title)} →</a></p>\n` +
       `        <ul class="tools">\n${items}\n        </ul>\n` +
@@ -133,7 +138,7 @@ export function renderToolsIndex(): string {
       position: i + 1,
       name: tile.title,
       description: tile.description,
-      url: `${SITE_ORIGIN}/tools/${encodeURIComponent(tile.id)}.html`,
+      url: `${SITE_ORIGIN}/tools/${encodeURIComponent(tile.id)}`,
     })),
   });
 
@@ -144,14 +149,14 @@ export function renderToolsIndex(): string {
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>${escapeHtml(INDEX_TITLE)}</title>
     <meta name="description" content="${escapeHtml(INDEX_DESCRIPTION)}" />
-    <link rel="canonical" href="${SITE_ORIGIN}/tools.html" />
+    <link rel="canonical" href="${SITE_ORIGIN}/${INDEX_PAGE_URL}" />
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#6D28D9" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="enklayve" />
     <meta property="og:title" content="${escapeHtml(INDEX_TITLE)}" />
     <meta property="og:description" content="${escapeHtml(INDEX_DESCRIPTION)}" />
-    <meta property="og:url" content="${SITE_ORIGIN}/tools.html" />
+    <meta property="og:url" content="${SITE_ORIGIN}/${INDEX_PAGE_URL}" />
     <meta property="og:image" content="${SITE_ORIGIN}/og-image.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeHtml(INDEX_TITLE)}" />
@@ -160,13 +165,13 @@ export function renderToolsIndex(): string {
     <script type="application/ld+json">${itemList}</script>
     <script type="application/ld+json">${breadcrumb([
       { name: "enklayve", url: `${SITE_ORIGIN}/` },
-      { name: "All tools", url: `${SITE_ORIGIN}/tools.html` },
+      { name: "All tools", url: `${SITE_ORIGIN}/${INDEX_PAGE_URL}` },
     ])}</script>
     <style>${PAGE_STYLE}
     </style>
   </head>
   <body>
-    <nav><a href="/">← enklayve home</a> · <a href="/about.html">Why enklayve</a></nav>
+    <nav><a href="/">← enklayve home</a> · <a href="/about">Why enklayve</a></nav>
     <h1>All ${TOOL_COUNT} free calculators</h1>
     <p class="lede">
       ${escapeHtml(CATALOG_SUMMARY)} Every one runs entirely on your device, nothing is ever

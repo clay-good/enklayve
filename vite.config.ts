@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { renderToolsIndex } from "./scripts/tools-index";
 import { toolPages } from "./scripts/tool-pages";
 import { renderSitemap, renderRobots, SITE_ORIGIN } from "./scripts/sitemap";
+import { indexablePaths } from "./scripts/indexable";
 import { injectHomeSeo } from "./scripts/home-page";
 import { renderAboutPage, ABOUT_PAGE_PATH } from "./scripts/about-page";
 import { CORE_SHELL, renderServiceWorker, renderWebManifest } from "./scripts/service-worker";
@@ -63,13 +64,9 @@ function staticSeo(): Plugin {
       // crawler can index, so the page that explains what the site is had no
       // URL of its own while every calculator had one.
       this.emitFile({ type: "asset", fileName: ABOUT_PAGE_PATH, source: renderAboutPage() });
-      // Indexable URLs: the home, the two site-wide pages, and every tool shell.
-      const paths = [
-        "/",
-        "/tools.html",
-        `/${ABOUT_PAGE_PATH}`,
-        ...pages.map((p) => `/${p.fileName}`),
-      ];
+      // Indexable URLs: the home, the two site-wide pages, and every tool
+      // shell — named as the host serves them (scripts/sitemap.ts).
+      const paths = indexablePaths();
       this.emitFile({
         type: "asset",
         fileName: "sitemap.xml",

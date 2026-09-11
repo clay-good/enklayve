@@ -19,13 +19,17 @@ import { TILES } from "../src/tiles/registry";
 import { HOME_TITLE, CATALOG_SUMMARY } from "../src/ui/seo";
 import { escapeHtml, TOOL_COUNT, HUB_COUNT } from "./tools-index";
 import { SITE_ORIGIN } from "./sitemap";
-import { toolPagePath } from "./tool-pages";
+import { toolPageUrl } from "./tool-pages";
 
-/** The home's meta description: the breadth, then the promise, in ~160 characters. */
+/**
+ * The home's meta description. Google shows roughly 160 characters and cuts the
+ * rest mid-word, so the promise has to arrive before the cut rather than in a
+ * trailing clause nobody sees — this ran to 204 and lost "computed on your
+ * device", which is the whole argument, from every search result.
+ */
 export const HOME_DESCRIPTION =
   `${TOOL_COUNT} free calculators for take-home pay, federal and state taxes, ` +
-  "retirement, mortgages, debt payoff, budgeting, and benefits you may be owed — " +
-  "every number computed on your device, nothing ever uploaded.";
+  "retirement, mortgages, debt payoff and benefits you may be owed. Computed on your device.";
 
 /** The social-card headline (Open Graph / Twitter), warmer than the `<title>`. */
 export const SOCIAL_TITLE = `enklayve: ${TOOL_COUNT} free, private money tools that show their math`;
@@ -66,7 +70,7 @@ export function renderHomeHead(): string {
           position: i + 1,
           name: t.title,
           description: t.description,
-          url: `${SITE_ORIGIN}/${toolPagePath(t.id)}`,
+          url: `${SITE_ORIGIN}/${toolPageUrl(t.id)}`,
         })),
       },
     ],
@@ -94,7 +98,7 @@ export function renderHomeFallback(): string {
   // cost about a kilobyte gzipped of a precached shell with four to spare.
   const areas = TILES.map(
     (hub) =>
-      `        <li><a href="/${toolPagePath(hub.id)}">${escapeHtml(hub.title)}</a>: ` +
+      `        <li><a href="/${toolPageUrl(hub.id)}">${escapeHtml(hub.title)}</a>: ` +
       `${escapeHtml(hub.description)}</li>`,
   ).join("\n");
 
@@ -106,8 +110,8 @@ export function renderHomeFallback(): string {
       <ul>
 ${areas}
       </ul>
-      <p><a href="/tools.html">See all ${TOOL_COUNT} calculators →</a> ·
-        <a href="/about.html">Why enklayve is free and private →</a></p>
+      <p><a href="/tools">See all ${TOOL_COUNT} calculators →</a> ·
+        <a href="/about">Why enklayve is free and private →</a></p>
     </div>`;
 }
 

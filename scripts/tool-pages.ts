@@ -2,7 +2,7 @@
  * Pre-rendered per-tile shells (BUILD-SPEC.md §11, Phase 11; the roughlogic
  * pattern). enklayve is a fragment-routed single page, so on its own no
  * individual tool has a crawlable URL. This emits one static, self-contained
- * HTML page per tile — `/tools/<id>.html` — carrying the tool's name, what it
+ * HTML page per tile, served at `/tools/<id>`, carrying the tool's name, what it
  * does, how it works, what it covers, its trusted sources, and links to the
  * tools next to it, with a prominent link into the live on-device tool. Search
  * engines get a real, indexable landing page for every tool; people who land on
@@ -15,12 +15,27 @@
  */
 import { TILES, SUB_TOOLS } from "../src/tiles/registry";
 import type { TileDefinition } from "../src/tiles/types";
-import { escapeHtml, PAGE_STYLE, breadcrumb } from "./tools-index";
+import { escapeHtml, PAGE_STYLE, breadcrumb, INDEX_PAGE_URL } from "./tools-index";
 import { SITE_ORIGIN } from "./sitemap";
 
-/** The build path (and URL path, sans leading slash) for a tile's shell. */
+/** The build path for a tile's shell — the file the bundle emits. */
 export function toolPagePath(id: string): string {
   return `tools/${encodeURIComponent(id)}.html`;
+}
+
+/**
+ * The public URL of a tile's shell, which is NOT its filename.
+ *
+ * The host serves these pages with clean URLs: a request for
+ * `/tools/take-home.html` is answered with a 307 to `/tools/take-home`, and the
+ * extensionless URL is the one that returns 200. Every canonical, every
+ * `og:url`, every breadcrumb and every sitemap entry here named the `.html`
+ * form — so all eighty-one pages declared as canonical a URL that redirects
+ * away from them, and the sitemap handed a crawler eighty-one redirects. The
+ * file keeps its extension; the URL it is advertised under does not.
+ */
+export function toolPageUrl(id: string): string {
+  return `tools/${encodeURIComponent(id)}`;
 }
 
 /** Every tile that has a page, by id — used to resolve sibling and related links. */
@@ -52,7 +67,7 @@ function linkList(items: { id: string; note?: string }[]): string {
     .filter((it) => TITLE_BY_ID.has(it.id))
     .map(
       (it) =>
-        `        <li><a href="/${toolPagePath(it.id)}">${escapeHtml(TITLE_BY_ID.get(it.id)!)}</a>` +
+        `        <li><a href="/${toolPageUrl(it.id)}">${escapeHtml(TITLE_BY_ID.get(it.id)!)}</a>` +
         (it.note ? `<span class="d">, ${escapeHtml(it.note)}</span>` : "") +
         `</li>`,
     )
@@ -74,7 +89,7 @@ function section(heading: string, body: string): string {
  * orphans reachable only from the sitemap.
  */
 export function renderToolPage(tile: TileDefinition, hubId?: string): string {
-  const canonical = `${SITE_ORIGIN}/${toolPagePath(tile.id)}`;
+  const canonical = `${SITE_ORIGIN}/${toolPageUrl(tile.id)}`;
   const appUrl = hubId
     ? `/#/${encodeURIComponent(hubId)}?tool=${encodeURIComponent(tile.id)}`
     : `/#/${encodeURIComponent(tile.id)}`;
@@ -126,9 +141,9 @@ export function renderToolPage(tile: TileDefinition, hubId?: string): string {
 
   const crumbs = breadcrumb([
     { name: "enklayve", url: `${SITE_ORIGIN}/` },
-    { name: "All tools", url: `${SITE_ORIGIN}/tools.html` },
+    { name: "All tools", url: `${SITE_ORIGIN}/${INDEX_PAGE_URL}` },
     ...(hubId && TITLE_BY_ID.has(hubId)
-      ? [{ name: TITLE_BY_ID.get(hubId)!, url: `${SITE_ORIGIN}/${toolPagePath(hubId)}` }]
+      ? [{ name: TITLE_BY_ID.get(hubId)!, url: `${SITE_ORIGIN}/${toolPageUrl(hubId)}` }]
       : []),
     { name: tile.title, url: canonical },
   ]);
@@ -159,7 +174,7 @@ export function renderToolPage(tile: TileDefinition, hubId?: string): string {
     </style>
   </head>
   <body>
-    <nav><a href="/">← enklayve home</a> · <a href="/tools.html">All tools</a> · <a href="/about.html">Why enklayve</a></nav>
+    <nav><a href="/">← enklayve home</a> · <a href="/tools">All tools</a> · <a href="/about">Why enklayve</a></nav>
     <h1>${escapeHtml(tile.title)}</h1>
     <p class="lede">${escapeHtml(tile.description)}</p>
 ${covers}    <a class="open" href="${appUrl}">Open the ${escapeHtml(tile.title)} tool →</a>
@@ -179,7 +194,7 @@ ${section("How this works", how)}${section(
       and benefits — nothing is ever sent anywhere. Educational information, not financial, tax,
       investment, or legal advice.
     </p>
-    <p><a href="/tools.html">See all enklayve calculators →</a></p>
+    <p><a href="/tools">See all enklayve calculators →</a></p>
   </body>
 </html>
 `;
@@ -191,10 +206,11 @@ ${section("How this works", how)}${section(
  * (its "Open" link deep-links into the hub at `?tool=<id>`), so every tool keeps
  * a stable, indexable landing page after the consolidation.
  */
-export function toolPages(): { fileName: string; source: string }[] {
+export function toolPages(): { id: string; fileName: string; source: string }[] {
   return [
-    ...TILES.map((t) => ({ fileName: toolPagePath(t.id), source: renderToolPage(t) })),
+    ...TILES.map((t) => ({ id: t.id, fileName: toolPagePath(t.id), source: renderToolPage(t) })),
     ...SUB_TOOLS.map(({ tile, hubId }) => ({
+      id: tile.id,
       fileName: toolPagePath(tile.id),
       source: renderToolPage(tile, hubId),
     })),

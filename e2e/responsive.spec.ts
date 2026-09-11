@@ -64,12 +64,16 @@ test.describe("no horizontal scrolling, every view", () => {
 
   // Every tool, at a tight phone width — comprehensive coverage of "delightful
   // on every page/view." The full route list comes from sitemap.xml, whose
-  // /tools/<id>.html entries are generated from the tile registry (the static
-  // crawl surface), so a new tile is covered automatically. The All Tools index
+  // /tools/<id> entries are generated from the tile registry (the static crawl
+  // surface), so a new tile is covered automatically. The All Tools index
   // renders tools as buttons (not anchors), so the sitemap is the reliable list.
+  //
+  // The sitemap names the URLs the host serves, which carry no extension; the
+  // files behind them do, and `vite preview` serves the files — so the id is
+  // read from the clean URL and the `.html` is added back when fetching.
   test("every tool fits on a phone, down to the 320px iPhone SE", async ({ page, request }) => {
     const sitemap = await (await request.get("/sitemap.xml")).text();
-    const ids = [...sitemap.matchAll(/\/tools\/([^.<]+)\.html/g)].map((m) => m[1]);
+    const ids = [...sitemap.matchAll(/\/tools\/([^<]+)</g)].map((m) => m[1]);
     const unique = [...new Set(ids)];
     expect(unique.length, "expected the sitemap to list many tools").toBeGreaterThan(40);
 

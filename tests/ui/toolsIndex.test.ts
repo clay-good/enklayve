@@ -14,7 +14,7 @@ describe("static All Tools index", () => {
     for (const tile of TILES) {
       // The heading is a real URL a search engine can rank, not a fragment it
       // cannot; the "Open" link beside it is for a reader who wants the tool.
-      expect(html).toContain(`href="/tools/${tile.id}.html"`);
+      expect(html).toContain(`href="/tools/${tile.id}"`);
       expect(html).toContain(`href="/#/${tile.id}"`);
       expect(html).toContain(`>${escapeHtml(tile.title)}</a>`);
     }
@@ -27,11 +27,11 @@ describe("static All Tools index", () => {
 
   it("names every calculator and links its crawlable landing page", () => {
     for (const { tile } of SUB_TOOLS) {
-      expect(html).toContain(`href="/tools/${tile.id}.html"`);
+      expect(html).toContain(`href="/tools/${tile.id}"`);
       expect(html).toContain(`>${escapeHtml(tile.title)}</a>`);
     }
     // One landing-page link per calculator, plus one per hub heading.
-    const subLinks = html.match(/href="\/tools\/[^"]+\.html"/g) ?? [];
+    const subLinks = html.match(/href="\/tools\/[^"]+"/g) ?? [];
     expect(subLinks.length).toBe(SUB_TOOLS.length + TILES.length);
   });
 
