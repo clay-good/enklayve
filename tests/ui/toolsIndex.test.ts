@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderToolsIndex, escapeHtml } from "../../scripts/tools-index";
+import { renderToolsIndex, escapeHtml, TOOL_COUNT, HUB_COUNT } from "../../scripts/tools-index";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
 
 /**
@@ -10,8 +10,11 @@ import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
 describe("static All Tools index", () => {
   const html = renderToolsIndex();
 
-  it("emits a real, linkable anchor into the live app for every hub", () => {
+  it("heads each hub with its own crawlable page, and links the live app beside it", () => {
     for (const tile of TILES) {
+      // The heading is a real URL a search engine can rank, not a fragment it
+      // cannot; the "Open" link beside it is for a reader who wants the tool.
+      expect(html).toContain(`href="/tools/${tile.id}.html"`);
       expect(html).toContain(`href="/#/${tile.id}"`);
       expect(html).toContain(`>${escapeHtml(tile.title)}</a>`);
     }
@@ -27,15 +30,38 @@ describe("static All Tools index", () => {
       expect(html).toContain(`href="/tools/${tile.id}.html"`);
       expect(html).toContain(`>${escapeHtml(tile.title)}</a>`);
     }
-    // One sub-tool landing-page link per hosted calculator.
+    // One landing-page link per calculator, plus one per hub heading.
     const subLinks = html.match(/href="\/tools\/[^"]+\.html"/g) ?? [];
-    expect(subLinks.length).toBe(SUB_TOOLS.length);
+    expect(subLinks.length).toBe(SUB_TOOLS.length + TILES.length);
+  });
+
+  /**
+   * This is the page a search for "free personal finance calculators" should be
+   * able to land on, so the two things it is ranked on — the title and the
+   * heading — have to say the count and the word "free", and say them from the
+   * registry rather than from memory.
+   */
+  it("states the catalog's size in its title and heading, from the registry", () => {
+    expect(TOOL_COUNT).toBe(SUB_TOOLS.length);
+    expect(HUB_COUNT).toBe(TILES.length);
+    expect(html).toContain(`<title>All ${TOOL_COUNT} free personal finance calculators`);
+    expect(html).toContain(`<h1>All ${TOOL_COUNT} free calculators</h1>`);
+  });
+
+  it("carries an ItemList of every calculator, and a breadcrumb, that parse", () => {
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+    expect(blocks.length).toBe(2);
+    const [list, crumbs] = blocks.map((m) => JSON.parse(m[1]!));
+    expect(list["@type"]).toBe("ItemList");
+    expect(list.itemListElement.length).toBe(SUB_TOOLS.length);
+    expect(crumbs["@type"]).toBe("BreadcrumbList");
   });
 
   it("is a complete, crawlable HTML document with a link home", () => {
     expect(html).toContain("<!doctype html>");
-    expect(html).toContain("<title>All tools · enklayve</title>");
     expect(html).toContain('<a href="/">');
+    // Readable on a phone without a pinch: one column, real viewport.
+    expect(html).toContain('name="viewport" content="width=device-width, initial-scale=1');
   });
 
   it("escapes interpolated text", () => {

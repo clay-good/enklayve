@@ -19,6 +19,7 @@ import type { FilingStatus, Jurisdiction } from "../data/schemas";
 import { loadBundledData, type BundledData } from "../data/browser";
 import { type TileContext, type TileDefinition } from "../tiles/types";
 import { getTile, TILES, SUB_TOOLS } from "../tiles/registry";
+import { HOME_TITLE, CATALOG_SUMMARY } from "./seo";
 import { SituationStore } from "../profile/situation";
 import { resolveResidenceLocal, seedResidenceLocal, rememberableCounty } from "./residenceLocal";
 import { rememberShared, type SharedFields } from "../tiles/profileSync";
@@ -791,12 +792,12 @@ function budgetWhy(): HTMLElement {
  */
 function renderHome(
   container: HTMLElement,
-  navigate: (id: string | null) => void,
+  navigate: NavigateFn,
   data: BundledData | null = null,
   profile: SituationStore | null = null,
 ): void {
   clear(container);
-  document.title = "enklayve";
+  document.title = HOME_TITLE;
 
   const hero = el(
     "section",
@@ -808,7 +809,44 @@ function renderHome(
     }),
   );
 
-  container.append(hero, readoutDropzone(navigate), homeBudgetWidget(data, profile), budgetWhy());
+  container.append(
+    hero,
+    readoutDropzone(navigate),
+    homeBudgetWidget(data, profile),
+    budgetWhy(),
+    homeCatalog(navigate),
+  );
+}
+
+/**
+ * The home's catalog of everything enklayve offers, named.
+ *
+ * The home deliberately leads with one calm column, and for a while that meant
+ * the front page never said what was behind it: the tools were reachable only
+ * from the footer index and the ⌘K palette, so a first-time reader — and every
+ * crawler, which reads the rendered page exactly as a first-time reader does —
+ * saw a budget widget and an essay and had no way to learn that sixty-nine
+ * calculators were a click away. Breadth that is only discoverable by searching
+ * for something you already know the name of is breadth nobody finds.
+ *
+ * So the full list sits at the foot of the home, after the calm part: every
+ * topic hub as a heading and every calculator under it by name. The counts are
+ * read off the registry rather than written down, so they cannot drift.
+ */
+function homeCatalog(navigate: NavigateFn): HTMLElement {
+  return el(
+    "section",
+    { class: "home-catalog" },
+    el("h2", {
+      class: "home-catalog__title",
+      text: `${SUB_TOOLS.length} free calculators, in ${TILES.length} areas`,
+    }),
+    el("p", {
+      class: "home-catalog__lede",
+      text: CATALOG_SUMMARY,
+    }),
+    hubSections(navigate),
+  );
 }
 
 /** Trusted U.S. resources to learn the public rules behind the numbers. */
@@ -952,6 +990,16 @@ function renderAllTools(container: HTMLElement, navigate: NavigateFn): void {
   // heading opens the hub, and every calculator it hosts is listed beneath,
   // deep-linking into the hub already switched to that tool — so the browse
   // path reaches all the calculators by name, not just the hubs.
+  container.append(el("article", { class: "tile" }, head, hubSections(navigate)));
+}
+
+/**
+ * Every topic hub as a section — the heading opens the hub, and each calculator
+ * it hosts is listed beneath it, deep-linking into the hub already switched to
+ * that tool. Shared by the All Tools index and the home catalog so the two can
+ * never list different things.
+ */
+function hubSections(navigate: NavigateFn): HTMLElement {
   const sections = el("div", { class: "all-tools" });
   for (const hub of TILES) {
     const subs = SUB_TOOLS.filter((s) => s.hubId === hub.id).map((s) => s.tile);
@@ -968,12 +1016,12 @@ function renderAllTools(container: HTMLElement, navigate: NavigateFn): void {
             hub.title,
           ),
         ),
+        el("p", { class: "all-tools-hub-desc", text: hub.description }),
         el("ul", { class: "tile-list" }, ...subs.map((t) => subToolLink(t, hub.id, navigate))),
       ),
     );
   }
-
-  container.append(el("article", { class: "tile" }, head, sections));
+  return sections;
 }
 
 /** A calculator entry under a hub in the All Tools index (title + description). */

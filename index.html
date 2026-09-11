@@ -4,11 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-    <title>enklayve</title>
-    <meta
-      name="description"
-      content="Free, private financial tools that compute your taxes, benefits, take-home pay, and debt payoff entirely on your device. Nothing is ever sent anywhere, and every number shows its source."
-    />
+    <!-- The title, description, social copy, and structured data are rendered
+         from the registry at build time (scripts/home-page.ts), so the counts
+         and the catalog they claim cannot drift from the tools that exist. -->
+    <!-- enklayve:head -->
     <link rel="canonical" href="https://enklayve.com/" />
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#6D28D9" />
@@ -17,11 +16,6 @@
     <!-- Open Graph (social previews) -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="enklayve" />
-    <meta property="og:title" content="enklayve: free, private money tools that show their math" />
-    <meta
-      property="og:description"
-      content="Your taxes, benefits, take-home pay, and debt payoff, computed entirely on your device. Nothing is ever sent anywhere."
-    />
     <meta property="og:url" content="https://enklayve.com/" />
     <!-- A raster card (1200x630): SVG og:images don't render on Twitter/X,
          Facebook, LinkedIn, Slack, or iMessage. Regenerate with `npm run og:image`. -->
@@ -35,33 +29,14 @@
 
     <!-- Twitter card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="enklayve: free, private money tools that show their math" />
-    <meta
-      name="twitter:description"
-      content="Your taxes, benefits, take-home pay, and debt payoff, computed entirely on your device. Nothing is ever sent anywhere."
-    />
     <meta name="twitter:image" content="https://enklayve.com/og-image.png" />
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icon.svg" />
-
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "enklayve",
-        "url": "https://enklayve.com/",
-        "description": "Free, private financial tools that compute your taxes, benefits, take-home pay, and debt payoff entirely on your device. Nothing is ever sent anywhere, and every number shows its source.",
-        "applicationCategory": "FinanceApplication",
-        "operatingSystem": "Any (web browser)",
-        "isAccessibleForFree": true,
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
-      }
-    </script>
   </head>
   <body>
-    <div id="app" class="app"></div>
+    <div id="app" class="app"><!-- enklayve:catalog --></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

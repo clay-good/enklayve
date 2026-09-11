@@ -3,9 +3,10 @@
  * pattern). enklayve is a fragment-routed single page, so on its own no
  * individual tool has a crawlable URL. This emits one static, self-contained
  * HTML page per tile — `/tools/<id>.html` — carrying the tool's name, what it
- * does, how it works, and its trusted sources, with a prominent link into the
- * live on-device tool. Search engines get a real, indexable landing page for
- * every tool; people who land on one are one click from the app.
+ * does, how it works, what it covers, its trusted sources, and links to the
+ * tools next to it, with a prominent link into the live on-device tool. Search
+ * engines get a real, indexable landing page for every tool; people who land on
+ * one are one click from the app.
  *
  * Rendered here (not inline in the Vite plugin) so a test guards it against
  * registry drift. Styling is inline (the CSP allows 'unsafe-inline' for styles)
@@ -14,7 +15,7 @@
  */
 import { TILES, SUB_TOOLS } from "../src/tiles/registry";
 import type { TileDefinition } from "../src/tiles/types";
-import { escapeHtml } from "./tools-index";
+import { escapeHtml, PAGE_STYLE, breadcrumb } from "./tools-index";
 import { SITE_ORIGIN } from "./sitemap";
 
 /** The build path (and URL path, sans leading slash) for a tile's shell. */
@@ -22,44 +23,63 @@ export function toolPagePath(id: string): string {
   return `tools/${encodeURIComponent(id)}.html`;
 }
 
-const PAGE_STYLE = `
-      :root { color-scheme: light dark; }
-      body {
-        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-        max-width: 44rem;
-        margin: 0 auto;
-        padding: 2rem 1.25rem;
-        color: #1e1b2e;
-        background: #faf8ff;
-        line-height: 1.55;
-      }
-      nav a { font-weight: 700; }
-      h1 { color: #6d28d9; margin-bottom: 0.25rem; }
-      p.lede { color: #5b5570; margin-top: 0; font-size: 1.05rem; }
-      h2 { color: #5b21b6; margin: 1.75rem 0 0.5rem; font-size: 1.1rem; }
-      a { color: #6d28d9; font-weight: 600; text-decoration: none; }
-      a:hover { text-decoration: underline; }
+/** Every tile that has a page, by id — used to resolve sibling and related links. */
+const TITLE_BY_ID = new Map<string, string>([
+  ...TILES.map((t) => [t.id, t.title] as const),
+  ...SUB_TOOLS.map(({ tile }) => [tile.id, tile.title] as const),
+]);
+
+const EXTRA_STYLE = `
       .open {
         display: inline-block;
         margin: 1.25rem 0 0.5rem;
-        padding: 0.6rem 1.1rem;
+        padding: 0.75rem 1.25rem;
         background: #6d28d9;
         color: #fff;
         border-radius: 8px;
       }
       .open:hover { background: #5b21b6; text-decoration: none; }
-      .note { color: #5b5570; font-size: 0.85rem; margin-top: 2rem; }
-      ul { padding-left: 1.1rem; }`;
+      .covers { color: #5b5570; font-size: 0.9rem; margin: 0.25rem 0 0; }
+      ul.plain { padding-left: 1.1rem; }
+      ul.plain li { padding: 0.2rem 0; }
+      @media (max-width: 480px) {
+        .open { display: block; text-align: center; }
+      }`;
+
+/** A list of links to other tool pages, titles resolved from the registry. */
+function linkList(items: { id: string; note?: string }[]): string {
+  return items
+    .filter((it) => TITLE_BY_ID.has(it.id))
+    .map(
+      (it) =>
+        `        <li><a href="/${toolPagePath(it.id)}">${escapeHtml(TITLE_BY_ID.get(it.id)!)}</a>` +
+        (it.note ? `<span class="d">, ${escapeHtml(it.note)}</span>` : "") +
+        `</li>`,
+    )
+    .join("\n");
+}
+
+function section(heading: string, body: string): string {
+  return body ? `    <h2>${heading}</h2>\n${body}\n` : "";
+}
 
 /**
- * Render the static landing page for one tile. `appUrl` defaults to the tile's
- * own fragment; a hosted sub-tool passes its hub deep link (`/#/<hub>?tool=<id>`).
+ * Render the static landing page for one tile.
+ *
+ * `hubId` is the hub that hosts this calculator (absent for a hub's own page).
+ * It decides two things: the deep link into the live app, and which other tools
+ * the page points at — the calculators beside it in the same hub for a sub-tool,
+ * the calculators it hosts for a hub. Those links are the whole reason the
+ * sixty-nine pages read as one site to a crawler rather than as sixty-nine
+ * orphans reachable only from the sitemap.
  */
-export function renderToolPage(
-  tile: TileDefinition,
-  appUrl = `/#/${encodeURIComponent(tile.id)}`,
-): string {
+export function renderToolPage(tile: TileDefinition, hubId?: string): string {
   const canonical = `${SITE_ORIGIN}/${toolPagePath(tile.id)}`;
+  const appUrl = hubId
+    ? `/#/${encodeURIComponent(hubId)}?tool=${encodeURIComponent(tile.id)}`
+    : `/#/${encodeURIComponent(tile.id)}`;
+  const title = `${tile.title} · Free & private · enklayve`;
+  const description = `${tile.description} Free, with no account, and computed entirely on your device.`;
 
   const how = (tile.how ?? "")
     .split(/\n\n+/)
@@ -75,43 +95,91 @@ export function renderToolPage(
     )
     .join("\n");
 
-  const howSection = how ? `    <h2>How this works</h2>\n${how}\n` : "";
-  const resourcesSection = resources
-    ? `    <h2>Learn more</h2>\n    <ul>\n${resources}\n    </ul>\n`
+  // A hub's page lists the calculators it holds; a calculator's page lists the
+  // others in its hub, plus the sibling tools the tile itself nominates.
+  const hosted = SUB_TOOLS.filter((s) => s.hubId === tile.id).map(({ tile: t }) => ({ id: t.id }));
+  const siblings = hubId
+    ? SUB_TOOLS.filter((s) => s.hubId === hubId && s.tile.id !== tile.id).map(({ tile: t }) => ({
+        id: t.id,
+      }))
+    : [];
+  const related = (tile.related ?? []).map((r) => ({ id: r.tool ?? r.hubId, note: r.note }));
+
+  const covers = tile.keywords.length
+    ? `    <p class="covers">Covers: ${escapeHtml(tile.keywords.join(", "))}.</p>\n`
     : "";
+
+  const app = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: tile.title,
+    url: canonical,
+    description: tile.description,
+    applicationCategory: "FinanceApplication",
+    applicationSubCategory: "Calculator",
+    operatingSystem: "Any (web browser)",
+    isAccessibleForFree: true,
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    keywords: tile.keywords.join(", "),
+    provider: { "@type": "Organization", name: "enklayve", url: `${SITE_ORIGIN}/` },
+  };
+
+  const crumbs = breadcrumb([
+    { name: "enklayve", url: `${SITE_ORIGIN}/` },
+    { name: "All tools", url: `${SITE_ORIGIN}/tools.html` },
+    ...(hubId && TITLE_BY_ID.has(hubId)
+      ? [{ name: TITLE_BY_ID.get(hubId)!, url: `${SITE_ORIGIN}/${toolPagePath(hubId)}` }]
+      : []),
+    { name: tile.title, url: canonical },
+  ]);
 
   return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${escapeHtml(tile.title)} · enklayve</title>
-    <meta name="description" content="${escapeHtml(tile.description)}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>${escapeHtml(title)}</title>
+    <meta name="description" content="${escapeHtml(description)}" />
     <link rel="canonical" href="${canonical}" />
     <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#6D28D9" />
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="enklayve" />
-    <meta property="og:title" content="${escapeHtml(tile.title)} · enklayve" />
-    <meta property="og:description" content="${escapeHtml(tile.description)}" />
+    <meta property="og:title" content="${escapeHtml(title)}" />
+    <meta property="og:description" content="${escapeHtml(description)}" />
     <meta property="og:url" content="${canonical}" />
     <meta property="og:image" content="${SITE_ORIGIN}/og-image.png" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${escapeHtml(tile.title)} · enklayve" />
-    <meta name="twitter:description" content="${escapeHtml(tile.description)}" />
+    <meta name="twitter:title" content="${escapeHtml(title)}" />
+    <meta name="twitter:description" content="${escapeHtml(description)}" />
     <meta name="twitter:image" content="${SITE_ORIGIN}/og-image.png" />
-    <style>${PAGE_STYLE}
+    <script type="application/ld+json">${JSON.stringify(app)}</script>
+    <script type="application/ld+json">${crumbs}</script>
+    <style>${PAGE_STYLE}${EXTRA_STYLE}
     </style>
   </head>
   <body>
     <nav><a href="/">← enklayve home</a> · <a href="/tools.html">All tools</a></nav>
     <h1>${escapeHtml(tile.title)}</h1>
     <p class="lede">${escapeHtml(tile.description)}</p>
-    <a class="open" href="${appUrl}">Open the ${escapeHtml(tile.title)} tool →</a>
-${howSection}${resourcesSection}    <p class="note">
-      Computed entirely on your device for U.S. taxes and benefits. Nothing is ever sent
-      anywhere, and it is free forever. Educational information, not financial, tax, investment,
-      or legal advice.
+${covers}    <a class="open" href="${appUrl}">Open the ${escapeHtml(tile.title)} tool →</a>
+${section("How this works", how)}${section(
+    hosted.length ? "Calculators in this area" : "Others in this area",
+    hosted.length || siblings.length
+      ? `    <ul class="tools">\n${linkList(hosted.length ? hosted : siblings)}\n    </ul>`
+      : "",
+  )}${section(
+    "Related tools",
+    related.length ? `    <ul class="tools">\n${linkList(related)}\n    </ul>` : "",
+  )}${section(
+    "Learn more",
+    resources ? `    <ul class="plain">\n${resources}\n    </ul>` : "",
+  )}    <p class="note">
+      Free forever, with no account and no ads. Computed entirely on your device for U.S. taxes
+      and benefits — nothing is ever sent anywhere. Educational information, not financial, tax,
+      investment, or legal advice.
     </p>
+    <p><a href="/tools.html">See all enklayve calculators →</a></p>
   </body>
 </html>
 `;
@@ -128,10 +196,7 @@ export function toolPages(): { fileName: string; source: string }[] {
     ...TILES.map((t) => ({ fileName: toolPagePath(t.id), source: renderToolPage(t) })),
     ...SUB_TOOLS.map(({ tile, hubId }) => ({
       fileName: toolPagePath(tile.id),
-      source: renderToolPage(
-        tile,
-        `/#/${encodeURIComponent(hubId)}?tool=${encodeURIComponent(tile.id)}`,
-      ),
+      source: renderToolPage(tile, hubId),
     })),
   ];
 }

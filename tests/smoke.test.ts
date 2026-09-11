@@ -2,26 +2,33 @@ import { describe, it, expect, vi, afterEach, beforeAll } from "vitest";
 import { renderHome, renderAbout, renderAllTools, renderReadout, mountApp } from "../src/ui/shell";
 import { loadBundledData, type BundledData } from "../src/data/browser";
 import { SituationStore } from "../src/profile/situation";
+import { TILES, SUB_TOOLS } from "../src/tiles/registry";
+import { HOME_TITLE } from "../src/ui/seo";
 
 describe("shell home view (redesigned 2026-06-01)", () => {
-  it("leads with hero, dropzone, and the budget (no tool grid, no search box)", () => {
+  it("leads with hero, dropzone, and the budget, then names every tool", () => {
     const root = document.createElement("main");
     renderHome(root, () => {});
     expect(root.querySelector(".hero-title")?.textContent).toContain("made simple");
     // The Readout dropzone (BUILD-SPEC-2 §1.1) and the budget remain.
     expect(root.querySelector(".readout-dropzone")).not.toBeNull();
     expect(root.querySelector(".home-budget")).not.toBeNull();
-    // The home search box and the tool grid are both gone; tools are reached via
-    // the All Tools index (footer) and the ⌘K palette.
+    // The home search box is still gone (⌘K and the All Tools index do that job).
     expect(root.querySelector(".home-search")).toBeNull();
-    expect(root.querySelector(".home-tools-group")).toBeNull();
-    expect(root.querySelectorAll(".tile-link-title").length).toBe(0);
+    // The catalog came back, below the calm part: a front page that never named
+    // what it offered advertised none of it to a reader or a search engine.
+    // Every calculator in the registry is listed by name.
+    expect(root.querySelector(".home-catalog")).not.toBeNull();
+    expect(root.querySelectorAll(".tile-link-title").length).toBe(SUB_TOOLS.length);
+    expect(root.querySelectorAll(".all-tools-hub").length).toBe(TILES.length);
   });
 
-  it("the document title is just the brand", () => {
+  it("titles the home with what it offers, not just the brand", () => {
     const root = document.createElement("main");
     renderHome(root, () => {});
-    expect(document.title).toBe("enklayve");
+    // The one line a search result shows has to carry a word people search for.
+    expect(document.title).toBe(HOME_TITLE);
+    expect(document.title).toContain("Free");
   });
 
   it("the dropzone navigates to the Readout", () => {

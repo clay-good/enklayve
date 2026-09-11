@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { renderToolsIndex } from "./scripts/tools-index";
 import { toolPages } from "./scripts/tool-pages";
 import { renderSitemap, renderRobots, SITE_ORIGIN } from "./scripts/sitemap";
+import { injectHomeSeo } from "./scripts/home-page";
 import { CORE_SHELL, renderServiceWorker, renderWebManifest } from "./scripts/service-worker";
 
 const REPO_ROOT = resolve(__dirname);
@@ -20,6 +21,24 @@ function staticToolsIndex(): Plugin {
     apply: "build",
     generateBundle() {
       this.emitFile({ type: "asset", fileName: "tools.html", source: renderToolsIndex() });
+    },
+  };
+}
+
+/**
+ * Fill in the home's search-facing head and its no-JavaScript body from the
+ * registry (scripts/home-page.ts). index.html carries two markers rather than
+ * the copy itself, so the title, the description, the structured data and the
+ * crawlable tool list are all generated from the tools that actually exist and
+ * cannot drift from them. Runs in dev as well as build, so what a crawler sees
+ * is what a developer sees.
+ */
+function homeSeo(): Plugin {
+  return {
+    name: "enklayve-home-seo",
+    transformIndexHtml: {
+      order: "pre",
+      handler: (html) => injectHomeSeo(html),
     },
   };
 }
@@ -154,7 +173,7 @@ function offlinePwa(): Plugin {
 export default defineConfig({
   root: REPO_ROOT,
   publicDir: resolve(REPO_ROOT, "public"),
-  plugins: [staticToolsIndex(), staticSeo(), ocrAssets(), offlinePwa()],
+  plugins: [homeSeo(), staticToolsIndex(), staticSeo(), ocrAssets(), offlinePwa()],
   build: {
     outDir: resolve(REPO_ROOT, "dist"),
     emptyOutDir: true,

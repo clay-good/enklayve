@@ -4,6 +4,8 @@ import { resolve } from "node:path";
 import { renderToolPage, toolPages, toolPagePath } from "../../scripts/tool-pages";
 import { escapeHtml } from "../../scripts/tools-index";
 import { renderSitemap, renderRobots, SITE_ORIGIN } from "../../scripts/sitemap";
+import { injectHomeSeo, HEAD_MARKER, FALLBACK_MARKER } from "../../scripts/home-page";
+import { HOME_TITLE } from "../../src/ui/seo";
 import { TILES, SUB_TOOLS } from "../../src/tiles/registry";
 
 /** Every indexable tool page: the registered tiles (hubs + My Plan) plus each
@@ -33,7 +35,10 @@ describe("per-tile static shells", () => {
     for (const tile of TILES) {
       const html = renderToolPage(tile);
       expect(html).toContain("<!doctype html>");
-      expect(html).toContain(`<title>${escapeHtml(tile.title)} · enklayve</title>`);
+      // Keyword-carrying title: the tool's own name, then what it costs.
+      expect(html).toContain(
+        `<title>${escapeHtml(tile.title)} · Free &amp; private · enklayve</title>`,
+      );
       // A real, deep link into the live on-device tool.
       expect(html).toContain(`href="/#/${tile.id}"`);
       // A self-referential canonical for search engines.
@@ -43,6 +48,50 @@ describe("per-tile static shells", () => {
       // Navigation back to the home and the index.
       expect(html).toContain('href="/tools.html"');
     }
+  });
+
+  it("carries SoftwareApplication and BreadcrumbList structured data that parses", () => {
+    for (const { tile, hubId } of SUB_TOOLS) {
+      const html = renderToolPage(tile, hubId);
+      const blocks = [
+        ...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g),
+      ];
+      expect(blocks.length).toBe(2);
+      const [app, crumbs] = blocks.map((m) => JSON.parse(m[1]!));
+      expect(app["@type"]).toBe("SoftwareApplication");
+      expect(app.isAccessibleForFree).toBe(true);
+      expect(app.offers.price).toBe("0");
+      expect(crumbs["@type"]).toBe("BreadcrumbList");
+      // home → All tools → the hub that hosts it → this tool.
+      expect(crumbs.itemListElement.length).toBe(4);
+      expect(crumbs.itemListElement.at(-1).name).toBe(tile.title);
+    }
+  });
+
+  /**
+   * Sixty-nine landing pages reachable only from the sitemap are sixty-nine
+   * orphans. Every calculator's page links the others in its hub, so a crawler
+   * that finds one finds the rest, and so does a reader.
+   */
+  it("links the other calculators in the same hub, and the hub lists the ones it holds", () => {
+    for (const { tile, hubId } of SUB_TOOLS) {
+      const siblings = SUB_TOOLS.filter((s) => s.hubId === hubId && s.tile.id !== tile.id);
+      const html = renderToolPage(tile, hubId);
+      for (const s of siblings) {
+        expect(html).toContain(`href="/${toolPagePath(s.tile.id)}"`);
+      }
+    }
+    for (const hub of TILES) {
+      const html = renderToolPage(hub);
+      for (const s of SUB_TOOLS.filter((s) => s.hubId === hub.id)) {
+        expect(html).toContain(`href="/${toolPagePath(s.tile.id)}"`);
+      }
+    }
+  });
+
+  it("deep-links a hosted calculator into its hub, already switched to it", () => {
+    const { tile, hubId } = SUB_TOOLS[0]!;
+    expect(renderToolPage(tile, hubId)).toContain(`href="/#/${hubId}?tool=${tile.id}"`);
   });
 
   it("loads nothing cross-origin (only same-origin styles inline; external links are anchors)", () => {
@@ -57,17 +106,38 @@ describe("per-tile static shells", () => {
 });
 
 describe("home index.html SEO head", () => {
-  // The home is the primary indexable page (the SPA shell). Phase 11 added the
-  // full discovery + social surface to it; this guards that surface against
-  // accidental removal. The canonical/og URLs are self-referential to the
-  // production origin, which the release audit explicitly allows.
-  const html = readFileSync(resolve(__dirname, "../../index.html"), "utf8");
+  // The home is the primary indexable page (the SPA shell), and its head is
+  // filled in at build time from the registry (scripts/home-page.ts) so the
+  // counts and the catalog it claims cannot drift from the tools that exist.
+  // This guards the shipped head — the injected result, not the template.
+  const source = readFileSync(resolve(__dirname, "../../index.html"), "utf8");
+  const html = injectHomeSeo(source);
 
-  it("carries a canonical, robots, and a descriptive title + description", () => {
+  it("leaves no un-injected marker behind", () => {
+    expect(source).toContain(HEAD_MARKER);
+    expect(source).toContain(FALLBACK_MARKER);
+    expect(html).not.toContain(HEAD_MARKER);
+    expect(html).not.toContain(FALLBACK_MARKER);
+  });
+
+  it("carries a canonical, robots, and a keyword-carrying title + description", () => {
     expect(html).toContain(`<link rel="canonical" href="${SITE_ORIGIN}/" />`);
     expect(html).toMatch(/<meta name="robots" content="index, follow" \/>/);
-    expect(html).toMatch(/<title>enklayve<\/title>/);
-    expect(html).toMatch(/<meta\s+name="description"/);
+    // The shell sets the same string as the document title on the home, so the
+    // tab and the search result say one thing.
+    expect(html).toContain(`<title>${escapeHtml(HOME_TITLE)}</title>`);
+    expect(HOME_TITLE.toLowerCase()).toContain("free");
+    expect(html).toMatch(/<meta name="description" content="[^"]{80,}"/);
+  });
+
+  it("names the catalog for a crawler that never runs the app", () => {
+    // Without this block the front page of a site with sixty-nine calculators
+    // is an empty <div> to anything that does not execute JavaScript.
+    for (const hub of TILES) {
+      expect(html).toContain(escapeHtml(hub.title));
+      expect(html).toContain(`href="/${toolPagePath(hub.id)}"`);
+    }
+    expect(html).toContain('href="/tools.html"');
   });
 
   it("carries Open Graph and Twitter card tags for social previews", () => {
@@ -89,12 +159,16 @@ describe("home index.html SEO head", () => {
     expect(html).toContain('name="twitter:card" content="summary_large_image"');
   });
 
-  it("carries WebApplication structured data (JSON-LD) and parses", () => {
+  it("carries WebApplication and ItemList structured data (JSON-LD) that parses", () => {
     const m = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
     expect(m).not.toBeNull();
     const data = JSON.parse(m?.[1] ?? "null");
-    expect(data["@type"]).toBe("WebApplication");
-    expect(data.offers.price).toBe("0");
+    const app = data["@graph"].find((n: { "@type": string }) => n["@type"] === "WebApplication");
+    const list = data["@graph"].find((n: { "@type": string }) => n["@type"] === "ItemList");
+    expect(app.offers.price).toBe("0");
+    // The feature list is the catalog, so it cannot understate what is on offer.
+    expect(app.featureList.length).toBe(TILES.length);
+    expect(list.itemListElement.length).toBe(TILES.length);
   });
 
   it("loads nothing cross-origin (only self-referential absolute URLs)", () => {
