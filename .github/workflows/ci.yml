@@ -64,7 +64,8 @@ jobs:
       - name: Drop the Chrome apt repo (not needed; broke apt-get update)
         run: |
           set -euo pipefail
-          grep -rl 'dl\.google\.com' /etc/apt/sources.list.d/ /etc/apt/sources.list 2>/dev/null |
+          # grep exits 1 when the image has no such repo, which is a pass.
+          { grep -rl 'dl\.google\.com' /etc/apt/sources.list.d/ /etc/apt/sources.list 2>/dev/null || true; } |
             tee /dev/stderr |
             xargs -r sudo rm -f
           echo "remaining apt sources:"
