@@ -34,7 +34,7 @@ function specPhases(): number[] {
  * with an en dash ("0–4", "12–13") as well as single numbers.
  */
 function readmePhases(): Set<number> {
-  const readme = readFileSync(resolve(ROOT, "README.md"), "utf8");
+  const readme = readFileSync(resolve(ROOT, "docs", "under-the-hood.md"), "utf8");
   const covered = new Set<number>();
   // The status cell is an emoji, and a character class of them is a surrogate
   // trap — matched as an alternation instead.

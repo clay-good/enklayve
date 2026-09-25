@@ -426,7 +426,10 @@ describe("what the audit says when the budget passes", () => {
     // `checkReadmeShellFigure`, which runs where the build exists and compares
     // the prose against what was actually measured. What survives without a
     // build is the half below.
-    const readme = readFileSync(resolve(__dirname, "..", "..", "README.md"), "utf8");
+    const readme = readFileSync(
+      resolve(__dirname, "..", "..", "docs", "under-the-hood.md"),
+      "utf8",
+    );
     const stated = /\*\*([\d.]+) kB gzipped\*\* across the whole precached shell/.exec(readme);
     expect(stated, "the README no longer states the precached shell's size").not.toBeNull();
     expect(Number(stated![1])).toBeLessThanOrEqual(SHELL_GZIP_BUDGET_KB);
@@ -463,7 +466,10 @@ describe("what the audit says when the budget passes", () => {
     // come from the shards on disk rather than from a build, so unlike the
     // shell figure they can be checked exactly, and every day that adds a
     // sentence to a note moves them. Today added three.
-    const readme = readFileSync(resolve(__dirname, "..", "..", "README.md"), "utf8");
+    const readme = readFileSync(
+      resolve(__dirname, "..", "..", "docs", "under-the-hood.md"),
+      "utf8",
+    );
     const stated =
       /\*\*([\d.]+) kB of shard JSON, of which ([\d.]+) kB — (\d+)% — is `sourceNote` prose\*\*/.exec(
         readme,

@@ -40,7 +40,7 @@ import { ADAPTERS } from "../../scripts/refresh/adapters";
  * the usual way a test like this rots into decoration.
  */
 const ROOT = resolve(__dirname, "..", "..");
-const README = readFileSync(resolve(ROOT, "README.md"), "utf8");
+const README = readFileSync(resolve(ROOT, "docs", "under-the-hood.md"), "utf8");
 /**
  * Some claims are made in more than one document and drift independently. The
  * refresh pipeline's "N of M adapters watch their shard" was stated in three
@@ -52,6 +52,7 @@ const README = readFileSync(resolve(ROOT, "README.md"), "utf8");
  */
 const PROSE = [
   "README.md",
+  "docs/under-the-hood.md",
   "docs/data-sources.md",
   "docs/launch-checklist.md",
   "docs/adding-a-state.md",
@@ -274,6 +275,7 @@ describe("the README's counts are reproducible from the repo", () => {
 
   const PROSE_FILES = [
     "README.md",
+    "docs/under-the-hood.md",
     "docs/data-sources.md",
     "docs/launch-checklist.md",
     "docs/adding-a-state.md",
@@ -422,7 +424,7 @@ describe("every internal doc link resolves", () => {
  */
 describe("the cheat sheet's rates are the shards' rates", () => {
   const CHEAT_SHEET = (() => {
-    const readme = readFileSync(join(ROOT, "README.md"), "utf8");
+    const readme = readFileSync(join(ROOT, "docs", "under-the-hood.md"), "utf8");
     const start = readme.indexOf("### State coverage cheat sheet");
     expect(start, "the cheat-sheet heading moved or was renamed").toBeGreaterThan(-1);
     const end = readme.indexOf("\n## ", start);
@@ -543,7 +545,7 @@ describe("the cheat sheet's rates are the shards' rates", () => {
  * where the number beneath it moved.
  */
 describe("the README's worked results are the corpus's", () => {
-  const README = readFileSync(join(ROOT, "README.md"), "utf8");
+  const README = readFileSync(join(ROOT, "docs", "under-the-hood.md"), "utf8");
   const GOLDEN = join(ROOT, "tests", "golden");
 
   /** Every `expect(...).toBe(<number or numeric string>)` in the golden corpus. */

@@ -10,7 +10,7 @@ Expect a first reply within a week.
 
 ## What counts
 
-The promises in [README](README.md#the-privacy-guarantee-its-literal) are the threat model. A report is in scope if it breaks one of them:
+The promises in the [privacy guarantee](docs/under-the-hood.md#the-privacy-guarantee-its-literal) are the threat model. A report is in scope if it breaks one of them:
 
 - **Data leaving the device.** Any path that sends an input anywhere — a request the CSP does not block, a redirect carrying a value, a figure in a URL that gets sent to a third party.
 - **Sensitive input persisting.** Income, balances and similar figures live in memory and clear on unload. Only the theme and locale preference may touch `localStorage`.

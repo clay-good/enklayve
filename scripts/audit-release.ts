@@ -1116,7 +1116,7 @@ function runCli(): void {
   violations.push(...checkBundleBudget(shell));
   violations.push(
     ...checkReadmeShellFigure(
-      readFileSync(join(root, "README.md"), "utf8"),
+      readFileSync(join(root, "docs", "under-the-hood.md"), "utf8"),
       shell.reduce((sum, a) => sum + a.gzipBytes, 0) / 1024,
     ),
   );

@@ -147,7 +147,7 @@ describe("anchoring coverage over the refresh adapters", () => {
     // by-the-numbers table. Held one way on purpose: every probe must be named,
     // and a state named there need not have one, because the same paragraph
     // narrates states that used to be stale and are not waiting on anything now.
-    const paragraph = readFileSync(resolve(ROOT, "README.md"), "utf8")
+    const paragraph = readFileSync(resolve(ROOT, "docs", "under-the-hood.md"), "utf8")
       .split("\n")
       .find((line) => line.includes("calibrated on the year that IS published"));
     expect(
