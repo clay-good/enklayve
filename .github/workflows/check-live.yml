@@ -78,13 +78,27 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `Production is not serving what the repository promises (${process.env.FINDINGS})`,
-              body: process.env.REPORT,
-              labels: ["bug"],
+            // One open issue per failure, not one per week: a run that meets
+            // an open issue of its own kind comments on it instead. Matched on
+            // the title as well as the label, so a person's own bug report is
+            // never where this lands.
+            const { owner, repo } = context.repo;
+            const open = await github.rest.issues.listForRepo({
+              owner, repo, state: "open", labels: "bug", per_page: 100,
             });
+            const same = open.data.find((i) => i.title.startsWith("Production is not serving"));
+            if (same) {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: same.number, body: process.env.REPORT,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner, repo,
+                title: `Production is not serving what the repository promises (${process.env.FINDINGS})`,
+                body: process.env.REPORT,
+                labels: ["bug"],
+              });
+            }
         env:
           REPORT: ${{ steps.live.outputs.report }}
           FINDINGS: ${{ steps.live.outputs.findings }}
@@ -94,13 +108,27 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: "The live check was refused at the edge before it could look",
-              body: process.env.REPORT,
-              labels: ["check-blocked"],
+            // One open issue per failure, not one per week: a run that meets
+            // an open issue of its own kind comments on it instead. Matched on
+            // the title as well as the label, so a person's own bug report is
+            // never where this lands.
+            const { owner, repo } = context.repo;
+            const open = await github.rest.issues.listForRepo({
+              owner, repo, state: "open", labels: "check-blocked", per_page: 100,
             });
+            const same = open.data.find((i) => i.title.startsWith("The live check was refused"));
+            if (same) {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: same.number, body: process.env.REPORT,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner, repo,
+                title: "The live check was refused at the edge before it could look",
+                body: process.env.REPORT,
+                labels: ["check-blocked"],
+              });
+            }
         env:
           REPORT: ${{ steps.live.outputs.report }}
 
