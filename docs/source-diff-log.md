@@ -26,3 +26,12 @@ See [`data-sources.md`](data-sources.md) for the sources and cadence, and
 [`contributing.md`](contributing.md) for the workflow.
 
 <!-- entries -->
+
+## 2026-10-01 — snap-fy2024-contiguous (USDA FNS SNAP cost-of-living adjustment (48 contiguous states and DC))
+
+_source unreachable or failed validation — opening a fail-safe alert_
+
+> **Alert:** Table 1 has no "Each Additional Member" row. The committed shard is unchanged;
+> the runtime fail-safe gate will show a verify-before-relying banner if this
+> dataset falls outside its refresh window before a good refresh lands.
+
