@@ -27,6 +27,15 @@ See [`data-sources.md`](data-sources.md) for the sources and cadence, and
 
 <!-- entries -->
 
+## 2026-10-15 — fica-2024 (SSA Contribution and Benefit Base / COLA fact sheet)
+
+_source unreachable or failed validation — opening a fail-safe alert_
+
+> **Alert:** source returned HTTP 403. The committed shard is unchanged;
+> the runtime fail-safe gate will show a verify-before-relying banner if this
+> dataset falls outside its refresh window before a good refresh lands.
+
+
 ## 2026-10-01 — snap-fy2024-contiguous (USDA FNS SNAP cost-of-living adjustment (48 contiguous states and DC))
 
 _source unreachable or failed validation — opening a fail-safe alert_
