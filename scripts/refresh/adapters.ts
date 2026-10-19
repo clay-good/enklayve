@@ -436,10 +436,11 @@ function parseCpi(raw: string, current: Record<string, unknown>): ParseOutcome {
  * adapter, because a region-blind parser could only ever have served one of the
  * three shards.
  */
-const POVERTY_REGION_HEADINGS: Record<string, RegExp> = {
-  contiguous: /POVERTY GUIDELINES FOR THE 48 CONTIGUOUS STATES/i,
-  alaska: /POVERTY GUIDELINES FOR ALASKA\b/i,
-  hawaii: /POVERTY GUIDELINES FOR HAWAII\b/i,
+/** The words after "<year> POVERTY GUIDELINES FOR" that name each region's table. */
+const POVERTY_REGION_HEADINGS: Record<string, string> = {
+  contiguous: "THE 48 CONTIGUOUS STATES",
+  alaska: "ALASKA\\b",
+  hawaii: "HAWAII\\b",
 };
 
 function parsePovertyGuidelines(raw: string, current: Record<string, unknown>): ParseOutcome {
@@ -450,15 +451,33 @@ function parsePovertyGuidelines(raw: string, current: Record<string, unknown>): 
   }
   const text = visibleText(raw);
   const year = Number(current.year);
-  if (Number.isInteger(year) && !new RegExp(`${year} POVERTY GUIDELINES`, "i").test(text)) {
-    return {
-      ok: false,
-      reason: `the page states no ${year} poverty guidelines — HHS issues these each January, so this is last year's page or the shard is ahead of it`,
-    };
-  }
-  const at = heading.exec(text);
+  // The table is chosen by the year in its own heading — "2026 POVERTY
+  // GUIDELINES FOR ALASKA" — never by whether the shard's year appears anywhere.
+  // On 2026-10-19 the page carried 2026 tables and a "2025 POVERTY GUIDELINES"
+  // mention besides, so asking "does the page say 2025?" would have answered yes
+  // for a 2025 shard and then read the first table, which is 2026's. Every
+  // January the same would happen to the 2026 shard the day HHS posts 2027.
+  const tableYears = [...text.matchAll(/((?:19|20)\d{2}) POVERTY GUIDELINES FOR/gi)].map((m) =>
+    Number(m[1]),
+  );
+  const at = new RegExp(`${year} POVERTY GUIDELINES FOR ${heading}`, "i").exec(text);
   if (!at) {
-    return { ok: false, reason: `could not find the ${region} guidelines heading on the page` };
+    if (tableYears.length === 0) {
+      return { ok: false, reason: `could not find any poverty-guideline table on the page` };
+    }
+    const newest = Math.max(...tableYears);
+    return newest > year
+      ? {
+          ok: false,
+          reason: `the page's tables are for ${newest} and the shard is ${year} — HHS has published the next year's guidelines, and the roll is due (docs/annual-roll.md)`,
+        }
+      : newest < year
+        ? {
+            ok: false,
+            reason: `the page's tables stop at ${newest} and the shard is already ${year}; HHS issues these each January`,
+            settled: true,
+          }
+        : { ok: false, reason: `the page has ${year} tables but none headed for ${region}` };
   }
   // From this region's heading to the next region's, so the increment sentence
   // that closes the section can never be read out of the section below it.
@@ -1207,6 +1226,33 @@ function parseMissouriWithholdingFormula(
  */
 function parseWestVirginiaTable(raw: string, current: Record<string, unknown>): ParseOutcome {
   const text = visibleText(raw);
+  // The page is about one bill and one year — "2026 Income Tax Rate Cut ...
+  // retroactive to January 1, 2026" — and SB 392 leaves further cuts to revenue
+  // triggers, so the next one would arrive on this same page. Without the year
+  // its table would be written into whichever shard is committed. (New Jersey's
+  // "current" schedule is the opposite case and carries no guard: NJ's brackets
+  // are statutory, unchanged since the 2020 the PDF is still titled with.)
+  const taxYear = Number(current.taxYear);
+  const stated = /retroactive to January 1,\s*(\d{4})|(\d{4}) Income Tax Rate Cut/i.exec(text);
+  const pageYear = stated ? Number(stated[1] ?? stated[2]) : NaN;
+  if (!Number.isInteger(pageYear)) {
+    return {
+      ok: false,
+      reason: "the page no longer says which tax year its rate table is for; refusing to guess",
+    };
+  }
+  if (pageYear !== taxYear) {
+    return pageYear > taxYear
+      ? {
+          ok: false,
+          reason: `the page's rate table is for ${pageYear} and the shard is ${taxYear} — a new cut is out, and the roll is due (docs/annual-roll.md)`,
+        }
+      : {
+          ok: false,
+          reason: `the page's rate table is for ${pageYear} and the shard is already ${taxYear}; West Virginia has not published the shard's year`,
+          settled: true,
+        };
+  }
   const separate = /For married individuals filing separate returns/i.exec(text);
   const scope = separate ? text.slice(0, separate.index) : text;
 

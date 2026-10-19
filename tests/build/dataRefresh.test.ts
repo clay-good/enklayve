@@ -307,14 +307,42 @@ describe("adapters: HHS poverty guidelines (three regions, one page)", () => {
     }
   });
 
-  it("refuses a page that does not state the shard's year", () => {
-    // HHS issues these each January. A page still showing last year's is the
-    // one case where every number parses and every number is stale.
+  it("calls a shard ahead of the page a settled wait", () => {
+    // HHS issues these each January; until it does, a 2027 shard has nothing
+    // to read.
     const rolled = { ...readShard("federal-poverty-level-2024-contiguous.json"), year: 2027 };
     const result = contiguous.parse(raw, rolled);
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.reason).toContain("no 2027 poverty guidelines");
+    expect(result.reason).toContain("stop at 2026");
+    expect(result.settled).toBe(true);
+  });
+
+  it("takes its table by the year in the heading, not a year mentioned elsewhere", () => {
+    // The live page on 2026-10-19 carried the 2026 tables and a "2025 POVERTY
+    // GUIDELINES" mention besides. The old guard asked whether the shard's year
+    // appeared anywhere, so a 2025 shard passed it and read 2026's table.
+    const page = "Prior years: 2025 POVERTY GUIDELINES (archived). " + raw;
+    const behind = { ...readShard("federal-poverty-level-2024-contiguous.json"), year: 2025 };
+    const result = contiguous.parse(page, behind);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("the roll is due");
+    expect(result.settled).toBeFalsy();
+  });
+
+  it("reads the shard's year when the page carries two years of tables", () => {
+    // January: next year's tables on top, this year's still below them.
+    const next = raw
+      .replaceAll("2026 POVERTY", "2027 POVERTY")
+      .replace("1 $15,960", "1 $16,400")
+      .replace("add $5,680", "add $5,820");
+    const both = next + " " + raw;
+    const result = contiguous.parse(both, readShard("federal-poverty-level-2024-contiguous.json"));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.shard.base).toBe(15960);
+    expect(result.shard.perAdditionalPerson).toBe(5680);
   });
 
   it("fails (-> alert) when the region's section is absent", () => {
@@ -759,6 +787,24 @@ describe("adapters: West Virginia (a published tax table, read as rows)", () => 
     const result = adapter.parse(conflicting, current);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toMatch(/two rates claim the \$25000 band/);
+  });
+
+  it("reads no table for another year: a new cut is a roll, an old page is a wait", () => {
+    // SB 392 leaves further cuts to revenue triggers, and the next would arrive
+    // on this same page. Unguarded, its table would land in the 2026 shard.
+    const ahead = adapter.parse(raw.replace("January 1, 2026", "January 1, 2027"), current);
+    expect(ahead.ok).toBe(false);
+    if (ahead.ok) return;
+    expect(ahead.reason).toContain("the roll is due");
+    expect(ahead.settled).toBeFalsy();
+
+    const behind = adapter.parse(raw, { ...current, taxYear: 2027 });
+    expect(behind.ok).toBe(false);
+    if (behind.ok) return;
+    expect(behind.settled).toBe(true);
+
+    const unstated = adapter.parse(raw.replace("retroactive to January 1, 2026", ""), current);
+    expect(unstated.ok).toBe(false);
   });
 });
 
