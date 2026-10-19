@@ -179,3 +179,5 @@ Formerly parked. Un-parked because the parked reason (per-hospital thresholds ar
 | Rental assistance / housing voucher eligibility | Local income limits and administration; waitlists dominate outcomes | A canonical income-limit dataset can be bundled and cited |
 
 *Hospital charity care was on this list and has been un-parked in its narrow form as §A6.*
+
+*Student-loan income-driven repayment: the plan set stopped moving by statute on July 1, 2026, and [SPEC-5-student-loans.md](SPEC-5-student-loans.md) specifies the tool with this gate kept and made mechanical. Still parked until that gate passes.*
