@@ -330,18 +330,39 @@ describe("adapters: SSA FICA (anchored prose)", () => {
   const adapter = adaptersForGroup("ssa")[0]!;
   const current = readShard("fica-2024.json");
 
-  it("anchors the taxable maximum (wage base)", () => {
-    const raw =
-      "The maximum amount of earnings subject to the Social Security tax will increase to $176,100 in 2025.";
+  // The page as SSA states it the October the next year's base is announced:
+  // next year's figure leads, then the table names every year.
+  const raw =
+    "This amount is also commonly referred to as the taxable maximum. For earnings in 2027," +
+    " this base is $192,300. The OASDI tax rate for wages paid in 2027 is set by statute at" +
+    " 6.2 percent ... Contribution and benefit bases, 1937-2027 Year Amount 1937-50 $3,000" +
+    " 1951-54 3,600 ... 2024 168,600 2025 176,100 2026 184,500 2027 192,300" +
+    " Note: Amounts for 1937-1974 and for 1979-1981 were set by statute";
+
+  it("reads the shard's own year from the table, not next year's from the lead", () => {
+    // Taking the first figure after "taxable maximum" wrote 2027's base into a
+    // 2026 shard.
     const result = adapter.parse(raw, current);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.shard.socialSecurityWageBase).toBe(176100);
+    expect(result.shard.socialSecurityWageBase).toBe(184500);
+    expect(result.shard).toEqual(current);
     expect(FicaSchema.safeParse(result.shard).success).toBe(true);
+
+    const rolled = adapter.parse(raw, { ...current, taxYear: 2027 });
+    expect(rolled.ok && rolled.shard.socialSecurityWageBase).toBe(192300);
   });
 
-  it("fails (-> alert) when the wage base cannot be anchored", () => {
-    expect(adapter.parse("no figure here", current).ok).toBe(false);
+  it("calls a year SSA has not announced a settled wait", () => {
+    const result = adapter.parse(raw, { ...current, taxYear: 2028 });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("no 2028 row");
+    expect(result.settled).toBe(true);
+  });
+
+  it("fails (-> alert) when the table is gone", () => {
+    expect(adapter.parse("The taxable maximum for 2026 is $184,500.", current).ok).toBe(false);
   });
 });
 

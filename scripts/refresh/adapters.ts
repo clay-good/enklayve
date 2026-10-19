@@ -497,24 +497,53 @@ function parsePovertyGuidelines(raw: string, current: Record<string, unknown>): 
 // --- SSA fact sheet (anchored prose) -----------------------------------------
 
 /**
- * The SSA COLA fact sheet states the new taxable maximum ("maximum amount of
- * earnings subject to the Social Security tax ... $176,100"). We anchor the
- * wage base; the 6.2% / 1.45% rates are statutory and stable, so a change to
- * them would show in the diff for the reviewer rather than being scraped.
+ * The wage base, read from SSA's year-by-year table of contribution and benefit
+ * bases ("2026 184,500 2027 192,300"), at the row for the shard's own tax year.
+ *
+ * This used to take the first dollar figure after "taxable maximum", and every
+ * October that figure is NEXT year's: SSA announces it with the COLA and leads
+ * the page with it — "For earnings in 2027, this base is $192,300." The 2026-10-15
+ * run was refused with a 403 before it could read that sentence; the one after
+ * it would have written 2027's base into the 2026 shard, overstating every
+ * high earner's Social Security tax for the rest of the year. The table states
+ * every year by name, so the shard picks its row and needs no guess about which
+ * year a sentence means. The 6.2% / 1.45% rates are statutory; a change would
+ * show in the diff for the reviewer rather than being scraped.
  */
 function parseFica(raw: string, current: Record<string, unknown>): ParseOutcome {
-  const match =
-    /(?:taxable maximum|maximum taxable earnings|earnings subject to (?:the )?social security tax)[^$]*\$?([\d,]{5,})/i.exec(
-      raw,
-    );
-  if (!match) {
+  const text = visibleText(raw);
+  const taxYear = Number(current.taxYear);
+  const at = text.search(/Contribution and benefit bases,?\s+\d{4}\s*-\s*\d{4}/i);
+  if (at < 0) {
     return {
       ok: false,
-      reason: "could not anchor the Social Security taxable maximum (wage base)",
+      reason: "the page states no year-by-year table of contribution and benefit bases",
+    };
+  }
+  const rows = new Map<number, number>();
+  for (const m of text
+    .slice(at)
+    .matchAll(/(?:^|\s)((?:19|20)\d{2})\s+\$?(\d{1,3}(?:,\d{3})+)(?=\s|$)/g)) {
+    rows.set(Number(m[1]), parseAmount(m[2] as string));
+  }
+  const base = rows.get(taxYear);
+  if (base === undefined) {
+    const newest = rows.size > 0 ? Math.max(...rows.keys()) : NaN;
+    return {
+      ok: false,
+      reason: `the table has no ${taxYear} row (it ends at ${newest}); SSA announces each year's base in October of the year before`,
+      settled: newest < taxYear,
+    };
+  }
+  const drift = implausibleDrift(current.socialSecurityWageBase as number, base);
+  if (drift) {
+    return {
+      ok: false,
+      reason: `the ${taxYear} wage base ${drift}; refusing — either the table moved or this is not the figure`,
     };
   }
   const shard = clone(current);
-  shard.socialSecurityWageBase = parseAmount(match[1] as string);
+  shard.socialSecurityWageBase = base;
   return { ok: true, shard };
 }
 
