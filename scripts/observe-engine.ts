@@ -81,6 +81,7 @@ import {
   retirementDrawdown,
 } from "../src/engine/finance";
 import { garnishmentCeiling } from "../src/engine/garnishment";
+import { estimateUi } from "../src/engine/stateUi";
 import {
   electiveDeferralCatchUp,
   electiveDeferralLimit,
@@ -119,6 +120,7 @@ export const PROBED_FILES = [
   "src/engine/fafsa.ts",
   "src/engine/finance.ts",
   "src/engine/garnishment.ts",
+  "src/engine/stateUi.ts",
   "src/engine/contributionLimits.ts",
   "src/engine/iraDeduction.ts",
   "src/engine/plan.ts",
@@ -468,6 +470,27 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
       exemption: r.exemption.toNumber(),
     });
   }
+
+  // --- unemployment insurance: every line a state's rule draws --------------
+  // Each probe stands on a threshold and a cent either side: California's
+  // schedule-to-divisor seam and its 1.25x path, Florida's 1.5x and $3,400,
+  // Texas's 37x and its weekly maximum.
+  const uiProbe = (code: string, q: [number, number, number, number]): void => {
+    const r = estimateUi({ quarterlyWages: q }, data.stateUi(code)!);
+    put(`ui(${code},${q.join("/")})`, {
+      eligible: r.eligible,
+      weekly: r.weeklyTotal,
+      total: r.maxBenefit,
+      basis: r.maxBenefitBasis,
+    });
+  };
+  for (const hq of [899.99, 900, 1832.99, 1833, 11674, 11674.01]) uiProbe("ca", [hq, hq, 0, 0]);
+  for (const other of [299.99, 300, 300.01]) uiProbe("ca", [1200, other, 0, 0]);
+  for (const other of [1499.99, 1500, 1500.01]) uiProbe("fl", [3000, other, 0, 0]);
+  for (const other of [399.99, 400, 400.01]) uiProbe("fl", [3000, other, 0, 0]);
+  for (const hq of [7149.99, 7150, 7176]) uiProbe("fl", [hq, hq, hq, hq]);
+  for (const other of [811.99, 812, 812.01]) uiProbe("tx", [2000, other, 0, 0]);
+  for (const hq of [15474.99, 15475, 15500.01]) uiProbe("tx", [hq, hq, 0, 0]);
 
   // --- garnishment: the crossover -------------------------------------------
   const garn = data.garnishmentLimits()!;

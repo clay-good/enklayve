@@ -1,0 +1,168 @@
+{
+  "stateCode": "ca",
+  "name": "California",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim begins. If those do not qualify, California can use the last four completed quarters instead (the alternate base period).",
+  "eligibility": [
+    {
+      "minHighQuarterWages": 1300
+    },
+    {
+      "minHighQuarterWages": 900,
+      "minBasePeriodToHighQuarter": 1.25
+    }
+  ],
+  "weeklyBenefit": {
+    "highQuarterDivisor": 26,
+    "rounding": "up",
+    "minimum": 40,
+    "maximum": 450,
+    "lowWageSchedule": {
+      "rows": [
+        {
+          "fromHighQuarter": 900,
+          "amount": 40
+        },
+        {
+          "fromHighQuarter": 949,
+          "amount": 41
+        },
+        {
+          "fromHighQuarter": 975,
+          "amount": 42
+        },
+        {
+          "fromHighQuarter": 1001,
+          "amount": 43
+        },
+        {
+          "fromHighQuarter": 1027,
+          "amount": 44
+        },
+        {
+          "fromHighQuarter": 1053,
+          "amount": 45
+        },
+        {
+          "fromHighQuarter": 1079,
+          "amount": 46
+        },
+        {
+          "fromHighQuarter": 1118,
+          "amount": 47
+        },
+        {
+          "fromHighQuarter": 1144,
+          "amount": 48
+        },
+        {
+          "fromHighQuarter": 1170,
+          "amount": 49
+        },
+        {
+          "fromHighQuarter": 1196,
+          "amount": 50
+        },
+        {
+          "fromHighQuarter": 1222,
+          "amount": 51
+        },
+        {
+          "fromHighQuarter": 1248,
+          "amount": 52
+        },
+        {
+          "fromHighQuarter": 1287,
+          "amount": 53
+        },
+        {
+          "fromHighQuarter": 1313,
+          "amount": 54
+        },
+        {
+          "fromHighQuarter": 1339,
+          "amount": 55
+        },
+        {
+          "fromHighQuarter": 1365,
+          "amount": 56
+        },
+        {
+          "fromHighQuarter": 1404,
+          "amount": 57
+        },
+        {
+          "fromHighQuarter": 1430,
+          "amount": 58
+        },
+        {
+          "fromHighQuarter": 1456,
+          "amount": 59
+        },
+        {
+          "fromHighQuarter": 1495,
+          "amount": 60
+        },
+        {
+          "fromHighQuarter": 1521,
+          "amount": 61
+        },
+        {
+          "fromHighQuarter": 1547,
+          "amount": 62
+        },
+        {
+          "fromHighQuarter": 1586,
+          "amount": 63
+        },
+        {
+          "fromHighQuarter": 1612,
+          "amount": 64
+        },
+        {
+          "fromHighQuarter": 1638,
+          "amount": 65
+        },
+        {
+          "fromHighQuarter": 1677,
+          "amount": 66
+        },
+        {
+          "fromHighQuarter": 1703,
+          "amount": 67
+        },
+        {
+          "fromHighQuarter": 1742,
+          "amount": 68
+        },
+        {
+          "fromHighQuarter": 1768,
+          "amount": 69
+        },
+        {
+          "fromHighQuarter": 1807,
+          "amount": 70
+        }
+      ],
+      "divisorFrom": 1833
+    }
+  },
+  "duration": {
+    "maxWeeks": 26,
+    "shareOfBasePeriodWages": 0.5
+  },
+  "notModeled": [
+    "The alternate base period: enter whichever four quarters the EDD will use.",
+    "Partial unemployment: earnings while claiming reduce each week's payment under the state's own formula, which this does not apply.",
+    "Whether you are eligible apart from wages: why the job ended, being able and available to work, and the work search the state requires.",
+    "Extended or federal emergency benefits, which exist only when Congress or a high state unemployment rate triggers them.",
+    "Taxes: benefits are taxable federal income; you can ask for 10% to be withheld."
+  ],
+  "citation": {
+    "sourceUrl": "https://edd.ca.gov/siteassets/files/pdf_pub_ctr/de1101bt5.pdf",
+    "sourceDocument": "California EDD, Unemployment Insurance Benefit Table (DE 1101BT5) and A Guide to Benefits and Employment Services (DE 2320)",
+    "sourceNote": "DE 2320: \"You must have at least $1,300 in earnings in one quarter of your base period or at least $900 in earnings in the highest quarter and 1.25 times your highest quarter earnings in your total base period.\" \"The WBA ranges from $40 to $450 per week.\" \"The maximum benefit amount is 26 times the weekly benefit amount or one-half of the total base period wages, whichever is less.\" DE 1101BT5 (claims beginning January 2, 2005 or after) is the benefit table itself. All 410 rows were parsed on 2026-10-19: from $1,833 of high-quarter wages up, every row equals the high quarter divided by 26 and raised to the next whole dollar, at both ends of its range, to $450 at $11,674.01 and over; below $1,833 the table is a fixed schedule from $40 at $900 to $70 at $1,807 that no divisor reproduces, carried here row by row. The $450 maximum has not changed since 2005. California pays no dependent allowance. The first week of a claim is an unpaid waiting week.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

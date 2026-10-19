@@ -93,6 +93,9 @@ const STATE_CODES = [
   "ct",
 ];
 
+/** States with a bundled unemployment-insurance rule set, most populous first. */
+export const UI_STATE_CODES = ["ca", "tx", "fl"] as const;
+
 const ANNUAL = { effectiveYear: 2026, expectedRefreshMonths: 12, staleAfterYears: 2 } as const;
 // Treasury I-bond rates reset every six months (BUILD-SPEC.md §7.2: May and
 // November). The semiannual cadence is the only difference from ANNUAL.
@@ -268,7 +271,15 @@ const SHARDS: ShardSource[] = [
     ...PILLAR4_ANNUAL,
     // Rolled 2026-10-19 on a full re-read; see the shard's citation.
     effectiveYear: 2027,
-  },
+  }, // Unemployment insurance (SPEC-4-safety-net §B5): one shard per state, only
+  // for the states whose rules have been read off their own agency. Pillar 4,
+  // so no grace year — Texas re-indexes its weekly range every October.
+  ...UI_STATE_CODES.map((code) => ({
+    id: `state-ui-${code}-2026`,
+    kind: "state-ui",
+    shard: `state-ui-${code}-2026.json`,
+    ...PILLAR4_ANNUAL,
+  })),
 ];
 
 function sha256Hex(buf: Buffer): string {

@@ -26,6 +26,7 @@ import {
   type FreeFilingData,
   type NoSurprisesData,
   type GarnishmentLimitsData,
+  type StateUiData,
   type EnrollmentWindowsData,
   type LifeEventsData,
   type SocialSecurityData,
@@ -133,6 +134,10 @@ export interface BundledData {
   statusOf(id: string): DatasetStatus | "missing";
   /** Two-letter codes of every bundled state jurisdiction, in manifest order. */
   stateCodes(): string[];
+  /** One state's unemployment-insurance rules (SPEC-4-safety-net §B5); null where none is bundled. */
+  stateUi(code: string): StateUiData | null;
+  /** Codes of the states with a bundled unemployment-insurance rule set. */
+  stateUiCodes(): string[];
 }
 
 let cache: Promise<BundledData> | null = null;
@@ -192,6 +197,11 @@ async function build(): Promise<BundledData> {
     freeFiling: () => dataOf("free-filing-2026") as FreeFilingData | null,
     noSurprises: () => dataOf("no-surprises-2026") as NoSurprisesData | null,
     garnishmentLimits: () => dataOf("garnishment-limits-2026") as GarnishmentLimitsData | null,
+    stateUi: (code) => dataOf(`state-ui-${code.toLowerCase()}-2026`) as StateUiData | null,
+    stateUiCodes: () =>
+      loaded.datasets
+        .map((d) => /^state-ui-([a-z]{2})-\d{4}$/.exec(d.id)?.[1])
+        .filter((c): c is string => c !== undefined),
     enrollmentWindows: () => dataOf("enrollment-windows-2026") as EnrollmentWindowsData | null,
     lifeEvents: () => dataOf("life-events-2026") as LifeEventsData | null,
     aca: () => dataOf("aca-2024") as AcaData | null,

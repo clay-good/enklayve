@@ -178,7 +178,9 @@ describe("the roster is every shard, not only the states", () => {
     // annual cycle, so scoping the question to `state-*.json` would have been
     // the narrowing this project keeps finding one directory over.
     expect(roster).toHaveLength(ids.length);
-    expect(roster.filter((r) => r.id.startsWith("state-"))).toHaveLength(51);
+    // The income-tax jurisdictions, by their own id shape — the unemployment
+    // shards are "state-" too, and are counted by their own subject row.
+    expect(roster.filter((r) => /^state-[a-z]{2}-income-tax-/.test(r.id))).toHaveLength(51);
   });
 
   it("names a state by its own name and postal code, from the shard", () => {

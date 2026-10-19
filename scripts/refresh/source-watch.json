@@ -188,6 +188,27 @@
       "why": "§68 is the reason a $1 itemized deduction is worth 35 cents rather than 37 to a top-bracket filer, and it is a FRACTION rather than an indexed amount — 2/37 of the lesser of the deductions or the income above where the 37% bracket starts. Nothing about it moves annually, and the one figure that does move, the threshold, is this shard's own bracket schedule rather than a field. Watched because this section has a history of being switched off and on: the pre-Act version applied to no taxable year from 2018 through 2025, and the Act rewrote it generally with effect from 2026. A section that has been dormant for eight years is exactly the one nobody notices changing again. Fifth watch on this shard.",
       "fingerprint": "519bcbd6afb80c400b70236b8ba89a96f47784a1104f19d350a1f7073735d908",
       "checkedOn": "2026-09-01"
+    },
+    {
+      "shard": "state-ui-ca-2026",
+      "url": "https://edd.ca.gov/siteassets/files/pdf_pub_ctr/de1101bt5.pdf",
+      "why": "California's weekly benefit is its benefit table, row by row, and the shard carries the low-wage schedule no divisor reproduces. A new table is a new set of rows to read, not a figure to parse.",
+      "fingerprint": "c1157e6d0b06a71fe7a91e069b2cc1118ea8e7d541d29d50083db10c84046b9b",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-tx-2026",
+      "url": "https://tcss.legis.texas.gov/resources/LA/htm/LA.207.htm",
+      "why": "Texas Labor Code chapter 207 sets the 1/25 divisor, the upward rounding, the 37-times wage test and the 27% cap, so an amendment is a rule somebody has to read. The weekly minimum and maximum it indexes each October are on TWC's page, which serves this pipeline no text; the shard's zero-year staleness window is what forces that re-read every January.",
+      "fingerprint": "85d3416b1d8b4dcdde8e3e5539d071915989d576bae013967611b583a291bdd6",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-fl-2026",
+      "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0443/Sections/0443.111.html",
+      "why": "Florida's weekly range, its 1.5-times test and its weeks-by-unemployment-rate scale are all statutory, and the 2026 session considered raising the range. An amendment is a sentence somebody has to read.",
+      "fingerprint": "8e80343317aec7f516dcd6907b689c7bdcbe9eff50147bac07ff4f830500b233",
+      "checkedOn": "2026-10-19"
     }
   ]
 }

@@ -1,0 +1,39 @@
+{
+  "stateCode": "fl",
+  "name": "Florida",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your benefit year begins. Florida has no alternate base period.",
+  "eligibility": [
+    {
+      "minQuartersWithWages": 2,
+      "minBasePeriodToHighQuarter": 1.5,
+      "minBasePeriodWages": 3400
+    }
+  ],
+  "weeklyBenefit": {
+    "highQuarterDivisor": 26,
+    "rounding": "down",
+    "minimum": 32,
+    "maximum": 275
+  },
+  "duration": {
+    "maxWeeks": 12,
+    "shareOfBasePeriodWages": 0.25,
+    "maxTotal": 6325,
+    "totalRoundsDown": true
+  },
+  "notModeled": [
+    "The number of weeks moves with Florida's unemployment rate: 12 at 5% or below, one more for each half point above, up to 23. Claims filed in 2026 get 12.",
+    "Partial unemployment: earnings while claiming reduce each week's payment under the state's own formula, which this does not apply.",
+    "Whether you are eligible apart from wages: why the job ended, being able and available to work, and the work search the state requires.",
+    "Extended or federal emergency benefits, which exist only when Congress or a high state unemployment rate triggers them.",
+    "Taxes: benefits are taxable federal income; you can ask for 10% to be withheld."
+  ],
+  "citation": {
+    "sourceUrl": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0443/Sections/0443.111.html",
+    "sourceDocument": "Fla. Stat. §443.111 (2026), Payment of benefits; FloridaCommerce Reemployment Assistance claimant FAQ",
+    "sourceNote": "§443.111(3): the weekly benefit is \"one twenty-sixth of the total wages ... paid during that quarter of the base period in which the total wages paid were the highest, but not less than $32 or more than $275,\" and \"if not a multiple of $1, is rounded downward.\" §443.111(2): wage credits \"in two or more calendar quarters\" and total base-period wages \"equal to the high quarter wages multiplied by 1.5, but at least $3,400.\" §443.111(5)(b): the total is \"25 percent of the total wages in his or her base period, not to exceed $6,325 or the product arrived at by multiplying the weekly benefit amount with the number of weeks,\" whichever is less, rounded down. §443.111(5)(c) sets the weeks from the state's average unemployment rate: twelve at or below 5%, up to 23. FloridaCommerce's claimant FAQ gives \"2025 and 2026 claim maximums: 12 weeks duration Maximum Benefit Amount (MBA): $3300.\" Florida pays no dependent allowance. The statute's history ends at ch. 2024-6, and HB 191 (2026), which would have raised the weekly range, died in committee. Read on 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

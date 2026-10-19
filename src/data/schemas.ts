@@ -1561,7 +1561,82 @@ export const LifeEventsSchema = z.object({
 });
 export type LifeEventsData = z.infer<typeof LifeEventsSchema>;
 
+/**
+ * One state's unemployment insurance benefit rules (SPEC-4-safety-net §B5).
+ *
+ * The gate on this item is that it ships **only** as a per-state set, each with
+ * its coverage stated, because a "typical state" estimate is worse than nothing
+ * for someone deciding whether they can make rent. So every field below is a
+ * rule some state publishes, and a state whose rules do not fit these fields is
+ * not bundled until they do — never approximated into them.
+ */
+const UiEligibilityPathSchema = z.object({
+  /** Wages in the highest base-period quarter at least this. */
+  minHighQuarterWages: z.number().gte(0).optional(),
+  /** Total base-period wages at least this. */
+  minBasePeriodWages: z.number().gte(0).optional(),
+  /** Total base-period wages at least this multiple of the high quarter (FL 1.5, CA 1.25). */
+  minBasePeriodToHighQuarter: z.number().gte(0).optional(),
+  /** Total base-period wages at least this multiple of the weekly benefit (TX 37). */
+  minBasePeriodToWeeklyBenefit: z.number().gte(0).optional(),
+  /** Wages in at least this many base-period quarters. */
+  minQuartersWithWages: z.number().int().gte(1).lte(4).optional(),
+});
+export const StateUiSchema = z.object({
+  stateCode: z.string().regex(/^[a-z]{2}$/),
+  name: z.string().min(1),
+  year: z.number().int(),
+  /** How the base period is counted, in the state's own words. */
+  basePeriod: z.string().min(1),
+  /** Monetary eligibility: ANY one path qualifies, and every test in a path must hold. */
+  eligibility: z.array(UiEligibilityPathSchema).min(1),
+  weeklyBenefit: z.object({
+    /** The weekly benefit is the high-quarter wages divided by this. */
+    highQuarterDivisor: z.number().positive(),
+    /** How the quotient becomes whole dollars — the statute's word, not ours. */
+    rounding: z.enum(["up", "down"]),
+    minimum: z.number().gte(0),
+    maximum: z.number().gt(0),
+    /**
+     * A fixed low-wage schedule that replaces the divisor below its own end
+     * (California's benefit table runs $40–$70 by rows no divisor reproduces).
+     * Each row applies from `fromHighQuarter` to the next row's start; the
+     * divisor applies from `divisorFrom` up. High-quarter wages below the first
+     * row do not establish a claim.
+     */
+    lowWageSchedule: z
+      .object({
+        rows: z
+          .array(z.object({ fromHighQuarter: z.number().gte(0), amount: z.number().gt(0) }))
+          .min(1),
+        divisorFrom: z.number().gt(0),
+      })
+      .optional(),
+  }),
+  /** Weekly amounts added per dependent, in order; absent where the state pays none. */
+  dependentAllowances: z
+    .object({
+      perDependent: z.array(z.number().gt(0)).min(1),
+      note: z.string().min(1),
+    })
+    .optional(),
+  duration: z.object({
+    maxWeeks: z.number().int().positive(),
+    /** Total benefits capped at this share of base-period wages (CA 0.5, TX 0.27, FL 0.25). */
+    shareOfBasePeriodWages: z.number().gt(0).lte(1).optional(),
+    /** A dollar ceiling on the total, where the statute states one. */
+    maxTotal: z.number().gt(0).optional(),
+    /** Whether the total rounds down to whole dollars (FL §443.111(5)(b)). */
+    totalRoundsDown: z.boolean().default(false),
+  }),
+  /** What the estimate does not model for this state — stated, never implied. */
+  notModeled: z.array(z.string().min(1)).min(1),
+  citation: CitationSchema,
+});
+export type StateUiData = z.infer<typeof StateUiSchema>;
+
 export const DATASET_SCHEMAS = {
+  "state-ui": StateUiSchema,
   "federal-income-tax": JurisdictionSchema,
   "state-income-tax": JurisdictionSchema,
   "retirement-limits": RetirementLimitsSchema,

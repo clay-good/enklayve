@@ -1,0 +1,38 @@
+{
+  "stateCode": "tx",
+  "name": "Texas",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim's effective date.",
+  "eligibility": [
+    {
+      "minQuartersWithWages": 2,
+      "minBasePeriodToWeeklyBenefit": 37
+    }
+  ],
+  "weeklyBenefit": {
+    "highQuarterDivisor": 25,
+    "rounding": "up",
+    "minimum": 76,
+    "maximum": 619
+  },
+  "duration": {
+    "maxWeeks": 26,
+    "shareOfBasePeriodWages": 0.27
+  },
+  "notModeled": [
+    "Claims with an effective date before October 4, 2026 use the previous range, $75 to $605.",
+    "The alternate base period, which Texas allows only after a medically verifiable illness or injury.",
+    "A second benefit year's extra test: six times the new weekly benefit earned since the last claim began.",
+    "Partial unemployment: earnings while claiming reduce each week's payment under the state's own formula, which this does not apply.",
+    "Whether you are eligible apart from wages: why the job ended, being able and available to work, and the work search the state requires.",
+    "Extended or federal emergency benefits, which exist only when Congress or a high state unemployment rate triggers them.",
+    "Taxes: benefits are taxable federal income; you can ask for 10% to be withheld."
+  ],
+  "citation": {
+    "sourceUrl": "https://www.twc.texas.gov/programs/unemployment-benefits/eligibility-benefit-amounts",
+    "sourceDocument": "Texas Workforce Commission, Eligibility & Benefit Amounts; Texas Labor Code §§207.002, 207.005, 207.006, 207.021",
+    "sourceNote": "Labor Code §207.002(a): benefits are \"1/25 of the wages received ... during that quarter in the individual's base period in which wages were highest.\" §207.006: a benefit rate that \"is not a multiple of $1\" is \"increased to the next multiple of $1.\" TWC's page says it divides by 25 \"and round[s] to the nearest dollar\"; the statute's upward rounding is used here, and the two differ by at most $1 a week. §207.005: the total \"may not exceed the lesser of: (1) 26 times the individual's benefit amount; or (2) 27 percent of the individual's benefit wage credits.\" §207.021(a)(6): wages \"in at least two calendar quarters\" and \"not less than 37 times the individual's benefit amount.\" The minimum and maximum are indexed each year (47.6% and 7.6% of the state average weekly wage, §207.002(b)); TWC's table gives $76 and $619 from October 4, 2026, and $75 and $605 from October 5, 2025. Texas pays no dependent allowance. Read on 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

@@ -158,6 +158,7 @@ export const SUBJECTS: Record<string, string[]> = {
   FAFSA: ["fafsa-2024-2025"],
   "Life events": ["life-events-2026"],
   "Bill triage": ["bill-triage-2026"],
+  "Unemployment insurance": ["state-ui-ca-2026", "state-ui-tx-2026", "state-ui-fl-2026"],
 };
 
 /**

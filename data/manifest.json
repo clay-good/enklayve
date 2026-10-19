@@ -1054,6 +1054,45 @@
       "sourceDocument": "enklayve life-event sequences — ordering hand-authored; every dated step cites the rule that sets its clock",
       "dateRetrieved": "2026-10-19",
       "contentHash": "32957abb54796bfb44fc56ba94d4497ca11e8f138cd15727840cfe686355ee7b"
+    },
+    {
+      "id": "state-ui-ca-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-ca-2026.json",
+      "sourceUrl": "https://edd.ca.gov/siteassets/files/pdf_pub_ctr/de1101bt5.pdf",
+      "sourceDocument": "California EDD, Unemployment Insurance Benefit Table (DE 1101BT5) and A Guide to Benefits and Employment Services (DE 2320)",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "e9ed9824549e4a172687ac092e78b9f478a373de6b5f6e7a3001674ec67c61fa"
+    },
+    {
+      "id": "state-ui-tx-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-tx-2026.json",
+      "sourceUrl": "https://www.twc.texas.gov/programs/unemployment-benefits/eligibility-benefit-amounts",
+      "sourceDocument": "Texas Workforce Commission, Eligibility & Benefit Amounts; Texas Labor Code §§207.002, 207.005, 207.006, 207.021",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "8dbab39dbe0c284dfb66364e1398858d537e84879a91958a940c30240805b464"
+    },
+    {
+      "id": "state-ui-fl-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-fl-2026.json",
+      "sourceUrl": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0443/Sections/0443.111.html",
+      "sourceDocument": "Fla. Stat. §443.111 (2026), Payment of benefits; FloridaCommerce Reemployment Assistance claimant FAQ",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "0bbc540ea2a6bfe32bbc3480528882a55f1fbafeb7942e75c588d08b71f4ffe8"
     }
   ]
 }

@@ -76,6 +76,7 @@ import { billTriageTile } from "./billTriage";
 import { freeFilingTile } from "./freeFiling";
 import { charityCareTile } from "./charityCare";
 import { garnishmentTile } from "./garnishment";
+import { uiEstimatorTile } from "./uiEstimator";
 import { enrollmentWindowsTile } from "./enrollmentWindows";
 import { lifeEventsTile } from "./lifeEvents";
 
@@ -232,6 +233,7 @@ const HUB_CONFIGS: HubConfig[] = [
       billTriageTile,
       lifeEventsTile,
       enrollmentWindowsTile,
+      uiEstimatorTile,
       garnishmentTile,
       charityCareTile,
       freeFilingTile,

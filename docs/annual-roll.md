@@ -2,9 +2,9 @@
 
 Every figure on this site is annual, so the roll is the one recurring task that touches every shard at once. It is also the task with the most one-line ways to go quietly wrong, and this page names them.
 
-**The shape of the danger:** the year is stated in two places, and they take very different effort to change. Each of the 81 shards states its own year inside its citations — 81 files. The manifest states it again, and there it comes from **shared constants** in [`build-manifest.ts`](../scripts/build-manifest.ts) (`ANNUAL`, `SEMIANNUAL`, and the Pillar 4 group), so bumping all 81 manifest entries is a **three-line edit**.
+**The shape of the danger:** the year is stated in two places, and they take very different effort to change. Each of the 84 shards states its own year inside its citations — 84 files. The manifest states it again, and there it comes from **shared constants** in [`build-manifest.ts`](../scripts/build-manifest.ts) (`ANNUAL`, `SEMIANNUAL`, and the Pillar 4 group), so bumping all 84 manifest entries is a **three-line edit**.
 
-That asymmetry is the hazard. The manifest's `effectiveYear` drives the staleness gate, so changing those three lines alone tells the app every figure is current while all 81 shards still hold last year's numbers — last year's figures reported as fresh, with no banner. A test now blocks exactly that (see step 4), and it is the reason to run the suite *before* believing a green build.
+That asymmetry is the hazard. The manifest's `effectiveYear` drives the staleness gate, so changing those three lines alone tells the app every figure is current while all 84 shards still hold last year's numbers — last year's figures reported as fresh, with no banner. A test now blocks exactly that (see step 4), and it is the reason to run the suite *before* believing a green build.
 
 ## When
 
@@ -39,7 +39,7 @@ to read documents in.
 
 5. **Repoint the parked adapters.** Five wait on a document their state has not published — `npm run check:adapters` lists them under "Settled" with the year each is waiting for. A parked adapter pointed at a closed year reports agreement forever, which is worse than being parked.
 
-6. **Check the zero-window shards.** **6** carry `staleAfterYears: 0` (the Pillar 4 group and free filing): they lapse the instant their year does, and they are the highest-harm figures here — a COBRA election window that is wrong is coverage that is simply gone. They want their own sourcing pass, not a copy-forward.
+6. **Check the zero-window shards.** **9** carry `staleAfterYears: 0` (the Pillar 4 group and free filing): they lapse the instant their year does, and they are the highest-harm figures here — a COBRA election window that is wrong is coverage that is simply gone. They want their own sourcing pass, not a copy-forward.
 
 7. **Two shards keep another clock.** SNAP's year is the federal fiscal year, so it rolls on **October 1**, not in January; its adapter refuses once FNA's allotment table names the next fiscal year, and says the roll is due. Indiana's counties can change rates on Oct. 1 too, and a county carrying `midYearRevision` holds a nine-and-three-month **blend** for the year rather than either rate. At the roll, give it the new January notice's rate and drop the field. The adapter will not do it for you: it refuses a notice for any year but the shard's.
 
