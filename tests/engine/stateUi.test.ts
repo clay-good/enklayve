@@ -22,26 +22,33 @@ let ind: StateUiData;
 let md: StateUiData;
 let mo: StateUiData;
 let co: StateUiData;
+/** A state's rules, loaded and gated as the estimator loads them. */
+async function rulesOf(code: string): Promise<StateUiData> {
+  const ds = await data.loadStateUi(code);
+  if (ds?.status !== "ok" || !ds.data) throw new Error(`${code} rules did not load clean`);
+  return ds.data;
+}
+
 beforeAll(async () => {
   data = await loadBundledData();
-  ca = data.stateUi("ca")!;
-  tx = data.stateUi("tx")!;
-  fl = data.stateUi("fl")!;
-  ny = data.stateUi("ny")!;
-  pa = data.stateUi("pa")!;
-  il = data.stateUi("il")!;
-  oh = data.stateUi("oh")!;
-  mi = data.stateUi("mi")!;
-  nj = data.stateUi("nj")!;
-  va = data.stateUi("va")!;
-  wa = data.stateUi("wa")!;
-  az = data.stateUi("az")!;
-  ma = data.stateUi("ma")!;
-  tn = data.stateUi("tn")!;
-  ind = data.stateUi("in")!;
-  md = data.stateUi("md")!;
-  mo = data.stateUi("mo")!;
-  co = data.stateUi("co")!;
+  ca = await rulesOf("ca");
+  tx = await rulesOf("tx");
+  fl = await rulesOf("fl");
+  ny = await rulesOf("ny");
+  pa = await rulesOf("pa");
+  il = await rulesOf("il");
+  oh = await rulesOf("oh");
+  mi = await rulesOf("mi");
+  nj = await rulesOf("nj");
+  va = await rulesOf("va");
+  wa = await rulesOf("wa");
+  az = await rulesOf("az");
+  ma = await rulesOf("ma");
+  tn = await rulesOf("tn");
+  ind = await rulesOf("in");
+  md = await rulesOf("md");
+  mo = await rulesOf("mo");
+  co = await rulesOf("co");
 });
 
 describe("the bundled state set", () => {
@@ -67,13 +74,27 @@ describe("the bundled state set", () => {
       "co",
     ]);
     for (const code of data.stateUiCodes()) {
-      expect(StateUiSchema.safeParse(data.stateUi(code)).success).toBe(true);
+      expect(StateUiSchema.safeParse(data.loadedStateUi(code)?.data).success).toBe(true);
     }
   });
 
-  it("gives no estimate for a state with no rule set, rather than a typical one", () => {
+  it("loads each state on demand through the same hash and schema gate as the shell", async () => {
+    // Left out of the eager gate rather than reported missing from it.
+    expect(data.manifest.datasets.some((d) => d.id.startsWith("state-ui-"))).toBe(false);
+    expect(data.invalidDatasets()).toEqual([]);
+    for (const code of data.stateUiCodes()) {
+      const ds = await data.loadStateUi(code);
+      expect(ds?.status, code).toBe("ok");
+      expect(ds?.problems).toEqual([]);
+      // Loaded once: the same promise answers every later request.
+      expect(data.loadedStateUi(code)).toBe(ds);
+    }
+  });
+
+  it("gives no estimate for a state with no rule set, rather than a typical one", async () => {
     // The spec's gate: a "typical state" figure is worse than nothing.
-    expect(data.stateUi("wy")).toBeNull();
+    expect(await data.loadStateUi("wy")).toBeNull();
+    expect(data.loadedStateUi("wy")).toBeNull();
   });
 });
 

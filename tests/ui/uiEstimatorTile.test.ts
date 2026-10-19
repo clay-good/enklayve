@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 import axe from "axe-core";
 import { mountUiEstimator, uiEstimatorTile } from "../../src/tiles/uiEstimator";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
@@ -16,7 +16,15 @@ import type { TileContext } from "../../src/tiles/types";
 let data: BundledData;
 beforeAll(async () => {
   data = await loadBundledData();
+  // Loaded up front so these tests read the figure synchronously; the
+  // on-demand path itself is tested below with data that has not loaded yet.
+  await Promise.all(data.stateUiCodes().map((code) => data.loadStateUi(code)));
 });
+
+/** The bundle as a first visit sees it: no state's rules loaded yet. */
+function unloaded(load: BundledData["loadStateUi"] = (c) => data.loadStateUi(c)): BundledData {
+  return { ...data, loadedStateUi: () => undefined, loadStateUi: load } as BundledData;
+}
 
 function mount(
   params: URLSearchParams,
@@ -185,6 +193,53 @@ describe("Unemployment Benefit Estimate", () => {
   it("degrades to a banner, never a number, when the data is missing", () => {
     const { root } = mount(TX, new SituationStore(), null);
     expect(root.querySelector(".verify-banner")).not.toBeNull();
+    expect(root.textContent).not.toMatch(/\$\d/);
+  });
+
+  it("loads a state's rules when it is asked for, and says so while it does", async () => {
+    const { root } = mount(TX, new SituationStore(), unloaded());
+    const result = root.querySelector(".tile-result")!;
+    expect(result.getAttribute("aria-busy")).toBe("true");
+    expect(root.textContent).toContain("Loading Texas's rules");
+    await vi.waitFor(() => expect(result.getAttribute("aria-busy")).toBeNull());
+    expect(root.textContent).toContain("About $480 a week, up to $9,720 in total.");
+  });
+
+  it("drops a slow answer for a state the reader has already moved off", async () => {
+    const pending = new Map<string, (v: Awaited<ReturnType<BundledData["loadStateUi"]>>) => void>();
+    const { root } = mount(
+      TX,
+      new SituationStore(),
+      unloaded((code) => new Promise((resolve) => pending.set(code, resolve))),
+    );
+    const select = root.querySelector("select")!;
+    select.value = "FL";
+    select.dispatchEvent(new Event("change"));
+    pending.get("FL")!(await data.loadStateUi("fl"));
+    await vi.waitFor(() => expect(root.textContent).toContain("Florida"));
+    pending.get("TX")!(await data.loadStateUi("tx"));
+    await Promise.resolve();
+    expect(root.textContent).not.toContain("What this leaves out for Texas");
+    expect(root.textContent).toContain("What this leaves out for Florida");
+  });
+
+  it("reports an altered rule set as one, never as a state with no rules", async () => {
+    const { root } = mount(
+      TX,
+      new SituationStore(),
+      unloaded(async () => ({
+        id: "state-ui-tx-2026",
+        kind: "state-ui",
+        version: "x",
+        status: "invalid",
+        effectiveYear: 2026,
+        data: null,
+        problems: ["content hash mismatch"],
+      })),
+    );
+    await vi.waitFor(() => expect(root.querySelector(".verify-banner")).not.toBeNull());
+    expect(root.textContent).toContain("did not pass their integrity check");
+    expect(root.textContent).not.toContain("No estimate for Texas yet");
     expect(root.textContent).not.toMatch(/\$\d/);
   });
 

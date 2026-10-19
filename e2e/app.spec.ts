@@ -89,6 +89,7 @@ test("works offline after the first visit", async ({ page, context }) => {
 
   // Cut the network and reload: the cached shell must still boot the app, and
   // since datasets are inlined at build time there is no runtime fetch to miss.
+  // (The unemployment rules are the exception; the test below covers them.)
   await context.setOffline(true);
 
   // An asset OUTSIDE the precache must fail like an asset, not like a page.
@@ -125,6 +126,45 @@ test("works offline after the first visit", async ({ page, context }) => {
   // Then the navigation itself: the cached shell still boots the app.
   await page.reload();
   await expect(page.locator(".wordmark")).toHaveText("enklayve");
+  await context.setOffline(false);
+});
+
+/**
+ * The unemployment rules load on demand rather than with the shell, one chunk
+ * per state, under the production CSP. A state opened once online must give
+ * the same figure offline, from the chunk the service worker cached.
+ */
+test("a state's unemployment rules load on demand, then work offline", async ({
+  page,
+  context,
+}) => {
+  const link = "/#/when-money-is-tight?tool=ui-estimator&st=TX&q1=12000&q2=10000&q3=8000&q4=6000";
+  const figure = "About $480 a week, up to $9,720 in total.";
+  await page.goto("/");
+  await page.waitForSelector(".wordmark");
+  await page.evaluate(async () => {
+    if ("serviceWorker" in navigator) await navigator.serviceWorker.ready;
+  });
+  await page.reload();
+  await page.waitForSelector(".wordmark");
+  await page.evaluate(async () => {
+    if (!("serviceWorker" in navigator) || navigator.serviceWorker.controller) return;
+    await new Promise<void>((resolve) => {
+      navigator.serviceWorker.addEventListener("controllerchange", () => resolve(), {
+        once: true,
+      });
+      setTimeout(resolve, 3000);
+    });
+  });
+
+  const chunk = page.waitForResponse((r) => /\/assets\/state-ui-tx-2026-.*\.js$/.test(r.url()));
+  await page.goto(link);
+  expect((await chunk).ok()).toBe(true);
+  await expect(page.locator(".tile-result")).toContainText(figure);
+
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.locator(".tile-result")).toContainText(figure);
   await context.setOffline(false);
 });
 

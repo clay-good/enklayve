@@ -57,6 +57,14 @@ function currentUtcYear(): number {
 }
 
 /**
+ * Whether an entry's effective year is outside its staleness window. Needs only
+ * the manifest, so a shard that has not been loaded yet can still be reported.
+ */
+export function pastWindow(entry: ManifestEntry, asOfYear: number = currentUtcYear()): boolean {
+  return asOfYear - entry.effectiveYear > entry.staleAfterYears;
+}
+
+/**
  * Load and gate a single shard. `shardText` is the exact bytes the manifest
  * hash was computed over (bundled into the build as a raw string).
  */

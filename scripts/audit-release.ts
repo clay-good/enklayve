@@ -634,6 +634,26 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  *
  * Eighteen states. The argument against 319 is a measured cost and the
  * owner's decision, as for every entry above.
+ *
+ * **Not raised on 2026-10-19: the unemployment rules left the shell instead,
+ * decided by the owner.** Five raises in one day, all for one feature that
+ * grows with every state, is the pattern this comment warns about, so the
+ * eighteen `state-ui-*` shards now load as one lazily imported chunk per
+ * state, when the estimator asks for that state. Measured: **316.6 → 306.8**,
+ * 9.8 kB out of the precached set.
+ *
+ * This is the lever the 2026-08-29 entry rejected, and the reasons it gave
+ * hold for what they described, which was different. Splitting a shard's notes
+ * from its figures would hash bytes that are not the shard; here each shard is
+ * loaded whole and run through the same `loadDataset` gate, hash first, so an
+ * altered rule set is reported by the estimator as one. The offline cost is
+ * real and stated in under-the-hood.md: a state never opened online gets no
+ * figure offline. It is accepted for these shards because a reader needs one
+ * state, usually right after losing a job, and nothing else on the site reads
+ * them.
+ *
+ * The budget stays at 319, leaving about 11.7 kB in CI. Lowering it to put the
+ * headroom back near a kilobyte is the owner's decision, like raising it.
  */
 export const SHELL_GZIP_BUDGET_KB = 319;
 

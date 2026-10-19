@@ -25,6 +25,8 @@ import { resolve } from "node:path";
 let data: BundledData;
 beforeAll(async () => {
   data = await loadBundledData();
+  // The unemployment rules load on demand; the probes need every state's.
+  await Promise.all(data.stateUiCodes().map((code) => data.loadStateUi(code)));
 });
 
 describe("the engine observation", () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { loadManifest, needsVerifyBanner } from "../../src/data/loader";
+import { loadManifest, needsVerifyBanner, pastWindow } from "../../src/data/loader";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -116,6 +116,17 @@ describe("the staleness gate reaches the screen", () => {
       // A stale dataset still carries its data — which is exactly why the
       // banner has to exist: the figure renders either way.
       expect(d.data).not.toBeNull();
+    }
+  });
+
+  it("judges an unemployment rule set's window from the manifest, before it loads", () => {
+    // These shards load on demand, so the site-wide banner cannot wait for them.
+    const manifest = ManifestSchema.parse(JSON.parse(readShard("manifest.json")));
+    const ui = manifest.datasets.filter((d) => d.id.startsWith("state-ui-"));
+    expect(ui.length).toBeGreaterThan(0);
+    for (const entry of ui) {
+      expect(pastWindow(entry, entry.effectiveYear), entry.id).toBe(false);
+      expect(pastWindow(entry, entry.effectiveYear + 1), entry.id).toBe(true);
     }
   });
 

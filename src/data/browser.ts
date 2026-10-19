@@ -7,9 +7,17 @@
  * gate (`loadManifest`) the tests use. The raw text is the exact bytes the
  * manifest hash was computed over, so the hash check is meaningful in the browser.
  */
-import { loadManifest, type LoadedManifest, type DatasetStatus } from "./loader";
+import {
+  loadDataset,
+  loadManifest,
+  pastWindow,
+  type LoadedDataset,
+  type LoadedManifest,
+  type DatasetStatus,
+} from "./loader";
 import {
   ManifestSchema,
+  type ManifestEntry,
   type FicaData,
   type Jurisdiction,
   type RetirementLimitsData,
@@ -46,11 +54,24 @@ export type FplRegion = "contiguous" | "alaska" | "hawaii";
 
 // Inlined at build time. The keys are repo-relative paths; the values are the
 // exact file contents. eager so the data is available synchronously after import.
-const rawFiles = import.meta.glob("../../data/*.json", {
+const rawFiles = import.meta.glob(["../../data/*.json", "!../../data/state-ui-*.json"], {
   query: "?raw",
   import: "default",
   eager: true,
 }) as Record<string, string>;
+
+// The unemployment rules, one chunk per state, imported when the estimator asks
+// for a state rather than precached with the shell (SPEC-4-safety-net §B5). They
+// are a same-origin script chunk, so `connect-src 'none'` still holds, and each
+// is the shard's exact text, so the manifest hash is checked over the bytes that
+// were reviewed, exactly as for an inlined shard. The service worker caches a
+// chunk on first use, so a state opened once works offline afterwards.
+const deferredFiles = import.meta.glob("../../data/state-ui-*.json", {
+  query: "?raw",
+  import: "default",
+}) as Record<string, () => Promise<string>>;
+
+const DEFERRED_ID = /^state-ui-([a-z]{2})-\d{4}$/;
 
 function basename(path: string): string {
   const segments = path.split("/");
@@ -134,8 +155,15 @@ export interface BundledData {
   statusOf(id: string): DatasetStatus | "missing";
   /** Two-letter codes of every bundled state jurisdiction, in manifest order. */
   stateCodes(): string[];
-  /** One state's unemployment-insurance rules (SPEC-4-safety-net §B5); null where none is bundled. */
-  stateUi(code: string): StateUiData | null;
+  /**
+   * One state's unemployment-insurance rules (SPEC-4-safety-net §B5), loaded on
+   * first request and gated like every other shard: null where no rule set is
+   * bundled, otherwise the dataset with its status, so an altered shard is
+   * reported as one rather than as a state with no rules.
+   */
+  loadStateUi(code: string): Promise<LoadedDataset<StateUiData> | null>;
+  /** The same, synchronously, once loaded; undefined while it has not been. */
+  loadedStateUi(code: string): LoadedDataset<StateUiData> | null | undefined;
   /** Codes of the states with a bundled unemployment-insurance rule set. */
   stateUiCodes(): string[];
 }
@@ -163,7 +191,51 @@ async function build(): Promise<BundledData> {
     if (text !== undefined) shards[entry.id] = text;
   }
 
-  const loaded = await loadManifest(manifest, shards);
+  // The deferred shards are gated when they load, so the eager gate leaves them
+  // out rather than reporting them missing. Their staleness needs only the
+  // manifest, so the site-wide banner still names a stale one before it loads.
+  const deferred = new Map<string, ManifestEntry>();
+  for (const entry of manifest.datasets) {
+    const code = DEFERRED_ID.exec(entry.id)?.[1];
+    if (code !== undefined) deferred.set(code, entry);
+  }
+  const deferredIds = new Set([...deferred.values()].map((e) => e.id));
+  const loaded = await loadManifest(
+    { ...manifest, datasets: manifest.datasets.filter((e) => !deferredIds.has(e.id)) },
+    shards,
+  );
+  const deferredLoads = new Map<string, Promise<LoadedDataset<StateUiData>>>();
+  const deferredLoaded = new Map<string, LoadedDataset<StateUiData>>();
+
+  const loadStateUi = (code: string): Promise<LoadedDataset<StateUiData> | null> => {
+    const key = code.toLowerCase();
+    const entry = deferred.get(key);
+    if (entry === undefined) return Promise.resolve(null);
+    let pending = deferredLoads.get(key);
+    if (pending === undefined) {
+      const importer = deferredFiles[`../../data/${entry.shard}`];
+      pending = (
+        importer === undefined
+          ? Promise.reject(new Error(`shard "${entry.shard}" not bundled`))
+          : importer().then((text) => loadDataset(entry, text))
+      ).then(
+        (ds) => ds as LoadedDataset<StateUiData>,
+        (err: unknown) =>
+          ({
+            id: entry.id,
+            kind: entry.kind,
+            version: entry.version,
+            status: "invalid",
+            effectiveYear: entry.effectiveYear,
+            data: null,
+            problems: [`could not load: ${(err as Error).message}`],
+          }) as LoadedDataset<StateUiData>,
+      );
+      pending.then((ds) => deferredLoaded.set(key, ds));
+      deferredLoads.set(key, pending);
+    }
+    return pending;
+  };
 
   const dataOf = (id: string): unknown => {
     const ds = loaded.byId.get(id);
@@ -172,12 +244,16 @@ async function build(): Promise<BundledData> {
 
   return {
     manifest: loaded,
-    staleDatasets: () =>
-      loaded.datasets
+    staleDatasets: () => [
+      ...loaded.datasets
         .filter((d) => d.status === "stale")
         .map((d) => ({ id: d.id, effectiveYear: d.effectiveYear })),
+      ...[...deferred.values()]
+        .filter((e) => pastWindow(e))
+        .map((e) => ({ id: e.id, effectiveYear: e.effectiveYear })),
+    ],
     invalidDatasets: () =>
-      loaded.datasets
+      [...loaded.datasets, ...deferredLoaded.values()]
         .filter((d) => d.status === "invalid")
         .map((d) => ({ id: d.id, problems: d.problems })),
     federal: () => dataOf("federal-income-tax-2024") as Jurisdiction | null,
@@ -197,11 +273,12 @@ async function build(): Promise<BundledData> {
     freeFiling: () => dataOf("free-filing-2026") as FreeFilingData | null,
     noSurprises: () => dataOf("no-surprises-2026") as NoSurprisesData | null,
     garnishmentLimits: () => dataOf("garnishment-limits-2026") as GarnishmentLimitsData | null,
-    stateUi: (code) => dataOf(`state-ui-${code.toLowerCase()}-2026`) as StateUiData | null,
-    stateUiCodes: () =>
-      loaded.datasets
-        .map((d) => /^state-ui-([a-z]{2})-\d{4}$/.exec(d.id)?.[1])
-        .filter((c): c is string => c !== undefined),
+    loadStateUi,
+    loadedStateUi: (code) => {
+      const key = code.toLowerCase();
+      return deferred.has(key) ? deferredLoaded.get(key) : null;
+    },
+    stateUiCodes: () => [...deferred.keys()],
     enrollmentWindows: () => dataOf("enrollment-windows-2026") as EnrollmentWindowsData | null,
     lifeEvents: () => dataOf("life-events-2026") as LifeEventsData | null,
     aca: () => dataOf("aca-2024") as AcaData | null,

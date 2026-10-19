@@ -19,6 +19,7 @@ import { el, option } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { citationLink } from "../ui/resultCard";
 import type { StateUiData } from "../data/schemas";
+import type { LoadedDataset } from "../data/loader";
 import type { TileContext, TileDefinition } from "./types";
 
 /** What no state's estimate here models — said once, under every state's own list. */
@@ -280,6 +281,7 @@ export function mountUiEstimator(ctx: TileContext): void {
     return blocks;
   }
 
+  let latest = 0;
   function compute(): void {
     if (!data) {
       resultContainer.replaceChildren(
@@ -291,7 +293,37 @@ export function mountUiEstimator(ctx: TileContext): void {
       );
       return;
     }
-    const rules = data.stateUi(fields.stateCode);
+    // A state's rules load the first time it is asked for. A later answer for a
+    // state the reader has since moved off is dropped rather than rendered.
+    const ticket = ++latest;
+    const loaded = data.loadedStateUi(fields.stateCode);
+    if (loaded !== undefined) {
+      show(loaded);
+      return;
+    }
+    resultContainer.setAttribute("aria-busy", "true");
+    resultContainer.replaceChildren(
+      el("p", { class: "uie-loading", text: `Loading ${stateName(fields.stateCode)}'s rules…` }),
+    );
+    void data.loadStateUi(fields.stateCode).then((ds) => {
+      if (ticket === latest) show(ds);
+    });
+  }
+
+  function show(ds: LoadedDataset<StateUiData> | null): void {
+    resultContainer.removeAttribute("aria-busy");
+    if (ds?.status === "invalid") {
+      creditRow.hidden = hoursRow.hidden = dependentsRow.hidden = true;
+      resultContainer.replaceChildren(
+        el("div", {
+          class: "verify-banner",
+          attrs: { role: "alert" },
+          text: `${stateName(fields.stateCode)}'s unemployment rules did not pass their integrity check (${ds.problems[0] ?? "failed its gate"}), so no estimate is given. Reload from a fresh copy of the site, or ask the state's unemployment office.`,
+        }),
+      );
+      return;
+    }
+    const rules = ds?.data ?? null;
     // Only the inputs this state's rules use are shown.
     creditRow.hidden = !rules?.duration.weeksFromCreditWeeks;
     creditHint.textContent = rules?.duration.creditWeeksMean ?? "";

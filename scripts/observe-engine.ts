@@ -475,8 +475,12 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
   // Each probe stands on a threshold and a cent either side: California's
   // schedule-to-divisor seam and its 1.25x path, Florida's 1.5x and $3,400,
   // Texas's 37x and its weekly maximum.
+  // The rules load on demand, so the caller loads them first (`loadStateUi`); a
+  // probe against a state that was not loaded fails loudly rather than skipping.
   const uiProbe = (code: string, q: [number, number, number, number], creditWeeks = 26): void => {
-    const r = estimateUi({ quarterlyWages: q, creditWeeks, hours: 2080 }, data.stateUi(code)!);
+    const rules = data.loadedStateUi(code)?.data;
+    if (!rules) throw new Error(`load the ${code} unemployment rules before observing them`);
+    const r = estimateUi({ quarterlyWages: q, creditWeeks, hours: 2080 }, rules);
     put(`ui(${code},${q.join("/")})`, {
       eligible: r.eligible,
       weekly: r.weeklyTotal,
