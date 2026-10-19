@@ -57,7 +57,7 @@ describe("Unemployment Benefit Estimate", () => {
     const { root } = mount(new URLSearchParams({ st: "OH", q1: "12000", q2: "10000" }));
     const text = root.textContent ?? "";
     expect(text).toContain("No estimate for Ohio yet");
-    expect(text).toContain("California, Texas, Florida");
+    expect(text).toContain("California, Texas, Florida, New York, Pennsylvania");
     expect(text).not.toMatch(/\$\d/);
     expect(root.querySelector(".uie-office a")?.getAttribute("href")).toContain("careeronestop");
   });
@@ -98,6 +98,49 @@ describe("Unemployment Benefit Estimate", () => {
       "6000",
     ]);
     expect(mount(p).root.textContent).toContain("About $520 a week");
+  });
+
+  it("asks Pennsylvania for credit weeks and dependents, and no other state", () => {
+    const pa = mount(
+      new URLSearchParams({ st: "PA", q1: "7500", q2: "2000", q3: "1500", q4: "924" }),
+    );
+    const credit = pa.root.querySelector<HTMLInputElement>(
+      'input[aria-label="Credit weeks in the base period"]',
+    )!;
+    expect(credit.closest<HTMLElement>(".field, label, div")!.hidden).toBe(false);
+    // Uncounted credit weeks are a prompt, never an assumed 26.
+    expect(pa.root.textContent).toContain("fewer than 18 credit weeks");
+    const tx = mount(TX);
+    const txCredit = tx.root.querySelector<HTMLInputElement>(
+      'input[aria-label="Credit weeks in the base period"]',
+    )!;
+    expect(txCredit.closest<HTMLElement>(".field, label, div")!.hidden).toBe(true);
+  });
+
+  it("states Pennsylvania's payment reduction in the figure, and adds dependents", () => {
+    const { root, written } = mount(
+      new URLSearchParams({ st: "PA", q1: "7500", q2: "2000", q3: "1500", q4: "924", cw: "26" }),
+    );
+    // A $295 rate less 3.2% pays $285 (L&I's own example row).
+    expect(root.textContent).toContain(
+      "About $285 a week after Pennsylvania's 3.2% payment reduction, on a $295 rate",
+    );
+    const deps = root.querySelector<HTMLInputElement>(
+      'input[aria-label="Dependents you support"]',
+    )!;
+    deps.value = "2";
+    deps.dispatchEvent(new Event("input"));
+    expect(root.textContent).toContain("That includes $8 a week for dependents.");
+    expect(written.at(-1)!.get("dep")).toBe("2");
+    expect(written.at(-1)!.get("cw")).toBe("26");
+  });
+
+  it("names New York's two-quarter average when it is the rule that applied", () => {
+    const { root } = mount(
+      new URLSearchParams({ st: "NY", q1: "4500", q2: "4288", q3: "0", q4: "0" }),
+    );
+    expect(root.textContent).toContain("About $169 a week");
+    expect(root.textContent).toContain("average of your two highest quarters");
   });
 
   it("degrades to a banner, never a number, when the data is missing", () => {

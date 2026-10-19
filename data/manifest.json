@@ -1066,7 +1066,7 @@
       "sourceUrl": "https://edd.ca.gov/siteassets/files/pdf_pub_ctr/de1101bt5.pdf",
       "sourceDocument": "California EDD, Unemployment Insurance Benefit Table (DE 1101BT5) and A Guide to Benefits and Employment Services (DE 2320)",
       "dateRetrieved": "2026-10-19",
-      "contentHash": "e9ed9824549e4a172687ac092e78b9f478a373de6b5f6e7a3001674ec67c61fa"
+      "contentHash": "dfafe7a53ca0c24a83118eb849fb9db8dcd3996f6581104547f3759e79a72190"
     },
     {
       "id": "state-ui-tx-2026",
@@ -1079,7 +1079,7 @@
       "sourceUrl": "https://www.twc.texas.gov/programs/unemployment-benefits/eligibility-benefit-amounts",
       "sourceDocument": "Texas Workforce Commission, Eligibility & Benefit Amounts; Texas Labor Code §§207.002, 207.005, 207.006, 207.021",
       "dateRetrieved": "2026-10-19",
-      "contentHash": "8dbab39dbe0c284dfb66364e1398858d537e84879a91958a940c30240805b464"
+      "contentHash": "a142bd3985e4db9e2650d1d281010cfe7954f75ae0dab9576b04b62c63c83bdf"
     },
     {
       "id": "state-ui-fl-2026",
@@ -1092,7 +1092,33 @@
       "sourceUrl": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0443/Sections/0443.111.html",
       "sourceDocument": "Fla. Stat. §443.111 (2026), Payment of benefits; FloridaCommerce Reemployment Assistance claimant FAQ",
       "dateRetrieved": "2026-10-19",
-      "contentHash": "0bbc540ea2a6bfe32bbc3480528882a55f1fbafeb7942e75c588d08b71f4ffe8"
+      "contentHash": "798a77299c6982589a55217e6006047fef2d34eeb962065dc0d95727311e7317"
+    },
+    {
+      "id": "state-ui-ny-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-ny-2026.json",
+      "sourceUrl": "https://dol.ny.gov/system/files/documents/2026/03/p832-how-your-weekly-ui-benefits-are-calculated-2-26.pdf",
+      "sourceDocument": "NYSDOL, How Your Weekly UI Benefit Payment Is Calculated (P832, 2/26); NY Labor Law §§527, 590",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "07afca5a024176327255cbef264f07b284f8bccff38288fdabf82463b7c76c8e"
+    },
+    {
+      "id": "state-ui-pa-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-pa-2026.json",
+      "sourceUrl": "https://www.pa.gov/agencies/dli/resources/for-claimants-workers/benefits-information/benefit-guide/eligibility-information",
+      "sourceDocument": "PA L&I, UC eligibility and the §404(e) rate table; 56 Pa.B. 448 (Jan. 17, 2026); UC benefit guide and rate FAQs",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "20ec1912f68ea8d33514033002c0410dcb9fea4088737858add717c237de7901"
     }
   ]
 }

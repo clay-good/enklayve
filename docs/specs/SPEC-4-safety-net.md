@@ -18,7 +18,7 @@ Statutory anchors named below are the **intended citation targets, not facts**. 
 | B2 | `garnishment` | `when-money-is-tight` | `engine/garnishment.ts` | 23 | 3 |
 | B3 | (Readout kind, no tile) | — | `readout/checks.ts` | 22 | 3 |
 | B4 | `enrollment-windows` | `life-changes` | `engine/sequences.ts` | 23 | 2 |
-| B5 | `ui-estimator` | `when-money-is-tight` | `engine/stateUi.ts` | un-parked (CA, TX, FL) | 1 |
+| B5 | `ui-estimator` | `when-money-is-tight` | `engine/stateUi.ts` | un-parked (CA, TX, FL, NY, PA) | 1 |
 
 ---
 
@@ -164,7 +164,7 @@ Formerly parked. Un-parked because the parked reason (per-hospital thresholds ar
 
 **Gate.** This ships **only** as a state-adapter set with coverage stated per state, exactly as the tax engine does. A "typical state" estimate would be worse than nothing for someone deciding whether they can make rent. If the adapter effort is not funded, this item stays parked rather than approximated. It has no phase number on purpose.
 
-**Status — un-parked 2026-10-19, three states shipped.** `ui-estimator` in the When Money Is Tight hub, `engine/stateUi.ts`, and `state-ui-<st>-2026` shards for **California, Texas and Florida**, each read off its own agency or statute and golden-tested (see the Source audits table in [data-sources.md](../data-sources.md)). The picker lists every state; one without a rule set gets no figure, names the states covered, and links to its own unemployment office. **New York and Pennsylvania were researched and not bundled.** New York computes its weekly rate three ways depending on how many quarters have wages, and Pennsylvania's duration turns on credit weeks, so each needs inputs this version does not ask for. The feature took the shell budget from 300 to 305 kB, by the owner's decision; see `SHELL_GZIP_BUDGET_KB`.
+**Status — un-parked 2026-10-19; five states shipped.** `ui-estimator` in the When Money Is Tight hub, `engine/stateUi.ts`, and `state-ui-<st>-2026` shards for **California, Texas, Florida, New York and Pennsylvania**, the five most populous, each read off its own agency or statute and golden-tested, including each agency's own worked example where it publishes one (see the Source audits table in [data-sources.md](../data-sources.md)). New York needed a low-earner divisor, a floor and two-quarter averaging; Pennsylvania needed its banded rate table, per-row qualifying wages, credit weeks, dependents and a payment reduction. The tile asks for credit weeks and dependents only where a state uses them. The picker lists every state; one without a rule set gets no figure, names the states covered, and links to its own unemployment office. The feature took the shell budget from 300 to 305 kB, by the owner's decision; see `SHELL_GZIP_BUDGET_KB`.
 
 ---
 

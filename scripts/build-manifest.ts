@@ -94,7 +94,7 @@ const STATE_CODES = [
 ];
 
 /** States with a bundled unemployment-insurance rule set, most populous first. */
-export const UI_STATE_CODES = ["ca", "tx", "fl"] as const;
+export const UI_STATE_CODES = ["ca", "tx", "fl", "ny", "pa"] as const;
 
 const ANNUAL = { effectiveYear: 2026, expectedRefreshMonths: 12, staleAfterYears: 2 } as const;
 // Treasury I-bond rates reset every six months (BUILD-SPEC.md §7.2: May and

@@ -1581,6 +1581,20 @@ const UiEligibilityPathSchema = z.object({
   minBasePeriodToWeeklyBenefit: z.number().gte(0).optional(),
   /** Wages in at least this many base-period quarters. */
   minQuartersWithWages: z.number().int().gte(1).lte(4).optional(),
+  /** The high quarter counted in the ratio test is capped here (NY: 22 × the maximum rate). */
+  highQuarterCapForRatio: z.number().gt(0).optional(),
+  /** At least this share of base-period wages paid outside the high quarter (PA 0.37). */
+  minShareOutsideHighQuarter: z.number().gt(0).lt(1).optional(),
+  /** Weeks earning at least the state's credit-week amount (PA 18). */
+  minCreditWeeks: z.number().int().gte(1).optional(),
+  /**
+   * A minimum base-period total per row of a banded table (PA's "Part C"):
+   * (row start + addend) / share, rounded up. Below it, the rate steps down to
+   * one of the next `stepDownRows` lower rows whose minimum is met.
+   */
+  bandedQualifyingWages: z
+    .object({ addend: z.number(), share: z.number().gt(0).lte(1), stepDownRows: z.number().int().gte(0) })
+    .optional(),
 });
 export const StateUiSchema = z.object({
   stateCode: z.string().regex(/^[a-z]{2}$/),
@@ -1592,7 +1606,34 @@ export const StateUiSchema = z.object({
   eligibility: z.array(UiEligibilityPathSchema).min(1),
   weeklyBenefit: z.object({
     /** The weekly benefit is the high-quarter wages divided by this. */
-    highQuarterDivisor: z.number().positive(),
+    highQuarterDivisor: z.number().positive().optional(),
+    /** A smaller divisor at or below a high-quarter figure, and a floor above it (NY). */
+    lowEarner: z
+      .object({ atOrBelowHighQuarter: z.number().gt(0), divisor: z.number().positive(), floorAbove: z.number().gt(0) })
+      .optional(),
+    /** With wages in fewer than `belowQuarters` quarters and a high quarter over
+     * `aboveHighQuarter`, the divisor applies to the average of the top quarters (NY). */
+    fewQuartersAverage: z
+      .object({
+        belowQuarters: z.number().int().gte(2).lte(4),
+        aboveHighQuarter: z.number().gt(0),
+        topQuarters: z.number().int().gte(2).lte(4),
+      })
+      .optional(),
+    /**
+     * A rate table in equal bands of high-quarter wages (PA's §404(e) table):
+     * row = floor((HQ − from) / width), rate = factor × (baseRate + row), rounded
+     * per `rounding`; the maximum from `maximumFrom` up, no claim below `from`.
+     */
+    bandedTable: z
+      .object({
+        fromHighQuarter: z.number().gt(0),
+        bandWidth: z.number().gt(0),
+        baseRate: z.number().gt(0),
+        factor: z.number().gt(0).lte(1),
+        maximumFrom: z.number().gt(0),
+      })
+      .optional(),
     /** How the quotient becomes whole dollars — the statute's word, not ours. */
     rounding: z.enum(["up", "down"]),
     minimum: z.number().gte(0),
@@ -1600,15 +1641,14 @@ export const StateUiSchema = z.object({
     /**
      * A fixed low-wage schedule that replaces the divisor below its own end
      * (California's benefit table runs $40–$70 by rows no divisor reproduces).
-     * Each row applies from `fromHighQuarter` to the next row's start; the
+     * Each row applies from its start to the next row's start; the
      * divisor applies from `divisorFrom` up. High-quarter wages below the first
      * row do not establish a claim.
      */
     lowWageSchedule: z
       .object({
-        rows: z
-          .array(z.object({ fromHighQuarter: z.number().gte(0), amount: z.number().gt(0) }))
-          .min(1),
+        /** [high-quarter wages the row starts at, weekly amount]. */
+        rows: z.array(z.tuple([z.number().gte(0), z.number().gt(0)])).min(1),
         divisorFrom: z.number().gt(0),
       })
       .optional(),
@@ -1628,11 +1668,18 @@ export const StateUiSchema = z.object({
     maxTotal: z.number().gt(0).optional(),
     /** Whether the total rounds down to whole dollars (FL §443.111(5)(b)). */
     totalRoundsDown: z.boolean().default(false),
+    /** Weeks are the claimant's credit weeks, up to `maxWeeks` (PA). */
+    weeksFromCreditWeeks: z.boolean().default(false),
   }),
+  /** A share taken off every payment, rounded down to whole dollars (PA 0.032). */
+  paymentReduction: z.number().gt(0).lt(1).optional(),
   /** What the estimate does not model for this state — stated, never implied. */
   notModeled: z.array(z.string().min(1)).min(1),
   citation: CitationSchema,
-});
+}).refine(
+  (d) => (d.weeklyBenefit.highQuarterDivisor === undefined) !== (d.weeklyBenefit.bandedTable === undefined),
+  { message: "a state's weekly benefit is a divisor or a banded table, exactly one" },
+);
 export type StateUiData = z.infer<typeof StateUiSchema>;
 
 export const DATASET_SCHEMAS = {

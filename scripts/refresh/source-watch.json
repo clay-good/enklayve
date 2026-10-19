@@ -209,6 +209,20 @@
       "why": "Florida's weekly range, its 1.5-times test and its weeks-by-unemployment-rate scale are all statutory, and the 2026 session considered raising the range. An amendment is a sentence somebody has to read.",
       "fingerprint": "8e80343317aec7f516dcd6907b689c7bdcbe9eff50147bac07ff4f830500b233",
       "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-ny-2026",
+      "url": "https://dol.ny.gov/mbr",
+      "why": "New York's maximum rate is scheduled by Labor Law §590(5) to step each October, subject to a trust-fund condition, and the Department announces each step on this page. A change here is the figure the shard's maximum must follow.",
+      "fingerprint": "0ce99742f1a62cb7c89c765609c3f13877a3a8507d64a17e52e047c110f8a926",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-pa-2026",
+      "url": "https://www.pa.gov/agencies/dli/resources/for-claimants-workers/benefits-information/benefit-guide/eligibility-information",
+      "why": "Pennsylvania's weekly rate is its §404(e) table, which the shard carries as a verified closed form; a new table, maximum or credit-week amount appears on this page first and means the form must be re-checked against every row.",
+      "fingerprint": "3826a2a108de4a4c21fd83c0a0276b30bd7038e9b9ed96a6ffb5bfc77679214d",
+      "checkedOn": "2026-10-19"
     }
   ]
 }

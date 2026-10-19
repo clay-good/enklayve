@@ -1,0 +1,44 @@
+{
+  "stateCode": "ny",
+  "name": "New York",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before the quarter you file. If those do not qualify, New York uses the last four completed quarters (the alternate base period).",
+  "eligibility": [
+    {
+      "minHighQuarterWages": 3500,
+      "minQuartersWithWages": 2,
+      "minBasePeriodToHighQuarter": 1.5,
+      "highQuarterCapForRatio": 19118
+    }
+  ],
+  "weeklyBenefit": {
+    "highQuarterDivisor": 26,
+    "rounding": "down",
+    "minimum": 140,
+    "maximum": 869,
+    "lowEarner": {
+      "atOrBelowHighQuarter": 3575,
+      "divisor": 25,
+      "floorAbove": 143
+    },
+    "fewQuartersAverage": {
+      "belowQuarters": 4,
+      "aboveHighQuarter": 4000,
+      "topQuarters": 2
+    }
+  },
+  "duration": {
+    "maxWeeks": 26
+  },
+  "notModeled": [
+    "The alternate base period: enter whichever four quarters the Department of Labor will use.",
+    "A higher maximum: the law schedules a step for October 2026, subject to a trust-fund condition, and the Department has not announced one."
+  ],
+  "citation": {
+    "sourceUrl": "https://dol.ny.gov/system/files/documents/2026/03/p832-how-your-weekly-ui-benefits-are-calculated-2-26.pdf",
+    "sourceDocument": "NYSDOL, How Your Weekly UI Benefit Payment Is Calculated (P832, 2/26); NY Labor Law §§527, 590",
+    "sourceNote": "P832: wages in at least two quarters, at least $3,500 in one quarter for claims filed in 2026, and a total of at least 1.5 times the high quarter; \"if your high quarter wages were $19,118 or more\", at least $9,559 in the other three. With wages in all four quarters, a high quarter over $3,575 is divided by 26; at $3,575 or less, by 25. With two or three quarters, over $4,000 the average of the two highest quarters is divided by 26 (\"$8,788 ÷ 2 = $4,394 ... $169\"), and $3,576 to $4,000 the high quarter is. Above $3,575 the rate is at least $143. Labor Law §590(5) lowers a rate that is not a whole dollar. The maximum has been $869 since October 6, 2025 (dol.ny.gov/mbr, read 2026-10-19). P832 gives the minimum as $140 from January 2026, while §590's text still reads $100; $140 is $3,500 divided by 25, the least any claim that meets the wage test can produce, so the two do not disagree about anyone eligible. Total benefits are at most 26 times the rate. New York pays no dependent allowance. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

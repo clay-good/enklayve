@@ -19,130 +19,37 @@
     "maximum": 450,
     "lowWageSchedule": {
       "rows": [
-        {
-          "fromHighQuarter": 900,
-          "amount": 40
-        },
-        {
-          "fromHighQuarter": 949,
-          "amount": 41
-        },
-        {
-          "fromHighQuarter": 975,
-          "amount": 42
-        },
-        {
-          "fromHighQuarter": 1001,
-          "amount": 43
-        },
-        {
-          "fromHighQuarter": 1027,
-          "amount": 44
-        },
-        {
-          "fromHighQuarter": 1053,
-          "amount": 45
-        },
-        {
-          "fromHighQuarter": 1079,
-          "amount": 46
-        },
-        {
-          "fromHighQuarter": 1118,
-          "amount": 47
-        },
-        {
-          "fromHighQuarter": 1144,
-          "amount": 48
-        },
-        {
-          "fromHighQuarter": 1170,
-          "amount": 49
-        },
-        {
-          "fromHighQuarter": 1196,
-          "amount": 50
-        },
-        {
-          "fromHighQuarter": 1222,
-          "amount": 51
-        },
-        {
-          "fromHighQuarter": 1248,
-          "amount": 52
-        },
-        {
-          "fromHighQuarter": 1287,
-          "amount": 53
-        },
-        {
-          "fromHighQuarter": 1313,
-          "amount": 54
-        },
-        {
-          "fromHighQuarter": 1339,
-          "amount": 55
-        },
-        {
-          "fromHighQuarter": 1365,
-          "amount": 56
-        },
-        {
-          "fromHighQuarter": 1404,
-          "amount": 57
-        },
-        {
-          "fromHighQuarter": 1430,
-          "amount": 58
-        },
-        {
-          "fromHighQuarter": 1456,
-          "amount": 59
-        },
-        {
-          "fromHighQuarter": 1495,
-          "amount": 60
-        },
-        {
-          "fromHighQuarter": 1521,
-          "amount": 61
-        },
-        {
-          "fromHighQuarter": 1547,
-          "amount": 62
-        },
-        {
-          "fromHighQuarter": 1586,
-          "amount": 63
-        },
-        {
-          "fromHighQuarter": 1612,
-          "amount": 64
-        },
-        {
-          "fromHighQuarter": 1638,
-          "amount": 65
-        },
-        {
-          "fromHighQuarter": 1677,
-          "amount": 66
-        },
-        {
-          "fromHighQuarter": 1703,
-          "amount": 67
-        },
-        {
-          "fromHighQuarter": 1742,
-          "amount": 68
-        },
-        {
-          "fromHighQuarter": 1768,
-          "amount": 69
-        },
-        {
-          "fromHighQuarter": 1807,
-          "amount": 70
-        }
+        [900, 40],
+        [949, 41],
+        [975, 42],
+        [1001, 43],
+        [1027, 44],
+        [1053, 45],
+        [1079, 46],
+        [1118, 47],
+        [1144, 48],
+        [1170, 49],
+        [1196, 50],
+        [1222, 51],
+        [1248, 52],
+        [1287, 53],
+        [1313, 54],
+        [1339, 55],
+        [1365, 56],
+        [1404, 57],
+        [1430, 58],
+        [1456, 59],
+        [1495, 60],
+        [1521, 61],
+        [1547, 62],
+        [1586, 63],
+        [1612, 64],
+        [1638, 65],
+        [1677, 66],
+        [1703, 67],
+        [1742, 68],
+        [1768, 69],
+        [1807, 70]
       ],
       "divisorFrom": 1833
     }
@@ -152,11 +59,7 @@
     "shareOfBasePeriodWages": 0.5
   },
   "notModeled": [
-    "The alternate base period: enter whichever four quarters the EDD will use.",
-    "Partial unemployment: earnings while claiming reduce each week's payment under the state's own formula, which this does not apply.",
-    "Whether you are eligible apart from wages: why the job ended, being able and available to work, and the work search the state requires.",
-    "Extended or federal emergency benefits, which exist only when Congress or a high state unemployment rate triggers them.",
-    "Taxes: benefits are taxable federal income; you can ask for 10% to be withheld."
+    "The alternate base period: enter whichever four quarters the EDD will use."
   ],
   "citation": {
     "sourceUrl": "https://edd.ca.gov/siteassets/files/pdf_pub_ctr/de1101bt5.pdf",

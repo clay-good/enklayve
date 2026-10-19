@@ -22,11 +22,7 @@
   "notModeled": [
     "Claims with an effective date before October 4, 2026 use the previous range, $75 to $605.",
     "The alternate base period, which Texas allows only after a medically verifiable illness or injury.",
-    "A second benefit year's extra test: six times the new weekly benefit earned since the last claim began.",
-    "Partial unemployment: earnings while claiming reduce each week's payment under the state's own formula, which this does not apply.",
-    "Whether you are eligible apart from wages: why the job ended, being able and available to work, and the work search the state requires.",
-    "Extended or federal emergency benefits, which exist only when Congress or a high state unemployment rate triggers them.",
-    "Taxes: benefits are taxable federal income; you can ask for 10% to be withheld."
+    "A second benefit year's extra test: six times the new weekly benefit earned since the last claim began."
   ],
   "citation": {
     "sourceUrl": "https://www.twc.texas.gov/programs/unemployment-benefits/eligibility-benefit-amounts",

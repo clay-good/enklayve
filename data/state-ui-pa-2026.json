@@ -1,0 +1,52 @@
+{
+  "stateCode": "pa",
+  "name": "Pennsylvania",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim. Pennsylvania's only alternate base year is for a work-related injury.",
+  "eligibility": [
+    {
+      "minCreditWeeks": 18,
+      "minShareOutsideHighQuarter": 0.37,
+      "bandedQualifyingWages": {
+        "addend": 24,
+        "share": 0.63,
+        "stepDownRows": 2
+      }
+    }
+  ],
+  "weeklyBenefit": {
+    "rounding": "up",
+    "minimum": 68,
+    "maximum": 605,
+    "bandedTable": {
+      "fromHighQuarter": 1688,
+      "bandWidth": 25,
+      "baseRate": 69,
+      "factor": 0.98,
+      "maximumFrom": 15388
+    }
+  },
+  "dependentAllowances": {
+    "perDependent": [
+      5,
+      3
+    ],
+    "note": "$5 a week for a dependent spouse, or a first dependent child if there is no spouse, and $3 for one more child; each must be wholly or chiefly supported by you."
+  },
+  "duration": {
+    "maxWeeks": 26,
+    "weeksFromCreditWeeks": true
+  },
+  "paymentReduction": 0.032,
+  "notModeled": [
+    "The other route to a weekly rate: half your full-time weekly wage, where that is higher than the table's.",
+    "A credit week is a week you earned $116 or more; count them from your pay stubs."
+  ],
+  "citation": {
+    "sourceUrl": "https://www.pa.gov/agencies/dli/resources/for-claimants-workers/benefits-information/benefit-guide/eligibility-information",
+    "sourceDocument": "PA L&I, UC eligibility and the §404(e) rate table; 56 Pa.B. 448 (Jan. 17, 2026); UC benefit guide and rate FAQs",
+    "sourceNote": "The table L&I publishes runs from $1,688-$1,712 of high-quarter wages at $68 to \"15,388 or more\" at $605, in $25 rows. All 548 rows were checked on 2026-10-19 against a closed form: row = (high quarter - 1,688) / 25 rounded down, rate = 98% of (69 + row) rounded up, the 98% being Act 144's 2% reduction, which is why eleven rates appear on two rows; and each row's qualifying wages (Part C) = (row start + 24) / 0.63 rounded up. Short of Part C, the rate steps down to either of the next two rows (§404(a)(3)). \"Not less than thirty-seven per centum (37%)\" of base-year wages must be outside the high quarter (§401(a)(2)). Weeks are credit weeks, \"any calendar week ... in which an individual earned $116 or more\", from 18 to 26. 56 Pa.B. 448: \"the maximum weekly benefit rate for calendar year 2026 will remain at $605.\" L&I's FAQ: payments are \"reduced by 3.2 percent beginning with the week ending January 7, 2023\", so a $605 rate pays $585. The dependent allowance is $5 and $3, at most $8 (benefit guide).",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

@@ -475,8 +475,8 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
   // Each probe stands on a threshold and a cent either side: California's
   // schedule-to-divisor seam and its 1.25x path, Florida's 1.5x and $3,400,
   // Texas's 37x and its weekly maximum.
-  const uiProbe = (code: string, q: [number, number, number, number]): void => {
-    const r = estimateUi({ quarterlyWages: q }, data.stateUi(code)!);
+  const uiProbe = (code: string, q: [number, number, number, number], creditWeeks = 26): void => {
+    const r = estimateUi({ quarterlyWages: q, creditWeeks }, data.stateUi(code)!);
     put(`ui(${code},${q.join("/")})`, {
       eligible: r.eligible,
       weekly: r.weeklyTotal,
@@ -491,6 +491,18 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
   for (const hq of [7149.99, 7150, 7176]) uiProbe("fl", [hq, hq, hq, hq]);
   for (const other of [811.99, 812, 812.01]) uiProbe("tx", [2000, other, 0, 0]);
   for (const hq of [15474.99, 15475, 15500.01]) uiProbe("tx", [hq, hq, 0, 0]);
+  // New York: the $3,575 low-earner line, the $4,000 averaging line, the $3,500
+  // wage test, and the $19,118 cap in the 1.5x test.
+  for (const hq of [3574.99, 3575, 3575.01]) uiProbe("ny", [hq, hq, hq, hq]);
+  for (const hq of [3999.99, 4000, 4000.01]) uiProbe("ny", [hq, 3000, 0, 0]);
+  for (const hq of [3499.99, 3500, 3500.01]) uiProbe("ny", [hq, 3000, 0, 0]);
+  for (const other of [9558.99, 9559, 9559.01]) uiProbe("ny", [30000, other, 0, 0]);
+  // Pennsylvania: the first row, a row's qualifying total, the 37% share, the
+  // maximum row, and 18 credit weeks.
+  for (const hq of [1687.99, 1688, 1712, 1713]) uiProbe("pa", [hq, 1100, 0, 0]);
+  for (const last of [922.99, 923, 924]) uiProbe("pa", [7500, 2000, 1500, last]);
+  for (const hq of [15387.99, 15388]) uiProbe("pa", [hq, 5000, 5000, 5000]);
+  for (const cw of [17, 18, 26, 27]) uiProbe("pa", [7500, 2000, 1500, 924], cw);
 
   // --- garnishment: the crossover -------------------------------------------
   const garn = data.garnishmentLimits()!;
