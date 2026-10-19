@@ -27,7 +27,7 @@ function fundedProfile(): SituationStore {
 }
 
 describe("the Report asks the engine, not a number it remembers", () => {
-  /** A household under DC's expansion threshold and over the federal one. */
+  /** A single DC household at a given income. */
   function inDc(income: number): SituationStore {
     const p = new SituationStore();
     p.set("annualIncome", income);
@@ -37,22 +37,31 @@ describe("the Report asks the engine, not a number it remembers", () => {
     return p;
   }
 
-  it("uses DC's 215% threshold, which the hardcoded 138 could not see", () => {
+  it("uses a state's own threshold, which the hardcoded 138 could not see", () => {
     // The Report tested `p <= 138` against a literal it held itself, and the
-    // Medicaid shard carries a per-state override the literal ignored: DC
-    // expands to 215% of the poverty line. A single DC resident earning
-    // $28,000 is around 170% of it — eligible in DC, and told otherwise by a
-    // document generated beside a Medicaid tile that says the opposite.
-    const owed = buildReport(inDc(28_000), data).sections.find(
+    // Medicaid shard carries a per-state override the literal ignored. DC
+    // carried 215% until 2026; no state carries one live now, so the field is
+    // given one. A single DC resident earning $28,000 is around 170% of the
+    // poverty line — under the override, and the Report must say so.
+    const withOverride = Object.create(data) as BundledData;
+    withOverride.medicaid = () => ({ ...data.medicaid()!, thresholdOverridesPctFpl: { DC: 215 } });
+    const owed = buildReport(inDc(28_000), withOverride).sections.find(
       (s) => s.title === "What you may be owed",
     );
     const medicaid = owed?.lines.find((l) => l.label === "Medicaid");
-    expect(medicaid, "a DC resident at ~170% FPL should be flagged eligible").toBeDefined();
+    expect(medicaid, "an override at 215% should reach ~170% FPL").toBeDefined();
     expect(medicaid?.value).toContain("215%");
+
+    // And on the bundled data, where DC is at 138% from 2026 (DHCF MDL 25-02),
+    // the same household is not flagged.
+    const live = buildReport(inDc(28_000), data).sections.find(
+      (s) => s.title === "What you may be owed",
+    );
+    expect(live?.lines.find((l) => l.label === "Medicaid")).toBeUndefined();
   });
 
   it("still points a household above the threshold at the premium tax credit", () => {
-    // ~320% of the poverty line for one person: over DC's 215% and under the
+    // ~320% of the poverty line for one person: over DC's 138% and under the
     // 400% ceiling that came back for 2026.
     const owed = buildReport(inDc(50_000), data).sections.find(
       (s) => s.title === "What you may be owed",

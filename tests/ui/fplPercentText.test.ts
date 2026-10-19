@@ -80,7 +80,8 @@ describe("fplPercentText", () => {
   });
 
   it("checks each threshold the caller named, not a hardcoded list", () => {
-    // DC expands Medicaid to 215%, which no shared constant would have known.
+    // A state's own override — DC carried 215% until 2026 — which no shared
+    // constant would have known.
     expect(fplPercentText(215.3, [138])).toBe("215%");
     expect(fplPercentText(215.3, [215])).toBe("215.3%");
   });

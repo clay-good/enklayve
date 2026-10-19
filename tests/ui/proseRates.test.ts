@@ -169,13 +169,6 @@ const BOUND: RateBound[] = [
     path: ".expansionThresholdPctFpl",
     derive: asPoints,
   },
-  {
-    file: "tiles/medicaid.ts",
-    shard: "medicaid-2024",
-    path: ".thresholdOverridesPctFpl.DC",
-    derive: asPoints,
-    why: "DC's override, the one the Readout Report used to ignore",
-  },
 
   {
     file: "tiles/garnishment.ts",

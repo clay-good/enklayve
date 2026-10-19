@@ -178,22 +178,45 @@ describe("What Am I Owed screener", () => {
     expect(root.textContent).toContain("ends it entirely");
   });
 
-  it("uses DC's 215% threshold, which the hardcoded 138 could not see", () => {
+  it("uses a state's own threshold, which the hardcoded 138 could not see", () => {
     // The Readout Report was fixed out of this exact shape on an earlier day —
     // `p <= 138` against a literal it held itself — and the screener was the
-    // surface that kept it. A single DC resident at $27,000 is around 169% of
-    // the poverty line: over 138, under DC's 215, and eligible. The Medicaid
-    // tile said so, the saved Report said so, and the screener whose entire job
-    // is to find what a household is owed said nothing.
+    // surface that kept it. DC carried a 215% override until 2026, so a single
+    // DC resident at $27,000, around 169% of the poverty line, was eligible and
+    // heard nothing here. No state carries an override live now, so the shard's
+    // own field is given one: the screener must read it, not the literal.
+    const live = data;
+    data = Object.create(live) as BundledData;
+    data.medicaid = () => ({ ...live.medicaid()!, thresholdOverridesPctFpl: { DC: 215 } });
+    try {
+      const profile = new SituationStore();
+      profile.set("stateCode", "dc");
+      const root = mount(
+        mountOwedScreener,
+        new URLSearchParams({ hh: "1", inc: "27000" }),
+        profile,
+      );
+      const items = Array.from(root.querySelectorAll(".screener-item")).map(
+        (n) => n.textContent ?? "",
+      );
+      const medicaid = items.find((t) => t.includes("Medicaid"));
+      expect(medicaid, "an override at 215% should reach a household at ~169% FPL").toBeDefined();
+      expect(medicaid).toContain("215%");
+    } finally {
+      data = live;
+    }
+  });
+
+  it("does not promise DC Medicaid above 138% now that DC has lowered its line", () => {
+    // DHCF MDL 25-02, effective 2026-01-01. The same household as above, on the
+    // bundled data: over the line, and not told it qualifies.
     const profile = new SituationStore();
     profile.set("stateCode", "dc");
     const root = mount(mountOwedScreener, new URLSearchParams({ hh: "1", inc: "27000" }), profile);
     const items = Array.from(root.querySelectorAll(".screener-item")).map(
       (n) => n.textContent ?? "",
     );
-    const medicaid = items.find((t) => t.includes("Medicaid"));
-    expect(medicaid, "a DC resident at ~169% FPL should be told about Medicaid").toBeDefined();
-    expect(medicaid).toContain("215%");
+    expect(items.some((t) => t.includes("215%"))).toBe(false);
   });
 
   it("does not promise Medicaid to a household in a non-expansion state", () => {

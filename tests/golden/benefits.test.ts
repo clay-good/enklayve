@@ -388,11 +388,26 @@ describe("Medicaid eligibility (2026)", () => {
     expect(r.thresholdPctFpl).toBeNull();
   });
 
-  it("applies DC's higher 215% threshold", () => {
-    // $30,000 for a household of 1 is ~188% FPL — eligible only because DC goes to 215%.
+  it("holds DC to 138% from 2026, not the 215% it used to carry", () => {
+    // DHCF MDL 25-02: childless adults and parents drop to 138% on 2026-01-01.
+    // $30,000 for a household of 1 is ~188% FPL — eligible under the old 215%,
+    // and not now.
     const r = medicaidEligibility(
       { stateCode: "DC", income: 30000, householdSize: 1 },
       medicaid,
+      fpl,
+    );
+    expect(r.thresholdPctFpl).toBe(138);
+    expect(r.eligible).toBe(false);
+  });
+
+  it("still lets a per-state override decide, where the shard carries one", () => {
+    // No state carries one live in 2026; the mechanism stays, because a state
+    // that sets its own line is the case a single constant gets wrong.
+    const withOverride = { ...medicaid, thresholdOverridesPctFpl: { DC: 215 } };
+    const r = medicaidEligibility(
+      { stateCode: "DC", income: 30000, householdSize: 1 },
+      withOverride,
       fpl,
     );
     expect(r.thresholdPctFpl).toBe(215);

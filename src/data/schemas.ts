@@ -999,7 +999,7 @@ export const MedicaidSchema = z.object({
   year: z.number().int(),
   /** Adult MAGI eligibility ceiling in expansion states, as a % of FPL (138). */
   expansionThresholdPctFpl: z.number().gte(0),
-  /** Per-state ceiling overrides (e.g. DC covers adults to 215% FPL). */
+  /** Per-state ceiling overrides (DC carried 215% FPL until 2026; none does now). */
   thresholdOverridesPctFpl: z
     .record(z.string().regex(/^[A-Z]{2}$/), z.number().gte(0))
     .optional(),

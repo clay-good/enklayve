@@ -314,9 +314,9 @@ export function mountOwedScreener(ctx: TileContext): void {
     // Medicaid and the premium tax credit were drawn here with literals — `<= 138`
     // and `>= 100 && <= 400` — which is the shape the Readout Report was fixed
     // out of, one surface later than this one. The 138 is a shard field with a
-    // per-state override the literal could not see: DC expands to 215%, so a DC
-    // resident at 170% of the poverty line is eligible, is told so by the
-    // Medicaid tile and by the saved Report, and heard nothing here.
+    // per-state override the literal could not see: DC expanded to 215% until
+    // 2026, so a DC resident at 170% of the poverty line was eligible, was told
+    // so by the Medicaid tile and by the saved Report, and heard nothing here.
     const medicaidData = bundled.medicaid();
     const stateCode = profile.get("stateCode");
     const medicaidThreshold = medicaidData?.expansionThresholdPctFpl ?? 138;

@@ -131,9 +131,9 @@ export function mountMedicaid(ctx: TileContext): void {
       },
       {
         label: "Income as % of poverty line",
-        // The state's own threshold is what this tile decides with — 138% in
-        // most expansion states, 215% in DC — so that is the line the printed
-        // figure must not be rounded onto.
+        // The state's own threshold is what this tile decides with — 138%, or a
+        // state's override where the shard carries one — so that is the line the
+        // printed figure must not be rounded onto.
         value: fplPercentText(r.fplPercent, r.thresholdPctFpl === null ? [] : [r.thresholdPctFpl]),
         citation: fpl.citation,
       },
@@ -226,7 +226,7 @@ export const medicaidTile: TileDefinition = {
   description: "MAGI thresholds by state, expansion vs non-expansion.",
   keywords: ["medicaid", "magi", "health", "expansion", "coverage"],
   status: "ready",
-  how: "Most adult Medicaid eligibility is based on modified adjusted gross income (MAGI) as a percentage of the federal poverty line. In states that expanded Medicaid under the Affordable Care Act, adults at or below 138% of the poverty line are generally eligible (DC covers adults to 215%). We compute your percentage of the line for your state's region and compare it to the threshold.\n\nIn states that did not expand, there is usually no broad coverage for adults on income alone; eligibility is limited to specific groups like parents, pregnant people, children, and people with disabilities, often at much lower income limits. We tell you your state's expansion status and flag this rather than guess a precise number. The agency makes the final determination.",
+  how: "Most adult Medicaid eligibility is based on modified adjusted gross income (MAGI) as a percentage of the federal poverty line. In states that expanded Medicaid under the Affordable Care Act, adults at or below 138% of the poverty line are generally eligible. That now includes DC, which used to go further; adults there just above the line may qualify for the Healthy DC Plan, which is not Medicaid. We compute your percentage of the line for your state's region and compare it to the threshold.\n\nIn states that did not expand, there is usually no broad coverage for adults on income alone; eligibility is limited to specific groups like parents, pregnant people, children, and people with disabilities, often at much lower income limits. We tell you your state's expansion status and flag this rather than guess a precise number. The agency makes the final determination.",
   resources: [
     {
       label: "Medicaid.gov, eligibility",

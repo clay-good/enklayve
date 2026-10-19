@@ -70,7 +70,13 @@ import type { TileContext } from "../../src/tiles/types";
  */
 let data: BundledData;
 beforeAll(async () => {
-  data = await loadBundledData();
+  // DC is the grid's override state. It carried 215% live until 2026 and is at
+  // 138% now (DHCF MDL 25-02), so the override is given here: the sweep exists
+  // to catch a surface that reads the literal instead of the shard's field, and
+  // only a state whose line differs from 138 can show that.
+  const live = await loadBundledData();
+  data = Object.create(live) as BundledData;
+  data.medicaid = () => ({ ...live.medicaid()!, thresholdOverridesPctFpl: { DC: 215 } });
 });
 
 /**
@@ -106,7 +112,7 @@ const lineFor = (size: number): number => FPL.base + (size - 1) * FPL.perAdditio
 
 /**
  * Incomes placed at, just under, and just over every line that decides
- * something — 100%, 138%, DC's 215%, and 400% of the poverty line. A round
+ * something — 100%, 138%, the 215% override given to DC, and 400% of the poverty line. A round
  * number never lands on a threshold, which is why these are derived.
  */
 function grid(): { label: string; income: number; state: string; size: number }[] {
