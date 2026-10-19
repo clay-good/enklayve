@@ -1593,6 +1593,12 @@ const UiEligibilityPathSchema = z.object({
   minAverageWeeklyWage: z.number().gt(0).optional(),
   /** Hours worked in the base period (WA 680). */
   minHours: z.number().int().gt(0).optional(),
+  /** Wages in the last two base-period quarters at least this (IN $2,500); quarters in order. */
+  minLastTwoQuarters: z.number().gt(0).optional(),
+  /** Wages outside the high quarter at least the lesser of a sum and a multiple of the rate (TN). */
+  minOutsideHighQuarterLesserOf: z
+    .object({ dollars: z.number().gt(0), timesWeekly: z.number().gt(0) })
+    .optional(),
   /** A path the state allows but this estimate cannot compute; meeting only it
    * says "may qualify" instead of a figure (NJ's $15,500 alternative). */
   notEstimated: z.boolean().optional(),
@@ -1602,7 +1608,15 @@ const UiEligibilityPathSchema = z.object({
    * one of the next `stepDownRows` lower rows whose minimum is met.
    */
   bandedQualifyingWages: z
-    .object({ addend: z.number(), share: z.number().gt(0).lte(1), stepDownRows: z.number().int().gte(0) })
+    .object({
+      addend: z.number(),
+      share: z.number().gt(0).lte(1).optional(),
+      /** Or the row's end times this (MD: 1.5 × the line's upper limit). */
+      multiplier: z.number().gt(0).optional(),
+      stepDownRows: z.number().int().gte(0),
+      /** The test applies at the open-ended top row too (MD), not only below it (PA). */
+      atMaximum: z.boolean().optional(),
+    })
     .optional(),
 });
 export const StateUiSchema = z.object({
@@ -1641,6 +1655,8 @@ export const StateUiSchema = z.object({
         capAtWageOver: z.number().positive().optional(),
         /** The averaged wage is a quarter's, not a week's (WA), for how it is named. */
         quarterly: z.boolean().optional(),
+        /** The top quarters must be consecutive, in base-period order (CO). */
+        consecutive: z.boolean().optional(),
       })
       .optional(),
     /**
@@ -1654,6 +1670,25 @@ export const StateUiSchema = z.object({
         firstUpTo: z.number().gt(0),
         width: z.number().gt(0),
         firstRate: z.number().gt(0),
+      })
+      .optional(),
+    /**
+     * A table on the two-quarter average A (TN §50-7-301(b)): the rate is A / 26
+     * rounded up, plus the offset of the last row whose start A exceeds.
+     */
+    averageWageTable: z
+      .object({
+        divisor: z.number().positive(),
+        rows: z.array(z.tuple([z.number().gte(0), z.number()])).min(1),
+      })
+      .optional(),
+    /** A second formula, paid when it is higher: base-period wages over a divisor,
+     * times a share, with its own maximum (CO's 50% of 1/52). */
+    alternative: z
+      .object({
+        basePeriodDivisor: z.number().positive(),
+        share: z.number().gt(0).lt(1),
+        maximum: z.number().gt(0),
       })
       .optional(),
     /** Maximums by dependents, indexed by count and capped at the last (OH). */
@@ -1714,6 +1749,8 @@ export const StateUiSchema = z.object({
       repeatLast: z.boolean().default(false),
       /** Paid on top of the total cap rather than under it (MA §30). */
       outsideTotalCap: z.boolean().default(false),
+      /** Rate plus allowance may not pass the weekly maximum (MD §8-804). */
+      capAtMaximum: z.boolean().default(false),
       note: z.string().min(1),
       /** Added before the rate is rounded and capped, not after (MI §421.27). */
       beforeRounding: z.boolean().default(false),
@@ -1757,6 +1794,7 @@ export const StateUiSchema = z.object({
       d.weeklyBenefit.highQuarterShare,
       d.weeklyBenefit.averageWeeklyWage,
       d.weeklyBenefit.stepTable,
+      d.weeklyBenefit.averageWageTable,
     ].filter((m) => m !== undefined).length === 1,
   { message: "a state's weekly benefit has exactly one method" },
 );

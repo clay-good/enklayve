@@ -51,6 +51,7 @@ export interface UiResult {
     | "stepped-down"
     | "average-wage"
     | "share"
+    | "alternative"
     | "minimum"
     | "maximum";
   dependentAllowance: number;
@@ -100,7 +101,14 @@ function bandedRow(
   const start = new Decimal(t.fromHighQuarter).plus(new Decimal(t.bandWidth).times(row));
   return {
     rate: wholeDollars(new Decimal(t.factor).times(t.baseRate + row), w.rounding),
-    qualifying: q ? wholeDollars(start.plus(q.addend).dividedBy(q.share), "up") : 0,
+    qualifying: q
+      ? wholeDollars(
+          q.multiplier !== undefined
+            ? start.plus(q.addend).times(q.multiplier)
+            : start.plus(q.addend).dividedBy(q.share ?? 1),
+          "up",
+        )
+      : 0,
   };
 }
 
@@ -133,11 +141,16 @@ function weeklyFrom(
   const t = w.bandedTable;
   if (t) {
     if (highQuarter < t.fromHighQuarter) return null;
-    if (highQuarter >= t.maximumFrom) return { amount: w.maximum, basis: "maximum" };
-    // Below its row's qualifying total the rate steps down to one of the next
-    // rows whose total is met (PA §404(a)(3)); past those, there is no claim.
     const q = rules.eligibility[0]?.bandedQualifyingWages;
-    const row = Math.floor((highQuarter - t.fromHighQuarter) / t.bandWidth);
+    // Pennsylvania's open-ended top row has no qualifying total of its own;
+    // Maryland's does, so its test runs there too.
+    if (highQuarter >= t.maximumFrom && !q?.atMaximum)
+      return { amount: w.maximum, basis: "maximum" };
+    // Below its row's qualifying total the rate steps down to one of the next
+    // rows whose total is met (PA §404(a)(3), MD §8-803(a)(2)); past those, no claim.
+    const row = Math.floor(
+      (Math.min(highQuarter, t.maximumFrom) - t.fromHighQuarter) / t.bandWidth,
+    );
     for (let k = 0; k <= (q?.stepDownRows ?? 0) && row - k >= 0; k++) {
       const r = bandedRow(row - k, w, q);
       if (basePeriod >= r.qualifying)
@@ -152,6 +165,21 @@ function weeklyFrom(
         ? { ...extra, amount: w.minimum, basis: "minimum" }
         : { ...extra, amount, basis: b };
   const sorted = [...quarters].sort((a, b) => b - a);
+  // The highest pair of quarters — adjacent ones where the state says
+  // consecutive (CO), in the order the base period runs.
+  const topPair = (consecutive: boolean | undefined): number =>
+    consecutive
+      ? Math.max(...quarters.slice(1).map((q, i) => (quarters[i] ?? 0) + q))
+      : (sorted[0] ?? 0) + (sorted[1] ?? 0);
+  const table = w.averageWageTable;
+  if (table) {
+    // Tennessee: the two-quarter average over 26, raised, plus its row's offset.
+    const average = new Decimal(topPair(false)).dividedBy(2);
+    let offset: number | undefined;
+    for (const [from, add] of table.rows) if (average.greaterThanOrEqualTo(from)) offset = add;
+    if (offset === undefined) return null;
+    return clamp(wholeDollars(average.dividedBy(table.divisor), "up") + offset, "table");
+  }
   const aww = w.averageWeeklyWage;
   if (aww) {
     let wage: Decimal;
@@ -169,10 +197,11 @@ function weeklyFrom(
         few && withWages <= few.atOrBelowQuarters
           ? [1, few.divisor]
           : [aww.topQuarters ?? 2, aww.divisor ?? 26];
-      wage = sorted
-        .slice(0, n)
-        .reduce((a, b) => a.plus(b), new Decimal(0))
-        .dividedBy(divisor);
+      const top =
+        n === 2
+          ? new Decimal(topPair(aww.consecutive))
+          : sorted.slice(0, n).reduce((a, b) => a.plus(b), new Decimal(0));
+      wage = top.dividedBy(divisor);
     }
     const averageWeeklyWage = wholeDollars(wage, aww.wageRounding);
     const clamped = clamp(
@@ -180,6 +209,18 @@ function weeklyFrom(
       "average-wage",
       { averageWeeklyWage },
     );
+    // Colorado: a second formula on the whole base period, paid if higher.
+    const alt = w.alternative;
+    if (alt) {
+      const other = Math.min(
+        alt.maximum,
+        wholeDollars(
+          new Decimal(basePeriod).dividedBy(alt.basePeriodDivisor).times(alt.share),
+          "down",
+        ),
+      );
+      if (other > clamped.amount) return { ...clamped, amount: other, basis: "alternative" };
+    }
     // Washington: no one is paid more than their own weekly wage.
     if (aww.capAtWageOver !== undefined) {
       const own = wholeDollars(new Decimal(averageWeeklyWage).dividedBy(aww.capAtWageOver), "down");
@@ -274,16 +315,36 @@ export function estimateUi(input: UiInput, rules: StateUiData): UiResult {
     // A table's first row is a wage test of its own; a state without one says
     // what is short through its other tests (Ohio's weeks and average wage).
     const wb = rules.weeklyBenefit;
-    if (weekly === null && (wb.lowWageSchedule || wb.bandedTable || wb.stepTable))
+    if (
+      weekly === null &&
+      (wb.lowWageSchedule || wb.bandedTable || wb.stepTable || wb.averageWageTable)
+    )
       out.push(
         wb.stepTable
           ? `wages in the two highest quarters under $${wb.stepTable.fromWages.toLocaleString("en-US")}`
-          : path.bandedQualifyingWages
-            ? "high-quarter or total wages below the lowest rate the table allows"
-            : "high-quarter wages below the lowest row of the benefit table",
+          : wb.averageWageTable
+            ? `an average in the two highest quarters under $${wb.averageWageTable.rows[0]![0].toLocaleString("en-US")}`
+            : path.bandedQualifyingWages
+              ? "high-quarter or total wages below the lowest rate the table allows"
+              : "high-quarter wages below the lowest row of the benefit table",
       );
     if (path.minHours !== undefined && hours < path.minHours)
       out.push(`fewer than ${path.minHours} hours worked`);
+    if (
+      path.minLastTwoQuarters !== undefined &&
+      (quarters[2] ?? 0) + (quarters[3] ?? 0) < path.minLastTwoQuarters
+    )
+      out.push(
+        `wages in the last two quarters under $${path.minLastTwoQuarters.toLocaleString("en-US")}`,
+      );
+    const lesser = path.minOutsideHighQuarterLesserOf;
+    if (
+      lesser &&
+      basePeriod - highQuarter < Math.min(lesser.dollars, lesser.timesWeekly * weeklyBenefit)
+    )
+      out.push(
+        `wages outside the high quarter under the lesser of $${lesser.dollars.toLocaleString("en-US")} or ${lesser.timesWeekly} times the weekly benefit`,
+      );
     if (rowWeeks === 0) out.push("base-period wages below the table's shortest duration");
     if (path.minHighQuarterWages !== undefined && highQuarter < path.minHighQuarterWages)
       out.push(`high-quarter wages under $${path.minHighQuarterWages.toLocaleString("en-US")}`);
@@ -337,7 +398,9 @@ export function estimateUi(input: UiInput, rules: StateUiData): UiResult {
     return out;
   });
   const estimable = (i: number): boolean => !rules.eligibility[i]?.notEstimated;
-  const eligible = failures.some((f, i) => f.length === 0 && estimable(i));
+  // No rate means no claim, whatever the tests say: a table with no row for
+  // these wages has already answered (TN below its first row).
+  const eligible = weekly !== null && failures.some((f, i) => f.length === 0 && estimable(i));
   const mayQualifyUnestimated =
     !eligible && failures.some((f, i) => f.length === 0 && !estimable(i));
 
@@ -350,9 +413,15 @@ export function estimateUi(input: UiInput, rules: StateUiData): UiResult {
     const shares = deps.sharesOfRate.slice(0, dependents).reduce((a, b) => a + b, 0);
     const raised = wholeDollars(new Decimal(weeklyBenefit).times(1 + shares), "down");
     dependentAllowance = Math.max(0, Math.min(raised, rules.weeklyBenefit.maximum) - weeklyBenefit);
-  } else if (eligible)
+  } else if (eligible) {
     for (let i = 0; i < dependents; i++)
       dependentAllowance += amounts[i] ?? (deps?.repeatLast ? (amounts.at(-1) ?? 0) : 0);
+    if (deps?.capAtMaximum)
+      dependentAllowance = Math.max(
+        0,
+        Math.min(dependentAllowance, rules.weeklyBenefit.maximum - weeklyBenefit),
+      );
+  }
   const weeklyTotal = eligible ? weeklyBenefit + dependentAllowance : 0;
   const weeklyPaid =
     rules.paymentReduction === undefined

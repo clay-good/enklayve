@@ -1,0 +1,49 @@
+{
+  "stateCode": "tn",
+  "name": "Tennessee",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim. Tennessee uses the last four completed quarters only if those do not qualify.",
+  "eligibility": [
+    {
+      "minQuartersWithWages": 2,
+      "minBasePeriodToWeeklyBenefit": 40,
+      "minOutsideHighQuarterLesserOf": {
+        "dollars": 900,
+        "timesWeekly": 6
+      }
+    }
+  ],
+  "weeklyBenefit": {
+    "rounding": "up",
+    "minimum": 55,
+    "maximum": 325,
+    "averageWageTable": {
+      "divisor": 26,
+      "rows": [
+        [
+          780.01,
+          24
+        ],
+        [
+          4420.01,
+          49
+        ]
+      ]
+    }
+  },
+  "duration": {
+    "maxWeeks": 12,
+    "totalRoundsDown": true
+  },
+  "notModeled": [
+    "The weeks rise above 12, to as many as 20, when Tennessee's average unemployment rate is over 5.5%.",
+    "The alternate base period: enter whichever four quarters the Department will use."
+  ],
+  "citation": {
+    "sourceUrl": "https://publications.tnsosfiles.com/acts/112/pub/pc0560.pdf",
+    "sourceDocument": "Tenn. Code Ann. §50-7-301 as amended by 2021 Pub. Ch. 560 (from Dec. 1, 2023); TDLWD eligibility pages",
+    "sourceNote": "Pub. Ch. 560 §1 replaces the benefit table: rows of the average wages in the two highest quarters, $26 wide, from \"$ 780.01 through $ 806.00 ... $55.00\" to \"7,150.01 and over ... 325.00\". All 242 rows read on 2026-10-19 equal the average over 26 rounded up plus $24 to $4,420, and plus $49 above it, so no rate between $195 and $219 exists. §2: a claimant is not entitled if base-period earnings are \"less than forty (40) times\" the rate, or earnings outside the high quarter are \"less than the lesser of six (6) times ... or nine hundred dollars ($900)\"; weeks are \"Twelve (12) ... if the state average unemployment rate is at or below five and five-tenths percent\", to 20, and the total rounds down. TDLWD: \"Eligible claims may receive up to $325 per week\" and \"a maximum of 12 weeks ... if the state average unemployment rate is at or below 5.5%.\" One unpaid waiting week.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

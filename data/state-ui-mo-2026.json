@@ -1,0 +1,43 @@
+{
+  "stateCode": "mo",
+  "name": "Missouri",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim. Missouri has no alternate base period.",
+  "eligibility": [
+    {
+      "minHighQuarterWages": 1500,
+      "minBasePeriodToHighQuarter": 1.5
+    },
+    {
+      "minQuartersWithWages": 2,
+      "minBasePeriodWages": 13500
+    }
+  ],
+  "weeklyBenefit": {
+    "rounding": "down",
+    "minimum": 0,
+    "maximum": 320,
+    "averageWeeklyWage": {
+      "from": "top-quarters",
+      "topQuarters": 2,
+      "divisor": 2,
+      "wageRounding": "none",
+      "share": 0.04,
+      "quarterly": true
+    }
+  },
+  "duration": {
+    "maxWeeks": 20,
+    "basePeriodWagesDivisor": 3
+  },
+  "notModeled": [
+    "The second wage test is 1.5 times the taxable wage base, $9,000 for 2026; a claim measured against 2025's $9,500 would need $14,250."
+  ],
+  "citation": {
+    "sourceUrl": "https://revisor.mo.gov/main/OneSection.aspx?section=288.038",
+    "sourceDocument": "RSMo 288.030, 288.038, 288.060 (operative 2011 text); Missouri DES",
+    "sourceNote": "RSMo 288.038: \"four percent\" of \"the average of the two highest quarters of the worker's base period\", at most \"three hundred twenty dollars\", rounded down. 288.030: \"one thousand five hundred dollars or more in at least one calendar quarter\" and a total of 1.5 times it, or wages in two quarters totaling \"one and one-half times the maximum taxable wage base\" ($9,000 for 2026, DES). 288.060.4, the operative 2011 text: the total \"shall not exceed twenty times his or her weekly benefit amount, or thirty-three and one-third percent of his or her wage credits.\" The 2015 HB 150 version on the revisor's site, which indexed weeks to unemployment, was voided in Pestka v. State (2016); DES: \"Twenty weeks of benefits is the maximum\". No dependent allowance; one waiting week, paid at the end of the claim. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

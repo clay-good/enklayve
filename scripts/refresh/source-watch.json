@@ -272,6 +272,34 @@
       "why": "M.G.L. c. 151A §29 sets the half-of-average-wage rule and the dependency allowance; the October maximum is DUA's, on a page that refuses this pipeline, so the zero-year window forces its re-read.",
       "fingerprint": "094f827cbe80691bc71404cf46b3911a6854adb705999664b4a3557c0c80a1a8",
       "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-in-2026",
+      "url": "https://www.in.gov/dwd/files/Claimant_Handbook.pdf",
+      "why": "DWD's handbook states the 47% formula with a worked example, the $390 maximum and the wage tests; a revised handbook is where a statutory change is explained.",
+      "fingerprint": "62e1d9237c23c3a3f4125556df6d15ef8fe6ee39cd65f28b94fd9d55c9fd5ff5",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-md-2026",
+      "url": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gle&section=8-803&enactments=false",
+      "why": "Maryland's schedule of benefits is §8-803 itself, carried as a closed form; a bill like 2026's SB 3 would replace it, and the change is a table to re-check.",
+      "fingerprint": "2271bf00ded16e074fd13bd08cbf6ff981ae424d44cd1a2f8e54f5ab99f4e19f",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-mo-2026",
+      "url": "https://revisor.mo.gov/main/OneSection.aspx?section=288.038",
+      "why": "RSMo 288.038 holds the 4% formula and the $320 maximum, unchanged since 2008; an amendment is a rule to read.",
+      "fingerprint": "d5e950a226f0d1fdf2d8a0351d0e90677f8daf229fc10c315f510e0ac8062a57",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-tn-2026",
+      "url": "https://publications.tnsosfiles.com/acts/112/pub/pc0560.pdf",
+      "why": "The 2023 benefit table and duration scale are this public chapter; a later chapter amending §50-7-301 would not change this document, so the zero-year window forces a January re-read of the codified section.",
+      "fingerprint": "33df31a8851dcf3346d01b0b93dc877444dc48b681a8ef2d0c43823fa0a746c5",
+      "checkedOn": "2026-10-19"
     }
   ]
 }

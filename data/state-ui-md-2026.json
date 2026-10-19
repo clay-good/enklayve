@@ -1,0 +1,53 @@
+{
+  "stateCode": "md",
+  "name": "Maryland",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim. Maryland uses the four most recent completed quarters only if those do not qualify.",
+  "eligibility": [
+    {
+      "minQuartersWithWages": 2,
+      "bandedQualifyingWages": {
+        "addend": 23.99,
+        "multiplier": 1.5,
+        "stepDownRows": 6,
+        "atMaximum": true
+      }
+    }
+  ],
+  "weeklyBenefit": {
+    "rounding": "up",
+    "minimum": 50,
+    "maximum": 430,
+    "bandedTable": {
+      "fromHighQuarter": 1176.01,
+      "bandWidth": 24,
+      "baseRate": 50,
+      "factor": 1,
+      "maximumFrom": 10296.01
+    }
+  },
+  "dependentAllowances": {
+    "perDependent": [
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "capAtMaximum": true,
+    "note": "$8 a week for each child under 16 you support, up to five, never past the $430 maximum."
+  },
+  "duration": {
+    "maxWeeks": 26
+  },
+  "notModeled": [
+    "The alternate base period: enter whichever four quarters the Department will use."
+  ],
+  "citation": {
+    "sourceUrl": "https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=gle&section=8-803&enactments=false",
+    "sourceDocument": "Md. Code, Lab. & Empl. §§8-802, 8-803, 8-804, 8-808 (schedule of benefits)",
+    "sourceNote": "§8-803(b), the schedule of benefits: 381 lines in $24 bands of high-quarter wages, from \"(1) $ 1,176.01 to $ 1,200.00 50.00 1,800.00\" to \"(381) $10,296.01 and over 430.00 15,480.00\", each line's minimum qualifying wages 1.5 times its upper limit (§8-802). Short of it, a claimant who qualifies \"in 1 of the next 6 lower lines\" gets the lower line's amount (§8-803(a)(2)). §8-804: \"$8 for each child\", not \"for more than 5 dependents\", benefits and allowance not exceeding the schedule's highest amount. §8-808: the total is 26 times the weekly amount, the allowance paid on top. The 2026 bill to change the formula (SB 3) did not pass. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

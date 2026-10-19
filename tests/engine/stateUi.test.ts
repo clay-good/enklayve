@@ -17,6 +17,11 @@ let va: StateUiData;
 let wa: StateUiData;
 let az: StateUiData;
 let ma: StateUiData;
+let tn: StateUiData;
+let ind: StateUiData;
+let md: StateUiData;
+let mo: StateUiData;
+let co: StateUiData;
 beforeAll(async () => {
   data = await loadBundledData();
   ca = data.stateUi("ca")!;
@@ -32,6 +37,11 @@ beforeAll(async () => {
   wa = data.stateUi("wa")!;
   az = data.stateUi("az")!;
   ma = data.stateUi("ma")!;
+  tn = data.stateUi("tn")!;
+  ind = data.stateUi("in")!;
+  md = data.stateUi("md")!;
+  mo = data.stateUi("mo")!;
+  co = data.stateUi("co")!;
 });
 
 describe("the bundled state set", () => {
@@ -50,6 +60,11 @@ describe("the bundled state set", () => {
       "wa",
       "az",
       "ma",
+      "tn",
+      "in",
+      "md",
+      "mo",
+      "co",
     ]);
     for (const code of data.stateUiCodes()) {
       expect(StateUiSchema.safeParse(data.stateUi(code)).success).toBe(true);
@@ -494,6 +509,117 @@ describe("Massachusetts (M.G.L. c. 151A; DUA October 2026)", () => {
     expect(estimateUi({ quarterlyWages: [40000, 40000, 40000, 40000] }, ma).weeklyBenefit).toBe(
       1154,
     );
+  });
+});
+
+describe("Tennessee (§50-7-301 as amended by Pub. Ch. 560)", () => {
+  it("reads the table: the two-quarter average over 26, raised, plus $24 or $49", () => {
+    // Average $800: 800 / 26 = 30.77 → 31, + 24 = $55, the first row. ($2,600 in
+    // all clears 40 × 55 = $2,200.)
+    expect(estimateUi({ quarterlyWages: [900, 700, 700, 300] }, tn).weeklyBenefit).toBe(55);
+    // $4,420 is the last $194 row; $4,420.01 jumps to $220.
+    expect(estimateUi({ quarterlyWages: [4420, 4420, 4000, 0] }, tn).weeklyBenefit).toBe(194);
+    expect(estimateUi({ quarterlyWages: [4420.01, 4420.01, 4000, 0] }, tn).weeklyBenefit).toBe(220);
+    expect(estimateUi({ quarterlyWages: [9000, 9000, 9000, 9000] }, tn).weeklyBenefit).toBe(325);
+  });
+
+  it("needs 40 times the rate in all and the lesser of $900 or 6 times it outside the high quarter", () => {
+    // $194 a week: 40× = $7,760; 6× = $1,164, so $900 is the lesser.
+    expect(estimateUi({ quarterlyWages: [4420, 4420, 0, 0] }, tn).eligible).toBe(true);
+    // $8,000 and $800: average $4,400 → $194, $8,800 in all clears 40×, but only
+    // $800 outside the high quarter, under the lesser of $900 and $1,164.
+    const outside = estimateUi({ quarterlyWages: [8000, 800, 0, 0] }, tn);
+    expect(outside.eligible).toBe(false);
+    expect(outside.shortfalls.join(" ")).toContain("lesser of $900");
+    // Average under $780.01: below the first row.
+    expect(estimateUi({ quarterlyWages: [780, 780, 780, 780] }, tn).eligible).toBe(false);
+    // Twelve weeks, total rounded down.
+    expect(estimateUi({ quarterlyWages: [4420, 4420, 4000, 0] }, tn).maxBenefit).toBe(12 * 194);
+  });
+});
+
+describe("Indiana (IC 22-4-12-2, 22-4-14-5; DWD handbook)", () => {
+  it("pays 47% of base-period wages over 52, rounded down — the handbook's $271 example", () => {
+    const r = estimateUi({ quarterlyWages: [7500, 7500, 7500, 7500] }, ind);
+    expect(r.weeklyBenefit).toBe(271);
+    // Total: lesser of 26 × 271 = 7,046 and 28% of 30,000 = 8,400.
+    expect(r.maxBenefit).toBe(7046);
+    expect(estimateUi({ quarterlyWages: [20000, 20000, 20000, 20000] }, ind).weeklyBenefit).toBe(
+      390,
+    );
+  });
+
+  it("needs $2,500 in the LAST two quarters, so order matters", () => {
+    expect(estimateUi({ quarterlyWages: [3000, 1500, 1250, 1250] }, ind).eligible).toBe(true);
+    expect(estimateUi({ quarterlyWages: [1250, 1250, 3000, 1500] }, ind).eligible).toBe(true);
+    const early = estimateUi({ quarterlyWages: [2000, 2000, 1000, 1000] }, ind);
+    expect(early.eligible).toBe(false);
+    expect(early.shortfalls.join(" ")).toContain("last two quarters");
+  });
+});
+
+describe("Maryland (§§8-802, 8-803, 8-804 schedule of benefits)", () => {
+  it("reads its line of the schedule: $50 at $1,176.01-$1,200, $1 more each $24", () => {
+    // Line 1 needs $1,800 in at least two quarters.
+    expect(estimateUi({ quarterlyWages: [1200, 600, 0, 0] }, md).weeklyBenefit).toBe(50);
+    expect(estimateUi({ quarterlyWages: [1200.01, 700, 0, 0] }, md).weeklyBenefit).toBe(51);
+    // Line 381, $10,296.01 and over: $430, qualifying wages $15,480.
+    expect(estimateUi({ quarterlyWages: [12000, 4000, 0, 0] }, md).weeklyBenefit).toBe(430);
+  });
+
+  it("steps down a line when the line's qualifying wages are short, even at the top", () => {
+    // $12,000 high quarter but $15,479 in all: the top line's $15,480 is missed,
+    // line 380 ($10,272.01-$10,296, qualifying $15,444) is met: $429.
+    const r = estimateUi({ quarterlyWages: [12000, 3479, 0, 0] }, md);
+    expect(r.weeklyBenefit).toBe(429);
+    expect(r.weeklyBasis).toBe("stepped-down");
+  });
+
+  it("adds $8 a child, up to five, never past $430", () => {
+    expect(
+      estimateUi({ quarterlyWages: [5000, 3000, 0, 0], dependents: 6 }, md).dependentAllowance,
+    ).toBe(40);
+    expect(
+      estimateUi({ quarterlyWages: [12000, 4000, 0, 0], dependents: 2 }, md).dependentAllowance,
+    ).toBe(0);
+  });
+});
+
+describe("Missouri (RSMo 288.030, 288.038, 288.060)", () => {
+  it("pays 4% of the two-quarter average, rounded down, for the lesser of 20 weeks or a third of wages", () => {
+    // (8,000 + 6,000) / 2 = 7,000; 4% = $280. 20 × 280 = 5,600 < 18,000 / 3.
+    const r = estimateUi({ quarterlyWages: [8000, 6000, 3000, 1000] }, mo);
+    expect(r.weeklyBenefit).toBe(280);
+    expect(r.maxBenefit).toBe(5600);
+    expect(estimateUi({ quarterlyWages: [9000, 9000, 9000, 9000] }, mo).weeklyBenefit).toBe(320);
+  });
+
+  it("qualifies on $1,500 and 1.5 times it, or on $13,500 in two quarters", () => {
+    expect(estimateUi({ quarterlyWages: [1500, 750, 0, 0] }, mo).eligible).toBe(true);
+    expect(estimateUi({ quarterlyWages: [10000, 3500, 0, 0] }, mo).eligible).toBe(true);
+    expect(estimateUi({ quarterlyWages: [10000, 3499, 0, 0] }, mo).eligible).toBe(false);
+  });
+});
+
+describe("Colorado (C.R.S. 8-73-102; CDLE estimator 2026)", () => {
+  it("takes the highest CONSECUTIVE pair, so order matters", () => {
+    // Adjacent pairs: 8,000+1,000, 1,000+1,000, 1,000+8,000 → 9,000. 60% of 9,000/26 = $207.
+    const apart = estimateUi({ quarterlyWages: [8000, 1000, 1000, 8000] }, co);
+    expect(apart.weeklyBenefit).toBe(207);
+    // Together: 8,000 + 8,000 = 16,000 → 60% of 615.38 = $369.
+    expect(estimateUi({ quarterlyWages: [1000, 8000, 8000, 1000] }, co).weeklyBenefit).toBe(369);
+  });
+
+  it("pays the second formula when it is higher, up to $884", () => {
+    // Two-quarter formula caps at $804; half of 100,000 / 52 = $961 → capped at $884.
+    const r = estimateUi({ quarterlyWages: [25000, 25000, 25000, 25000] }, co);
+    expect(r.weeklyBenefit).toBe(884);
+    expect(r.weeklyBasis).toBe("alternative");
+  });
+
+  it("needs the greater of $2,500 or 40 times the rate", () => {
+    expect(estimateUi({ quarterlyWages: [1300, 1199, 0, 0] }, co).eligible).toBe(false);
+    expect(estimateUi({ quarterlyWages: [1300, 1200, 0, 0] }, co).eligible).toBe(true);
   });
 });
 

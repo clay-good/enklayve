@@ -521,6 +521,13 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
   for (const avg of [4979, 4979.01, 5098]) uiProbe("wa", [avg, avg, 0, 0]);
   for (const hq of [6012.49, 6012.5, 7987.49, 7987.5]) uiProbe("az", [hq, hq / 2, 0, 0]);
   for (const second of [3149.99, 3150]) uiProbe("ma", [3150, second, 0, 0]);
+  // TN's first row and its $4,420 seam; IN's last-two-quarters test; MD's top
+  // line and its qualifying wages; MO's two routes; CO's consecutive pair.
+  for (const a of [780, 780.01, 4420, 4420.01]) uiProbe("tn", [a, a, a, a]);
+  for (const late of [1249.99, 1250]) uiProbe("in", [3000, 1500, late, late]);
+  for (const total of [15479, 15480]) uiProbe("md", [12000, total - 12000, 0, 0]);
+  for (const other of [3499.99, 3500]) uiProbe("mo", [10000, other, 0, 0]);
+  for (const first of [7999.99, 8000]) uiProbe("co", [first, 8000, 1000, 1000]);
 
   // --- garnishment: the crossover -------------------------------------------
   const garn = data.garnishmentLimits()!;

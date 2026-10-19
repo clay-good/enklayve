@@ -1,0 +1,40 @@
+{
+  "stateCode": "in",
+  "name": "Indiana",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim. Indiana has no general alternate base period.",
+  "eligibility": [
+    {
+      "minBasePeriodWages": 4200,
+      "minLastTwoQuarters": 2500,
+      "minBasePeriodToHighQuarter": 1.5
+    }
+  ],
+  "weeklyBenefit": {
+    "rounding": "down",
+    "minimum": 0,
+    "maximum": 390,
+    "averageWeeklyWage": {
+      "from": "top-quarters",
+      "topQuarters": 4,
+      "divisor": 52,
+      "wageRounding": "none",
+      "share": 0.47
+    }
+  },
+  "duration": {
+    "maxWeeks": 26,
+    "shareOfBasePeriodWages": 0.28,
+    "totalRoundsDown": true
+  },
+  "notModeled": [
+    "Enter the quarters in order, earliest first: the $2,500 test is on the last two."
+  ],
+  "citation": {
+    "sourceUrl": "https://www.in.gov/dwd/files/Claimant_Handbook.pdf",
+    "sourceDocument": "Ind. Code 22-4-12-2, 22-4-12-4, 22-4-14-5 (2026); DWD Claimant Handbook",
+    "sourceNote": "IC 22-4-12-2: the weekly amount is \"forty-seven percent (47%) of the claimant's prior average weekly wage\", rounded down, the average being base-period wage credits \"divided by ... fifty-two (52)\", and it \"may not exceed three hundred ninety dollars ($390).\" DWD's handbook works it: \"$30,000 ÷ 52 = $576.92 x 0.47 = $271\". IC 22-4-14-5: at least $2,500 in the last two quarters, $4,200 in all four, and 1.5 times the high quarter. IC 22-4-12-4: the total \"shall not exceed twenty-six (26) times the individual's weekly benefit, or twenty-eight percent (28%) of the individual's wage credits\", rounded down. Indiana pays no dependent allowance. One unpaid waiting week. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

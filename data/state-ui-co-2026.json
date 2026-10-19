@@ -1,0 +1,45 @@
+{
+  "stateCode": "co",
+  "name": "Colorado",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim. Colorado can use the last four completed quarters if those do not qualify.",
+  "eligibility": [
+    {
+      "minBasePeriodWages": 2500,
+      "minBasePeriodToWeeklyBenefit": 40
+    }
+  ],
+  "weeklyBenefit": {
+    "rounding": "down",
+    "minimum": 25,
+    "maximum": 804,
+    "averageWeeklyWage": {
+      "from": "top-quarters",
+      "topQuarters": 2,
+      "divisor": 26,
+      "wageRounding": "none",
+      "share": 0.6,
+      "consecutive": true
+    },
+    "alternative": {
+      "basePeriodDivisor": 52,
+      "share": 0.5,
+      "maximum": 884
+    }
+  },
+  "duration": {
+    "maxWeeks": 26,
+    "basePeriodWagesDivisor": 3
+  },
+  "notModeled": [
+    "Enter the quarters in order, earliest first: Colorado uses the highest two consecutive quarters.",
+    "A cap on how much of any one quarter counts toward the total, which changes it only when one quarter is far larger than the rest."
+  ],
+  "citation": {
+    "sourceUrl": "https://uibestimator.coworkforce.com/",
+    "sourceDocument": "C.R.S. 8-73-102, 8-73-104, 8-73-107; CDLE benefits estimator (2026)",
+    "sourceNote": "C.R.S. 8-73-102: \"sixty percent of one-twenty-sixth of the wages paid ... during the two consecutive quarters of the individual's base period in which such total wages were highest\", rounded down; or, for a claimant at that maximum, \"fifty percent of one fifty-second of his total wages\", paid if greater. CDLE's estimator: the first \"currently cannot exceed $804 per week, or be less than $25\", the second \"$884\"; at least $2,500 in wages. 8-73-107: base-period wages of at least the greater of $2,500 or 40 times the rate. 8-73-104: the total is \"twenty-six times his weekly benefit amount or one-third of his wage credits ... whichever is the lesser.\" No dependent allowance (a 2023 bill for one was lost). One unpaid waiting week. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

@@ -91,6 +91,8 @@ function weeklyLine(r: UiResult, rules: StateUiData, locale: string): string {
   switch (r.weeklyBasis) {
     case "average-wage":
       return `${Math.round(w.averageWeeklyWage!.share * 10000) / 100}% of your average ${w.averageWeeklyWage!.quarterly ? "quarterly" : "weekly"} wage, ${money(r.averageWeeklyWage, locale)}, rounded ${w.rounding}: ${rate} a week.`;
+    case "alternative":
+      return `Half of your base-period wages over 52, ${rate} a week, is higher than the two-quarter formula, so ${rules.name} pays it.`;
     case "share":
       return `${Math.round(w.highQuarterShare! * 1000) / 10}% of your highest quarter, ${hq}, rounded ${w.rounding}: ${money(r.weeklyTotal, locale)} a week.`;
     case "table":
@@ -329,6 +331,7 @@ export function mountUiEstimator(ctx: TileContext): void {
       "form",
       { class: "tile-form", on: { submit: (e) => e.preventDefault() } },
       field("State you worked in", stateSelect),
+      el("p", { class: "uie-hint", text: "Quarter 1 is the earliest of the four." }),
       ...quarterInputs.map((input, i) =>
         field(`Wages paid in base-period quarter ${i + 1}`, input),
       ),
