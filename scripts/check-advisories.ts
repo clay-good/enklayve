@@ -81,7 +81,10 @@ export interface Advisory {
  * advisories themselves, bare strings are "this package is affected because a
  * dependency is", which would otherwise be counted as findings with no id.
  */
-export function advisoriesFrom(report: unknown): Advisory[] {
+export function advisoriesFrom(
+  report: unknown,
+  installed: (name: string) => string | undefined = () => undefined,
+): Advisory[] {
   const vulns = (
     report as {
       vulnerabilities?: Record<string, { via?: unknown[]; fixAvailable?: unknown }>;
@@ -91,8 +94,20 @@ export function advisoriesFrom(report: unknown): Advisory[] {
   const out = new Map<string, Advisory>();
   for (const entry of Object.values(vulns)) {
     // `fixAvailable: false` is the only answer that means "nothing to take".
-    // An object is npm naming the version that fixes it, which is a fix.
-    const fixAvailable = entry.fixAvailable !== undefined && entry.fixAvailable !== false;
+    // An object is npm naming the version that fixes it, which is a fix —
+    // unless that version is BELOW the one installed. sprintf-js has no
+    // patched release, and npm's answer for it is mammoth 0.3.29, from 2015,
+    // in place of the 1.12.0 that reads a household's Word documents: the old
+    // mammoth simply predates the dependency. That is not a fix on the shelf.
+    const named = entry.fixAvailable as { name?: string; version?: string } | undefined;
+    const current = named?.name ? installed(named.name) : undefined;
+    const downgrade =
+      typeof named === "object" &&
+      named?.version !== undefined &&
+      current !== undefined &&
+      compareVersions(named.version, current) < 0;
+    const fixAvailable =
+      entry.fixAvailable !== undefined && entry.fixAvailable !== false && !downgrade;
     for (const via of entry.via ?? []) {
       if (typeof via !== "object" || via === null) continue;
       const v = via as { url?: string; name?: string; severity?: string; title?: string };
@@ -112,6 +127,27 @@ export function advisoriesFrom(report: unknown): Advisory[] {
     }
   }
   return [...out.values()].sort((a, b) => a.id.localeCompare(b.id));
+}
+
+/** Compare two plain `major.minor.patch` versions; prerelease tags are ignored. */
+export function compareVersions(a: string, b: string): number {
+  const parts = (v: string) =>
+    v
+      .split("-")[0]!
+      .split(".")
+      .map((n) => Number(n) || 0);
+  const [x, y] = [parts(a), parts(b)];
+  for (let i = 0; i < 3; i++) {
+    const d = (x[i] ?? 0) - (y[i] ?? 0);
+    if (d !== 0) return Math.sign(d);
+  }
+  return 0;
+}
+
+/** The installed version of each top-level package, read from the lockfile. */
+export function installedFromLock(lock: unknown): (name: string) => string | undefined {
+  const packages = (lock as { packages?: Record<string, { version?: string }> })?.packages ?? {};
+  return (name) => packages[`node_modules/${name}`]?.version;
 }
 
 /** Advisories with no triage entry, and triage entries nothing reports any more. */
@@ -168,7 +204,8 @@ function main(): void {
     raw = out;
   }
 
-  const found = advisoriesFrom(JSON.parse(raw));
+  const lock = JSON.parse(readFileSync(join(ROOT, "package-lock.json"), "utf8")) as unknown;
+  const found = advisoriesFrom(JSON.parse(raw), installedFromLock(lock));
   const { untriaged, stale } = reconcile(found, triage.accepted);
   const patchable = fixable(found, triage.accepted);
   const old = overdue(triage.accepted, new Date());

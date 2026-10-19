@@ -1,7 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { advisoriesFrom, reconcile, overdue, fixable } from "../../scripts/check-advisories";
+import {
+  advisoriesFrom,
+  compareVersions,
+  fixable,
+  installedFromLock,
+  overdue,
+  reconcile,
+} from "../../scripts/check-advisories";
 
 /**
  * The dependency-advisory triage (scripts/check-advisories.ts).
@@ -142,6 +149,42 @@ describe("an entry may not stand over a fix that is on the shelf", () => {
       },
     };
     expect(advisoriesFrom(named)[0]!.fixAvailable).toBe(true);
+  });
+
+  it("does not count a downgrade as a fix", () => {
+    // sprintf-js has no patched release; npm's "fix" is mammoth 0.3.29, from
+    // 2015, in place of the installed 1.12.0. Counting that would make the
+    // advisory impossible to triage and the check impossible to pass.
+    const report = {
+      vulnerabilities: {
+        "sprintf-js": {
+          severity: "moderate",
+          fixAvailable: { name: "mammoth", version: "0.3.29", isSemVerMajor: true },
+          via: [
+            {
+              name: "sprintf-js",
+              severity: "moderate",
+              title: "sprintf-js vulnerable to denial of service",
+              url: "https://github.com/advisories/GHSA-hp3w-g68c-fv3c",
+            },
+          ],
+        },
+      },
+    };
+    const lock = { packages: { "node_modules/mammoth": { version: "1.12.0" } } };
+    expect(advisoriesFrom(report, installedFromLock(lock))[0]!.fixAvailable).toBe(false);
+    // An upgrade above what is installed is still a fix, major or not.
+    const newer = { packages: { "node_modules/mammoth": { version: "0.3.1" } } };
+    expect(advisoriesFrom(report, installedFromLock(newer))[0]!.fixAvailable).toBe(true);
+    // And with nothing to compare against, the object still counts.
+    expect(advisoriesFrom(report)[0]!.fixAvailable).toBe(true);
+  });
+
+  it("compares versions numerically, not as strings", () => {
+    expect(compareVersions("0.3.29", "1.12.0")).toBe(-1);
+    expect(compareVersions("1.10.0", "1.9.9")).toBe(1);
+    expect(compareVersions("8.71.0", "8.71.0")).toBe(0);
+    expect(compareVersions("2.0.0-beta.1", "1.9.0")).toBe(1);
   });
 
   it("says nothing about an advisory that has no triage entry — that is untriaged", () => {
