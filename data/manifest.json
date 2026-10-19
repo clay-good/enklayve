@@ -952,6 +952,19 @@
       "contentHash": "8bba0e5845cbf7d389bb316393c0b05b0ad46fefffebadcab10c8e830cb67e92"
     },
     {
+      "id": "pmi-cancellation-2026",
+      "kind": "pmi-cancellation",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 1,
+      "shard": "pmi-cancellation-2026.json",
+      "sourceUrl": "https://www.law.cornell.edu/uscode/text/12/4902",
+      "sourceDocument": "Homeowners Protection Act of 1998, 12 U.S.C. §§4901-4903",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "64f6bf12af21d0e380d38e97175fa9dd991f0aaf2498c0626bc60d2aa3d350e5"
+    },
+    {
       "id": "child-tax-2024",
       "kind": "child-tax",
       "version": "2026.0",

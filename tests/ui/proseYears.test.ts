@@ -132,6 +132,9 @@ const BOUND: YearBound[] = [
  * DO move honest.
  */
 const NOT_A_TAX_YEAR: Record<string, Record<string, string>> = {
+  "tiles/pmiEndDate.ts": {
+    "1999": "the Act covers loans made from July 29, 1999, a date the statute fixes",
+  },
   "tiles/acaPtc.ts": { "2025": "when the enhanced subsidies expired, which is history" },
   "tiles/autoLoan.ts": {
     "2025": "the first year of §163(h)(4), which the statute fixes",

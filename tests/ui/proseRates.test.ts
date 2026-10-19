@@ -69,6 +69,17 @@ interface RateBound {
 const asPoints = (n: number) => n;
 
 const BOUND: RateBound[] = [
+  // The Homeowners Protection Act's two lines, in the "how" block.
+  {
+    file: "tiles/pmiEndDate.ts",
+    shard: "pmi-cancellation-2026",
+    path: ".requestShareOfOriginalValue",
+  },
+  {
+    file: "tiles/pmiEndDate.ts",
+    shard: "pmi-cancellation-2026",
+    path: ".automaticShareOfOriginalValue",
+  },
   // The two AMT rates, in the line that names them both.
   { file: "tiles/amtScreener.ts", shard: "amt-2024", path: ".rateLow" },
   { file: "tiles/amtScreener.ts", shard: "amt-2024", path: ".rateHigh" },

@@ -44,6 +44,7 @@ import {
   type IraDeductionData,
   type GiftTaxData,
   type TrumpAccountData,
+  type PmiCancellationData,
   type AmtData,
   type ChildTaxData,
   type EducationCreditsData,
@@ -143,6 +144,8 @@ export interface BundledData {
   giftTax(): GiftTaxData | null;
   /** IRC §530A accounts and the §6434 pilot contribution. */
   trumpAccounts(): TrumpAccountData | null;
+  /** The Homeowners Protection Act's PMI cancellation lines (SPEC-5 Phase 28). */
+  pmiCancellation(): PmiCancellationData | null;
   /** AMT exemption, phase-out, and rate breakpoint (SPEC-3 §4.7). */
   amt(): AmtData | null;
   /** Child-tax dependent shelter and earned-income add-on (SPEC-3 §4.5). */
@@ -289,6 +292,7 @@ async function build(): Promise<BundledData> {
     iraDeduction: () => dataOf("ira-deduction-2024") as IraDeductionData | null,
     giftTax: () => dataOf("gift-tax-2024") as GiftTaxData | null,
     trumpAccounts: () => dataOf("trump-accounts-2026") as TrumpAccountData | null,
+    pmiCancellation: () => dataOf("pmi-cancellation-2026") as PmiCancellationData | null,
     amt: () => dataOf("amt-2024") as AmtData | null,
     childTax: () => dataOf("child-tax-2024") as ChildTaxData | null,
     educationCredits: () => dataOf("education-credits-2024") as EducationCreditsData | null,

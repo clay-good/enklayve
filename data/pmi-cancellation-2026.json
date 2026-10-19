@@ -1,0 +1,11 @@
+{
+  "requestShareOfOriginalValue": 0.8,
+  "automaticShareOfOriginalValue": 0.78,
+  "citation": {
+    "sourceUrl": "https://www.law.cornell.edu/uscode/text/12/4902",
+    "sourceDocument": "Homeowners Protection Act of 1998, 12 U.S.C. §§4901-4903",
+    "sourceNote": "§4901(2): the cancellation date for a fixed-rate loan is, at the borrower's option, when the balance \"based solely on the initial amortization schedule ... is first scheduled to reach 80 percent of the original value\" or, \"based solely on actual payments, reaches 80 percent\". §4902(a): cancellation needs a written request, a good payment history, current payments, and, if the holder asks, evidence the value has not fallen below the original value and that no second lien encumbers the equity. §4901(18): the termination date is when the balance is first scheduled to reach \"78 percent of the original value\"; §4902(b) ends the requirement then if the borrower is current. §4902(c): in no case beyond \"the first day of the month immediately following the date that is the midpoint of the amortization period\". §4901(12): original value is \"the lesser of the sales price ... or the appraised value\" at closing, or for a refinance the appraisal the lender relied on. Applies to private mortgage insurance on a single-family principal residence financed on or after July 29, 1999; not to FHA or VA insurance, and a lender-paid policy or a loan the lender classed as high-risk follows other rules. §4903(a): at closing the lender gives a fixed-rate borrower \"a written initial amortization schedule\" and both dates, and the servicer sends \"an annual written statement\" of these rights. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

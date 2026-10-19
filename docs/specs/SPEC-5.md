@@ -213,6 +213,8 @@ Ordered prompts in the SPEC/SPEC-2 convention. Each phase is independently shipp
 
 **Shell cost.** Five tiles and four small shards, loaded with the shell (every reader may need them). Expected under 6 kB gzipped; the phase states the measured figure.
 
+**Status — in progress.** **`pmi-end-date` shipped 2026-10-19** with `pmi-cancellation-2026` (12 U.S.C. §§4901-4903, watched at §4902 on Cornell LII). The tool shows the request date on the original schedule, the request date reached sooner with extra principal, the automatic date and the final cutoff. Extra principal moves only the first of those. Its golden cases were computed outside the codebase, and a zero-rate loan lands exactly on the 80% line, so the observation probes hold the `<=`. The Home & Big Purchases hub took the tool's tier and left the legacy baseline the same day. **Measured: 3.4 kB** (309.5 → 312.9 of 319), about twice the per-tool share this phase assumed, most of it the how block and the cited note. At that rate the four remaining tools and three shards do not fit in the 6.1 kB left. Before they ship, the owner decides between a budget raise and loading Wave A's tools on demand, as the unemployment rules now do.
+
 ### Phase 29: Later life, the figures
 
 **Goal.** The hub, with the tools whose output is a figure to check against a statement.

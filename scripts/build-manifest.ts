@@ -239,6 +239,14 @@ const SHARDS: ShardSource[] = [
     ...ANNUAL,
   },
   { id: "amt-2024", kind: "amt", shard: "amt-2024.json", ...ANNUAL },
+  // A statute unamended since 1998, so a year's grace rather than two (SPEC-5 §6).
+  {
+    id: "pmi-cancellation-2026",
+    kind: "pmi-cancellation",
+    shard: "pmi-cancellation-2026.json",
+    ...ANNUAL,
+    staleAfterYears: 1,
+  },
   { id: "child-tax-2024", kind: "child-tax", shard: "child-tax-2024.json", ...ANNUAL },
   {
     id: "education-credits-2024",

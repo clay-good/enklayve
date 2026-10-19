@@ -104,6 +104,7 @@ import {
 } from "../src/engine/tax/brackets";
 import { taxLossHarvest } from "../src/engine/taxMoves";
 import { projectTrumpAccount } from "../src/engine/trumpAccount";
+import { pmiEndDates } from "../src/engine/pmi";
 import type { BundledData } from "../src/data/browser";
 import type { CitationData, FilingStatus, Jurisdiction } from "../src/data/schemas";
 
@@ -131,6 +132,7 @@ export const PROBED_FILES = [
   "src/engine/tax/brackets.ts",
   "src/engine/taxMoves.ts",
   "src/engine/trumpAccount.ts",
+  "src/engine/pmi.ts",
 ];
 
 const citation: CitationData = {
@@ -879,6 +881,29 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
       steps: r.steps.map((s) => `${s.id}:${s.satisfied}:${s.amount?.toNumber() ?? "-"}`),
     });
   }
+
+  // --- PMI: a balance landing exactly on the 80% line, a cent over it, and
+  // a loan that starts on it. At 0% the balance falls $1,250 a payment, so
+  // $225,000 reaches $200,000 at payment 20 exactly.
+  for (const loan of [200_000, 200_000.01, 225_000, 225_000.01])
+    for (const extra of [0, 1]) {
+      const r = pmiEndDates({
+        originalValue: 250_000,
+        loanAmount: loan,
+        annualRatePct: 0,
+        termYears: 15,
+        extraMonthly: extra,
+        requestShare: 0.8,
+        automaticShare: 0.78,
+      });
+      put(`pmi(${loan},${extra})`, {
+        under: r.atOrUnderRequestLine,
+        request: r.request?.payment ?? null,
+        extra: r.requestWithExtra?.payment ?? null,
+        automatic: r.automatic?.payment ?? null,
+        final: r.final.payment,
+      });
+    }
 
   return o;
 }

@@ -10,7 +10,9 @@
     "The list may only SHRINK. A tile that gains a tier comes off it, and the test",
     "fails until it does, so the shrink is recorded rather than left for someone",
     "to notice. An id added here is a build failure: the ceiling in",
-    "tests/build/auditRelease.test.ts only ever goes down."
+    "tests/build/auditRelease.test.ts only ever goes down.",
+    "",
+    "2026-10-19: home-purchases left the list the day it was written, when When PMI Ends (tier 1) joined the hub and the hub took its tier."
   ],
   "untiered": [
     "aca-ptc",
@@ -43,7 +45,6 @@
     "gift-tax",
     "health-plan",
     "home-affordability",
-    "home-purchases",
     "hourly-salary",
     "inflation",
     "investing",

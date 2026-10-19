@@ -52,6 +52,7 @@ import { spendingPlanTile } from "./spendingPlan";
 import { homeAffordabilityTile } from "./homeAffordability";
 import { sinkingFundTile } from "./sinkingFund";
 import { rentVsBuyTile } from "./rentVsBuy";
+import { pmiEndDateTile } from "./pmiEndDate";
 import { healthPlanTile } from "./healthPlan";
 import { eobCheckerTile } from "./eobChecker";
 import { cashFlowTile } from "./cashFlow";
@@ -176,7 +177,7 @@ const HUB_CONFIGS: HubConfig[] = [
     title: "Home & Big Purchases",
     pillar: "protect",
     description: "What home you can afford, rent vs buy, and saving for college.",
-    tools: [homeAffordabilityTile, rentVsBuyTile, collegeCostTile],
+    tools: [homeAffordabilityTile, rentVsBuyTile, pmiEndDateTile, collegeCostTile],
   },
   {
     id: "protection",

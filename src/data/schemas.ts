@@ -1187,6 +1187,20 @@ export const TrumpAccountSchema = z.object({
 });
 export type TrumpAccountData = z.infer<typeof TrumpAccountSchema>;
 
+/**
+ * The Homeowners Protection Act's cancellation lines (12 U.S.C. §§4901, 4902;
+ * SPEC-5 Phase 28). Both are shares of the property's original value — the
+ * lesser of the contract price and the appraisal — never of the current value.
+ */
+export const PmiCancellationSchema = z.object({
+  /** §4901(2): the borrower may ask for cancellation at this balance. */
+  requestShareOfOriginalValue: z.number().gt(0).lt(1),
+  /** §4901(18): the requirement ends on its own at this balance. */
+  automaticShareOfOriginalValue: z.number().gt(0).lt(1),
+  citation: CitationSchema,
+});
+export type PmiCancellationData = z.infer<typeof PmiCancellationSchema>;
+
 export const GiftTaxSchema = z.object({
   taxYear: z.number().int(),
   annualExclusion: z.number().gte(0),
@@ -1836,6 +1850,7 @@ export const DATASET_SCHEMAS = {
   "garnishment-limits": GarnishmentLimitsSchema,
   "enrollment-windows": EnrollmentWindowsSchema,
   "life-events": LifeEventsSchema,
+  "pmi-cancellation": PmiCancellationSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;
