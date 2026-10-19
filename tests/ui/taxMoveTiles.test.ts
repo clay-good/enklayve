@@ -138,6 +138,20 @@ describe("Social Security Claiming Age", () => {
     expect(lastParams()?.get("born")).toBe("1965");
   });
 
+  it("starts from the birth year My Situation holds, and a link's year beats it", () => {
+    // SPEC-5 §7.2: one birth year, shared with the Medicare and earnings-test tiles.
+    const profile = new SituationStore();
+    profile.set("birthYear", 1958);
+    const { root } = mount(mountSocialSecurity, new URLSearchParams({ pia: "2000" }), profile);
+    expect(rowValue(root, "Full retirement age for 1958")).toContain("age 66 and 8 months");
+    const linked = mount(
+      mountSocialSecurity,
+      new URLSearchParams({ pia: "2000", born: "1965" }),
+      profile,
+    ).root;
+    expect(rowValue(linked, "Full retirement age for 1965")).toContain("age 67");
+  });
+
   it("clamps a deep-linked age outside the claiming window", () => {
     const ss = data.socialSecurity()!;
     const below = mount(

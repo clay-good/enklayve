@@ -11,6 +11,7 @@ import type { CitationData } from "../data/schemas";
 import type { Deadline } from "../engine/deadline";
 import type { Money } from "../engine/money";
 import type { TextSource } from "./extractText";
+import type { SituationKey } from "../profile/situation";
 
 /** The personal-finance documents the Readout knows how to read (§2.1). */
 export type DocKind =
@@ -34,14 +35,21 @@ export type DocKind =
   | "benefitsNotice";
 
 /** The My Situation fields the Readout can populate on confirmation. Kept
- * narrow (not all of {@link SituationKey}) so the mapping stays type-safe. */
-export type ReadoutTarget =
-  | "annualIncome"
-  | "selfEmploymentProfitAnnual"
-  | "retirementContributionsAnnual"
-  | "filingStatus"
-  | "qualifiedTipsAnnual"
-  | "qualifiedOvertimeAnnual";
+ * narrow (not all of {@link SituationKey}) so the mapping stays type-safe, and
+ * held as a value so a test pins the set: widening it is a deliberate edit
+ * (SPEC-4-readout-v2 §2.1). SPEC-5 §7.2's two additions, `socialSecurityPia`
+ * and `unemploymentCompensationAnnual`, land with the extractors that write
+ * them, since a target is a profile field and a field nothing reads fails the
+ * profile's own gate. */
+export const READOUT_TARGETS = [
+  "annualIncome",
+  "selfEmploymentProfitAnnual",
+  "retirementContributionsAnnual",
+  "filingStatus",
+  "qualifiedTipsAnnual",
+  "qualifiedOvertimeAnnual",
+] as const satisfies readonly SituationKey[];
+export type ReadoutTarget = (typeof READOUT_TARGETS)[number];
 
 /** How sure we are about an extracted value. */
 export type FieldConfidence = "high" | "needs-review" | "low";

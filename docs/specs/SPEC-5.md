@@ -193,6 +193,16 @@ Ordered prompts in the SPEC/SPEC-2 convention. Each phase is independently shipp
 
 **Shell cost.** None beyond the window rows.
 
+**Status — shipped 2026-10-19, with three deliberate departures.**
+
+- **Shipped.** `checkTierDeclared`, run over the real catalog from the test suite, with its baseline in [`scripts/tier-legacy.json`](../../scripts/tier-legacy.json): the 69 tiles and hubs with no tier on that date. The list may only shrink, a tile that gains a tier must leave it, and the test holds a ceiling of 69.
+- **Shipped.** `birthYear` on `SituationValues`, with every profile gate satisfied. The Social Security tile reads it and writes it, so the Medicare and earnings-test tiles inherit a year the reader has already given.
+- **Shipped.** The six windows in the enrollment-windows shard, each read from its own section's text. Each is a limit on the reader, so none says "at least".
+- **Departure: two citations corrected.** The IRMAA reconsideration window cites §418.1325 with §404.909(a)(1): §418.1330, which this spec named, covers only a dispute over the IRS's figure. The student-loan transition is the act's own note, Pub. L. 119-21 §82001(a): choose before July 1, 2028, or be moved on that date. It renders as June 30, 2028.
+- **Departure: the windows are visible.** They appear in the Enrollment & Appeal Windows tool under five new programs, since that tool shows every window the shard holds. Hiding them would have meant a second, unrendered list of clocks, which §7.4 rules out.
+- **Departure: three items deferred to the phase that uses them.** `dependentCareExpensesAnnual` waits for Phase 31, and the two `ReadoutTarget` values wait for Phase 32. A profile field nothing reads fails the profile's own read-by gate, and a target is a profile field. The target set is now a value, `READOUT_TARGETS`, pinned by a test, so adding the two will be the deliberate edit §7.2 asks for.
+- **Measured shell cost: 2.2 kB** (307.3 → 309.5 of 319), almost all of it the six windows' cited prose.
+
 ### Phase 28: The compositions
 
 **Goal.** Wave A, the zero-data tools and the three small statutory shards.

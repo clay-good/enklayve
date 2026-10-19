@@ -207,6 +207,36 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
   return violations;
 }
 
+/**
+ * 5b. Every new tile declares a harm tier (SPEC-5 §3, §7.3).
+ *
+ * `checkHarmTier` binds a tile that declares a tier; declaring one was Pillar
+ * 4's admission bar alone. From SPEC-5 on, every tile declares one, whatever
+ * hub it joins. `legacy` is the catalog that predates the rule
+ * (`scripts/tier-legacy.json`), and it may only shrink: an id there that now
+ * declares a tier, or names no tile, is reported too, so a tile that gains a
+ * tier leaves the list in the same change. Runs from the test suite, for the
+ * reason `checkHarmTier` does.
+ */
+export function checkTierDeclared(tiles: AuditTile[], legacy: readonly string[]): string[] {
+  const violations: string[] = [];
+  const exempt = new Set(legacy);
+  const byId = new Map(tiles.map((t) => [t.id, t]));
+  for (const tile of byId.values()) {
+    if (tile.harmTier === undefined && !exempt.has(tile.id))
+      violations.push(`tile ${tile.id} declares no harmTier and is not in the legacy baseline`);
+  }
+  for (const id of exempt) {
+    const tile = byId.get(id);
+    if (!tile) violations.push(`legacy baseline names ${id}, which is not a tile; remove it`);
+    else if (tile.harmTier !== undefined)
+      violations.push(
+        `tile ${id} now declares harmTier ${tile.harmTier}; remove it from the legacy baseline`,
+      );
+  }
+  return violations;
+}
+
 /** 6. localStorage may be used only by the theme/locale boundary. */
 /**
  * The precached shell's gzipped budget, in kilobytes.

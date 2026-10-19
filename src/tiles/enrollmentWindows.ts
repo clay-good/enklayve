@@ -264,10 +264,21 @@ export const enrollmentWindowsTile: TileDefinition = {
     "marketplace",
     "state continuation coverage",
     "mini-cobra",
+    // SPEC-5's clocks: the reader's own limits, kept in the same shard.
+    "rollover deadline",
+    "60 day rollover",
+    "medicare part d",
+    "part d penalty",
+    "irmaa appeal",
+    "medicare appeals",
+    "federal student loans",
+    "student loan plan deadline",
+    "debt collection",
+    "dispute a debt",
   ],
   status: "ready",
   mount: mountEnrollmentWindows,
-  how: 'These are the numbers on this site with the sharpest edges. Miss a COBRA election and the coverage is simply gone. Miss the Medicare Part B special enrollment period and you pay a late-enrollment penalty for as long as you have Part B. Miss a fair-hearing request and the decision stands, whether or not it was right.\n\nSo every date here is counted from a date you set, not from the moment the page loaded. That is deliberate: it makes the result reproducible, it shows the clock rather than hiding it, and it lets you check what a date will look like next week without waiting for next week.\n\nOne distinction matters more than any single number, and summaries routinely lose it. Most of these windows are floors — a plan or an agency may give you longer, and may never give you less. The Medicaid fair-hearing period is not. The rule gives a state a reasonable time "not to exceed 90 days," which makes 90 days the most your state has to allow, and reading it as a guarantee is exactly how someone misses it. The page says which kind each one is, in words, under the clock.\n\nWhere the states set the clock themselves, most of all for unemployment appeals, no number is shown. There is no federal figure to show, the states differ widely, and a plausible-looking default would be worse than a pointer to your own notice.\n\nThis is information about published federal rules. It is not legal or financial advice, and your own notice is the authority on your own deadline. If a date here and a date on your notice disagree, act on whichever is sooner.',
+  how: 'These are the numbers on this site with the sharpest edges. Miss a COBRA election and the coverage is simply gone. Miss the Medicare Part B special enrollment period and you pay a late-enrollment penalty for as long as you have Part B. Miss a fair-hearing request and the decision stands, whether or not it was right.\n\nSo every date here is counted from a date you set, not from the moment the page loaded. That is deliberate: it makes the result reproducible, it shows the clock rather than hiding it, and it lets you check what a date will look like next week without waiting for next week.\n\nOne distinction matters more than any single number, and summaries routinely lose it. Many of these windows are floors — a plan or an agency may give you longer, and may never give you less. The Medicaid fair-hearing period is not. The rule gives a state a reasonable time "not to exceed 90 days," which makes 90 days the most your state has to allow, and reading it as a guarantee is exactly how someone misses it. The page says which kind each one is, in words, under the clock. The rest are limits on you rather than on anyone else: rolling over a distribution, disputing a debt, appealing a Medicare decision. Each is the last day to act, and nobody has to give you longer.\n\nWhere the states set the clock themselves, most of all for unemployment appeals, no number is shown. There is no federal figure to show, the states differ widely, and a plausible-looking default would be worse than a pointer to your own notice.\n\nThis is information about published federal rules. It is not legal or financial advice, and your own notice is the authority on your own deadline. If a date here and a date on your notice disagree, act on whichever is sooner.',
   resources: [
     {
       label: "45 CFR §155.420 — Special enrollment periods",

@@ -76,6 +76,7 @@ const NUMERIC_FIELDS = [
   "liquidSavings",
   "planDeductible",
   "planOopMax",
+  "birthYear",
 ] as const satisfies readonly SituationKey[];
 
 /**
@@ -134,6 +135,7 @@ const EXPECTED = [
   "screener | qualifyingChildren <- Qualifying children",
   "se-retirement | selfEmploymentProfitAnnual <- Net business profit",
   "snap | householdSize <- Household size",
+  "social-security | birthYear <- Birth year",
   "take-home | annualIncome <- Annual wages",
   "take-home | preTaxContributions <- Pre-tax adjustments",
   "take-home | qualifiedOvertimeAnnual <- Of that, qualified overtime premium",

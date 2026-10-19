@@ -45,6 +45,7 @@ const EVERY_FIELD: Required<SituationValues> = {
   liquidSavings: 11_000,
   planDeductible: 11_000,
   planOopMax: 11_000,
+  birthYear: 1990,
 };
 
 /**

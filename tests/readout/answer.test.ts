@@ -9,7 +9,7 @@ import {
   type CheckDefinition,
 } from "../../src/readout/checks";
 import type { ExtractedText } from "../../src/readout/extractText";
-import type { ExtractionResult } from "../../src/readout/types";
+import { READOUT_TARGETS, type ExtractionResult } from "../../src/readout/types";
 import { NoSurprisesSchema, type NoSurprisesData } from "../../src/data/schemas";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -96,6 +96,22 @@ const NOTICE_SNAP_WINDOW =
   "Notice of Decision — Supplemental Nutrition Assistance Program (SNAP) " +
   "Your benefits have been reduced. Reason code: SN-04 Effective date 11/01/2026 " +
   "You may request a fair hearing within 90 days of the date on this notice.";
+
+describe("the fields a document may write into My Situation", () => {
+  it("is exactly this set, so widening it is a deliberate edit", () => {
+    // SPEC-4-readout-v2 §2.1. SPEC-5 §7.2 adds socialSecurityPia (the Social
+    // Security Statement) and unemploymentCompensationAnnual (1099-G box 1)
+    // with the extractors that write them, and this list grows by those two.
+    expect([...READOUT_TARGETS]).toEqual([
+      "annualIncome",
+      "selfEmploymentProfitAnnual",
+      "retirementContributionsAnnual",
+      "filingStatus",
+      "qualifiedTipsAnnual",
+      "qualifiedOvertimeAnnual",
+    ]);
+  });
+});
 
 describe("Readout v2, Explanation of Benefits extraction", () => {
   const result = extractDocument(typed(EOB_CLEAN));

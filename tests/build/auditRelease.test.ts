@@ -9,6 +9,7 @@ import {
   checkClientStorage,
   withoutComments,
   checkHarmTier,
+  checkTierDeclared,
   ADVICE_MARKERS,
   type AuditTile,
   checkBundleBudget,
@@ -348,6 +349,58 @@ describe("audit: Pillar 4 harm tiers", () => {
   it("holds over the real catalog, hubs and sub-tools alike", () => {
     const tiles: AuditTile[] = [...TILES, ...SUB_TOOLS.map((s) => s.tile)];
     expect(checkHarmTier(tiles)).toEqual([]);
+  });
+});
+
+/**
+ * Every tile a spec adds from SPEC-5 on declares a harm tier (SPEC-5 §7.3);
+ * the catalog that predates the rule is a committed baseline that may only
+ * shrink, held the way watch-coverage and the adapter baseline are held.
+ */
+describe("audit: every new tile declares a tier", () => {
+  const legacy = (
+    JSON.parse(
+      readFileSync(resolve(__dirname, "..", "..", "scripts", "tier-legacy.json"), "utf8"),
+    ) as { untiered: string[] }
+  ).untiered;
+  const catalog: AuditTile[] = [...TILES, ...SUB_TOOLS.map((s) => s.tile)];
+
+  it("passes the real catalog", () => {
+    expect(checkTierDeclared(catalog, legacy)).toEqual([]);
+  });
+
+  it("fails a tile outside the baseline that declares no tier", () => {
+    const violations = checkTierDeclared(
+      [...catalog, { id: "medicare-irmaa", pillar: "retirement" }],
+      legacy,
+    );
+    expect(violations).toEqual([
+      "tile medicare-irmaa declares no harmTier and is not in the legacy baseline",
+    ]);
+  });
+
+  it("passes the same tile once it declares one", () => {
+    expect(
+      checkTierDeclared(
+        [...catalog, { id: "medicare-irmaa", pillar: "retirement", harmTier: 1 }],
+        legacy,
+      ),
+    ).toEqual([]);
+  });
+
+  it("makes a tile that gains a tier leave the baseline", () => {
+    const tiered = catalog.map((t) => (t.id === "take-home" ? { ...t, harmTier: 1 as const } : t));
+    expect(checkTierDeclared(tiered, legacy)).toEqual([
+      "tile take-home now declares harmTier 1; remove it from the legacy baseline",
+    ]);
+  });
+
+  it("only shrinks: an id added to the baseline fails the build", () => {
+    // 69 tiles and hubs had no tier on 2026-10-19. Lower this when the list
+    // shrinks; it never goes up, so a new untiered tile cannot buy its way in.
+    expect(legacy.length).toBeLessThanOrEqual(69);
+    expect(new Set(legacy).size, "the baseline repeats an id").toBe(legacy.length);
+    expect([...legacy].sort(), "keep the baseline sorted, so a diff reads").toEqual(legacy);
   });
 });
 

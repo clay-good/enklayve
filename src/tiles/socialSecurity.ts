@@ -23,10 +23,16 @@ interface Fields {
 
 const EXAMPLE: Fields = { pia: 2000, bornYear: 1965, claimAge: 62 };
 
-function readFields(p: URLSearchParams, ss: SocialSecurityData): Fields {
+function readFields(
+  p: URLSearchParams,
+  ss: SocialSecurityData,
+  profile: TileContext["profile"],
+): Fields {
   return {
     pia: parseNonNegative(p.get("pia"), 0),
-    bornYear: Math.round(parseNonNegative(p.get("born"), 1965)),
+    // A link's year wins; otherwise the one My Situation holds, which the
+    // Medicare and earnings-test tiles share (SPEC-5 §7.2).
+    bornYear: Math.round(parseNonNegative(p.get("born"), profile.get("birthYear") ?? 1965)),
     // A deep link can name any age; the tile only offers the ages you could
     // actually claim at, so clamp into that window before anything is labelled.
     claimAge: Math.min(
@@ -66,7 +72,7 @@ export function mountSocialSecurity(ctx: TileContext): void {
     return;
   }
 
-  let fields = readFields(ctx.params, ss);
+  let fields = readFields(ctx.params, ss, ctx.profile);
 
   const piaInput = el("input", {
     type: "number",
@@ -154,6 +160,7 @@ export function mountSocialSecurity(ctx: TileContext): void {
       claimAge: Math.round(parseNonNegative(ageSelect.value, 67)),
     };
     ctx.setParams(writeFields(fields));
+    ctx.profile.set("birthYear", fields.bornYear);
     compute();
   }
 

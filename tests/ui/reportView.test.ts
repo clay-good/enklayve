@@ -227,6 +227,7 @@ describe("the Report against a profile no form could have produced", () => {
     liquidSavings: 1e308,
     planDeductible: 1e308,
     planOopMax: 1e308,
+    birthYear: 1e308,
   };
 
   function hostileProfile(): SituationStore {

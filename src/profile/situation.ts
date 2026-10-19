@@ -145,6 +145,13 @@ export interface SituationValues {
   planDeductible: number;
   /** The reader's own out-of-pocket maximum, the deductible's twin. */
   planOopMax: number;
+  /**
+   * Four-digit birth year of the filer (SPEC-5 §7.2). Read by the Social
+   * Security, Medicare and earnings-test tiles; written by whichever the reader
+   * fills in first. A year rather than `ages` because it is one number a person
+   * can answer and it does not go stale on a birthday.
+   */
+  birthYear: number;
 }
 
 export type SituationKey = keyof SituationValues;
@@ -259,6 +266,7 @@ export const SituationValuesSchema = z
      */
     planDeductible: num,
     planOopMax: num,
+    birthYear: num,
   })
   .catch({});
 

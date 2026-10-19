@@ -196,6 +196,113 @@
         "effectiveYear": 2027,
         "dateRetrieved": "2026-10-19"
       }
+    },
+    {
+      "id": "rollover-60-day",
+      "program": "Retirement account",
+      "label": "Roll over a distribution you were paid",
+      "due": {
+        "days": 60,
+        "trigger": "the day you received the distribution"
+      },
+      "bound": "ceiling",
+      "detail": "Money paid out of a retirement plan or IRA can still be rolled into another one, tax-free, if the transfer is made within 60 days of the day you received it. After that it is a taxable distribution. The IRS can waive the deadline for hardship, and a few cases get longer, but you cannot count on either.",
+      "citation": {
+        "sourceUrl": "https://www.law.cornell.edu/uscode/text/26/402",
+        "sourceDocument": "26 U.S.C. §402(c)(3)(A)",
+        "sourceNote": "The rollover rule does not apply \"to any transfer of a distribution made after the 60th day following the day on which the distributee received the property distributed.\" §402(c)(3)(B) lets the Secretary waive the 60-day requirement for hardship.",
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    {
+      "id": "part-d-creditable-gap",
+      "program": "Medicare Part D",
+      "label": "Avoid the Part D late-enrollment penalty",
+      "due": {
+        "days": 63,
+        "trigger": "the day your creditable drug coverage ended, if you were eligible for Part D"
+      },
+      "bound": "ceiling",
+      "detail": "A penalty attaches if, after your initial enrollment period, you go 63 days or longer in a row eligible for Part D without a drug plan or other creditable coverage. It is added to your Part D premium for as long as you have Part D, so the count matters more than any single month.",
+      "citation": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-B/part-423/subpart-B/section-423.46",
+        "sourceDocument": "42 CFR §423.46(a)",
+        "sourceNote": "A Part D eligible individual must pay the late penalty \"if there is a continuous period of 63 days or longer at any time after the end of the individual's initial enrollment period\" without Part D or creditable prescription drug coverage. Unamended since 2017 (eCFR version history).",
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    {
+      "id": "medicare-irmaa-reconsideration",
+      "program": "Medicare appeals",
+      "label": "Ask Social Security to reconsider an income-related premium",
+      "due": {
+        "days": 60,
+        "trigger": "the day you received the notice of the income-related monthly adjustment"
+      },
+      "bound": "ceiling",
+      "detail": "If you think the surcharge on your Medicare premium is wrong, you can ask Social Security to reconsider it within 60 days of receiving the notice. A change in your life that lowered your income, such as retiring, is a different request, a new initial determination, and it has no such deadline.",
+      "citation": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-20/chapter-III/part-418/subpart-B/section-418.1325",
+        "sourceDocument": "20 CFR §§418.1325, 404.909(a)(1)",
+        "sourceNote": "§418.1325: a reconsideration of an income-related monthly adjustment determination uses \"the rules in §§ 404.907 through 404.922\". §404.909(a)(1): the request is filed \"Within 60 days after the date you receive notice of the initial determination\". A new initial determination for a life-changing event is §418.1310.",
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    {
+      "id": "idr-transition-2028",
+      "program": "Federal student loans",
+      "label": "Choose a new repayment plan if you repay under ICR, PAYE or SAVE",
+      "due": {
+        "on": "2028-06-30"
+      },
+      "bound": "ceiling",
+      "detail": "The income-contingent plans close. A borrower in one must choose the Repayment Assistance Plan, income-based repayment, or another plan the law allows before July 1, 2028. A borrower who does not choose is moved into the Repayment Assistance Plan, or income-based repayment for loans it does not cover, and starts paying under it that day.",
+      "citation": {
+        "sourceUrl": "https://www.law.cornell.edu/uscode/text/20/1087e",
+        "sourceDocument": "Pub. L. 119-21 §82001(a), note to 20 U.S.C. §1087e",
+        "sourceNote": "§82001(a)(1): the Secretary shall ensure that \"before July 1, 2028\", each borrower with loans in an income contingent repayment plan under §455(e) selects the Repayment Assistance Plan, the §493C income-based plan, or another §455(d)(1) plan. (a)(3): a borrower who fails to select is enrolled in the Repayment Assistance Plan, or income-based repayment for ineligible loans, and must begin repaying \"on July 1, 2028.\"",
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    {
+      "id": "collections-validation",
+      "program": "Debt collection",
+      "label": "Dispute a debt in writing",
+      "due": {
+        "days": 30,
+        "trigger": "the day you received the collector's validation notice"
+      },
+      "bound": "ceiling",
+      "detail": "A debt collector's first notice starts a validation period that ends 30 days after you receive it, and the notice must state the date it treats as the end. Dispute the debt in writing on or before that date. The collector may assume you received the notice five business days after it was sent, so the date printed on the notice is the one to go by.",
+      "citation": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-12/chapter-X/part-1006/subpart-B/section-1006.34",
+        "sourceDocument": "12 CFR §1006.34(b)(5)",
+        "sourceNote": "\"Validation period means the period starting on the date that a debt collector provides the validation information ... and ending 30 days after the consumer receives or is assumed to receive the validation information.\" A collector may assume receipt on any date at least five days, excluding legal public holidays, Saturdays and Sundays, after providing it. §1006.34(c)(3)(i): the notice states \"the date that the debt collector will consider the end date of the validation period\".",
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    {
+      "id": "medicare-summary-appeal",
+      "program": "Medicare appeals",
+      "label": "Appeal a claim on your Medicare Summary Notice",
+      "due": {
+        "days": 120,
+        "trigger": "the day you received your Medicare Summary Notice"
+      },
+      "bound": "ceiling",
+      "detail": "To appeal a decision on a claim under Original Medicare, ask for a redetermination within 120 days of receiving the notice. You are presumed to have received it five days after the date printed on it unless you can show otherwise, and a late request can be accepted only for good cause.",
+      "citation": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-B/part-405/subpart-I/section-405.942",
+        "sourceDocument": "42 CFR §405.942(a)",
+        "sourceNote": "\"any request for redetermination must be filed within 120 calendar days from the date a party receives the notice of the initial determination\"; receipt \"will be presumed to be 5 calendar days after the date of the notice\", unless there is evidence to the contrary. §405.942(b) extends the time for good cause.",
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
+      }
     }
   ],
   "stateSet": [
@@ -216,7 +323,7 @@
   "citation": {
     "sourceUrl": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-E/section-155.420",
     "sourceDocument": "Federal enrollment and appeal windows — 29 U.S.C. §§1162, 1165; 42 CFR §§406.24, 407.14, 407.15, 431.221; 45 CFR §§155.410, 155.420, 155.520; 7 CFR §273.15",
-    "sourceNote": "Each window carries its own citation to the section that sets it; this shard-level citation names the set. Every figure was transcribed from the statutory or regulatory text, not from a summary. One distinction the sources make and summaries routinely lose: the Medicaid fair-hearing period is a CEILING on what a state must allow (“reasonable time, not to exceed 90 days”), while the COBRA, SNAP, and Marketplace windows are floors a plan or agency may exceed but not shorten. Rolled to the 2027 benefit year on 2026-10-19. eCFR's version history shows no amendment to §§155.520, 407.14, 407.15, 407.20, 406.24, 431.221 or 273.15 since before this shard was read, and §155.420's last (2026-07-20) predates its reading; the two §155.420 passages quoted here still read word for word. 29 U.S.C. §§1162 and 1165 carry no amendment from the 119th Congress. The one window that changed is open enrollment, where CMS is applying the November 1 - January 15 schedule for 2027 rather than §155.410(e)(5)'s shortened one; see that window's citation.",
+    "sourceNote": "Each window carries its own citation to the section that sets it; this shard-level citation names the set. Every figure was transcribed from the statutory or regulatory text, not from a summary. One distinction the sources make and summaries routinely lose: the Medicaid fair-hearing period is a CEILING on what a state must allow (“reasonable time, not to exceed 90 days”), while the COBRA, SNAP, and Marketplace windows are floors a plan or agency may exceed but not shorten. Rolled to the 2027 benefit year on 2026-10-19. eCFR's version history shows no amendment to §§155.520, 407.14, 407.15, 407.20, 406.24, 431.221 or 273.15 since before this shard was read, and §155.420's last (2026-07-20) predates its reading; the two §155.420 passages quoted here still read word for word. 29 U.S.C. §§1162 and 1165 carry no amendment from the 119th Congress. The one window that changed is open enrollment, where CMS is applying the November 1 - January 15 schedule for 2027 rather than §155.410(e)(5)'s shortened one; see that window's citation. Six windows were added on 2026-10-19 for SPEC-5 (the 60-day rollover, the Part D 63-day gap, IRMAA reconsideration, the student-loan plan transition, debt validation and the Medicare Summary Notice appeal), each read from its section's own text and each a limit on the reader rather than a minimum someone else must allow.",
     "effectiveYear": 2027,
     "dateRetrieved": "2026-10-19"
   }

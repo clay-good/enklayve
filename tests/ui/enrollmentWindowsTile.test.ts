@@ -133,6 +133,30 @@ describe("the enrollment-windows shard and its mapping", () => {
     expect(resolveDueDate(sep.deadline.due, "2026-01-31")).toBe("2026-09-30");
   });
 
+  it("carries SPEC-5's six clocks, each cited to its own section and none a floor", () => {
+    // These are limits on the reader, not minimums someone else must allow, so
+    // none may render "at least" or "your plan may allow longer".
+    const want: Record<string, { cite: string; url: string }> = {
+      "rollover-60-day": { cite: "§402(c)(3)(A)", url: "/26/402" },
+      "part-d-creditable-gap": { cite: "§423.46", url: "part-423" },
+      "medicare-irmaa-reconsideration": { cite: "§§418.1325, 404.909", url: "part-418" },
+      "idr-transition-2028": { cite: "§82001(a)", url: "/20/1087e" },
+      "collections-validation": { cite: "§1006.34(b)(5)", url: "part-1006" },
+      "medicare-summary-appeal": { cite: "§405.942", url: "part-405" },
+    };
+    const all = enrollmentWindows(data.enrollmentWindows()!);
+    for (const [id, { cite, url }] of Object.entries(want)) {
+      const w = all.find((x) => x.id === id);
+      expect(w, `${id} is missing from the shard`).toBeDefined();
+      expect(w!.deadline.citation.sourceDocument).toContain(cite);
+      expect(w!.deadline.citation.sourceUrl).toContain(url);
+      expect(w!.deadline.isFloor, `${id} is a limit on the reader, not a floor`).toBeFalsy();
+    }
+    // The plan transition is a date, the last day before July 1, 2028.
+    const idr = all.find((x) => x.id === "idr-transition-2028")!;
+    expect(resolveDueDate(idr.deadline.due, "2026-10-19")).toBe("2028-06-30");
+  });
+
   it("lists every program the shard carries", () => {
     expect(programsIn(data.enrollmentWindows()!)).toEqual([
       "COBRA",
@@ -140,6 +164,11 @@ describe("the enrollment-windows shard and its mapping", () => {
       "Medicare",
       "Medicaid",
       "SNAP",
+      "Retirement account",
+      "Medicare Part D",
+      "Medicare appeals",
+      "Federal student loans",
+      "Debt collection",
     ]);
   });
 });

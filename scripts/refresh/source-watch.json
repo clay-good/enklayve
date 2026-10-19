@@ -321,6 +321,34 @@
       "why": "The Department's FAQ states the $275 maximum, the 14-20 weeks and the two-quarter test; ALISON serves the Code through a script, which this pipeline cannot fingerprint, so a statutory change arrives as an act the zero-year window forces a person to read.",
       "fingerprint": "830bff81b645081204353001b7a041d40f48e3662bb983a32e35911bc7e2f8e1",
       "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "enrollment-windows-2026",
+      "url": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-B/part-423/subpart-B/section-423.46",
+      "why": "The Part D 63-day creditable-coverage gap is this section's own text; an amendment changes when the lifetime penalty attaches.",
+      "fingerprint": "9bd055531a2a9cac4e9a62d5503318d67ee82913c3c100eec5f97f5077c736d2",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "enrollment-windows-2026",
+      "url": "https://www.ecfr.gov/current/title-20/chapter-III/part-418/subpart-B/section-418.1325",
+      "why": "IRMAA reconsideration borrows the 60 days of §404.909 through this section; a rewrite here could give the surcharge its own clock.",
+      "fingerprint": "d9877348e11e8694ac64f97fa2843d9a5359570242d1cd9b4be190109558456c",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "enrollment-windows-2026",
+      "url": "https://www.ecfr.gov/current/title-12/chapter-X/part-1006/subpart-B/section-1006.34",
+      "why": "Regulation F's validation period, and the five-day receipt presumption, are in §1006.34(b)(5); a change moves the date a debt can be disputed by.",
+      "fingerprint": "83f9531e72f6c10561544088fee5377fd0655a8782ac1fd4ae72b7e702dd6c2f",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "enrollment-windows-2026",
+      "url": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-B/part-405/subpart-I/section-405.942",
+      "why": "The 120-day redetermination window for a Medicare Summary Notice, and its receipt presumption, are this section.",
+      "fingerprint": "146fe607e283ce6fbd035c6626a081e7e74cf508855b64707f9d53ad949b68a8",
+      "checkedOn": "2026-10-19"
     }
   ]
 }
