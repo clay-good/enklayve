@@ -592,8 +592,22 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * third of the country — and the spec's own gate is met for them. The next state is an
  * argument against 308 with its measured cost, the same as these were; the
  * budget does not grow because a list is long.
+ *
+ * **308 → 311 on 2026-10-19, for Illinois, Ohio and Michigan, decided by the owner.**
+ *
+ * Five states were researched and three admitted: **2.8 kB** (306.2 → 309.0)
+ * for Illinois's average-weekly-wage rule, Ohio's qualifying weeks and
+ * dependency classes, and Michigan's dependents-before-rounding and
+ * half-week duration, each with its citations. North Carolina and Georgia
+ * cost nothing because they were held — each turns on a figure or rule its
+ * agency does not publish where this site can cite it — which is the gate
+ * working, not a saving. No lossless trim remained after the last entry's.
+ *
+ * Eight states now. Each further one is the same argument against 311, made
+ * with its measured cost; the budget grows with what the owner decides is
+ * worth shipping, not with the length of the list.
  */
-export const SHELL_GZIP_BUDGET_KB = 308;
+export const SHELL_GZIP_BUDGET_KB = 311;
 
 /**
  * The headroom this gate needs to be measuring the shell rather than the runner.

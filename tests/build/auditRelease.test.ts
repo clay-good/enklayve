@@ -665,15 +665,18 @@ describe("checkBundleBudget", () => {
   });
 
   it("fails a shell over budget and names the chunks that grew", () => {
+    // A kilobyte over whatever the budget is. This was a literal 310 kB, which
+    // stopped being "over" the day the budget passed it — derive it instead.
+    const js = SHELL_GZIP_BUDGET_KB - 9;
     const [violation] = checkBundleBudget([
-      { path: "/assets/index.js", gzipBytes: kb(300) },
+      { path: "/assets/index.js", gzipBytes: kb(js) },
       { path: "/assets/index.css", gzipBytes: kb(9) },
       { path: "/index.html", gzipBytes: kb(1) },
     ]);
-    expect(violation).toContain("310.0 kB gzipped");
+    expect(violation).toContain(`${(SHELL_GZIP_BUDGET_KB + 1).toFixed(1)} kB gzipped`);
     expect(violation).toContain(`over its ${SHELL_GZIP_BUDGET_KB} kB budget`);
     // A failure has to say *what* grew, or the next person just raises the number.
-    expect(violation).toContain("/assets/index.js 300 kB");
+    expect(violation).toContain(`/assets/index.js ${js} kB`);
     expect(violation).toContain("raise SHELL_GZIP_BUDGET_KB deliberately and say why");
   });
 
@@ -777,7 +780,10 @@ describe("checkBundleBudget", () => {
     // And to 308 the same day, by the owner again, for New York and
     // Pennsylvania: 3.3 kB, of which lossless trims recovered 0.2. The
     // docstring records the measurement; the next state argues against 308.
-    expect(SHELL_GZIP_BUDGET_KB).toBe(308);
+    //
+    // And to 311, again by the owner, for Illinois, Ohio and Michigan (2.8 kB);
+    // North Carolina and Georgia were held at the gate and cost nothing.
+    expect(SHELL_GZIP_BUDGET_KB).toBe(311);
   });
 });
 
