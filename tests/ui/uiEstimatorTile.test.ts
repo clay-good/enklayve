@@ -82,6 +82,15 @@ describe("Unemployment Benefit Estimate", () => {
     expect(text).not.toContain("a week, up to");
   });
 
+  it("names Alabama's rounding, and its floor as no claim rather than $45", () => {
+    const paid = mount(new URLSearchParams({ st: "AL", q1: "1183", q2: "1183", q3: "600" }));
+    expect(paid.root.textContent).toContain("rounded to the nearest dollar, an even 50 cents down");
+    expect(paid.root.textContent).toContain("About $45 a week");
+    const none = mount(new URLSearchParams({ st: "AL", q1: "1157", q2: "1157", q3: "600" }));
+    expect(none.root.textContent).toContain("a weekly benefit under the $45 minimum");
+    expect(none.root.textContent).not.toContain("a week, up to");
+  });
+
   it("starts from the state My Situation holds", () => {
     const profile = new SituationStore();
     profile.set("stateCode", "ca");

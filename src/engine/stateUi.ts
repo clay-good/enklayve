@@ -77,7 +77,10 @@ type Weekly = {
   rowBase?: number;
 };
 
-function wholeDollars(value: Decimal, rounding: "up" | "down" | "nearest" | "none"): number {
+function wholeDollars(
+  value: Decimal,
+  rounding: "up" | "down" | "nearest" | "nearest-half-down" | "none",
+): number {
   if (rounding === "none") return value.toNumber();
   return value
     .toDecimalPlaces(
@@ -86,7 +89,9 @@ function wholeDollars(value: Decimal, rounding: "up" | "down" | "nearest" | "non
         ? Decimal.ROUND_CEIL
         : rounding === "nearest"
           ? Decimal.ROUND_HALF_UP
-          : Decimal.ROUND_FLOOR,
+          : rounding === "nearest-half-down"
+            ? Decimal.ROUND_HALF_DOWN
+            : Decimal.ROUND_FLOOR,
     )
     .toNumber();
 }
@@ -161,7 +166,7 @@ function weeklyFrom(
   const clamp = (amount: number, b: Weekly["basis"], extra: Partial<Weekly> = {}): Weekly =>
     amount > maximum
       ? { ...extra, amount: maximum, basis: "maximum" }
-      : amount < w.minimum
+      : amount < w.minimum && !w.noClaimBelowMinimum
         ? { ...extra, amount: w.minimum, basis: "minimum" }
         : { ...extra, amount, basis: b };
   const sorted = [...quarters].sort((a, b) => b - a);
@@ -328,6 +333,9 @@ export function estimateUi(input: UiInput, rules: StateUiData): UiResult {
               ? "high-quarter or total wages below the lowest rate the table allows"
               : "high-quarter wages below the lowest row of the benefit table",
       );
+    // Alabama: a rate under the minimum is no claim, and says what it is short of.
+    if (wb.noClaimBelowMinimum && weekly !== null && weekly.amount < wb.minimum)
+      out.push(`a weekly benefit under the $${wb.minimum} minimum`);
     if (path.minHours !== undefined && hours < path.minHours)
       out.push(`fewer than ${path.minHours} hours worked`);
     if (
@@ -468,7 +476,7 @@ export function estimateUi(input: UiInput, rules: StateUiData): UiResult {
   const maxBenefit = eligible
     ? d.totalRoundsDown || outside
       ? total.toDecimalPlaces(0, Decimal.ROUND_FLOOR).toNumber()
-      : total.toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber()
+      : total.toDecimalPlaces(d.totalRoundsToNearest ? 0 : 2, Decimal.ROUND_HALF_UP).toNumber()
     : 0;
   // Full weeks the total pays at the weekly rate; a final partial week is paid
   // as the remainder, which is how every bundled state words it.

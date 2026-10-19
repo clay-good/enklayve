@@ -532,6 +532,18 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
   for (const total of [15479, 15480]) uiProbe("md", [12000, total - 12000, 0, 0]);
   for (const other of [3499.99, 3500]) uiProbe("mo", [10000, other, 0, 0]);
   for (const first of [7999.99, 8000]) uiProbe("co", [first, 8000, 1000, 1000]);
+  for (const hq of [1349.99, 1350, 9249.99, 9250]) uiProbe("wi", [hq, 3700, 0, 0]);
+  for (const other of [1479.99, 1480]) uiProbe("wi", [20000, other, 0, 0]);
+  for (const last of [1178.99, 1179]) uiProbe("sc", [1092, 1092, 1092, last]);
+  // Alabama's $44.50 line, its even fifty cents dropped, and its $274.50 line.
+  for (const [a, b] of [
+    [1157, 1157],
+    [1157, 1157.01],
+    [1183, 1183],
+    [7137, 7137],
+    [7137, 7137.01],
+  ] as const)
+    uiProbe("al", [a, b, 600, 0]);
 
   // --- garnishment: the crossover -------------------------------------------
   const garn = data.garnishmentLimits()!;

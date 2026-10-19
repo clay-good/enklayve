@@ -300,6 +300,27 @@
       "why": "The 2023 benefit table and duration scale are this public chapter; a later chapter amending §50-7-301 would not change this document, so the zero-year window forces a January re-read of the codified section.",
       "fingerprint": "33df31a8851dcf3346d01b0b93dc877444dc48b681a8ef2d0c43823fa0a746c5",
       "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-wi-2026",
+      "url": "https://dwd.wisconsin.gov/uiben/qualifying-wages.htm",
+      "why": "DWD's Qualifying Wages page states the 4% rate, the $54 floor, the $370 maximum and the 26-times-or-40% total; ch. 108 is one PDF, where a fingerprint would fire for any change to the chapter.",
+      "fingerprint": "38b8dfc9c7bc053852447064bd211a3832bd46e321dac00a125c763427b389ce",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-sc-2026",
+      "url": "https://www.scstatehouse.gov/code/t41c035.php",
+      "why": "Chapter 35 holds the half-of-average-wage rule, the $42 floor and the 20-week or one-third total; DEW sets the $350 maximum on its own page, so the zero-year window forces its January re-read.",
+      "fingerprint": "ae41b75d6f76025c7412fa163a5dc5183d4d450ebc6e4e580e3fcf4914e3ed30",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-al-2026",
+      "url": "https://workforce.alabama.gov/unemployment/faq/",
+      "why": "The Department's FAQ states the $275 maximum, the 14-20 weeks and the two-quarter test; ALISON serves the Code through a script, which this pipeline cannot fingerprint, so a statutory change arrives as an act the zero-year window forces a person to read.",
+      "fingerprint": "830bff81b645081204353001b7a041d40f48e3662bb983a32e35911bc7e2f8e1",
+      "checkedOn": "2026-10-19"
     }
   ]
 }

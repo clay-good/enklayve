@@ -22,6 +22,9 @@ let ind: StateUiData;
 let md: StateUiData;
 let mo: StateUiData;
 let co: StateUiData;
+let wi: StateUiData;
+let sc: StateUiData;
+let al: StateUiData;
 /** A state's rules, loaded and gated as the estimator loads them. */
 async function rulesOf(code: string): Promise<StateUiData> {
   const ds = await data.loadStateUi(code);
@@ -49,6 +52,9 @@ beforeAll(async () => {
   md = await rulesOf("md");
   mo = await rulesOf("mo");
   co = await rulesOf("co");
+  wi = await rulesOf("wi");
+  sc = await rulesOf("sc");
+  al = await rulesOf("al");
 });
 
 describe("the bundled state set", () => {
@@ -72,6 +78,9 @@ describe("the bundled state set", () => {
       "md",
       "mo",
       "co",
+      "wi",
+      "sc",
+      "al",
     ]);
     for (const code of data.stateUiCodes()) {
       expect(StateUiSchema.safeParse(data.loadedStateUi(code)?.data).success).toBe(true);
@@ -641,6 +650,99 @@ describe("Colorado (C.R.S. 8-73-102; CDLE estimator 2026)", () => {
   it("needs the greater of $2,500 or 40 times the rate", () => {
     expect(estimateUi({ quarterlyWages: [1300, 1199, 0, 0] }, co).eligible).toBe(false);
     expect(estimateUi({ quarterlyWages: [1300, 1200, 0, 0] }, co).eligible).toBe(true);
+  });
+});
+
+describe("Wisconsin (Wis. Stat. 108.04, 108.05, 108.06; DWD rate chart)", () => {
+  it("pays 4% of the high quarter, rounded down, from $54 to $370", () => {
+    // DWD's chart: a $4,000 quarter is $160; $1,350 is the $54 floor.
+    expect(estimateUi({ quarterlyWages: [4000, 1600, 0, 0] }, wi).weeklyBenefit).toBe(160);
+    expect(estimateUi({ quarterlyWages: [1350, 540, 0, 0] }, wi).weeklyBenefit).toBe(54);
+    expect(estimateUi({ quarterlyWages: [9250, 3700, 0, 0] }, wi).weeklyBenefit).toBe(370);
+    expect(estimateUi({ quarterlyWages: [9299, 3700, 0, 0] }, wi).weeklyBenefit).toBe(370);
+  });
+
+  it("pays nothing on a high quarter under $1,350, since the rate would be under $54", () => {
+    const r = estimateUi({ quarterlyWages: [1349.99, 1000, 0, 0] }, wi);
+    expect(r.eligible).toBe(false);
+    expect(r.shortfalls).toContain("high-quarter wages under $1,350");
+  });
+
+  it("needs 35 times the rate in the base period", () => {
+    // $54 × 35 = $1,890, the chart's own figure.
+    expect(estimateUi({ quarterlyWages: [1350, 540, 0, 0] }, wi).eligible).toBe(true);
+    expect(estimateUi({ quarterlyWages: [1350, 539.99, 0, 0] }, wi).eligible).toBe(false);
+  });
+
+  it("needs 4 times the rate outside the high quarter, which binds at the maximum", () => {
+    // $370 × 4 = $1,480 outside; 35 × 370 = $12,950 is already met by the quarter.
+    expect(estimateUi({ quarterlyWages: [20000, 1479.99, 0, 0] }, wi).eligible).toBe(false);
+    const r = estimateUi({ quarterlyWages: [20000, 1480, 0, 0] }, wi);
+    expect(r.eligible).toBe(true);
+    // The lower of 26 × $370 = $9,620 and 40% of $21,480 = $8,592.
+    expect(r.maxBenefit).toBe(8592);
+    expect(r.maxBenefitBasis).toBe("share-of-base-period");
+  });
+});
+
+describe("South Carolina (S.C. Code 41-27-310, 41-35-40, 41-35-50; DEW handbook)", () => {
+  it("matches DEW's own worked example: $307 a week, $6,140 in all", () => {
+    // Handbook: "$8,000 / 26 = $307"; "20 Weeks * $307 = $6,140" against "$30,000 / 3".
+    const r = estimateUi({ quarterlyWages: [7400, 8000, 6800, 7800] }, sc);
+    expect(r.eligible).toBe(true);
+    expect(r.weeklyBenefit).toBe(307);
+    expect(r.maxBenefit).toBe(6140);
+    expect(r.weeks).toBe(20);
+  });
+
+  it("needs $4,455 in the base period and $1,092 in the high quarter", () => {
+    expect(estimateUi({ quarterlyWages: [1092, 1092, 1092, 1179] }, sc).eligible).toBe(true);
+    const short = estimateUi({ quarterlyWages: [1092, 1092, 1092, 1178.99] }, sc);
+    expect(short.eligible).toBe(false);
+    expect(short.shortfalls).toContain("base-period wages under $4,455");
+  });
+
+  it("caps at $350 and takes a third of wages where that is less, rounded down", () => {
+    expect(estimateUi({ quarterlyWages: [9126, 9126, 0, 0] }, sc).weeklyBenefit).toBe(350);
+    // $7,000 / 26 = $269; 20 × 269 = $5,380 against $10,501 / 3 = $3,500.33 → $3,500.
+    const r = estimateUi({ quarterlyWages: [7000, 3501, 0, 0] }, sc);
+    expect(r.weeklyBenefit).toBe(269);
+    expect(r.maxBenefit).toBe(3500);
+  });
+});
+
+describe("Alabama (Code of Ala. 25-4-72, 25-4-74, 25-4-77)", () => {
+  it("pays the two highest quarters over 52, $275 at most, for 14 weeks", () => {
+    // $11,000 / 52 = $211.54 → $212; the lesser of 14 × 212 and a quarter of $16,000.
+    const r = estimateUi({ quarterlyWages: [3000, 6000, 5000, 2000] }, al);
+    expect(r.weeklyBenefit).toBe(212);
+    expect(r.maxBenefit).toBe(2968);
+    expect(r.weeks).toBe(14);
+    // $14,274 / 52 is exactly $274.50, which is not "more than" it: $274, not $275.
+    expect(estimateUi({ quarterlyWages: [7137, 7137, 5000, 0] }, al).weeklyBenefit).toBe(274);
+    expect(estimateUi({ quarterlyWages: [7137, 7137.01, 5000, 0] }, al).weeklyBenefit).toBe(275);
+  });
+
+  it("drops an even fifty cents, and rounds anything over it up", () => {
+    // $2,366 / 52 = $45.50 → $45; $2,418 / 52 = $46.50 → $46.
+    expect(estimateUi({ quarterlyWages: [1183, 1183, 600, 0] }, al).weeklyBenefit).toBe(45);
+    expect(estimateUi({ quarterlyWages: [1209, 1209, 600, 0] }, al).weeklyBenefit).toBe(46);
+  });
+
+  it("pays nothing at or under $44.50, rather than raising it to $45", () => {
+    const none = estimateUi({ quarterlyWages: [1157, 1157, 600, 0] }, al);
+    expect(none.eligible).toBe(false);
+    expect(none.weeklyBenefit).toBe(0);
+    expect(none.shortfalls).toContain("a weekly benefit under the $45 minimum");
+    // A cent more is $44.50019, which is over the line and rounds to $45.
+    expect(estimateUi({ quarterlyWages: [1157, 1157.01, 600, 0] }, al).weeklyBenefit).toBe(45);
+  });
+
+  it("needs 1.5 times the high quarter, and rounds the total to the dollar", () => {
+    expect(estimateUi({ quarterlyWages: [2999.99, 6000, 0, 0] }, al).eligible).toBe(false);
+    // A quarter of $9,001.98 is $2,250.495 → $2,250; of $9,003.98, $2,250.995 → $2,251.
+    expect(estimateUi({ quarterlyWages: [3001.98, 6000, 0, 0] }, al).maxBenefit).toBe(2250);
+    expect(estimateUi({ quarterlyWages: [3003.98, 6000, 0, 0] }, al).maxBenefit).toBe(2251);
   });
 });
 

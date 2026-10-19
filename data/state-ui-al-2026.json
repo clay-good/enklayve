@@ -1,0 +1,41 @@
+{
+  "stateCode": "al",
+  "name": "Alabama",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim. Alabama has no alternate base period.",
+  "eligibility": [
+    {
+      "minBasePeriodToHighQuarter": 1.5
+    }
+  ],
+  "weeklyBenefit": {
+    "rounding": "nearest-half-down",
+    "minimum": 45,
+    "noClaimBelowMinimum": true,
+    "maximum": 275,
+    "averageWeeklyWage": {
+      "from": "top-quarters",
+      "topQuarters": 2,
+      "divisor": 26,
+      "wageRounding": "none",
+      "share": 0.5
+    }
+  },
+  "duration": {
+    "maxWeeks": 14,
+    "shareOfBasePeriodWages": 0.25,
+    "totalRoundsToNearest": true
+  },
+  "notModeled": [
+    "The weeks rise from 14 to as many as 20 when Alabama's average unemployment rate for the most recent third quarter is above 6.5%; the Department put September 2026's at 3.5% (preliminary).",
+    "Five more weeks for a claimant in approved training.",
+    "A claimant with an earlier benefit year must have earned 8 times the earlier weekly amount since it began."
+  ],
+  "citation": {
+    "sourceUrl": "https://alison.legislature.state.al.us/code-of-alabama?section=25-4-72",
+    "sourceDocument": "Code of Ala. §§25-4-1, 25-4-72, 25-4-74, 25-4-77; Alabama Department of Workforce, Unemployment FAQ",
+    "sourceNote": "§25-4-72(b): the weekly amount is \"one twenty-sixth of the average of the wages\" in \"the two quarters of his or her base period in which the total wages were the highest\", that is half the two-quarter total over 26. Cents \"in excess of fifty cents ($.50)\" round up, and \"fifty cents ($.50) or less shall be dropped\". \"If the amount derived ... is not in excess of forty-four dollars fifty cents ($44.50), there shall be no weekly benefit amount\"; above $274.50 it is \"two hundred seventy-five dollars ($275)\". §25-4-77(a)(6): base-period wages of \"one and one-half times\" the high quarter. §25-4-74(a): the total is the lesser of \"14 times\" the weekly amount at an unemployment rate of 6.5% or less and \"one fourth of the wages\" in the base period, \"computed to the nearest multiple of one dollar\". The Department: \"maximum in Alabama is $275 a week\". No dependent allowance; one unpaid waiting week. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

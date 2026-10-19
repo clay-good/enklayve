@@ -1720,9 +1720,12 @@ export const StateUiSchema = z.object({
         maximumFrom: z.number().gt(0),
       })
       .optional(),
-    /** How the quotient becomes whole dollars — the statute's word, not ours. */
-    rounding: z.enum(["up", "down", "nearest"]),
+    /** How the quotient becomes whole dollars — the statute's word, not ours.
+     * `nearest-half-down` drops an even fifty cents (AL §25-4-72(b)). */
+    rounding: z.enum(["up", "down", "nearest", "nearest-half-down"]),
     minimum: z.number().gte(0),
+    /** A rate under `minimum` is no claim rather than raised to it (AL §25-4-72(b)(2)). */
+    noClaimBelowMinimum: z.boolean().default(false),
     maximum: z.number().gt(0),
     /**
      * A fixed low-wage schedule that replaces the divisor below its own end
@@ -1771,6 +1774,8 @@ export const StateUiSchema = z.object({
     maxTotal: z.number().gt(0).optional(),
     /** Whether the total rounds down to whole dollars (FL §443.111(5)(b)). */
     totalRoundsDown: z.boolean().default(false),
+    /** Whether the total rounds to the nearest whole dollar (AL §25-4-74(a)). */
+    totalRoundsToNearest: z.boolean().default(false),
     /** Weeks are the claimant's credit weeks, up to `maxWeeks` (PA, OH). */
     weeksFromCreditWeeks: z.boolean().default(false),
     /** What a week that counts is, in the state's words, for the input's hint. */

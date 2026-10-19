@@ -1288,6 +1288,45 @@
       "sourceDocument": "C.R.S. 8-73-102, 8-73-104, 8-73-107; CDLE benefits estimator (2026)",
       "dateRetrieved": "2026-10-19",
       "contentHash": "f8ac46b07e504393ddb63bc8bb48f5f329a4509923c602622e9e2bd4020ec109"
+    },
+    {
+      "id": "state-ui-wi-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-wi-2026.json",
+      "sourceUrl": "https://docs.legis.wisconsin.gov/statutes/statutes/108.pdf",
+      "sourceDocument": "Wis. Stat. §§108.02(4), 108.04(4)(a), 108.05(1)(r), 108.06(1); Wisconsin DWD, Qualifying Wages",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "f05c71b08aa0a031a5d325d1b35eba59a22f66eab1b14fe9c009abd125667c2c"
+    },
+    {
+      "id": "state-ui-sc-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-sc-2026.json",
+      "sourceUrl": "https://www.scstatehouse.gov/code/t41c035.php",
+      "sourceDocument": "S.C. Code §§41-27-140, -150, -310, 41-35-40, -50; SC DEW, Weekly Benefit Amount and Claimant Handbook",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "0ba7a3d29fdd4c3bf54825b0f0753937710f646b42fdae33f9f042c21e1ee907"
+    },
+    {
+      "id": "state-ui-al-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-al-2026.json",
+      "sourceUrl": "https://alison.legislature.state.al.us/code-of-alabama?section=25-4-72",
+      "sourceDocument": "Code of Ala. §§25-4-1, 25-4-72, 25-4-74, 25-4-77; Alabama Department of Workforce, Unemployment FAQ",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "2e8952fdb5278724264b2af6bbfc3172d26ea73aabde20abf3ca8d8294fb7b2f"
     }
   ]
 }

@@ -1,0 +1,35 @@
+{
+  "stateCode": "sc",
+  "name": "South Carolina",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim. South Carolina uses the last four completed quarters only if those do not qualify.",
+  "eligibility": [
+    {
+      "minHighQuarterWages": 1092,
+      "minBasePeriodWages": 4455,
+      "minBasePeriodToHighQuarter": 1.5
+    }
+  ],
+  "weeklyBenefit": {
+    "highQuarterDivisor": 26,
+    "rounding": "down",
+    "minimum": 42,
+    "maximum": 350
+  },
+  "duration": {
+    "maxWeeks": 20,
+    "basePeriodWagesDivisor": 3,
+    "totalRoundsDown": true
+  },
+  "notModeled": [
+    "The alternate base period: enter whichever four quarters the Department will use.",
+    "The $350 maximum is set by the Department within the statute's ceiling of two-thirds of the statewide average weekly wage; the date it took effect is not published on the pages read."
+  ],
+  "citation": {
+    "sourceUrl": "https://www.scstatehouse.gov/code/t41c035.php",
+    "sourceDocument": "S.C. Code §§41-27-140, -150, -310, 41-35-40, -50; SC DEW, Weekly Benefit Amount and Claimant Handbook",
+    "sourceNote": "§41-27-140: the weekly average wage is the high quarter divided \"by thirteen\". §41-35-40(A): the weekly amount is \"fifty percent of his weekly average wage\", \"computed to the next lower multiple of one dollar\", and never \"less than forty-two dollars\". §41-27-310: base-period wages of \"one and one-half times\" the high quarter, at least \"four thousand four hundred fifty-five dollars\", and \"one thousand ninety-two dollars\" in the high quarter. §41-35-50: the total is the lesser of \"twenty times his weekly benefit amount\" and \"one-third of his wages\", rounded down to the dollar. DEW: \"a minimum of $42 a week to a maximum of $350 a week\". No dependent allowance; one unpaid waiting week. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

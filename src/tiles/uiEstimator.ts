@@ -85,13 +85,20 @@ const money = (n: number, locale: string): string =>
   n.toLocaleString(locale, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
 /** One sentence naming the rule that produced the weekly figure. */
+/** The rounding rule in words; an even fifty cents dropped is Alabama's. */
+function roundWord(rounding: StateUiData["weeklyBenefit"]["rounding"]): string {
+  return rounding === "nearest-half-down"
+    ? "to the nearest dollar, an even 50 cents down"
+    : rounding;
+}
+
 function weeklyLine(r: UiResult, rules: StateUiData, locale: string): string {
   const w = rules.weeklyBenefit;
   const hq = money(r.highQuarterWages, locale);
   const rate = money(r.weeklyBenefit, locale);
   switch (r.weeklyBasis) {
     case "average-wage":
-      return `${Math.round(w.averageWeeklyWage!.share * 10000) / 100}% of your average ${w.averageWeeklyWage!.quarterly ? "quarterly" : "weekly"} wage, ${money(r.averageWeeklyWage, locale)}, rounded ${w.rounding}: ${rate} a week.`;
+      return `${Math.round(w.averageWeeklyWage!.share * 10000) / 100}% of your average ${w.averageWeeklyWage!.quarterly ? "quarterly" : "weekly"} wage, ${money(r.averageWeeklyWage, locale)}, rounded ${roundWord(w.rounding)}: ${rate} a week.`;
     case "alternative":
       return `Half of your base-period wages over 52, ${rate} a week, is higher than the two-quarter formula, so ${rules.name} pays it.`;
     case "share":

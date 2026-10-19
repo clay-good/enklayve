@@ -113,6 +113,9 @@ export const UI_STATE_CODES = [
   "md",
   "mo",
   "co",
+  "wi",
+  "sc",
+  "al",
 ] as const;
 
 const ANNUAL = { effectiveYear: 2026, expectedRefreshMonths: 12, staleAfterYears: 2 } as const;

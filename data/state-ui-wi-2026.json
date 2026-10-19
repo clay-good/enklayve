@@ -1,0 +1,37 @@
+{
+  "stateCode": "wi",
+  "name": "Wisconsin",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim. Wisconsin uses the last four completed quarters only if those do not qualify.",
+  "eligibility": [
+    {
+      "minHighQuarterWages": 1350,
+      "minBasePeriodToWeeklyBenefit": 35,
+      "minOutsideHighQuarterLesserOf": {
+        "dollars": 1480,
+        "timesWeekly": 4
+      }
+    }
+  ],
+  "weeklyBenefit": {
+    "highQuarterShare": 0.04,
+    "rounding": "down",
+    "minimum": 54,
+    "maximum": 370
+  },
+  "duration": {
+    "maxWeeks": 26,
+    "shareOfBasePeriodWages": 0.4
+  },
+  "notModeled": [
+    "The alternate base period: enter whichever four quarters the Department will use.",
+    "A claimant with an earlier benefit year must have earned 8 times the earlier weekly rate since it began."
+  ],
+  "citation": {
+    "sourceUrl": "https://docs.legis.wisconsin.gov/statutes/statutes/108.pdf",
+    "sourceDocument": "Wis. Stat. §§108.02(4), 108.04(4)(a), 108.05(1)(r), 108.06(1); Wisconsin DWD, Qualifying Wages",
+    "sourceNote": "§108.05(1)(r): the rate is \"4 percent of the employee's base period wages that were paid during that quarter\" with the highest wages, \"rounded down to the nearest whole dollar\"; \"if that amount is less than $54, no benefits are payable\", and above $370 it is $370. So the high quarter must be at least $1,350. §108.04(4)(a): base-period wages of \"at least 35 times\" the rate, including \"at least 4 times\" it outside the high quarter, carried here as the lesser of 4 times and $1,480, which is 4 times the $370 maximum. §108.06(1): the total is the lower of \"26 times the claimant's weekly benefit rate\" and \"40 percent of the claimant's base period wages\". DWD: \"The maximum WBR is $370.\" No dependent allowance; one unpaid waiting week. Chapter 108 as updated through 2025 Act 247. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}
