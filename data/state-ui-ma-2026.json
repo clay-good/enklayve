@@ -1,0 +1,52 @@
+{
+  "stateCode": "ma",
+  "name": "Massachusetts",
+  "year": 2026,
+  "basePeriod": "The last four completed calendar quarters before your claim. Massachusetts can use the last three plus your weeks in the current quarter if those do not qualify.",
+  "eligibility": [
+    {
+      "minBasePeriodWages": 6300,
+      "minBasePeriodToWeeklyBenefit": 30
+    }
+  ],
+  "weeklyBenefit": {
+    "rounding": "down",
+    "minimum": 0,
+    "maximum": 1154,
+    "averageWeeklyWage": {
+      "from": "top-quarters",
+      "topQuarters": 2,
+      "divisor": 26,
+      "wageRounding": "up",
+      "share": 0.5,
+      "fewQuarters": {
+        "atOrBelowQuarters": 2,
+        "divisor": 13
+      }
+    }
+  },
+  "dependentAllowances": {
+    "perDependent": [
+      25
+    ],
+    "repeatLast": true,
+    "outsideTotalCap": true,
+    "note": "$25 a week for each child you mainly support, paid on top of the weekly rate."
+  },
+  "duration": {
+    "maxWeeks": 30,
+    "shareOfBasePeriodWages": 0.36,
+    "totalRoundsDown": true
+  },
+  "notModeled": [
+    "DUA states 30 weeks today; the law lowers it to 26 when unemployment is low statewide, as it did for claims from July 2023.",
+    "Benefit years that began before October 4, 2026 use a $1,105 maximum."
+  ],
+  "citation": {
+    "sourceUrl": "https://www.mass.gov/info-details/how-unemployment-insurance-benefits-are-determined",
+    "sourceDocument": "DUA, How unemployment insurance benefits are determined (2026); M.G.L. c. 151A §§1, 24, 29, 30",
+    "sourceNote": "DUA: \"As of October 4, 2026, the maximum weekly benefit amount is $1,154.00 per week\"; up to \"30 times your weekly benefit amount, or 36% of your total wages in your base period\"; \"the maximum duration of benefits is 30 weeks\"; and \"a dependency allowance of up to $25 per child.\" c. 151A §1(w): the average weekly wage is the two highest quarters over 26, or the highest over 13 with wages in two quarters or fewer, raised to the next dollar; §29(a): the rate is \"fifty percent\" of it, rounded down; §30 adds dependency benefits on top of the cap. §24: base-period wages of at least $6,300 for 2026 and 30 times the rate. One unpaid waiting week. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

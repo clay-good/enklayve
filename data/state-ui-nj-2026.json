@@ -1,0 +1,50 @@
+{
+  "stateCode": "nj",
+  "name": "New Jersey",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before you apply. New Jersey can use the last four completed quarters, or the last three plus your weeks in the current quarter, if those do not qualify.",
+  "eligibility": [
+    {
+      "minCreditWeeks": 20
+    },
+    {
+      "minBasePeriodWages": 15500,
+      "notEstimated": true
+    }
+  ],
+  "weeklyBenefit": {
+    "rounding": "down",
+    "minimum": 0,
+    "maximum": 905,
+    "averageWeeklyWage": {
+      "from": "credit-weeks",
+      "wageRounding": "none",
+      "share": 0.6,
+      "maxWeeksCounted": 52
+    }
+  },
+  "dependentAllowances": {
+    "sharesOfRate": [
+      0.07,
+      0.04,
+      0.04
+    ],
+    "note": "7% of the rate for the first dependent and 4% for each of the next two, rounded down and only up to the maximum; not paid if a spouse is working when you apply."
+  },
+  "duration": {
+    "maxWeeks": 26,
+    "weeksFromCreditWeeks": true,
+    "creditWeeksMean": "A base week is a week in which you earned $310 or more from an employer."
+  },
+  "notModeled": [
+    "With fewer than 20 base weeks, New Jersey can still qualify you on $15,500 of base-year wages, but works out the rate in a way this does not estimate.",
+    "The alternate base years: enter whichever four quarters NJDOL will use."
+  ],
+  "citation": {
+    "sourceUrl": "https://www.nj.gov/labor/myunemployment/before/about/calculator/",
+    "sourceDocument": "NJDOL, How your benefits are calculated and Who is eligible (2026); N.J.S.A. 43:21-3, 43:21-19",
+    "sourceNote": "NJDOL: \"If you're applying in 2026: You must have earned at least $310 per week for 20 or more weeks ... or a total of at least $15,500\" (20 and 1,000 times the $15.49 minimum wage, rounded up). \"For 2026, the maximum weekly benefit rate is $905.\" N.J.S.A. 43:21-3(c)(1): the rate is \"60% of his average weekly wage\", rounded down, and §43:21-19(u) divides total base-year wages by base weeks, at most 52. §43:21-3(c)(2)(A): dependents raise it \"by 7% for the first dependent and 4% each for the next two\", not past the maximum. §43:21-3(d): the total is base weeks times the rate, at most 26 times it. There is no waiting week for benefit years from 2002. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

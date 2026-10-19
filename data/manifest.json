@@ -1158,6 +1158,71 @@
       "sourceDocument": "Michigan Employment Security Act, MCL 421.27 and 421.46; UIA Eligibility Requirements (2026)",
       "dateRetrieved": "2026-10-19",
       "contentHash": "2233e05652098e73a5b728866bde795b6f82a8f992e6e9704eb80d8b4462a698"
+    },
+    {
+      "id": "state-ui-nj-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-nj-2026.json",
+      "sourceUrl": "https://www.nj.gov/labor/myunemployment/before/about/calculator/",
+      "sourceDocument": "NJDOL, How your benefits are calculated and Who is eligible (2026); N.J.S.A. 43:21-3, 43:21-19",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "23b5312a7fdbd3d99a39ac63e1b432d987490a6a69a5ca7c5adaa08ef788a727"
+    },
+    {
+      "id": "state-ui-va-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-va-2026.json",
+      "sourceUrl": "https://www.vec.virginia.gov/sites/default/files/bentable.pdf",
+      "sourceDocument": "Code of Virginia §§60.2-602, 60.2-607, 60.2-612; the §60.2-602 Benefit Table (July 2026), VEC",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "d71c7a7bc6ec49c9d211764b3e6ca1dc5f60d0951d7fab536e2bcdc6f0b92be3"
+    },
+    {
+      "id": "state-ui-wa-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-wa-2026.json",
+      "sourceUrl": "https://app.leg.wa.gov/RCW/default.aspx?cite=50.20.120",
+      "sourceDocument": "RCW 50.04.030, 50.20.120; ESD news release on 2026 benefit amounts (June 2026)",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "c3f51d0a18534c3d54c18c8de12dad02ccb4aa3e3f802b0f45980c4fae4f7126"
+    },
+    {
+      "id": "state-ui-az-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-az-2026.json",
+      "sourceUrl": "https://www.azleg.gov/ars/23/00779.htm",
+      "sourceDocument": "A.R.S. §§23-771, 23-779, 23-780; Arizona DES, Determining eligibility (2026)",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "123ba5c839cab6e26fccdd09c0a246efcda2eb6d5c1c7a72abdaab193fbdca12"
+    },
+    {
+      "id": "state-ui-ma-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-ma-2026.json",
+      "sourceUrl": "https://www.mass.gov/info-details/how-unemployment-insurance-benefits-are-determined",
+      "sourceDocument": "DUA, How unemployment insurance benefits are determined (2026); M.G.L. c. 151A §§1, 24, 29, 30",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "0cdcbe2b1ada7515c288bb199946b321ae8f34c0f1ae3f93795078f1c5a172fc"
     }
   ]
 }

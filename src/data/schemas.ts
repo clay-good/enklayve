@@ -1591,6 +1591,11 @@ const UiEligibilityPathSchema = z.object({
   minWagesOutsideHighQuarter: z.number().gt(0).optional(),
   /** An average weekly wage of at least this (OH $352). */
   minAverageWeeklyWage: z.number().gt(0).optional(),
+  /** Hours worked in the base period (WA 680). */
+  minHours: z.number().int().gt(0).optional(),
+  /** A path the state allows but this estimate cannot compute; meeting only it
+   * says "may qualify" instead of a figure (NJ's $15,500 alternative). */
+  notEstimated: z.boolean().optional(),
   /**
    * A minimum base-period total per row of a banded table (PA's "Part C"):
    * (row start + addend) / share, rounded up. Below it, the rate steps down to
@@ -1623,8 +1628,32 @@ export const StateUiSchema = z.object({
         from: z.enum(["top-quarters", "credit-weeks"]),
         topQuarters: z.number().int().gte(1).lte(4).optional(),
         divisor: z.number().positive().optional(),
-        wageRounding: z.enum(["nearest", "down"]),
+        wageRounding: z.enum(["nearest", "down", "up", "none"]),
         share: z.number().gt(0).lt(1),
+        /** With wages in this many quarters or fewer, the top quarter alone over
+         * its own divisor (MA: one quarter / 13). */
+        fewQuarters: z
+          .object({ atOrBelowQuarters: z.number().int(), divisor: z.number().positive() })
+          .optional(),
+        /** Weeks counted in the divisor at most this many (NJ 52). */
+        maxWeeksCounted: z.number().int().positive().optional(),
+        /** The rate may not exceed the wage over this divisor (WA: a quarter / 13). */
+        capAtWageOver: z.number().positive().optional(),
+        /** The averaged wage is a quarter's, not a week's (WA), for how it is named. */
+        quarterly: z.boolean().optional(),
+      })
+      .optional(),
+    /**
+     * A table stepping $1 per band of the two highest quarters (VA §60.2-602):
+     * `firstRate` from `fromWages` up to `firstUpTo`, then one dollar more per
+     * `width` started above it.
+     */
+    stepTable: z
+      .object({
+        fromWages: z.number().gt(0),
+        firstUpTo: z.number().gt(0),
+        width: z.number().gt(0),
+        firstRate: z.number().gt(0),
       })
       .optional(),
     /** Maximums by dependents, indexed by count and capped at the last (OH). */
@@ -1657,7 +1686,7 @@ export const StateUiSchema = z.object({
       })
       .optional(),
     /** How the quotient becomes whole dollars — the statute's word, not ours. */
-    rounding: z.enum(["up", "down"]),
+    rounding: z.enum(["up", "down", "nearest"]),
     minimum: z.number().gte(0),
     maximum: z.number().gt(0),
     /**
@@ -1678,7 +1707,13 @@ export const StateUiSchema = z.object({
   /** Weekly amounts added per dependent, in order; absent where the state pays none. */
   dependentAllowances: z
     .object({
-      perDependent: z.array(z.number().gt(0)).min(1),
+      perDependent: z.array(z.number().gt(0)).min(1).optional(),
+      /** Or shares of the rate, applied together and rounded down (NJ 7%, 4%, 4%). */
+      sharesOfRate: z.array(z.number().gt(0).lt(1)).min(1).optional(),
+      /** The last amount repeats for every further dependent (MA $25 a child). */
+      repeatLast: z.boolean().default(false),
+      /** Paid on top of the total cap rather than under it (MA §30). */
+      outsideTotalCap: z.boolean().default(false),
       note: z.string().min(1),
       /** Added before the rate is rounded and capped, not after (MI §421.27). */
       beforeRounding: z.boolean().default(false),
@@ -1688,6 +1723,13 @@ export const StateUiSchema = z.object({
     maxWeeks: z.number().int().positive(),
     /** Total benefits capped at this share of base-period wages (CA 0.5, TX 0.27, FL 0.25). */
     shareOfBasePeriodWages: z.number().gt(0).lte(1).optional(),
+    /** ... or base-period wages over this, for shares no decimal states exactly (AZ, WA: 3). */
+    basePeriodWagesDivisor: z.number().gt(1).optional(),
+    /** VA: weeks from 12 to `maxWeeks` by the row's base B, the nth needing more than
+     * B + B × (n − 12) / `stepDivisor` in base-period wages, rounded to the dollar. */
+    weeksFromRowBase: z
+      .object({ minWeeks: z.number().int().positive(), stepDivisor: z.number().positive() })
+      .optional(),
     /** A dollar ceiling on the total, where the statute states one. */
     maxTotal: z.number().gt(0).optional(),
     /** Whether the total rounds down to whole dollars (FL §443.111(5)(b)). */
@@ -1714,6 +1756,7 @@ export const StateUiSchema = z.object({
       d.weeklyBenefit.bandedTable,
       d.weeklyBenefit.highQuarterShare,
       d.weeklyBenefit.averageWeeklyWage,
+      d.weeklyBenefit.stepTable,
     ].filter((m) => m !== undefined).length === 1,
   { message: "a state's weekly benefit has exactly one method" },
 );

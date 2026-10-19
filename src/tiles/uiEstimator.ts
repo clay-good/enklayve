@@ -38,6 +38,8 @@ interface Fields {
   quarters: [number, number, number, number];
   /** Pennsylvania's credit weeks; 0 until counted, so no estimate assumes them. */
   creditWeeks: number;
+  /** Hours worked, for a state that tests hours (WA); 0 until entered. */
+  hours: number;
   dependents: number;
 }
 
@@ -45,6 +47,7 @@ const EXAMPLE: Fields = {
   stateCode: "TX",
   quarters: [12000, 10000, 8000, 6000],
   creditWeeks: 0,
+  hours: 0,
   dependents: 0,
 };
 
@@ -62,6 +65,7 @@ function readFields(ctx: TileContext): Fields {
       knownState(p.get("st")) ?? knownState(ctx.profile.get("stateCode")) ?? EXAMPLE.stateCode,
     quarters: [q("q1", 0), q("q2", 1), q("q3", 2), q("q4", 3)],
     creditWeeks: Math.min(52, Math.floor(parseNonNegative(p.get("cw"), 0))),
+    hours: Math.min(9999, Math.floor(parseNonNegative(p.get("hrs"), 0))),
     dependents: Math.min(9, Math.floor(parseNonNegative(p.get("dep"), 0))),
   };
 }
@@ -71,6 +75,7 @@ function writeFields(f: Fields): URLSearchParams {
   p.set("st", f.stateCode);
   f.quarters.forEach((v, i) => p.set(`q${i + 1}`, String(v)));
   p.set("cw", String(f.creditWeeks));
+  p.set("hrs", String(f.hours));
   p.set("dep", String(f.dependents));
   return p;
 }
@@ -85,7 +90,7 @@ function weeklyLine(r: UiResult, rules: StateUiData, locale: string): string {
   const rate = money(r.weeklyBenefit, locale);
   switch (r.weeklyBasis) {
     case "average-wage":
-      return `${Math.round(w.averageWeeklyWage!.share * 100)}% of your average weekly wage, ${money(r.averageWeeklyWage, locale)}, rounded ${w.rounding}: ${rate} a week.`;
+      return `${Math.round(w.averageWeeklyWage!.share * 10000) / 100}% of your average ${w.averageWeeklyWage!.quarterly ? "quarterly" : "weekly"} wage, ${money(r.averageWeeklyWage, locale)}, rounded ${w.rounding}: ${rate} a week.`;
     case "share":
       return `${Math.round(w.highQuarterShare! * 1000) / 10}% of your highest quarter, ${hq}, rounded ${w.rounding}: ${money(r.weeklyTotal, locale)} a week.`;
     case "table":
@@ -167,6 +172,14 @@ export function mountUiEstimator(ctx: TileContext): void {
     creditHint,
   );
   const dependentsRow = field("Dependents you support", dependentsInput);
+  const hoursInput = el("input", {
+    type: "number",
+    min: 0,
+    step: 10,
+    value: fields.hours,
+    attrs: { "aria-label": "Hours worked in the base period", inputmode: "numeric" },
+  });
+  const hoursRow = field("Hours worked in the base period", hoursInput);
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
   function unbundled(code: string): HTMLElement[] {
@@ -195,6 +208,7 @@ export function mountUiEstimator(ctx: TileContext): void {
         quarterlyWages: fields.quarters,
         creditWeeks: fields.creditWeeks,
         dependents: fields.dependents,
+        hours: fields.hours,
       },
       rules,
     );
@@ -202,7 +216,18 @@ export function mountUiEstimator(ctx: TileContext): void {
     const blocks: HTMLElement[] = [
       el("p", { class: "uie-base", text: `Base period in ${rules.name}: ${rules.basePeriod}` }),
     ];
-    if (!r.eligible) {
+    if (r.mayQualifyUnestimated) {
+      blocks.push(
+        el(
+          "p",
+          { class: "uie-figure" },
+          el("span", {
+            text: `These wages may qualify under ${rules.name}'s alternative wage test, which works out the rate in a way this does not estimate. `,
+          }),
+          citationLink(rules.citation),
+        ),
+      );
+    } else if (!r.eligible) {
       blocks.push(
         el(
           "p",
@@ -268,6 +293,7 @@ export function mountUiEstimator(ctx: TileContext): void {
     // Only the inputs this state's rules use are shown.
     creditRow.hidden = !rules?.duration.weeksFromCreditWeeks;
     creditHint.textContent = rules?.duration.creditWeeksMean ?? "";
+    hoursRow.hidden = !rules?.eligibility.some((p) => p.minHours !== undefined);
     dependentsRow.hidden = !rules?.dependentAllowances && !rules?.weeklyBenefit.maximumByDependents;
     resultContainer.replaceChildren(...(rules ? render(rules) : unbundled(fields.stateCode)));
   }
@@ -277,6 +303,7 @@ export function mountUiEstimator(ctx: TileContext): void {
       stateCode: knownState(stateSelect.value) ?? fields.stateCode,
       quarters: quarterInputs.map((i) => parseNonNegative(i.value, 0)) as Fields["quarters"],
       creditWeeks: Math.min(52, Math.floor(parseNonNegative(creditInput.value, 0))),
+      hours: Math.min(9999, Math.floor(parseNonNegative(hoursInput.value, 0))),
       dependents: Math.min(9, Math.floor(parseNonNegative(dependentsInput.value, 0))),
     };
     ctx.setParams(writeFields(fields));
@@ -284,7 +311,7 @@ export function mountUiEstimator(ctx: TileContext): void {
   }
 
   stateSelect.addEventListener("change", recompute);
-  for (const input of [...quarterInputs, creditInput, dependentsInput])
+  for (const input of [...quarterInputs, creditInput, hoursInput, dependentsInput])
     input.addEventListener("input", recompute);
 
   const tryExample = tryExampleButton(() => {
@@ -292,6 +319,7 @@ export function mountUiEstimator(ctx: TileContext): void {
     stateSelect.value = fields.stateCode;
     quarterInputs.forEach((input, i) => (input.value = String(fields.quarters[i])));
     creditInput.value = String(fields.creditWeeks);
+    hoursInput.value = String(fields.hours);
     dependentsInput.value = String(fields.dependents);
     recompute();
   });
@@ -305,6 +333,7 @@ export function mountUiEstimator(ctx: TileContext): void {
         field(`Wages paid in base-period quarter ${i + 1}`, input),
       ),
       creditRow,
+      hoursRow,
       dependentsRow,
       el("div", { class: "tile-form-actions" }, tryExample),
     ),

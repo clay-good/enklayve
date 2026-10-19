@@ -12,6 +12,11 @@ let pa: StateUiData;
 let il: StateUiData;
 let oh: StateUiData;
 let mi: StateUiData;
+let nj: StateUiData;
+let va: StateUiData;
+let wa: StateUiData;
+let az: StateUiData;
+let ma: StateUiData;
 beforeAll(async () => {
   data = await loadBundledData();
   ca = data.stateUi("ca")!;
@@ -22,11 +27,30 @@ beforeAll(async () => {
   il = data.stateUi("il")!;
   oh = data.stateUi("oh")!;
   mi = data.stateUi("mi")!;
+  nj = data.stateUi("nj")!;
+  va = data.stateUi("va")!;
+  wa = data.stateUi("wa")!;
+  az = data.stateUi("az")!;
+  ma = data.stateUi("ma")!;
 });
 
 describe("the bundled state set", () => {
   it("bundles the most populous states first, each schema-valid", () => {
-    expect(data.stateUiCodes()).toEqual(["ca", "tx", "fl", "ny", "pa", "il", "oh", "mi"]);
+    expect(data.stateUiCodes()).toEqual([
+      "ca",
+      "tx",
+      "fl",
+      "ny",
+      "pa",
+      "il",
+      "oh",
+      "mi",
+      "nj",
+      "va",
+      "wa",
+      "az",
+      "ma",
+    ]);
     for (const code of data.stateUiCodes()) {
       expect(StateUiSchema.safeParse(data.stateUi(code)).success).toBe(true);
     }
@@ -333,6 +357,143 @@ describe("Michigan (MCL 421.27, 421.46; UIA 2026)", () => {
     expect(aeq.eligible).toBe(true);
     // 0.43 × 26,677.60 / 530 = 21.64 → 21.5 weeks.
     expect(aeq.weeks).toBe(21.5);
+  });
+});
+
+describe("New Jersey (N.J.S.A. 43:21-3, 43:21-19; NJDOL 2026)", () => {
+  it("pays 60% of base-year wages over base weeks (at most 52), for that many weeks to 26", () => {
+    // $40,000 / 52 = 769.23; 60% = 461.54 → $461; 26 weeks.
+    const r = estimateUi({ quarterlyWages: [10000, 10000, 10000, 10000], creditWeeks: 60 }, nj);
+    expect(r.weeklyBenefit).toBe(461);
+    expect(r.maxBenefit).toBe(26 * 461);
+    // $10,000 over 20 base weeks = $500; 60% = $300; 20 weeks.
+    const twenty = estimateUi({ quarterlyWages: [5000, 5000, 0, 0], creditWeeks: 20 }, nj);
+    expect(twenty.weeklyBenefit).toBe(300);
+    expect(twenty.maxBenefit).toBe(6000);
+  });
+
+  it("adds 7%, then 4% and 4%, rounded down, never past the $905 maximum", () => {
+    const q: [number, number, number, number] = [10000, 10000, 10000, 10000];
+    // 461 × 1.07 = 493.27 → $493; × 1.15 = 530.15 → $530.
+    expect(
+      estimateUi({ quarterlyWages: q, creditWeeks: 52, dependents: 1 }, nj).dependentAllowance,
+    ).toBe(32);
+    expect(
+      estimateUi({ quarterlyWages: q, creditWeeks: 52, dependents: 5 }, nj).dependentAllowance,
+    ).toBe(69);
+    const top = estimateUi(
+      { quarterlyWages: [60000, 60000, 60000, 60000], creditWeeks: 52, dependents: 3 },
+      nj,
+    );
+    expect(top.weeklyBenefit).toBe(905);
+    expect(top.dependentAllowance).toBe(0);
+  });
+
+  it("says 'may qualify' on the $15,500 alternative rather than refusing or guessing a rate", () => {
+    const alt = estimateUi({ quarterlyWages: [8000, 8000, 0, 0], creditWeeks: 19 }, nj);
+    expect(alt.eligible).toBe(false);
+    expect(alt.mayQualifyUnestimated).toBe(true);
+    expect(
+      estimateUi({ quarterlyWages: [5000, 5000, 0, 0], creditWeeks: 19 }, nj).mayQualifyUnestimated,
+    ).toBe(false);
+  });
+});
+
+describe("Virginia (§60.2-602 Benefit Table, July 2026)", () => {
+  it("reads the first row: $160, and 12 weeks only from $3,000.01", () => {
+    expect(estimateUi({ quarterlyWages: [1500, 1500, 0, 0] }, va).eligible).toBe(false);
+    const r = estimateUi({ quarterlyWages: [1500, 1500.01, 0, 0] }, va);
+    expect(r.weeklyBenefit).toBe(160);
+    expect(r.weeks).toBe(12);
+    // $3,050.01 is the next row: $161.
+    expect(estimateUi({ quarterlyWages: [1525, 1525.01, 0, 0] }, va).weeklyBenefit).toBe(161);
+  });
+
+  it("reproduces the $478 row's columns to the cent", () => {
+    // Two highest $18,900.01. 13 weeks from $20,250.01; 26 from $37,800.01.
+    const thirteen = estimateUi({ quarterlyWages: [10000, 8900.01, 1350, 0] }, va);
+    expect(thirteen.weeklyBenefit).toBe(478);
+    expect(thirteen.weeks).toBe(13);
+    expect(thirteen.maxBenefit).toBe(13 * 478);
+    expect(estimateUi({ quarterlyWages: [10000, 8900.01, 1349.99, 0] }, va).weeks).toBe(12);
+    expect(estimateUi({ quarterlyWages: [10000, 9450, 9450, 8900.01] }, va).weeks).toBe(26);
+    expect(estimateUi({ quarterlyWages: [10000, 9450, 9450, 8900] }, va).weeks).toBe(25);
+  });
+
+  it("needs wages in two quarters", () => {
+    expect(estimateUi({ quarterlyWages: [9000, 0, 0, 0] }, va).eligible).toBe(false);
+  });
+});
+
+describe("Washington (RCW 50.04.030, 50.20.120; ESD July 2026)", () => {
+  it("pays 3.85% of the two-quarter average, inside $383-$1,208 and the claimant's own weekly wage", () => {
+    // ESD's example: a $5,098 average is $196 at 3.85%, under the $383 minimum,
+    // and the weekly wage (5,098 / 13 = $392) is above it, so $383.
+    expect(estimateUi({ quarterlyWages: [5098, 5098, 0, 0], hours: 700 }, wa).weeklyBenefit).toBe(
+      383,
+    );
+    // A $4,000 average: weekly wage $307, under the minimum, so $307.
+    expect(estimateUi({ quarterlyWages: [4000, 4000, 0, 0], hours: 700 }, wa).weeklyBenefit).toBe(
+      307,
+    );
+    // A $20,000 average: $770; total the lesser of 26 × 770 and $60,000 / 3.
+    const r = estimateUi({ quarterlyWages: [20000, 20000, 10000, 10000], hours: 2080 }, wa);
+    expect(r.weeklyBenefit).toBe(770);
+    expect(r.maxBenefit).toBe(20000);
+    expect(r.maxBenefitBasis).toBe("share-of-base-period");
+    expect(
+      estimateUi({ quarterlyWages: [40000, 40000, 0, 0], hours: 2080 }, wa).weeklyBenefit,
+    ).toBe(1208);
+  });
+
+  it("needs 680 hours", () => {
+    const r = estimateUi({ quarterlyWages: [20000, 20000, 0, 0], hours: 679 }, wa);
+    expect(r.eligible).toBe(false);
+    expect(r.shortfalls.join(" ")).toContain("680 hours");
+  });
+});
+
+describe("Arizona (A.R.S. 23-771, 23-779, 23-780; DES 2026)", () => {
+  it("pays 1/25 of the high quarter, halves rounded up, $236-$320, 24 weeks or a third of wages", () => {
+    // $7,000 / 25 = $280; total the lesser of 24 × 280 and $11,000 / 3.
+    const r = estimateUi({ quarterlyWages: [7000, 4000, 0, 0] }, az);
+    expect(r.weeklyBenefit).toBe(280);
+    expect(r.maxBenefit).toBe(3666.67);
+    // $6,012.50 / 25 = 240.5 → $241.
+    expect(estimateUi({ quarterlyWages: [6012.5, 3006.25, 0, 0] }, az).weeklyBenefit).toBe(241);
+    expect(estimateUi({ quarterlyWages: [10000, 5000, 0, 0] }, az).weeklyBenefit).toBe(320);
+  });
+
+  it("qualifies on either route, and on neither below them", () => {
+    // Route B: $7,987.50 in a quarter and $8,000 in two.
+    expect(estimateUi({ quarterlyWages: [7987.5, 12.5, 0, 0] }, az).eligible).toBe(true);
+    expect(estimateUi({ quarterlyWages: [5908.49, 2954.25, 0, 0] }, az).eligible).toBe(false);
+  });
+});
+
+describe("Massachusetts (M.G.L. c. 151A; DUA October 2026)", () => {
+  it("pays half the average weekly wage, raised to the dollar first, capped at 36% of wages", () => {
+    // 19,000 / 26 = 730.77 → $731; half → $365. Lesser of 30 × 365 and 36% of $27,000.
+    const r = estimateUi({ quarterlyWages: [10000, 9000, 5000, 3000] }, ma);
+    expect(r.averageWeeklyWage).toBe(731);
+    expect(r.weeklyBenefit).toBe(365);
+    expect(r.maxBenefit).toBe(9720);
+    // Two quarters with wages: the top one over 13. 8,000 / 13 = 615.38 → $616 → $308.
+    expect(estimateUi({ quarterlyWages: [8000, 6000, 0, 0] }, ma).weeklyBenefit).toBe(308);
+  });
+
+  it("pays $25 a child on top of the cap, for the weeks it pays", () => {
+    // 9,720 + (9,720 / 365) × 50 = 11,051.5 → $11,051.
+    const r = estimateUi({ quarterlyWages: [10000, 9000, 5000, 3000], dependents: 2 }, ma);
+    expect(r.dependentAllowance).toBe(50);
+    expect(r.maxBenefit).toBe(11051);
+  });
+
+  it("needs $6,300, and holds the $1,154 maximum", () => {
+    expect(estimateUi({ quarterlyWages: [3150, 3149, 0, 0] }, ma).eligible).toBe(false);
+    expect(estimateUi({ quarterlyWages: [40000, 40000, 40000, 40000] }, ma).weeklyBenefit).toBe(
+      1154,
+    );
   });
 });
 

@@ -1,0 +1,41 @@
+{
+  "stateCode": "wa",
+  "name": "Washington",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim. Washington uses the last four completed quarters only if those do not qualify.",
+  "eligibility": [
+    {
+      "minHours": 680
+    }
+  ],
+  "weeklyBenefit": {
+    "rounding": "down",
+    "minimum": 383,
+    "maximum": 1208,
+    "averageWeeklyWage": {
+      "from": "top-quarters",
+      "topQuarters": 2,
+      "divisor": 2,
+      "wageRounding": "none",
+      "share": 0.0385,
+      "capAtWageOver": 13,
+      "quarterly": true
+    }
+  },
+  "duration": {
+    "maxWeeks": 26,
+    "basePeriodWagesDivisor": 3,
+    "totalRoundsDown": true
+  },
+  "notModeled": [
+    "Claims opened before July 5, 2026 use $366 to $1,152 a week.",
+    "The alternate base year: enter whichever four quarters ESD will use."
+  ],
+  "citation": {
+    "sourceUrl": "https://app.leg.wa.gov/RCW/default.aspx?cite=50.20.120",
+    "sourceDocument": "RCW 50.04.030, 50.20.120; ESD news release on 2026 benefit amounts (June 2026)",
+    "sourceNote": "RCW 50.20.120: the weekly amount is \"three and eighty-five one-hundredths percent of the average quarterly wages\" in the two highest quarters, rounded down, and the total \"the lesser of twenty-six times the weekly benefit amount ... or one-third of the individual's base year wages.\" RCW 50.04.030: at least \"six hundred eighty hours\" in the base year. ESD: the minimum \"will increase by $17 to $383, for new claims opened on or after July 5, 2026. The maximum ... will increase by $56 to $1,208\", and \"No one can receive a weekly benefit amount that exceeds their average weekly wage\" (a quarter's wages over 13). Washington pays no dependent allowance. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

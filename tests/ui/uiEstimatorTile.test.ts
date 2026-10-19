@@ -58,7 +58,7 @@ describe("Unemployment Benefit Estimate", () => {
     const text = root.textContent ?? "";
     expect(text).toContain("No estimate for North Carolina yet");
     expect(text).toContain(
-      "California, Texas, Florida, New York, Pennsylvania, Illinois, Ohio, Michigan",
+      "California, Texas, Florida, New York, Pennsylvania, Illinois, Ohio, Michigan, New Jersey, Virginia, Washington, Arizona, Massachusetts",
     );
     expect(text).not.toMatch(/\$\d/);
     expect(root.querySelector(".uie-office a")?.getAttribute("href")).toContain("careeronestop");
@@ -143,6 +143,35 @@ describe("Unemployment Benefit Estimate", () => {
     expect(text).toContain("fewer than 20 weeks that count");
     expect(text).not.toContain("benefit table");
     expect(text).toContain("A qualifying week is any week");
+  });
+
+  it("asks Washington for hours, and no other state", () => {
+    const wa = mount(new URLSearchParams({ st: "WA", q1: "20000", q2: "20000", q3: "0", q4: "0" }));
+    const hours = wa.root.querySelector<HTMLInputElement>(
+      'input[aria-label="Hours worked in the base period"]',
+    )!;
+    expect(hours.closest<HTMLElement>("label, .field, div")!.hidden).toBe(false);
+    expect(wa.root.textContent).toContain("fewer than 680 hours worked");
+    hours.value = "2080";
+    hours.dispatchEvent(new Event("input"));
+    expect(wa.root.textContent).toContain("About $770 a week");
+    expect(wa.root.textContent).toContain("average quarterly wage");
+    expect(wa.written.at(-1)!.get("hrs")).toBe("2080");
+    const tx = mount(TX);
+    const txHours = tx.root.querySelector<HTMLInputElement>(
+      'input[aria-label="Hours worked in the base period"]',
+    )!;
+    expect(txHours.closest<HTMLElement>("label, .field, div")!.hidden).toBe(true);
+  });
+
+  it("tells a New Jersey claimant on the $15,500 alternative they may qualify, without a figure", () => {
+    const { root } = mount(
+      new URLSearchParams({ st: "NJ", q1: "8000", q2: "8000", q3: "0", q4: "0", cw: "19" }),
+    );
+    const text = root.textContent ?? "";
+    expect(text).toContain("may qualify under New Jersey's alternative wage test");
+    expect(text).not.toContain("do not meet");
+    expect(text).not.toContain("a week, up to");
   });
 
   it("names New York's two-quarter average when it is the rule that applied", () => {

@@ -1,0 +1,40 @@
+{
+  "stateCode": "va",
+  "name": "Virginia",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim. Virginia uses the four most recent completed quarters only if those do not qualify.",
+  "eligibility": [
+    {
+      "minQuartersWithWages": 2
+    }
+  ],
+  "weeklyBenefit": {
+    "rounding": "down",
+    "minimum": 160,
+    "maximum": 478,
+    "stepTable": {
+      "fromWages": 3000,
+      "firstUpTo": 3050,
+      "width": 50,
+      "firstRate": 160
+    }
+  },
+  "duration": {
+    "maxWeeks": 26,
+    "weeksFromRowBase": {
+      "minWeeks": 12,
+      "stepDivisor": 14
+    }
+  },
+  "notModeled": [
+    "Claims filed before July 5, 2026 use the earlier table, $112 to $430 a week.",
+    "The alternate base period: enter whichever four quarters the VEC will use."
+  ],
+  "citation": {
+    "sourceUrl": "https://www.vec.virginia.gov/sites/default/files/bentable.pdf",
+    "sourceDocument": "Code of Virginia §§60.2-602, 60.2-607, 60.2-612; the §60.2-602 Benefit Table (July 2026), VEC",
+    "sourceNote": "VEC: \"For new claims filed on or after July 5, 2026: The maximum weekly benefit amount increases to $478, while the minimum increases to $160\", and \"you must have earned at least $3,000 in your two highest paying quarters combined.\" §60.2-602 makes the weekly amount the table's, and §60.2-607 its duration, \"not exceed[ing] twenty-six times\" it. All 319 rows and 4,785 duration cells of the table were checked on 2026-10-19 against a closed form: $160 for $3,000 to $3,050 of two-quarter wages, $1 more for each $50 started above $3,050, to $478; and with the row's base B ($3,000 plus $50 a row), n weeks from 12 to 26 need base-period wages over B + B × (n - 12) / 14, rounded to the dollar. §60.2-612: wages in at least two quarters; one unpaid waiting week.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

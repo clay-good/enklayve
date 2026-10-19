@@ -1,0 +1,37 @@
+{
+  "stateCode": "az",
+  "name": "Arizona",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim. Arizona has no general alternate base period.",
+  "eligibility": [
+    {
+      "minHighQuarterWages": 5908.5,
+      "minBasePeriodToHighQuarter": 1.5
+    },
+    {
+      "minQuartersWithWages": 2,
+      "minHighQuarterWages": 7987.5,
+      "minBasePeriodWages": 8000
+    }
+  ],
+  "weeklyBenefit": {
+    "highQuarterDivisor": 25,
+    "rounding": "nearest",
+    "minimum": 236,
+    "maximum": 320
+  },
+  "duration": {
+    "maxWeeks": 24,
+    "basePeriodWagesDivisor": 3
+  },
+  "notModeled": [
+    "The weeks rise from 24 to 26 when Arizona's unemployment rate for the prior quarter is 5% or more."
+  ],
+  "citation": {
+    "sourceUrl": "https://www.azleg.gov/ars/23/00779.htm",
+    "sourceDocument": "A.R.S. §§23-771, 23-779, 23-780; Arizona DES, Determining eligibility (2026)",
+    "sourceNote": "A.R.S. 23-779: the weekly amount is \"1/25 of the person's total wages\" in the high quarter, \"rounded to the nearest dollar, with an even one-half dollar being rounded to the next higher multiple of $1\", at most $320. 23-771: a high quarter of \"three hundred ninety times the minimum wage\" ($15.15 in 2026, so $5,908.50) and a total of 1.5 times it, or wages in two quarters, one enough for the maximum, totaling the $8,000 wage base. DES: \"The minimum weekly amount is $236, the maximum is $320.\" 23-780: 26 weeks if the prior quarter's unemployment rate is 5% or more, 24 if under, and never more than \"one-third of the individual's base period earnings\"; DES states 24. Arizona pays no dependent allowance. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

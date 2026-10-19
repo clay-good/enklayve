@@ -476,7 +476,7 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
   // schedule-to-divisor seam and its 1.25x path, Florida's 1.5x and $3,400,
   // Texas's 37x and its weekly maximum.
   const uiProbe = (code: string, q: [number, number, number, number], creditWeeks = 26): void => {
-    const r = estimateUi({ quarterlyWages: q, creditWeeks }, data.stateUi(code)!);
+    const r = estimateUi({ quarterlyWages: q, creditWeeks, hours: 2080 }, data.stateUi(code)!);
     put(`ui(${code},${q.join("/")})`, {
       eligible: r.eligible,
       weekly: r.weeklyTotal,
@@ -511,6 +511,16 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
   for (const pay of [7039.99, 7040, 7059.99]) uiProbe("oh", [pay, 0, 0, 0], 20);
   for (const hq of [5327.99, 5328, 5328.01]) uiProbe("mi", [hq, hq, 0, 0]);
   for (const other of [6677.59, 6677.6, 6677.61]) uiProbe("mi", [20000, other, 0, 0]);
+  // NJ's 20 base weeks; VA's first band, a duration column and the cap row;
+  // WA's minimum against the weekly-wage cap; AZ's half-dollar; MA's $6,300.
+  for (const cw of [19, 20, 52, 53]) uiProbe("nj", [10000, 10000, 10000, 10000], cw);
+  for (const two of [2999.99, 3000, 3000.01, 3050, 3050.01])
+    uiProbe("va", [two / 2, two / 2, 0, 0]);
+  for (const last of [1349.99, 1350]) uiProbe("va", [10000, 8900.01, last, 0]);
+  for (const hq of [18900, 18900.01, 18950.01]) uiProbe("va", [hq, 1, 0, 0]);
+  for (const avg of [4979, 4979.01, 5098]) uiProbe("wa", [avg, avg, 0, 0]);
+  for (const hq of [6012.49, 6012.5, 7987.49, 7987.5]) uiProbe("az", [hq, hq / 2, 0, 0]);
+  for (const second of [3149.99, 3150]) uiProbe("ma", [3150, second, 0, 0]);
 
   // --- garnishment: the crossover -------------------------------------------
   const garn = data.garnishmentLimits()!;

@@ -244,6 +244,34 @@
       "why": "Michigan's 4.1% rate, its dependent amount, its maximum schedule ($530 for 2026, $614 for 2027, then indexed) and the 43% duration rule all sit in MCL 421.27. An amendment is a rule to read.",
       "fingerprint": "b68db9e64cbbf0642111eee80d5632bb56e4864d486f74514adae8928b07fe2c",
       "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-nj-2026",
+      "url": "https://www.nj.gov/labor/myunemployment/before/about/calculator/",
+      "why": "NJDOL resets the maximum weekly rate each January and states it on this page beside the prior year's; the base-week amount and the $15,500 alternative follow the minimum wage and are on the eligibility page it links.",
+      "fingerprint": "108b9950218c9c471dfe14c2f35a91ddbb3f6e3724b7f0670511279dc459bf29",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-va-2026",
+      "url": "https://www.vec.virginia.gov/sites/default/files/bentable.pdf",
+      "why": "Virginia's weekly amounts and durations are its Benefit Table, carried as a closed form verified against every row; a new table — the legislature changed it twice in 2026 — means re-checking the form against every cell.",
+      "fingerprint": "5cc70589cc722abf08e0a65514c353d496bc8b39d8e7bad41514b97aaa191727",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-wa-2026",
+      "url": "https://app.leg.wa.gov/RCW/default.aspx?cite=50.20.120",
+      "why": "RCW 50.20.120 holds the 3.85% rule, the weekly-wage cap and the one-third total; the yearly minimum and maximum are in ESD's July release, which the zero-year window forces a re-read of.",
+      "fingerprint": "ed5cdb30323ea2118b61934b019dd50ffa706ea3873964fc90985dbd6ee997e6",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-ma-2026",
+      "url": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXXI/Chapter151A/Section29",
+      "why": "M.G.L. c. 151A §29 sets the half-of-average-wage rule and the dependency allowance; the October maximum is DUA's, on a page that refuses this pipeline, so the zero-year window forces its re-read.",
+      "fingerprint": "094f827cbe80691bc71404cf46b3911a6854adb705999664b4a3557c0c80a1a8",
+      "checkedOn": "2026-10-19"
     }
   ]
 }
