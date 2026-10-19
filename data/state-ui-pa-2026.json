@@ -35,7 +35,8 @@
   },
   "duration": {
     "maxWeeks": 26,
-    "weeksFromCreditWeeks": true
+    "weeksFromCreditWeeks": true,
+    "creditWeeksMean": "A credit week is any week of the base period in which you earned $116 or more."
   },
   "paymentReduction": 0.032,
   "notModeled": [

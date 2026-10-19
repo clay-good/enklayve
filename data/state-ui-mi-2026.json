@@ -1,0 +1,53 @@
+{
+  "stateCode": "mi",
+  "name": "Michigan",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim. Michigan uses the four most recent completed quarters only if those do not qualify.",
+  "eligibility": [
+    {
+      "minHighQuarterWages": 5328,
+      "minQuartersWithWages": 2,
+      "minBasePeriodToHighQuarter": 1.5
+    },
+    {
+      "minHighQuarterWages": 5328,
+      "minQuartersWithWages": 2,
+      "minBasePeriodWages": 26677.6
+    }
+  ],
+  "weeklyBenefit": {
+    "highQuarterShare": 0.041,
+    "rounding": "down",
+    "minimum": 0,
+    "maximum": 530
+  },
+  "dependentAllowances": {
+    "perDependent": [
+      19.33,
+      19.33,
+      19.33,
+      19.33,
+      19.33
+    ],
+    "beforeRounding": true,
+    "note": "$19.33 a week for each dependent, up to five, added before the rate is rounded and capped."
+  },
+  "duration": {
+    "maxWeeks": 26,
+    "weeksFromShareOfBasePeriod": {
+      "share": 0.43,
+      "minWeeks": 14
+    }
+  },
+  "notModeled": [
+    "Claims filed from January 1, 2027 use a $614 maximum and $26 per dependent.",
+    "The alternate base period: enter whichever four quarters UIA will use."
+  ],
+  "citation": {
+    "sourceUrl": "https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-421-27",
+    "sourceDocument": "Michigan Employment Security Act, MCL 421.27 and 421.46; UIA Eligibility Requirements (2026)",
+    "sourceNote": "MCL 421.27(b)(1): the rate is \"4.1% of the individual's wages paid in the calendar quarter of the base period in which the individual was paid the highest total wages, plus\" an amount per dependent, up to five, \"adjusted to the next lower multiple of $1.00\"; for claims filed on or after January 1, 2026, \"$19.33 for each dependent, and the maximum weekly benefit rate must not exceed $530.00.\" MCL 421.27(d): weeks are \"43% of the individual's base period wages\" over the rate, \"rounded down to the nearest half number\", \"not more than 26 weeks ... or less than 14 weeks\" (2024 PA 173, from April 2, 2025). MCL 421.46: at least the state minimum wage times 388.06 in one quarter, and a total of 1.5 times the high quarter or 20 times the state average weekly wage. UIA: \"one quarter's wages must be at least $5,328.00\" for 2026, and \"the AEQ amount is $26,677.60.\" Michigan has no unpaid waiting week. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

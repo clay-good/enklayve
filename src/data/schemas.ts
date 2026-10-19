@@ -1585,8 +1585,12 @@ const UiEligibilityPathSchema = z.object({
   highQuarterCapForRatio: z.number().gt(0).optional(),
   /** At least this share of base-period wages paid outside the high quarter (PA 0.37). */
   minShareOutsideHighQuarter: z.number().gt(0).lt(1).optional(),
-  /** Weeks earning at least the state's credit-week amount (PA 18). */
+  /** Weeks earning at least the state's credit-week amount (PA 18, OH 20). */
   minCreditWeeks: z.number().int().gte(1).optional(),
+  /** Wages paid outside the high quarter at least this (IL $440). */
+  minWagesOutsideHighQuarter: z.number().gt(0).optional(),
+  /** An average weekly wage of at least this (OH $352). */
+  minAverageWeeklyWage: z.number().gt(0).optional(),
   /**
    * A minimum base-period total per row of a banded table (PA's "Part C"):
    * (row start + addend) / share, rounded up. Below it, the rate steps down to
@@ -1607,6 +1611,24 @@ export const StateUiSchema = z.object({
   weeklyBenefit: z.object({
     /** The weekly benefit is the high-quarter wages divided by this. */
     highQuarterDivisor: z.number().positive().optional(),
+    /** ... or this share of them (MI 4.1%). */
+    highQuarterShare: z.number().gt(0).lt(1).optional(),
+    /**
+     * ... or a share of an average weekly wage: the top quarters over a divisor
+     * (IL: two quarters / 26, to the nearest dollar), or base-period wages over
+     * the weeks that count (OH, to the dollar below).
+     */
+    averageWeeklyWage: z
+      .object({
+        from: z.enum(["top-quarters", "credit-weeks"]),
+        topQuarters: z.number().int().gte(1).lte(4).optional(),
+        divisor: z.number().positive().optional(),
+        wageRounding: z.enum(["nearest", "down"]),
+        share: z.number().gt(0).lt(1),
+      })
+      .optional(),
+    /** Maximums by dependents, indexed by count and capped at the last (OH). */
+    maximumByDependents: z.array(z.number().gt(0)).min(2).optional(),
     /** A smaller divisor at or below a high-quarter figure, and a floor above it (NY). */
     lowEarner: z
       .object({ atOrBelowHighQuarter: z.number().gt(0), divisor: z.number().positive(), floorAbove: z.number().gt(0) })
@@ -1658,6 +1680,8 @@ export const StateUiSchema = z.object({
     .object({
       perDependent: z.array(z.number().gt(0)).min(1),
       note: z.string().min(1),
+      /** Added before the rate is rounded and capped, not after (MI §421.27). */
+      beforeRounding: z.boolean().default(false),
     })
     .optional(),
   duration: z.object({
@@ -1668,8 +1692,15 @@ export const StateUiSchema = z.object({
     maxTotal: z.number().gt(0).optional(),
     /** Whether the total rounds down to whole dollars (FL §443.111(5)(b)). */
     totalRoundsDown: z.boolean().default(false),
-    /** Weeks are the claimant's credit weeks, up to `maxWeeks` (PA). */
+    /** Weeks are the claimant's credit weeks, up to `maxWeeks` (PA, OH). */
     weeksFromCreditWeeks: z.boolean().default(false),
+    /** What a week that counts is, in the state's words, for the input's hint. */
+    creditWeeksMean: z.string().min(1).optional(),
+    /** Weeks are this share of base-period wages over the weekly rate, rounded
+     * down to the half week and kept between `minWeeks` and `maxWeeks` (MI). */
+    weeksFromShareOfBasePeriod: z
+      .object({ share: z.number().gt(0).lte(1), minWeeks: z.number().gt(0) })
+      .optional(),
   }),
   /** A share taken off every payment, rounded down to whole dollars (PA 0.032). */
   paymentReduction: z.number().gt(0).lt(1).optional(),
@@ -1677,8 +1708,14 @@ export const StateUiSchema = z.object({
   notModeled: z.array(z.string().min(1)).min(1),
   citation: CitationSchema,
 }).refine(
-  (d) => (d.weeklyBenefit.highQuarterDivisor === undefined) !== (d.weeklyBenefit.bandedTable === undefined),
-  { message: "a state's weekly benefit is a divisor or a banded table, exactly one" },
+  (d) =>
+    [
+      d.weeklyBenefit.highQuarterDivisor,
+      d.weeklyBenefit.bandedTable,
+      d.weeklyBenefit.highQuarterShare,
+      d.weeklyBenefit.averageWeeklyWage,
+    ].filter((m) => m !== undefined).length === 1,
+  { message: "a state's weekly benefit has exactly one method" },
 );
 export type StateUiData = z.infer<typeof StateUiSchema>;
 

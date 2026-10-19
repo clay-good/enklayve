@@ -1,0 +1,44 @@
+{
+  "stateCode": "oh",
+  "name": "Ohio",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim. Ohio uses the four most recent completed quarters only if those do not qualify.",
+  "eligibility": [
+    {
+      "minCreditWeeks": 20,
+      "minAverageWeeklyWage": 352
+    }
+  ],
+  "weeklyBenefit": {
+    "rounding": "down",
+    "minimum": 0,
+    "maximum": 624,
+    "maximumByDependents": [
+      624,
+      757,
+      757,
+      842
+    ],
+    "averageWeeklyWage": {
+      "from": "credit-weeks",
+      "wageRounding": "down",
+      "share": 0.5
+    }
+  },
+  "duration": {
+    "maxWeeks": 26,
+    "weeksFromCreditWeeks": true,
+    "creditWeeksMean": "A qualifying week is any week of the base period in which you earned or were paid wages in covered work."
+  },
+  "notModeled": [
+    "The 2026 maximums and the $352 average-wage test were read from ODJFS's own benefit estimator; ODJFS has not published them as a table.",
+    "The alternate base period: enter whichever four quarters ODJFS will use."
+  ],
+  "citation": {
+    "sourceUrl": "https://codes.ohio.gov/ohio-revised-code/section-4141.30",
+    "sourceDocument": "Ohio Revised Code §§4141.01, 4141.30; ODJFS benefit estimator (uiben.jfs.ohio.gov), 2026",
+    "sourceNote": "§4141.01(O): a qualifying week is \"any calendar week ... with respect to which the individual earns or is paid remuneration\", and the average weekly wage is pay in those weeks \"by the number of such qualifying weeks\", rounded down. §4141.01(R): at least \"twenty qualifying weeks\" at an average weekly wage of at least 27.5% of the statewide average. §4141.30(B): the benefit is \"fifty per cent of the individual's average weekly wage\", rounded down, up to the maximum for the dependency class: A, no dependents; B, one or two; C, three or more. §4141.30(D): the total is the lesser of 26 times the benefit or 20 times it plus once more for each qualifying week past twenty, so weeks equal qualifying weeks up to 26. ODJFS's estimator for applications from October 4, 2026 gives the floor as an average weekly wage of $352 and the maximums as $624, $757 and $842. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

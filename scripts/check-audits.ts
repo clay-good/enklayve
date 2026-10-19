@@ -164,6 +164,9 @@ export const SUBJECTS: Record<string, string[]> = {
     "state-ui-fl-2026",
     "state-ui-ny-2026",
     "state-ui-pa-2026",
+    "state-ui-il-2026",
+    "state-ui-oh-2026",
+    "state-ui-mi-2026",
   ],
 };
 

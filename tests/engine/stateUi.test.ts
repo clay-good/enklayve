@@ -9,6 +9,9 @@ let tx: StateUiData;
 let fl: StateUiData;
 let ny: StateUiData;
 let pa: StateUiData;
+let il: StateUiData;
+let oh: StateUiData;
+let mi: StateUiData;
 beforeAll(async () => {
   data = await loadBundledData();
   ca = data.stateUi("ca")!;
@@ -16,11 +19,14 @@ beforeAll(async () => {
   fl = data.stateUi("fl")!;
   ny = data.stateUi("ny")!;
   pa = data.stateUi("pa")!;
+  il = data.stateUi("il")!;
+  oh = data.stateUi("oh")!;
+  mi = data.stateUi("mi")!;
 });
 
 describe("the bundled state set", () => {
   it("bundles the most populous states first, each schema-valid", () => {
-    expect(data.stateUiCodes()).toEqual(["ca", "tx", "fl", "ny", "pa"]);
+    expect(data.stateUiCodes()).toEqual(["ca", "tx", "fl", "ny", "pa", "il", "oh", "mi"]);
     for (const code of data.stateUiCodes()) {
       expect(StateUiSchema.safeParse(data.stateUi(code)).success).toBe(true);
     }
@@ -228,6 +234,105 @@ describe("Pennsylvania (§404(e) table, 56 Pa.B. 448, L&I benefit guide)", () =>
     expect(
       estimateUi({ quarterlyWages: [1687, 1687, 1687, 1687], creditWeeks: 26 }, pa).eligible,
     ).toBe(false);
+  });
+});
+
+describe("Illinois (820 ILCS 405 §401; IDES BEN 548, 2026)", () => {
+  it("takes 47% of the two-highest-quarter average weekly wage, rounded up", () => {
+    // (10,000 + 9,000) / 26 = 730.77 → $731; 47% = 343.57 → $344.
+    const r = estimateUi({ quarterlyWages: [10000, 9000, 5000, 3000] }, il);
+    expect(r.averageWeeklyWage).toBe(731);
+    expect(r.weeklyBenefit).toBe(344);
+    expect(r.maxBenefit).toBe(26 * 344);
+  });
+
+  it("reproduces a row of IDES's own table: $2,821 in the top two quarters pays $52", () => {
+    // 2,821 / 26 = 108.5 → $109 (halves up); 47% = 51.23 → $52.
+    const r = estimateUi({ quarterlyWages: [1500, 1321, 0, 0] }, il);
+    expect(r.averageWeeklyWage).toBe(109);
+    expect(r.weeklyBenefit).toBe(52);
+  });
+
+  it("holds $51 to $628, and needs $440 outside the high quarter", () => {
+    expect(estimateUi({ quarterlyWages: [800, 800, 0, 0] }, il).weeklyBenefit).toBe(51);
+    expect(estimateUi({ quarterlyWages: [20000, 20000, 0, 0] }, il).weeklyBenefit).toBe(628);
+    const short = estimateUi({ quarterlyWages: [5000, 400, 0, 0] }, il);
+    expect(short.eligible).toBe(false);
+    expect(short.shortfalls.join(" ")).toContain("outside the high quarter");
+  });
+});
+
+describe("Ohio (ORC §§4141.01, 4141.30; ODJFS 2026 figures)", () => {
+  it("pays half the average weekly wage over the qualifying weeks, for that many weeks", () => {
+    // $10,000 over 20 weeks = $500; half = $250; 20 weeks.
+    const r = estimateUi({ quarterlyWages: [5000, 5000, 0, 0], creditWeeks: 20 }, oh);
+    expect(r.averageWeeklyWage).toBe(500);
+    expect(r.weeklyBenefit).toBe(250);
+    expect(r.weeks).toBe(20);
+    expect(r.maxBenefit).toBe(5000);
+    // $40,000 over 52 weeks = 769.23 → $769; half = 384.5 → $384; capped at 26 weeks.
+    const full = estimateUi({ quarterlyWages: [10000, 10000, 10000, 10000], creditWeeks: 52 }, oh);
+    expect(full.weeklyBenefit).toBe(384);
+    expect(full.weeks).toBe(26);
+  });
+
+  it("needs 20 qualifying weeks and a $352 average weekly wage", () => {
+    expect(estimateUi({ quarterlyWages: [5000, 5000, 0, 0], creditWeeks: 19 }, oh).eligible).toBe(
+      false,
+    );
+    // $7,020 / 20 = $351 — a dollar short; $7,040 / 20 = $352 pays $176.
+    expect(estimateUi({ quarterlyWages: [7020, 0, 0, 0], creditWeeks: 20 }, oh).eligible).toBe(
+      false,
+    );
+    expect(estimateUi({ quarterlyWages: [7040, 0, 0, 0], creditWeeks: 20 }, oh).weeklyBenefit).toBe(
+      176,
+    );
+  });
+
+  it("sets the maximum by dependency class: $624, $757, $842", () => {
+    const q: [number, number, number, number] = [50000, 50000, 50000, 50000];
+    expect(estimateUi({ quarterlyWages: q, creditWeeks: 26 }, oh).weeklyBenefit).toBe(624);
+    expect(
+      estimateUi({ quarterlyWages: q, creditWeeks: 26, dependents: 2 }, oh).weeklyBenefit,
+    ).toBe(757);
+    expect(
+      estimateUi({ quarterlyWages: q, creditWeeks: 26, dependents: 4 }, oh).weeklyBenefit,
+    ).toBe(842);
+  });
+});
+
+describe("Michigan (MCL 421.27, 421.46; UIA 2026)", () => {
+  it("pays 4.1% of the high quarter, rounded down, for 43% of wages over the rate", () => {
+    // 4.1% of $10,000 = $410. Weeks: 0.43 × 15,000 / 410 = 15.73 → 15.5.
+    const r = estimateUi({ quarterlyWages: [10000, 5000, 0, 0] }, mi);
+    expect(r.weeklyBenefit).toBe(410);
+    expect(r.weeks).toBe(15.5);
+    expect(r.maxBenefit).toBe(15.5 * 410);
+    // Plenty of wages: 0.43 × 30,000 / 410 = 31.46, held to 26.
+    expect(estimateUi({ quarterlyWages: [10000, 8000, 7000, 5000] }, mi).weeks).toBe(26);
+  });
+
+  it("adds dependents BEFORE rounding, so one is worth $19, not $19.33", () => {
+    // 410 + 19.33 = 429.33 → $429; two: 448.66 → $448.
+    const one = estimateUi({ quarterlyWages: [10000, 5000, 0, 0], dependents: 1 }, mi);
+    expect(one.weeklyTotal).toBe(429);
+    expect(one.dependentAllowance).toBe(19);
+    expect(estimateUi({ quarterlyWages: [10000, 5000, 0, 0], dependents: 2 }, mi).weeklyTotal).toBe(
+      448,
+    );
+    // At the $530 cap, dependents add nothing.
+    const capped = estimateUi({ quarterlyWages: [15000, 8000, 0, 0], dependents: 2 }, mi);
+    expect(capped.weeklyTotal).toBe(530);
+    expect(capped.dependentAllowance).toBe(0);
+  });
+
+  it("qualifies on either path: 1.5 times the high quarter, or 20 times the state average weekly wage", () => {
+    expect(estimateUi({ quarterlyWages: [5327, 5000, 0, 0] }, mi).eligible).toBe(false);
+    // $20,000 high quarter, $26,677.60 total: under 1.5 times, over the AEQ amount.
+    const aeq = estimateUi({ quarterlyWages: [20000, 6677.6, 0, 0] }, mi);
+    expect(aeq.eligible).toBe(true);
+    // 0.43 × 26,677.60 / 530 = 21.64 → 21.5 weeks.
+    expect(aeq.weeks).toBe(21.5);
   });
 });
 

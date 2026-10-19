@@ -1,0 +1,39 @@
+{
+  "stateCode": "il",
+  "name": "Illinois",
+  "year": 2026,
+  "basePeriod": "The first four of the last five completed calendar quarters before your claim. Illinois uses the last four completed quarters only if those do not qualify.",
+  "eligibility": [
+    {
+      "minBasePeriodWages": 1600,
+      "minWagesOutsideHighQuarter": 440
+    }
+  ],
+  "weeklyBenefit": {
+    "rounding": "up",
+    "minimum": 51,
+    "maximum": 628,
+    "averageWeeklyWage": {
+      "from": "top-quarters",
+      "topQuarters": 2,
+      "divisor": 26,
+      "wageRounding": "nearest",
+      "share": 0.47
+    }
+  },
+  "duration": {
+    "maxWeeks": 26,
+    "shareOfBasePeriodWages": 1
+  },
+  "notModeled": [
+    "The dependent allowance: a non-working spouse or a dependent child (not both) can raise the weekly amount, to as much as $748 or $859 a week. This estimate is for a claimant without one.",
+    "The alternate base period: enter whichever four quarters IDES will use."
+  ],
+  "citation": {
+    "sourceUrl": "https://ides.illinois.gov/content/dam/soi/en/web/ides/ides_forms_and_publications/CLI110L.pdf",
+    "sourceDocument": "IDES Table 1 of Weekly Benefit Amounts (BEN 548), benefit years from 1/1/2026; 820 ILCS 405 §§401, 403, 500",
+    "sourceNote": "§401: the weekly amount is \"47% of the individual's prior average weekly wage, rounded ... to the next higher dollar\", and the prior average weekly wage is the two highest quarters \"divided by 26\", rounded to the nearest dollar, halves up; it \"cannot be less than $51.\" BEN 548 (11/2025): \"Minimum Qualifying Wages: In Base Period = $1600 ... Outside High Quarter = $440\", SAWW $1,334.81, \"Maximum WBA Individual $628.00\", applying to benefit years beginning on or after 1/1/2026; its rows match the formula ($800 → $51; $2,821 → $52). §403: the total is \"26 times the individual's weekly benefit amount plus dependents' allowances, or ... the total wages ... during the individual's base period, whichever amount is smaller.\" Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

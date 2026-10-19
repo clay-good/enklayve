@@ -84,6 +84,10 @@ function weeklyLine(r: UiResult, rules: StateUiData, locale: string): string {
   const hq = money(r.highQuarterWages, locale);
   const rate = money(r.weeklyBenefit, locale);
   switch (r.weeklyBasis) {
+    case "average-wage":
+      return `${Math.round(w.averageWeeklyWage!.share * 100)}% of your average weekly wage, ${money(r.averageWeeklyWage, locale)}, rounded ${w.rounding}: ${rate} a week.`;
+    case "share":
+      return `${Math.round(w.highQuarterShare! * 1000) / 10}% of your highest quarter, ${hq}, rounded ${w.rounding}: ${money(r.weeklyTotal, locale)} a week.`;
     case "table":
       return `Your highest quarter, ${hq}, falls on a row of ${rules.name}'s rate table that pays ${rate} a week.`;
     case "stepped-down":
@@ -145,7 +149,7 @@ export function mountUiEstimator(ctx: TileContext): void {
     max: 52,
     step: 1,
     value: fields.creditWeeks,
-    attrs: { "aria-label": "Credit weeks in the base period", inputmode: "numeric" },
+    attrs: { "aria-label": "Weeks that count in the base period", inputmode: "numeric" },
   });
   const dependentsInput = el("input", {
     type: "number",
@@ -155,7 +159,13 @@ export function mountUiEstimator(ctx: TileContext): void {
     value: fields.dependents,
     attrs: { "aria-label": "Dependents you support", inputmode: "numeric" },
   });
-  const creditRow = field("Credit weeks in the base period", creditInput);
+  const creditHint = el("p", { class: "uie-hint" });
+  const creditRow = el(
+    "div",
+    { class: "uie-credit" },
+    field("Weeks that count in the base period", creditInput),
+    creditHint,
+  );
   const dependentsRow = field("Dependents you support", dependentsInput);
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
@@ -257,7 +267,8 @@ export function mountUiEstimator(ctx: TileContext): void {
     const rules = data.stateUi(fields.stateCode);
     // Only the inputs this state's rules use are shown.
     creditRow.hidden = !rules?.duration.weeksFromCreditWeeks;
-    dependentsRow.hidden = !rules?.dependentAllowances;
+    creditHint.textContent = rules?.duration.creditWeeksMean ?? "";
+    dependentsRow.hidden = !rules?.dependentAllowances && !rules?.weeklyBenefit.maximumByDependents;
     resultContainer.replaceChildren(...(rules ? render(rules) : unbundled(fields.stateCode)));
   }
 

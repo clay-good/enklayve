@@ -223,6 +223,27 @@
       "why": "Pennsylvania's weekly rate is its §404(e) table, which the shard carries as a verified closed form; a new table, maximum or credit-week amount appears on this page first and means the form must be re-checked against every row.",
       "fingerprint": "3826a2a108de4a4c21fd83c0a0276b30bd7038e9b9ed96a6ffb5bfc77679214d",
       "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-il-2026",
+      "url": "https://ides.illinois.gov/content/dam/soi/en/web/ides/ides_forms_and_publications/CLI110L.pdf",
+      "why": "IDES re-issues Table 1 each January with the year's statewide average weekly wage and the maximums it sets; a new table is the figure the shard's $628 must follow.",
+      "fingerprint": "a184c7e6b76c07edd7d793bc7c9fa2b92c6df4c5635fb5ad26a4228bd2351791",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-oh-2026",
+      "url": "https://codes.ohio.gov/ohio-revised-code/section-4141.30",
+      "why": "Ohio's half-of-average-weekly-wage rule, its dependency classes and the 20-to-26 week duration are statutory; the yearly maximums are not published as a document, so the zero-year window forces their re-read each January.",
+      "fingerprint": "f43415d6935bc1171fd71456ca3875373e1630a41e6fb12d5c6daa3ba68168a5",
+      "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "state-ui-mi-2026",
+      "url": "https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-421-27",
+      "why": "Michigan's 4.1% rate, its dependent amount, its maximum schedule ($530 for 2026, $614 for 2027, then indexed) and the 43% duration rule all sit in MCL 421.27. An amendment is a rule to read.",
+      "fingerprint": "b68db9e64cbbf0642111eee80d5632bb56e4864d486f74514adae8928b07fe2c",
+      "checkedOn": "2026-10-19"
     }
   ]
 }

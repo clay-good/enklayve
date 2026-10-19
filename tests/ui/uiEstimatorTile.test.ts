@@ -54,10 +54,12 @@ describe("Unemployment Benefit Estimate", () => {
   });
 
   it("gives a state with no rule set no figure at all, and says which states it covers", () => {
-    const { root } = mount(new URLSearchParams({ st: "OH", q1: "12000", q2: "10000" }));
+    const { root } = mount(new URLSearchParams({ st: "NC", q1: "12000", q2: "10000" }));
     const text = root.textContent ?? "";
-    expect(text).toContain("No estimate for Ohio yet");
-    expect(text).toContain("California, Texas, Florida, New York, Pennsylvania");
+    expect(text).toContain("No estimate for North Carolina yet");
+    expect(text).toContain(
+      "California, Texas, Florida, New York, Pennsylvania, Illinois, Ohio, Michigan",
+    );
     expect(text).not.toMatch(/\$\d/);
     expect(root.querySelector(".uie-office a")?.getAttribute("href")).toContain("careeronestop");
   });
@@ -105,16 +107,16 @@ describe("Unemployment Benefit Estimate", () => {
       new URLSearchParams({ st: "PA", q1: "7500", q2: "2000", q3: "1500", q4: "924" }),
     );
     const credit = pa.root.querySelector<HTMLInputElement>(
-      'input[aria-label="Credit weeks in the base period"]',
+      'input[aria-label="Weeks that count in the base period"]',
     )!;
-    expect(credit.closest<HTMLElement>(".field, label, div")!.hidden).toBe(false);
+    expect(credit.closest<HTMLElement>(".uie-credit")!.hidden).toBe(false);
     // Uncounted credit weeks are a prompt, never an assumed 26.
-    expect(pa.root.textContent).toContain("fewer than 18 credit weeks");
+    expect(pa.root.textContent).toContain("fewer than 18 weeks that count");
     const tx = mount(TX);
     const txCredit = tx.root.querySelector<HTMLInputElement>(
-      'input[aria-label="Credit weeks in the base period"]',
+      'input[aria-label="Weeks that count in the base period"]',
     )!;
-    expect(txCredit.closest<HTMLElement>(".field, label, div")!.hidden).toBe(true);
+    expect(txCredit.closest<HTMLElement>(".uie-credit")!.hidden).toBe(true);
   });
 
   it("states Pennsylvania's payment reduction in the figure, and adds dependents", () => {
@@ -133,6 +135,14 @@ describe("Unemployment Benefit Estimate", () => {
     expect(root.textContent).toContain("That includes $8 a week for dependents.");
     expect(written.at(-1)!.get("dep")).toBe("2");
     expect(written.at(-1)!.get("cw")).toBe("26");
+  });
+
+  it("says what Ohio is short of without inventing a table it does not have", () => {
+    const { root } = mount(new URLSearchParams({ st: "OH", q1: "5000", q2: "5000", cw: "0" }));
+    const text = root.textContent ?? "";
+    expect(text).toContain("fewer than 20 weeks that count");
+    expect(text).not.toContain("benefit table");
+    expect(text).toContain("A qualifying week is any week");
   });
 
   it("names New York's two-quarter average when it is the rule that applied", () => {

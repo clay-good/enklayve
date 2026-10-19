@@ -1118,7 +1118,46 @@
       "sourceUrl": "https://www.pa.gov/agencies/dli/resources/for-claimants-workers/benefits-information/benefit-guide/eligibility-information",
       "sourceDocument": "PA L&I, UC eligibility and the §404(e) rate table; 56 Pa.B. 448 (Jan. 17, 2026); UC benefit guide and rate FAQs",
       "dateRetrieved": "2026-10-19",
-      "contentHash": "20ec1912f68ea8d33514033002c0410dcb9fea4088737858add717c237de7901"
+      "contentHash": "8fc384e97bded80d17a2c3d0e2e82c812c2ed13199c2f458e8dcd359d14b0311"
+    },
+    {
+      "id": "state-ui-il-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-il-2026.json",
+      "sourceUrl": "https://ides.illinois.gov/content/dam/soi/en/web/ides/ides_forms_and_publications/CLI110L.pdf",
+      "sourceDocument": "IDES Table 1 of Weekly Benefit Amounts (BEN 548), benefit years from 1/1/2026; 820 ILCS 405 §§401, 403, 500",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "482fe0e10d3c0a81489df75d28851c5d8473a44a6d99f3734df88f6615136803"
+    },
+    {
+      "id": "state-ui-oh-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-oh-2026.json",
+      "sourceUrl": "https://codes.ohio.gov/ohio-revised-code/section-4141.30",
+      "sourceDocument": "Ohio Revised Code §§4141.01, 4141.30; ODJFS benefit estimator (uiben.jfs.ohio.gov), 2026",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "e87bfa9eb990bc1f889b622b60125dda1704ed1619165a80dafa4be138675110"
+    },
+    {
+      "id": "state-ui-mi-2026",
+      "kind": "state-ui",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "state-ui-mi-2026.json",
+      "sourceUrl": "https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-421-27",
+      "sourceDocument": "Michigan Employment Security Act, MCL 421.27 and 421.46; UIA Eligibility Requirements (2026)",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "2233e05652098e73a5b728866bde795b6f82a8f992e6e9704eb80d8b4462a698"
     }
   ]
 }

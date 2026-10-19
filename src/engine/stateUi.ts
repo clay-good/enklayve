@@ -31,6 +31,8 @@ export interface UiResult {
   shortfalls: string[];
   highQuarterWages: number;
   basePeriodWages: number;
+  /** The average weekly wage the rate was taken from, where the state uses one; else 0. */
+  averageWeeklyWage: number;
   quartersWithWages: number;
   /** The weekly benefit before dependents, after the minimum and maximum. */
   weeklyBenefit: number;
@@ -43,6 +45,8 @@ export interface UiResult {
     | "floor"
     | "table"
     | "stepped-down"
+    | "average-wage"
+    | "share"
     | "minimum"
     | "maximum";
   dependentAllowance: number;
@@ -57,7 +61,14 @@ export interface UiResult {
   weeks: number;
 }
 
-type Weekly = { amount: number; basis: UiResult["weeklyBasis"] };
+type Weekly = {
+  amount: number;
+  basis: UiResult["weeklyBasis"];
+  /** The average weekly wage the rate was taken from, where it is one (IL, OH). */
+  averageWeeklyWage?: number;
+  /** Dependents' share of `amount`, where the state adds them before rounding (MI). */
+  included?: number;
+};
 
 function wholeDollars(value: Decimal, rounding: "up" | "down"): number {
   return value
@@ -85,8 +96,14 @@ function weeklyFrom(
   highQuarter: number,
   basePeriod: number,
   rules: StateUiData,
+  creditWeeks: number,
+  dependents: number,
 ): Weekly | null {
   const w = rules.weeklyBenefit;
+  const byDependents = w.maximumByDependents;
+  const maximum = byDependents
+    ? (byDependents[Math.min(dependents, byDependents.length - 1)] as number)
+    : w.maximum;
   const schedule = w.lowWageSchedule;
   if (schedule) {
     if (highQuarter < (schedule.rows[0]?.[0] ?? 0)) return null;
@@ -114,6 +131,42 @@ function weeklyFrom(
     }
     return null;
   }
+  const clamp = (amount: number, b: Weekly["basis"], extra: Partial<Weekly> = {}): Weekly =>
+    amount > maximum
+      ? { ...extra, amount: maximum, basis: "maximum" }
+      : amount < w.minimum
+        ? { ...extra, amount: w.minimum, basis: "minimum" }
+        : { ...extra, amount, basis: b };
+  const aww = w.averageWeeklyWage;
+  if (aww) {
+    let wage: Decimal;
+    if (aww.from === "credit-weeks") {
+      if (creditWeeks <= 0) return null;
+      wage = new Decimal(basePeriod).dividedBy(creditWeeks);
+    } else {
+      const top = [...quarters].sort((a, b) => b - a).slice(0, aww.topQuarters ?? 2);
+      wage = top.reduce((a, b) => a.plus(b), new Decimal(0)).dividedBy(aww.divisor ?? 26);
+    }
+    const averageWeeklyWage = wage
+      .toDecimalPlaces(
+        0,
+        aww.wageRounding === "nearest" ? Decimal.ROUND_HALF_UP : Decimal.ROUND_FLOOR,
+      )
+      .toNumber();
+    const rate = wholeDollars(new Decimal(averageWeeklyWage).times(aww.share), w.rounding);
+    return clamp(rate, "average-wage", { averageWeeklyWage });
+  }
+  if (w.highQuarterShare !== undefined) {
+    const exact = new Decimal(highQuarter).times(w.highQuarterShare);
+    const deps = rules.dependentAllowances;
+    if (!deps?.beforeRounding) return clamp(wholeDollars(exact, w.rounding), "share");
+    // Michigan adds the dependent amount to 4.1% of the high quarter and then
+    // rounds and caps the sum, so the allowance is whatever the sum gained.
+    const added = deps.perDependent.slice(0, dependents).reduce((a, b) => a + b, 0);
+    const base = Math.min(maximum, wholeDollars(exact, w.rounding));
+    const total = clamp(wholeDollars(exact.plus(added), w.rounding), "share");
+    return { ...total, included: total.amount - Math.min(base, total.amount) };
+  }
   const divisor = w.highQuarterDivisor!;
   const lowEarner = w.lowEarner;
   const few = w.fewQuartersAverage;
@@ -134,9 +187,7 @@ function weeklyFrom(
     raw = lowEarner.floorAbove;
     basis = "floor";
   }
-  if (raw > w.maximum) return { amount: w.maximum, basis: "maximum" };
-  if (raw < w.minimum) return { amount: w.minimum, basis: "minimum" };
-  return { amount: raw, basis };
+  return clamp(raw, basis);
 }
 
 export function estimateUi(input: UiInput, rules: StateUiData): UiResult {
@@ -145,16 +196,19 @@ export function estimateUi(input: UiInput, rules: StateUiData): UiResult {
   const basePeriod = quarters.reduce((a, b) => a + b, 0);
   const quartersWithWages = quarters.filter((q) => q > 0).length;
   const creditWeeks = Math.max(0, Math.floor(Number(input.creditWeeks) || 0));
+  const dependents = Math.max(0, Math.floor(input.dependents ?? 0));
 
-  const weekly = weeklyFrom(quarters, highQuarter, basePeriod, rules);
-  const weeklyBenefit = weekly?.amount ?? 0;
+  const weekly = weeklyFrom(quarters, highQuarter, basePeriod, rules, creditWeeks, dependents);
+  const weeklyBenefit = (weekly?.amount ?? 0) - (weekly?.included ?? 0);
 
   // Monetary eligibility: any path, every test in it. Shortfalls are reported
   // for the first path only — the one a reader is most likely to be near — so
   // the list says what to look at rather than enumerating every route.
   const failures = rules.eligibility.map((path) => {
     const out: string[] = [];
-    if (weekly === null)
+    // A table's first row is a wage test of its own; a state without one says
+    // what is short through its other tests (Ohio's weeks and average wage).
+    if (weekly === null && (rules.weeklyBenefit.lowWageSchedule || rules.weeklyBenefit.bandedTable))
       out.push(
         path.bandedQualifyingWages
           ? "high-quarter or total wages below the lowest rate the table allows"
@@ -187,7 +241,21 @@ export function estimateUi(input: UiInput, rules: StateUiData): UiResult {
         `less than ${Math.round(path.minShareOutsideHighQuarter * 100)}% of base-period wages outside the high quarter`,
       );
     if (path.minCreditWeeks !== undefined && creditWeeks < path.minCreditWeeks)
-      out.push(`fewer than ${path.minCreditWeeks} credit weeks`);
+      out.push(`fewer than ${path.minCreditWeeks} weeks that count`);
+    if (
+      path.minWagesOutsideHighQuarter !== undefined &&
+      basePeriod - highQuarter < path.minWagesOutsideHighQuarter
+    )
+      out.push(
+        `wages outside the high quarter under $${path.minWagesOutsideHighQuarter.toLocaleString("en-US")}`,
+      );
+    if (
+      path.minAverageWeeklyWage !== undefined &&
+      (weekly?.averageWeeklyWage ?? 0) < path.minAverageWeeklyWage
+    )
+      out.push(
+        `an average weekly wage under $${path.minAverageWeeklyWage.toLocaleString("en-US")}`,
+      );
     if (
       path.minBasePeriodToWeeklyBenefit !== undefined &&
       basePeriod < weeklyBenefit * path.minBasePeriodToWeeklyBenefit
@@ -200,10 +268,11 @@ export function estimateUi(input: UiInput, rules: StateUiData): UiResult {
   const eligible = failures.some((f) => f.length === 0);
 
   const allowances = rules.dependentAllowances?.perDependent ?? [];
-  const dependents = Math.max(0, Math.floor(input.dependents ?? 0));
-  const dependentAllowance = eligible
-    ? allowances.slice(0, dependents).reduce((a, b) => a + b, 0)
-    : 0;
+  const dependentAllowance = !eligible
+    ? 0
+    : weekly?.included !== undefined
+      ? weekly.included
+      : allowances.slice(0, dependents).reduce((a, b) => a + b, 0);
   const weeklyTotal = eligible ? weeklyBenefit + dependentAllowance : 0;
   const weeklyPaid =
     rules.paymentReduction === undefined
@@ -212,7 +281,19 @@ export function estimateUi(input: UiInput, rules: StateUiData): UiResult {
 
   // The total payable is the least of the state's limits.
   const d = rules.duration;
-  const maxWeeks = d.weeksFromCreditWeeks ? Math.min(d.maxWeeks, creditWeeks) : d.maxWeeks;
+  let maxWeeks = d.weeksFromCreditWeeks ? Math.min(d.maxWeeks, creditWeeks) : d.maxWeeks;
+  const fromWages = d.weeksFromShareOfBasePeriod;
+  if (fromWages && weeklyTotal > 0) {
+    // Michigan: 43% of base-period wages over the rate, down to the half week.
+    const half = new Decimal(basePeriod)
+      .times(fromWages.share)
+      .dividedBy(weeklyTotal)
+      .times(2)
+      .floor()
+      .dividedBy(2)
+      .toNumber();
+    maxWeeks = Math.min(d.maxWeeks, Math.max(fromWages.minWeeks, half));
+  }
   const candidates: { value: Decimal; basis: UiResult["maxBenefitBasis"] }[] = [
     { value: new Decimal(weeklyTotal).times(maxWeeks), basis: "weeks" },
   ];
@@ -239,6 +320,7 @@ export function estimateUi(input: UiInput, rules: StateUiData): UiResult {
     shortfalls: eligible ? [] : (failures[0] ?? []),
     highQuarterWages: highQuarter,
     basePeriodWages: basePeriod,
+    averageWeeklyWage: weekly?.averageWeeklyWage ?? 0,
     quartersWithWages,
     weeklyBenefit: eligible ? weeklyBenefit : 0,
     weeklyBasis: weekly?.basis ?? "schedule",
