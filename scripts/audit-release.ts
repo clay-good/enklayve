@@ -606,8 +606,23 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * Eight states now. Each further one is the same argument against 311, made
  * with its measured cost; the budget grows with what the owner decides is
  * worth shipping, not with the length of the list.
+ *
+ * **311 → 315 on 2026-10-19, for New Jersey, Virginia, Washington, Arizona and
+ * Massachusetts, decided by the owner.**
+ *
+ * **4.2 kB** (309.0 → 313.2) for five states, every one admitted: the rules
+ * that made each one honest rather than approximate — New Jersey's base weeks
+ * and percentage dependents, Virginia's two-dimensional table, Washington's
+ * hours test and weekly-wage cap, Arizona's half-dollar rounding,
+ * Massachusetts's dependents outside the cap — and an hours input. The bytes
+ * also bought a correctness fix every state shares: base-period wages are now
+ * summed exactly, after a cent-boundary test caught a floating-point total one
+ * cent over a Virginia duration line.
+ *
+ * Thirteen states. The argument against 315 is the same as against every
+ * entry above: a measured cost, and the owner's decision that it is worth it.
  */
-export const SHELL_GZIP_BUDGET_KB = 311;
+export const SHELL_GZIP_BUDGET_KB = 315;
 
 /**
  * The headroom this gate needs to be measuring the shell rather than the runner.
