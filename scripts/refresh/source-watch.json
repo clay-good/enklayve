@@ -25,8 +25,8 @@
       "shard": "free-filing-2026",
       "url": "https://www.irs.gov/e-file-do-your-taxes-for-free",
       "why": "Channel availability and eligibility change by program announcement, not on a schedule — and an absence (Direct File in 2026) is itself a recorded fact.",
-      "fingerprint": "50272ab09bcc927af50af34b6d463ca5d30a8783899df4c3cfe143fcc16fadbf",
-      "checkedOn": "2026-08-29"
+      "fingerprint": "c6c8414964cee9dc51140867d5d5d3620e2c09a9da31f52814aac72306d3fcfe",
+      "checkedOn": "2026-10-19"
     },
     {
       "shard": "bill-triage-2026",
@@ -116,15 +116,15 @@
       "shard": "federal-income-tax-2024",
       "url": "https://www.law.cornell.edu/uscode/text/26/63",
       "why": "§63(b) is the list, and the list is load-bearing twice over. It names what a filer who does not itemize subtracts from adjusted gross income — paragraphs (4) through (7) are §170(p), §224, §225 and §163(h)(4), the four of the Act's five new deductions that reach a non-itemizer — and because it defines federal TAXABLE income it is also the list that six states inherit by starting there. A new paragraph in §63(b) is therefore a change to Colorado, Idaho, Iowa, Montana, North Dakota and Oregon that none of those states legislated, and nothing else in this repo would see it. Third watch on this shard: §164 for the cap, §163 for the car loan, §63 for the list itself.",
-      "fingerprint": "111f2dcdfdae5aff431676b1c6c3d916dc8aed9697e691cb2260b0ead61573c5",
-      "checkedOn": "2026-09-01"
+      "fingerprint": "42f653c2d2384e54f6fb5f3c1dbee78ffa611662d72490d2c0d99b7217169cb5",
+      "checkedOn": "2026-10-19"
     },
     {
       "shard": "state-co-income-tax-2024",
       "url": "https://tax.colorado.gov/individual-income-tax-guide",
       "why": "The Department's own guide is where Colorado states both halves of the conformity answer this shard encodes: that \"Colorado income tax is based generally on federal taxable income\", and which federal deductions must be added back — overtime for 2026 and later under HB25-1296, and, in the next sentence, that no addback is required for qualified tips. That is prose, not a table: an addback added or repealed is a sentence somebody has to read, and it changes the state tax of every tipped or hourly filer in Colorado. The bracket figures this shard also carries are the flat rate, which the state adapter handles; this watches the part no parser should touch.",
-      "fingerprint": "390e45c54def44eea94da85588921d33ed42db4d0bebbafea216097b2af01791",
-      "checkedOn": "2026-09-01"
+      "fingerprint": "4e1f2695c8043749d4b2bcfda5be11a2159f43872e99f58e6fbf18289cb74d3e",
+      "checkedOn": "2026-10-19"
     },
     {
       "shard": "state-ia-income-tax-2024",

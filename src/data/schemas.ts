@@ -436,8 +436,11 @@ export type SteppedIncomeDeductionData = z.infer<typeof SteppedIncomeDeductionSc
  * Which federal deductions a state inherits because its income tax starts from
  * FEDERAL TAXABLE INCOME rather than from federal adjusted gross income.
  *
- * §63(b) subtracts seven things from AGI to reach taxable income, and five of
- * them are the One Big Beautiful Bill Act's new deductions. A state whose
+ * §63(b) subtracts eight things from AGI to reach taxable income, and five of
+ * them are the One Big Beautiful Bill Act's new deductions. The eighth, the
+ * qualified net disaster loss (Pub. L. 119-108, 2026), has no field here
+ * because the engine models no casualty loss for anyone, so there is nothing
+ * for a state to inherit. A state whose
  * starting point is that figure has already given them, without legislating
  * anything, unless it adds them back — so for a tipped worker in North Dakota
  * the federal deduction is a state deduction too, and an engine that stops at
