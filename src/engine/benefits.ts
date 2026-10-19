@@ -242,8 +242,11 @@ export interface SnapResult {
 }
 
 /** SNAP allotment / standard-deduction lookup, using the largest defined size
- *  for households beyond the table and adding the per-person amount past eight. */
+ *  for households beyond the table and adding the per-person amount past eight,
+ *  up to the flat large-household allotment where the shard states one. */
 function snapAllotment(size: number, data: SnapData): Money {
+  const large = data.largeHouseholdAllotment;
+  if (large && size >= large.fromHouseholdSize) return Money.from(large.amount);
   const sizes = Object.keys(data.maxAllotmentByHouseholdSize)
     .map(Number)
     .sort((a, b) => a - b);

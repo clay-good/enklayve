@@ -1,35 +1,39 @@
 {
-  "fiscalYear": 2026,
+  "fiscalYear": 2027,
   "region": "contiguous",
   "maxAllotmentByHouseholdSize": {
-    "1": 298,
-    "2": 546,
-    "3": 785,
-    "4": 994,
-    "5": 1183,
-    "6": 1421,
-    "7": 1571,
-    "8": 1789
+    "1": 306,
+    "2": 562,
+    "3": 808,
+    "4": 1023,
+    "5": 1217,
+    "6": 1463,
+    "7": 1616,
+    "8": 1841
   },
-  "additionalPersonAllotment": 218,
+  "additionalPersonAllotment": 225,
+  "largeHouseholdAllotment": {
+    "fromHouseholdSize": 18,
+    "amount": 3887
+  },
   "standardDeductionByHouseholdSize": {
-    "1": 209,
-    "2": 209,
-    "3": 209,
-    "4": 223,
-    "5": 261,
-    "6": 299
+    "1": 217,
+    "2": 217,
+    "3": 217,
+    "4": 229,
+    "5": 268,
+    "6": 308
   },
   "earnedIncomeDeductionRate": 0.2,
   "grossIncomeLimitPctFpl": 130,
   "netIncomeLimitPctFpl": 100,
   "expectedContributionRate": 0.3,
-  "minBenefit": 24,
+  "minBenefit": 25,
   "citation": {
     "sourceUrl": "https://www.fna.usda.gov/snap/allotment/cola",
-    "sourceDocument": "USDA FNA SNAP Fiscal Year 2026 Cost-of-Living Adjustments (48 contiguous states and DC), Table 1, effective Oct 1, 2025",
-    "effectiveYear": 2026,
-    "dateRetrieved": "2026-08-29",
-    "sourceNote": "SNAP runs on the FEDERAL FISCAL year, not the calendar year, so these figures are effective October 1, 2025 through September 30, 2026 — the one dataset here whose clock differs from every other. The maximum allotments derive from USDA's Thrifty Food Plan and rise irregularly with household size rather than by a fixed increment, which is why they are stored as a table; above eight people, add $218 per person. The benefit is not the allotment: it is the maximum allotment minus 30% of net income (the expected contribution), floored at a $24 minimum for one- and two-person households. Net income is gross income minus the standard deduction and 20% of earned income. Eligibility runs on two tests, gross income at or below 130% of the poverty line and net income at or below 100%. This shard covers the 48 CONTIGUOUS STATES AND DC only; Alaska, Hawaii, Guam and the U.S. Virgin Islands have their own, higher allotments and are not seeded. Omitted: the excess shelter deduction (often the largest deduction a household has, and capped except for elderly or disabled members), the dependent-care, medical and child-support deductions, the asset limits, broad-based categorical eligibility (which many states use to waive the gross-income test), the ABAWD work requirements, and the state options that vary all of this. The figure is an estimate of the maximum a household could receive, not an eligibility determination. Every figure here was verified against Table 1 of the USDA COLA page on 2026-08-29. The August audit could not read the allotments and recorded them as standing as authored; it was reading the per-fiscal-year page, which renders its tables client-side, while the COLA index one level up states them in the markup. All eight household sizes and the $218 each-additional-member amount match. Note the agency renamed itself the Food and Nutrition Administration on June 1, 2026, and fns.usda.gov now redirects to fna.usda.gov."
+    "sourceDocument": "USDA FNA SNAP FY 2027 Cost-of-Living Adjustments (48 contiguous states and DC), maximum and minimum allotments and deductions, effective Oct 1, 2026",
+    "effectiveYear": 2027,
+    "dateRetrieved": "2026-10-19",
+    "sourceNote": "SNAP runs on the FEDERAL FISCAL year, not the calendar year, so these figures are effective October 1, 2026 through September 30, 2027 — the one dataset here whose clock differs from every other. The maximum allotments derive from USDA's Thrifty Food Plan and rise irregularly with household size rather than by a fixed increment, which is why they are stored as a table. Past eight people FY 2027 adds $225 per person for households of nine to seventeen, and then states a flat $3,887 for eighteen or more — less than the $4,091 the increment would give at eighteen, so it is a cap and is stored as one (largeHouseholdAllotment). Through FY 2026 the table had a single \"Each Additional Member\" row and no cap. The benefit is not the allotment: it is the maximum allotment minus 30% of net income (the expected contribution), floored at a $25 minimum for one- and two-person households. Net income is gross income minus the standard deduction and 20% of earned income. Eligibility runs on two tests, gross income at or below 130% of the poverty line and net income at or below 100%; FNS's FY 2027 limits are the 2026 HHS guidelines this repo already carries ($1,330 net and $1,729 gross for one person). This shard covers the 48 CONTIGUOUS STATES AND DC only; Alaska, Hawaii, Guam and the U.S. Virgin Islands have their own, higher allotments and are not seeded. Omitted: the excess shelter deduction (often the largest deduction a household has, capped at $769 except for elderly or disabled members), the homeless shelter, dependent-care, medical and child-support deductions, the asset limits ($3,000, or $4,750 with a member 60+ or disabled), broad-based categorical eligibility (which many states use to waive the gross-income test), the ABAWD work requirements, and the state options that vary all of this. The figure is an estimate of the maximum a household could receive, not an eligibility determination. Every figure here was read on 2026-10-19 from the COLA index page and checked against FNA's print versions (snap-fy27maximumAllotments-deductions.pdf, snap-fy27MinimumAllotments.pdf); the refresh adapter reads all of them. The agency renamed itself the Food and Nutrition Administration on June 1, 2026, and fns.usda.gov now redirects to fna.usda.gov."
   }
 }

@@ -943,6 +943,19 @@ export const SnapSchema = z.object({
   maxAllotmentByHouseholdSize: z.record(z.string(), z.number().gte(0)),
   /** Added to the size-8 allotment for each person beyond eight. */
   additionalPersonAllotment: z.number().gte(0),
+  /**
+   * A flat allotment for every household at or above `fromHouseholdSize`, where
+   * the per-person increment stops. FY 2027 Table 1 states it as an "18+" row:
+   * $225 per additional person for sizes 9-17, then $3,887 whatever the size —
+   * less than the $4,091 the increment would give at eighteen. Absent, the
+   * increment runs without limit, as it did through FY 2026.
+   */
+  largeHouseholdAllotment: z
+    .object({
+      fromHouseholdSize: z.number().int().gte(2),
+      amount: z.number().gte(0),
+    })
+    .optional(),
   standardDeductionByHouseholdSize: z.record(z.string(), z.number().gte(0)),
   earnedIncomeDeductionRate: z.number().gte(0).lte(1),
   /** Gross monthly income limit as a percentage of the poverty line (130). */

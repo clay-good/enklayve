@@ -172,7 +172,15 @@ const SHARDS: ShardSource[] = [
     shard: "savers-credit-2024.json",
     ...ANNUAL,
   },
-  { id: "snap-fy2024-contiguous", kind: "snap", shard: "snap-fy2024-contiguous.json", ...ANNUAL },
+  // SNAP's year is the federal fiscal year, which starts each October 1: FY 2027
+  // is the one in force from 2026-10-01, a calendar year ahead of the rest.
+  {
+    id: "snap-fy2024-contiguous",
+    kind: "snap",
+    shard: "snap-fy2024-contiguous.json",
+    ...ANNUAL,
+    effectiveYear: 2027,
+  },
   { id: "medicaid-2024", kind: "medicaid", shard: "medicaid-2024.json", ...ANNUAL },
   { id: "aca-2024", kind: "aca", shard: "aca-2024.json", ...ANNUAL },
   { id: "fafsa-2024-2025", kind: "fafsa", shard: "fafsa-2024-2025.json", ...ANNUAL },

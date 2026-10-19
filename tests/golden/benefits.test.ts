@@ -250,18 +250,18 @@ describe("Saver's Credit (2026)", () => {
   });
 });
 
-describe("SNAP eligibility (FY2026, contiguous)", () => {
+describe("SNAP eligibility (FY2027, contiguous)", () => {
   it("estimates a benefit for an eligible 3-person household", () => {
     // Poverty line(3) = 27,320/yr → 2,276.67/mo. Gross 2,200 ≤ 130% (2,959.67).
-    // Net = 2,200 − 209 standard − 440 earned (20%) = 1,551 ≤ 100% (2,276.67).
-    // Benefit = 785 max − 30% × 1,551 = 785 − 465.30 = 319.70.
+    // Net = 2,200 − 217 standard − 440 earned (20%) = 1,543 ≤ 100% (2,276.67).
+    // Benefit = 808 max − 30% × 1,543 = 808 − 462.90 = 345.10.
     const r = estimateSnap(
       { householdSize: 3, monthlyGrossIncome: 2200, monthlyEarnedIncome: 2200 },
       snap,
       fpl,
     );
     expect(r.eligible).toBe(true);
-    expect(r.monthlyBenefit.roundToCents().toNumber()).toBeCloseTo(319.7, 2);
+    expect(r.monthlyBenefit.roundToCents().toNumber()).toBeCloseTo(345.1, 2);
   });
 
   it("takes the 20% deduction on earnings only (7 CFR §273.9(d)(2))", () => {
@@ -317,14 +317,41 @@ describe("SNAP eligibility (FY2026, contiguous)", () => {
   });
 
   it("floors an eligible small household at the minimum benefit", () => {
-    // hh1, $1,500/mo: passes both tests, computed benefit rounds below the $24 floor.
+    // hh1, $1,500/mo: passes both tests; 306 − 30% × (1,500 − 217 − 300) = 11.10,
+    // below the $25 floor.
     const r = estimateSnap(
       { householdSize: 1, monthlyGrossIncome: 1500, monthlyEarnedIncome: 1500 },
       snap,
       fpl,
     );
     expect(r.eligible).toBe(true);
-    expect(r.monthlyBenefit.toNumber()).toBe(24);
+    expect(r.monthlyBenefit.toNumber()).toBe(25);
+  });
+
+  it("stops the per-person increment at the flat 18+ allotment", () => {
+    // FY 2027 Table 1: $225 per person for nine to seventeen, then $3,887 for
+    // eighteen or more — below the $4,091 the increment would reach at eighteen.
+    const allotment = (size: number): number =>
+      estimateSnap(
+        { householdSize: size, monthlyGrossIncome: 0, monthlyEarnedIncome: 0 },
+        snap,
+        fpl,
+      ).maxAllotment.toNumber();
+    expect(allotment(8)).toBe(1841);
+    expect(allotment(9)).toBe(2066);
+    expect(allotment(17)).toBe(1841 + 225 * 9);
+    expect(allotment(18)).toBe(3887);
+    expect(allotment(25)).toBe(3887);
+
+    // A shard without the row runs the increment without limit, as FY 2026 did.
+    const uncapped = { ...snap, largeHouseholdAllotment: undefined };
+    expect(
+      estimateSnap(
+        { householdSize: 18, monthlyGrossIncome: 0, monthlyEarnedIncome: 0 },
+        uncapped,
+        fpl,
+      ).maxAllotment.toNumber(),
+    ).toBe(1841 + 225 * 10);
   });
 });
 

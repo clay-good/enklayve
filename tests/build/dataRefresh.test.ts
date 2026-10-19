@@ -2768,34 +2768,76 @@ describe("adapters: seventh set — the remaining seeded states", () => {
 describe("adapters: USDA SNAP (one table, a column per region)", () => {
   const adapter = adaptersForGroup("usda-snap")[0]!;
   const current = readShard("snap-fy2024-contiguous.json");
-  // FNS Table 1 as the page states it: seven region columns, and the figure
-  // this shard wants is the first of them.
+  // The COLA index as FNA states it for FY 2027: a related-content link naming
+  // last year, the income-eligibility tables (a different "Table 1"), then the
+  // allotment table with seven region columns, the standard deductions, and the
+  // minimum allotment. The figure this shard wants is the first of each row.
   const raw =
-    "SNAP FY 2026 Cost-of-Living Adjustments ... Table 1. Maximum Monthly Allotment" +
+    "Related Content SNAP FY 2026 Cost-of-Living Adjustments USDA Food Plans" +
+    " Fiscal Year 2027 Standards, Allotments, and Deductions" +
+    " Table 1. Net Monthly Income Limit (100% of Federal Poverty Level) Household Size" +
+    " 48 States, District of Columbia, Guam, Virgin Islands Alaska Hawaii" +
+    " 1 $1,330 $1,663 $1,530 2 $1,804 $2,255 $2,075" +
+    " Each Additional Member $474 $592 $545" +
+    " Maximum Allotments and Deductions The following tables provide the monthly maximum" +
+    " allotment and allowable deductions for FY 2027 (effective Oct. 1, 2026, through" +
+    " Sept. 30, 2027). Maximum Allotments Table 1. Maximum Monthly Allotment" +
     " Household Size 48 States and District of Columbia Alaska (Urban) Alaska (Rural 1)" +
     " Alaska (Rural 2) Guam Hawaii Virgin Islands" +
-    " 1 $298 $385 $491 $598 $439 $506 $383" +
-    " 2 $546 $707 $901 $1,097 $806 $929 $703" +
-    " 3 $785 $1,015 $1,295 $1,576 $1,157 $1,334 $1,009" +
-    " 4 $994 $1,285 $1,639 $1,995 $1,465 $1,689 $1,278" +
-    " 5 $1,183 $1,529 $1,950 $2,374 $1,743 $2,010 $1,521" +
-    " 6 $1,421 $1,838 $2,344 $2,853 $2,095 $2,415 $1,827" +
-    " 7 $1,571 $2,031 $2,590 $3,152 $2,315 $2,668 $2,019" +
-    " 8 $1,789 $2,314 $2,950 $3,591 $2,637 $3,040 $2,300" +
-    " Each Additional Member $218 $282 $360 $438 $322 $371 $281" +
+    " 1 $306 $392 $499 $608 $452 $496 $394" +
+    " 2 $562 $718 $916 $1,115 $829 $910 $723" +
+    " 3 $808 $1,032 $1,316 $1,602 $1,191 $1,307 $1,039" +
+    " 4 $1,023 $1,306 $1,666 $2,027 $1,507 $1,655 $1,315" +
+    " 5 $1,217 $1,555 $1,982 $2,413 $1,794 $1,969 $1,565" +
+    " 6 $1,463 $1,868 $2,382 $2,900 $2,156 $2,367 $1,880" +
+    " 7 $1,616 $2,064 $2,632 $3,204 $2,382 $2,615 $2,078" +
+    " 8 $1,841 $2,352 $2,999 $3,650 $2,714 $2,979 $2,367" +
+    " 9-17 $225 per additional person $287 per additional person $366 per additional person" +
+    " $446 per additional person $331 per additional person $364 per additional person" +
+    " $289 per additional person" +
+    " 18+ $3,887 $4,965 $6,331 $7,705 $5,729 $6,289 $4,997" +
     " Deductions Table 2. Standard Deductions Household Size 48 States and District of" +
-    " Columbia Alaska Guam Hawaii Virgin Islands 1 $209 $358 $420 $295 $184";
+    " Columbia Alaska Guam Hawaii Virgin Islands" +
+    " 1 $217 $371 $435 $306 $191 2 $217 $371 $435 $306 $191 3 $217 $371 $435 $306 $191" +
+    " 4 $229 $371 $457 $306 $229 5 $268 $371 $536 $309 $268 6+ $308 $385 $614 $354 $308" +
+    " Table 3. Maximum Excess Shelter Deductions 48 States and District of Columbia Alaska" +
+    " Guam Hawaii Virgin Islands $769 $1,229 $903 $1,306 $606" +
+    " Minimum SNAP Allotment The following table provides the monthly minimum allotment for" +
+    " FY 2027 (effective Oct. 1, 2026, through Sept. 30, 2027). Table 1. Minimum Monthly" +
+    " Allotment Household Size 48 States and District of Columbia Alaska (Urban) Alaska" +
+    " (Rural 1) Alaska (Rural 2) Guam Hawaii Virgin Islands 1-2 $25 $31 $40 $49 $36 $40 $32" +
+    " Prior Year Standards, Allotments, and Deductions 2026 2025 2024";
 
-  it("reads the shard's own region column, not the first amount in the row", () => {
+  it("reads every figure the estimate uses from the shard's own region column", () => {
     const result = adapter.parse(raw, current);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const a = result.shard.maxAllotmentByHouseholdSize as Record<string, number>;
-    expect(a["1"]).toBe(298);
-    expect(a["4"]).toBe(994);
-    expect(a["8"]).toBe(1789);
-    expect(result.shard.additionalPersonAllotment).toBe(218);
+    expect(a["1"]).toBe(306);
+    expect(a["4"]).toBe(1023);
+    expect(a["8"]).toBe(1841);
+    expect(result.shard.additionalPersonAllotment).toBe(225);
+    expect(result.shard.largeHouseholdAllotment).toEqual({ fromHouseholdSize: 18, amount: 3887 });
+    // The shard's largest size reads the table's "6+" row.
+    expect(result.shard.standardDeductionByHouseholdSize).toEqual({
+      "1": 217,
+      "2": 217,
+      "3": 217,
+      "4": 229,
+      "5": 268,
+      "6": 308,
+    });
+    expect(result.shard.minBenefit).toBe(25);
     expect(SnapSchema.safeParse(result.shard).success).toBe(true);
+  });
+
+  it("agrees with the committed shard, figure for figure", () => {
+    // The shard was transcribed from this page; a parse that disagrees with it
+    // is either a transcription error or a parser reading the wrong cell.
+    const result = adapter.parse(raw, current);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.shard).toEqual(current);
   });
 
   it("refuses a row that is not the header's width rather than counting into it", () => {
@@ -2803,8 +2845,8 @@ describe("adapters: USDA SNAP (one table, a column per region)", () => {
     // Alaska (Rural 2) is twice the contiguous figure — plausible money, wrong
     // households. The only thing that catches it is the count.
     const narrowed = raw.replace(
-      " 4 $994 $1,285 $1,639 $1,995 $1,465 $1,689 $1,278",
-      " 4 $994 $1,285 $1,639 $1,995 $1,465 $1,689",
+      " 4 $1,023 $1,306 $1,666 $2,027 $1,507 $1,655 $1,315",
+      " 4 $1,023 $1,306 $1,666 $2,027 $1,507 $1,655",
     );
     const result = adapter.parse(narrowed, current);
     expect(result.ok).toBe(false);
@@ -2812,12 +2854,49 @@ describe("adapters: USDA SNAP (one table, a column per region)", () => {
     expect(result.reason).toContain("the table's shape changed");
   });
 
-  it("refuses a page that does not state the shard's fiscal year", () => {
-    const rolled = { ...current, fiscalYear: 2028 };
-    const result = adapter.parse(raw, rolled);
+  it("takes its year from the allotment table, not from a link elsewhere on the page", () => {
+    // On 2026-10-01 the old guard looked for "FY 2026", found it in the
+    // related-content link above, and passed a FY 2027 page as FY 2026.
+    const behind = { ...current, fiscalYear: 2026 };
+    const result = adapter.parse(raw, behind);
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.reason).toContain("no FY 2028 figures");
+    expect(result.reason).toContain("the October roll is due");
+    // A roll is work for someone, so it must not land with the settled waits.
+    expect(result.settled).toBeFalsy();
+  });
+
+  it("calls a page behind the shard a settled wait", () => {
+    const ahead = { ...current, fiscalYear: 2028 };
+    const result = adapter.parse(raw, ahead);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("FNS has not published the shard's year");
+    expect(result.settled).toBe(true);
+  });
+
+  it("refuses a page that no longer says which year its allotment table is for", () => {
+    const unstated = raw.replace("allotment and allowable deductions for FY 2027", "allotment");
+    const result = adapter.parse(unstated, current);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("no longer says which fiscal year");
+  });
+
+  it("refuses when the per-person rows past eight are gone", () => {
+    // The large-household bounds come off the labels; without them the parser
+    // would have to invent where the increment stops.
+    const noCap = raw.replace(" 18+ $3,887 $4,965 $6,331 $7,705 $5,729 $6,289 $4,997", "");
+    const capResult = adapter.parse(noCap, current);
+    expect(capResult.ok).toBe(false);
+    if (capResult.ok) return;
+    expect(capResult.reason).toContain('no "18+" row');
+
+    const noRange = raw.slice(0, raw.indexOf(" 9-17 ")) + raw.slice(raw.indexOf(" 18+ "));
+    const rangeResult = adapter.parse(noRange, current);
+    expect(rangeResult.ok).toBe(false);
+    if (rangeResult.ok) return;
+    expect(rangeResult.reason).toContain("no per-person row starting at household size 9");
   });
 
   it("watches the COLA index, not the per-year page that renders its tables in JS", () => {
@@ -2825,7 +2904,11 @@ describe("adapters: USDA SNAP (one table, a column per region)", () => {
   });
 
   it("fails (-> alert) when Table 1 is absent", () => {
-    expect(adapter.parse("SNAP FY 2026 Cost-of-Living Adjustments", current).ok).toBe(false);
+    const result = adapter.parse(
+      "Maximum Allotments and Deductions for FY 2027 Table 2. Standard Deductions",
+      current,
+    );
+    expect(result.ok).toBe(false);
   });
 });
 

@@ -244,7 +244,9 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
       benefit: r.monthlyBenefit.toNumber(),
     });
   };
-  for (const size of [1, 2, 3, 8, 9]) {
+  // 17, 18 and 19 stand either side of the flat large-household allotment, so
+  // a mutated `>=` there changes an answer.
+  for (const size of [1, 2, 3, 8, 9, 17, 18, 19]) {
     // The two income tests are the point: derive each limit from the shard and
     // stand exactly on it, a cent either side. An arbitrary income never does.
     const monthlyLine = povertyLine(size, fpl).toNumber() / 12;
@@ -264,8 +266,8 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
     // Unearned income only, so net is gross less the standard deduction: this
     // puts the NET test exactly on its limit rather than near it.
     for (const d of [-0.01, 0, 0.01]) snapProbe(size, netLimit + stdDed + d, 0);
-    snapProbe(size, 1_959, 0);
-    snapProbe(size, 1_959, 1_959);
+    snapProbe(size, 2_012, 0);
+    snapProbe(size, 2_012, 2_012);
   }
   for (const income of [line1 - 1, line1, line1 * 4 - 1, line1 * 4, line1 * 4 + 1]) {
     const r = estimatePremiumTaxCredit(

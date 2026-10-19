@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-09",
+  "generatedAt": "2026-10-19",
   "datasets": [
     {
       "id": "federal-income-tax-2024",
@@ -824,15 +824,15 @@
     {
       "id": "snap-fy2024-contiguous",
       "kind": "snap",
-      "version": "2026.0",
-      "effectiveYear": 2026,
+      "version": "2027.0",
+      "effectiveYear": 2027,
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "snap-fy2024-contiguous.json",
       "sourceUrl": "https://www.fna.usda.gov/snap/allotment/cola",
-      "sourceDocument": "USDA FNA SNAP Fiscal Year 2026 Cost-of-Living Adjustments (48 contiguous states and DC), Table 1, effective Oct 1, 2025",
-      "dateRetrieved": "2026-08-29",
-      "contentHash": "f1e502a6c26da691ab8c7c59d8716804a366c2f80cb2b381b6bafa96a4daca40"
+      "sourceDocument": "USDA FNA SNAP FY 2027 Cost-of-Living Adjustments (48 contiguous states and DC), maximum and minimum allotments and deductions, effective Oct 1, 2026",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "bd7e175c65064cb2204b23095932ba3f3fd7c9335caab17d0f326f6d0a53e66f"
     },
     {
       "id": "medicaid-2024",

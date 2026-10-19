@@ -571,7 +571,7 @@ describe("SNAP tile", () => {
 
   it("estimates a monthly benefit for an eligible household, cited", () => {
     const root = mount(mountSnap, new URLSearchParams({ hh: "3", inc: "2200" }));
-    expect(rowValue(root, "Estimated monthly benefit")).toContain("$319");
+    expect(rowValue(root, "Estimated monthly benefit")).toContain("$345");
     expect(root.querySelectorAll("a.cite-link").length).toBeGreaterThanOrEqual(2);
   });
 

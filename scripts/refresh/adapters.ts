@@ -3196,97 +3196,185 @@ function parseNewJerseyTopRate(raw: string, current: Record<string, unknown>): P
  * committed shard already carries are filled, and every one of them must be
  * present or nothing is written.
  *
- * Scope: Table 1, the maximum allotments, which is what a benefit estimate is
- * built from. The standard-deduction and excess-shelter tables below it stay the
- * reviewer's data-only step — the diff on an allotment move is what prompts it.
+ * Scope: every figure the benefit estimate is built from — Table 1's maximum
+ * allotments with the rows past eight, Table 2's standard deductions, and the
+ * minimum allotment. The excess-shelter and asset tables are not modeled.
+ *
+ * The fiscal year is the one the allotment table states ("maximum allotment and
+ * allowable deductions for FY 2027"), never a year found anywhere on the page.
+ * On 2026-10-01 FNS published FY 2027 and the guard looked for "FY 2026", which
+ * it found in a related-content link, so it passed; what failed was a renamed
+ * row. Had the rows kept their names it would have written FY 2027 allotments
+ * under a shard, a standard deduction and a minimum benefit that still said
+ * FY 2026. A page ahead of the shard is therefore a refusal and not a refresh:
+ * the October roll changes prose and a citation as well as figures, and that is
+ * a reading task (docs/annual-roll.md). A page behind it is a settled wait.
  */
 const SNAP_REGION_COLUMNS: Record<string, RegExp> = {
-  contiguous: /^48 States and District of Columbia$/i,
+  contiguous: /^48 States (?:and|&) District of Columbia$/i,
 };
 
-function parseSnap(raw: string, current: Record<string, unknown>): ParseOutcome {
-  const region = String(current.region ?? "");
-  const column = SNAP_REGION_COLUMNS[region];
-  if (!column) {
-    return { ok: false, reason: `shard names no known SNAP region (got "${region}")` };
-  }
-  const text = visibleText(raw);
-  const fiscalYear = Number(current.fiscalYear);
-  if (Number.isInteger(fiscalYear) && !new RegExp(`FY ?${fiscalYear}\\b`, "i").test(text)) {
-    return {
-      ok: false,
-      reason: `the page states no FY ${fiscalYear} figures — SNAP's COLA takes effect each October, so this is a prior year's page or the shard is ahead of it`,
-    };
-  }
+/** One FNS region table: its header columns, the shard region's index, and rows by label. */
+interface SnapTable {
+  name: string;
+  columns: string[];
+  index: number;
+  rows: Map<string, string>;
+}
 
-  const table = /Table 1\. Maximum Monthly Allotment([\s\S]*?)(?:Table 2\.|Deductions\b)/i.exec(
-    text,
-  );
-  if (!table) {
-    return { ok: false, reason: "could not find Table 1 (maximum monthly allotment) on the page" };
-  }
-  const body = table[1] as string;
+/**
+ * Read one FNS region table — the header first, so the shard's region picks its
+ * column by name, then every row by its household-size label: "1", "6+", "1-2",
+ * "9-17", "18+". The body stops at the next "Table N." or the prior-year links,
+ * so a row is never borrowed from the table below. A string is why it failed.
+ */
+function snapTable(text: string, title: RegExp, name: string, region: string): SnapTable | string {
+  const at = title.exec(text);
+  if (!at) return `could not find ${name} on the page`;
+  const rest = text.slice(at.index + at[0].length);
+  const end = rest.search(/Table \d+\.|Prior Year\b/i);
+  const body = end === -1 ? rest : rest.slice(0, end);
 
   // The header runs from "Household Size" to the first data row ("1 $...").
-  const header = /Household Size([\s\S]*?)\b1\s+\$/i.exec(body);
-  if (!header) {
-    return { ok: false, reason: "Table 1 has no readable header row of region columns" };
-  }
+  const header = /Household Size([\s\S]*?)\s\d+(?:-\d+|\+)?\s+\$/i.exec(body);
+  if (!header) return `${name} has no readable header row of region columns`;
   const columns = (header[1] as string)
     .split(
       /\s{2,}|(?<=\))\s+(?=[A-Z48])|(?<=[a-z])\s+(?=48 States)|\s+(?=Alaska|Guam|Hawaii|Virgin)/,
     )
     .map((c) => c.trim())
     .filter(Boolean);
-  const index = columns.findIndex((c) => column.test(c));
+  const index = columns.findIndex((c) => (SNAP_REGION_COLUMNS[region] as RegExp).test(c));
   if (index === -1) {
-    return {
-      ok: false,
-      reason: `Table 1 no longer has a "${region}" column (header reads: ${columns.join(" | ")})`,
-    };
+    return `${name} no longer has a "${region}" column (header reads: ${columns.join(" | ")})`;
   }
 
-  /** The `index`-th amount of a row, refusing if the row is not the header's width. */
-  function cell(label: string, row: string | undefined): number | string {
-    if (row === undefined) return `Table 1 has no "${label}" row`;
-    const amounts = [...row.matchAll(/\$([\d,]+)/g)].map((m) => parseAmount(m[1] as string));
-    if (amounts.length !== columns.length) {
-      return `the "${label}" row carries ${amounts.length} amounts for ${columns.length} columns — the table's shape changed, and counting into it would read another region`;
-    }
-    return amounts[index] as number;
-  }
-
-  const allotments = { ...((current.maxAllotmentByHouseholdSize as Record<string, number>) ?? {}) };
   const rows = new Map<string, string>();
-  for (const m of body.matchAll(/(?:^|\s)(\d+|Each Additional Member)((?:\s+\$[\d,]+)+)/gi)) {
-    rows.set(String(m[1]).toLowerCase(), m[2] as string);
+  for (const m of body.matchAll(
+    /(?:^|\s)(\d+(?:-\d+|\+)?)((?:\s+\$[\d,]+(?:\.\d+)?(?: per additional person)?)+)/gi,
+  )) {
+    rows.set(String(m[1]), m[2] as string);
   }
-  const parsed: Record<string, number> = {};
-  for (const size of Object.keys(allotments)) {
-    const value = cell(size, rows.get(size));
-    if (typeof value === "string") return { ok: false, reason: value };
-    const drift = implausibleDrift(allotments[size] as number, value);
-    if (drift) {
-      return {
-        ok: false,
-        reason: `the household-size-${size} maximum allotment ${drift}; refusing — either the table moved or this is not the figure`,
-      };
-    }
-    parsed[size] = value;
+  return { name, columns, index, rows };
+}
+
+/**
+ * The shard region's amount in one row, refusing a row that is not the header's
+ * width or a figure implausibly far from the committed one.
+ */
+function snapCell(table: SnapTable, label: string, committed: unknown): number | string {
+  const row = table.rows.get(label);
+  if (row === undefined) return `${table.name} has no "${label}" row`;
+  const amounts = [...row.matchAll(/\$([\d,]+)/g)].map((m) => parseAmount(m[1] as string));
+  if (amounts.length !== table.columns.length) {
+    return `the "${label}" row of ${table.name} carries ${amounts.length} amounts for ${table.columns.length} columns — the table's shape changed, and counting into it would read another region`;
   }
-  const additional = cell("Each Additional Member", rows.get("each additional member"));
-  if (typeof additional === "string") return { ok: false, reason: additional };
-  const additionalDrift = implausibleDrift(current.additionalPersonAllotment as number, additional);
-  if (additionalDrift) {
+  const value = amounts[table.index] as number;
+  const drift = typeof committed === "number" ? implausibleDrift(committed, value) : null;
+  if (drift) {
+    return `the "${label}" figure in ${table.name} ${drift}; refusing — either the table moved or this is not the figure`;
+  }
+  return value;
+}
+
+function parseSnap(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const region = String(current.region ?? "");
+  if (!SNAP_REGION_COLUMNS[region]) {
+    return { ok: false, reason: `shard names no known SNAP region (got "${region}")` };
+  }
+  const text = visibleText(raw);
+  const fail = (reason: string): ParseOutcome => ({ ok: false, reason });
+
+  const fiscalYear = Number(current.fiscalYear);
+  const stated = /maximum allotments? and (?:allowable )?deductions for FY ?(\d{4})/i.exec(text);
+  if (!stated) {
+    return fail(
+      "the page no longer says which fiscal year its allotment table is for — refusing rather than taking a year mentioned elsewhere on it",
+    );
+  }
+  const pageYear = Number(stated[1]);
+  if (pageYear > fiscalYear) {
+    return fail(
+      `the page states FY ${pageYear} allotments and the shard is FY ${fiscalYear} — the October roll is due, and it moves the standard deduction, the minimum benefit, the tile's prose and the citation along with the allotments; transcribe it by hand (docs/annual-roll.md)`,
+    );
+  }
+  if (pageYear < fiscalYear) {
     return {
       ok: false,
-      reason: `the each-additional-member allotment ${additionalDrift}; refusing — either the table moved or this is not the figure`,
+      reason: `the page states FY ${pageYear} allotments and the shard is already FY ${fiscalYear}; FNS has not published the shard's year yet`,
+      settled: true,
     };
   }
+
+  // Table 1, sizes one to eight, then the rows past them.
+  const allotments = snapTable(
+    text,
+    /Table 1\. Maximum Monthly Allotment/i,
+    "Table 1 (maximum monthly allotment)",
+    region,
+  );
+  if (typeof allotments === "string") return fail(allotments);
+  const committedAllotments = (current.maxAllotmentByHouseholdSize ?? {}) as Record<string, number>;
+  const parsedAllotments: Record<string, number> = {};
+  for (const size of Object.keys(committedAllotments)) {
+    const value = snapCell(allotments, size, committedAllotments[size]);
+    if (typeof value === "string") return fail(value);
+    parsedAllotments[size] = value;
+  }
+  // "9-17 $225 per additional person", then a flat "18+" row where the
+  // increment stops. Both bounds come off the labels, never off a constant.
+  const top = Math.max(...Object.keys(parsedAllotments).map(Number));
+  const range = [...allotments.rows.keys()]
+    .map((label) => /^(\d+)-(\d+)$/.exec(label))
+    .find((m) => m !== null && Number(m[1]) === top + 1);
+  if (!range) {
+    return fail(`Table 1 has no per-person row starting at household size ${top + 1}`);
+  }
+  const additional = snapCell(allotments, range[0], current.additionalPersonAllotment);
+  if (typeof additional === "string") return fail(additional);
+  const capFrom = Number(range[2]) + 1;
+  const committedCap = current.largeHouseholdAllotment as { amount?: unknown } | undefined;
+  const cap = snapCell(allotments, `${capFrom}+`, committedCap?.amount);
+  if (typeof cap === "string") return fail(cap);
+
+  // Table 2: the shard's largest size is the table's "6+" row.
+  const deductions = snapTable(
+    text,
+    /Table 2\. Standard Deductions/i,
+    "Table 2 (standard deductions)",
+    region,
+  );
+  if (typeof deductions === "string") return fail(deductions);
+  const committedDeductions = (current.standardDeductionByHouseholdSize ?? {}) as Record<
+    string,
+    number
+  >;
+  const topDeduction = Math.max(...Object.keys(committedDeductions).map(Number));
+  const parsedDeductions: Record<string, number> = {};
+  for (const size of Object.keys(committedDeductions)) {
+    const label = Number(size) === topDeduction ? `${size}+` : size;
+    const value = snapCell(deductions, label, committedDeductions[size]);
+    if (typeof value === "string") return fail(value);
+    parsedDeductions[size] = value;
+  }
+
+  // The minimum allotment, stated for one- and two-person households.
+  const minimum = snapTable(
+    text,
+    /Table \d+\. Minimum Monthly Allotment/i,
+    "the minimum monthly allotment table",
+    region,
+  );
+  if (typeof minimum === "string") return fail(minimum);
+  const minBenefit = snapCell(minimum, "1-2", current.minBenefit);
+  if (typeof minBenefit === "string") return fail(minBenefit);
 
   const shard = clone(current);
-  shard.maxAllotmentByHouseholdSize = parsed;
+  shard.maxAllotmentByHouseholdSize = parsedAllotments;
   shard.additionalPersonAllotment = additional;
+  shard.largeHouseholdAllotment = { fromHouseholdSize: capFrom, amount: cap };
+  shard.standardDeductionByHouseholdSize = parsedDeductions;
+  shard.minBenefit = minBenefit;
   return { ok: true, shard };
 }
 

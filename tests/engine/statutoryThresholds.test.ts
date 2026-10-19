@@ -220,20 +220,22 @@ describe("the SNAP minimum benefit at a two-person household", () => {
   it("floors an eligible two-person household at the minimum benefit", () => {
     // Two people on unearned income (SSI, disability, unemployment): the
     // poverty line is $21,640 a year, so the net test allows $1,803.33 a month.
-    // At $1,959 of unearned income the household clears both tests, and the
-    // computed benefit — $546 max allotment less 30% of $1,750 net — is $21.
-    // The statute floors one- and two-person households at $24.
+    // At $2,012 of unearned income the household clears both tests, and the
+    // computed benefit — $562 max allotment less 30% of $1,795 net — is $23.50.
+    // FY 2027 floors one- and two-person households at $25. The income sits
+    // just under the net limit because nowhere else does a two-person
+    // benefit fall below the floor.
     const r = estimateSnap(
-      { householdSize: 2, monthlyGrossIncome: 1_959, monthlyEarnedIncome: 0 },
+      { householdSize: 2, monthlyGrossIncome: 2_012, monthlyEarnedIncome: 0 },
       data.snap()!,
       data.fpl("contiguous")!,
     );
     expect(r.eligible).toBe(true);
-    expect(r.netMonthlyIncome.toNumber()).toBe(1_750);
+    expect(r.netMonthlyIncome.toNumber()).toBe(1_795);
     // `size <= 2` decides this. Flipped to `<`, a two-person household is paid
-    // $21 instead of the $24 minimum — the floor would apply to single people
+    // $23.50 instead of the $25 minimum — the floor would apply to single people
     // only, which is not what the rule says.
-    expect(r.monthlyBenefit.toNumber()).toBe(24);
+    expect(r.monthlyBenefit.toNumber()).toBe(25);
   });
 
   it("does not floor a three-person household", () => {
@@ -243,10 +245,10 @@ describe("the SNAP minimum benefit at a two-person household", () => {
       data.fpl("contiguous")!,
     );
     expect(r.eligible).toBe(true);
-    // $785 allotment less 30% of ($2,400 − $209) = $785 − $657.30 = $127.70,
+    // $808 allotment less 30% of ($2,400 − $217) = $808 − $654.90 = $153.10,
     // well clear of the floor, which is why this case cannot substitute for the
     // two-person one above.
-    expect(r.monthlyBenefit.toNumber()).toBeCloseTo(127.7, 6);
+    expect(r.monthlyBenefit.toNumber()).toBeCloseTo(153.1, 6);
   });
 });
 
