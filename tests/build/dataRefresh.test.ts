@@ -1642,9 +1642,11 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     expect(result.shard).toEqual(current);
   });
 
-  it("calls an older copy of the notice a settled wait, not a reversal", () => {
-    // in.gov served the January notice on 2026-10-19 for a URL that had carried
-    // the October one since 2026-10-01.
+  it("reports a source that went backwards rather than reverting to it", () => {
+    // By 2026-10-19 the DOR served the January notice again, at this URL and
+    // from its own index, three weeks after replacing it — with no rescission
+    // on record. Reading that as news would revert Boone's blend; calling it
+    // settled would hide it. It is reported, for a person to resolve.
     const adapter = adaptersForGroup("state-in")[0]!;
     const current = readShard("state-in-income-tax-2024.json");
     const result = adapter.parse(
@@ -1653,8 +1655,8 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     );
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.reason).toContain("older copy");
-    expect(result.settled).toBe(true);
+    expect(result.reason).toContain("the source has gone backwards");
+    expect(result.settled).toBeFalsy();
   });
 
   it("refuses a second mid-year revision rather than blending a blend", () => {

@@ -2021,17 +2021,22 @@ function parseIndianaStateAndCounties(raw: string, current: Record<string, unkno
   const noticeIso = effective
     ? `${effective.year}-${String(effective.month + 1).padStart(2, "0")}-01`
     : null;
-  // An older copy of the notice than the shard has already read. On 2026-10-19
-  // in.gov served the January notice for a URL that had carried the October one
-  // for three weeks; read as news, it would have reverted Boone's blend.
+  // An older notice than the shard has already read. From 2026-10-01 to at
+  // least 10-08 the DOR served R47 ("Effective Oct. 1, 2026", Boone to 1.71%);
+  // by 10-19 both this URL and the DOR's own departmental-notices index served
+  // R46 from January again, with no rescission anywhere — the American Payroll
+  // Association reported R47 on 2026-09-30, and Indiana's ordinance timing puts
+  // a pre-September adoption into effect on October 1. That is not a wait and
+  // not a decision, so it is NOT settled: a person should find out whether the
+  // DOR withdrew the revision or only lost it from its site. Reverting the blend
+  // on the strength of an older document would be the wrong default.
   const newer = addOns.find(
     (a) => noticeIso && a.midYearRevision && a.midYearRevision.effective > noticeIso,
   );
   if (newer) {
     return {
       ok: false,
-      reason: `the notice is effective ${noticeIso} and the shard already carries ${newer.name}'s ${newer.midYearRevision!.effective} revision — this is an older copy of the notice, likely a stale cache`,
-      settled: true,
+      reason: `the notice is effective ${noticeIso}, older than the ${newer.midYearRevision!.effective} revision this shard already carries for ${newer.name}; the source has gone backwards — confirm with the DOR whether that revision was withdrawn before changing the shard`,
     };
   }
   const rates = new Map<string, number>();
