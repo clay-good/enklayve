@@ -41,6 +41,8 @@ to read documents in.
 
 6. **Check the zero-window shards.** **6** carry `staleAfterYears: 0` (the Pillar 4 group and free filing): they lapse the instant their year does, and they are the highest-harm figures here — a COBRA election window that is wrong is coverage that is simply gone. They want their own sourcing pass, not a copy-forward.
 
+7. **Two shards keep another clock.** SNAP's year is the federal fiscal year, so it rolls on **October 1**, not in January; its adapter refuses once FNA's allotment table names the next fiscal year, and says the roll is due. Indiana's counties can change rates on Oct. 1 too, and a county carrying `midYearRevision` holds a nine-and-three-month **blend** for the year rather than either rate. At the roll, give it the new January notice's rate and drop the field. The adapter will not do it for you: it refuses a notice for any year but the shard's.
+
 ## What the roll cannot tell you
 
 An adapter reporting agreement means its parser found something shaped like its figure, **not that the value is right**. The refresh pipeline proposes; the golden suite gates; a person reads. Nothing in this file replaces reading the agency's document.

@@ -1835,38 +1835,154 @@ const IN_COUNTY_CHART_HEADING = "Indiana County Tax Rates";
  *     drops the code column on two rows of the 2026 notice, which is why the
  *     code is optional and the NAME is what the reader keys on.
  */
-function parseIndianaCountyChart(raw: string, counties: string[]): Map<string, number> | string {
+function parseIndianaCountyChart(
+  raw: string,
+  counties: string[],
+): Map<string, { rate: number; changed: boolean }> | string {
   const text = visibleText(raw);
   const at = text.indexOf(IN_COUNTY_CHART_HEADING);
   if (at < 0) return `the source states no "${IN_COUNTY_CHART_HEADING}" chart`;
   // Only the chart, so a county named in the notice's prose (Perry, and the
   // Kentucky localities beside it) can never be read as a rate row.
   const chart = text.slice(at);
-  const rates = new Map<string, number>();
+  const rates = new Map<string, { rate: number; changed: boolean }>();
   for (const county of counties) {
     const escaped = county.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const match = new RegExp(`\\b${escaped}\\s+(?:\\d{2}\\s+)?(0\\.\\d+)`).exec(chart);
+    const match = new RegExp(`\\b${escaped}\\s+(?:\\d{2}\\s+)?(0\\.\\d+)(\\*?)`).exec(chart);
     if (!match) continue;
     const rate = Number(match[1]);
     // Indiana's statutory ceiling is well under 5%; anything above it is a
     // number that is not a county rate, read out of a row that is not a row.
     if (!Number.isFinite(rate) || rate <= 0 || rate > 0.05) continue;
-    rates.set(county, rate);
+    // The asterisk: "the rate has changed since Departmental Notice #1 was
+    // published on" the previous date.
+    rates.set(county, { rate, changed: match[2] === "*" });
   }
   return rates;
 }
 
+const IN_MONTHS = [
+  "jan",
+  "feb",
+  "mar",
+  "apr",
+  "may",
+  "jun",
+  "jul",
+  "aug",
+  "sep",
+  "oct",
+  "nov",
+  "dec",
+];
+
+/**
+ * The date the chart says its rates take effect — "Indiana County Tax Rates:
+ * Effective Oct. 1, 2026" — as a year and a zero-based month.
+ */
+function indianaChartEffective(raw: string): { year: number; month: number } | null {
+  const m =
+    /Indiana County Tax Rates:?\s*Effective\s+([A-Za-z]{3})[a-z]*\.?\s+\d{1,2},\s*(\d{4})/.exec(
+      visibleText(raw),
+    );
+  if (!m) return null;
+  const month = IN_MONTHS.indexOf((m[1] as string).toLowerCase());
+  return month < 0 ? null : { year: Number(m[2]), month };
+}
+
+/**
+ * Indiana's tax-year rate for a county that changed mid-year: each rate
+ * weighted by the months it was in force. The DOR's own 2024 chart is the
+ * evidence — Fulton, .0268 to .0288 on Oct. 1, 2024, is printed as .0273, and
+ * Decatur, Fayette and Henry, which moved the same day, carry six-decimal
+ * rates of the same shape. Six places is how many the chart prints.
+ */
+function indianaBlend(januaryRate: number, revisedRate: number, monthsBefore: number): number {
+  const blended = (januaryRate * monthsBefore + revisedRate * (12 - monthsBefore)) / 12;
+  return Math.round(blended * 1e6) / 1e6;
+}
+
+/**
+ * Departmental Notice #1 is a WITHHOLDING notice, reissued whenever a county
+ * moves, and this shard is a tax year. Those agree for the January notice and
+ * for no other: on 2026-10-01 the DOR replaced it with one "Effective Oct. 1,
+ * 2026" that moves Boone from 1.70% to 1.71%, and overlaying it wrote 1.71% as
+ * Boone's 2026 rate when a Boone resident owes 1.70% for nine months of it. So
+ * a mid-year notice blends the counties it marks as changed, and a notice for
+ * another year is not read at all — next January's arrives at this same URL,
+ * and without the guard it would have rolled 2027 county rates into 2026.
+ */
 function parseIndianaStateAndCounties(raw: string, current: Record<string, unknown>): ParseOutcome {
+  const taxYear = Number(current.taxYear);
+  const effective = indianaChartEffective(raw);
+  if (effective && Number.isInteger(taxYear) && effective.year !== taxYear) {
+    return effective.year > taxYear
+      ? {
+          ok: false,
+          reason: `the notice is effective in ${effective.year} and the shard is tax year ${taxYear} — the annual roll is due (docs/annual-roll.md); its county rates are not this year's`,
+        }
+      : {
+          ok: false,
+          reason: `the notice is effective in ${effective.year} and the shard is already tax year ${taxYear}; the DOR has not published the shard's year`,
+          settled: true,
+        };
+  }
   const outcome = parseFlatRateJurisdiction(raw, current);
   if (!outcome.ok) return outcome;
   const shard = outcome.shard;
-  const addOns = shard.localAddOns as { name: string; flatRate: number }[] | undefined;
+  const addOns = shard.localAddOns as
+    | {
+        name: string;
+        flatRate: number;
+        midYearRevision?: { effective: string; januaryRate: number; revisedRate: number };
+      }[]
+    | undefined;
   if (!Array.isArray(addOns) || addOns.length === 0) {
     return { ok: false, reason: "shard carries no county chart to overlay" };
   }
   const names = addOns.map((a) => a.name.replace(/ County$/, ""));
-  const rates = parseIndianaCountyChart(raw, names);
-  if (typeof rates === "string") return { ok: false, reason: rates };
+  const read = parseIndianaCountyChart(raw, names);
+  if (typeof read === "string") return { ok: false, reason: read };
+  const noticeIso = effective
+    ? `${effective.year}-${String(effective.month + 1).padStart(2, "0")}-01`
+    : null;
+  // An older copy of the notice than the shard has already read. On 2026-10-19
+  // in.gov served the January notice for a URL that had carried the October one
+  // for three weeks; read as news, it would have reverted Boone's blend.
+  const newer = addOns.find(
+    (a) => noticeIso && a.midYearRevision && a.midYearRevision.effective > noticeIso,
+  );
+  if (newer) {
+    return {
+      ok: false,
+      reason: `the notice is effective ${noticeIso} and the shard already carries ${newer.name}'s ${newer.midYearRevision!.effective} revision — this is an older copy of the notice, likely a stale cache`,
+      settled: true,
+    };
+  }
+  const rates = new Map<string, number>();
+  const midYear = effective !== null && effective.month > 0 ? effective : null;
+  const effectiveIso = midYear ? noticeIso : null;
+  for (const addOn of addOns) {
+    const name = addOn.name.replace(/ County$/, "");
+    const cell = read.get(name);
+    if (!cell) continue;
+    if (!midYear || !effectiveIso || !cell.changed) {
+      rates.set(name, cell.rate);
+      continue;
+    }
+    const prior = addOn.midYearRevision;
+    if (prior && prior.effective !== effectiveIso) {
+      return {
+        ok: false,
+        reason: `${addOn.name} already carries a ${prior.effective} revision and the notice states another from ${effectiveIso}; two in one year is a blend to work out by hand`,
+      };
+    }
+    // Re-reading the same notice must not blend a blend, so the January half
+    // comes from the recorded revision once there is one.
+    const januaryRate = prior ? prior.januaryRate : addOn.flatRate;
+    rates.set(name, indianaBlend(januaryRate, cell.rate, midYear.month));
+    addOn.midYearRevision = { effective: effectiveIso, januaryRate, revisedRate: cell.rate };
+  }
   const missing = names.filter((n) => !rates.has(n));
   if (missing.length > 0) {
     return {

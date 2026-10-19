@@ -1437,13 +1437,16 @@ describe("adapters: seventh set — the remaining seeded states", () => {
       const custom = damage(name, i);
       // 0.011, 0.012, … — distinct per county and inside the plausible band, so
       // every row is provably read from ITS OWN row and not a neighbour's.
+      // Boone carries the asterisk the October notice puts on it.
+      const mark = name === "Boone" ? "*" : "";
       return (
-        custom ?? `${name} ${String(i + 1).padStart(2, "0")} ${(0.011 + i / 10000).toFixed(4)}`
+        custom ??
+        `${name} ${String(i + 1).padStart(2, "0")} ${(0.011 + i / 10000).toFixed(4)}${mark}`
       );
     });
     return [
       "The Indiana income tax rate is 2.95%. The personal exemption is $1,000.",
-      "Indiana County Tax Rates: Effective Jan. 1, 2026",
+      "Indiana County Tax Rates: Effective Oct. 1, 2026",
       "County Name County Code County Tax Rate",
       ...rows,
     ].join("\n");
@@ -1511,6 +1514,109 @@ describe("adapters: seventh set — the remaining seeded states", () => {
     if (!result.ok) return;
     const addOns = result.shard.localAddOns as { name: string; flatRate: number }[];
     expect(addOns.find((a) => a.name === "Marshall County")!.flatRate).toBe(0.0125);
+  });
+
+  /**
+   * The notice as the DOR reissued it on 2026-10-01 (R47 / 10-26): every county
+   * at its committed rate except the ones `revise` returns, which carry the
+   * chart's asterisk.
+   */
+  const inRevision = (
+    current: Record<string, unknown>,
+    heading: string,
+    revise: Record<string, string>,
+  ): string => {
+    const addOns = current.localAddOns as { name: string; flatRate: number }[];
+    return [
+      "The Indiana income tax rate is 2.95%. The personal exemption is $1,000.",
+      `Indiana County Tax Rates: ${heading}`,
+      "County Name County Code County Tax Rate",
+      ...addOns.map((a, i) => {
+        const name = a.name.replace(/ County$/, "");
+        const code = String(i + 1).padStart(2, "0");
+        return `${name} ${code} ${revise[name] ?? String(a.flatRate)}`;
+      }),
+    ].join("\n");
+  };
+
+  it("blends a county that changed mid-year, as the DOR's tax-year chart does", () => {
+    // Boone, 1.70% to 1.71% on Oct. 1, 2026: nine months at one and three at
+    // the other is 1.7025%, and 1.71% is the withholding rate, not the year's.
+    const adapter = adaptersForGroup("state-in")[0]!;
+    const current = readShard("state-in-income-tax-2024.json");
+    const january = structuredClone(current);
+    for (const a of january.localAddOns as Record<string, unknown>[]) {
+      if (a.name === "Boone County") {
+        a.flatRate = 0.017;
+        delete a.midYearRevision;
+      }
+    }
+    const october = inRevision(january, "Effective Oct. 1, 2026", { Boone: "0.0171*" });
+    const result = adapter.parse(october, january);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const boone = (result.shard.localAddOns as Record<string, unknown>[]).find(
+      (a) => a.name === "Boone County",
+    )!;
+    expect(boone.flatRate).toBe(0.017025);
+    expect(boone.midYearRevision).toEqual({
+      effective: "2026-10-01",
+      januaryRate: 0.017,
+      revisedRate: 0.0171,
+    });
+    // Only the asterisked county moves.
+    expect(diffShards(january, result.shard).lines).toHaveLength(2);
+    expect(JurisdictionSchema.safeParse(result.shard).success).toBe(true);
+
+    // Reading the same notice again recomputes the same blend, not a blend of
+    // the blend — which is also what the committed shard must agree with.
+    const again = adapter.parse(october, result.shard);
+    expect(again.ok && diffShards(result.shard, again.shard).lines).toEqual([]);
+    expect(result.shard).toEqual(current);
+  });
+
+  it("calls an older copy of the notice a settled wait, not a reversal", () => {
+    // in.gov served the January notice on 2026-10-19 for a URL that had carried
+    // the October one since 2026-10-01.
+    const adapter = adaptersForGroup("state-in")[0]!;
+    const current = readShard("state-in-income-tax-2024.json");
+    const result = adapter.parse(
+      inRevision(current, "Effective Jan. 1, 2026", { Boone: "0.017" }),
+      current,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("older copy");
+    expect(result.settled).toBe(true);
+  });
+
+  it("refuses a second mid-year revision rather than blending a blend", () => {
+    const adapter = adaptersForGroup("state-in")[0]!;
+    const current = readShard("state-in-income-tax-2024.json");
+    const result = adapter.parse(
+      inRevision(current, "Effective Dec. 1, 2026", { Boone: "0.0172*" }),
+      current,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toContain("two in one year");
+  });
+
+  it("reads no notice for another year: a roll ahead is due, a year behind is a wait", () => {
+    // Next January's notice arrives at this same URL. Unguarded, it would roll
+    // 2027 county rates into the 2026 shard the day it was posted.
+    const adapter = adaptersForGroup("state-in")[0]!;
+    const current = readShard("state-in-income-tax-2024.json");
+    const ahead = adapter.parse(inRevision(current, "Effective Jan. 1, 2027", {}), current);
+    expect(ahead.ok).toBe(false);
+    if (ahead.ok) return;
+    expect(ahead.reason).toContain("the annual roll is due");
+    expect(ahead.settled).toBeFalsy();
+
+    const behind = adapter.parse(inRevision(current, "Effective Jan. 1, 2025", {}), current);
+    expect(behind.ok).toBe(false);
+    if (behind.ok) return;
+    expect(behind.settled).toBe(true);
   });
 
   it("refuses when the notice states the state rate but carries no county chart", () => {

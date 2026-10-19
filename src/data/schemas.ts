@@ -93,6 +93,21 @@ export const LocalAddOnSchema = z.object({
   name: z.string().min(1),
   /** Either a flat rate or its own ascending brackets. */
   flatRate: z.number().gte(0).lte(1).optional(),
+  /**
+   * Provenance for a `flatRate` that is a blend of two rates within one tax
+   * year. An Indiana county can change its rate on Oct. 1, and the DOR's
+   * tax-year chart then prints a month-weighted rate — Fulton's 2024 .0268 for
+   * nine months and .0288 for three is the chart's .0273. The refresh adapter
+   * records both halves here so that reading the same notice twice recomputes
+   * the same blend instead of blending a blend. The engine reads `flatRate`.
+   */
+  midYearRevision: z
+    .object({
+      effective: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      januaryRate: z.number().gte(0).lte(1),
+      revisedRate: z.number().gte(0).lte(1),
+    })
+    .optional(),
   brackets: z.array(TaxBracketSchema).optional(),
   /**
    * True where the locality taxes EARNINGS rather than the state's taxable
