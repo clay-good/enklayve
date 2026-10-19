@@ -105,6 +105,7 @@ import {
 import { taxLossHarvest } from "../src/engine/taxMoves";
 import { projectTrumpAccount } from "../src/engine/trumpAccount";
 import { pmiEndDates } from "../src/engine/pmi";
+import { homeSaleGain } from "../src/engine/homeSale";
 import type { BundledData } from "../src/data/browser";
 import type { CitationData, FilingStatus, Jurisdiction } from "../src/data/schemas";
 
@@ -133,6 +134,7 @@ export const PROBED_FILES = [
   "src/engine/taxMoves.ts",
   "src/engine/trumpAccount.ts",
   "src/engine/pmi.ts",
+  "src/engine/homeSale.ts",
 ];
 
 const citation: CitationData = {
@@ -904,6 +906,47 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
         final: r.final.payment,
       });
     }
+
+  // --- §121: the 24-month lines for ownership, use and a prior sale, the
+  // one-year line for a long-term gain, and a gain landing on the limit.
+  const homeRules = {
+    maxExclusion: 250_000,
+    maxExclusionJoint: 500_000,
+    ownershipAndUseMonths: 24,
+    lookbackMonths: 60,
+    citation,
+  };
+  for (const [owned, lived, prior, reason, price] of [
+    [23, 60, null, false, 600_000],
+    [24, 60, null, false, 600_000],
+    [60, 23, null, true, 600_000],
+    [60, 60, 23, false, 600_000],
+    [60, 60, 24, false, 600_000],
+    [12, 12, null, true, 600_000],
+    [13, 13, null, true, 600_000],
+    [60, 60, null, false, 550_000],
+    [60, 60, null, false, 550_000.01],
+  ] as const) {
+    const r = homeSaleGain(
+      {
+        joint: false,
+        salePrice: price,
+        sellingCosts: 0,
+        basis: 300_000,
+        monthsOwned: owned,
+        monthsLived: lived,
+        monthsSincePriorExclusion: prior,
+        qualifyingReason: reason,
+      },
+      homeRules,
+    );
+    put(`homeSale(${owned},${lived},${prior},${reason},${price})`, {
+      basis: r.basis,
+      share: r.share,
+      taxable: r.taxableGain.toNumber(),
+      longTerm: r.longTerm,
+    });
+  }
 
   return o;
 }

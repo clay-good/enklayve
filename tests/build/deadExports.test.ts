@@ -66,6 +66,12 @@ const HARNESS_ONLY: Record<string, string> = {
     "every windowId a sequence references that the windows shard does not carry — empty in a healthy build, asserted by a test so a renamed window cannot silently strip the clock off a step",
   "src/readout/checks.ts: validateRegistry":
     "the properties every document check must have (a stated false positive, a citation, OCR suppression), asserted over the whole registry so a new check cannot ship without them",
+  "src/data/browser.ts: EAGER_SHARD_FILES":
+    "the files the shell inlines, held against the deferred list by a test, since the two globs that define them must be literals and cannot share one list",
+  "src/tiles/lazy.ts: preloadLazyTiles":
+    "loads every lazy tile before the test sweeps mount the catalog, so a tile that loads on demand is not passed over as a 'Loading' line",
+  "src/tiles/lazy.ts: lazyTileCount":
+    "lets the test setup skip the preload in a file that reached no lazy tile",
 };
 
 function tsFiles(dir: string): string[] {

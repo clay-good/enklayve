@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadDataset, loadManifest, needsVerifyBanner } from "../src/data/loader";
+import { DEFERRED_SHARD_FILES, EAGER_SHARD_FILES, loadBundledData } from "../src/data/browser";
 import {
   FicaSchema,
   ManifestSchema,
@@ -43,6 +44,30 @@ describe("manifest loading (BUILD-SPEC §7, §8)", () => {
     const loaded = await loadManifest(manifest, {}, 2024);
     expect(loaded.hasFailSafe).toBe(true);
     expect(loaded.datasets.every((d) => d.status === "invalid")).toBe(true);
+  });
+});
+
+describe("which shards the shell carries and which load on demand (SPEC-5 §7.5)", () => {
+  it("puts every shard on exactly one path", () => {
+    // The two globs must be literals, so they cannot share a list. A shard on
+    // neither would be silently missing; one on both, paid for twice.
+    const eager = new Set(EAGER_SHARD_FILES);
+    const both = DEFERRED_SHARD_FILES.filter((f) => eager.has(f));
+    expect(both, "on both paths").toEqual([]);
+    const onEither = new Set([...EAGER_SHARD_FILES, ...DEFERRED_SHARD_FILES]);
+    const missing = manifest.datasets.map((d) => d.shard).filter((f) => !onEither.has(f));
+    expect(missing, "on neither path").toEqual([]);
+    expect(DEFERRED_SHARD_FILES).toContain("pmi-cancellation-2026.json");
+  });
+
+  it("gates a deferred shard by its hash when it loads, and not before", async () => {
+    const data = await loadBundledData();
+    expect(data.manifest.byId.has("pmi-cancellation-2026")).toBe(false);
+    const ds = await data.loadDeferred("pmi-cancellation-2026");
+    expect(ds?.status).toBe("ok");
+    expect(data.loadedDeferred("pmi-cancellation-2026")).toBe(ds);
+    expect(data.pmiCancellation()?.requestShareOfOriginalValue).toBe(0.8);
+    expect(await data.loadDeferred("federal-income-tax-2024")).toBeNull();
   });
 });
 

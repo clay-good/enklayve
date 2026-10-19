@@ -45,6 +45,7 @@ import {
   type GiftTaxData,
   type TrumpAccountData,
   type PmiCancellationData,
+  type HomeSaleExclusionData,
   type AmtData,
   type ChildTaxData,
   type EducationCreditsData,
@@ -53,31 +54,42 @@ import {
 /** Federal Poverty Level region (BUILD-SPEC.md §4.1). */
 export type FplRegion = "contiguous" | "alaska" | "hawaii";
 
-// Inlined at build time. The keys are repo-relative paths; the values are the
-// exact file contents. eager so the data is available synchronously after import.
-const rawFiles = import.meta.glob(["../../data/*.json", "!../../data/state-ui-*.json"], {
-  query: "?raw",
-  import: "default",
-  eager: true,
-}) as Record<string, string>;
-
-// The unemployment rules, one chunk per state, imported when the estimator asks
-// for a state rather than precached with the shell (SPEC-4-safety-net §B5). They
-// are a same-origin script chunk, so `connect-src 'none'` still holds, and each
-// is the shard's exact text, so the manifest hash is checked over the bytes that
-// were reviewed, exactly as for an inlined shard. The service worker caches a
-// chunk on first use, so a state opened once works offline afterwards.
-const deferredFiles = import.meta.glob("../../data/state-ui-*.json", {
-  query: "?raw",
-  import: "default",
-}) as Record<string, () => Promise<string>>;
-
-const DEFERRED_ID = /^state-ui-([a-z]{2})-\d{4}$/;
-
 function basename(path: string): string {
   const segments = path.split("/");
   return segments[segments.length - 1] ?? path;
 }
+
+// Inlined at build time. The keys are repo-relative paths; the values are the
+// exact file contents. eager so the data is available synchronously after import.
+// The exclusions are exactly the deferred list below; a test holds the two
+// together, since a shard in neither would be silently missing and a shard in
+// both would be paid for twice.
+const rawFiles = import.meta.glob(
+  ["../../data/*.json", "!../../data/state-ui-*.json", "!../../data/pmi-cancellation-2026.json",
+    "!../../data/home-sale-exclusion-2026.json"],
+  { query: "?raw", import: "default", eager: true },
+) as Record<string, string>;
+
+// Shards a reader needs only after choosing a tool or a state, one chunk each,
+// imported on first request rather than precached with the shell: the
+// unemployment rules (SPEC-4-safety-net §B5) and SPEC-5's tools (§7.5). Each is
+// a same-origin script chunk, so `connect-src 'none'` still holds, and each is
+// the shard's exact text, so the manifest hash is checked over the bytes that
+// were reviewed, exactly as for an inlined shard. The service worker caches a
+// chunk on first use, so a shard opened once works offline afterwards.
+const deferredFiles = import.meta.glob(
+  ["../../data/state-ui-*.json", "../../data/pmi-cancellation-2026.json",
+    "../../data/home-sale-exclusion-2026.json",
+  ],
+  { query: "?raw", import: "default" },
+) as Record<string, () => Promise<string>>;
+
+/** The data files each path loads by, for the test that holds them together. */
+export const EAGER_SHARD_FILES = Object.keys(rawFiles).map(basename);
+export const DEFERRED_SHARD_FILES = Object.keys(deferredFiles).map(basename);
+
+const UI_ID = /^state-ui-([a-z]{2})-\d{4}$/;
+
 
 /** Typed, gated accessors over the bundled datasets for the tiles. */
 export interface BundledData {
@@ -144,8 +156,11 @@ export interface BundledData {
   giftTax(): GiftTaxData | null;
   /** IRC §530A accounts and the §6434 pilot contribution. */
   trumpAccounts(): TrumpAccountData | null;
-  /** The Homeowners Protection Act's PMI cancellation lines (SPEC-5 Phase 28). */
+  /** The Homeowners Protection Act's PMI cancellation lines (SPEC-5 Phase 28).
+   * Deferred: null until `loadDeferred("pmi-cancellation-2026")` has resolved. */
   pmiCancellation(): PmiCancellationData | null;
+  /** IRC §121's home-sale exclusion (SPEC-5 Phase 28). Deferred, as above. */
+  homeSaleExclusion(): HomeSaleExclusionData | null;
   /** AMT exemption, phase-out, and rate breakpoint (SPEC-3 §4.7). */
   amt(): AmtData | null;
   /** Child-tax dependent shelter and earned-income add-on (SPEC-3 §4.5). */
@@ -169,6 +184,13 @@ export interface BundledData {
   loadedStateUi(code: string): LoadedDataset<StateUiData> | null | undefined;
   /** Codes of the states with a bundled unemployment-insurance rule set. */
   stateUiCodes(): string[];
+  /**
+   * Any deferred shard by dataset id, loaded on first request and gated like
+   * every other shard (SPEC-5 §7.5): null where the id is not deferred.
+   */
+  loadDeferred(id: string): Promise<LoadedDataset | null>;
+  /** The same, synchronously, once loaded; undefined while it has not been. */
+  loadedDeferred(id: string): LoadedDataset | null | undefined;
 }
 
 let cache: Promise<BundledData> | null = null;
@@ -197,24 +219,26 @@ async function build(): Promise<BundledData> {
   // The deferred shards are gated when they load, so the eager gate leaves them
   // out rather than reporting them missing. Their staleness needs only the
   // manifest, so the site-wide banner still names a stale one before it loads.
+  const deferredNames = new Set(DEFERRED_SHARD_FILES);
   const deferred = new Map<string, ManifestEntry>();
-  for (const entry of manifest.datasets) {
-    const code = DEFERRED_ID.exec(entry.id)?.[1];
-    if (code !== undefined) deferred.set(code, entry);
+  for (const entry of manifest.datasets)
+    if (deferredNames.has(entry.shard)) deferred.set(entry.id, entry);
+  const uiIds = new Map<string, string>();
+  for (const id of deferred.keys()) {
+    const code = UI_ID.exec(id)?.[1];
+    if (code !== undefined) uiIds.set(code, id);
   }
-  const deferredIds = new Set([...deferred.values()].map((e) => e.id));
   const loaded = await loadManifest(
-    { ...manifest, datasets: manifest.datasets.filter((e) => !deferredIds.has(e.id)) },
+    { ...manifest, datasets: manifest.datasets.filter((e) => !deferred.has(e.id)) },
     shards,
   );
-  const deferredLoads = new Map<string, Promise<LoadedDataset<StateUiData>>>();
-  const deferredLoaded = new Map<string, LoadedDataset<StateUiData>>();
+  const deferredLoads = new Map<string, Promise<LoadedDataset>>();
+  const deferredLoaded = new Map<string, LoadedDataset>();
 
-  const loadStateUi = (code: string): Promise<LoadedDataset<StateUiData> | null> => {
-    const key = code.toLowerCase();
-    const entry = deferred.get(key);
+  const loadDeferred = (id: string): Promise<LoadedDataset | null> => {
+    const entry = deferred.get(id);
     if (entry === undefined) return Promise.resolve(null);
-    let pending = deferredLoads.get(key);
+    let pending = deferredLoads.get(id);
     if (pending === undefined) {
       const importer = deferredFiles[`../../data/${entry.shard}`];
       pending = (
@@ -222,22 +246,28 @@ async function build(): Promise<BundledData> {
           ? Promise.reject(new Error(`shard "${entry.shard}" not bundled`))
           : importer().then((text) => loadDataset(entry, text))
       ).then(
-        (ds) => ds as LoadedDataset<StateUiData>,
-        (err: unknown) =>
-          ({
-            id: entry.id,
-            kind: entry.kind,
-            version: entry.version,
-            status: "invalid",
-            effectiveYear: entry.effectiveYear,
-            data: null,
-            problems: [`could not load: ${(err as Error).message}`],
-          }) as LoadedDataset<StateUiData>,
+        (ds) => ds,
+        (err: unknown): LoadedDataset => ({
+          id: entry.id,
+          kind: entry.kind,
+          version: entry.version,
+          status: "invalid",
+          effectiveYear: entry.effectiveYear,
+          data: null,
+          problems: [`could not load: ${(err as Error).message}`],
+        }),
       );
-      pending.then((ds) => deferredLoaded.set(key, ds));
-      deferredLoads.set(key, pending);
+      pending.then((ds) => deferredLoaded.set(id, ds));
+      deferredLoads.set(id, pending);
     }
     return pending;
+  };
+  const loadedDeferred = (id: string): LoadedDataset | null | undefined =>
+    deferred.has(id) ? deferredLoaded.get(id) : null;
+  /** Data from a loaded deferred shard, or null when it is unloaded or invalid. */
+  const deferredDataOf = (id: string): unknown => {
+    const ds = deferredLoaded.get(id);
+    return ds && ds.status !== "invalid" ? ds.data : null;
   };
 
   const dataOf = (id: string): unknown => {
@@ -276,12 +306,19 @@ async function build(): Promise<BundledData> {
     freeFiling: () => dataOf("free-filing-2026") as FreeFilingData | null,
     noSurprises: () => dataOf("no-surprises-2026") as NoSurprisesData | null,
     garnishmentLimits: () => dataOf("garnishment-limits-2026") as GarnishmentLimitsData | null,
-    loadStateUi,
-    loadedStateUi: (code) => {
-      const key = code.toLowerCase();
-      return deferred.has(key) ? deferredLoaded.get(key) : null;
+    loadDeferred,
+    loadedDeferred,
+    loadStateUi: (code) => {
+      const id = uiIds.get(code.toLowerCase());
+      return id === undefined
+        ? Promise.resolve(null)
+        : (loadDeferred(id) as Promise<LoadedDataset<StateUiData>>);
     },
-    stateUiCodes: () => [...deferred.keys()],
+    loadedStateUi: (code) => {
+      const id = uiIds.get(code.toLowerCase());
+      return id === undefined ? null : (loadedDeferred(id) as LoadedDataset<StateUiData> | undefined);
+    },
+    stateUiCodes: () => [...uiIds.keys()],
     enrollmentWindows: () => dataOf("enrollment-windows-2026") as EnrollmentWindowsData | null,
     lifeEvents: () => dataOf("life-events-2026") as LifeEventsData | null,
     aca: () => dataOf("aca-2024") as AcaData | null,
@@ -292,7 +329,9 @@ async function build(): Promise<BundledData> {
     iraDeduction: () => dataOf("ira-deduction-2024") as IraDeductionData | null,
     giftTax: () => dataOf("gift-tax-2024") as GiftTaxData | null,
     trumpAccounts: () => dataOf("trump-accounts-2026") as TrumpAccountData | null,
-    pmiCancellation: () => dataOf("pmi-cancellation-2026") as PmiCancellationData | null,
+    pmiCancellation: () => deferredDataOf("pmi-cancellation-2026") as PmiCancellationData | null,
+    homeSaleExclusion: () =>
+      deferredDataOf("home-sale-exclusion-2026") as HomeSaleExclusionData | null,
     amt: () => dataOf("amt-2024") as AmtData | null,
     childTax: () => dataOf("child-tax-2024") as ChildTaxData | null,
     educationCredits: () => dataOf("education-credits-2024") as EducationCreditsData | null,

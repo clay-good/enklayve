@@ -247,6 +247,13 @@ const SHARDS: ShardSource[] = [
     ...ANNUAL,
     staleAfterYears: 1,
   },
+  {
+    id: "home-sale-exclusion-2026",
+    kind: "home-sale-exclusion",
+    shard: "home-sale-exclusion-2026.json",
+    ...ANNUAL,
+    staleAfterYears: 1,
+  },
   { id: "child-tax-2024", kind: "child-tax", shard: "child-tax-2024.json", ...ANNUAL },
   {
     id: "education-credits-2024",

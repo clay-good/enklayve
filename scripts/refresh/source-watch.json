@@ -356,6 +356,13 @@
       "why": "The Homeowners Protection Act's cancellation, termination and midpoint rules are §4902, with the 80% and 78% lines in §4901; the Act is unamended since 2000, so a change here is a rule to re-read.",
       "fingerprint": "e9e92732b64af04b75ac5c932cf9e2f58b9ec1d84586ab7a962a143df037e776",
       "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "home-sale-exclusion-2026",
+      "url": "https://www.law.cornell.edu/uscode/text/26/121",
+      "why": "§121's limits, its two-of-five-years test and the §121(c) partial exclusion are the statute itself, unindexed; an amendment is a rule to re-read.",
+      "fingerprint": "97b19bced9e9b3b6caacd38b94447e67a9c8963f23ab2de1760cf2b0787deeb7",
+      "checkedOn": "2026-10-19"
     }
   ]
 }

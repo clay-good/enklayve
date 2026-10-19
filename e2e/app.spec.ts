@@ -169,6 +169,48 @@ test("a state's unemployment rules load on demand, then work offline", async ({
 });
 
 /**
+ * A SPEC-5 tool's code and shard load on demand (§7.5): two chunks, neither
+ * in the precached shell, and the tool works offline once it has been opened.
+ */
+test("a tool that loads on demand fetches its code and shard, then works offline", async ({
+  page,
+  context,
+}) => {
+  const link =
+    "/#/home-purchases?tool=home-sale-gain&fs=single&sp=600000&sc=36000&b=300000&own=60&use=60&oth=80000";
+  await page.goto("/");
+  await page.waitForSelector(".wordmark");
+  await page.evaluate(async () => {
+    if ("serviceWorker" in navigator) await navigator.serviceWorker.ready;
+  });
+  await page.reload();
+  await page.waitForSelector(".wordmark");
+  await page.evaluate(async () => {
+    if (!("serviceWorker" in navigator) || navigator.serviceWorker.controller) return;
+    await new Promise<void>((resolve) => {
+      navigator.serviceWorker.addEventListener("controllerchange", () => resolve(), {
+        once: true,
+      });
+      setTimeout(resolve, 3000);
+    });
+  });
+
+  const code = page.waitForResponse((r) => /\/assets\/homeSaleGainView-.*\.js$/.test(r.url()));
+  const shard = page.waitForResponse((r) =>
+    /\/assets\/home-sale-exclusion-2026-.*\.js$/.test(r.url()),
+  );
+  await page.goto(link);
+  expect((await code).ok()).toBe(true);
+  expect((await shard).ok()).toBe(true);
+  await expect(page.locator(".tile-result")).toContainText("$14,000.00");
+
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.locator(".tile-result")).toContainText("$14,000.00");
+  await context.setOffline(false);
+});
+
+/**
  * SPEC-4-ledger §6.1 and §7, and SPEC §2 principle 8 more broadly: a household
  * that never opts into the Standing Ledger experiences the product exactly as it
  * was, and Phase 24 adds no persistence at all.

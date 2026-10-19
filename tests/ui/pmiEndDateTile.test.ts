@@ -1,10 +1,12 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 import axe from "axe-core";
 import { pmiEndDates } from "../../src/engine/pmi";
-import { mountPmiEndDate, pmiEndDateTile, paymentMonth } from "../../src/tiles/pmiEndDate";
+import { pmiEndDateTile } from "../../src/tiles/pmiEndDate";
+import { mountPmiEndDate, paymentMonth } from "../../src/tiles/pmiEndDateView";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import { checkHarmTier, type AuditTile } from "../../scripts/audit-release";
+import { lazyMount } from "../../src/tiles/lazy";
 import type { TileContext } from "../../src/tiles/types";
 
 /**
@@ -17,6 +19,7 @@ import type { TileContext } from "../../src/tiles/types";
 let data: BundledData;
 beforeAll(async () => {
   data = await loadBundledData();
+  await data.loadDeferred("pmi-cancellation-2026");
 });
 
 const lines = () => {
@@ -169,5 +172,54 @@ describe("When PMI Ends", () => {
     const results = await axe.run(root, { rules: { "color-contrast": { enabled: false } } });
     root.remove();
     expect(results.violations).toEqual([]);
+  });
+});
+
+/**
+ * The on-demand path itself (SPEC-5 §7.5). The suite's setup preloads every
+ * lazy tile so the catalog sweeps see each one rendered; this exercises a
+ * tile from cold, with a fresh `lazyMount` nothing has loaded.
+ */
+describe("a tile that loads on demand", () => {
+  const ctxFor = (root: HTMLElement): TileContext =>
+    ({
+      root,
+      params: EXAMPLE,
+      setParams: () => {},
+      permalink: () => "",
+      navigate: () => {},
+      locale: "en-US",
+      data: { ...data, loadedDeferred: () => undefined } as BundledData,
+      profile: new SituationStore(),
+    }) as TileContext;
+
+  it("says it is loading, then mounts the tool", async () => {
+    const mount = lazyMount(
+      () => import("../../src/tiles/pmiEndDateView").then((m) => m.mountPmiEndDate),
+      ["pmi-cancellation-2026"],
+    );
+    const root = document.createElement("div");
+    mount(ctxFor(root));
+    expect(root.querySelector("[aria-busy='true']")?.textContent).toContain("Loading this tool");
+    await vi.waitFor(() => expect(root.textContent).toContain("payment 109"));
+  });
+
+  it("drops a load that arrives after the reader has moved on", async () => {
+    let release!: (m: (ctx: TileContext) => void) => void;
+    const mount = lazyMount(() => new Promise((r) => (release = r)));
+    const root = document.createElement("div");
+    mount(ctxFor(root));
+    root.replaceChildren(document.createTextNode("another tool"));
+    release((ctx) => ctx.root.replaceChildren(document.createTextNode("late")));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(root.textContent).toBe("another tool");
+  });
+
+  it("says so when the code cannot load, and gives no figure", async () => {
+    const mount = lazyMount(() => Promise.reject(new Error("offline")));
+    const root = document.createElement("div");
+    mount(ctxFor(root));
+    await vi.waitFor(() => expect(root.querySelector(".verify-banner")).not.toBeNull());
+    expect(root.textContent).toContain("could not load");
   });
 });

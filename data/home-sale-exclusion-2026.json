@@ -1,0 +1,13 @@
+{
+  "maxExclusion": 250000,
+  "maxExclusionJoint": 500000,
+  "ownershipAndUseMonths": 24,
+  "lookbackMonths": 60,
+  "citation": {
+    "sourceUrl": "https://www.law.cornell.edu/uscode/text/26/121",
+    "sourceDocument": "26 U.S.C. §121 (exclusion of gain from sale of principal residence)",
+    "sourceNote": "§121(a): gain is excluded if, \"during the 5-year period ending on the date of the sale or exchange\", the home was \"owned and used by the taxpayer as the taxpayer's principal residence for periods aggregating 2 years or more.\" §121(b)(1): the exclusion \"shall not exceed $250,000\"; (b)(2)(A) substitutes \"$500,000\" on a joint return if either spouse meets the ownership test, both meet the use test, and neither is barred by (b)(3), which allows the exclusion only once in any 2-year period. (b)(2)(B): a couple short of that gets the sum of each spouse's own limit, which this estimate does not split. §121(c): a sale \"by reason of a change in place of employment, health, or ... unforeseen circumstances\" that fails those tests gets the limit times the shorter of the qualifying period and the time since the last excluded sale, over 2 years. §121(d)(6): gain up to depreciation taken after May 6, 1997 is not excluded, and (b)(5) taxes gain allocated to nonqualified use after 2008; neither is modeled. The dollar limits are not indexed. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

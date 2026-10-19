@@ -965,6 +965,19 @@
       "contentHash": "64f6bf12af21d0e380d38e97175fa9dd991f0aaf2498c0626bc60d2aa3d350e5"
     },
     {
+      "id": "home-sale-exclusion-2026",
+      "kind": "home-sale-exclusion",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 1,
+      "shard": "home-sale-exclusion-2026.json",
+      "sourceUrl": "https://www.law.cornell.edu/uscode/text/26/121",
+      "sourceDocument": "26 U.S.C. §121 (exclusion of gain from sale of principal residence)",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "a419a0e8dd5e058a8d9c0761f16fc9dd693946d01ea087e8ff38aa498bce13b5"
+    },
+    {
       "id": "child-tax-2024",
       "kind": "child-tax",
       "version": "2026.0",

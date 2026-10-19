@@ -47,6 +47,9 @@ test("no tool hangs or renders NaN/Infinity for absurd inputs", async ({ page, r
     const m = pageHtml.match(/href="(\/#\/[^"]+)"/);
     await page.goto(m ? m[1]! : `/#/${id}`);
     await page.waitForSelector(".content", { state: "attached" });
+    // A tool that loads on demand (SPEC-5 §7.5) shows a placeholder first;
+    // typing into that would pass over the tool without testing it.
+    await page.waitForFunction(() => !document.querySelector(".tile-loading"));
 
     // A big-but-finite value, zero (divide-by-zero bait), a negative (a crafted
     // deep link can supply one), and magnitudes near/over Number.MAX_VALUE that

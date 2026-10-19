@@ -2,9 +2,9 @@
 
 Every figure on this site is annual, so the roll is the one recurring task that touches every shard at once. It is also the task with the most one-line ways to go quietly wrong, and this page names them.
 
-**The shape of the danger:** the year is stated in two places, and they take very different effort to change. Each of the 103 shards states its own year inside its citations — 103 files. The manifest states it again, and there it comes from **shared constants** in [`build-manifest.ts`](../scripts/build-manifest.ts) (`ANNUAL`, `SEMIANNUAL`, and the Pillar 4 group), so bumping all 103 manifest entries is a **three-line edit**.
+**The shape of the danger:** the year is stated in two places, and they take very different effort to change. Each of the 104 shards states its own year inside its citations — 104 files. The manifest states it again, and there it comes from **shared constants** in [`build-manifest.ts`](../scripts/build-manifest.ts) (`ANNUAL`, `SEMIANNUAL`, and the Pillar 4 group), so bumping all 104 manifest entries is a **three-line edit**.
 
-That asymmetry is the hazard. The manifest's `effectiveYear` drives the staleness gate, so changing those three lines alone tells the app every figure is current while all 103 shards still hold last year's numbers — last year's figures reported as fresh, with no banner. A test now blocks exactly that (see step 4), and it is the reason to run the suite *before* believing a green build.
+That asymmetry is the hazard. The manifest's `effectiveYear` drives the staleness gate, so changing those three lines alone tells the app every figure is current while all 104 shards still hold last year's numbers — last year's figures reported as fresh, with no banner. A test now blocks exactly that (see step 4), and it is the reason to run the suite *before* believing a green build.
 
 ## When
 

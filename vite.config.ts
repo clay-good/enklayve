@@ -228,6 +228,11 @@ export default defineConfig({
      * robustness sweep.
      */
     testTimeout: 20_000,
+    // A lazily loaded tile (SPEC-5 §7.5) mounts a placeholder until its code and
+    // shards arrive. Preloading them before any test runs keeps every sweep that
+    // mounts the catalog and reads the result at once reaching those tiles too,
+    // rather than passing over a "Loading" line. The cold path has its own test.
+    setupFiles: ["tests/helpers/lazyTiles.setup.ts"],
     // The app runs in the browser, where mammoth resolves its `browser` package
     // field (an arrayBuffer-based unzip). Node's vitest resolver would otherwise
     // pull mammoth's Node build (which wants a Buffer), so the .docx extraction

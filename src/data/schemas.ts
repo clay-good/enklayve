@@ -1201,6 +1201,23 @@ export const PmiCancellationSchema = z.object({
 });
 export type PmiCancellationData = z.infer<typeof PmiCancellationSchema>;
 
+/**
+ * IRC §121's exclusion of gain on a principal residence (SPEC-5 Phase 28).
+ * Statutory and unindexed: the dollar caps have not moved since 1997.
+ */
+export const HomeSaleExclusionSchema = z.object({
+  /** §121(b)(1). */
+  maxExclusion: z.number().gt(0),
+  /** §121(b)(2)(A), a joint return where both spouses meet the use test. */
+  maxExclusionJoint: z.number().gt(0),
+  /** §121(a): owned and used "for periods aggregating 2 years or more". */
+  ownershipAndUseMonths: z.number().int().positive(),
+  /** §121(a): measured over "the 5-year period ending on the date of the sale". */
+  lookbackMonths: z.number().int().positive(),
+  citation: CitationSchema,
+});
+export type HomeSaleExclusionData = z.infer<typeof HomeSaleExclusionSchema>;
+
 export const GiftTaxSchema = z.object({
   taxYear: z.number().int(),
   annualExclusion: z.number().gte(0),
@@ -1851,6 +1868,7 @@ export const DATASET_SCHEMAS = {
   "enrollment-windows": EnrollmentWindowsSchema,
   "life-events": LifeEventsSchema,
   "pmi-cancellation": PmiCancellationSchema,
+  "home-sale-exclusion": HomeSaleExclusionSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

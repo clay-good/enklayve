@@ -132,6 +132,10 @@ const BOUND: YearBound[] = [
  * DO move honest.
  */
 const NOT_A_TAX_YEAR: Record<string, Record<string, string>> = {
+  "tiles/homeSaleGain.ts": {
+    "2008":
+      "§121(b)(5) counts nonqualified use only from January 1, 2009, a date the statute fixes",
+  },
   "tiles/pmiEndDate.ts": {
     "1999": "the Act covers loans made from July 29, 1999, a date the statute fixes",
   },
