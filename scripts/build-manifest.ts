@@ -261,6 +261,14 @@ const SHARDS: ShardSource[] = [
     ...ANNUAL,
     staleAfterYears: 1,
   },
+  // Zero-window, as SPEC-5 §6 sets for every separation figure: a COBRA rule a
+  // year out of date is a wrong number with no banner.
+  {
+    id: "separation-rules-2026",
+    kind: "separation-rules",
+    shard: "separation-rules-2026.json",
+    ...PILLAR4_ANNUAL,
+  },
   { id: "child-tax-2024", kind: "child-tax", shard: "child-tax-2024.json", ...ANNUAL },
   {
     id: "education-credits-2024",

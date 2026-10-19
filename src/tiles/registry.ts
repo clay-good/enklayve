@@ -55,6 +55,7 @@ import { rentVsBuyTile } from "./rentVsBuy";
 import { pmiEndDateTile } from "./pmiEndDate";
 import { homeSaleGainTile } from "./homeSaleGain";
 import { retirementCashOutTile } from "./retirementCashOut";
+import { cobraVsMarketplaceTile } from "./cobraVsMarketplace";
 import { healthPlanTile } from "./healthPlan";
 import { eobCheckerTile } from "./eobChecker";
 import { cashFlowTile } from "./cashFlow";
@@ -196,6 +197,7 @@ const HUB_CONFIGS: HubConfig[] = [
       "Health plan choice, life and disability cover, umbrella liability, and estate basics.",
     tools: [
       healthPlanTile,
+      cobraVsMarketplaceTile,
       eobCheckerTile,
       lifeInsuranceTile,
       disabilityTile,

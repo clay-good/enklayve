@@ -132,6 +132,10 @@ const BOUND: YearBound[] = [
  * DO move honest.
  */
 const NOT_A_TAX_YEAR: Record<string, Record<string, string>> = {
+  "tiles/cobraVsMarketplaceView.ts": {
+    "2026":
+      "Pub. L. 119-21 §71305(c) ends the repayment cap for taxable years after 2025, a date the statute fixes",
+  },
   "tiles/homeSaleGain.ts": {
     "2008":
       "§121(b)(5) counts nonqualified use only from January 1, 2009, a date the statute fixes",

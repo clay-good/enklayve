@@ -1239,6 +1239,20 @@ export const EarlyDistributionSchema = z.object({
 });
 export type EarlyDistributionData = z.infer<typeof EarlyDistributionSchema>;
 
+/**
+ * Rules a job loss starts (SPEC-5 §6, layoff-month): COBRA's premium ceilings.
+ * The unemployment-tax and supplemental-withholding rates join this shard with
+ * the tools that read them.
+ */
+export const SeparationRulesSchema = z.object({
+  /** 29 U.S.C. §1162(3)(A): a share of the plan's full cost. */
+  cobraPremiumCeiling: z.number().gt(1),
+  /** The same, after the 18th month of a disability extension. */
+  cobraDisabilityExtensionCeiling: z.number().gt(1),
+  citation: CitationSchema,
+});
+export type SeparationRulesData = z.infer<typeof SeparationRulesSchema>;
+
 export const GiftTaxSchema = z.object({
   taxYear: z.number().int(),
   annualExclusion: z.number().gte(0),
@@ -1891,6 +1905,7 @@ export const DATASET_SCHEMAS = {
   "pmi-cancellation": PmiCancellationSchema,
   "home-sale-exclusion": HomeSaleExclusionSchema,
   "early-distribution": EarlyDistributionSchema,
+  "separation-rules": SeparationRulesSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

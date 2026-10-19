@@ -370,6 +370,13 @@
       "why": "§72(t) holds the 10% additional tax, the age-59½ and age-55 lines, and every exception the tool lists; SECURE 2.0 added three in 2022, so an amendment here is the likeliest change.",
       "fingerprint": "f6543c0dca72699bd3a7e2dfcad27e1e65b5b80130e2440576f0bd82574f03c6",
       "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "separation-rules-2026",
+      "url": "https://www.law.cornell.edu/uscode/text/29/1162",
+      "why": "COBRA's 102% premium ceiling and the 150% disability-extension ceiling are §1162(3) itself; an amendment changes what a plan may charge.",
+      "fingerprint": "004450d11e50d4607fc09a9d6d3859d2c311394ef598739b713078734036eb44",
+      "checkedOn": "2026-10-19"
     }
   ]
 }

@@ -991,6 +991,19 @@
       "contentHash": "1efcbedf9fbf62ac77c3cedb84740c1ecdfedb716a0653f9b120020f07ba9e17"
     },
     {
+      "id": "separation-rules-2026",
+      "kind": "separation-rules",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "separation-rules-2026.json",
+      "sourceUrl": "https://www.law.cornell.edu/uscode/text/29/1162",
+      "sourceDocument": "ERISA §602(3), 29 U.S.C. §1162(3); IRC §4980B(f)(2)(C)",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "99323113d200f9b643a1cacc89c261cd54ab994d08b97d6ec6bd6fdde66627df"
+    },
+    {
       "id": "child-tax-2024",
       "kind": "child-tax",
       "version": "2026.0",
@@ -1092,7 +1105,7 @@
       "sourceUrl": "https://www.healthcare.gov/sep-list/",
       "sourceDocument": "enklayve life-event sequences — ordering hand-authored; every dated step cites the rule that sets its clock",
       "dateRetrieved": "2026-10-19",
-      "contentHash": "dfd983be9daf7a011c748c76f21dae526a5e9d86575ec7734d4e41220b41fd32"
+      "contentHash": "bee444fdb7d6be491e71fec357a407c7ef22b204f976e6d3ce7ad568152123ff"
     },
     {
       "id": "state-ui-ca-2026",

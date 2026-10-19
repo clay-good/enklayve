@@ -1,0 +1,11 @@
+{
+  "cobraPremiumCeiling": 1.02,
+  "cobraDisabilityExtensionCeiling": 1.5,
+  "citation": {
+    "sourceUrl": "https://www.law.cornell.edu/uscode/text/29/1162",
+    "sourceDocument": "ERISA §602(3), 29 U.S.C. §1162(3); IRC §4980B(f)(2)(C)",
+    "sourceNote": "29 U.S.C. §1162(3): a COBRA premium \"(A) shall not exceed 102 percent of the applicable premium for such period\" and may be paid monthly; for a qualified beneficiary on the disability extension, \"102 percent\" reads \"150 percent\" for any month after the 18th. The applicable premium is the plan's cost for a similarly situated active employee, employer and employee shares together. IRC §4980B(f)(2)(C) states the same rule for the excise tax. The first premium is not due before 45 days after the election, the enrollment-windows shard's cobra-first-premium. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}
