@@ -773,7 +773,11 @@ describe("checkBundleBudget", () => {
     // for the Unemployment Insurance Estimator — a feature the spec un-parked
     // rather than a correction — and the docstring records why no trim or lazy
     // load could carry it. The same rule holds against 305.
-    expect(SHELL_GZIP_BUDGET_KB).toBe(305);
+    //
+    // And to 308 the same day, by the owner again, for New York and
+    // Pennsylvania: 3.3 kB, of which lossless trims recovered 0.2. The
+    // docstring records the measurement; the next state argues against 308.
+    expect(SHELL_GZIP_BUDGET_KB).toBe(308);
   });
 });
 

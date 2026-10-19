@@ -574,8 +574,26 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * feature. New York and Pennsylvania, which B5 still needs, will need their
  * own inputs and their own bytes, and each one is an argument to make here
  * against 305 — not a reason to assume the next five.
+ *
+ * **305 → 308 on 2026-10-19, for New York and Pennsylvania, decided by the owner.**
+ *
+ * The argument the entry above asked for. The two states measured **3.3 kB**
+ * (303.1 → 306.4): New York needed a low-earner divisor, a floor and
+ * two-quarter averaging, and Pennsylvania its banded rate table, per-row
+ * qualifying wages, credit weeks, dependents and a payment reduction — rules
+ * plus the citations that say where each figure came from. The lossless trims
+ * were taken first and bought **0.2 kB**: the four caveats every state shared
+ * moved from the shards to the tile, and California's schedule became pairs.
+ * Gzip had already seen through both. What remained could only come out of the
+ * quoted sources and the "what this leaves out" lists, which are what make a
+ * per-state estimate honest rather than a guess with a citation on it.
+ *
+ * With these five, B5 covers the five most populous states — more than a
+ * third of the country — and the spec's own gate is met for them. The next state is an
+ * argument against 308 with its measured cost, the same as these were; the
+ * budget does not grow because a list is long.
  */
-export const SHELL_GZIP_BUDGET_KB = 305;
+export const SHELL_GZIP_BUDGET_KB = 308;
 
 /**
  * The headroom this gate needs to be measuring the shell rather than the runner.
