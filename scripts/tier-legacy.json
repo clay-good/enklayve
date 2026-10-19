@@ -12,7 +12,8 @@
     "to notice. An id added here is a build failure: the ceiling in",
     "tests/build/auditRelease.test.ts only ever goes down.",
     "",
-    "2026-10-19: home-purchases left the list the day it was written, when When PMI Ends (tier 1) joined the hub and the hub took its tier."
+    "2026-10-19: home-purchases left the list the day it was written, when When PMI Ends (tier 1) joined the hub and the hub took its tier.",
+    "2026-10-19: retirement left too, when Cashing Out a 401(k) (tier 2) joined the hub."
   ],
   "untiered": [
     "aca-ptc",
@@ -60,7 +61,6 @@
     "quarterly-taxes",
     "refinance",
     "rent-vs-buy",
-    "retirement",
     "retirement-drawdown",
     "retirement-optimizer",
     "rmd",

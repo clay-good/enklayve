@@ -796,6 +796,33 @@ export function checkPrecacheContents(paths: readonly string[]): string[] {
 }
 
 /**
+ * 8b. Everything the page loads before it can run is precached.
+ *
+ * The worker precached the entry chunk and nothing it imports, which was
+ * complete only while there was nothing to import. On 2026-10-19 the third
+ * on-demand tool shared enough with the entry that the bundler split a 40 kB
+ * chunk out of it; the page preloaded that chunk on every visit, the worker
+ * never cached it, and the shell measured 12 kB *lighter* — the budget gate
+ * reading an offline break as a saving. So the page itself is the reference:
+ * every module script and every `modulepreload` in the built `index.html`
+ * must be in the precache.
+ */
+export function checkShellCoversPage(indexHtml: string, precache: readonly string[]): string[] {
+  const cached = new Set(precache);
+  const needed = [
+    ...indexHtml.matchAll(/<script[^>]*type="module"[^>]*src="([^"]+)"/g),
+    ...indexHtml.matchAll(/<link[^>]*rel="modulepreload"[^>]*href="([^"]+)"/g),
+  ].map((m) => m[1]!);
+  const missing = needed.filter((p) => p.startsWith("/") && !cached.has(p));
+  return missing.length === 0
+    ? []
+    : [
+        `the page loads ${missing.join(", ")} before it can run, and the service worker does not ` +
+          "precache it, so the app would not open offline. Precache the entry's static imports.",
+      ];
+}
+
+/**
  * 7. The eager shell stays inside its budget. Reported with the breakdown, so a
  * failure names the chunk that grew rather than only the total.
  */
@@ -1243,6 +1270,12 @@ function runCli(): void {
   // what is allowed to be in it at all.
   const shell = precachedAssets(root);
   violations.push(...checkPrecacheContents(shell.map((a) => a.path)));
+  violations.push(
+    ...checkShellCoversPage(
+      readFileSync(join(root, "dist", "index.html"), "utf8"),
+      shell.map((a) => a.path),
+    ),
+  );
   violations.push(...checkBundleBudget(shell));
   violations.push(
     ...checkReadmeShellFigure(

@@ -1,0 +1,15 @@
+{
+  "additionalTaxRate": 0.1,
+  "mandatoryWithholdingRate": 0.2,
+  "penaltyFreeAge": 59.5,
+  "separationAge": 55,
+  "publicSafetySeparationAge": 50,
+  "emergencyExpenseLimit": 1000,
+  "citation": {
+    "sourceUrl": "https://www.law.cornell.edu/uscode/text/26/72",
+    "sourceDocument": "26 U.S.C. §§72(t), 3405(c); IRS Publication 575 (2025)",
+    "sourceNote": "§72(t)(1): tax is increased by \"10 percent of the portion of such amount which is includible in gross income\" for a distribution from a qualified plan, unless (t)(2) excepts it: (A)(i) on or after age 59½; (A)(iii) disability; (A)(iv) substantially equal periodic payments; (A)(v) \"after separation from service after attainment of age 55\", which (t)(10) lowers to age 50 or 25 years of service for qualified public-safety employees and Pub. 575 reads as separation \"in or after the year you reached age 55\"; (B) medical expenses deductible under §213; (C) an alternate payee under a QDRO; (H) a birth or adoption, up to $5,000; (I) one emergency personal expense distribution a year, up to \"the lesser of $1,000\" or the vested balance over $1,000; (K) a domestic abuse victim, up to the lesser of $10,000 (indexed) or half the balance; (L) terminal illness. §3405(c)(1)(B): the payor of an eligible rollover distribution \"shall withhold ... 20 percent\", unless (c)(2) it is paid directly to another plan. The distribution is ordinary income. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

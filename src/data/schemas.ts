@@ -1218,6 +1218,27 @@ export const HomeSaleExclusionSchema = z.object({
 });
 export type HomeSaleExclusionData = z.infer<typeof HomeSaleExclusionSchema>;
 
+/**
+ * Cashing out a retirement plan early (SPEC-5 Phase 28): IRC §72(t)'s
+ * additional tax, §3405(c)'s withholding, and the exceptions with a number in
+ * them. The exceptions with none are the tile's checklist, cited here.
+ */
+export const EarlyDistributionSchema = z.object({
+  /** §72(t)(1). */
+  additionalTaxRate: z.number().gt(0).lt(1),
+  /** §3405(c)(1)(B), on an eligible rollover distribution paid to you. */
+  mandatoryWithholdingRate: z.number().gt(0).lt(1),
+  /** §72(t)(2)(A)(i). */
+  penaltyFreeAge: z.number().gt(0),
+  /** §72(t)(2)(A)(v), and (t)(10) for public-safety employees. */
+  separationAge: z.number().int().positive(),
+  publicSafetySeparationAge: z.number().int().positive(),
+  /** §72(t)(2)(I), once a calendar year. */
+  emergencyExpenseLimit: z.number().gt(0),
+  citation: CitationSchema,
+});
+export type EarlyDistributionData = z.infer<typeof EarlyDistributionSchema>;
+
 export const GiftTaxSchema = z.object({
   taxYear: z.number().int(),
   annualExclusion: z.number().gte(0),
@@ -1869,6 +1890,7 @@ export const DATASET_SCHEMAS = {
   "life-events": LifeEventsSchema,
   "pmi-cancellation": PmiCancellationSchema,
   "home-sale-exclusion": HomeSaleExclusionSchema,
+  "early-distribution": EarlyDistributionSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

@@ -563,10 +563,10 @@ describe("what a calculator may write into My Situation", () => {
         ).toBe("married_jointly");
       }
     }
-    // A sweep that reached no dropdown would assert nothing. Seventeen since
-    // Selling a Home, which loads on demand: the test setup preloads it, and
-    // this count is the proof the sweep still reaches a lazy tile.
-    expect(seen).toBe(17);
+    // A sweep that reached no dropdown would assert nothing. Eighteen since
+    // Selling a Home and Cashing Out a 401(k), which load on demand: the test
+    // setup preloads them, and this count is the proof the sweep reaches them.
+    expect(seen).toBe(18);
   });
 
   /**

@@ -54,6 +54,7 @@ import { sinkingFundTile } from "./sinkingFund";
 import { rentVsBuyTile } from "./rentVsBuy";
 import { pmiEndDateTile } from "./pmiEndDate";
 import { homeSaleGainTile } from "./homeSaleGain";
+import { retirementCashOutTile } from "./retirementCashOut";
 import { healthPlanTile } from "./healthPlan";
 import { eobCheckerTile } from "./eobChecker";
 import { cashFlowTile } from "./cashFlow";
@@ -147,6 +148,7 @@ const HUB_CONFIGS: HubConfig[] = [
       iraDeductionTile,
       rmdTile,
       drawdownTile,
+      retirementCashOutTile,
       socialSecurityTile,
       socialSecurityTaxTile,
       downshiftTile,

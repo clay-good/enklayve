@@ -147,8 +147,25 @@ function offlinePwa(): Plugin {
       // built, still served, still in the sitemap, and the fetch handler
       // runtime-caches it the moment anyone opens it.
       const core = new Set<string>(CORE_SHELL);
+      // An entry's static imports are part of the entry: the page cannot start
+      // without them. Rollup splits one out as soon as a lazily loaded chunk
+      // shares modules with the entry, which the on-demand tools (SPEC-5 §7.5)
+      // do — and a chunk the entry needs that the worker never cached is an
+      // app that will not open offline. Walked transitively.
+      const addStaticImports = (name: string): void => {
+        const chunk = bundle[name];
+        if (chunk?.type !== "chunk") return;
+        for (const dep of chunk.imports) {
+          if (core.has(`/${dep}`)) continue;
+          core.add(`/${dep}`);
+          addStaticImports(dep);
+        }
+      };
       for (const [name, output] of Object.entries(bundle)) {
-        if (output.type === "chunk" && output.isEntry) core.add(`/${name}`);
+        if (output.type === "chunk" && output.isEntry) {
+          core.add(`/${name}`);
+          addStaticImports(name);
+        }
         if (output.type === "asset" && name.endsWith(".css")) core.add(`/${name}`);
       }
 
@@ -177,15 +194,56 @@ function offlinePwa(): Plugin {
   };
 }
 
+let staticFromPage: Set<string> | null = null;
+
+/**
+ * Record every module the HTML entry reaches through static imports alone, once
+ * the module graph is complete, for `manualChunks` to keep in the entry chunk.
+ */
+function entryReach(): Plugin {
+  return {
+    name: "enklayve-entry-reach",
+    apply: "build",
+    buildEnd() {
+      const ids = [...this.getModuleIds()];
+      const seen = new Set<string>();
+      const stack = ids.filter(
+        (id) => id.endsWith("index.html") && this.getModuleInfo(id)?.isEntry,
+      );
+      while (stack.length > 0) {
+        const id = stack.pop()!;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        stack.push(...(this.getModuleInfo(id)?.importedIds ?? []));
+      }
+      staticFromPage = seen;
+    },
+  };
+}
+
 export default defineConfig({
   root: REPO_ROOT,
   publicDir: resolve(REPO_ROOT, "public"),
-  plugins: [homeSeo(), staticToolsIndex(), staticSeo(), ocrAssets(), offlinePwa()],
+  plugins: [homeSeo(), staticToolsIndex(), staticSeo(), ocrAssets(), offlinePwa(), entryReach()],
   build: {
     outDir: resolve(REPO_ROOT, "dist"),
     emptyOutDir: true,
     target: "es2022",
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        // Everything the page imports statically belongs to the entry chunk.
+        // Rollup otherwise splits modules the entry shares with the on-demand
+        // tools (SPEC-5 §7.5) into a chunk of their own once enough tools share
+        // them: three did on 2026-10-19, and the 40 kB split cost 2.5 kB of
+        // gzip context on every first visit while loading nothing later. A
+        // tool's own view and data still split out, since the entry reaches
+        // them only through a dynamic import.
+        manualChunks(id) {
+          return staticFromPage?.has(id) ? "index" : undefined;
+        },
+      },
+    },
     // Vite's 500 kB nudge is a standing false alarm for a deliberately single-
     // bundle app, so this raises it. Note what has actually happened to this
     // number: it was 800, drifted under the growing bundle and printed on every

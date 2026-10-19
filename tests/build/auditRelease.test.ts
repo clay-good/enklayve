@@ -10,6 +10,7 @@ import {
   withoutComments,
   checkHarmTier,
   checkTierDeclared,
+  checkShellCoversPage,
   ADVICE_MARKERS,
   type AuditTile,
   checkBundleBudget,
@@ -352,6 +353,25 @@ describe("audit: Pillar 4 harm tiers", () => {
   });
 });
 
+describe("audit: the precache covers what the page loads to start", () => {
+  const page =
+    '<script type="module" crossorigin src="/assets/index-a.js"></script>\n' +
+    '<link rel="modulepreload" crossorigin href="/assets/shared-b.js">';
+
+  it("passes when the entry and its preloaded chunks are precached", () => {
+    expect(checkShellCoversPage(page, ["/", "/assets/index-a.js", "/assets/shared-b.js"])).toEqual(
+      [],
+    );
+  });
+
+  it("fails a preloaded chunk the worker never caches", () => {
+    const violations = checkShellCoversPage(page, ["/", "/assets/index-a.js"]);
+    expect(violations.length).toBe(1);
+    expect(violations[0]).toContain("/assets/shared-b.js");
+    expect(violations[0]).toContain("would not open offline");
+  });
+});
+
 /**
  * Every tile a spec adds from SPEC-5 on declares a harm tier (SPEC-5 §7.3);
  * the catalog that predates the rule is a committed baseline that may only
@@ -396,10 +416,10 @@ describe("audit: every new tile declares a tier", () => {
   });
 
   it("only shrinks: an id added to the baseline fails the build", () => {
-    // 69 tiles and hubs had no tier on 2026-10-19, and home-purchases left the
-    // same day. Lower this when the list shrinks; it never goes up, so a new
-    // untiered tile cannot buy its way in.
-    expect(legacy.length).toBeLessThanOrEqual(68);
+    // 69 tiles and hubs had no tier on 2026-10-19; home-purchases and
+    // retirement left the same day. Lower this when the list shrinks; it never
+    // goes up, so a new untiered tile cannot buy its way in.
+    expect(legacy.length).toBeLessThanOrEqual(67);
     expect(new Set(legacy).size, "the baseline repeats an id").toBe(legacy.length);
     expect([...legacy].sort(), "keep the baseline sorted, so a diff reads").toEqual(legacy);
   });

@@ -46,6 +46,7 @@ import {
   type TrumpAccountData,
   type PmiCancellationData,
   type HomeSaleExclusionData,
+  type EarlyDistributionData,
   type AmtData,
   type ChildTaxData,
   type EducationCreditsData,
@@ -66,7 +67,8 @@ function basename(path: string): string {
 // both would be paid for twice.
 const rawFiles = import.meta.glob(
   ["../../data/*.json", "!../../data/state-ui-*.json", "!../../data/pmi-cancellation-2026.json",
-    "!../../data/home-sale-exclusion-2026.json"],
+    "!../../data/home-sale-exclusion-2026.json",
+    "!../../data/early-distribution-2026.json"],
   { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
@@ -80,6 +82,7 @@ const rawFiles = import.meta.glob(
 const deferredFiles = import.meta.glob(
   ["../../data/state-ui-*.json", "../../data/pmi-cancellation-2026.json",
     "../../data/home-sale-exclusion-2026.json",
+    "../../data/early-distribution-2026.json",
   ],
   { query: "?raw", import: "default" },
 ) as Record<string, () => Promise<string>>;
@@ -161,6 +164,8 @@ export interface BundledData {
   pmiCancellation(): PmiCancellationData | null;
   /** IRC §121's home-sale exclusion (SPEC-5 Phase 28). Deferred, as above. */
   homeSaleExclusion(): HomeSaleExclusionData | null;
+  /** IRC §72(t) and §3405(c) for an early cash-out (SPEC-5 Phase 28). Deferred. */
+  earlyDistribution(): EarlyDistributionData | null;
   /** AMT exemption, phase-out, and rate breakpoint (SPEC-3 §4.7). */
   amt(): AmtData | null;
   /** Child-tax dependent shelter and earned-income add-on (SPEC-3 §4.5). */
@@ -330,6 +335,8 @@ async function build(): Promise<BundledData> {
     giftTax: () => dataOf("gift-tax-2024") as GiftTaxData | null,
     trumpAccounts: () => dataOf("trump-accounts-2026") as TrumpAccountData | null,
     pmiCancellation: () => deferredDataOf("pmi-cancellation-2026") as PmiCancellationData | null,
+    earlyDistribution: () =>
+      deferredDataOf("early-distribution-2026") as EarlyDistributionData | null,
     homeSaleExclusion: () =>
       deferredDataOf("home-sale-exclusion-2026") as HomeSaleExclusionData | null,
     amt: () => dataOf("amt-2024") as AmtData | null,

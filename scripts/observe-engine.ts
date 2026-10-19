@@ -106,6 +106,7 @@ import { taxLossHarvest } from "../src/engine/taxMoves";
 import { projectTrumpAccount } from "../src/engine/trumpAccount";
 import { pmiEndDates } from "../src/engine/pmi";
 import { homeSaleGain } from "../src/engine/homeSale";
+import { earlyDistributionCost, incomeTaxOnDistribution } from "../src/engine/earlyDistribution";
 import type { BundledData } from "../src/data/browser";
 import type { CitationData, FilingStatus, Jurisdiction } from "../src/data/schemas";
 
@@ -135,6 +136,7 @@ export const PROBED_FILES = [
   "src/engine/trumpAccount.ts",
   "src/engine/pmi.ts",
   "src/engine/homeSale.ts",
+  "src/engine/earlyDistribution.ts",
 ];
 
 const citation: CitationData = {
@@ -945,6 +947,57 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
       share: r.share,
       taxable: r.taxableGain.toNumber(),
       longTerm: r.longTerm,
+    });
+  }
+
+  // --- an early distribution: the 59½ line, the separation and emergency
+  // exceptions, and an excepted amount landing exactly on the distribution.
+  const early = {
+    additionalTaxRate: 0.1,
+    mandatoryWithholdingRate: 0.2,
+    penaltyFreeAge: 59.5,
+    separationAge: 55,
+    publicSafetySeparationAge: 50,
+    emergencyExpenseLimit: 1_000,
+    citation,
+  };
+  const fedJ = data.federal();
+  const ficaD = data.fica();
+  for (const [age, sep, emergency, excepted] of [
+    [59.4, false, false, 0],
+    [59.5, false, false, 0],
+    [40, true, false, 0],
+    [40, false, true, 0],
+    [40, false, true, 19_000],
+    [40, false, false, 20_000],
+    [40, false, false, 19_999.99],
+  ] as const) {
+    const tax =
+      fedJ && ficaD
+        ? incomeTaxOnDistribution(
+            20_000,
+            { filingStatus: "single", wages: 60_000 },
+            { federal: fedJ, fica: ficaD },
+          )
+        : { federal: Money.zero(), state: Money.zero() };
+    const r = earlyDistributionCost(
+      {
+        amount: 20_000,
+        age,
+        separatedAtSeparationAge: sep,
+        publicSafetySeparation: false,
+        wholeException: false,
+        emergency,
+        otherExcepted: excepted,
+        federalTax: tax.federal,
+        stateTax: tax.state,
+      },
+      early,
+    );
+    put(`early(${age},${sep},${emergency},${excepted})`, {
+      additional: r.additionalTax.toNumber(),
+      because: r.noAdditionalTaxBecause,
+      due: r.federalDueAtFiling.toNumber(),
     });
   }
 

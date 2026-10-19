@@ -978,6 +978,19 @@
       "contentHash": "a419a0e8dd5e058a8d9c0761f16fc9dd693946d01ea087e8ff38aa498bce13b5"
     },
     {
+      "id": "early-distribution-2026",
+      "kind": "early-distribution",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 1,
+      "shard": "early-distribution-2026.json",
+      "sourceUrl": "https://www.law.cornell.edu/uscode/text/26/72",
+      "sourceDocument": "26 U.S.C. §§72(t), 3405(c); IRS Publication 575 (2025)",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "1efcbedf9fbf62ac77c3cedb84740c1ecdfedb716a0653f9b120020f07ba9e17"
+    },
+    {
       "id": "child-tax-2024",
       "kind": "child-tax",
       "version": "2026.0",
@@ -1079,7 +1092,7 @@
       "sourceUrl": "https://www.healthcare.gov/sep-list/",
       "sourceDocument": "enklayve life-event sequences — ordering hand-authored; every dated step cites the rule that sets its clock",
       "dateRetrieved": "2026-10-19",
-      "contentHash": "32957abb54796bfb44fc56ba94d4497ca11e8f138cd15727840cfe686355ee7b"
+      "contentHash": "dfd983be9daf7a011c748c76f21dae526a5e9d86575ec7734d4e41220b41fd32"
     },
     {
       "id": "state-ui-ca-2026",

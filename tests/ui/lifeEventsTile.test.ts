@@ -108,7 +108,7 @@ describe("Life-Event Sequences", () => {
   it("renders the steps in order, numbered", () => {
     const root = mount(JOB_LOSS);
     const numbers = Array.from(root.querySelectorAll(".lev-step-n")).map((n) => n.textContent);
-    expect(numbers).toEqual(["1", "2", "3", "4", "5", "6", "7"]);
+    expect(numbers).toEqual(["1", "2", "3", "4", "5", "6", "7", "8"]);
     expect(root.querySelector(".lev-step-label")?.textContent).toContain(
       "File for unemployment in your state, today",
     );

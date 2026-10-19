@@ -70,6 +70,12 @@
           "tileId": "bill-triage"
         },
         {
+          "id": "retirement-account",
+          "label": "Before you take money out of a 401(k), see what it costs",
+          "detail": "Cashing out early usually costs the tax withheld when it is paid, your own tax rates on the whole amount, and often an additional tax on top. If you left the job in or after the year you turned 55, that additional tax may not apply. A direct rollover to an IRA costs nothing and keeps the money where it was.",
+          "tileId": "retirement-cash-out"
+        },
+        {
           "id": "part-b",
           "label": "If you or your spouse are 65 or older, check the Medicare clock",
           "detail": "The Part B special enrollment period runs from the end of employment-based coverage, not from the end of COBRA. Electing COBRA does not pause it, and missing it means a penalty for as long as you have Part B.",
