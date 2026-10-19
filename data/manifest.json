@@ -980,15 +980,15 @@
     {
       "id": "bill-triage-2026",
       "kind": "bill-triage",
-      "version": "2026.0",
-      "effectiveYear": 2026,
+      "version": "2027.0",
+      "effectiveYear": 2027,
       "expectedRefreshMonths": 12,
       "staleAfterYears": 0,
       "shard": "bill-triage-2026.json",
       "sourceUrl": "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_prioritizing-bills_tool.pdf",
       "sourceDocument": "CFPB, Your Money Your Goals: Prioritizing bills",
-      "dateRetrieved": "2026-08-28",
-      "contentHash": "7d63f44d72587ac7f2336e1cdc07e660a0f404a7711f4e8bf763570464df79c8"
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "ab08b383ed359626934cf2e4af0cc2e0d94e72d24f2425ee01649be43b32c008"
     },
     {
       "id": "free-filing-2026",
@@ -1006,28 +1006,28 @@
     {
       "id": "no-surprises-2026",
       "kind": "no-surprises",
-      "version": "2026.0",
-      "effectiveYear": 2026,
+      "version": "2027.0",
+      "effectiveYear": 2027,
       "expectedRefreshMonths": 12,
       "staleAfterYears": 0,
       "shard": "no-surprises-2026.json",
       "sourceUrl": "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights",
       "sourceDocument": "CMS, Medical bill rights — the No Surprises Act (effective 2022-01-01)",
       "dateRetrieved": "2026-10-19",
-      "contentHash": "911074d330ec706e1d81c73d61a8c4dd2a444da5b8919a0af0a0d86b0e131dd7"
+      "contentHash": "b842c8daa581897fa639fe63c6d6eba3e37069540b92ef7bf0ba00b8e65193ad"
     },
     {
       "id": "garnishment-limits-2026",
       "kind": "garnishment-limits",
-      "version": "2026.0",
-      "effectiveYear": 2026,
+      "version": "2027.0",
+      "effectiveYear": 2027,
       "expectedRefreshMonths": 12,
       "staleAfterYears": 0,
       "shard": "garnishment-limits-2026.json",
       "sourceUrl": "https://www.law.cornell.edu/uscode/text/15/1673",
       "sourceDocument": "Consumer Credit Protection Act Title III — 15 U.S.C. §§1673, 1674, 1677; 29 U.S.C. §206(a)(1)",
-      "dateRetrieved": "2026-09-01",
-      "contentHash": "c80506f6352466c3cb11320e0257ca33fd74b1480eeffb1612cd2a4e67aa3d8d"
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "9bd8281ab3b74ac3f47be0326492a6e5b275a7b225f498779549dc7cbfc8cafd"
     },
     {
       "id": "enrollment-windows-2026",

@@ -227,6 +227,8 @@ const SHARDS: ShardSource[] = [
     kind: "bill-triage",
     shard: "bill-triage-2026.json",
     ...PILLAR4_ANNUAL,
+    // Rolled 2026-10-19: the CFPB tool is unchanged since 2020.
+    effectiveYear: 2027,
   },
   {
     id: "free-filing-2026",
@@ -239,12 +241,17 @@ const SHARDS: ShardSource[] = [
     kind: "no-surprises",
     shard: "no-surprises-2026.json",
     ...PILLAR4_ANNUAL,
+    // Rolled 2026-10-19: §149.420 is unamended since 2021 with nothing pending.
+    effectiveYear: 2027,
   },
+  // Rolled ahead of the shared constant: every section it rests on was re-read
+  // on 2026-10-19 with no amendment pending, so 2027's rule is already known.
   {
     id: "garnishment-limits-2026",
     kind: "garnishment-limits",
     shard: "garnishment-limits-2026.json",
     ...PILLAR4_ANNUAL,
+    effectiveYear: 2027,
   },
   {
     id: "enrollment-windows-2026",

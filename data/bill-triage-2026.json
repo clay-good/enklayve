@@ -1,5 +1,5 @@
 {
-  "year": 2026,
+  "year": 2027,
   "categories": [
     {
       "id": "housing",
@@ -49,7 +49,9 @@
       "rank": 4,
       "consequence": "Losing what you need to do the job puts the income itself at risk, which is the one thing that makes every other bill payable.",
       "timing": "none",
-      "relief": ["Childcare subsidies through your state's CCDF program"]
+      "relief": [
+        "Childcare subsidies through your state's CCDF program"
+      ]
     },
     {
       "id": "insurance",
@@ -141,8 +143,8 @@
   "citation": {
     "sourceUrl": "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_prioritizing-bills_tool.pdf",
     "sourceDocument": "CFPB, Your Money Your Goals: Prioritizing bills",
-    "sourceNote": "The ordering and the consequence language follow the CFPB tool's own framing: identify what you need to pay to protect your housing and income, keep your insurance, and meet court-ordered obligations, then weigh the risk of not paying each one. The CFPB publishes no numeric ranking, so the default order here is our reading of that framing and is adjustable by the user. Consequences for transportation, housing, utilities, credit cards, and court-ordered obligations are taken from the tool's own CONSIDER column. Timing for eviction, utility shutoff, and repossession is set by state law and is deliberately carried as a pointer rather than a number. Two categories here are NOT in the CFPB tool and are ours: tax debt and medical bills. Property taxes are in it — its housing line reads \"Rent, mortgage, or property taxes\" — and this shard listed only the first two until 2026-09-09, leaving a homeowner facing a tax lien with no row.",
-    "effectiveYear": 2026,
-    "dateRetrieved": "2026-08-28"
+    "sourceNote": "The ordering and the consequence language follow the CFPB tool's own framing: identify what you need to pay to protect your housing and income, keep your insurance, and meet court-ordered obligations, then weigh the risk of not paying each one. The CFPB publishes no numeric ranking, so the default order here is our reading of that framing and is adjustable by the user. Consequences for transportation, housing, utilities, credit cards, and court-ordered obligations are taken from the tool's own CONSIDER column. Timing for eviction, utility shutoff, and repossession is set by state law and is deliberately carried as a pointer rather than a number. Two categories here are NOT in the CFPB tool and are ours: tax debt and medical bills. Property taxes are in it — its housing line reads \"Rent, mortgage, or property taxes\" — and this shard listed only the first two until 2026-09-09, leaving a homeowner facing a tax lien with no row. Rolled to 2027 on 2026-10-19. The CFPB tool is unchanged since its June 2020 revision, and the rows that rest on law that moved in 2025-26 still hold for 2027: federal student loans keep an income-driven plan (the One Big Beautiful Bill Act's Repayment Assistance Plan is one) and deferment and forbearance, and the medical row makes no claim about credit reporting.",
+    "effectiveYear": 2027,
+    "dateRetrieved": "2026-10-19"
   }
 }
