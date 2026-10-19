@@ -1032,28 +1032,28 @@
     {
       "id": "enrollment-windows-2026",
       "kind": "enrollment-windows",
-      "version": "2026.0",
-      "effectiveYear": 2026,
+      "version": "2027.0",
+      "effectiveYear": 2027,
       "expectedRefreshMonths": 12,
       "staleAfterYears": 0,
       "shard": "enrollment-windows-2026.json",
       "sourceUrl": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-E/section-155.420",
       "sourceDocument": "Federal enrollment and appeal windows — 29 U.S.C. §§1162, 1165; 42 CFR §§406.24, 407.14, 407.15, 431.221; 45 CFR §§155.410, 155.420, 155.520; 7 CFR §273.15",
-      "dateRetrieved": "2026-08-29",
-      "contentHash": "ba29c2dcdebf5859b0dc351c8c9a4f10b44ec825f41a33fc5397890dbd3be99f"
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "f1dadbc6f5c106818487cd58574331f547d5d6403bf7e426fea9f649c050843f"
     },
     {
       "id": "life-events-2026",
       "kind": "life-events",
-      "version": "2026.0",
-      "effectiveYear": 2026,
+      "version": "2027.0",
+      "effectiveYear": 2027,
       "expectedRefreshMonths": 12,
       "staleAfterYears": 0,
       "shard": "life-events-2026.json",
       "sourceUrl": "https://www.healthcare.gov/sep-list/",
       "sourceDocument": "enklayve life-event sequences — ordering hand-authored; every dated step cites the rule that sets its clock",
-      "dateRetrieved": "2026-08-29",
-      "contentHash": "60e4ee7c77a59bdfc7d0a6a094b360cf319650dbc18a511da06e43917c0143df"
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "32957abb54796bfb44fc56ba94d4497ca11e8f138cd15727840cfe686355ee7b"
     }
   ]
 }

@@ -49,8 +49,8 @@
             "sourceUrl": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-E/section-155.420",
             "sourceDocument": "45 CFR §155.420(e), (d)(15)",
             "sourceNote": "Paragraph (e): \"Loss of coverage does not include voluntary termination of coverage or other loss due to (1) Failure to pay premiums on a timely basis, including COBRA continuation coverage premiums prior to expiration of COBRA continuation coverage, except for circumstances in which an employer completely ceases its contributions to COBRA continuation coverage...\" Paragraph (d)(15) makes that cessation its own triggering event, dated to the last day the coverage was paid for or subsidized.",
-            "effectiveYear": 2026,
-            "dateRetrieved": "2026-09-03"
+            "effectiveYear": 2027,
+            "dateRetrieved": "2026-10-19"
           }
         },
         {
@@ -361,8 +361,8 @@
   "citation": {
     "sourceUrl": "https://www.healthcare.gov/sep-list/",
     "sourceDocument": "enklayve life-event sequences — ordering hand-authored; every dated step cites the rule that sets its clock",
-    "sourceNote": "The clocks in these sequences are not stated here: each dated step names a window in the enrollment-windows shard, which carries its own citation to the statute or regulation that sets it, so no figure is duplicated and none can drift. What this shard contributes is the ORDERING and the plain-English framing, which are enklayve's editorial judgment about which step unlocks the others and which has a clock on it — not a published sequence, and stated as such on screen. The qualifying events that open a special enrollment period are those HealthCare.gov lists; the rest of each sequence is grounded in the free government channel each step names.",
-    "effectiveYear": 2026,
-    "dateRetrieved": "2026-08-29"
+    "sourceNote": "The clocks in these sequences are not stated here: each dated step names a window in the enrollment-windows shard, which carries its own citation to the statute or regulation that sets it, so no figure is duplicated and none can drift. What this shard contributes is the ORDERING and the plain-English framing, which are enklayve's editorial judgment about which step unlocks the others and which has a clock on it — not a published sequence, and stated as such on screen. The qualifying events that open a special enrollment period are those HealthCare.gov lists; the rest of each sequence is grounded in the free government channel each step names. Rolled to 2027 on 2026-10-19: §155.420(e) and (d)(15) still read as quoted, and HealthCare.gov's special-enrollment list is unchanged in substance.",
+    "effectiveYear": 2027,
+    "dateRetrieved": "2026-10-19"
   }
 }

@@ -258,12 +258,16 @@ const SHARDS: ShardSource[] = [
     kind: "enrollment-windows",
     shard: "enrollment-windows-2026.json",
     ...PILLAR4_ANNUAL,
+    // Rolled 2026-10-19 on a full re-read; see the shard's citation.
+    effectiveYear: 2027,
   },
   {
     id: "life-events-2026",
     kind: "life-events",
     shard: "life-events-2026.json",
     ...PILLAR4_ANNUAL,
+    // Rolled 2026-10-19 on a full re-read; see the shard's citation.
+    effectiveYear: 2027,
   },
 ];
 

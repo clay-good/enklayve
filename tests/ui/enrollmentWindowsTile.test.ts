@@ -197,9 +197,27 @@ describe("Enrollment & Appeal Windows", () => {
   });
 
   it("surfaces a published rule change that has not taken effect yet", () => {
-    const text = mount(COBRA).textContent ?? "";
+    // A fixture rather than the live shard: the one change it carried, the
+    // shortened 2027 open enrollment, is not being applied (CMS, 2026-07-27),
+    // so the bundled list is empty — and the rendering still wants holding.
+    const shard = data.enrollmentWindows()!;
+    const withChange = Object.create(data) as BundledData;
+    withChange.enrollmentWindows = () => ({
+      ...shard,
+      upcomingChanges: [
+        {
+          id: "fixture-change",
+          label: "A window shortens for the 2028 benefit year",
+          detail: "From 2028 the window closes a month earlier.",
+          citation: shard.citation,
+        },
+      ],
+    });
+    const text = mount(COBRA, withChange).textContent ?? "";
     expect(text).toContain("Already published, not yet in effect");
-    expect(text).toContain("2027");
+    expect(text).toContain("2028");
+    // And with nothing published, nothing is announced.
+    expect(mount(COBRA).textContent ?? "").not.toContain("Already published, not yet in effect");
   });
 
   it("tells the user to act on their own notice when the two disagree", () => {

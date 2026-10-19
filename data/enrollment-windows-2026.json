@@ -1,5 +1,5 @@
 {
-  "benefitYear": 2026,
+  "benefitYear": 2027,
   "windows": [
     {
       "id": "cobra-election",
@@ -15,8 +15,8 @@
         "sourceUrl": "https://www.law.cornell.edu/uscode/text/29/1165",
         "sourceDocument": "ERISA §605 — 29 U.S.C. §1165(a)(1)",
         "sourceNote": "The election period is of at least 60 days' duration and ends not earlier than 60 days after the later of the date coverage terminates or the date of the election notice.",
-        "effectiveYear": 2026,
-        "dateRetrieved": "2026-08-29"
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
       }
     },
     {
@@ -33,8 +33,8 @@
         "sourceUrl": "https://www.law.cornell.edu/uscode/text/29/1162",
         "sourceDocument": "ERISA §602(3) — 29 U.S.C. §1162(3)",
         "sourceNote": "In no event may the plan require the payment of any premium before the day which is 45 days after the day on which the qualified beneficiary made the initial election.",
-        "effectiveYear": 2026,
-        "dateRetrieved": "2026-08-29"
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
       }
     },
     {
@@ -51,8 +51,8 @@
         "sourceUrl": "https://www.law.cornell.edu/uscode/text/29/1162",
         "sourceDocument": "ERISA §602(2)(C) — 29 U.S.C. §1162(2)(C)",
         "sourceNote": "Payment of any premium is considered timely if made within 30 days after the date due, or within such longer period as applies under the plan.",
-        "effectiveYear": 2026,
-        "dateRetrieved": "2026-08-29"
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
       }
     },
     {
@@ -69,25 +69,25 @@
         "sourceUrl": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-E/section-155.420",
         "sourceDocument": "45 CFR §155.420(c)(1)-(2)",
         "sourceNote": "Unless stated otherwise, a qualified individual or enrollee has 60 days from the date of a triggering event to select a QHP; for a loss of coverage and certain other triggers, 60 days before the event as well.",
-        "effectiveYear": 2026,
-        "dateRetrieved": "2026-08-29"
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
       }
     },
     {
       "id": "aca-open-enrollment",
       "program": "Marketplace",
-      "label": "Choose a Marketplace plan for the 2026 benefit year",
+      "label": "Choose a Marketplace plan for the 2027 benefit year",
       "due": {
-        "on": "2026-01-15"
+        "on": "2027-01-15"
       },
       "bound": "floor",
-      "detail": "Open enrollment for the 2026 benefit year ran from November 1, 2025 through January 15, 2026 on HealthCare.gov. A State-based Exchange may set a later end date, so check your own state's marketplace.",
+      "detail": "Open enrollment for the 2027 benefit year runs from November 1, 2026 through January 15, 2027 on HealthCare.gov. Choose a plan by December 15 for coverage that starts January 1; a plan chosen after that starts February 1. You may read that open enrollment now ends in December: a 2025 rule said so, and CMS is not applying it for 2027. A State-based Exchange may set a later end date, so check your own state's marketplace.",
       "citation": {
-        "sourceUrl": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-E/section-155.410",
-        "sourceDocument": "45 CFR §155.410(e)(4)",
-        "sourceNote": "For benefit years beginning January 1, 2022 through January 1, 2026, annual open enrollment begins November 1 of the preceding calendar year and extends through January 15 of the benefit year; a State Exchange may adopt a later end date.",
-        "effectiveYear": 2026,
-        "dateRetrieved": "2026-08-29"
+        "sourceUrl": "https://www.cms.gov/files/document/ftr-requirement-py26-27-statement.pdf",
+        "sourceDocument": "45 CFR §155.410(e)(4), as CMS applies it for 2027 — CCIIO statement of July 27, 2026",
+        "sourceNote": "\"HHS ... has not altered the dates for the Open Enrollment period contained in 45 CFR 155.410(e)(4), including related flexibilities available to State Exchanges under 45 CFR 155.410(e)(4)(ii) and (iii). Open Enrollment at the Federally-facilitated Marketplace will begin on November 1, 2026 and end on January 15, 2027.\" The statement follows the District of Maryland's orders in City of Columbus v. Kennedy (June 12, 2026, No. 1:25-cv-2114; July 16, 2026, No. 1:26-cv-2215), which vacated or stayed parts of the 2025 Marketplace Integrity rule and the 2027 payment notice. eCFR still prints §155.410(e)(5) — open enrollment ending by December 31 and lasting at most nine weeks for benefit years from 2027 — because a court order does not edit the Code, which is why this window cites CMS and not the section. This shard said until 2026-10-19 that the January 15 end \"does not carry forward\"; for 2027 it does. The December 15 / January 1 and February 1 coverage dates are HealthCare.gov's own (healthcare.gov/quick-guide/dates-and-deadlines, read 2026-10-19), the (e)(4)-era schedule in §155.410(f)(3). The government has appealed, so a later year's window may still shorten.",
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
       }
     },
     {
@@ -104,8 +104,8 @@
         "sourceUrl": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-B/part-407/subpart-B/section-407.14",
         "sourceDocument": "42 CFR §407.14(a)(1)",
         "sourceNote": "The initial enrollment period is the 7-month period that begins 3 months before the month an individual first meets the eligibility requirements and ends 3 months after that first month of eligibility.",
-        "effectiveYear": 2026,
-        "dateRetrieved": "2026-08-29"
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
       }
     },
     {
@@ -121,8 +121,8 @@
         "sourceUrl": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-B/part-407/subpart-B/section-407.15",
         "sourceDocument": "42 CFR §407.15(a)",
         "sourceNote": "The general enrollment period is January through March of each calendar year.",
-        "effectiveYear": 2026,
-        "dateRetrieved": "2026-08-29"
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
       }
     },
     {
@@ -139,8 +139,8 @@
         "sourceUrl": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-B/part-407/subpart-B/section-407.20",
         "sourceDocument": "42 CFR §407.20",
         "sourceNote": "Section 407.20 is the Part B (supplementary medical insurance) special enrollment period, and it takes the SEP's definition — and so its duration — from 42 CFR §406.24(a)(4). §406.24(b)(2) states that the SEP ends on the last day of the eighth consecutive month during which the individual is at no time enrolled in a group health plan or large group health plan by reason of current employment status.",
-        "effectiveYear": 2026,
-        "dateRetrieved": "2026-09-03"
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
       }
     },
     {
@@ -157,8 +157,8 @@
         "sourceUrl": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-C/part-431/subpart-E/subject-group-ECFR4e89d7b32b71f9d/section-431.221",
         "sourceDocument": "42 CFR §431.221(d)",
         "sourceNote": "The agency must allow the applicant or beneficiary a reasonable time, not to exceed 90 days from the date that notice of action is mailed, to request a hearing.",
-        "effectiveYear": 2026,
-        "dateRetrieved": "2026-08-29"
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
       }
     },
     {
@@ -175,8 +175,8 @@
         "sourceUrl": "https://www.ecfr.gov/current/title-7/subtitle-B/chapter-II/subchapter-C/part-273/subpart-F/section-273.15",
         "sourceDocument": "7 CFR §273.15(g)",
         "sourceNote": "A household shall be allowed to request a hearing on any action by the State agency or loss of benefits which occurred in the prior 90 days.",
-        "effectiveYear": 2026,
-        "dateRetrieved": "2026-08-29"
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
       }
     },
     {
@@ -193,8 +193,8 @@
         "sourceUrl": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-F/section-155.520",
         "sourceDocument": "45 CFR §155.520(b)",
         "sourceNote": "The Exchange and the appeals entity must allow an appeal request within 90 days of the date of the notice of eligibility determination, or a timeframe consistent with the state Medicaid agency's requirement provided that timeframe is no less than 30 days.",
-        "effectiveYear": 2026,
-        "dateRetrieved": "2026-09-03"
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
       }
     }
   ],
@@ -212,25 +212,12 @@
       "note": "Most states have their own continuation law for employers too small for federal COBRA, each with its own election window. Your state insurance department can tell you whether one applies and how long you have."
     }
   ],
-  "upcomingChanges": [
-    {
-      "id": "aca-open-enrollment-2027",
-      "label": "Marketplace open enrollment shortens for the 2027 benefit year",
-      "detail": "For benefit years beginning on or after January 1, 2027, open enrollment must begin no later than November 1, must end no later than December 31 of the preceding calendar year, and may not exceed nine weeks. The January 15 end date on this page is the 2026 rule and does not carry forward.",
-      "citation": {
-        "sourceUrl": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-E/section-155.410",
-        "sourceDocument": "45 CFR §155.410(e)(5)",
-        "sourceNote": "For benefit years beginning on or after January 1, 2027, the annual open enrollment period for all Exchanges must begin no later than November 1 and end no later than December 31 of the preceding calendar year, and must not exceed 9 weeks in duration.",
-        "effectiveYear": 2026,
-        "dateRetrieved": "2026-08-29"
-      }
-    }
-  ],
+  "upcomingChanges": [],
   "citation": {
     "sourceUrl": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-E/section-155.420",
     "sourceDocument": "Federal enrollment and appeal windows — 29 U.S.C. §§1162, 1165; 42 CFR §§406.24, 407.14, 407.15, 431.221; 45 CFR §§155.410, 155.420, 155.520; 7 CFR §273.15",
-    "sourceNote": "Each window carries its own citation to the section that sets it; this shard-level citation names the set. Every figure was transcribed from the statutory or regulatory text, not from a summary. One distinction the sources make and summaries routinely lose: the Medicaid fair-hearing period is a CEILING on what a state must allow (“reasonable time, not to exceed 90 days”), while the COBRA, SNAP, and Marketplace windows are floors a plan or agency may exceed but not shorten.",
-    "effectiveYear": 2026,
-    "dateRetrieved": "2026-08-29"
+    "sourceNote": "Each window carries its own citation to the section that sets it; this shard-level citation names the set. Every figure was transcribed from the statutory or regulatory text, not from a summary. One distinction the sources make and summaries routinely lose: the Medicaid fair-hearing period is a CEILING on what a state must allow (“reasonable time, not to exceed 90 days”), while the COBRA, SNAP, and Marketplace windows are floors a plan or agency may exceed but not shorten. Rolled to the 2027 benefit year on 2026-10-19. eCFR's version history shows no amendment to §§155.520, 407.14, 407.15, 407.20, 406.24, 431.221 or 273.15 since before this shard was read, and §155.420's last (2026-07-20) predates its reading; the two §155.420 passages quoted here still read word for word. 29 U.S.C. §§1162 and 1165 carry no amendment from the 119th Congress. The one window that changed is open enrollment, where CMS is applying the November 1 - January 15 schedule for 2027 rather than §155.410(e)(5)'s shortened one; see that window's citation.",
+    "effectiveYear": 2027,
+    "dateRetrieved": "2026-10-19"
   }
 }
