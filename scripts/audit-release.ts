@@ -621,8 +621,21 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  *
  * Thirteen states. The argument against 315 is the same as against every
  * entry above: a measured cost, and the owner's decision that it is worth it.
+ *
+ * **315 → 319 on 2026-10-19, for Tennessee, Indiana, Maryland, Missouri and
+ * Colorado, decided by the owner.**
+ *
+ * **3.4 kB** (313.2 → 316.6) for five states, every one admitted: Tennessee's
+ * segmented table, Indiana's last-two-quarters test, Maryland's schedule with
+ * its step-down at the top line, Missouri's operative 2011 duration, and
+ * Colorado's consecutive quarters and second formula. The bytes also bought an
+ * engine fix every state shares: wages with no row in a state's table are now
+ * an ineligible claim, not an eligible one with no rate.
+ *
+ * Eighteen states. The argument against 319 is a measured cost and the
+ * owner's decision, as for every entry above.
  */
-export const SHELL_GZIP_BUDGET_KB = 315;
+export const SHELL_GZIP_BUDGET_KB = 319;
 
 /**
  * The headroom this gate needs to be measuring the shell rather than the runner.

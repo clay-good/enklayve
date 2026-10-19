@@ -783,8 +783,9 @@ describe("checkBundleBudget", () => {
     //
     // And to 311, again by the owner, for Illinois, Ohio and Michigan (2.8 kB);
     // North Carolina and Georgia were held at the gate and cost nothing.
-    // Then to 315, by the owner, for NJ, VA, WA, AZ and MA (4.2 kB).
-    expect(SHELL_GZIP_BUDGET_KB).toBe(315);
+    // Then to 315, by the owner, for NJ, VA, WA, AZ and MA (4.2 kB), and to
+    // 319 for TN, IN, MD, MO and CO (3.4 kB).
+    expect(SHELL_GZIP_BUDGET_KB).toBe(319);
   });
 });
 
