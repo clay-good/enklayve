@@ -768,7 +768,12 @@ describe("checkBundleBudget", () => {
     // shape of thing this file keeps finding somewhere else, so it is a gate.
     // Raising it means editing this line and saying why here too, which is the
     // deliberate act the audit's own error message asks for.
-    expect(SHELL_GZIP_BUDGET_KB).toBe(300);
+    //
+    // It was raised once since, to 305 on 2026-10-19, by the owner's decision,
+    // for the Unemployment Insurance Estimator — a feature the spec un-parked
+    // rather than a correction — and the docstring records why no trim or lazy
+    // load could carry it. The same rule holds against 305.
+    expect(SHELL_GZIP_BUDGET_KB).toBe(305);
   });
 });
 

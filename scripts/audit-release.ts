@@ -554,8 +554,28 @@ export function checkHarmTier(tiles: AuditTile[]): string[] {
  * the agency's page on this date" is a question about what this site is for.
  * That deserves its own decision with its own evidence, not to be carried along
  * because somebody needed a kilobyte.
+ *
+ * **300 → 305 on 2026-10-19, for a feature, decided by the owner.**
+ *
+ * The entry above said there would be no next one, and that a change that does
+ * not fit "gets a trim, or it does not ship." This is that next entry, and it
+ * is written down as an exception rather than a precedent. The Unemployment
+ * Insurance Estimator (SPEC-4-safety-net §B5) was un-parked on purpose: its
+ * spec gates it on a per-state rule set, and the first three states — the
+ * tile, its engine, and California's, Texas's and Florida's shards — measured
+ * **6.4 kB**, taking the shell from 296.7 to 303.1. No trim covered it: the
+ * dated-verification sentences the entry above set aside free about 0.9 kB,
+ * and B5's own prose and California's 31-row schedule a kilobyte or two more.
+ * Lazy-loading it would break the offline promise for the one tool a person
+ * reaches for the week they lose a job. So the owner chose the raise.
+ *
+ * What it does not change is the rule for everything else. Corrections still
+ * fit under the line or trim; this kilobyte budget was bought for a named
+ * feature. New York and Pennsylvania, which B5 still needs, will need their
+ * own inputs and their own bytes, and each one is an argument to make here
+ * against 305 — not a reason to assume the next five.
  */
-export const SHELL_GZIP_BUDGET_KB = 300;
+export const SHELL_GZIP_BUDGET_KB = 305;
 
 /**
  * The headroom this gate needs to be measuring the shell rather than the runner.
