@@ -2,10 +2,10 @@
   "entries": [
     {
       "shard": "no-surprises-2026",
-      "url": "https://www.cms.gov/medical-bill-rights",
+      "url": "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights",
       "why": "The Act's scope is prose, not a table. Auto-rewriting which situations are protected from a scraped page would let the site's most consequential sentences change without a person reading them.",
-      "fingerprint": "4c1dc58a615c2ee52179a059d36ddd5a5817524112c6c4fcfadcba319a4c3694",
-      "checkedOn": "2026-08-29"
+      "fingerprint": "d463b1ebd770b9e57bc82cb0414ded38901dabe49f616a35a4c14146710e0e79",
+      "checkedOn": "2026-10-19"
     },
     {
       "shard": "garnishment-limits-2026",

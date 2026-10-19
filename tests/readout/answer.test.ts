@@ -183,7 +183,7 @@ describe("Readout v2, the check registry contract (§4.1)", () => {
     falsePositive: "The provider may have an in-network agreement we cannot see.",
     suppressOnOcr: true,
     citation: {
-      sourceUrl: "https://www.cms.gov/medical-bill-rights",
+      sourceUrl: "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights",
       sourceDocument: "CMS, protections against surprise medical bills",
       effectiveYear: 2026,
       dateRetrieved: "2026-08-29",
@@ -433,7 +433,7 @@ describe("Readout v2, OCR suppresses rule checks entirely (§6.4)", () => {
     falsePositive: "The provider may hold an in-network agreement this notice does not show.",
     suppressOnOcr: true,
     citation: {
-      sourceUrl: "https://www.cms.gov/medical-bill-rights",
+      sourceUrl: "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights",
       sourceDocument: "CMS, protections against surprise medical bills",
       effectiveYear: 2026,
       dateRetrieved: "2026-08-29",

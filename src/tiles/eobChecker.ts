@@ -377,7 +377,7 @@ export const eobCheckerTile: TileDefinition = {
     },
     {
       label: "CMS: find an action plan for your medical bill",
-      url: "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights/get-help/find-action-plan-your-medical-bill",
+      url: "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights/get-help/find-action-plan",
       note: "A few questions, then the steps that fit your situation",
     },
     {
@@ -404,11 +404,11 @@ export const eobCheckerTile: TileDefinition = {
   resources: [
     {
       label: "CMS: know your rights with insurance",
-      url: "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights/know-your-medical-bill-rights/know-your-rights-insurance",
+      url: "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights/know-your-rights/insurance",
     },
     {
       label: "CMS: dispute a medical bill",
-      url: "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights/get-help/dispute-medical-bill",
+      url: "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights/get-help/dispute-bill",
     },
   ],
   related: [

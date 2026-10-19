@@ -3828,7 +3828,7 @@ export const ADAPTERS: RefreshAdapter[] = [
     // The guide states both HB 463 figures on its "what changed" page, which is
     // what the shard's own note cites.
     sourceUrl:
-      "https://dor.georgia.gov/document/document/2026-employers-tax-guide-updated-june-2026/download",
+      "https://dor.georgia.gov/document/document/2026-employers-tax-guide-updated-september-2026/download",
     cadence: "Annual",
     parse: (raw, current) =>
       parseAmountThenStatusDeductions(raw, current, {

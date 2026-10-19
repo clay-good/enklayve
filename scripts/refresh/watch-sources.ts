@@ -270,7 +270,7 @@ export function renderWatchReport(results: WatchResult[], today: string): string
     for (const r of changed) lines.push(`- \`${r.shard}\` — ${r.url}`);
     lines.push(
       "",
-      "Nothing was edited. Read the source, update the shard by hand if the rule moved, and refresh the fingerprint with `node scripts/refresh/watch-sources.ts --accept`.",
+      "Nothing was edited. Read the source, update the shard by hand if the rule moved, and refresh its fingerprint with `node scripts/refresh/watch-sources.ts --accept=<shard>` — naming only the sources you read.",
       "",
     );
   }
@@ -301,17 +301,50 @@ function entryKey(e: { shard: string; url: string }): string {
   return `${e.shard}\n${e.url}`;
 }
 
-/** Apply new fingerprints to the watch file (the `--accept` path). */
-export function acceptChanges(file: WatchFile, results: WatchResult[], today: string): WatchFile {
+/**
+ * Apply new fingerprints to the watch file (the `--accept` path).
+ *
+ * `only` names the sources a person actually read, by shard id or by URL. A
+ * bare `--accept` takes every change at once, so reading one changed source and
+ * accepting stamped the others as reviewed too: on 2026-10-08 the watch flagged
+ * the CMS No Surprises page and §63 together, and the CMS page is the one that
+ * had been read.
+ */
+export function acceptChanges(
+  file: WatchFile,
+  results: WatchResult[],
+  today: string,
+  only?: ReadonlySet<string>,
+): WatchFile {
   const byEntry = new Map(results.map((r) => [entryKey(r), r]));
   return {
     entries: file.entries.map((entry) => {
       const r = byEntry.get(entryKey(entry));
-      return r?.status === "changed"
+      const named = !only || only.has(entry.shard) || only.has(entry.url);
+      return r?.status === "changed" && named
         ? { ...entry, fingerprint: r.fingerprint, checkedOn: today }
         : entry;
     }),
   };
+}
+
+/**
+ * `--accept` alone accepts every change; `--accept=<shard or url>,…` only the
+ * named ones. Undefined means the flag is absent.
+ */
+export function parseAcceptFlag(argv: readonly string[]): { only?: Set<string> } | undefined {
+  for (const arg of argv) {
+    if (arg === "--accept") return {};
+    if (arg.startsWith("--accept=")) {
+      const names = arg
+        .slice("--accept=".length)
+        .split(",")
+        .map((n) => n.trim())
+        .filter(Boolean);
+      return { only: new Set(names) };
+    }
+  }
+  return undefined;
 }
 
 export function readWatchFile(path = WATCH_FILE): WatchFile {
@@ -320,7 +353,7 @@ export function readWatchFile(path = WATCH_FILE): WatchFile {
 
 /* c8 ignore start — the CLI shell: fetch and file writes only. */
 async function main(): Promise<void> {
-  const accept = process.argv.includes("--accept");
+  const accept = parseAcceptFlag(process.argv);
   const today = new Date().toISOString().slice(0, 10);
   const file = readWatchFile();
 
@@ -343,7 +376,8 @@ async function main(): Promise<void> {
   process.stdout.write(`${report}\n`);
 
   if (accept) {
-    writeFileSync(WATCH_FILE, `${JSON.stringify(acceptChanges(file, results, today), null, 2)}\n`);
+    const next = acceptChanges(file, results, today, accept.only);
+    writeFileSync(WATCH_FILE, `${JSON.stringify(next, null, 2)}\n`);
   }
 
   const out = process.env.GITHUB_OUTPUT;

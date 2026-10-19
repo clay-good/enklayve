@@ -24,7 +24,7 @@ import type { AnswerSection, ExtractedField, ExtractionResult, ReadoutAnswer } f
 const CHANNELS = {
   medicalBillRights: {
     label: "CMS: your rights against surprise medical bills",
-    url: "https://www.cms.gov/medical-bill-rights",
+    url: "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights",
   },
   hospitalFap: {
     label: "IRS: what a nonprofit hospital's financial assistance policy must contain",

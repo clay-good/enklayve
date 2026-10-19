@@ -192,10 +192,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-ga-income-tax-2024.json",
-      "sourceUrl": "https://dor.georgia.gov/document/document/2026-employers-tax-guide-updated-june-2026/download",
-      "sourceDocument": "Georgia DOR 2026 Employer's Withholding Tax Guide (revised June 2026) — HB 463: flat 4.99%, standard deduction $15,000 / $30,000",
-      "dateRetrieved": "2026-08-29",
-      "contentHash": "53ef653a754ed407d8bb553ccc7f30dea76c9f6dc41afae0e0e7c4844896909b"
+      "sourceUrl": "https://dor.georgia.gov/document/document/2026-employers-tax-guide-updated-september-2026/download",
+      "sourceDocument": "Georgia DOR 2026 Employer's Withholding Tax Guide (revised September 2026) — HB 463: flat 4.99%, standard deduction $15,000 / $30,000",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "8928bcf3070216c8f3d641c8667e7713b1eb827ede5fa763d5da3db09b2aad91"
     },
     {
       "id": "state-nc-income-tax-2024",
@@ -1011,10 +1011,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 0,
       "shard": "no-surprises-2026.json",
-      "sourceUrl": "https://www.cms.gov/medical-bill-rights",
+      "sourceUrl": "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights",
       "sourceDocument": "CMS, Medical bill rights — the No Surprises Act (effective 2022-01-01)",
-      "dateRetrieved": "2026-08-29",
-      "contentHash": "7798c93446e9bf5445d59f1713301463b6155334183a0378eef1ce410b4ef5cf"
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "911074d330ec706e1d81c73d61a8c4dd2a444da5b8919a0af0a0d86b0e131dd7"
     },
     {
       "id": "garnishment-limits-2026",

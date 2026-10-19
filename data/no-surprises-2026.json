@@ -112,20 +112,20 @@
       "id": "action-plan",
       "label": "CMS: find an action plan for your medical bill",
       "note": "Answer a few questions and get the steps that fit your situation.",
-      "url": "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights/get-help/find-action-plan-your-medical-bill"
+      "url": "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights/get-help/find-action-plan"
     },
     {
       "id": "dispute",
       "label": "CMS: dispute a medical bill",
       "note": "The patient-provider dispute resolution process, for a bill at least $400 above a good faith estimate.",
-      "url": "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights/get-help/dispute-medical-bill"
+      "url": "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights/get-help/dispute-bill"
     }
   ],
   "citation": {
-    "sourceUrl": "https://www.cms.gov/medical-bill-rights",
+    "sourceUrl": "https://www.cms.gov/initiatives/your-patient-rights/medical-bill-rights",
     "sourceDocument": "CMS, Medical bill rights — the No Surprises Act (effective 2022-01-01)",
-    "sourceNote": "Transcribed from the CMS consumer pages 'Medical bill rights' and 'Know your rights with insurance', which state the three protected situations (emergency room visits; non-emergency care related to a visit to an in-network hospital, hospital outpatient department, or ambulatory surgical center; air ambulance services), the exclusions (ground ambulance, vision-only and dental-only plans, short-term limited-duration and health care sharing ministry plans, fixed indemnity excepted-benefit plans), the notice-and-consent waiver, and the uninsured good-faith-estimate route (3 business days' advance scheduling; a bill at least $400 above the estimate may be disputed). No dollar figure here is a benchmark price: the Act sets who may bill you, not what care costs.",
+    "sourceNote": "Transcribed from the CMS consumer pages 'Medical bill rights' and 'Know your rights with insurance', which state the three protected situations (emergency room visits; non-emergency care related to a visit to an in-network hospital, hospital outpatient department, or ambulatory surgical center; air ambulance services), the exclusions (ground ambulance, vision-only and dental-only plans, short-term limited-duration and health care sharing ministry plans, fixed indemnity excepted-benefit plans), the notice-and-consent waiver, and the uninsured good-faith-estimate route (3 business days' advance scheduling; a bill at least $400 above the estimate may be disputed). No dollar figure here is a benchmark price: the Act sets who may bill you, not what care costs. Re-read on 2026-10-19 after CMS moved the pages under /initiatives/your-patient-rights/ (last modified 2026-10-05): the three protected situations, the 3-business-day good faith estimate, the $400 dispute threshold and the 1-800-985-3059 help desk are all unchanged.",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-08-29"
+    "dateRetrieved": "2026-10-19"
   }
 }

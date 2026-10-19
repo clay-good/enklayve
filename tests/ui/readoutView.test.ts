@@ -362,7 +362,9 @@ describe("Readout view, the four-part answer", () => {
     const links = Array.from(container.querySelectorAll(".readout-next a")).map(
       (a) => a.getAttribute("href") ?? "",
     );
-    expect(links.some((h) => h.includes("cms.gov/medical-bill-rights"))).toBe(true);
+    expect(
+      links.some((h) => h.includes("cms.gov/initiatives/your-patient-rights/medical-bill-rights")),
+    ).toBe(true);
   });
 
   it("runs the plan-math family against the deductible the reader already typed", async () => {

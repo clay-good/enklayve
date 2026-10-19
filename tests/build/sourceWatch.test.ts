@@ -5,6 +5,7 @@ import {
   extractRuleBodies,
   looksLikeInterstitial,
   acceptChanges,
+  parseAcceptFlag,
   fingerprint,
   normalizeSourceText,
   planWatch,
@@ -241,6 +242,38 @@ describe("accepting a reviewed change", () => {
     expect(next.entries[0]?.fingerprint).not.toBe(FIXTURE.entries[0]?.fingerprint);
     expect(next.entries[0]?.checkedOn).toBe("2026-10-08");
     expect(next.entries[1]).toEqual(FIXTURE.entries[1]);
+  });
+
+  it("accepts only the sources named, by shard or by url", () => {
+    // Two sources changed and one was read. Accepting both would stamp the
+    // unread one as reviewed, and it would never be reported again.
+    const results = planWatch(
+      FIXTURE,
+      fetched(
+        ["https://example.gov/a", page("Something else entirely.")],
+        ["https://example.gov/b", page("Now 30 per centum of disposable earnings.")],
+      ),
+    );
+    const byShard = acceptChanges(
+      FIXTURE,
+      results,
+      "2026-10-19",
+      new Set([FIXTURE.entries[0]!.shard]),
+    );
+    expect(byShard.entries[0]?.checkedOn).toBe("2026-10-19");
+    expect(byShard.entries[1]).toEqual(FIXTURE.entries[1]);
+
+    const byUrl = acceptChanges(FIXTURE, results, "2026-10-19", new Set(["https://example.gov/b"]));
+    expect(byUrl.entries[0]).toEqual(FIXTURE.entries[0]);
+    expect(byUrl.entries[1]?.checkedOn).toBe("2026-10-19");
+  });
+
+  it("reads the accept flag: bare is everything, a list is only those", () => {
+    expect(parseAcceptFlag(["node", "watch-sources.ts"])).toBeUndefined();
+    expect(parseAcceptFlag(["node", "watch-sources.ts", "--accept"])).toEqual({});
+    expect(parseAcceptFlag(["node", "w.ts", "--accept=no-surprises-2026, medicaid-2024"])).toEqual({
+      only: new Set(["no-surprises-2026", "medicaid-2024"]),
+    });
   });
 
   it("keeps two watches on one shard apart", () => {
