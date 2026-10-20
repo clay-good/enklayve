@@ -753,3 +753,33 @@ describe("inputs that are not wages", () => {
     expect(Number.isFinite(r.maxBenefit)).toBe(true);
   });
 });
+
+describe("the banded and low-earner lines, on the line (hardening, 2026-10-20)", () => {
+  it("New York: a high quarter of exactly $3,575 is still a low earner's", () => {
+    // Labor Law §590: at or below $3,575 the rate is the high quarter over 25.
+    expect(estimateUi({ quarterlyWages: [3575, 3575, 3575, 3575] }, ny).weeklyBasis).toBe(
+      "low-earner",
+    );
+    expect(estimateUi({ quarterlyWages: [3575.01, 3575, 3575, 3575] }, ny).weeklyBasis).not.toBe(
+      "low-earner",
+    );
+  });
+
+  it("Pennsylvania: a high quarter exactly at the top row's floor takes the maximum, with no row test", () => {
+    // At $15,388 the open-ended top row applies. Its rate has no qualifying
+    // total of its own, so a thin base period is short on other tests, never
+    // "below the lowest rate the table allows".
+    const r = estimateUi({ quarterlyWages: [15388, 0, 0, 0] }, pa);
+    expect(r.eligible).toBe(false);
+    expect(r.shortfalls.join(" ")).not.toContain("below the lowest rate");
+  });
+
+  it("Maryland: the last row it may step down to still pays", () => {
+    // §8-803(a)(2) steps the rate down up to six rows to find a qualifying
+    // total; this base period meets one only on the sixth.
+    const r = estimateUi({ quarterlyWages: [1824, 730, 0, 0] }, md);
+    expect(r.eligible).toBe(true);
+    expect(r.weeklyBenefit).toBe(70);
+    expect(r.weeklyBasis).toBe("stepped-down");
+  });
+});

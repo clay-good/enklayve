@@ -6,6 +6,7 @@ import { pmiEndDates } from "../../src/engine/pmi";
 import { survivorFraMonths } from "../../src/engine/ssFamily";
 import { interestDeduction } from "../../src/engine/studentLoans";
 import { ssiEstimate } from "../../src/engine/ssi";
+import { fplKeyedRows } from "../../src/engine/benefits";
 import { Money } from "../../src/engine/money";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 
@@ -27,6 +28,7 @@ beforeAll(async () => {
       "ss-family-benefits-2026",
       "student-loans-2026",
       "ssi-2026",
+      "fpl-keyed-programs-2026",
     ].map((id) => data.loadDeferred(id)),
   );
 });
@@ -122,5 +124,17 @@ describe("SPEC-5 thresholds, on the line", () => {
     expect(pay(true, 0, 1511)).toBe(0);
     expect(pay(false, 2072, 0)).toBe(0.5);
     expect(pay(false, 0, 1013)).toBe(1);
+  });
+
+  it("the screener's poverty-line programs: each line includes the household exactly on it", () => {
+    const programs = data.fplKeyedPrograms()!;
+    const ids = (pct: number, children = 1) =>
+      fplKeyedRows(pct, { children, youngChild: false }, programs).map(
+        (r) => `${r.id}${r.reducedPrice ? ":reduced" : ""}`,
+      );
+    expect(ids(135)).toContain("lifeline"); // 47 CFR §54.409(a): "at or below 135%"
+    expect(ids(150)).toContain("liheap"); // the ceiling's 150% leg
+    expect(ids(185)).toContain("school-meals:reduced"); // §1758(b)(1)(A): 185%
+    expect(ids(100, 0)).not.toContain("school-meals"); // no children, no school meals
   });
 });
