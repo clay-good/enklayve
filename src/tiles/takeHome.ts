@@ -11,7 +11,7 @@ import type { DeductionMode } from "../engine/tax/types";
 import type { CitationData, FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { NO_STATE_OPTION_LABEL, field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
-import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { citationLink, resultCard, type BreakdownLine } from "../ui/resultCard";
 import { rememberableCounty, residenceLocalField, seedResidenceLocal } from "../ui/residenceLocal";
 import { statutoryStepNote } from "../ui/statuteStep";
 import { rememberShared } from "./profileSync";
@@ -64,6 +64,8 @@ interface Fields {
   /** Qualified overtime premium inside `wages` (IRC §225). */
   overtime: number;
   local: string[]; // selected local add-on ids
+  /** A second state to set the same return against, or "" for none (SPEC-5 §2.1). */
+  vs: string;
 }
 
 const EXAMPLE: Fields = {
@@ -76,6 +78,7 @@ const EXAMPLE: Fields = {
   tips: 0,
   overtime: 0,
   local: [],
+  vs: "",
 };
 
 function isFilingStatus(v: string): v is FilingStatus {
@@ -116,6 +119,7 @@ function readFields(
       ? parseNonNegative(params.get("ot"), 0)
       : (profile.get("qualifiedOvertimeAnnual") ?? 0),
     local: (params.get("loc") ?? "").split(",").filter((s) => s.length > 0),
+    vs: params.get("vs") ?? "",
   };
 }
 
@@ -136,6 +140,7 @@ function writeFields(f: Fields): URLSearchParams {
   p.set("tips", String(f.tips));
   p.set("ot", String(f.overtime));
   if (f.local.length > 0) p.set("loc", f.local.join(","));
+  if (f.vs) p.set("vs", f.vs);
   return p;
 }
 
@@ -262,6 +267,18 @@ export function mountTakeHome(ctx: TileContext): void {
   // collect() reads the deep-linked state (not a default) regardless of
   // option-attribute timing.
   stSelect.value = fields.st;
+  // The moving-states question (SPEC-5 §2.1): the same return in a second state,
+  // so a reader weighing a move does not need two tabs.
+  const vsSelect = el(
+    "select",
+    { name: "vs", attrs: { "aria-label": "Compare with another state" } },
+    option("", "No comparison", fields.vs === ""),
+    ...codes.map((code) => {
+      const j = bundled.state(code);
+      return option(code, j ? j.name : code.toUpperCase(), code === fields.vs);
+    }),
+  );
+  vsSelect.value = codes.includes(fields.vs) ? fields.vs : "";
 
   const wagesInput = el("input", {
     type: "number",
@@ -372,6 +389,7 @@ export function mountTakeHome(ctx: TileContext): void {
       tips: parseNonNegative(tipsInput.value, 0),
       overtime: parseNonNegative(otInput.value, 0),
       local,
+      vs: vsSelect.value,
     };
     resolveLocal();
   }
@@ -401,7 +419,30 @@ export function mountTakeHome(ctx: TileContext): void {
         permalink: () => ctx.permalink(writeFields(fields)),
       }),
       ...(rateNote ? [rateNote] : []),
+      ...compareLine(input, result),
     );
+  }
+
+  /** The same return in the comparison state: no local taxes, which are the first state's. */
+  function compareLine(input: TaxInput, result: TaxResult): HTMLElement[] {
+    const other = fields.vs && fields.vs !== fields.st ? bundled.state(fields.vs) : null;
+    if (!other) return [];
+    const there = evaluateTaxes(
+      { ...input, localJurisdictionIds: [] },
+      { federal: fed, fica: ficaData, state: other },
+    );
+    const diff = there.totals.takeHome.subtract(result.totals.takeHome);
+    const amount = (diff.isNegative() ? diff.multiply(-1) : diff).format(ctx.locale);
+    return [
+      el(
+        "p",
+        { class: "th-compare" },
+        el("span", {
+          text: `In ${other.name}, the same pay takes home ${there.totals.takeHome.format(ctx.locale)} a year: ${diff.isZero() ? "the same" : `${amount} ${diff.isNegative() ? "less" : "more"}`}, before any local tax there. `,
+        }),
+        citationLink(other.citation),
+      ),
+    ];
   }
 
   function recompute(): void {
@@ -420,6 +461,13 @@ export function mountTakeHome(ctx: TileContext): void {
     compute();
   }
 
+  // A state the reader is only weighing is not where they live, so changing it
+  // updates the link and the comparison and never writes My Situation.
+  vsSelect.addEventListener("change", () => {
+    collect();
+    ctx.setParams(writeFields(fields));
+    compute();
+  });
   for (const control of [fsSelect, stSelect, seniorSelect]) {
     control.addEventListener("change", recompute);
   }
@@ -434,6 +482,7 @@ export function mountTakeHome(ctx: TileContext): void {
     tipsInput.value = String(fields.tips);
     otInput.value = String(fields.overtime);
     stSelect.value = fields.st;
+    vsSelect.value = "";
     wagesInput.value = String(fields.wages);
     otherInput.value = String(fields.other);
     adjInput.value = String(fields.adjustments);
@@ -455,6 +504,7 @@ export function mountTakeHome(ctx: TileContext): void {
     field("Of that, qualified tips", tipsInput),
     field("Of that, qualified overtime premium", otInput),
     localContainer,
+    field("Compare with another state", vsSelect),
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 

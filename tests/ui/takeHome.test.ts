@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { mountTakeHome } from "../../src/tiles/takeHome";
+import { evaluateTaxes } from "../../src/engine/tax";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
@@ -312,5 +313,58 @@ describe("the breakdown column adds up", () => {
     // 6.2% of the 2026 wage base, which $123,456 clears.
     expect(fica).toHaveLength(1);
     expect(Math.abs(fica[0]! - 765427)).toBeLessThanOrEqual(1);
+  });
+});
+
+/**
+ * Compare two states (SPEC-5 §2.1): the same return set against a second
+ * state's engine, which the moving-states sequence sends a reader to ask.
+ */
+describe("compare with another state", () => {
+  const CA_VS_TX = new URLSearchParams({ fs: "single", st: "ca", w: "85000", vs: "tx" });
+
+  it("sets the same return against the second state, cited to it", () => {
+    const { root } = mount(CA_VS_TX);
+    const line = root.querySelector(".th-compare");
+    const run = (code: string) =>
+      evaluateTaxes(
+        {
+          filingStatus: "single",
+          wages: 85000,
+          otherIncome: 0,
+          adjustments: 0,
+          deductionMode: "standard",
+          seniorsAge65Plus: 0,
+          qualifiedTips: 0,
+          qualifiedOvertime: 0,
+          localJurisdictionIds: [],
+        },
+        { federal: data.federal()!, fica: data.fica()!, state: data.state(code)! },
+      ).totals.takeHome;
+    const diff = run("tx").subtract(run("ca"));
+    expect(diff.greaterThan(0)).toBe(true);
+    expect(line?.textContent).toContain(
+      `In Texas, the same pay takes home ${run("tx").format("en-US")} a year`,
+    );
+    expect(line?.textContent).toContain(`${diff.format("en-US")} more`);
+    expect(line?.querySelector("a.cite-link")?.getAttribute("href")).toBe(
+      data.state("tx")!.citation.sourceUrl,
+    );
+  });
+
+  it("rides the link, and says nothing with no second state or the same one", () => {
+    const { root, lastParams } = mount(CA_VS_TX);
+    const wages = root.querySelector<HTMLInputElement>('input[name="w"]')!;
+    wages.value = "90000";
+    wages.dispatchEvent(new Event("input"));
+    expect(lastParams()?.get("vs")).toBe("tx");
+    expect(
+      mount(new URLSearchParams({ st: "ca", w: "85000" })).root.querySelector(".th-compare"),
+    ).toBeNull();
+    expect(
+      mount(new URLSearchParams({ st: "ca", w: "85000", vs: "ca" })).root.querySelector(
+        ".th-compare",
+      ),
+    ).toBeNull();
   });
 });

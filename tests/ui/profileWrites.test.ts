@@ -313,15 +313,23 @@ function enumWritesFrom(tile: TileDefinition): string[] {
       .map((o) => o.value)
       .filter(Boolean)
       .slice(0, 6)) {
+      // Only a value this change put there counts. A field another select set
+      // earlier in the walk can already hold the option — Take-Home's State
+      // select leaves a state that its "compare with another state" select
+      // then offers — and that is agreement, not a write.
+      const before = ENUM_FIELDS.map((f) => profile.get(f)?.toLowerCase());
       select.value = option;
       select.dispatchEvent(new Event("change", { bubbles: true }));
       select.dispatchEvent(new Event("input", { bubbles: true }));
-      for (const field of ENUM_FIELDS) {
+      for (const [i, field] of ENUM_FIELDS.entries()) {
         // Case-insensitively, because a tile is entitled to normalize on the
         // way in: the Medicaid tile renders state codes upper and My Situation
         // documents them lower, so an exact compare read that writer as no
         // writer at all and the map went on claiming to pin every one of them.
-        if (profile.get(field)?.toLowerCase() === option.toLowerCase()) {
+        if (
+          before[i] !== option.toLowerCase() &&
+          profile.get(field)?.toLowerCase() === option.toLowerCase()
+        ) {
           found.push(`${tile.id} | ${field} <- select "${labelOf(root, select)}"`);
         }
       }
