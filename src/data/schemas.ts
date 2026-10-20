@@ -1523,6 +1523,16 @@ export const StudentLoansSchema = z.object({
     }),
   }),
   employerAssistanceMax: z.number().gt(0),
+  /** §1087e(a)'s limits from July 1, 2026, which the College Cost Planner states. */
+  loanLimits: z.object({
+    graduateAnnual: z.number().gt(0),
+    graduateAggregate: z.number().gt(0),
+    professionalAnnual: z.number().gt(0),
+    professionalAggregate: z.number().gt(0),
+    lifetime: z.number().gt(0),
+    parentPlusAnnual: z.number().gt(0),
+    parentPlusAggregate: z.number().gt(0),
+  }),
   newLoanDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   citation: CitationSchema,
 });

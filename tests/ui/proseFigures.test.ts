@@ -147,6 +147,22 @@ describe("the containment test on money", () => {
 });
 
 const BOUND: Bound[] = [
+  // The College Cost Planner's note on §1087e(a)'s limits from July 1, 2026.
+  ...(
+    [
+      "parentPlusAnnual",
+      "parentPlusAggregate",
+      "graduateAnnual",
+      "graduateAggregate",
+      "professionalAnnual",
+      "professionalAggregate",
+      "lifetime",
+    ] as const
+  ).map((k) => ({
+    file: "tiles/collegeCost.ts",
+    shard: "student-loans-2026",
+    path: `.loanLimits.${k}`,
+  })),
   // Federal Student Loan Payment's "how": RAP's $10 floor and $50 a dependent.
   {
     file: "tiles/studentLoanPaymentHow.ts",

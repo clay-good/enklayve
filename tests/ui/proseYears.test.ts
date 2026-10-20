@@ -132,6 +132,9 @@ const BOUND: YearBound[] = [
  * DO move honest.
  */
 const NOT_A_TAX_YEAR: Record<string, Record<string, string>> = {
+  "tiles/collegeCost.ts": {
+    "2026": "July 1 and June 30, 2026, the dates §1087e(a) fixes for the new loan limits",
+  },
   "tiles/studentLoanPaymentHow.ts": {
     "2014": "§1098e(e)'s new-borrower date, which the statute fixes",
     "2025": "the year of the budget law, history",

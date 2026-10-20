@@ -293,7 +293,7 @@ The appeal date renders as a `Deadline` cited to `medicare-summary-appeal`. Besi
 - IBR at 15% and 10% and against its cap.
 - A copy test that no plan is named as the choice.
 
-§221's deduction is shown as a deduction amount (Rev. Proc. 2025-32's 2026 phase-out), not run through the tax engine for its worth. §127's $5,250 is stated. The forgiven balance is called taxable income under §108(f)(5) as amended, without a computed tax. **Measured: 0.5 kB** (312.1 → 312.6 of 325).
+§221's deduction is shown as a deduction amount (Rev. Proc. 2025-32's 2026 phase-out), not run through the tax engine for its worth. §127's $5,250 is stated. The forgiven balance is called taxable income under §108(f)(5) as amended, without a computed tax. **Measured: 0.5 kB** (312.1 → 312.6 of 325). **The College Cost Planner's loan-limits note followed the same day.** §1087e(a)'s limits from July 1, 2026 are in the shard, and each figure in the planner's how block is bound to its path. Those are parent PLUS, graduate and professional unsubsidized, and the $257,500 lifetime limit. The note also covers the end of Grad PLUS and paragraph (8)'s three-year interim exception for students already borrowing.
 
 ---
 
