@@ -1603,6 +1603,10 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
   },
 };
 
+/** Every kind an extractor exists for, so a test can hold its fixtures to the
+ * whole set instead of a list somebody keeps by hand. */
+export const SUPPORTED_KINDS = Object.keys(EXTRACTORS) as DocKind[];
+
 /**
  * Read one document deterministically. Detects the kind/revision, runs the
  * pinned extractor, and applies the confidence rules: an unrecognized revision

@@ -1067,3 +1067,65 @@ describe("the Saver's Match, as upcoming data (SPEC-5 F5)", () => {
     expect(change!.citation.effectiveYear).toBe(2027);
   });
 });
+
+describe("the screener's rows when their shard has not loaded yet", () => {
+  /** The bundle as a first visit sees it: the deferred shard still in flight. */
+  function inFlight(): { bundle: BundledData; land: () => void } {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((r) => (release = r));
+    let landed = false;
+    const bundle = {
+      ...data,
+      fplKeyedPrograms: () => (landed ? data.fplKeyedPrograms() : null),
+      loadedDeferred: (id: string) =>
+        id === "fpl-keyed-programs-2026" && !landed ? undefined : data.loadedDeferred(id),
+      loadDeferred: async (id: string) => {
+        if (id !== "fpl-keyed-programs-2026") return data.loadDeferred(id);
+        await gate;
+        landed = true;
+        return data.loadDeferred(id);
+      },
+    } as BundledData;
+    return { bundle, land: () => release() };
+  }
+  const mountWith = (bundle: BundledData): HTMLElement => {
+    const root = document.createElement("div");
+    mountOwedScreener({
+      root,
+      params: new URLSearchParams({ hh: "4", inc: "30000", kids: "2", mfj: "1" }),
+      setParams: () => {},
+      permalink: () => "",
+      navigate: () => {},
+      locale: "en-US",
+      data: bundle,
+      profile: new SituationStore(),
+    });
+    return root;
+  };
+  const programs = (root: HTMLElement): string[] =>
+    Array.from(root.querySelectorAll(".screener-program")).map((n) => n.textContent ?? "");
+
+  beforeAll(async () => {
+    await data.loadDeferred("fpl-keyed-programs-2026");
+  });
+
+  it("draws the rows once the shard lands, while the screener is on the page", async () => {
+    const { bundle, land } = inFlight();
+    const root = mountWith(bundle);
+    document.body.append(root);
+    expect(programs(root)).not.toContain("Lifeline");
+    land();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(programs(root)).toContain("Lifeline");
+    root.remove();
+  });
+
+  it("leaves a screener that is no longer shown alone when the shard lands", async () => {
+    const { bundle, land } = inFlight();
+    const root = mountWith(bundle);
+    land();
+    await new Promise((r) => setTimeout(r, 0));
+    // Not on the page, so not redrawn, and nothing thrown.
+    expect(programs(root)).not.toContain("Lifeline");
+  });
+});

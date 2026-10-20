@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractDocument, detectDocument } from "../../src/readout/extract";
+import { SUPPORTED_KINDS, extractDocument, detectDocument } from "../../src/readout/extract";
 import type { ExtractedText } from "../../src/readout/extractText";
 
 /**
@@ -32,6 +32,24 @@ const REAL = [
     "11 Adjusted gross income 95000.00 15 Taxable income 80000.00 22 Total tax 12000.00",
   "ABC Payroll Earnings Statement Pay Period 06/01/2024 Bi-Weekly Gross Pay 2884.62 Net Pay 2100.00",
   "Explanation of Benefits Amount billed 4200.00 Plan paid 3000.00 You may owe 1200.00 out of network",
+  "Form 1099-INT 2025 1 Interest income 412.55 4 Federal income tax withheld 0.00",
+  "Form 1099-DIV 2025 1a Total ordinary dividends 980.00 1b Qualified dividends 760.00 2a Total capital gain distr. 120.00",
+  "Form 1099-NEC 2025 Nonemployee Compensation 1 Nonemployee compensation 18500.00",
+  "Form 1099-B 2025 1d Proceeds 12000.00 1e Cost or other basis 9000.00",
+  "Form 1095-A Health Insurance Marketplace Statement 2025 Annual Totals 7200.00 7800.00 5100.00",
+  "Form 1098 Mortgage Interest Statement 2025 1 Mortgage interest received from payer(s)/borrower(s) 6200.00 2 Outstanding mortgage principal 240000.00",
+  "2025-26 FAFSA Submission Summary Federal Student Aid Student Aid Index (SAI): 4500",
+  "Itemized Statement 01/21/2026 Office visit $143.00 01/21/2026 Lab panel $68.56 Total charges $211.56",
+  "Notice of Action Your SNAP benefits have been reduced. Effective date 10/01/2026. Reason code R-14. You may request a fair hearing within 90 days.",
+  "FORM SSA-1099 - SOCIAL SECURITY BENEFIT STATEMENT 2025 Box 3. Benefits Paid in 2025 $24,000.00 Box 4. Benefits Repaid to SSA in 2025 $500.00 Box 5. Net Benefits for 2025 (Box 3 minus Box 4) $23,500.00",
+  "Form 1099-R 2026 1 Gross distribution $40,000.00 2a Taxable amount $40,000.00 4 Federal income tax withheld $8,000.00 7a Dist. code(s) 1 7b IRA/SEP/",
+  "Form 1099-G 2025 1 Unemployment compensation $8,000.00 4 Federal income tax withheld $800.00 12 State income tax withheld $0.00",
+  "Form 1098-T Tuition Statement 2025 1 Payments received for qualified tuition and related expenses $9,800.00 5 Scholarships or grants $2,000.00",
+  "Form 1098-E Student Loan Interest Statement 2025 1 Student loan interest received by lender $1,840.22",
+  "North South Group is a debt collector. We are trying to collect a debt that you owe to Bank of Rockville. As of January 2, 2017, you owed: $ 2,234.56 You were charged this amount in interest: + $ 75.00 Total amount of the debt now: $ 2,309.56 Call or write to us by August 28, 2020, to dispute all or part of the debt.",
+  "Medicare Summary Notice for Part B Date of This Notice March 1, 2020 Number of Services Medicare Denied 0 Total You May Be Billed $21.59 Total for Claim #02-10195-592-390 $143.00 $107.97 $86.38 $21.59 We must receive your appeal by: July 13, 2020",
+  "This form is a statement of final loan terms and closing costs. Closing Disclosure Loan Term 30 years Loan Amount $162,000 Interest Rate 3.875% Monthly Principal & Interest $761.78 Closing Costs $9,712.10 Cash to Close $14,147.26 A. Origination Charges $1,802.00 B. Services Borrower Did Not Shop For $236.55",
+  "Save this Loan Estimate to compare with your Closing Disclosure. Loan Estimate LOAN TERM 30 years Loan Amount $162,000 Interest Rate 3.875% Monthly Principal & Interest $761.78 Estimated Cash to Close $16,054 A. Origination Charges $1,802 B. Services You Cannot Shop For $672",
 ];
 
 /** A seeded generator, so a failure names an input somebody can reproduce. */
@@ -78,6 +96,15 @@ function corpus(): string[] {
 }
 
 describe("what the extractor does with a document nobody wrote for it", () => {
+  it("fuzzes every kind the extractor knows, not a list kept by hand", () => {
+    // The corpus was four documents for as long as the Readout read thirteen
+    // kinds, then twenty-one: every kind added after it was never fuzzed.
+    const covered = new Set(
+      REAL.map((text) => detectDocument({ text, pages: [text], source: "typed" }).kind),
+    );
+    expect(SUPPORTED_KINDS.filter((k) => !covered.has(k))).toEqual([]);
+  });
+
   it("sweeps a corpus that reaches the extractors, not just the unknown branch", () => {
     // A sweep where every document is unrecognized asserts nothing: the unknown
     // branch returns no fields at all and every property below holds vacuously.
