@@ -489,6 +489,20 @@
       "why": "Notice 2026-48 gives the 2027 Saver's Match limits by filing status and names Form 8880-A; a change here, or proposed regulations, means the upcomingChanges block needs reading again.",
       "fingerprint": "da6c13bdb5b267155d76f8d6b3978021a95775ecf24954dee7a5c836708f2189",
       "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "student-loans-2026",
+      "url": "https://www.law.cornell.edu/uscode/text/20/1087e",
+      "why": "§1087e(q) writes the Repayment Assistance Plan's tiers, floor, dependent reduction, interest subsidy, principal match and 360 payments, and (d)(7) the tiered Standard terms.",
+      "fingerprint": "86b9e10f8b8d264a754e42a61a6c2d4f83628cb85aefea6b09a5bf0b08423576",
+      "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "student-loans-2026",
+      "url": "https://studentaid.gov/sites/default/files/IncomeDrivenRepayment-en-us.pdf",
+      "why": "The Department's IDR Plan Request states RAP's terms, IBR's and the tiered Standard range; the un-park gate needs it and the statute to agree.",
+      "fingerprint": "bf999ff8b9a1c668fcd51505ba2a2bd3c91fd8811aa5555431e27ed9632867d3",
+      "checkedOn": "2026-10-20"
     }
   ]
 }

@@ -27,6 +27,7 @@ beforeAll(async () => {
   data = await loadBundledData();
   // The unemployment rules load on demand; the probes need every state's.
   await Promise.all(data.stateUiCodes().map((code) => data.loadStateUi(code)));
+  await data.loadDeferred("student-loans-2026");
 });
 
 describe("the engine observation", () => {

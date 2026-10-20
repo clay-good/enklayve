@@ -75,6 +75,7 @@ import { owedScreenerTile } from "./owedScreener";
 import { acaPtcTile } from "./acaPtc";
 import { saversCreditTile } from "./saversCredit";
 import { dependentCareTile } from "./dependentCare";
+import { studentLoanPaymentTile } from "./studentLoanPayment";
 import { secondIncomeTile } from "./secondIncome";
 import { snapTile } from "./snap";
 import { medicaidTile } from "./medicaid";
@@ -198,6 +199,7 @@ const HUB_CONFIGS: HubConfig[] = [
       autoLoanTile,
       balanceTransferTile,
       freedomDateTile,
+      studentLoanPaymentTile,
     ],
   },
   {

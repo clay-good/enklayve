@@ -31,6 +31,7 @@ import {
   type SnapData,
   type MedicaidData,
   type FplKeyedProgramsData,
+  type StudentLoansData,
   type BillTriageData,
   type FreeFilingData,
   type NoSurprisesData,
@@ -88,7 +89,8 @@ const rawFiles = import.meta.glob(
     "!../../data/ssi-2026.json",
     "!../../data/medicare-savings-2026.json",
     "!../../data/dependent-care-2026.json",
-    "!../../data/fpl-keyed-programs-2026.json"],
+    "!../../data/fpl-keyed-programs-2026.json",
+    "!../../data/student-loans-2026.json"],
   { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
@@ -113,6 +115,7 @@ const deferredFiles = import.meta.glob(
     "../../data/medicare-savings-2026.json",
     "../../data/dependent-care-2026.json",
     "../../data/fpl-keyed-programs-2026.json",
+    "../../data/student-loans-2026.json",
   ],
   { query: "?raw", import: "default" },
 ) as Record<string, () => Promise<string>>;
@@ -168,6 +171,7 @@ export interface BundledData {
   /** Medicaid expansion status and thresholds by state (BUILD-SPEC.md §4.3). */
   medicaid(): MedicaidData | null;
   fplKeyedPrograms(): FplKeyedProgramsData | null;
+  studentLoans(): StudentLoansData | null;
   /** Bill-triage consequence rules (SPEC-4 §A3). */
   billTriage(): BillTriageData | null;
   /** Free tax-filing channels and their eligibility tests (SPEC-4 §A5). */
@@ -363,6 +367,7 @@ async function build(): Promise<BundledData> {
     saversCredit: () => dataOf("savers-credit-2024") as SaversCreditData | null,
     snap: () => dataOf("snap-fy2024-contiguous") as SnapData | null,
     medicaid: () => dataOf("medicaid-2024") as MedicaidData | null,
+    studentLoans: () => deferredDataOf("student-loans-2026") as StudentLoansData | null,
     fplKeyedPrograms: () =>
       deferredDataOf(FPL_KEYED_PROGRAMS) as FplKeyedProgramsData | null,
     billTriage: () => dataOf("bill-triage-2026") as BillTriageData | null,

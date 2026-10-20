@@ -1,0 +1,52 @@
+{
+  "year": 2026,
+  "rap": {
+    "floorAgi": 10000,
+    "floorAnnualPayment": 120,
+    "tiers": [
+      { "over": 10000, "pct": 1 },
+      { "over": 20000, "pct": 2 },
+      { "over": 30000, "pct": 3 },
+      { "over": 40000, "pct": 4 },
+      { "over": 50000, "pct": 5 },
+      { "over": 60000, "pct": 6 },
+      { "over": 70000, "pct": 7 },
+      { "over": 80000, "pct": 8 },
+      { "over": 90000, "pct": 9 },
+      { "over": 100000, "pct": 10 }
+    ],
+    "dependentReductionMonthly": 50,
+    "minimumMonthly": 10,
+    "principalMatchMonthly": 50,
+    "qualifyingPayments": 360
+  },
+  "standard": {
+    "terms": [
+      { "principalBelow": 25000, "years": 10 },
+      { "principalBelow": 50000, "years": 15 },
+      { "principalBelow": 100000, "years": 20 },
+      { "principalBelow": null, "years": 25 }
+    ]
+  },
+  "ibr": {
+    "povertyMultiple": 1.5,
+    "pct": 15,
+    "newBorrowerPct": 10,
+    "years": 25,
+    "newBorrowerYears": 20,
+    "capYears": 10
+  },
+  "interestDeduction": {
+    "max": 2500,
+    "phaseOut": { "other": [85000, 100000], "joint": [175000, 205000] }
+  },
+  "employerAssistanceMax": 5250,
+  "newLoanDate": "2026-07-01",
+  "citation": {
+    "sourceUrl": "https://www.law.cornell.edu/uscode/text/20/1087e",
+    "sourceDocument": "20 U.S.C. §§1087e(d)(7), 1087e(q), 1098e; Federal Student Aid, IDR Plan Request (OMB 1845-0102); Rev. Proc. 2025-32 §.29",
+    "sourceNote": "The un-park gate (SPEC-5-student-loans §4), read 2026-10-20. Each RAP parameter is checked in two places: the statute, 20 U.S.C. §1087e(q) on Cornell LII, and the Department's IDR Plan Request form (studentaid.gov/sites/default/files/IncomeDrivenRepayment-en-us.pdf, OMB 1845-0102, exp. 08/31/2029). Base payment of $120 at AGI not more than $10,000, then 1% to 10% of AGI in $10,000 tiers above $10,000, 10% above $100,000: agree. Base divided by 12, less $50 for each dependent: agree. $10 minimum monthly payment: agree. Unpaid interest not charged after an on-time payment (§1087e(q)(2)(A); the form: \"for the life of the loan\"): agree. Principal reduced by at least the lesser of $50 or the payment (§1087e(q)(2)(B)): agree. Cancellation after 360 qualifying payments (§1087e(q)(1)(D)-(E); the form: \"360 qualifying monthly payments in not less than 30 years\"): agree. The Tiered Standard plan's terms by total principal (§1087e(d)(7)(A)(i)(II)): 10 years under $25,000, 15 under $50,000, 20 under $100,000, 25 at $100,000 or more; the Department's form states only \"between 10 and 25 years\" by principal, which agrees as far as it goes. Income-based repayment (20 U.S.C. §1098e): 15% of AGI above 150% of the poverty line, 10% and 20 years for a new borrower on or after July 1, 2014 and before July 1, 2026, otherwise 25 years, and no more than the 10-year standard payment: agrees with the form. Rev. Proc. 2025-32 §.29: the §221 deduction of up to $2,500 phases out between $85,000 and $100,000 of MAGI ($175,000 and $205,000 joint) for 2026. 26 U.S.C. §127(a)(2): $5,250 of employer educational assistance, which §127(c)(1)(B) lets include payments on a qualified education loan. 26 U.S.C. §108(f)(5), as amended by Pub. L. 119-21 §70119 for discharges after December 31, 2025, now excludes only discharges on death or disability, so a balance forgiven under RAP or IBR is income under current law.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-20"
+  }
+}

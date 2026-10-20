@@ -147,6 +147,17 @@ describe("the containment test on money", () => {
 });
 
 const BOUND: Bound[] = [
+  // Federal Student Loan Payment's "how": RAP's $10 floor and $50 a dependent.
+  {
+    file: "tiles/studentLoanPaymentHow.ts",
+    shard: "student-loans-2026",
+    path: ".rap.minimumMonthly",
+  },
+  {
+    file: "tiles/studentLoanPaymentHow.ts",
+    shard: "student-loans-2026",
+    path: ".rap.dependentReductionMonthly",
+  },
   // Child & Dependent Care's "how" block: §21(c)'s two caps and §129's limit.
   { file: "tiles/dependentCareHow.ts", shard: "dependent-care-2026", path: ".expenseCap.one" },
   {

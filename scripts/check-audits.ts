@@ -168,6 +168,7 @@ export const SUBJECTS: Record<string, string[]> = {
   "Medicare Savings Programs and Extra Help": ["medicare-savings-2026"],
   "Child and dependent care": ["dependent-care-2026"],
   "Programs keyed to the poverty line": ["fpl-keyed-programs-2026"],
+  "Federal student loans": ["student-loans-2026"],
   FAFSA: ["fafsa-2024-2025"],
   "Life events": ["life-events-2026"],
   "Bill triage": ["bill-triage-2026"],

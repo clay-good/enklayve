@@ -132,6 +132,16 @@ const BOUND: YearBound[] = [
  * DO move honest.
  */
 const NOT_A_TAX_YEAR: Record<string, Record<string, string>> = {
+  "tiles/studentLoanPaymentHow.ts": {
+    "2014": "§1098e(e)'s new-borrower date, which the statute fixes",
+    "2025": "the year of the budget law, history",
+    "2026": "July 1, 2026, when RAP and the tiered Standard plan began, which the statute fixes",
+    "2028": "July 1, 2028, when the income-contingent plans close, which the statute fixes",
+  },
+  "tiles/studentLoanPaymentView.ts": {
+    "2014": "§1098e(e)'s new-borrower date, asked as a yes/no",
+    "2026": "§1087e(d)(7)'s date for new loans, asked as a yes/no",
+  },
   "tiles/dependentCareHow.ts": {
     "2026":
       "Pub. L. 119-21 §§70404, 70405 rewrote the credit and the FSA for taxable years beginning after 2025, a date the statute fixes",

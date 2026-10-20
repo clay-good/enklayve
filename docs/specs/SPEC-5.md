@@ -286,6 +286,15 @@ The appeal date renders as a `Deadline` cited to `medicare-summary-appeal`. Besi
 
 **Shell cost.** One tile and one small shard with the shell.
 
+**Status — shipped 2026-10-20, the gate passed.** Every Repayment Assistance Plan parameter was read in both places and agrees: 20 U.S.C. §1087e(q) on Cornell LII, and the Department's IDR Plan Request form (OMB 1845-0102). The record is in `student-loans-2026`'s `sourceNote`, with both URLs on source-watch. `student-loan-payment` (Borrowing & Debt, tier 2) is on the lazy pattern. It simulates each plan month by month: RAP with its interest waiver and $50 principal match, the tiered Standard plan from §1087e(d)(7), and legacy IBR from §1098e capped at the 10-year payment. The reader's eligibility picks which plans show: Standard with a loan from July 1, 2026, IBR without one. A SAVE, PAYE or ICR borrower gets the `idr-transition-2028` window as a cited `Deadline` and no payment for the ending plan. The golden cases:
+- RAP at $9,000, $10,001, $20,000, $55,000 and $120,000 with zero and two dependents.
+- A RAP case below the month's interest: $50 a month, $18,000 paid, $32,000 cancelled after 360 payments.
+- The Standard term at each breakpoint.
+- IBR at 15% and 10% and against its cap.
+- A copy test that no plan is named as the choice.
+
+§221's deduction is shown as a deduction amount (Rev. Proc. 2025-32's 2026 phase-out), not run through the tax engine for its worth. §127's $5,250 is stated. The forgiven balance is called taxable income under §108(f)(5) as amended, without a computed tax. **Measured: 0.5 kB** (312.1 → 312.6 of 325).
+
 ---
 
 ## 9. Decisions recorded

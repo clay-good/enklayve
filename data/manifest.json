@@ -1108,6 +1108,19 @@
       "contentHash": "04abb3529bd287c6a4a1c39de232ba609ed3ea78709092ab59cc6290d7164f54"
     },
     {
+      "id": "student-loans-2026",
+      "kind": "student-loans",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "student-loans-2026.json",
+      "sourceUrl": "https://www.law.cornell.edu/uscode/text/20/1087e",
+      "sourceDocument": "20 U.S.C. §§1087e(d)(7), 1087e(q), 1098e; Federal Student Aid, IDR Plan Request (OMB 1845-0102); Rev. Proc. 2025-32 §.29",
+      "dateRetrieved": "2026-10-20",
+      "contentHash": "9a575568e530211dc14abffd14b771c3037e5723a7187b2e4c83578b016dbc74"
+    },
+    {
       "id": "medicare-savings-2026",
       "kind": "medicare-savings",
       "version": "2026.0",

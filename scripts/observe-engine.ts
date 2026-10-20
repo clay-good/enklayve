@@ -97,6 +97,12 @@ import { socialSecurityBenefit, fullRetirementAgeMonths } from "../src/engine/so
 import { spousalBenefit, survivorBenefit, survivorFraMonths } from "../src/engine/ssFamily";
 import { medicareSavingsScreen } from "../src/engine/medicareSavings";
 import { applicablePercentage, compareDependentCare } from "../src/engine/dependentCare";
+import {
+  interestDeduction,
+  rapOutcome,
+  standardOutcome,
+  standardYears,
+} from "../src/engine/studentLoans";
 import { socialSecurityBenefitTaxation } from "../src/engine/socialSecurityTax";
 import {
   bracketTax,
@@ -137,6 +143,7 @@ export const PROBED_FILES = [
   "src/engine/ssFamily.ts",
   "src/engine/medicareSavings.ts",
   "src/engine/dependentCare.ts",
+  "src/engine/studentLoans.ts",
   "src/engine/socialSecurityTax.ts",
   "src/engine/tax/brackets.ts",
   "src/engine/taxMoves.ts",
@@ -1136,6 +1143,35 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
           r.reducedPrice,
         ]),
       );
+
+  // --- student loans: §221's phase-out at each end, a RAP payment below and
+  // above the month's interest, and the Standard term at each breakpoint.
+  // Deferred, so the caller loads it first, as for the unemployment rules: a
+  // probe that skipped quietly would report "no observed difference" because
+  // nothing looked.
+  const loans = data.studentLoans();
+  if (!loans) throw new Error("load student-loans-2026 before observing it");
+  {
+    for (const magi of [85000, 85000.01, 99999.99, 100000])
+      for (const joint of [false, true])
+        put(`sl221(${magi},${joint})`, interestDeduction(2500, magi, joint, loans));
+    for (const agi of [30000, 90000])
+      for (const balance of [20000, 50000]) {
+        const s = {
+          balance,
+          ratePct: 7,
+          agi,
+          dependents: 0,
+          familySize: 1,
+          incomeGrowth: 0,
+          newBorrower2014: true,
+        };
+        put(`rap(${agi},${balance})`, rapOutcome(s, loans));
+        put(`std(${agi},${balance})`, standardOutcome(s, loans));
+      }
+    for (const p of [24999.99, 25000, 99999.99, 100000])
+      put(`stdYears(${p})`, standardYears(p, loans));
+  }
 
   // --- dependent care: §21(a)(2)'s thresholds on each side, a cent over, both
   // floors, one child against two, and the earned-income limit at the cap.

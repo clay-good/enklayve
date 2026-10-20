@@ -1489,6 +1489,45 @@ export const FplKeyedProgramsSchema = z.object({
 });
 export type FplKeyedProgramsData = z.infer<typeof FplKeyedProgramsSchema>;
 
+/** Federal student loan repayment after Pub. L. 119-21 (SPEC-5 Phase 33). */
+export const StudentLoansSchema = z.object({
+  year: z.number().int(),
+  rap: z.object({
+    floorAgi: z.number().gt(0),
+    floorAnnualPayment: z.number().gt(0),
+    /** Whole percent of all AGI, for AGI above `over`, ascending. */
+    tiers: z.array(z.object({ over: z.number().gt(0), pct: z.number().gt(0) })).min(1),
+    dependentReductionMonthly: z.number().gt(0),
+    minimumMonthly: z.number().gt(0),
+    principalMatchMonthly: z.number().gt(0),
+    qualifyingPayments: z.number().int().gt(0),
+  }),
+  standard: z.object({
+    terms: z
+      .array(z.object({ principalBelow: z.number().gt(0).nullable(), years: z.number().int().gt(0) }))
+      .min(1),
+  }),
+  ibr: z.object({
+    povertyMultiple: z.number().gt(0),
+    pct: z.number().gt(0),
+    newBorrowerPct: z.number().gt(0),
+    years: z.number().int().gt(0),
+    newBorrowerYears: z.number().int().gt(0),
+    capYears: z.number().int().gt(0),
+  }),
+  interestDeduction: z.object({
+    max: z.number().gt(0),
+    phaseOut: z.object({
+      other: z.tuple([z.number(), z.number()]),
+      joint: z.tuple([z.number(), z.number()]),
+    }),
+  }),
+  employerAssistanceMax: z.number().gt(0),
+  newLoanDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  citation: CitationSchema,
+});
+export type StudentLoansData = z.infer<typeof StudentLoansSchema>;
+
 export const GiftTaxSchema = z.object({
   taxYear: z.number().int(),
   annualExclusion: z.number().gte(0),
@@ -2141,6 +2180,7 @@ export const DATASET_SCHEMAS = {
   "medicare-savings": MedicareSavingsSchema,
   "dependent-care": DependentCareSchema,
   "fpl-keyed-programs": FplKeyedProgramsSchema,
+  "student-loans": StudentLoansSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

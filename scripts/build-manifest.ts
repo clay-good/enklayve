@@ -321,6 +321,12 @@ const SHARDS: ShardSource[] = [
     staleAfterYears: 1,
   },
   {
+    id: "student-loans-2026",
+    kind: "student-loans",
+    shard: "student-loans-2026.json",
+    ...PILLAR4_ANNUAL,
+  },
+  {
     id: "medicare-savings-2026",
     kind: "medicare-savings",
     shard: "medicare-savings-2026.json",

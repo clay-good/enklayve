@@ -69,6 +69,37 @@ interface RateBound {
 const asPoints = (n: number) => n;
 
 const BOUND: RateBound[] = [
+  // Federal Student Loan Payment's "how": RAP's lowest and highest tiers,
+  // and §1098e's 15%, 10% and 150% of the poverty line.
+  {
+    file: "tiles/studentLoanPaymentHow.ts",
+    shard: "student-loans-2026",
+    path: ".rap.tiers.0.pct",
+    derive: asPoints,
+  },
+  {
+    file: "tiles/studentLoanPaymentHow.ts",
+    shard: "student-loans-2026",
+    path: ".rap.tiers.9.pct",
+    derive: asPoints,
+  },
+  {
+    file: "tiles/studentLoanPaymentHow.ts",
+    shard: "student-loans-2026",
+    path: ".ibr.pct",
+    derive: asPoints,
+  },
+  {
+    file: "tiles/studentLoanPaymentHow.ts",
+    shard: "student-loans-2026",
+    path: ".ibr.newBorrowerPct",
+    derive: asPoints,
+  },
+  {
+    file: "tiles/studentLoanPaymentHow.ts",
+    shard: "student-loans-2026",
+    path: ".ibr.povertyMultiple",
+  },
   // The Readout's 1099-R question (SPEC-5-readout-v3 R2): §72(t)'s 10% and
   // §3405(c)'s 20%, the same rates Cashing Out a 401(k) reads.
   { file: "readout/checks.ts", shard: "early-distribution-2026", path: ".additionalTaxRate" },
