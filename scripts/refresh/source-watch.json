@@ -384,6 +384,13 @@
       "why": "Pub. 15 restates the supplemental-wage rates each December; Pub. L. 119-21 made the brackets they track permanent, so a change here is either a new edition or a rate to re-read.",
       "fingerprint": "5da796b8e41fde4d03b5d6832e0cdde1dd430600303a641cc9d34bedea283c3c",
       "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "ui-taxation-2026",
+      "url": "https://www.law.cornell.edu/uscode/text/26/3402",
+      "why": "The 10% voluntary withholding on unemployment compensation is §3402(p)(2); the per-state treatment is read each January under the zero-year window, since 21 agency pages are too many to fingerprint with confidence.",
+      "fingerprint": "f5330b06be4c65d8d93195d7b16ca05e6b6c7727d52345281763256f8a57de3d",
+      "checkedOn": "2026-10-20"
     }
   ]
 }

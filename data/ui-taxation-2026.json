@@ -1,0 +1,243 @@
+{
+  "federalWithholdingRate": 0.1,
+  "states": {
+    "ca": {
+      "taxed": "no",
+      "withholdingOffered": false,
+      "citation": {
+        "sourceUrl": "https://edd.ca.gov/en/unemployment/Get_Tax_Information_Form_1099G/",
+        "sourceDocument": "EDD, Get Tax Information (Form 1099G)",
+        "sourceNote": "EDD: \"California State Tax Return: You don't need to report your Form 1099G.\" The page names federal withholding only. Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "tx": {
+      "taxed": "none",
+      "withholdingOffered": false,
+      "citation": {
+        "sourceUrl": "https://comptroller.texas.gov/taxes/",
+        "sourceDocument": "Texas Comptroller, no state personal income tax",
+        "sourceNote": "No personal income tax, so nothing to withhold; the agency offers only the federal 10%. Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "fl": {
+      "taxed": "none",
+      "withholdingOffered": false,
+      "citation": {
+        "sourceUrl": "https://floridarevenue.com/taxes/Pages/default.aspx",
+        "sourceDocument": "Florida Department of Revenue, no state personal income tax",
+        "sourceNote": "No personal income tax, so nothing to withhold; the agency offers only the federal 10%. Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "ny": {
+      "taxed": "yes",
+      "withholdingOffered": true,
+      "citation": {
+        "sourceUrl": "https://dol.ny.gov/unemployment/1099-g-tax-form",
+        "sourceDocument": "NYS DOL, 1099-G Tax Form",
+        "sourceNote": "NYS DOL: \"Benefits paid to you are considered taxable income.\" Box 11 of its 1099-G reports \"state income taxes withheld from your benefits\", so state withholding is offered; the rate is not stated there. Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "pa": {
+      "taxed": "no",
+      "withholdingOffered": false,
+      "citation": {
+        "sourceUrl": "https://www.pa.gov/en/agencies/dli/resources/for-claimants-workers/benefits-information/benefit-guide.html",
+        "sourceDocument": "PA Department of Labor & Industry, UC Benefit Guide",
+        "sourceNote": "L&I: \"These benefits are not taxable by the Commonwealth of Pennsylvania and local governments.\" It offers federal withholding at 10% only. The Revenue PIT Guide lists unemployment compensation among items never taxable. Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "il": {
+      "taxed": "yes",
+      "withholdingOffered": true,
+      "citation": {
+        "sourceUrl": "https://tax.illinois.gov/individuals/taxableincome.html",
+        "sourceDocument": "Illinois Department of Revenue, taxable income; IDES form TAX-2",
+        "sourceNote": "IDOR: \"Railroad Unemployment is the only type of unemployment income that is not taxed by Illinois.\" IDES TAX-2: \"I voluntarily elect to have state of Illinois income tax in the amount of 4.95% deducted and withheld\". Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "oh": {
+      "taxed": "yes",
+      "withholdingOffered": null,
+      "citation": {
+        "sourceUrl": "https://codes.ohio.gov/ohio-revised-code/section-4141.321",
+        "sourceDocument": "Ohio Rev. Code §4141.321; Ohio Department of Taxation",
+        "sourceNote": "ORC 4141.321(A)(1): benefits are \"subject to federal and state income taxes\", and (A)(3) lets a claimant elect state withholding under §5747.065. No ODJFS page read confirms the option is live, so the estimator tells the reader to ask. Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "mi": {
+      "taxed": "yes",
+      "withholdingOffered": true,
+      "citation": {
+        "sourceUrl": "https://www.legislature.mi.gov/Laws/MCL?objectName=MCL-421-27B",
+        "sourceDocument": "MCL 421.27b",
+        "sourceNote": "MCL 421.27b: claimants are told \"That unemployment benefits are subject to federal and state income tax\", and \"an election by an individual to have income tax withheld from unemployment compensation payments applies to both federal and state income tax.\" Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "nj": {
+      "taxed": "no",
+      "withholdingOffered": false,
+      "citation": {
+        "sourceUrl": "https://www.nj.gov/treasury/taxation/njit12.shtml",
+        "sourceDocument": "NJ Division of Taxation, income not subject to tax",
+        "sourceNote": "The Division lists \"Unemployment compensation\" among income not subject to New Jersey tax; NJDOL offers only federal 10% withholding. Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "va": {
+      "taxed": "no",
+      "withholdingOffered": false,
+      "citation": {
+        "sourceUrl": "https://law.lis.virginia.gov/vacode/title58.1/chapter3/section58.1-322.02/",
+        "sourceDocument": "Va. Code §58.1-322.02, subtraction 17",
+        "sourceNote": "Va. Code §58.1-322.02(17) subtracts \"Unemployment benefits taxable pursuant to § 85 of the Internal Revenue Code\"; VEC: \"No, benefits are not subject to state taxes.\" Some older VEC pages say otherwise; the statute governs. Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "wa": {
+      "taxed": "none",
+      "withholdingOffered": false,
+      "citation": {
+        "sourceUrl": "https://dor.wa.gov/taxes-rates/income-tax",
+        "sourceDocument": "Washington Department of Revenue, no personal income tax on wages",
+        "sourceNote": "No personal income tax, so nothing to withhold; the agency offers only the federal 10%. Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "az": {
+      "taxed": "yes",
+      "withholdingOffered": true,
+      "citation": {
+        "sourceUrl": "https://www.azleg.gov/ars/23/00792.htm",
+        "sourceDocument": "A.R.S. §23-792",
+        "sourceNote": "A.R.S. 23-792: benefits are \"subject to federal and state tax\", and a claimant may elect state withholding \"at the rate of ten per cent of the amount withheld for federal income tax.\" Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "ma": {
+      "taxed": "yes",
+      "withholdingOffered": true,
+      "citation": {
+        "sourceUrl": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXXI/Chapter151A/Section29E",
+        "sourceDocument": "M.G.L. c. 151A §29E",
+        "sourceNote": "§29E: payments \"are subject to federal and state income tax\", and a claimant may elect \"to have federal and state income tax deducted and withheld\". Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "tn": {
+      "taxed": "none",
+      "withholdingOffered": false,
+      "citation": {
+        "sourceUrl": "https://www.tn.gov/revenue/taxes.html",
+        "sourceDocument": "Tennessee Department of Revenue, no personal income tax",
+        "sourceNote": "No personal income tax, so nothing to withhold; the agency offers only the federal 10%. Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "in": {
+      "taxed": "partly",
+      "withholdingOffered": true,
+      "citation": {
+        "sourceUrl": "https://www.in.gov/dor/i-am-a/individual/individual-faq/",
+        "sourceDocument": "Indiana DOR, individual FAQ; DWD Claimant Handbook",
+        "sourceNote": "DOR: \"Unemployment compensation is taxable on both federal and state tax returns\", with a deduction that can reduce the amount taxed. DWD handbook: claimants may have \"4% withheld for state income taxes\". Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "md": {
+      "taxed": "yes",
+      "withholdingOffered": true,
+      "citation": {
+        "sourceUrl": "https://labor.maryland.gov/employment/clmtguide/uiclmtpamphlet.pdf",
+        "sourceDocument": "Maryland Division of Unemployment Insurance, claimant pamphlet",
+        "sourceNote": "\"You may choose to have federal tax (10%), Maryland state tax (7%), both, or no taxes withheld\"; benefits \"are subject to both federal and state income taxes.\" Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "mo": {
+      "taxed": "yes",
+      "withholdingOffered": false,
+      "citation": {
+        "sourceUrl": "https://labor.mo.gov/faqs/knowledge-base/are-my-benefits-taxable",
+        "sourceDocument": "Missouri Department of Labor, Are my benefits taxable?",
+        "sourceNote": "\"Unemployment benefits are subject to federal and state income taxes.\" RSMo 288.379 provides for federal withholding only. Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "co": {
+      "taxed": "yes",
+      "withholdingOffered": null,
+      "citation": {
+        "sourceUrl": "https://cdle.colorado.gov/ui/claimants/claimant-guide/amount-of-ui-benefits",
+        "sourceDocument": "CDLE, claimant guide: amount of UI benefits",
+        "sourceNote": "CDLE: \"Your unemployment benefits are taxable by both the federal and state governments.\" It says taxes may be withheld without saying state tax plainly, so the estimator tells the reader to ask. Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "wi": {
+      "taxed": "partly",
+      "withholdingOffered": true,
+      "citation": {
+        "sourceUrl": "https://www.revenue.wi.gov/Pages/FAQS/ise-unemployment.aspx",
+        "sourceDocument": "Wisconsin DOR, unemployment compensation FAQ; DWD withholding",
+        "sourceNote": "DOR: the taxable amount \"is equal to the lesser of\" two figures set by federal AGI and filing status. DWD: \"The State withholding is 5% of the weekly amount payable.\" Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "sc": {
+      "taxed": "yes",
+      "withholdingOffered": true,
+      "citation": {
+        "sourceUrl": "https://www.dew.sc.gov/individuals/how-unemployment-insurance-works/weekly-benefit-amount",
+        "sourceDocument": "SC DEW, weekly benefit amount; SC DOR FAQ",
+        "sourceNote": "DOR: unemployment compensation taxed federally \"is taxable to South Carolina\". DEW: \"federal withholdings are 10 percent ... and state withholdings are 7 percent.\" Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    "al": {
+      "taxed": "no",
+      "withholdingOffered": false,
+      "citation": {
+        "sourceUrl": "https://www.revenue.alabama.gov/individual-corporate/income-exempt-from-alabama-income-taxation/",
+        "sourceDocument": "Alabama DOR, Income Exempt from Alabama Income Taxation",
+        "sourceNote": "The Department lists \"Unemployment compensation\" as income exempt from Alabama income tax; the Department of Workforce offers federal withholding only. Read 2026-10-19.",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    }
+  },
+  "citation": {
+    "sourceUrl": "https://www.law.cornell.edu/uscode/text/26/3402",
+    "sourceDocument": "IRC §85(a) (unemployment compensation is gross income); IRC §3402(p)(2) (voluntary withholding); IRS Form W-4V",
+    "sourceNote": "§85(a): \"In the case of an individual, gross income includes unemployment compensation.\" §3402(p)(2): when a claimant's request is in effect, a payment of unemployment compensation is treated as wages, and \"The amount to be deducted and withheld ... shall be an amount equal to 10 percent of such payment.\" The request is made on Form W-4V or the state agency's own form; no other federal rate may be elected. Each state's treatment carries its own citation. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

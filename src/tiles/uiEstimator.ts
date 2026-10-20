@@ -275,6 +275,7 @@ export function mountUiEstimator(ctx: TileContext): void {
             ]
           : []),
         el("p", { class: "uie-math", text: totalLine(r, rules, locale) }),
+        netBlock(r.weeklyPaid || r.weeklyTotal, r.maxBenefit),
       );
     }
     blocks.push(
@@ -286,6 +287,40 @@ export function mountUiEstimator(ctx: TileContext): void {
       ),
     );
     return blocks;
+  }
+
+  /**
+   * What the check nets after tax (SPEC-5 layoff-month J3): loaded with its
+   * shard once there is a figure to net, so the shell carries none of it.
+   */
+  function netBlock(weekly: number, yearBenefits: number): HTMLElement {
+    const box = el("div", { class: "uie-net-box", attrs: { "aria-busy": "true" } });
+    const code = fields.stateCode;
+    if (!data) return box;
+    void Promise.all([import("./uiNetView"), data.loadDeferred("ui-taxation-2026")]).then(
+      ([m]) => {
+        const rules = data.uiTaxation();
+        box.removeAttribute("aria-busy");
+        if (!rules || fields.stateCode !== code) return;
+        box.replaceChildren(
+          ...m.renderUiNet(
+            {
+              stateCode: code,
+              stateName: stateName(code),
+              weekly,
+              yearBenefits,
+              filingStatus: ctx.profile.get("filingStatus") ?? "single",
+              otherIncome: ctx.profile.get("annualIncome") ?? 0,
+              locale: ctx.locale,
+            },
+            rules,
+            data,
+          ),
+        );
+      },
+      () => box.removeAttribute("aria-busy"),
+    );
+    return box;
   }
 
   let latest = 0;

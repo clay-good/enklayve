@@ -1267,6 +1267,34 @@ export const SupplementalWithholdingSchema = z.object({
 });
 export type SupplementalWithholdingData = z.infer<typeof SupplementalWithholdingSchema>;
 
+/**
+ * How unemployment benefits are taxed (SPEC-5 layoff-month J3). Federal: gross
+ * income under IRC §85, with 10% withholding on request under §3402(p)(2).
+ * State: each read from that state's own revenue department or unemployment
+ * agency, with its own citation, and a state not yet read is absent.
+ */
+export const UiTaxationSchema = z.object({
+  /** §3402(p)(2): the one federal rate a claimant may elect. */
+  federalWithholdingRate: z.number().gt(0).lt(1),
+  states: z
+    .record(
+      z.string().regex(/^[a-z]{2}$/),
+      z.object({
+        /** Whether the state's income tax reaches benefits. "partly" is a share
+         *  set by a formula this does not model (WI's, IN's deduction); "none"
+         *  is a state with no income tax. */
+        taxed: z.enum(["yes", "no", "partly", "none"]),
+        /** Whether the agency will withhold state income tax on request; null
+         *  where its own pages do not say so plainly. */
+        withholdingOffered: z.boolean().nullable(),
+        citation: CitationSchema,
+      }),
+    )
+    .default({}),
+  citation: CitationSchema,
+});
+export type UiTaxationData = z.infer<typeof UiTaxationSchema>;
+
 export const GiftTaxSchema = z.object({
   taxYear: z.number().int(),
   annualExclusion: z.number().gte(0),
@@ -1921,6 +1949,7 @@ export const DATASET_SCHEMAS = {
   "early-distribution": EarlyDistributionSchema,
   "separation-rules": SeparationRulesSchema,
   "supplemental-withholding": SupplementalWithholdingSchema,
+  "ui-taxation": UiTaxationSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

@@ -1017,6 +1017,19 @@
       "contentHash": "f0a5325f6383a1911e0365710575f5ce807ac47c1ca1fe8f6e5bc59e8ca4b2f3"
     },
     {
+      "id": "ui-taxation-2026",
+      "kind": "ui-taxation",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "ui-taxation-2026.json",
+      "sourceUrl": "https://www.law.cornell.edu/uscode/text/26/3402",
+      "sourceDocument": "IRC §85(a) (unemployment compensation is gross income); IRC §3402(p)(2) (voluntary withholding); IRS Form W-4V",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "e7f9c3d6c2c43e729e79003517cdd5c9c516b634d628b4a0146883f5ecea11bf"
+    },
+    {
       "id": "child-tax-2024",
       "kind": "child-tax",
       "version": "2026.0",

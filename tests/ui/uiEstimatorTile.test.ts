@@ -2,6 +2,8 @@ import { describe, it, expect, beforeAll, vi } from "vitest";
 import axe from "axe-core";
 import { mountUiEstimator, uiEstimatorTile } from "../../src/tiles/uiEstimator";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
+import { evaluateTaxes } from "../../src/engine/tax";
+import { renderUiNet } from "../../src/tiles/uiNetView";
 import { SituationStore } from "../../src/profile/situation";
 import { checkHarmTier, type AuditTile } from "../../scripts/audit-release";
 import type { TileContext } from "../../src/tiles/types";
@@ -264,5 +266,79 @@ describe("Unemployment Benefit Estimate", () => {
     const results = await axe.run(root, { rules: { "color-contrast": { enabled: false } } });
     root.remove();
     expect(results.violations).toEqual([]);
+  });
+});
+
+/**
+ * What the check nets after tax (SPEC-5 layoff-month J3): federal from §85 and
+ * §3402(p)(2), the state half from each state's own page.
+ */
+describe("what the unemployment check nets", () => {
+  const net = async (st: string, other = 50000): Promise<string> => {
+    await data.loadDeferred("ui-taxation-2026");
+    const profile = new SituationStore();
+    profile.set("annualIncome", other);
+    const { root } = mount(
+      new URLSearchParams({ st, q1: "12000", q2: "10000", q3: "8000", q4: "6000" }),
+      profile,
+    );
+    await vi.waitFor(() => expect(root.querySelector(".uie-net")).not.toBeNull());
+    return root.querySelector(".uie-net-box")?.textContent ?? "";
+  };
+  const federalOn = (benefits: number, other: number): string => {
+    const tax = (o: number) =>
+      evaluateTaxes(
+        { filingStatus: "single", wages: other, otherIncome: o },
+        { federal: data.federal()!, fica: data.fica()! },
+      ).federal.incomeTax;
+    return tax(benefits).subtract(tax(0)).format("en-US");
+  };
+
+  it("adds the claim to the year's income for the federal tax, and offers 10%", async () => {
+    // Texas: $480 a week, $9,720 for the claim.
+    const text = await net("TX");
+    expect(text).toContain(
+      "You can ask for 10% to be withheld, which leaves $432.00 of each $480.00",
+    );
+    expect(text).toContain(`the claim adds about ${federalOn(9720, 50000)} of federal income tax`);
+    expect(text).toContain("If you elect no withholding, that is what you would owe in April");
+    expect(text).toContain("Texas has no income tax");
+  });
+
+  it("names a state that taxes benefits, one that does not, and one that taxes part", async () => {
+    expect(await net("IL")).toContain("Illinois taxes them too");
+    expect(await net("CA")).toContain("California does not tax unemployment benefits");
+    expect(await net("WI")).toContain("Wisconsin taxes part of them");
+    expect(await net("CO")).toContain("Ask the agency whether it will withhold state tax");
+  });
+
+  it("gives no state figure for a state whose treatment has not been read", async () => {
+    await data.loadDeferred("ui-taxation-2026");
+    const rules = { ...data.uiTaxation()!, states: {} };
+    const text = renderUiNet(
+      {
+        stateCode: "TX",
+        stateName: "Texas",
+        weekly: 480,
+        yearBenefits: 9720,
+        filingStatus: "single",
+        otherIncome: 0,
+        locale: "en-US",
+      },
+      rules,
+      data,
+    )
+      .map((n) => n.textContent)
+      .join(" ");
+    expect(text).toContain("State treatment not yet read for Texas");
+  });
+
+  it("covers every state the estimator covers, each with its own citation", async () => {
+    await data.loadDeferred("ui-taxation-2026");
+    const states = data.uiTaxation()!.states;
+    for (const code of data.stateUiCodes()) {
+      expect(states[code], `${code} has no tax treatment`).toBeDefined();
+      expect(states[code]!.citation.sourceUrl).toMatch(/^https:/);
+    }
   });
 });

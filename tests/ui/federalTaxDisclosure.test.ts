@@ -80,6 +80,7 @@ describe("every tile that computes federal income tax", () => {
       "paycheckOptimizer.ts",
       "quarterlyTaxes.ts",
       "takeHome.ts",
+      "uiNetView.ts",
       "w4Withholding.ts",
     ]);
   });
@@ -110,6 +111,7 @@ describe("every tile that computes federal income tax", () => {
       "tiles/paycheckOptimizer.ts",
       "tiles/quarterlyTaxes.ts",
       "tiles/takeHome.ts",
+      "tiles/uiNetView.ts",
       "tiles/w4Withholding.ts",
       "ui/shell.ts",
     ]);
@@ -125,6 +127,32 @@ describe("every tile that computes federal income tax", () => {
       "these show a reader a federal tax figure computed without the five 2026 deductions and" +
         " say nothing about it — apply them, or name what is missing and which tool applies it",
     ).toEqual([]);
+  });
+
+  it("holds a tile that reaches the engine through another engine module to it too", () => {
+    // The rule above reads `evaluateTaxes(` in the tile's own source, so a tile
+    // whose engine module makes the call passed unseen: Cashing Out a 401(k)
+    // and Jointly or Separately both showed federal tax with none of the five
+    // deductions and said nothing. A lazy tile's "how" lives in its How file.
+    const read = (f: string): string => readFileSync(resolve(TILES, f), "utf8");
+    const composers = readdirSync(resolve(SRC, "engine"))
+      .filter((f) => f.endsWith(".ts"))
+      .filter((f) => readFileSync(resolve(SRC, "engine", f), "utf8").includes("evaluateTaxes("))
+      .map((f) => f.replace(/\.ts$/, ""));
+    const tiles = readdirSync(TILES).filter((f) => f.endsWith(".ts"));
+    const viaEngine = tiles.filter((f) =>
+      composers.some((m) => read(f).includes(`"../engine/${m}"`)),
+    );
+    expect(viaEngine.length, "found no tile composing a tax-engine caller").toBeGreaterThan(0);
+    const silent = viaEngine.filter((f) => {
+      const how = `${f.replace(/(View)?\.ts$/, "")}How.ts`;
+      const text = read(f) + (tiles.includes(how) ? read(how) : "");
+      return (
+        !DISCLOSURES.some((d) => text.includes(d)) &&
+        !/tips, overtime, car loan interest/.test(text)
+      );
+    });
+    expect(silent, "compute federal tax through an engine module and say nothing").toEqual([]);
   });
 
   it("does not let a tile that asks for nothing claim it applies them", () => {
