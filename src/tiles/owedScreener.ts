@@ -190,6 +190,11 @@ export function mountOwedScreener(ctx: TileContext): void {
 
   const results = el("div", { class: "screener-results", attrs: { "aria-live": "polite" } });
   let keyedRequested = false;
+  // A shard that lands after the reader has moved on, or after a test has
+  // torn its page down, has nothing to draw into.
+  const rerenderIfShown = (): void => {
+    if (root.isConnected) render();
+  };
 
   function render(): void {
     results.replaceChildren();
@@ -396,7 +401,7 @@ export function mountOwedScreener(ctx: TileContext): void {
       bundled.loadedDeferred("fpl-keyed-programs-2026") === undefined
     ) {
       keyedRequested = true;
-      void bundled.loadDeferred("fpl-keyed-programs-2026").then(() => render());
+      void bundled.loadDeferred("fpl-keyed-programs-2026").then(rerenderIfShown, () => {});
     }
     if (keyed) {
       for (const row of fplKeyedRows(
@@ -429,7 +434,7 @@ export function mountOwedScreener(ctx: TileContext): void {
       const loaded = bundled.loadedDeferred("medicare-savings-2026");
       const msp = bundled.medicareSavings();
       if (loaded === undefined) {
-        void bundled.loadDeferred("medicare-savings-2026").then(() => render());
+        void bundled.loadDeferred("medicare-savings-2026").then(rerenderIfShown, () => {});
         findings.push({
           program: "Medicare Savings Programs and Extra Help",
           estimate: "Loading",
