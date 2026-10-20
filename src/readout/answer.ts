@@ -44,7 +44,7 @@ const CHANNELS = {
   },
   medicareAppeals: {
     label: "Medicare.gov: how to appeal a claim decision",
-    url: "https://www.medicare.gov/claims-appeals/how-do-i-file-an-appeal",
+    url: "https://www.medicare.gov/providers-services/claims-appeals-complaints/appeals",
   },
   ship: {
     label: "Find your State Health Insurance Assistance Program (SHIP)",

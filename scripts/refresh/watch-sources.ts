@@ -210,9 +210,23 @@ export function looksLikeInterstitial(text: string): string | null {
   if (trimmed.length < MIN_SOURCE_TEXT) {
     return `page has only ${trimmed.length} characters of visible text; too short to be the source`;
   }
+  return refusalPhrase(trimmed);
+}
+
+/**
+ * The phrase half of {@link looksLikeInterstitial}, on its own: the watch also
+ * runs it over a page's visible text, where a refusal served inside a heavy
+ * template shows up although its raw HTML is long and its first 2,000
+ * characters are all `<head>`. The length half is not applied there, because
+ * a real section can be one paragraph (20 CFR §418.1325 is 600 characters).
+ */
+export function refusalPhrase(text: string): string | null {
+  const trimmed = text.trim();
   const refusals = [
     /programmatic access to these sites/i,
-    /request access/i,
+    // Word-bounded: Maryland's statute pages carry "Request Accessibility
+    // Services" in their menu.
+    /\brequest access\b/i,
     /access denied/i,
     /are you a (?:human|robot)/i,
     /enable javascript to (?:view|continue)/i,
@@ -239,7 +253,9 @@ export function planWatch(file: WatchFile, fetched: Map<string, string | Error>)
     }
     // Never fingerprint an interstitial: it is stable, so it would report
     // "unchanged" forever while the rule underneath it moved freely.
-    const interstitial = looksLikeInterstitial(got);
+    // Judged on the raw page and on its visible text: a refusal served in a
+    // heavy template passes the length test as HTML and fails it as text.
+    const interstitial = looksLikeInterstitial(got) ?? refusalPhrase(normalizeSourceText(got));
     if (interstitial !== null) {
       return {
         shard: entry.shard,

@@ -9,7 +9,7 @@
       "requires": "children",
       "worth": "Free or reduced-price breakfast and lunch at school",
       "categorical": "Children in a household on SNAP or TANF get free meals without an income test, and many schools serve every child free under community eligibility.",
-      "agencyUrl": "https://www.fns.usda.gov/nslp",
+      "agencyUrl": "https://www.fna.usda.gov/nslp",
       "rule": {
         "sourceUrl": "https://www.law.cornell.edu/uscode/text/42/1758",
         "sourceDocument": "42 U.S.C. §1758(b)(1)(A)",
@@ -24,7 +24,7 @@
       "requires": "youngChild",
       "worth": "Food, infant formula and nutrition support",
       "categorical": "Anyone on SNAP, Medicaid or TANF counts as income-eligible. A state may set its line lower, and its own table governs.",
-      "agencyUrl": "https://www.fns.usda.gov/wic/applicant-participant/eligibility",
+      "agencyUrl": "https://www.fna.usda.gov/wic/applicant-participant/eligibility",
       "rule": {
         "sourceUrl": "https://www.ecfr.gov/current/title-7/subtitle-B/chapter-II/subchapter-A/part-246/subpart-C/section-246.7",
         "sourceDocument": "7 CFR §246.7(d)",
@@ -70,7 +70,7 @@
       "requires": null,
       "worth": "Help with heating and cooling bills",
       "categorical": "Each state sets its own income line under a federal ceiling, and households on SNAP, SSI or TANF may be eligible at any income.",
-      "agencyUrl": "https://www.acf.hhs.gov/ocs/map/liheap-map-state-and-territory-contact-listing",
+      "agencyUrl": "https://acf.gov/ocs/data/map/liheap-map-state-and-territory-contact-listing",
       "rule": {
         "sourceUrl": "https://www.law.cornell.edu/uscode/text/42/8624",
         "sourceDocument": "42 U.S.C. §8624(b)(2)",

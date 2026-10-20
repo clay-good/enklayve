@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import {
   extractRuleBodies,
   looksLikeInterstitial,
+  refusalPhrase,
   acceptChanges,
   parseAcceptFlag,
   fingerprint,
@@ -174,6 +175,26 @@ describe("planning a watch run", () => {
     const changed = results.filter((r) => r.status === "changed");
     expect(changed).toHaveLength(1);
     expect(changed[0]?.shard).toBe("no-surprises-2026");
+  });
+
+  it("does not fingerprint a short refusal wrapped in a heavy page", () => {
+    // Enough markup to pass the length test as HTML, a refusal line as text,
+    // and the refusal past the first 2,000 characters of the raw page.
+    const heavy =
+      `<html><head>${'<meta name="x" content="y">'.repeat(200)}</head>` +
+      "<body><p>Due to aggressive automated scraping, programmatic access to these sites is limited.</p></body></html>";
+    const [result] = planWatch(FIXTURE, fetched(["https://example.gov/a", heavy]));
+    expect(result?.status).toBe("unreachable");
+  });
+
+  it("reads a real page whose menu offers to request accessibility services", () => {
+    const long = (body: string): string => body + " lorem ipsum".repeat(400);
+    expect(
+      refusalPhrase(long("Request Accessibility Services. § 8-803. Weekly benefit amount.")),
+    ).toBeNull();
+    expect(refusalPhrase("Request Access. Please complete the CAPTCHA.")).toMatch(
+      /access interstitial/,
+    );
   });
 
   it("never reports an unreachable source as unchanged", () => {

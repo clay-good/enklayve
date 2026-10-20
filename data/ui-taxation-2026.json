@@ -49,7 +49,7 @@
       "taxed": "no",
       "withholdingOffered": false,
       "citation": {
-        "sourceUrl": "https://www.pa.gov/en/agencies/dli/resources/for-claimants-workers/benefits-information/benefit-guide.html",
+        "sourceUrl": "https://www.pa.gov/agencies/dli/resources/for-claimants-workers/benefits-information/benefit-guide.html",
         "sourceDocument": "PA Department of Labor & Industry, UC Benefit Guide",
         "sourceNote": "L&I: \"These benefits are not taxable by the Commonwealth of Pennsylvania and local governments.\" It offers federal withholding at 10% only. The Revenue PIT Guide lists unemployment compensation among items never taxable. Read 2026-10-19.",
         "effectiveYear": 2026,
@@ -192,7 +192,7 @@
       "taxed": "yes",
       "withholdingOffered": null,
       "citation": {
-        "sourceUrl": "https://cdle.colorado.gov/ui/claimants/claimant-guide/amount-of-ui-benefits",
+        "sourceUrl": "https://cdle.colorado.gov/ui/claimants/claimant-guide/amount-of-benefits",
         "sourceDocument": "CDLE, claimant guide: amount of UI benefits",
         "sourceNote": "CDLE: \"Your unemployment benefits are taxable by both the federal and state governments.\" It says taxes may be withheld without saying state tax plainly, so the estimator tells the reader to ask. Read 2026-10-19.",
         "effectiveYear": 2026,

@@ -30,7 +30,7 @@
     },
     {
       "shard": "bill-triage-2026",
-      "url": "https://www.consumerfinance.gov/consumer-tools/educator-tools/your-money-your-goals/toolkit/",
+      "url": "https://www.consumerfinance.gov/consumer-tools/educator-tool/your-money-your-goals/toolkit/",
       "why": "The ordering framing and consequence language come from the CFPB's own tool. A change there is a reason to re-read the ordering, not to rewrite it automatically.",
       "fingerprint": "eb2aca684f91aa079df24661b7c04b330153a9bbb7a7351a8924a56b34a47f2e",
       "checkedOn": "2026-08-29"
@@ -207,8 +207,8 @@
       "shard": "state-ui-fl-2026",
       "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0443/Sections/0443.111.html",
       "why": "Florida's weekly range, its 1.5-times test and its weeks-by-unemployment-rate scale are all statutory, and the 2026 session considered raising the range. An amendment is a sentence somebody has to read.",
-      "fingerprint": "8e80343317aec7f516dcd6907b689c7bdcbe9eff50147bac07ff4f830500b233",
-      "checkedOn": "2026-10-19"
+      "fingerprint": "fbbba896020c09229ba963e8a1c59ce27505178e1fe712bcf9a3ba6f14ca0fa1",
+      "checkedOn": "2026-10-20"
     },
     {
       "shard": "state-ui-ny-2026",
@@ -331,7 +331,7 @@
     },
     {
       "shard": "enrollment-windows-2026",
-      "url": "https://www.ecfr.gov/current/title-20/chapter-III/part-418/subpart-B/section-418.1325",
+      "url": "https://www.ecfr.gov/current/title-20/chapter-III/part-418/subpart-B/subject-group-ECFRe5c996498e76059/section-418.1325",
       "why": "IRMAA reconsideration borrows the 60 days of §404.909 through this section; a rewrite here could give the surcharge its own clock.",
       "fingerprint": "d9877348e11e8694ac64f97fa2843d9a5359570242d1cd9b4be190109558456c",
       "checkedOn": "2026-10-19"
@@ -345,7 +345,7 @@
     },
     {
       "shard": "enrollment-windows-2026",
-      "url": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-B/part-405/subpart-I/section-405.942",
+      "url": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-B/part-405/subpart-I/subject-group-ECFR3ec6343ada14c59/section-405.942",
       "why": "The 120-day redetermination window for a Medicare Summary Notice, and its receipt presumption, are this section.",
       "fingerprint": "146fe607e283ce6fbd035c6626a081e7e74cf508855b64707f9d53ad949b68a8",
       "checkedOn": "2026-10-19"
@@ -401,9 +401,9 @@
     },
     {
       "shard": "ss-earnings-test-2026",
-      "url": "https://www.federalregister.gov/documents/2025/11/03/2025-19763/cost-of-living-increase-and-other-determinations-for-2026",
-      "why": "SSA's annual determinations notice states both exempt amounts and the withholding ratios; ssa.gov refuses this pipeline, and 2027's arrives as a new notice each fall, which the zero-year window forces a person to read.",
-      "fingerprint": "57e743ff35fb4ad185ed6617973a94c44caea167fff32cac7c46af3544a316e0",
+      "url": "https://www.federalregister.gov/documents/full_text/text/2025/11/03/2025-19763.txt",
+      "why": "SSA's annual determinations notice states both exempt amounts and the withholding ratios; ssa.gov refuses this pipeline, and 2027's arrives as a new notice each fall, which the zero-year window forces a person to read. Watched as the notice's plain text, from the Federal Register API's raw_text_url, because the HTML page carries live chrome that changes when the notice does not.",
+      "fingerprint": "8c31bca7b39ed091715c409d0eea4d477f39c98398e7aa9070b30102e1ec82a1",
       "checkedOn": "2026-10-20"
     },
     {
@@ -415,7 +415,7 @@
     },
     {
       "shard": "ssi-2026",
-      "url": "https://www.ecfr.gov/current/title-20/chapter-III/part-416/subpart-K/section-416.1112",
+      "url": "https://www.ecfr.gov/current/title-20/chapter-III/part-416/subpart-K/subject-group-ECFR3529f3ce4370291/section-416.1112",
       "why": "The earned-income exclusions and their order are §416.1112; the 2026 federal benefit rates come from SSA's annual notice, which the zero-year window forces a person to read each fall.",
       "fingerprint": "2254c0f544736fd1da5b7ed897be43afe1452db303f4d4e7a8ecdb51fcb03294",
       "checkedOn": "2026-10-20"

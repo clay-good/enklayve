@@ -31,7 +31,7 @@ export const studentLoanPaymentTile: TileDefinition = lazyTile(
     resources: [
       {
         label: "Federal Student Aid: Loan Simulator",
-        url: "https://studentaid.gov/loan-simulator/",
+        url: "https://studentaid.gov/repayment-calculator/",
       },
     ],
   },

@@ -1027,7 +1027,7 @@
       "sourceUrl": "https://www.law.cornell.edu/uscode/text/26/3402",
       "sourceDocument": "IRC §85(a) (unemployment compensation is gross income); IRC §3402(p)(2) (voluntary withholding); IRS Form W-4V",
       "dateRetrieved": "2026-10-19",
-      "contentHash": "e7f9c3d6c2c43e729e79003517cdd5c9c516b634d628b4a0146883f5ecea11bf"
+      "contentHash": "8729da5e6fc786a638f27c82caf4f5c92d6e91d81a5c72f213de71cd462a9846"
     },
     {
       "id": "medicare-costs-2026",
@@ -1053,7 +1053,7 @@
       "sourceUrl": "https://www.federalregister.gov/documents/2025/11/03/2025-19763/cost-of-living-increase-and-other-determinations-for-2026",
       "sourceDocument": "SSA, Cost-of-Living Increase and Other Determinations for 2026, 90 FR (Nov. 3, 2025); 42 U.S.C. §§403(b), (f), 402(q)(7)",
       "dateRetrieved": "2026-10-19",
-      "contentHash": "dce67827341b875d3e157ae61b6f8939f5d1ff7c1be62758a8efbd66e2f67060"
+      "contentHash": "9cd6bf80f85becfd48877b4d5dd194c1a30b423e071b12c08fad025581e47da1"
     },
     {
       "id": "ss-family-benefits-2026",
@@ -1092,7 +1092,7 @@
       "sourceUrl": "https://www.law.cornell.edu/uscode/text/42/1758",
       "sourceDocument": "Federal programs keyed to the poverty guidelines: 42 U.S.C. §§1758, 8624; 7 CFR §246.7; 45 CFR §1302.12; 47 CFR §54.409",
       "dateRetrieved": "2026-10-19",
-      "contentHash": "7391c459b591c5abf01b758e04515fff8db240d13dccf62330358a99a57c80c3"
+      "contentHash": "9631ce0669b591f1c3178bc6989be8cd610798a592a1b2881ad98dfe5c723193"
     },
     {
       "id": "dependent-care-2026",
@@ -1222,7 +1222,7 @@
       "sourceUrl": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-155/subpart-E/section-155.420",
       "sourceDocument": "Federal enrollment and appeal windows — 29 U.S.C. §§1162, 1165; 42 CFR §§406.24, 407.14, 407.15, 431.221; 45 CFR §§155.410, 155.420, 155.520; 7 CFR §273.15",
       "dateRetrieved": "2026-10-19",
-      "contentHash": "3cfe1915ee272efbd92bbc77128b709505ba1ee82f25482b513894aeb1de9ac6"
+      "contentHash": "dc299665025f764fece6f4a480627d0669d529e72ba0b59f0dccddb3267b5cab"
     },
     {
       "id": "life-events-2026",
@@ -1274,7 +1274,7 @@
       "sourceUrl": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0443/Sections/0443.111.html",
       "sourceDocument": "Fla. Stat. §443.111 (2026), Payment of benefits; FloridaCommerce Reemployment Assistance claimant FAQ",
       "dateRetrieved": "2026-10-19",
-      "contentHash": "798a77299c6982589a55217e6006047fef2d34eeb962065dc0d95727311e7317"
+      "contentHash": "1764b938f353c7d750931cc2cf771c6aabc3b0cdad760478cf9963fc1e752a97"
     },
     {
       "id": "state-ui-ny-2026",
