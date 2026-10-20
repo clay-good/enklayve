@@ -59,6 +59,7 @@ import { cobraVsMarketplaceTile } from "./cobraVsMarketplace";
 import { filingJointlyVsSeparatelyTile } from "./filingJointlyVsSeparately";
 import { medicareIrmaaTile } from "./medicareIrmaa";
 import { medicarePenaltiesTile } from "./medicarePenalties";
+import { ssEarningsTestTile } from "./ssEarningsTest";
 import { healthPlanTile } from "./healthPlan";
 import { eobCheckerTile } from "./eobChecker";
 import { cashFlowTile } from "./cashFlow";
@@ -168,7 +169,7 @@ const HUB_CONFIGS: HubConfig[] = [
     pillar: "retirement",
     description:
       "Medicare premiums and surcharges at 65, and the Social Security rules around them.",
-    tools: [medicareIrmaaTile, medicarePenaltiesTile],
+    tools: [medicareIrmaaTile, medicarePenaltiesTile, ssEarningsTestTile],
   },
 
   {

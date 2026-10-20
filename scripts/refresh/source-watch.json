@@ -398,6 +398,13 @@
       "why": "CMS's 2026 fact sheet is the source of every premium and tier; a correction lands here, and the 2027 figures arrive as a new fact sheet each November, which the zero-year window forces a person to read.",
       "fingerprint": "749ce659c4bf4014c22825f1084584e62a7c496103fed8f10267dc51587b72c7",
       "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "ss-earnings-test-2026",
+      "url": "https://www.federalregister.gov/documents/2025/11/03/2025-19763/cost-of-living-increase-and-other-determinations-for-2026",
+      "why": "SSA's annual determinations notice states both exempt amounts and the withholding ratios; ssa.gov refuses this pipeline, and 2027's arrives as a new notice each fall, which the zero-year window forces a person to read.",
+      "fingerprint": "57e743ff35fb4ad185ed6617973a94c44caea167fff32cac7c46af3544a316e0",
+      "checkedOn": "2026-10-20"
     }
   ]
 }

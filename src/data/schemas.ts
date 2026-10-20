@@ -1340,6 +1340,20 @@ export const MedicareCostsSchema = z.object({
 export type MedicareCostsData = z.infer<typeof MedicareCostsSchema>;
 export type IrmaaTier = z.infer<typeof IrmaaTierSchema>;
 
+/** Social Security's retirement earnings test for a year (SPEC-5 later-life L3). */
+export const SsEarningsTestSchema = z.object({
+  year: z.number().int(),
+  /** Below full retirement age, in years before the one it is reached. */
+  lowerAnnualExempt: z.number().gt(0),
+  /** In the year full retirement age is reached, for months before it. */
+  higherAnnualExempt: z.number().gt(0),
+  /** $1 withheld for every this many dollars over the exempt amount. */
+  earningsPerDollarWithheld: z.number().int().positive(),
+  earningsPerDollarWithheldInFraYear: z.number().int().positive(),
+  citation: CitationSchema,
+});
+export type SsEarningsTestData = z.infer<typeof SsEarningsTestSchema>;
+
 export const GiftTaxSchema = z.object({
   taxYear: z.number().int(),
   annualExclusion: z.number().gte(0),
@@ -1996,6 +2010,7 @@ export const DATASET_SCHEMAS = {
   "supplemental-withholding": SupplementalWithholdingSchema,
   "ui-taxation": UiTaxationSchema,
   "medicare-costs": MedicareCostsSchema,
+  "ss-earnings-test": SsEarningsTestSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

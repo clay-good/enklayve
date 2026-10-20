@@ -287,6 +287,12 @@ const SHARDS: ShardSource[] = [
     shard: "medicare-costs-2026.json",
     ...PILLAR4_ANNUAL,
   },
+  {
+    id: "ss-earnings-test-2026",
+    kind: "ss-earnings-test",
+    shard: "ss-earnings-test-2026.json",
+    ...PILLAR4_ANNUAL,
+  },
   { id: "child-tax-2024", kind: "child-tax", shard: "child-tax-2024.json", ...ANNUAL },
   {
     id: "education-credits-2024",

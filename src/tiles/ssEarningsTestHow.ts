@@ -1,0 +1,7 @@
+/**
+ * Social Security Earnings Test: the "How this works" block, loaded with the
+ * tool rather than with the shell (SPEC-5 §7.5). The build reads it for the
+ * tool's crawlable page.
+ */
+export const how =
+  "If you claim Social Security before your full retirement age and keep working, part of your benefit may be held back. Below the year you reach full retirement age, Social Security withholds $1 for every $2 you earn above a yearly limit. In the year you reach it, the limit is higher and the rate is $1 for every $3, counting only what you earn in the months before your birthday month. From that month on, earnings do not reduce your benefit at all.\n\nOnly wages and net self-employment income count, not pensions, investment income or other benefits. Social Security does not shave a little off each check: it holds back whole monthly payments until it has withheld the amount the test requires.\n\nThe money is deferred rather than lost. When you reach full retirement age, Social Security recalculates your benefit as if you had claimed it that many months later, which raises your monthly payment for the rest of your life.\n\nEnter your monthly benefit and the earnings that count, and we show the amount withheld, how many monthly payments that is, and what is still paid this year. The year's limits come from Social Security's annual notice. This is information about a published rule, not financial advice.";

@@ -162,6 +162,7 @@ export const SUBJECTS: Record<string, string[]> = {
   "Supplemental withholding": ["supplemental-withholding-2026"],
   "Unemployment benefit taxation": ["ui-taxation-2026"],
   "Medicare costs": ["medicare-costs-2026"],
+  "Social Security earnings test": ["ss-earnings-test-2026"],
   FAFSA: ["fafsa-2024-2025"],
   "Life events": ["life-events-2026"],
   "Bill triage": ["bill-triage-2026"],

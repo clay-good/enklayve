@@ -147,6 +147,17 @@ describe("the containment test on money", () => {
 });
 
 const BOUND: Bound[] = [
+  // The earnings test's ratios, "$1 for every $2" and "$1 for every $3".
+  {
+    file: "tiles/ssEarningsTestHow.ts",
+    shard: "ss-earnings-test-2026",
+    path: ".earningsPerDollarWithheld",
+  },
+  {
+    file: "tiles/ssEarningsTestHow.ts",
+    shard: "ss-earnings-test-2026",
+    path: ".earningsPerDollarWithheldInFraYear",
+  },
   // IRC §121's two limits, in Selling a Home's "how" block.
   { file: "tiles/homeSaleGainHow.ts", shard: "home-sale-exclusion-2026", path: ".maxExclusion" },
   {
@@ -468,6 +479,10 @@ const BOUND_TO_CODE: { file: string; figure: string; from: string; declaredIn?: 
  * a real `$25` arriving in that tile's prose would have been waved through.
  */
 const NOT_A_FIGURE: Record<string, Record<string, string>> = {
+  // The withholding ratio's own unit: $1 held back per $2 or $3 earned over the
+  // limit. It is the definition of the ratio, not a figure that could move.
+  "tiles/ssEarningsTestHow.ts": { $1: "the unit of the earnings test's ratio" },
+  "tiles/ssEarningsTestView.ts": { $1: "the unit of the earnings test's ratio" },
   "tiles/deductionCopy.ts": {
     // Where §163(h)(4)'s joint phase-out lands, which is the threshold plus the
     // cap divided by the step: $200,000 + $10,000 ÷ $200 × $1,000. Every term is
