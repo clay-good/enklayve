@@ -475,6 +475,20 @@
       "why": "§8624(b)(2)(B) bounds a state's LIHEAP income line by the greater of 150% of the poverty level or 60% of state median income.",
       "fingerprint": "c7b632246d1f623790f202daeccc531480f6c4f3ebf0e4abc5c66d65cdf440fd",
       "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "savers-credit-2024",
+      "url": "https://www.law.cornell.edu/uscode/text/26/6433",
+      "why": "§6433 is the Saver's Match that replaces this credit for 2027: its 50% of $2,000, its $41,000 base and $30,000 phase-out range, and the inflation adjustment from 2028.",
+      "fingerprint": "89e6c54913d3525f315aa2b600f66964bcbd2dc6778b0cb37901f71b5e721a69",
+      "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "savers-credit-2024",
+      "url": "https://www.irs.gov/pub/irs-drop/n-26-48.pdf",
+      "why": "Notice 2026-48 gives the 2027 Saver's Match limits by filing status and names Form 8880-A; a change here, or proposed regulations, means the upcomingChanges block needs reading again.",
+      "fingerprint": "da6c13bdb5b267155d76f8d6b3978021a95775ecf24954dee7a5c836708f2189",
+      "checkedOn": "2026-10-20"
     }
   ]
 }

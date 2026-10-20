@@ -1045,3 +1045,25 @@ describe("the screener's programs keyed to the poverty line (SPEC-5 F4)", () => 
     expect(labels).not.toContain("WIC");
   });
 });
+
+describe("the Saver's Match, as upcoming data (SPEC-5 F5)", () => {
+  it("says above the Saver's Credit that the match replaces it from 2027, citing the notice", () => {
+    const root = mount(
+      mountSaversCredit,
+      new URLSearchParams({ fs: "single", agi: "20000", c: "2000" }),
+    );
+    const note = root.querySelector(".sc-upcoming")!;
+    expect(note.textContent).toContain("Saver's Match");
+    expect(note.textContent).toContain("$35,500");
+    expect(note.querySelector("a")?.getAttribute("href")).toBe(
+      "https://www.irs.gov/pub/irs-drop/n-26-48.pdf",
+    );
+    const card = root.querySelector(".tile-result")!.lastElementChild!;
+    expect(note.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("validates against the shared upcoming-change schema, effective 2027", () => {
+    const [change] = data.saversCredit()!.upcomingChanges;
+    expect(change!.citation.effectiveYear).toBe(2027);
+  });
+});

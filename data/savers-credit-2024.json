@@ -21,6 +21,20 @@
       "agiCapMarried": 80500
     }
   ],
+  "upcomingChanges": [
+    {
+      "id": "savers-match-2027",
+      "label": "From 2027, the Saver's Match replaces this credit",
+      "detail": "For contributions made for 2027, the Treasury pays a match of 50% of up to $2,000 into your IRA or workplace plan, rather than taking a credit off your tax, so it reaches people who owe no tax. It phases out between $41,000 and $71,000 of modified AGI on a joint return, $30,750 and $53,250 for a head of household, and $20,500 and $35,500 otherwise, and is claimed on a new Form 8880-A.",
+      "citation": {
+        "sourceUrl": "https://www.irs.gov/pub/irs-drop/n-26-48.pdf",
+        "sourceDocument": "IRS Notice 2026-48 (Saver's Match); 26 U.S.C. §6433",
+        "sourceNote": "26 U.S.C. §6433(a)(1): a match equal to \"the applicable percentage\" of contributions up to $2,000. §6433(b): 50 percent, phased out over a $30,000 range above $41,000 for joint returns and surviving spouses, three-quarters of both for a head of household and half for everyone else, rounded down to whole points. Pub. L. 117-328 div. T §103(f): for \"taxable years beginning after December 31, 2026\". Notice 2026-48's 2027 table: the match ends at $71,000 joint and surviving spouse, $53,250 head of household, $35,500 single and married filing separately; amounts are adjusted for inflation after 2027 (§6433(h)), and it is claimed on \"a new (not yet published) Form 8880-A\". The notice announces proposed regulations; until they are final the engine still computes the §25B credit, which applies through 2026. Read on Cornell LII and irs.gov 2026-10-19.",
+        "effectiveYear": 2027,
+        "dateRetrieved": "2026-10-19"
+      }
+    }
+  ],
   "citation": {
     "sourceUrl": "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-savings-contributions-credit-savers-credit",
     "sourceDocument": "IRS Retirement Savings Contributions Credit (Form 8880), 2026 AGI limits per IRS Notice 2025-67",

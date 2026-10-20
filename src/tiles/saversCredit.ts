@@ -10,7 +10,7 @@ import { estimateSaversCredit } from "../engine/benefits";
 import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
-import { resultCard, type BreakdownLine } from "../ui/resultCard";
+import { citationLink, resultCard, type BreakdownLine } from "../ui/resultCard";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
 import type { TileContext, TileDefinition } from "./types";
@@ -146,7 +146,18 @@ export function mountSaversCredit(ctx: TileContext): void {
       },
     ];
 
+    // The rule that replaces this one, said above the figure it replaces.
+    const upcoming = savers!.upcomingChanges.map((c) =>
+      el(
+        "p",
+        { class: "sc-upcoming", attrs: { role: "note" } },
+        el("strong", { text: `${c.label}. ` }),
+        el("span", { text: `${c.detail} ` }),
+        citationLink(c.citation),
+      ),
+    );
     resultContainer.replaceChildren(
+      ...upcoming,
       resultCard({
         label: "Estimated Saver's Credit",
         value: r.credit,

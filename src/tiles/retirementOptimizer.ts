@@ -216,6 +216,13 @@ export function mountRetirementOptimizer(ctx: TileContext): void {
         citation: cite,
       },
       { label: "IRA room remaining", value: fmt(Money.from(roomIra)), emphasis: true },
+      // The Saver's Match that pays into this IRA room from 2027 (SPEC-5 F5).
+      // Its label names the Saver's Credit, which this tile does not show.
+      ...(data?.saversCredit()?.upcomingChanges ?? []).map((c) => ({
+        label: `From ${c.citation.effectiveYear}, the Saver's Match`,
+        value: c.detail,
+        citation: c.citation,
+      })),
     ];
     if (fields.hsaCoverage !== "none") {
       lines.push(

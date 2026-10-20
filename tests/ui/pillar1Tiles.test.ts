@@ -341,6 +341,8 @@ describe("Retirement Contribution Optimizer tile", () => {
     // 50+ → catch-up annotation on the 401(k) and IRA limits.
     expect(ls.some((l) => l.startsWith("401(k) limit (with catch-up)"))).toBe(true);
     expect(ls).toContain("401(k) room remaining");
+    // The Saver's Match that pays into this IRA room from 2027 (SPEC-5 F5).
+    expect(ls.indexOf("From 2027, the Saver's Match")).toBe(ls.indexOf("IRA room remaining") + 1);
     // HSA section shows because coverage is selected.
     expect(ls.some((l) => l.startsWith("HSA limit"))).toBe(true);
     // Every limit cites the IRS notice.

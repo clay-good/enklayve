@@ -43,6 +43,8 @@ to read documents in.
 
 7. **Two shards keep another clock.** SNAP's year is the federal fiscal year, so it rolls on **October 1**, not in January; its adapter refuses once FNA's allotment table names the next fiscal year, and says the roll is due. Indiana's counties can change rates on Oct. 1 too, and a county carrying `midYearRevision` holds a nine-and-three-month **blend** for the year rather than either rate. At the roll, give it the new January notice's rate and drop the field. The adapter will not do it for you: it refuses a notice for any year but the shard's.
 
+8. **One shard changes shape at the 2027 roll.** `savers-credit-2024` holds the §25B credit, which ends with 2026, and an `upcomingChanges` block for the Saver's Match (§6433), which replaces it. When Treasury's regulations are final, a `savers-match-2027` shard and an engine for it replace both. Notice 2026-48 is only the notice of intent, so read the final rule, not the notice. Until then, rolling the credit forward a year would describe a credit that no longer exists.
+
 ## What the roll cannot tell you
 
 An adapter reporting agreement means its parser found something shaped like its figure, **not that the value is right**. The refresh pipeline proposes; the golden suite gates; a person reads. Nothing in this file replaces reading the agency's document.

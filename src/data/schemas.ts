@@ -934,6 +934,16 @@ export type AcaData = z.infer<typeof AcaSchema>;
  * 10%) of up to a capped contribution amount, where the rate steps down as AGI
  * rises through filing-status-specific ceilings.
  */
+/** A rule change already published for a later year, so a figure that is about
+ * to stop being true says so rather than quietly rotting. Its citation's
+ * `effectiveYear` is the year it takes over. */
+export const UpcomingChangeSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  detail: z.string().min(1),
+  citation: CitationSchema,
+});
+
 export const SaversCreditSchema = z.object({
   taxYear: z.number().int(),
   /** Maximum contribution counted per individual ($2,000); MFJ counts each spouse. */
@@ -949,6 +959,8 @@ export const SaversCreditSchema = z.object({
       }),
     )
     .min(1),
+  /** The Saver's Match that replaces the credit from 2027 (SPEC-5 F5). */
+  upcomingChanges: z.array(UpcomingChangeSchema).default([]),
   citation: CitationSchema,
 });
 export type SaversCreditData = z.infer<typeof SaversCreditSchema>;
@@ -1784,18 +1796,8 @@ export const EnrollmentWindowsSchema = z.object({
       }),
     )
     .min(1),
-  /** Rule changes already published for a later year, so a figure that is about
-   * to stop being true says so rather than quietly rotting. */
-  upcomingChanges: z
-    .array(
-      z.object({
-        id: z.string().min(1),
-        label: z.string().min(1),
-        detail: z.string().min(1),
-        citation: CitationSchema,
-      }),
-    )
-    .default([]),
+  /** Rule changes already published for a later year. */
+  upcomingChanges: z.array(UpcomingChangeSchema).default([]),
   citation: CitationSchema,
 });
 export type EnrollmentWindowsData = z.infer<typeof EnrollmentWindowsSchema>;
