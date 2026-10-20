@@ -44,7 +44,10 @@ export type DocKind =
   // Regulation F's validation notice (12 CFR §1006.34). Its content follows
   // Model Form B-1, but a collector prints no form revision on it, so it is
   // anchored on the model's own captions and exempt from the revision pin.
-  | "collectionsNotice";
+  | "collectionsNotice"
+  // The Part B Medicare Summary Notice, read on the captions of CMS's own
+  // sample. CMS prints no revision on it, so it is revisionless too.
+  | "medicareSummaryNotice";
 
 /** The My Situation fields the Readout can populate on confirmation. Kept
  * narrow (not all of {@link SituationKey}) so the mapping stays type-safe, and

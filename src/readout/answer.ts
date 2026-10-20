@@ -42,6 +42,14 @@ const CHANNELS = {
     label: "HealthCare.gov: how to appeal a Marketplace decision",
     url: "https://www.healthcare.gov/appeals/",
   },
+  medicareAppeals: {
+    label: "Medicare.gov: how to appeal a claim decision",
+    url: "https://www.medicare.gov/claims-appeals/how-do-i-file-an-appeal",
+  },
+  ship: {
+    label: "Find your State Health Insurance Assistance Program (SHIP)",
+    url: "https://www.shiphelp.org/",
+  },
   cfpbComplaint: {
     label: "CFPB: submit a complaint about a debt collector",
     url: "https://www.consumerfinance.gov/complaint/",
@@ -219,6 +227,40 @@ function appealChannel(program: string | number | undefined): { label: string; u
 /** "What to do next, by when", per kind. Ordered: the first line is the first move. */
 function nextFor(result: ExtractionResult, options: BuildAnswerOptions): ReadoutAnswer["next"] {
   switch (result.kind) {
+    case "medicareSummaryNotice": {
+      const next: ReadoutAnswer["next"] = [
+        {
+          label:
+            "Compare each provider's bill with this notice before you pay. A provider should not bill you more than the notice's maximum you may be billed.",
+        },
+      ];
+      const by = valueOf(result, "msn-appeal-by");
+      const noticeDate = valueOf(result, "msn-notice-date");
+      const window = options.windows?.windows.find((w) => w.id === "medicare-summary-appeal");
+      if (typeof by === "string" && window) {
+        const days = "days" in window.due ? window.due.days : null;
+        // §405.942(a): 120 days from receipt, receipt presumed five days after
+        // the date of the notice. Computed from the notice's own date, so it
+        // needs no clock.
+        const check =
+          typeof noticeDate === "string" && days !== null
+            ? ` The notice says ${by}. ${days} days from receipt, presumed five days after its date of ${noticeDate}, is ${addDays(noticeDate, days + 5)}. If those differ, go by the earlier one.`
+            : "";
+        next.push({
+          label:
+            "If you disagree with a decision on this notice, appeal in writing by the date it gives, using the form on its last page." +
+            check,
+          channel: CHANNELS.medicareAppeals,
+          deadline: { label: window.label, due: { on: by }, citation: window.citation },
+        });
+      }
+      next.push({
+        label:
+          "Free help reading the notice or filing an appeal is available from your state's SHIP.",
+        channel: CHANNELS.ship,
+      });
+      return next;
+    }
     case "collectionsNotice": {
       // Tier 3 in the Readout's own terms (SPEC-5-readout-v3 R8): the clock is
       // the one printed on the notice, shown as the notice's figure, and the

@@ -39,6 +39,7 @@ const REVISIONLESS_KINDS: DocKind[] = [
   "medicalBill",
   "benefitsNotice",
   "collectionsNotice",
+  "medicareSummaryNotice",
 ];
 
 /** Pay frequencies, most-specific first so "bi-weekly" isn't shadowed by
@@ -237,6 +238,11 @@ const DOC_MARKERS: { kind: DocKind; re: RegExp; also?: RegExp }[] = [
   // itemized bill's markers are the broadest, so it goes last.
   // Model Form B-1's opening sentence and one of its captions, so a letter that
   // only mentions a collector is not read as a validation notice.
+  {
+    kind: "medicareSummaryNotice",
+    re: /medicare summary notice/i,
+    also: /(total you may be billed|maximum you may be billed)/i,
+  },
   {
     kind: "collectionsNotice",
     re: /is a debt collector/i,
@@ -1042,6 +1048,105 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
       return fields;
     },
   },
+  /**
+   * The Part B Medicare Summary Notice, on the captions of CMS's sample notice
+   * (Sample Part B Medicare Summary Notice, cms.gov). It reads the notice date,
+   * the dashboard's total you may be billed and count of denied services, each
+   * claim's totals row, and the appeal date the notice prints. It never reads
+   * the Medicare Number, or a name or address.
+   */
+  medicareSummaryNotice: {
+    citation: () => null,
+    extract: (t) => {
+      const text = t.text;
+      const fields: ExtractedField[] = [];
+      const date = (re: RegExp): string | null => {
+        const m = new RegExp(re.source + String.raw`[^A-Za-z0-9]{0,10}` + LONG_DATE, "i").exec(
+          text,
+        );
+        return m ? isoFromLongDate(m[1]!) : null;
+      };
+      const noticeDate = date(/date of this notice/);
+      if (noticeDate)
+        fields.push({
+          id: "msn-notice-date",
+          label: "Date of this notice",
+          value: noticeDate,
+          confidence: "high",
+          needsReview: false,
+        });
+      const total = field(
+        "msn-total-may-be-billed",
+        "Total you may be billed",
+        amountAfter(text, /total you may be billed/i),
+        undefined,
+      );
+      if (total) fields.push(total);
+      const denied = /number of services medicare denied\s*(\d{1,3})\b/i.exec(text);
+      if (denied)
+        fields.push({
+          id: "msn-services-denied",
+          label: "Services Medicare denied",
+          value: Number(denied[1]),
+          confidence: "high",
+          needsReview: false,
+        });
+      // "Total for Claim #… $charged $approved $paid $max", one row per claim.
+      const money = String.raw`\$?([0-9][0-9,]*\.[0-9]{2})`;
+      const row = new RegExp(
+        String.raw`total for claim\s*#?\s*[0-9A-Z-]{4,30}\s+` +
+          [money, money, money, money].join(String.raw`\s+`),
+        "gi",
+      );
+      let m: RegExpExecArray | null;
+      let n = 0;
+      while ((m = row.exec(text)) !== null && n < 20) {
+        n += 1;
+        const [charged, approved, paid, max] = [m[1], m[2], m[3], m[4]].map(parseAmount);
+        fields.push(
+          {
+            id: `msn-claim-${n}-charged`,
+            label: `Claim ${n}: amount provider charged`,
+            value: charged!,
+            confidence: "high",
+            needsReview: false,
+          },
+          {
+            id: `msn-claim-${n}-approved`,
+            label: `Claim ${n}: Medicare-approved amount`,
+            value: approved!,
+            confidence: "high",
+            needsReview: false,
+          },
+          {
+            id: `msn-claim-${n}-paid`,
+            label: `Claim ${n}: amount Medicare paid`,
+            value: paid!,
+            confidence: "high",
+            needsReview: false,
+          },
+          {
+            id: `msn-claim-${n}-max`,
+            label: `Claim ${n}: maximum you may be billed`,
+            value: max!,
+            confidence: "high",
+            needsReview: false,
+          },
+        );
+      }
+      const appealBy = date(/we must receive your appeal by:?/);
+      if (appealBy)
+        fields.push({
+          id: "msn-appeal-by",
+          label: "Appeal by (as printed on the notice)",
+          value: appealBy,
+          confidence: "needs-review",
+          needsReview: true,
+          note: "The date the notice gives for Medicare to receive a written appeal.",
+        });
+      return fields;
+    },
+  },
   fafsaSummary: {
     citation: (rev) =>
       formCitation(
@@ -1348,7 +1453,7 @@ export function extractDocument(t: ExtractedText): ExtractionResult {
 
   if (kind === "unknown") {
     warnings.push(
-      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B/R/G), SSA-1099, 1095-A, 1098 mortgage statements, 1098-T, 1098-E, the FAFSA Submission Summary, health plan Explanations of Benefits, itemized medical bills, benefits determination notices, and debt collection validation notices.",
+      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B/R/G), SSA-1099, 1095-A, 1098 mortgage statements, 1098-T, 1098-E, the FAFSA Submission Summary, health plan Explanations of Benefits, itemized medical bills, benefits determination notices, debt collection validation notices, and Part B Medicare Summary Notices.",
     );
     return {
       kind,
@@ -1473,6 +1578,8 @@ export function labelFor(kind: DocKind | "unknown"): string {
       return "1099-G";
     case "collectionsNotice":
       return "debt collection validation notice";
+    case "medicareSummaryNotice":
+      return "Medicare Summary Notice";
     default:
       return "document";
   }

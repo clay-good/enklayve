@@ -229,6 +229,58 @@ export const CHECKS: CheckDefinition[] = [
     },
   },
   {
+    // On an approved claim, what you may be billed is Medicare's approved
+    // amount less what Medicare paid. A denied service adds its whole charge,
+    // so this runs only when the notice reports none denied.
+    id: "msn-max-over-share",
+    kind: "arithmetic",
+    appliesTo: ["medicareSummaryNotice"],
+    falsePositive:
+      "A provider who does not accept assignment may bill up to the limiting charge above the approved amount, and a claim with a denied service adds that service's full charge.",
+    suppressOnOcr: true,
+    run: (ctx) => {
+      const d = doc(ctx, "medicareSummaryNotice");
+      if (amount(d, "msn-services-denied") !== 0) return null;
+      for (let n = 1; amount(d, `msn-claim-${n}-max`) !== null; n++) {
+        const approved = amount(d, `msn-claim-${n}-approved`)!;
+        const paid = amount(d, `msn-claim-${n}-paid`)!;
+        const max = amount(d, `msn-claim-${n}-max`)!;
+        if (max - (approved - paid) <= NOISE_FLOOR) continue;
+        return {
+          question:
+            "Why can this provider bill you more than Medicare's approved amount less what Medicare paid?",
+          detail: `Claim ${n} shows ${usd(approved)} approved and ${usd(paid)} paid by Medicare, a share of ${usd(approved - paid)}, but ${usd(max)} as the most you may be billed, with no service denied.`,
+          askWho:
+            "1-800-MEDICARE, or your State Health Insurance Assistance Program for free help reading the notice.",
+        };
+      }
+      return null;
+    },
+  },
+  {
+    // The Medicare form of the EOB × bill cross-check (SPEC-5-readout-v3 §3):
+    // the notice's own figure is the standard the bill is held to.
+    id: "msn-bill-over-max",
+    kind: "plan-math",
+    appliesTo: ["medicareSummaryNotice", "medicalBill"],
+    falsePositive:
+      "A bill can cover services on more than one notice, or carry a balance from before, so its total can be higher without any one claim being overbilled.",
+    suppressOnOcr: true,
+    run: (ctx) => {
+      const msn = doc(ctx, "medicareSummaryNotice");
+      const bill = amount(doc(ctx, "medicalBill"), "bill-total");
+      const max = amount(msn, "msn-total-may-be-billed");
+      if (bill === null || max === null || bill - max <= NOISE_FLOOR) return null;
+      return {
+        question:
+          "Is this bill asking for more than your Medicare Summary Notice says you may be billed?",
+        detail: `The bill's total is ${usd(bill)}. The notice says the most you may be billed is ${usd(max)}, which is ${usd(bill - max)} less.`,
+        askWho:
+          "The provider's billing office, with the notice in hand. If the bill does not come down, 1-800-MEDICARE.",
+      };
+    },
+  },
+  {
     // Model Form B-1 prints its own arithmetic: the amount on the itemization
     // date, plus interest and fees, less payments, is the amount now
     // (§1006.34(c)(2)(vii)-(ix)). A notice that does not add up is the first

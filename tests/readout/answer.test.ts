@@ -845,3 +845,83 @@ describe("Readout v3, the debt collection validation notice", () => {
     expect(a.next[0]!.deadline).toBeDefined();
   });
 });
+
+/**
+ * The Part B Medicare Summary Notice (SPEC-5-readout-v3 R6), in the words and
+ * figures of CMS's own sample notice.
+ */
+describe("Readout v3, the Medicare Summary Notice", () => {
+  const MSN =
+    "Medicare Summary Notice for Part B (Medical Insurance) THIS IS NOT A BILL JENNIFER WASHINGTON " +
+    "STREET ADDRESS CITY, ST 12345-6789 Notice for Jennifer Washington Medicare Number 1A23BC4DE56 " +
+    "Date of This Notice March 1, 2020 Did Medicare Approve All Services? NO " +
+    "Number of Services Medicare Denied 1 Total You May Be Billed $90.15 " +
+    "Service Provided & Billing Code Service Approved? Amount Provider Charged Medicare-Approved Amount " +
+    "Amount Medicare Paid Maximum You May Be Billed " +
+    "Eye and medical examination (92014) Yes $143.00 $107.97 $86.38 $21.59 " +
+    "Destruction of skin growth (17000) NO 68.56 0.00 0.00 68.56 A " +
+    "Total for Claim #02-10195-592-390 $211.56 $107.97 $86.38 $90.15 B " +
+    "We must receive your appeal by: July 13, 2020";
+  const windows = EnrollmentWindowsSchema.parse(
+    JSON.parse(
+      readFileSync(resolve(__dirname, "..", "..", "data", "enrollment-windows-2026.json"), "utf8"),
+    ),
+  );
+  const v = (r: ExtractionResult, id: string) => r.fields.find((f) => f.id === id)?.value;
+
+  it("reads the dashboard, the claim's totals and the appeal date, and nothing that identifies", () => {
+    const r = extractDocument(typed(MSN));
+    expect(r.kind).toBe("medicareSummaryNotice");
+    expect(v(r, "msn-notice-date")).toBe("2020-03-01");
+    expect(v(r, "msn-total-may-be-billed")).toBe(90.15);
+    expect(v(r, "msn-services-denied")).toBe(1);
+    expect(v(r, "msn-claim-1-charged")).toBe(211.56);
+    expect(v(r, "msn-claim-1-approved")).toBe(107.97);
+    expect(v(r, "msn-claim-1-paid")).toBe(86.38);
+    expect(v(r, "msn-claim-1-max")).toBe(90.15);
+    expect(v(r, "msn-appeal-by")).toBe("2020-07-13");
+    const everything = JSON.stringify(r.fields);
+    for (const secret of ["1A23BC4DE56", "WASHINGTON", "Washington", "12345-6789"]) {
+      expect(everything).not.toContain(secret);
+    }
+  });
+
+  it("does not question a maximum that a denied service explains", () => {
+    expect(buildAnswer(extractDocument(typed(MSN))).flags).toEqual([]);
+  });
+
+  it("asks when nothing was denied and the maximum is above the share", () => {
+    const text = MSN.replace(
+      "Number of Services Medicare Denied 1",
+      "Number of Services Medicare Denied 0",
+    );
+    const flag = buildAnswer(extractDocument(typed(text))).flags.find(
+      (f) => f.checkId === "msn-max-over-share",
+    )!;
+    expect(flag.detail).toContain("$21.59");
+    expect(buildAnswer(extractDocument(scanned(text))).flags).toEqual([]);
+  });
+
+  it("holds a provider's bill to the notice's maximum", () => {
+    const msn = extractDocument(typed(MSN));
+    const bill = extractDocument(
+      typed(
+        "Itemized Statement 01/21/2020 Eye examination $143.00 01/21/2020 Skin growth $68.56 Total charges $211.56",
+      ),
+    );
+    const flags = buildAnswer(msn, { documents: [msn, bill] }).flags.map((f) => f.checkId);
+    expect(flags).toContain("msn-bill-over-max");
+    expect(buildAnswer(msn, { documents: [msn] }).flags.map((f) => f.checkId)).not.toContain(
+      "msn-bill-over-max",
+    );
+  });
+
+  it("renders the appeal date as a cited Deadline, checked against 120 days from receipt", () => {
+    const a = buildAnswer(extractDocument(typed(MSN)), { windows });
+    const step = a.next.find((n) => n.deadline)!;
+    expect(step.deadline!.due).toEqual({ on: "2020-07-13" });
+    expect(step.deadline!.citation.sourceDocument).toContain("405.942");
+    // March 1 + 5 days presumed receipt + 120 days = July 4.
+    expect(step.label).toContain("is 2020-07-04");
+  });
+});
