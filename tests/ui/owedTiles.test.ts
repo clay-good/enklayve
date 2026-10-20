@@ -852,3 +852,67 @@ describe("Pillar 2 accessibility", () => {
     }, 30000);
   }
 });
+
+describe("the screener's 65-plus rows (SPEC-5 Phase 30)", () => {
+  beforeAll(async () => {
+    await data.loadDeferred("medicare-savings-2026");
+  });
+  const programs = (root: HTMLElement): string[] =>
+    Array.from(root.querySelectorAll(".screener-program")).map((n) => n.textContent ?? "");
+
+  it("appears only with the toggle on", () => {
+    // $18,000 a year is $1,500 a month: over QMB's $1,350, under SLMB's $1,616.
+    const off = mount(mountOwedScreener, new URLSearchParams({ hh: "1", inc: "18000", mfj: "0" }));
+    expect(programs(off).some((p) => p.includes("Medicare") || p.includes("Extra Help"))).toBe(
+      false,
+    );
+    const on = mount(
+      mountOwedScreener,
+      new URLSearchParams({ hh: "1", inc: "18000", mfj: "0", med: "1" }),
+    );
+    expect(programs(on)).toContain("Medicare Savings Program");
+    expect(programs(on)).toContain("Extra Help with Part D drug costs");
+    const text = on.textContent ?? "";
+    expect(text).toContain("Specified Low-Income Medicare Beneficiary (SLMB)");
+    expect(text).toContain("$1,616");
+    expect(text).toContain("Likely worth applying");
+    expect(text.toLowerCase()).not.toContain("you qualify for extra help");
+    for (const item of on.querySelectorAll(".screener-item")) {
+      if (
+        (item.textContent ?? "").includes("Medicare") ||
+        (item.textContent ?? "").includes("Extra Help")
+      )
+        expect(item.querySelector("a.cite-link")).not.toBeNull();
+    }
+  });
+
+  it("lists nothing over every federal line, and rides the permalink", () => {
+    const over = mount(
+      mountOwedScreener,
+      new URLSearchParams({ hh: "1", inc: "40000", mfj: "0", med: "1" }),
+    );
+    expect(
+      programs(over).some((p) => p.includes("Medicare Savings") || p.includes("Extra Help")),
+    ).toBe(false);
+    let written = new URLSearchParams();
+    const rec = document.createElement("div");
+    mountOwedScreener({
+      root: rec,
+      params: new URLSearchParams({ hh: "1", inc: "18000" }),
+      setParams: (p) => (written = p),
+      permalink: () => "",
+      navigate: () => {},
+      locale: "en-US",
+      data,
+      profile: new SituationStore(),
+    });
+    const recBox = rec.querySelector<HTMLInputElement>('input[name="med"]')!;
+    expect(recBox.checked).toBe(false);
+    recBox.checked = true;
+    recBox.dispatchEvent(new Event("change"));
+    expect(written.get("med")).toBe("1");
+    recBox.checked = false;
+    recBox.dispatchEvent(new Event("change"));
+    expect(written.has("med")).toBe(false);
+  });
+});

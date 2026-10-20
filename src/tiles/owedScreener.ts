@@ -16,6 +16,7 @@ import {
   medicaidEligibility,
   acaCreditEligible,
 } from "../engine/benefits";
+import { medicareSavingsScreen } from "../engine/medicareSavings";
 import { el, option } from "../ui/dom";
 import { field, fplPercentText, parseNonNegative, tryExampleButton } from "../ui/form";
 import {
@@ -43,6 +44,8 @@ interface Fields {
   income: number;
   children: number;
   married: boolean;
+  /** Opt-in: someone 65 or older, or on Medicare (SPEC-5 Phase 30). */
+  medicare: boolean;
 }
 
 const EXAMPLE: Fields = {
@@ -51,6 +54,7 @@ const EXAMPLE: Fields = {
   income: 38000,
   children: 2,
   married: true,
+  medicare: false,
 };
 
 function isRegion(v: string): v is FplRegion {
@@ -76,6 +80,7 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
       ? Math.max(0, parseNonNegative(p.get("kids"), 0))
       : (profile.get("qualifyingChildren") ?? 0),
     married: p.has("mfj") ? p.get("mfj") === "1" : marriedDefault(profile),
+    medicare: p.get("med") === "1",
   };
 }
 
@@ -90,6 +95,9 @@ function writeFields(f: Fields): URLSearchParams {
   // Situation answer instead, so the same link opens joint for a married
   // reader and single for everyone else.
   p.set("mfj", f.married ? "1" : "0");
+  // Nothing in My Situation answers this one, so its absence is "off" for
+  // every reader and only "on" needs writing.
+  if (f.medicare) p.set("med", "1");
   return p;
 }
 
@@ -368,6 +376,47 @@ export function mountOwedScreener(ctx: TileContext): void {
       });
     }
 
+    // The 65-plus rows, only with the toggle on. Their shard loads on demand,
+    // so the first render after the toggle shows that it is loading and the
+    // load renders again. They compare income only: the screener asks nothing
+    // about savings, so each row names the savings limit instead of testing it.
+    if (fields.medicare) {
+      const loaded = bundled.loadedDeferred("medicare-savings-2026");
+      const msp = bundled.medicareSavings();
+      if (loaded === undefined) {
+        void bundled.loadDeferred("medicare-savings-2026").then(() => render());
+        findings.push({
+          program: "Medicare Savings Programs and Extra Help",
+          estimate: "Loading",
+          note: "Loading the Medicare limits.",
+          citation: null,
+        });
+      } else if (msp) {
+        const screen = medicareSavingsScreen(
+          { couple: fields.married, monthlyIncome: fields.income / 12, resources: 0 },
+          msp,
+        );
+        const best = screen.programs.find((p) => p.underIncomeLine);
+        const who = fields.married ? "couple" : "individual";
+        if (best) {
+          findings.push({
+            program: "Medicare Savings Program",
+            estimate: "Likely worth applying",
+            note: `Your income is under the federal line for the ${best.name} program, ${fmt(Money.from(best.monthlyIncomeLine))} a month, which pays ${best.pays}. It also counts savings, up to ${fmt(Money.from(msp.savingsResourceLimit[who]))} federally, and many states go higher. Your state Medicaid agency decides.`,
+            citation: msp.citation,
+          });
+        }
+        if (screen.extraHelp.underIncomeLine) {
+          findings.push({
+            program: "Extra Help with Part D drug costs",
+            estimate: "Likely worth applying",
+            note: `Your income is under Extra Help's federal line, ${fmt(Money.from(screen.extraHelp.annualIncomeLine))} a year. It also counts savings, up to ${fmt(Money.from(screen.extraHelp.resourceLimitWithBurial))} with the burial allowance. A Medicare Savings Program brings it without a separate application. Social Security decides.`,
+            citation: msp.citation,
+          });
+        }
+      }
+    }
+
     results.append(
       el("p", {
         class: "screener-summary",
@@ -412,6 +461,8 @@ export function mountOwedScreener(ctx: TileContext): void {
     ...REGIONS.map((r) => option(r.value, r.label, r.value === fields.region)),
   );
   const mfj = marriedCheckbox(fields.married);
+  const medicareBox = el("input", { type: "checkbox", name: "med" });
+  medicareBox.checked = fields.medicare;
 
   function recompute(): void {
     fields = {
@@ -420,6 +471,7 @@ export function mountOwedScreener(ctx: TileContext): void {
       income: parseNonNegative(incInput.value, 0),
       children: Math.max(0, parseNonNegative(kidsInput.value, 0)),
       married: mfj.checked,
+      medicare: medicareBox.checked,
     };
     ctx.setParams(writeFields(fields));
     profile.set("householdSize", fields.householdSize);
@@ -430,6 +482,7 @@ export function mountOwedScreener(ctx: TileContext): void {
 
   regionSelect.addEventListener("change", recompute);
   mfj.addEventListener("change", recompute);
+  medicareBox.addEventListener("change", recompute);
   for (const i of [hhInput, incInput, kidsInput]) i.addEventListener("input", recompute);
 
   const tryExample = tryExampleButton(() => {
@@ -439,6 +492,7 @@ export function mountOwedScreener(ctx: TileContext): void {
     incInput.value = String(fields.income);
     kidsInput.value = String(fields.children);
     mfj.checked = fields.married;
+    medicareBox.checked = fields.medicare;
     recompute();
   });
 
@@ -450,6 +504,12 @@ export function mountOwedScreener(ctx: TileContext): void {
     field("Annual household income", incInput),
     field("Qualifying children", kidsInput),
     el("label", { class: "checkbox" }, mfj, el("span", { text: "Married filing jointly" })),
+    el(
+      "label",
+      { class: "checkbox" },
+      medicareBox,
+      el("span", { text: "Anyone 65 or older, or on Medicare" }),
+    ),
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
@@ -464,7 +524,7 @@ export const owedScreenerTile: TileDefinition = {
   description: "Enter your situation once; see every program you likely qualify for.",
   keywords: ["screener", "benefits", "eligibility", "what am i owed"],
   status: "ready",
-  how: "You enter your household once, size, income, region, children, and filing status, and we compute your percentage of the poverty line, estimate the refundable credits you likely qualify for (the Earned Income Tax Credit and the Child Tax Credit), and flag where your income suggests Medicaid or ACA-subsidy eligibility. Each line shows its public source.\n\nWe ask for nothing identifying and send nothing anywhere. These are estimates to point you toward programs worth applying for, the agencies make the final determination.",
+  how: "You enter your household once, size, income, region, children, and filing status, and we compute your percentage of the poverty line, estimate the refundable credits you likely qualify for (the Earned Income Tax Credit and the Child Tax Credit), and flag where your income suggests Medicaid or ACA-subsidy eligibility. If anyone is 65 or older or on Medicare, tick that box to add the Medicare Savings Programs and Extra Help, measured against their federal income lines. Each line shows its public source.\n\nWe ask for nothing identifying and send nothing anywhere. These are estimates to point you toward programs worth applying for, the agencies make the final determination.",
   resources: [
     { label: "USA.gov, find benefits", url: "https://www.usa.gov/benefit-finder" },
     { label: "HealthCare.gov, lower costs", url: "https://www.healthcare.gov/lower-costs/" },

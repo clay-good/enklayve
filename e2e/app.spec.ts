@@ -231,6 +231,25 @@ test("a tool that loads on demand fetches its code and shard, then works offline
 });
 
 /**
+ * The screener's 65-plus rows (SPEC-5 Phase 30): the screener is in the shell
+ * and their shard is not, so ticking the toggle fetches it, and the rows
+ * arrive once it has loaded.
+ */
+test("the screener's Medicare rows load their limits on demand", async ({ page }) => {
+  await page.goto("/#/benefits?tool=screener&hh=1&inc=18000&kids=0&mfj=0");
+  await page.waitForSelector(".screener-summary");
+  await expect(page.locator(".screener-program", { hasText: "Extra Help" })).toHaveCount(0);
+  const shard = page.waitForResponse((r) =>
+    /\/assets\/medicare-savings-2026-.*\.js$/.test(r.url()),
+  );
+  await page.locator('input[name="med"]').check();
+  expect((await shard).ok()).toBe(true);
+  await expect(page.locator(".screener-program", { hasText: "Extra Help" })).toHaveCount(1);
+  await expect(page.locator(".screener-results")).toContainText("$1,616.00");
+  expect(page.url()).toContain("med=1");
+});
+
+/**
  * SPEC-4-ledger §6.1 and §7, and SPEC §2 principle 8 more broadly: a household
  * that never opts into the Standing Ledger experiences the product exactly as it
  * was, and Phase 24 adds no persistence at all.
