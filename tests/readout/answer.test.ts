@@ -987,3 +987,34 @@ describe("Readout v3, the Closing Disclosure", () => {
     expect(a.next.some((n) => n.deadline)).toBe(false);
   });
 });
+
+describe("Readout v3, the SSA-1099 against the 1040 (SPEC-5-readout-v3 §3)", () => {
+  const SSA =
+    "FORM SSA-1099 - SOCIAL SECURITY BENEFIT STATEMENT 2025 Box 5. Net Benefits for 2025 (Box 3 minus Box 4) $23,500.00";
+  const RETURN = (line6a: string) =>
+    "Form 1040 U.S. Individual Income Tax Return 2025 " +
+    `6a Social security benefits . . 6a ${line6a} b Taxable amount . . . . . . 6b 9,800.00 ` +
+    "11 Adjusted gross income 52000.00";
+
+  it("reads lines 6a and 6b without taking the box marker for the amount", () => {
+    const r = extractDocument(typed(RETURN("23,500.00")));
+    expect(r.fields.find((f) => f.id === "f1040-6a")?.value).toBe(23500);
+    expect(r.fields.find((f) => f.id === "f1040-6b")?.value).toBe(9800);
+  });
+
+  it("asks only when line 6a is short of box 5, and only with both in the session", () => {
+    const ssa = extractDocument(typed(SSA));
+    const short = extractDocument(typed(RETURN("20,000.00")));
+    const ids = (docs: ReturnType<typeof extractDocument>[]) =>
+      buildAnswer(docs[0]!, { documents: docs }).flags.map((f) => f.checkId);
+    expect(ids([ssa, short])).toContain("ssa1099-on-1040");
+    expect(ids([ssa, extractDocument(typed(RETURN("23,500.00")))])).not.toContain(
+      "ssa1099-on-1040",
+    );
+    // A joint return can report more.
+    expect(ids([ssa, extractDocument(typed(RETURN("41,000.00")))])).not.toContain(
+      "ssa1099-on-1040",
+    );
+    expect(ids([ssa])).not.toContain("ssa1099-on-1040");
+  });
+});

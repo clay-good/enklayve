@@ -536,6 +536,27 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
       if (taxable) fields.push(taxable);
       const totalTax = field("f1040-tax", "Total tax", amountAfter(text, /total tax/i), undefined);
       if (totalTax) fields.push(totalTax);
+      // Lines 6a and 6b, Social Security. The form prints each line's number
+      // twice, before the caption and again at the entry box, so the anchor
+      // requires the second one: the "6a" beside the box is never the amount.
+      const line = (re: RegExp): number => {
+        const m = re.exec(text);
+        return m ? parseAmount(m[1]) : NaN;
+      };
+      const ss6a = field(
+        "f1040-6a",
+        "Social security benefits (line 6a)",
+        line(/6a\s*social security benefits[\s.]*6a\s*\$?([0-9][0-9,]*(?:\.[0-9]{2})?)/i),
+        undefined,
+      );
+      if (ss6a) fields.push(ss6a);
+      const ss6b = field(
+        "f1040-6b",
+        "Taxable social security benefits (line 6b)",
+        line(/taxable amount[\s.]*6b\s*\$?([0-9][0-9,]*(?:\.[0-9]{2})?)/i),
+        undefined,
+      );
+      if (ss6b) fields.push(ss6b);
 
       // Filing status is a labeled checkbox/word, not a number — read it
       // directly, and only when the page names exactly one. See

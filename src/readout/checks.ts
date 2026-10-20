@@ -230,6 +230,28 @@ export const CHECKS: CheckDefinition[] = [
     },
   },
   {
+    // SPEC-5-readout-v3 §3: the SSA-1099's net benefits belong on line 6a.
+    // Only a shortfall is asked about: a joint return, a second SSA-1099 or
+    // an RRB-1099 all add to line 6a legitimately.
+    id: "ssa1099-on-1040",
+    kind: "plan-math",
+    appliesTo: ["ssa1099", "form1040"],
+    falsePositive:
+      "A return for a different year than the SSA-1099, or a benefit repaid in a later year and handled under the claim-of-right rules, can make line 6a differ.",
+    suppressOnOcr: true,
+    run: (ctx) => {
+      const box5 = amount(doc(ctx, "ssa1099"), "ssa1099-box5");
+      const line6a = amount(doc(ctx, "form1040"), "f1040-6a");
+      if (box5 === null || line6a === null || box5 - line6a <= NOISE_FLOOR) return null;
+      return {
+        question: "Is all of your Social Security on your return?",
+        detail: `The SSA-1099's net benefits in box 5 are ${usd(box5)}. Line 6a of the return shows ${usd(line6a)}, which is ${usd(box5 - line6a)} less.`,
+        askWho:
+          "Whoever prepared the return, or a free VITA site. If the return is already filed, an amended return (Form 1040-X) corrects it.",
+      };
+    },
+  },
+  {
     // The payment the form prints against the one its own amount, rate and
     // term produce, through the same formula Loan & Mortgage Amortization
     // uses. A mismatch is the first question to ask at the closing table.
