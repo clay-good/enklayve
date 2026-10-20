@@ -13,7 +13,7 @@
  */
 import { el } from "../ui/dom";
 import type { BundledData } from "../data/browser";
-import type { TileContext } from "./types";
+import type { TileContext, TileDefinition } from "./types";
 
 type Mount = (ctx: TileContext) => void;
 
@@ -24,6 +24,7 @@ interface LazyTile {
 }
 
 const LAZY: LazyTile[] = [];
+const HOWS: TileDefinition[] = [];
 
 function shardsReady(data: BundledData | null, shards: readonly string[]): boolean {
   return !data || shards.every((id) => data.loadedDeferred(id) !== undefined);
@@ -67,11 +68,36 @@ export function lazyMount(load: () => Promise<Mount>, shards: readonly string[] 
 }
 
 /**
+ * A tile whose code, shards and "how" block all load when it is opened. Only
+ * the title, description, keywords and the rest of the definition stay in the
+ * shell; `loadHow` fills in `how` for the explainer, the hub's audit copy and
+ * the build's crawlable page, each of which waits for it.
+ */
+export function lazyTile(
+  definition: Omit<TileDefinition, "mount" | "how" | "loadHow">,
+  parts: { view: () => Promise<Mount>; shards?: readonly string[]; how: () => Promise<string> },
+): TileDefinition {
+  const tile: TileDefinition = {
+    ...definition,
+    mount: lazyMount(parts.view, parts.shards ?? []),
+    loadHow: async () => (tile.how ??= await parts.how()),
+  };
+  HOWS.push(tile);
+  return tile;
+}
+
+/** Every lazy "how" block, loaded into its tile — for the build and the tests. */
+export async function loadLazyHows(): Promise<void> {
+  await Promise.all(HOWS.map((t) => t.loadHow?.()));
+}
+
+/**
  * Load every lazy tile's code and shards now, so later mounts are synchronous.
  * The test setup calls this, so the sweeps that mount every tile and read the
  * result at once cover a lazy tile as fully as an eager one.
  */
 export async function preloadLazyTiles(data: BundledData): Promise<void> {
+  await loadLazyHows();
   await Promise.all(
     LAZY.map(async (tile) => {
       tile.mount ??= await tile.load();
@@ -82,5 +108,5 @@ export async function preloadLazyTiles(data: BundledData): Promise<void> {
 
 /** How many tiles load this way, so a test can assert the sweeps reached them. */
 export function lazyTileCount(): number {
-  return LAZY.length;
+  return LAZY.length + HOWS.length;
 }

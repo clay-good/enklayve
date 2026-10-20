@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { renderToolsIndex } from "./scripts/tools-index";
 import { toolPages } from "./scripts/tool-pages";
+import { loadLazyHows } from "./src/tiles/lazy";
 import { renderSitemap, renderRobots, SITE_ORIGIN } from "./scripts/sitemap";
 import { indexablePaths } from "./scripts/indexable";
 import { injectHomeSeo } from "./scripts/home-page";
@@ -55,7 +56,10 @@ function staticSeo(): Plugin {
   return {
     name: "enklayve-static-seo",
     apply: "build",
-    generateBundle() {
+    async generateBundle() {
+      // A SPEC-5 tool's "how" block loads with its code rather than the shell;
+      // its crawlable page still carries it, written here at build time.
+      await loadLazyHows();
       const pages = toolPages();
       for (const page of pages) {
         this.emitFile({ type: "asset", fileName: page.fileName, source: page.source });

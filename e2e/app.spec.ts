@@ -169,6 +169,26 @@ test("a state's unemployment rules load on demand, then work offline", async ({
 });
 
 /**
+ * One "How this works" per page. A hub of harm tier 2 or more carries a copy of
+ * its strictest tool's explanation for the audit, and the shell rendered it, so
+ * every calculator in Retirement showed the 401(k) cash-out's explanation under
+ * its own. And a tool whose explanation loads on demand still shows it.
+ */
+test("a hub page shows one explanation, the active tool's own", async ({ page }) => {
+  for (const [link, own] of [
+    ["/#/retirement?tool=rmd", "Uniform Lifetime Table"],
+    ["/#/when-money-is-tight?tool=bill-triage", "Every debt calculator sorts"],
+    ["/#/retirement?tool=retirement-cash-out", "Taking money out of a 401(k)"],
+  ] as const) {
+    await page.goto(link);
+    await page.waitForSelector(".content");
+    await page.waitForFunction(() => !document.querySelector(".tile-loading, [aria-busy='true']"));
+    await expect(page.locator("summary", { hasText: "How this works" })).toHaveCount(1);
+    await expect(page.locator(".explainer-how")).toContainText(own);
+  }
+});
+
+/**
  * A SPEC-5 tool's code and shard load on demand (§7.5): two chunks, neither
  * in the precached shell, and the tool works offline once it has been opened.
  */

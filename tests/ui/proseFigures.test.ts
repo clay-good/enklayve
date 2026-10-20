@@ -148,8 +148,12 @@ describe("the containment test on money", () => {
 
 const BOUND: Bound[] = [
   // IRC §121's two limits, in Selling a Home's "how" block.
-  { file: "tiles/homeSaleGain.ts", shard: "home-sale-exclusion-2026", path: ".maxExclusion" },
-  { file: "tiles/homeSaleGain.ts", shard: "home-sale-exclusion-2026", path: ".maxExclusionJoint" },
+  { file: "tiles/homeSaleGainHow.ts", shard: "home-sale-exclusion-2026", path: ".maxExclusion" },
+  {
+    file: "tiles/homeSaleGainHow.ts",
+    shard: "home-sale-exclusion-2026",
+    path: ".maxExclusionJoint",
+  },
   { file: "tiles/childTax.ts", shard: "child-tax-2024", path: ".dependentStandardDeductionBase" },
 
   { file: "tiles/childTaxCredit.ts", shard: "eitc-ctc-2024", path: ".childTaxCredit.perChild" },

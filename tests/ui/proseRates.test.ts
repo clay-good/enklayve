@@ -72,17 +72,17 @@ const BOUND: RateBound[] = [
   // Cashing Out a 401(k)'s "how" block: the additional tax, the withholding,
   // and the check that is what the withholding leaves.
   {
-    file: "tiles/retirementCashOut.ts",
+    file: "tiles/retirementCashOutHow.ts",
     shard: "early-distribution-2026",
     path: ".additionalTaxRate",
   },
   {
-    file: "tiles/retirementCashOut.ts",
+    file: "tiles/retirementCashOutHow.ts",
     shard: "early-distribution-2026",
     path: ".mandatoryWithholdingRate",
   },
   {
-    file: "tiles/retirementCashOut.ts",
+    file: "tiles/retirementCashOutHow.ts",
     shard: "early-distribution-2026",
     path: ".mandatoryWithholdingRate",
     derive: (w) => Math.round((1 - w) * 100),
@@ -90,12 +90,12 @@ const BOUND: RateBound[] = [
   },
   // The Homeowners Protection Act's two lines, in the "how" block.
   {
-    file: "tiles/pmiEndDate.ts",
+    file: "tiles/pmiEndDateHow.ts",
     shard: "pmi-cancellation-2026",
     path: ".requestShareOfOriginalValue",
   },
   {
-    file: "tiles/pmiEndDate.ts",
+    file: "tiles/pmiEndDateHow.ts",
     shard: "pmi-cancellation-2026",
     path: ".automaticShareOfOriginalValue",
   },

@@ -61,9 +61,9 @@ export function defineHub(config: HubConfig): TileDefinition {
   // calculator happens to be listed first. The hub is rights-adjacent because of
   // that one tool, so its "how" is the one that must carry the line — picking
   // any other tool's silently inherits a "how" with no advice line in it.
-  const advice = strictest?.how ?? tools.find((t) => t.how)?.how;
+  const advice = (): string | undefined => strictest?.how ?? tools.find((t) => t.how)?.how;
 
-  return {
+  const hub: TileDefinition = {
     id,
     title,
     pillar,
@@ -71,14 +71,20 @@ export function defineHub(config: HubConfig): TileDefinition {
     status: "ready",
     ...(harmTier !== undefined ? { harmTier } : {}),
     ...(channels.length > 0 ? { channels } : {}),
-    // Each sub-tool renders its own "how" (including its advice line) under the
-    // active calculator; the hub carries one so the audit can see it too.
-    ...(harmTier !== undefined && harmTier >= 2 && advice ? { how: advice } : {}),
+
     // Aggregate sub-tool keywords so the hub itself is still findable; direct
     // per-sub-tool search uses the registry's SEARCH_ENTRIES.
     keywords: Array.from(new Set(tools.flatMap((t) => [t.title, ...t.keywords]))),
     mount: (ctx) => mountHub(ctx, config, fallback),
   };
+  // Each sub-tool renders its own "how" (including its advice line) under the
+  // active calculator; the hub carries one so the audit can see it too. Read
+  // through a getter, since a sub-tool's "how" may load after the hub is
+  // defined (SPEC-5 §7.5). The shell never renders it: it would repeat a
+  // sub-tool's explanation under every calculator in the hub.
+  if (harmTier !== undefined && harmTier >= 2)
+    Object.defineProperty(hub, "how", { get: advice, enumerable: true });
+  return hub;
 }
 
 function mountHub(ctx: TileContext, config: HubConfig, fallback: string): void {

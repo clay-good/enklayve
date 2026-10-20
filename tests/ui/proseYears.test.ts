@@ -136,11 +136,11 @@ const NOT_A_TAX_YEAR: Record<string, Record<string, string>> = {
     "2026":
       "Pub. L. 119-21 §71305(c) ends the repayment cap for taxable years after 2025, a date the statute fixes",
   },
-  "tiles/homeSaleGain.ts": {
+  "tiles/homeSaleGainHow.ts": {
     "2008":
       "§121(b)(5) counts nonqualified use only from January 1, 2009, a date the statute fixes",
   },
-  "tiles/pmiEndDate.ts": {
+  "tiles/pmiEndDateHow.ts": {
     "1999": "the Act covers loans made from July 29, 1999, a date the statute fixes",
   },
   "tiles/acaPtc.ts": { "2025": "when the enhanced subsidies expired, which is history" },

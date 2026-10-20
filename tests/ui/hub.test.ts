@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { defineHub } from "../../src/tiles/hub";
+import { tileHowResources } from "../../src/ui/explainer";
 import { SEARCH_ENTRIES } from "../../src/tiles/registry";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext, TileDefinition } from "../../src/tiles/types";
@@ -155,5 +156,43 @@ describe("search index (deep links)", () => {
     // Hubs themselves are searchable with no tool (open at their default).
     expect(SEARCH_ENTRIES.some((e) => e.hubId === "paycheck-taxes" && !e.tool)).toBe(true);
     expect(eitc).toBeTruthy();
+  });
+});
+
+/**
+ * A tool whose "how" block loads with its code (SPEC-5 §7.5): the explainer
+ * waits for it, and a hub's audit copy reads it once it has arrived.
+ */
+describe("a how block that loads on demand", () => {
+  function lazyHowTool(text: string): TileDefinition {
+    const tool: TileDefinition = {
+      ...fakeTool("lazy", "Lazy"),
+      how: undefined,
+      harmTier: 2,
+      loadHow: async () => (tool.how ??= text),
+    };
+    return tool;
+  }
+
+  it("says it is loading, then fills in the explanation", async () => {
+    const tool = lazyHowTool("First paragraph.\n\nSecond paragraph.");
+    const section = tileHowResources(tool)!;
+    expect(section.textContent).toContain("Loading…");
+    await vi.waitFor(() => expect(section.textContent).toContain("Second paragraph."));
+    expect(section.querySelectorAll(".explainer-para").length).toBe(2);
+  });
+
+  it("gives a tier-2 hub the loaded text, read when asked rather than when defined", async () => {
+    const tool = lazyHowTool("It is not tax advice.");
+    const hub = defineHub({
+      id: "h",
+      title: "H",
+      pillar: "stand",
+      description: "d",
+      tools: [fakeTool("a", "A"), tool],
+    });
+    expect(hub.how).toBe("How A works");
+    await tool.loadHow!();
+    expect(hub.how).toBe("It is not tax advice.");
   });
 });

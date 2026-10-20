@@ -74,6 +74,11 @@ export interface TileDefinition {
    * Paragraphs are separated by blank lines.
    */
   how?: string;
+  /**
+   * Loads `how` for a tool whose explanation is not in the shell (SPEC-5 §7.5);
+   * it sets `how` once resolved, so later readers find it there.
+   */
+  loadHow?: () => Promise<string>;
   /** Trusted external resources to learn more (shown as "Learn more" links). */
   resources?: { label: string; url: string }[];
   /**

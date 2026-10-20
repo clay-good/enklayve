@@ -12,14 +12,34 @@ export function tileHowResources(
   navigate?: TileContext["navigate"],
 ): HTMLElement | null {
   const hasRelated = navigate && tile.related && tile.related.length > 0;
-  if (!tile.how && !(tile.resources && tile.resources.length > 0) && !hasRelated) return null;
+  if (!tile.how && !tile.loadHow && !(tile.resources && tile.resources.length > 0) && !hasRelated)
+    return null;
   const section = el("section", { class: "tile-howres" });
 
-  if (tile.how) {
+  if (tile.how || tile.loadHow) {
     const how = el("details", { class: "explainer-how", attrs: { open: "" } });
     how.append(el("summary", { text: "How this works" }));
-    for (const para of tile.how.split(/\n\n+/)) {
-      how.append(el("p", { class: "explainer-para", text: para.trim() }));
+    const fill = (text: string): void => {
+      how.replaceChildren(how.firstChild!);
+      for (const para of text.split(/\n\n+/)) {
+        how.append(el("p", { class: "explainer-para", text: para.trim() }));
+      }
+    };
+    if (tile.how) fill(tile.how);
+    else {
+      // A tool whose explanation loads with its code (SPEC-5 §7.5).
+      how.append(
+        el("p", { class: "explainer-para", attrs: { "aria-busy": "true" }, text: "Loading…" }),
+      );
+      void tile.loadHow!().then(fill, () =>
+        how.replaceChildren(
+          how.firstChild!,
+          el("p", {
+            class: "explainer-para",
+            text: "This explanation could not load. Reload the page to see it.",
+          }),
+        ),
+      );
     }
     section.append(how);
   }

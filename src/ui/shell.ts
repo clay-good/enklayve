@@ -1084,7 +1084,12 @@ function tileExplainer(tile: TileDefinition): HTMLElement | null {
 
   // Hubs carry no `how`/`resources` of their own (their active sub-tool renders
   // those); for an ordinary tile this adds its "How this works" + "Learn more".
-  const howres = tileHowResources(tile);
+  // A hub of harm tier 2 or more does carry a `how`, a copy of its strictest
+  // sub-tool's for the audit, and rendering it put a second, unrelated "How this
+  // works" under every calculator in the hub — Retirement's showed the 401(k)
+  // cash-out's under the RMD tool. So a hub's is never rendered here.
+  const isHub = TILES.includes(tile);
+  const howres = tileHowResources(isHub ? { ...tile, how: undefined } : tile);
   if (howres) section.append(howres);
 
   section.append(

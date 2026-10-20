@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { renderToolPage, toolPages, toolPagePath, toolPageUrl } from "../../scripts/tool-pages";
+import { loadLazyHows } from "../../src/tiles/lazy";
+import { pmiEndDateTile } from "../../src/tiles/pmiEndDate";
 import { escapeHtml } from "../../scripts/tools-index";
 import { renderSitemap, renderRobots, SITE_ORIGIN } from "../../scripts/sitemap";
 import { indexablePaths } from "../../scripts/indexable";
@@ -312,5 +314,13 @@ describe("robots.txt", () => {
     expect(robots).toContain("User-agent: *");
     expect(robots).toContain("Allow: /");
     expect(robots).toContain(`Sitemap: ${SITE_ORIGIN}/sitemap.xml`);
+  });
+});
+
+describe("a tool whose explanation loads on demand still has it on its crawl page", () => {
+  it("writes the loaded how block into the page", async () => {
+    await loadLazyHows();
+    const html = renderToolPage(pmiEndDateTile, "home-purchases");
+    expect(html).toContain("Homeowners Protection Act sets three dates");
   });
 });
