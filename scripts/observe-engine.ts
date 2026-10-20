@@ -94,6 +94,7 @@ import { requiredMinimumDistribution } from "../src/engine/rmd";
 import { projectIBond } from "../src/engine/savingsBond";
 import { socialSecurityBenefit, fullRetirementAgeMonths } from "../src/engine/socialSecurity";
 import { spousalBenefit, survivorBenefit, survivorFraMonths } from "../src/engine/ssFamily";
+import { medicareSavingsScreen } from "../src/engine/medicareSavings";
 import { socialSecurityBenefitTaxation } from "../src/engine/socialSecurityTax";
 import {
   bracketTax,
@@ -132,6 +133,7 @@ export const PROBED_FILES = [
   "src/engine/savingsBond.ts",
   "src/engine/socialSecurity.ts",
   "src/engine/ssFamily.ts",
+  "src/engine/medicareSavings.ts",
   "src/engine/socialSecurityTax.ts",
   "src/engine/tax/brackets.ts",
   "src/engine/taxMoves.ts",
@@ -1031,6 +1033,35 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
     );
   for (const claim of [720, 803, 804])
     put(`survivor(2000,${claim})`, survivorBenefit(2000, 804, claim, family).monthly.toNumber());
+
+  // --- Medicare Savings and Extra Help: each income line and each savings
+  // limit, at it and a cent over, for one person and for a couple.
+  const pair = (individual: number, couple: number) => ({ individual, couple });
+  const savings = {
+    year: 2026,
+    programs: [
+      { id: "qmb", name: "QMB", pays: "-", monthlyIncomeLine: pair(1350, 1824) },
+      { id: "qi", name: "QI", pays: "-", monthlyIncomeLine: pair(1816, 2455) },
+    ],
+    savingsResourceLimit: pair(9950, 14910),
+    extraHelp: {
+      annualIncomeLine: pair(23940, 32460),
+      resourceLimit: pair(16590, 33100),
+      resourceLimitWithBurial: pair(18090, 36100),
+      maxCopayPerDrug: 12.65,
+    },
+    citation,
+  };
+  for (const couple of [false, true])
+    for (const monthlyIncome of [1350, 1350.01, 1995, 1995.01])
+      for (const resources of [9950, 9950.01, 16590, 16590.01, 18090, 18090.01]) {
+        const r = medicareSavingsScreen({ couple, monthlyIncome, resources }, savings);
+        put(`msp(${couple},${monthlyIncome},${resources})`, {
+          programs: r.programs.map((p) => p.underIncomeLine),
+          savings: r.underSavingsResourceLimit,
+          extraHelp: [r.extraHelp.underIncomeLine, r.extraHelp.resources],
+        });
+      }
 
   return o;
 }

@@ -1082,6 +1082,19 @@
       "contentHash": "615ec6638f88accae496be1eb3e356a51d5b1d55e8bf6e59422d5252ef1dc8e8"
     },
     {
+      "id": "medicare-savings-2026",
+      "kind": "medicare-savings",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "medicare-savings-2026.json",
+      "sourceUrl": "https://www.medicare.gov/basics/costs/help/medicare-savings-programs",
+      "sourceDocument": "Medicare.gov, Medicare Savings Programs and Help with drug costs (2026 limits); CMS, CY 2026 LIS resource limits memo; 42 CFR §423.773",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "4fbb42fd7e5b23dcf56c1f90294e09d7574b6f51e9d419bffaf7003d8160e495"
+    },
+    {
       "id": "child-tax-2024",
       "kind": "child-tax",
       "version": "2026.0",

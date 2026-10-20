@@ -1398,6 +1398,33 @@ export const SsiSchema = z.object({
 });
 export type SsiData = z.infer<typeof SsiSchema>;
 
+const MedicarePair = z.object({ individual: z.number().gt(0), couple: z.number().gt(0) });
+
+/** The federal Medicare Savings Program and Extra Help lines for a year (SPEC-5 later-life L5). */
+export const MedicareSavingsSchema = z.object({
+  year: z.number().int(),
+  programs: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        pays: z.string().min(1),
+        monthlyIncomeLine: MedicarePair,
+      }),
+    )
+    .min(1),
+  savingsResourceLimit: MedicarePair,
+  extraHelp: z.object({
+    annualIncomeLine: MedicarePair,
+    resourceLimit: MedicarePair,
+    /** For someone who expects to use some resources for burial, 20 CFR §416.1231. */
+    resourceLimitWithBurial: MedicarePair,
+    maxCopayPerDrug: z.number().gt(0),
+  }),
+  citation: CitationSchema,
+});
+export type MedicareSavingsData = z.infer<typeof MedicareSavingsSchema>;
+
 export const GiftTaxSchema = z.object({
   taxYear: z.number().int(),
   annualExclusion: z.number().gte(0),
@@ -2057,6 +2084,7 @@ export const DATASET_SCHEMAS = {
   "ss-earnings-test": SsEarningsTestSchema,
   "ss-family-benefits": SsFamilyBenefitsSchema,
   ssi: SsiSchema,
+  "medicare-savings": MedicareSavingsSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

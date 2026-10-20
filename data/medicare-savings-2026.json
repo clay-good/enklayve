@@ -1,0 +1,37 @@
+{
+  "year": 2026,
+  "programs": [
+    {
+      "id": "qmb",
+      "name": "Qualified Medicare Beneficiary (QMB)",
+      "pays": "Part B premiums, Part A premiums if you pay them, and Medicare's deductibles, coinsurance and copayments",
+      "monthlyIncomeLine": { "individual": 1350, "couple": 1824 }
+    },
+    {
+      "id": "slmb",
+      "name": "Specified Low-Income Medicare Beneficiary (SLMB)",
+      "pays": "Part B premiums",
+      "monthlyIncomeLine": { "individual": 1616, "couple": 2184 }
+    },
+    {
+      "id": "qi",
+      "name": "Qualifying Individual (QI)",
+      "pays": "Part B premiums, applied for every year and approved first come, first served",
+      "monthlyIncomeLine": { "individual": 1816, "couple": 2455 }
+    }
+  ],
+  "savingsResourceLimit": { "individual": 9950, "couple": 14910 },
+  "extraHelp": {
+    "annualIncomeLine": { "individual": 23940, "couple": 32460 },
+    "resourceLimit": { "individual": 16590, "couple": 33100 },
+    "resourceLimitWithBurial": { "individual": 18090, "couple": 36100 },
+    "maxCopayPerDrug": 12.65
+  },
+  "citation": {
+    "sourceUrl": "https://www.medicare.gov/basics/costs/help/medicare-savings-programs",
+    "sourceDocument": "Medicare.gov, Medicare Savings Programs and Help with drug costs (2026 limits); CMS, CY 2026 LIS resource limits memo; 42 CFR §423.773",
+    "sourceNote": "Medicare.gov's 2026 monthly income limits: QMB $1,350 for an individual and $1,824 for a married couple, SLMB $1,616 and $2,184, QI $1,816 and $2,455, each with resource limits of $9,950 and $14,910. The page says income limits are \"slightly higher in Alaska and Hawaii\" and that states may go above the federal limits, which this tool does not model. Extra Help, from Medicare.gov's drug-costs page: income limits of $23,940 and $32,460 a year. CMS's CY 2026 LIS memo (cms.gov/files/document/cy2026-lis-resource-limits-memo.pdf) gives resource limits of $16,590 ($33,100 if married), or $18,090 ($36,100) for someone who expects to use some resources for burial expenses under 20 CFR §416.1231. 42 CFR §423.773(c)(1)(iii): anyone eligible for QMB, SLMB or QI \"must be treated as\" eligible for the full Extra Help subsidy. Each Savings Program page puts the per-drug cost under Extra Help at \"no more than $12.65 in 2026\". The tool compares gross income with the lines and does not model the exclusions SSA and the states apply. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

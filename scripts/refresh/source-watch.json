@@ -419,6 +419,13 @@
       "why": "The earned-income exclusions and their order are §416.1112; the 2026 federal benefit rates come from SSA's annual notice, which the zero-year window forces a person to read each fall.",
       "fingerprint": "2254c0f544736fd1da5b7ed897be43afe1452db303f4d4e7a8ecdb51fcb03294",
       "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "medicare-savings-2026",
+      "url": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-B/part-423/subpart-P/section-423.773",
+      "why": "§423.773 sets Extra Help's 150%-of-poverty line and treats Savings Program enrollees as eligible; the year's dollar lines come from Medicare.gov and CMS's LIS memo, which the zero-year window forces a person to re-read each fall.",
+      "fingerprint": "37adf09986d00d4d23077f96539abbefd69516ed043c6d26dd40e90677f11a1d",
+      "checkedOn": "2026-10-20"
     }
   ]
 }
