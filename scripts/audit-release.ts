@@ -684,8 +684,41 @@ export function checkTierDeclared(tiles: AuditTile[], legacy: readonly string[])
  *
  * The budget stays at 319, leaving about 11.7 kB in CI. Lowering it to put the
  * headroom back near a kilobyte is the owner's decision, like raising it.
+ *
+ * **319 → 325 on 2026-10-19, for the rest of SPEC-5, decided by the owner.**
+ *
+ * The 11.7 kB above went to SPEC-5's Phases 27 to 29, and every tool in it was
+ * measured as it landed. The shell is 316.2, with 2.3 kB free in CI. What
+ * SPEC-5 has cost so far:
+ *
+ *   - Phase 27's six cited clocks, eager because the enrollment-windows shard
+ *     every deadline reads is eager: 2.2 kB.
+ *   - When PMI Ends, built eager: 3.4 kB. Moving its code and shard on demand
+ *     took 1.9 back, and its how block another share of the next 1.9.
+ *   - The on-demand tools after that, each its definition, hub row and import
+ *     stub in the shell: Selling a Home 1.0 (before the how block moved),
+ *     Cashing Out a 401(k) 1.9 (with the bundler's runtime chunk, which the
+ *     precache fix made a real cost rather than a hidden one), COBRA or the
+ *     Marketplace 0.9, Jointly or Separately 0.2, Medicare Premiums & IRMAA
+ *     with the thirteenth hub 0.6, Medicare Penalties 0.4, the Earnings Test
+ *     0.6.
+ *   - Changes to tools already in the shell, which cannot load on demand:
+ *     compare two states 0.3, the W-4's extra pay 0.7, the unemployment net's
+ *     hook 0.5.
+ *
+ * So a SPEC-5 tool on the lazy pattern costs 0.2 to 0.6 kB, about 0.5 on
+ * average, and the trims that pattern allows have been taken: code, shards
+ * and how blocks all load on demand already, and what is left is the title,
+ * description and keywords search needs before anything is opened. What
+ * remains of SPEC-5 is two Phase 29 tools, two Phase 30 screeners with the
+ * What Am I Owed screener's new rows, two Phase 31 tools with the screener's
+ * poverty-line programs, Phase 32's extractors (inside the Readout's lazy
+ * chunk, so near nothing here) and one Phase 33 tool. At the measured rate
+ * that is about 5 kB, which a 1 kB minimum headroom and the 0.5 kB CI spread
+ * put at 322 to 323. Six, not four: a ceiling that has to be raised again
+ * mid-phase is the drift this comment has argued against since 260.
  */
-export const SHELL_GZIP_BUDGET_KB = 319;
+export const SHELL_GZIP_BUDGET_KB = 325;
 
 /**
  * The headroom this gate needs to be measuring the shell rather than the runner.
