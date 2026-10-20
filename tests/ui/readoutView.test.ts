@@ -9,6 +9,9 @@ import { PDF_PASSWORD_REQUIRED, type TextExtractor } from "../../src/readout/ext
 let bundled: BundledData;
 beforeAll(async () => {
   bundled = await loadBundledData();
+  // The reading half loads with the first document (readout/engine.ts). Loaded
+  // here so a drop settles in one tick, as it does in a browser that has it.
+  await import("../../src/readout/engine");
 });
 
 /**

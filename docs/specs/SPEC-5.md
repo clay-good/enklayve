@@ -259,6 +259,12 @@ Ordered prompts in the SPEC/SPEC-2 convention. Each phase is independently shipp
 
 **Shell cost.** None; the Readout's extractors are already a lazy chunk.
 
+**Status — in progress.** **32a's first four statements shipped 2026-10-19**: the SSA-1099 (R1), the 1099-R (R2), and the 1098-T and 1098-E (R5). Each is revision-pinned with golden fixtures, including both negatives: an SSA-1042S stays unrecognized, and a mortgage 1098 stays a mortgage 1098. Each is anchored on the captions the IRS prints on its 2026 forms, and the SSA-1099's on IRS Publication 915's description of its boxes, because ssa.gov refuses automated reads. The 2026 1099-R splits box 7 into 7a to 7d, with 7c a Trump account checkbox. The code is read case-sensitively, as a whole token, so the next box's caption is never taken for a code. Each code is named in the words of the IRS's Guide to Distribution Codes. The 1099-R adds two rule checks, both silent on a scan:
+- A code 1 distribution with exactly 20% withheld asks whether that covers §72(t)'s 10% as well.
+- A code G with a taxable box 2a asks whether the rollover was meant to be taxable. Its declared false positive is the in-plan Roth rollover.
+
+The SSA-1099 and 1098-T point at the Social Security Taxation and Education Credits tools. **The Readout was not a lazy chunk**, as this phase's shell line assumed. These four measured 2.5 kB of shell, so the reading half (extractors, checks, answer) moved behind a dynamic import in `readout/engine.ts`. That took the shell from 321.3 to **312.0 kB**. Corrections to the companion spec: the current 1099-G's state withholding is box 12, not 11. The 1099-G, the Social Security Statement and their two targets are next, then 32b.
+
 ### Phase 33: Student loans
 
 **Goal.** The payment tool, shipped only when its gate passes.

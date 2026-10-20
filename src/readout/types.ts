@@ -32,7 +32,14 @@ export type DocKind =
   // from the revision pin, exactly as a pay stub is.
   | "eobHealth"
   | "medicalBill"
-  | "benefitsNotice";
+  | "benefitsNotice"
+  // Readout v3 (SPEC-5-readout-v3 §2), the statements a retiree, a student
+  // and a new parent hold. Each has a published model with numbered boxes,
+  // so each is revision-pinned like a W-2.
+  | "ssa1099"
+  | "form1099r"
+  | "form1098t"
+  | "form1098e";
 
 /** The My Situation fields the Readout can populate on confirmation. Kept
  * narrow (not all of {@link SituationKey}) so the mapping stays type-safe, and

@@ -176,6 +176,9 @@ const NOT_A_TAX_YEAR: Record<string, Record<string, string>> = {
     "2026": "the tax year box 14b of the W-2 was added for",
     "2025": "the year before which an occupation must have customarily received tips",
   },
+  "readout/citations.ts": {
+    "2026": "the edition of the 1099-R instructions that was read, a record of which document, not a figure that rolls",
+  },
   "readout/extract.ts": {
     "2023": "a W-2 form revision the readout can parse",
     "2024": "a W-2 form revision the readout can parse",

@@ -704,3 +704,58 @@ describe("Readout v2, the No Surprises balance-billing screen", () => {
     expect(NO_SURPRISES.uninsured.disputeThresholdDollars).toBe(400);
   });
 });
+
+describe("Readout v3, the 1099-R's questions (SPEC-5-readout-v3 R2)", () => {
+  const CASH_OUT =
+    "Form 1099-R 2026 1 Gross distribution $40,000.00 2a Taxable amount $40,000.00 " +
+    "4 Federal income tax withheld $8,000.00 7a Dist. code(s) 1 7b IRA/SEP/";
+  const ROLLOVER =
+    "Form 1099-R 2026 1 Gross distribution $60,000.00 2a Taxable amount $60,000.00 " +
+    "4 Federal income tax withheld $0.00 7a Dist. code(s) G 7b IRA/SEP/";
+
+  it("asks whether 20% withheld covers a code 1 distribution, citing §72(t)", () => {
+    const a = buildAnswer(extractDocument(typed(CASH_OUT)));
+    const flag = a.flags.find((f) => f.checkId === "1099r-early-withholding-short")!;
+    expect(flag.kind).toBe("rule");
+    expect(flag.question).toMatch(/\?$/);
+    expect(flag.detail).toContain("$4,000.00");
+    expect(flag.citation?.sourceUrl).toContain("/26/72");
+    expect(a.next.some((n) => n.label.includes("60 days"))).toBe(true);
+  });
+
+  it("asks why a direct rollover shows a taxable amount", () => {
+    const a = buildAnswer(extractDocument(typed(ROLLOVER)));
+    expect(a.flags.map((f) => f.checkId)).toContain("1099r-rollover-taxable");
+    const clean = buildAnswer(
+      extractDocument(
+        typed(ROLLOVER.replace("2a Taxable amount $60,000.00", "2a Taxable amount $0.00")),
+      ),
+    );
+    expect(clean.flags.map((f) => f.checkId)).not.toContain("1099r-rollover-taxable");
+  });
+
+  it("runs neither question on a scan", () => {
+    for (const text of [CASH_OUT, ROLLOVER]) {
+      expect(buildAnswer(extractDocument(scanned(text))).flags).toEqual([]);
+    }
+  });
+
+  it("points an SSA-1099 and a 1098-T at the tools that use them", () => {
+    const ssa = buildAnswer(
+      extractDocument(
+        typed(
+          "FORM SSA-1099 - SOCIAL SECURITY BENEFIT STATEMENT 2025 Box 5. Net Benefits for 2025 (Box 3 minus Box 4) $23,500.00",
+        ),
+      ),
+    );
+    expect(ssa.owed.map((o) => o.tileId)).toEqual(["social-security-tax"]);
+    const t = buildAnswer(
+      extractDocument(
+        typed(
+          "Form 1098-T Tuition Statement 2025 1 Payments received for qualified tuition and related expenses $9,800.00",
+        ),
+      ),
+    );
+    expect(t.owed.map((o) => o.tileId)).toEqual(["education-credits"]);
+  });
+});

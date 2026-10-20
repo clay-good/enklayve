@@ -9,7 +9,6 @@
  */
 import { el, clear, option } from "./dom";
 import { field } from "./form";
-import { extractDocument, labelFor } from "../readout/extract";
 import { applyToSituation, replacementNote } from "../readout/toSituation";
 import {
   extractTextFromFile,
@@ -26,7 +25,13 @@ import {
 } from "../profile/ledger";
 import { renderLedgerDiff } from "./ledgerView";
 import { buildReport } from "../readout/report";
-import { buildAnswer } from "../readout/answer";
+/** Loaded with the first document, not with the shell (see readout/engine.ts). */
+type ReadoutEngine = typeof import("../readout/engine");
+let engine: ReadoutEngine | null = null;
+async function loadEngine(): Promise<ReadoutEngine> {
+  engine ??= await import("../readout/engine");
+  return engine;
+}
 import type { PlanParameters } from "../readout/checks";
 import { citationLink } from "./resultCard";
 import { todayIso } from "./deadline";
@@ -223,7 +228,10 @@ export function renderReadout(opts: RenderReadoutOptions): void {
   async function readDocument(file: File, password?: string): Promise<void> {
     status.textContent = "Reading on your device…";
     try {
-      const text = await extractor(file, password);
+      const [text, { extractDocument }] = await Promise.all([
+        extractor(file, password),
+        loadEngine(),
+      ]);
       const result = extractDocument(text);
       if (result.recognized) session.push(result);
       status.textContent = "";
@@ -439,6 +447,8 @@ export function renderReadout(opts: RenderReadoutOptions): void {
   }
 
   function renderResult(result: ExtractionResult): void {
+    // Set before the first call: `readDocument` awaits it with the text.
+    const { labelFor, buildAnswer } = engine!;
     clear(resultRegion);
 
     for (const w of result.warnings) {

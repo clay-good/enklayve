@@ -317,7 +317,9 @@ describe("Readout, 1095-A and 1098 extraction", () => {
     const r = extractDocument(
       typed("Form 1098-T Tuition Statement 2024 1 Payments received 12000.00"),
     );
-    expect(r.kind).toBe("unknown");
+    // Read as a 1098-T since Readout v3 (SPEC-5-readout-v3 R5), never as a
+    // mortgage statement.
+    expect(r.kind).toBe("form1098t");
   });
 });
 
@@ -514,5 +516,104 @@ describe("a second document landing on a field the first one filled", () => {
     // box 1 it was computed from are not two incomes.
     expect(note).not.toMatch(/\badd\b|\btotal\b/i);
     expect(replacementNote([], "en-US")).toBe("");
+  });
+});
+
+/**
+ * Readout v3, the tax statements (SPEC-5-readout-v3 §2, Phase 32a). Captions
+ * are the forms' own: the 2026 1099-R, 1098-T and 1098-E as the IRS prints
+ * them, and the SSA-1099's boxes as IRS Publication 915 describes them.
+ */
+describe("Readout v3, the tax statements", () => {
+  const SSA1099 = typed(
+    "FORM SSA-1099 - SOCIAL SECURITY BENEFIT STATEMENT 2025 " +
+      "Box 3. Benefits Paid in 2025 $24,000.00 " +
+      "Box 4. Benefits Repaid to SSA in 2025 $500.00 " +
+      "Box 5. Net Benefits for 2025 (Box 3 minus Box 4) $23,500.00 " +
+      "Box 6. Voluntary Federal Income Tax Withheld $1,200.00",
+  );
+  const F1099R = typed(
+    "Form 1099-R 2026 Distributions From Pensions, Annuities, Retirement or Profit-Sharing Plans " +
+      "1 Gross distribution $40,000.00 2a Taxable amount $40,000.00 " +
+      "2b Taxable amount not determined Total distribution " +
+      "4 Federal income tax withheld $8,000.00 7a Dist. code(s) 1 7b IRA/SEP/SIMPLE",
+  );
+  const F1098T = typed(
+    "Form 1098-T Tuition Statement 2025 " +
+      "1 Payments received for qualified tuition and related expenses $9,800.00 " +
+      "5 Scholarships or grants $2,000.00 8 Checked if at least half-time student",
+  );
+  const F1098E = typed(
+    "Form 1098-E Student Loan Interest Statement 2025 1 Student loan interest received by lender $1,840.22",
+  );
+
+  it("reads the SSA-1099's four boxes", () => {
+    const r = extractDocument(SSA1099);
+    expect(r.kind).toBe("ssa1099");
+    expect(r.revision).toBe("2025");
+    expect(value(r, "ssa1099-box3")).toBe(24000);
+    expect(value(r, "ssa1099-box4")).toBe(500);
+    expect(value(r, "ssa1099-box5")).toBe(23500);
+    expect(value(r, "ssa1099-box6")).toBe(1200);
+    expect(r.fields.every((f) => f.target === undefined)).toBe(true);
+  });
+
+  it("leaves an SSA-1042S unrecognized rather than reading it as an SSA-1099", () => {
+    const r = extractDocument(
+      typed(
+        "FORM SSA-1042S SOCIAL SECURITY BENEFIT STATEMENT 2025 Box 3. Benefits Paid in 2025 $24,000.00",
+      ),
+    );
+    expect(r.kind).toBe("unknown");
+    expect(r.fields).toEqual([]);
+  });
+
+  it("reads the 1099-R's boxes and names its distribution code", () => {
+    const r = extractDocument(F1099R);
+    expect(r.kind).toBe("form1099r");
+    expect(value(r, "1099r-box1")).toBe(40000);
+    expect(value(r, "1099r-box2a")).toBe(40000);
+    expect(value(r, "1099r-box4")).toBe(8000);
+    const code = r.fields.find((f) => f.id === "1099r-code")!;
+    expect(code.value).toBe("1");
+    expect(code.needsReview).toBe(true);
+    expect(code.note).toContain("Early distribution, no known exception");
+  });
+
+  it("never reads the next box's caption as a distribution code", () => {
+    const blank = typed(
+      "Form 1099-R 2025 1 Gross distribution $5,000.00 7 Distribution code(s) IRA/SEP/SIMPLE",
+    );
+    expect(value(extractDocument(blank), "1099r-code")).toBeUndefined();
+    const next = typed(
+      "Form 1099-R 2026 1 Gross distribution $5,000.00 7a Dist. code(s) 7b IRA/SEP/",
+    );
+    expect(value(extractDocument(next), "1099r-code")).toBeUndefined();
+  });
+
+  it("reads the 1098-T and the 1098-E, and keeps a mortgage 1098 a mortgage 1098", () => {
+    const t = extractDocument(F1098T);
+    expect(t.kind).toBe("form1098t");
+    expect(value(t, "1098t-box1")).toBe(9800);
+    expect(value(t, "1098t-box5")).toBe(2000);
+    const e = extractDocument(F1098E);
+    expect(e.kind).toBe("form1098e");
+    expect(value(e, "1098e-box1")).toBe(1840.22);
+    const mortgage = extractDocument(
+      typed(
+        "Form 1098 Mortgage Interest Statement 2025 1 Mortgage interest received from payer(s)/borrower(s) $6,200.00",
+      ),
+    );
+    expect(mortgage.kind).toBe("form1098");
+  });
+
+  it("flags an unvalidated revision and reads nothing", () => {
+    const r = extractDocument(
+      typed(
+        "FORM SSA-1099 - SOCIAL SECURITY BENEFIT STATEMENT 2019 Box 3. Benefits Paid in 2019 $9.00",
+      ),
+    );
+    expect(r.recognized).toBe(true);
+    expect(r.fields).toEqual([]);
   });
 });

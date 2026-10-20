@@ -133,6 +133,28 @@ function owedFor(
   result: ExtractionResult,
   noSurprises: NoSurprisesData | undefined,
 ): ReadoutAnswer["owed"] {
+  // Readout v3: each statement points at the tool that turns its box into an
+  // answer, cited to the form it was read from. None is an estimate here.
+  if (result.citation) {
+    if (result.kind === "ssa1099" && valueOf(result, "ssa1099-box5") !== undefined)
+      return [
+        {
+          label:
+            "Up to 85% of net benefits can be taxable, depending on your other income. The Social Security Taxation tool works it out from box 5.",
+          citation: result.citation,
+          tileId: "social-security-tax",
+        },
+      ];
+    if (result.kind === "form1098t" && valueOf(result, "1098t-box1") !== undefined)
+      return [
+        {
+          label:
+            "Tuition you paid may qualify for the American Opportunity or Lifetime Learning Credit. The Education Credits tool sizes it.",
+          citation: result.citation,
+          tileId: "education-credits",
+        },
+      ];
+  }
   if (result.kind === "medicalBill") {
     return [
       {
@@ -213,6 +235,25 @@ function nextFor(result: ExtractionResult): ReadoutAnswer["next"] {
           channel: CHANNELS.hospitalFap,
         },
       ];
+    case "form1099r": {
+      const code = valueOf(result, "1099r-code");
+      const next: ReadoutAnswer["next"] = [];
+      if (code === "1")
+        next.push({
+          label:
+            "Size the April bill before it arrives: the Cashing Out a 401(k) tool shows the income tax and the 10% additional tax together, and names the exceptions.",
+        });
+      if (typeof code === "string" && /^[127]$/.test(code))
+        next.push({
+          label:
+            "If this money was meant to stay saved, it can still be rolled into an IRA within 60 days of when you received it (IRC §402(c)(3)), including the part withheld, which you would make up from other money.",
+        });
+      next.push({
+        label:
+          "Check the values above against the form, then confirm them. The gross and taxable amounts go on your return's IRA or pension lines.",
+      });
+      return next;
+    }
     case "benefitsNotice": {
       const program = valueOf(result, "notice-program");
       const next: ReadoutAnswer["next"] = [

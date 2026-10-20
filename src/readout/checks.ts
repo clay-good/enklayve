@@ -20,6 +20,10 @@
 import type { CitationData, NoSurprisesData } from "../data/schemas";
 import { Money } from "../engine/money";
 import { TIPPED_OCCUPATION_CITATION } from "../data/statutes";
+import {
+  DIRECT_ROLLOVER_REPORTING_CITATION,
+  EARLY_DISTRIBUTION_WITHHOLDING_CITATION,
+} from "./citations";
 import type { CheckKind, CheckOutcome, DocKind, ExtractionResult } from "./types";
 
 /**
@@ -145,6 +149,55 @@ function billLines(d: ExtractionResult | null): { label: string; value: number }
  * against fixtures in the meantime, so a rule check cannot land uncited.
  */
 export const CHECKS: CheckDefinition[] = [
+  {
+    // A code 1 distribution with 20% withheld is the shape of a cashed-out
+    // 401(k): the payer withheld what §3405(c) requires, which prepays income
+    // tax, and the 10% additional tax arrives in April on top of it.
+    id: "1099r-early-withholding-short",
+    kind: "rule",
+    appliesTo: ["form1099r"],
+    citation: EARLY_DISTRIBUTION_WITHHOLDING_CITATION,
+    falsePositive:
+      "An exception the payer did not know about (separation from service at 55 or later, disability, a series of equal payments, and others) removes the additional tax, and a low-income year can leave the 20% covering everything.",
+    suppressOnOcr: true,
+    run: (ctx) => {
+      const d = doc(ctx, "form1099r");
+      const code = d?.fields.find((f) => f.id === "1099r-code")?.value;
+      const gross = amount(d, "1099r-box1");
+      const taxable = amount(d, "1099r-box2a") ?? gross;
+      const withheld = amount(d, "1099r-box4");
+      if (code !== "1" || gross === null || taxable === null || withheld === null) return null;
+      if (gross <= 0 || Math.abs(withheld - gross * 0.2) > NOISE_FLOOR) return null;
+      return {
+        question: "Will the 20% withheld cover what this distribution costs at tax time?",
+        detail: `Code 1 means an early distribution with no known exception, so a 10% additional tax may be due on the ${usd(taxable)} taxable, about ${usd(taxable * 0.1)}, on top of the income tax. Box 4 shows ${usd(withheld)} withheld, which is the 20% a payer must withhold for income tax alone.`,
+        askWho:
+          "A free VITA tax site, or the Cashing Out a 401(k) tool here, before you file. If an exception applies, Form 5329 is where you claim it.",
+      };
+    },
+  },
+  {
+    id: "1099r-rollover-taxable",
+    kind: "rule",
+    appliesTo: ["form1099r"],
+    citation: DIRECT_ROLLOVER_REPORTING_CITATION,
+    falsePositive:
+      "A direct rollover into a designated Roth account in the same plan (an in-plan Roth rollover) is reported with code G and a taxable box 2a, correctly.",
+    suppressOnOcr: true,
+    run: (ctx) => {
+      const d = doc(ctx, "form1099r");
+      const code = d?.fields.find((f) => f.id === "1099r-code")?.value;
+      const taxable = amount(d, "1099r-box2a");
+      if (typeof code !== "string" || !code.includes("G") || taxable === null) return null;
+      if (taxable <= NOISE_FLOOR) return null;
+      return {
+        question: "Was this rollover meant to be taxable?",
+        detail: `Code G is a direct rollover, which the IRS instructions report with zero in box 2a. This form shows ${usd(taxable)} as taxable.`,
+        askWho:
+          "The plan administrator who issued this form. A rollover into a Roth account in the same plan is taxable; one into an IRA or another plan normally is not.",
+      };
+    },
+  },
   {
     // The tips deduction is the one figure on a 2026 W-2 that the form itself
     // qualifies. Box 12 code TP is "total cash tips reported to the employer";

@@ -69,6 +69,21 @@ interface RateBound {
 const asPoints = (n: number) => n;
 
 const BOUND: RateBound[] = [
+  // The Readout's 1099-R question (SPEC-5-readout-v3 R2): §72(t)'s 10% and
+  // §3405(c)'s 20%, the same rates Cashing Out a 401(k) reads.
+  { file: "readout/checks.ts", shard: "early-distribution-2026", path: ".additionalTaxRate" },
+  {
+    file: "readout/checks.ts",
+    shard: "early-distribution-2026",
+    path: ".mandatoryWithholdingRate",
+  },
+  { file: "readout/answer.ts", shard: "early-distribution-2026", path: ".additionalTaxRate" },
+  // The SSA-1099's pointer: §86's 85% ceiling on the taxable share.
+  {
+    file: "readout/answer.ts",
+    shard: "social-security-taxation-2024",
+    path: ".tier2InclusionRate",
+  },
   // Child & Dependent Care's "how" block: §21(a)(2)'s 50% start and its two
   // floors, stored in whole points.
   {

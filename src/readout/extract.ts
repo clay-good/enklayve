@@ -214,6 +214,13 @@ const DOC_MARKERS: { kind: DocKind; re: RegExp; also?: RegExp }[] = [
   { kind: "form1099nec", re: /\b1099-?NEC\b/i },
   { kind: "form1099b", re: /\b1099-?B\b/i },
   { kind: "form1095a", re: /\b1095-?A\b/i },
+  // Readout v3 (SPEC-5-readout-v3 §2). The SSA-1099 needs SSA's own form
+  // number, so its nonresident twin, the SSA-1042S, stays unrecognized rather
+  // than being read as one. The 1099-R needs a box caption beside its number.
+  { kind: "ssa1099", re: /\bSSA-?1099\b/i, also: /benefit statement/i },
+  { kind: "form1099r", re: /\b1099-?R\b/, also: /gross distribution/i },
+  { kind: "form1098t", re: /\b1098-?T\b/, also: /tuition/i },
+  { kind: "form1098e", re: /\b1098-?E\b/, also: /student loan interest/i },
   // Anchored to "mortgage interest" so the 1098-T (tuition) and 1098-E (student
   // loan) variants don't masquerade as a mortgage statement.
   { kind: "form1098", re: /\b1098\b/, also: /mortgage interest/i },
@@ -290,6 +297,63 @@ function occupationCodes(text: string): ExtractedField | null {
     note: codes.includes("000")
       ? 'A "000" here means at least some of these tips were received in an occupation that does not qualify for the tips deduction.'
       : undefined,
+  };
+}
+
+/**
+ * The 1099-R distribution codes a household is most likely to be holding, in
+ * the words of the IRS's own Guide to Distribution Codes (Instructions for
+ * Forms 1099-R and 5498, Table 1). A code not listed is named as a code and
+ * pointed at the instructions rather than guessed at.
+ */
+const DISTRIBUTION_CODES: Record<string, string> = {
+  "1": "Early distribution, no known exception",
+  "2": "Early distribution, exception applies",
+  "3": "Disability",
+  "4": "Death",
+  "7": "Normal distribution",
+  "8": "Excess contributions or deferrals, taxable this year",
+  B: "Designated Roth account distribution",
+  G: "Direct rollover",
+  H: "Direct rollover of a designated Roth account to a Roth IRA",
+  J: "Early distribution from a Roth IRA, no known exception",
+  L: "Loan treated as a deemed distribution",
+  M: "Qualified plan loan offset",
+  Q: "Qualified distribution from a Roth IRA",
+  S: "Early distribution from a SIMPLE IRA in its first two years",
+  T: "Roth IRA distribution, exception applies",
+  Y: "Qualified charitable distribution",
+};
+
+/**
+ * Box 7 (7a from the 2026 revision on): one or two codes, uppercase letters
+ * and digits from the IRS list. Read case-sensitively, and only as a whole
+ * token, so the caption of the next box ("7b IRA/SEP/SIMPLE", or "IRA" after
+ * the 2025 form's "Distribution code(s)") can never be read as a code: no
+ * code is a lowercase letter, and I is not a code.
+ */
+function distributionCode(text: string): ExtractedField | null {
+  const m = /7a?\s*[Dd]ist(?:ribution|\.)?\s*[Cc]ode\(?s?\)?[\s:]*([1-9A-HJ-NP-UWY]{1,2})\b/.exec(
+    text,
+  );
+  const code = m?.[1];
+  if (!code) return null;
+  const meanings = code
+    .split("")
+    .map((c) =>
+      DISTRIBUTION_CODES[c]
+        ? `${c}: ${DISTRIBUTION_CODES[c]}`
+        : `${c}: see the 1099-R instructions`,
+    );
+  return {
+    id: "1099r-code",
+    label: "Distribution code (box 7)",
+    value: code,
+    // Where a filled-in code lands in a PDF's text depends on the payer's
+    // software, so it is always shown for review.
+    confidence: "needs-review",
+    needsReview: true,
+    note: meanings.join("; "),
   };
 }
 
@@ -660,6 +724,129 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
       ].filter((f): f is ExtractedField => f !== null);
     },
   },
+  /**
+   * Form SSA-1099. Boxes 3 to 5 are as IRS Publication 915 describes them:
+   * gross benefits, repayments, and the net that the taxable-benefits
+   * worksheet starts from. Box 6 is the voluntary withholding a W-4V asks for.
+   */
+  ssa1099: {
+    citation: (rev) =>
+      formCitation(
+        "Form SSA-1099 Social Security Benefit Statement, per IRS Publication 915",
+        rev,
+        "https://www.irs.gov/publications/p915",
+      ),
+    extract: (t) => {
+      const text = t.text;
+      return [
+        field(
+          "ssa1099-box3",
+          "Benefits paid (box 3)",
+          amountAfter(text, /box\s*3\.?\s*benefits paid in\s*\d{4}/i),
+          undefined,
+        ),
+        field(
+          "ssa1099-box4",
+          "Benefits repaid to SSA (box 4)",
+          amountAfter(text, /box\s*4\.?\s*benefits repaid to ssa in\s*\d{4}/i),
+          undefined,
+        ),
+        field(
+          "ssa1099-box5",
+          "Net benefits (box 5)",
+          amountAfter(
+            text,
+            /box\s*5\.?\s*net benefits for\s*\d{4}(?:\s*\(box\s*3\s*minus\s*box\s*4\))?/i,
+          ),
+          undefined,
+          "The figure the taxable-benefits worksheet starts from. Feeds the Social Security Taxation tool.",
+        ),
+        field(
+          "ssa1099-box6",
+          "Voluntary federal income tax withheld (box 6)",
+          amountAfter(text, /box\s*6\.?\s*voluntary federal income tax withheld/i),
+          undefined,
+        ),
+      ].filter((f): f is ExtractedField => f !== null);
+    },
+  },
+  form1099r: {
+    citation: f1099Citation("R"),
+    extract: (t) => {
+      const text = t.text;
+      return [
+        field(
+          "1099r-box1",
+          "Gross distribution (box 1)",
+          amountAfter(text, /1\s*gross distribution/i),
+          undefined,
+        ),
+        // "Taxable amount not determined" is box 2b's caption, printed on every
+        // form whether or not it is checked, so the anchor refuses it.
+        field(
+          "1099r-box2a",
+          "Taxable amount (box 2a)",
+          amountAfter(text, /2a\s*taxable amount(?!\s*not)/i),
+          undefined,
+        ),
+        field(
+          "1099r-box4",
+          "Federal income tax withheld (box 4)",
+          amountAfter(text, /4\s*federal income tax\s*withheld/i),
+          undefined,
+        ),
+        distributionCode(text),
+      ].filter((f): f is ExtractedField => f !== null);
+    },
+  },
+  form1098t: {
+    citation: (rev) =>
+      formCitation(
+        "IRS Form 1098-T Tuition Statement",
+        rev,
+        "https://www.irs.gov/forms-pubs/about-form-1098-t",
+      ),
+    extract: (t) => {
+      const text = t.text;
+      return [
+        field(
+          "1098t-box1",
+          "Payments received for qualified tuition and related expenses (box 1)",
+          amountAfter(
+            text,
+            /1\s*payments received for\s*qualified tuition and related\s*expenses/i,
+          ),
+          undefined,
+          "Feeds the Education Credits tool's expenses. Your own records of what you paid govern, not this box alone.",
+        ),
+        field(
+          "1098t-box5",
+          "Scholarships or grants (box 5)",
+          amountAfter(text, /5\s*scholarships or grants/i),
+          undefined,
+          "Tax-free scholarships reduce the expenses the education credits count.",
+        ),
+      ].filter((f): f is ExtractedField => f !== null);
+    },
+  },
+  form1098e: {
+    citation: (rev) =>
+      formCitation(
+        "IRS Form 1098-E Student Loan Interest Statement",
+        rev,
+        "https://www.irs.gov/forms-pubs/about-form-1098-e",
+      ),
+    extract: (t) => {
+      const box1 = field(
+        "1098e-box1",
+        "Student loan interest received by lender (box 1)",
+        amountAfter(t.text, /1\s*student loan interest received by lender/i),
+        undefined,
+        "The student loan interest deduction (IRC §221) starts from this figure, with its own annual cap and income limit.",
+      );
+      return box1 ? [box1] : [];
+    },
+  },
   fafsaSummary: {
     citation: (rev) =>
       formCitation(
@@ -966,7 +1153,7 @@ export function extractDocument(t: ExtractedText): ExtractionResult {
 
   if (kind === "unknown") {
     warnings.push(
-      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B), 1095-A, 1098 mortgage statements, the FAFSA Submission Summary, health plan Explanations of Benefits, itemized medical bills, and benefits determination notices.",
+      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B/R), SSA-1099, 1095-A, 1098 mortgage statements, 1098-T, 1098-E, the FAFSA Submission Summary, health plan Explanations of Benefits, itemized medical bills, and benefits determination notices.",
     );
     return {
       kind,
@@ -1079,6 +1266,14 @@ export function labelFor(kind: DocKind | "unknown"): string {
       return "itemized medical bill";
     case "benefitsNotice":
       return "benefits determination notice";
+    case "ssa1099":
+      return "SSA-1099";
+    case "form1099r":
+      return "1099-R";
+    case "form1098t":
+      return "1098-T tuition statement";
+    case "form1098e":
+      return "1098-E student loan interest statement";
     default:
       return "document";
   }
