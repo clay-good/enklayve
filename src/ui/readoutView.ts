@@ -34,7 +34,7 @@ async function loadEngine(): Promise<ReadoutEngine> {
 }
 import type { PlanParameters } from "../readout/checks";
 import { citationLink } from "./resultCard";
-import { todayIso } from "./deadline";
+import { renderDeadline, todayIso } from "./deadline";
 import type {
   CheckOutcome,
   ExtractedField,
@@ -575,6 +575,9 @@ export function renderReadout(opts: RenderReadoutOptions): void {
         buildAnswer(result, {
           documents: session,
           noSurprises: data?.noSurprises() ?? undefined,
+          windows: data?.enrollmentWindows() ?? undefined,
+          // The clock is an input, shown beside the figure it produces.
+          asOf: todayIso(),
           // Every field of `CheckContext`. `buildAnswer`'s own comment says a
           // check reading a field this call drops cannot fire and nothing says
           // so — and that fix went into `buildAnswer` while its one production
@@ -685,17 +688,16 @@ export function renderReadout(opts: RenderReadoutOptions): void {
                       attrs: { rel: "noopener noreferrer", target: "_blank" },
                     })
                   : null,
+                // Through the one path every deadline on the site takes, so its
+                // citation and the clock it was read against render with it.
+                n.deadline
+                  ? renderDeadline(n.deadline, { asOf: todayIso(), locale: "en-US" })
+                  : null,
               ),
             ),
           )
         : null;
 
-    // No `next` action carries a `Deadline` yet: the statutory clocks a Readout
-    // would attach (an appeal window, a COBRA election) are the Phase 23
-    // `appeal-windows` / `enrollment-windows` shards' job, and SPEC-4 §7.3 will
-    // not let one render without a citation. When the first one ships,
-    // `RenderReadoutOptions` gains the explicit `asOf` that `renderDeadline`
-    // requires — the clock is an input here, never `Date.now()`.
     return el(
       "section",
       { class: "readout-answer", attrs: { "aria-label": "What this document means" } },

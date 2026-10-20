@@ -555,3 +555,17 @@ describe("Readout view, the four-part answer", () => {
     expect(answer).toContain("question to ask, not a verdict");
   });
 });
+
+describe("a clock read off a document (SPEC-5-readout-v3 R8)", () => {
+  it("renders the validation notice's dispute date through renderDeadline, cited", async () => {
+    const notice =
+      "North South Group is a debt collector. We are trying to collect a debt that you owe to Bank of Rockville. " +
+      "As of January 2, 2017, you owed: $ 2,234.56 Total amount of the debt now: $ 2,234.56 " +
+      "Call or write to us by August 28, 2099, to dispute all or part of the debt.";
+    const { container } = setup(sequence(notice), bundled);
+    await dropFile(container, "notice.pdf");
+    const deadline = container.querySelector("[data-deadline]");
+    expect(deadline).not.toBeNull();
+    expect(deadline!.querySelector("a")?.getAttribute("href")).toContain("1006.34");
+  });
+});

@@ -40,7 +40,11 @@ export type DocKind =
   | "form1099r"
   | "form1098t"
   | "form1098e"
-  | "form1099g";
+  | "form1099g"
+  // Regulation F's validation notice (12 CFR §1006.34). Its content follows
+  // Model Form B-1, but a collector prints no form revision on it, so it is
+  // anchored on the model's own captions and exempt from the revision pin.
+  | "collectionsNotice";
 
 /** The My Situation fields the Readout can populate on confirmation. Kept
  * narrow (not all of {@link SituationKey}) so the mapping stays type-safe, and

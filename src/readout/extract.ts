@@ -33,7 +33,13 @@ const SUPPORTED_REVISIONS = ["2023", "2024", "2025", "2026"];
  * the §2.2 revision check has nothing to check. Their extractors compensate by
  * anchoring only on captions and by flagging every varying value for review.
  */
-const REVISIONLESS_KINDS: DocKind[] = ["paystub", "eobHealth", "medicalBill", "benefitsNotice"];
+const REVISIONLESS_KINDS: DocKind[] = [
+  "paystub",
+  "eobHealth",
+  "medicalBill",
+  "benefitsNotice",
+  "collectionsNotice",
+];
 
 /** Pay frequencies, most-specific first so "bi-weekly" isn't shadowed by
  * "weekly" (nor "semi-monthly" by "monthly"). */
@@ -229,6 +235,13 @@ const DOC_MARKERS: { kind: DocKind; re: RegExp; also?: RegExp }[] = [
   // unmistakable title, so it leads; the benefits notice needs both a decision
   // word and a named program so a 1095-A's "Marketplace" cannot claim it; the
   // itemized bill's markers are the broadest, so it goes last.
+  // Model Form B-1's opening sentence and one of its captions, so a letter that
+  // only mentions a collector is not read as a validation notice.
+  {
+    kind: "collectionsNotice",
+    re: /is a debt collector/i,
+    also: /(total amount of the debt now|to dispute all or part of the debt)/i,
+  },
   {
     kind: "eobHealth",
     re: /explanation of benefits/i,
@@ -357,6 +370,46 @@ function distributionCode(text: string): ExtractedField | null {
     note: meanings.join("; "),
   };
 }
+
+const MONTHS = [
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
+];
+
+/** "August 28, 2020" as ISO `2020-08-28`, or null when it is not a real date. */
+function isoFromLongDate(raw: string): string | null {
+  const m = /^([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})$/.exec(raw.trim());
+  const month = m ? MONTHS.indexOf(m[1]!.toLowerCase()) : -1;
+  if (!m || month < 0) return null;
+  const iso = `${m[3]}-${String(month + 1).padStart(2, "0")}-${m[2]!.padStart(2, "0")}`;
+  const d = new Date(`${iso}T00:00:00Z`);
+  return Number.isNaN(d.getTime()) || d.getUTCDate() !== Number(m[2]) ? null : iso;
+}
+
+/**
+ * A dollar amount after a caption, where the notice may print the sign and a
+ * space between "$" and the figure ("+ $ 75.00", "– $ 50.00"), as Model
+ * Form B-1 lays them out.
+ */
+function dollarsAfter(text: string, anchor: RegExp): number {
+  const m = new RegExp(
+    anchor.source + String.raw`[^0-9$]{0,40}\$\s*([0-9][0-9,]*\.[0-9]{2})`,
+    "i",
+  ).exec(text);
+  return m ? parseAmount(m[1]) : NaN;
+}
+
+const LONG_DATE = String.raw`([A-Z][a-z]+\s+\d{1,2},\s*\d{4})`;
 
 /** Citation for one 1099 variant (INT/DIV/NEC/B), pinned to the revision. */
 function f1099Citation(variant: string): (rev: string) => CitationData {
@@ -891,6 +944,104 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
       ].filter((f): f is ExtractedField => f !== null);
     },
   },
+  /**
+   * Regulation F's validation notice, read on Model Form B-1's captions
+   * (12 CFR part 1006, appendix B). What it reads is who claims what, as of
+   * when, and the date the notice gives for disputing. It never reads the
+   * account number or anyone's name or address: those are on the page, and
+   * nothing here needs them.
+   */
+  collectionsNotice: {
+    citation: () => null,
+    extract: (t) => {
+      const text = t.text;
+      const fields: ExtractedField[] = [];
+      const creditor = tokenAfter(
+        text,
+        /trying to collect a debt that you owe to/i,
+        String.raw`([A-Z][A-Za-z0-9&'., -]{1,60}?)\.(?:\s|$)`,
+      );
+      if (creditor)
+        fields.push({
+          id: "collections-creditor",
+          label: "Creditor the debt is owed to",
+          value: creditor,
+          confidence: "needs-review",
+          needsReview: true,
+        });
+      const asOf = new RegExp(String.raw`as of ` + LONG_DATE + String.raw`,?\s*you owed`, "i").exec(
+        text,
+      );
+      const itemizationDate = asOf ? isoFromLongDate(asOf[1]!) : null;
+      if (itemizationDate)
+        fields.push({
+          id: "collections-itemization-date",
+          label: "Itemization date",
+          value: itemizationDate,
+          confidence: "high",
+          needsReview: false,
+          note: "The rule allows one of five reference dates: the last statement, the charge-off, the last payment, the transaction, or a judgment. Ask which this is if the notice does not say.",
+        });
+      const push = (f: ExtractedField | null): void => {
+        if (f) fields.push(f);
+      };
+      push(
+        field(
+          "collections-owed",
+          "Amount owed on the itemization date",
+          dollarsAfter(text, /you owed:?/i),
+          undefined,
+        ),
+      );
+      push(
+        field(
+          "collections-interest",
+          "Interest charged since",
+          dollarsAfter(text, /charged this amount in interest:?/i),
+          undefined,
+        ),
+      );
+      push(
+        field(
+          "collections-fees",
+          "Fees charged since",
+          dollarsAfter(text, /charged this amount in fees:?/i),
+          undefined,
+        ),
+      );
+      push(
+        field(
+          "collections-paid",
+          "Paid or credited since",
+          dollarsAfter(text, /paid or were credited this amount/i),
+          undefined,
+        ),
+      );
+      push(
+        field(
+          "collections-current",
+          "Total amount of the debt now",
+          dollarsAfter(text, /total amount of the debt now:?/i),
+          undefined,
+        ),
+      );
+      const by = new RegExp(
+        String.raw`(?:call or write to us|write to us) by ` + LONG_DATE,
+        "i",
+      ).exec(text);
+      const disputeBy = by ? isoFromLongDate(by[1]!) : null;
+      if (disputeBy)
+        fields.push({
+          id: "collections-dispute-by",
+          label: "Dispute by (as printed on the notice)",
+          value: disputeBy,
+          confidence: "needs-review",
+          needsReview: true,
+          note: "The end of the validation period, as the collector states it. Dispute in writing on or before this date.",
+        });
+      return fields;
+    },
+  },
   fafsaSummary: {
     citation: (rev) =>
       formCitation(
@@ -1197,7 +1348,7 @@ export function extractDocument(t: ExtractedText): ExtractionResult {
 
   if (kind === "unknown") {
     warnings.push(
-      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B/R/G), SSA-1099, 1095-A, 1098 mortgage statements, 1098-T, 1098-E, the FAFSA Submission Summary, health plan Explanations of Benefits, itemized medical bills, and benefits determination notices.",
+      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B/R/G), SSA-1099, 1095-A, 1098 mortgage statements, 1098-T, 1098-E, the FAFSA Submission Summary, health plan Explanations of Benefits, itemized medical bills, benefits determination notices, and debt collection validation notices.",
     );
     return {
       kind,
@@ -1320,6 +1471,8 @@ export function labelFor(kind: DocKind | "unknown"): string {
       return "1098-E student loan interest statement";
     case "form1099g":
       return "1099-G";
+    case "collectionsNotice":
+      return "debt collection validation notice";
     default:
       return "document";
   }

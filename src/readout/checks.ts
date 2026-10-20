@@ -229,6 +229,37 @@ export const CHECKS: CheckDefinition[] = [
     },
   },
   {
+    // Model Form B-1 prints its own arithmetic: the amount on the itemization
+    // date, plus interest and fees, less payments, is the amount now
+    // (§1006.34(c)(2)(vii)-(ix)). A notice that does not add up is the first
+    // thing worth asking about, before anything else on it is relied on.
+    id: "collections-itemization-sum",
+    kind: "arithmetic",
+    appliesTo: ["collectionsNotice"],
+    falsePositive:
+      "A notice that itemizes on a separate page, or that rounds each line, can differ from its total by the line it left off or by cents.",
+    // Arithmetic, but on a debt: a misread digit in a photographed letter must
+    // never become a question about whether the debt adds up (R8 is tier 3).
+    suppressOnOcr: true,
+    run: (ctx) => {
+      const d = doc(ctx, "collectionsNotice");
+      const owed = amount(d, "collections-owed");
+      const current = amount(d, "collections-current");
+      if (owed === null || current === null) return null;
+      const interest = amount(d, "collections-interest") ?? 0;
+      const fees = amount(d, "collections-fees") ?? 0;
+      const paid = amount(d, "collections-paid") ?? 0;
+      const expected = owed + interest + fees - paid;
+      if (Math.abs(expected - current) <= NOISE_FLOOR) return null;
+      return {
+        question: "Does the amount this notice says you owe now follow from its own itemization?",
+        detail: `It shows ${usd(owed)} on the itemization date, plus ${usd(interest)} interest and ${usd(fees)} fees, less ${usd(paid)} paid, which comes to ${usd(expected)}. It says the debt is now ${usd(current)}.`,
+        askWho:
+          "The debt collector, in writing and before the dispute date on the notice. Ask for the itemization and for verification of the debt.",
+      };
+    },
+  },
+  {
     id: "eob-allowed-splits",
     kind: "arithmetic",
     appliesTo: ["eobHealth"],

@@ -16,7 +16,7 @@
  * module is pure: extractions in, an answer out.
  */
 import { HOSPITAL_COLLECTION_CITATION, HOSPITAL_FAP_CITATION } from "../data/statutes";
-import type { NoSurprisesData } from "../data/schemas";
+import type { EnrollmentWindowsData, NoSurprisesData } from "../data/schemas";
 import { runChecks, type CheckDefinition, type PlanParameters } from "./checks";
 import type { AnswerSection, ExtractedField, ExtractionResult, ReadoutAnswer } from "./types";
 
@@ -42,7 +42,18 @@ const CHANNELS = {
     label: "HealthCare.gov: how to appeal a Marketplace decision",
     url: "https://www.healthcare.gov/appeals/",
   },
+  cfpbComplaint: {
+    label: "CFPB: submit a complaint about a debt collector",
+    url: "https://www.consumerfinance.gov/complaint/",
+  },
 } as const;
+
+/** `iso` plus `days`, as ISO; the arithmetic `engine/deadline.ts` does, in UTC. */
+function addDays(iso: string, days: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 export interface BuildAnswerOptions {
   /** Every extraction in the session, so §5 cross-document checks can fire. */
@@ -54,6 +65,11 @@ export interface BuildAnswerOptions {
   noSurprises?: NoSurprisesData;
   /** Injectable registry, so a test can exercise the contract without a fixture shard. */
   registry?: CheckDefinition[];
+  /** The federal windows, for a clock read off a document. Absent, no clock is
+   * rendered: a deadline must carry the rule that sets it (SPEC-4 §7.3). */
+  windows?: EnrollmentWindowsData;
+  /** The explicit clock, displayed, for the cross-check against a printed date. */
+  asOf?: string;
 }
 
 /** Render one extracted value the way the document states it. */
@@ -201,8 +217,50 @@ function appealChannel(program: string | number | undefined): { label: string; u
 }
 
 /** "What to do next, by when", per kind. Ordered: the first line is the first move. */
-function nextFor(result: ExtractionResult): ReadoutAnswer["next"] {
+function nextFor(result: ExtractionResult, options: BuildAnswerOptions): ReadoutAnswer["next"] {
   switch (result.kind) {
+    case "collectionsNotice": {
+      // Tier 3 in the Readout's own terms (SPEC-5-readout-v3 R8): the clock is
+      // the one printed on the notice, shown as the notice's figure, and the
+      // site's own thirty days is only a cross-check beside it. Nothing here
+      // says whether the debt is owed.
+      const next: ReadoutAnswer["next"] = [];
+      const by = valueOf(result, "collections-dispute-by");
+      const window = options.windows?.windows.find((w) => w.id === "collections-validation");
+      if (typeof by === "string" && window) {
+        const days = "days" in window.due ? window.due.days : null;
+        next.push({
+          label:
+            "Dispute the debt in writing by the date the notice gives, if any of it is not yours or the amount looks wrong. Collection on the disputed part must stop until the collector sends verification." +
+            (options.asOf && days !== null
+              ? ` The notice says ${by}; ${days} days from ${options.asOf}, if that is the day it reached you, would be ${addDays(options.asOf, days)}. If those differ, go by the earlier one and ask the collector which applies.`
+              : ""),
+          deadline: { label: window.label, due: { on: by }, citation: window.citation },
+        });
+      } else {
+        next.push({
+          label:
+            "Find the dispute date on the notice and dispute the debt in writing by then, if any of it is not yours or the amount looks wrong.",
+        });
+      }
+      next.push(
+        {
+          label:
+            "If the original creditor is someone else, ask in writing for its name and address by the same date; collection stops until the collector answers.",
+        },
+        {
+          label:
+            "If a collector breaks the rules, or you cannot get an answer, a complaint costs nothing.",
+          channel: CHANNELS.cfpbComplaint,
+        },
+        {
+          label:
+            "Free legal aid can advise before anything goes to court, and if it ever becomes a judgment, the Wage Garnishment screener shows what federal law lets a creditor take.",
+          channel: CHANNELS.legalAid,
+        },
+      );
+      return next;
+    }
     case "eobHealth": {
       const next: ReadoutAnswer["next"] = [
         {
@@ -346,7 +404,7 @@ export function buildAnswer(
     options.registry,
   );
   const owed = owedFor(result, options.noSurprises);
-  const next = nextFor(result);
+  const next = nextFor(result, options);
 
   const emptyReasons: ReadoutAnswer["emptyReasons"] = {};
   if (says.length === 0) emptyReasons.says = emptyReason("says", result);

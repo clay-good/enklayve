@@ -10,7 +10,11 @@ import {
 } from "../../src/readout/checks";
 import type { ExtractedText } from "../../src/readout/extractText";
 import { READOUT_TARGETS, type ExtractionResult } from "../../src/readout/types";
-import { NoSurprisesSchema, type NoSurprisesData } from "../../src/data/schemas";
+import {
+  EnrollmentWindowsSchema,
+  NoSurprisesSchema,
+  type NoSurprisesData,
+} from "../../src/data/schemas";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -759,5 +763,85 @@ describe("Readout v3, the 1099-R's questions (SPEC-5-readout-v3 R2)", () => {
       ),
     );
     expect(t.owed.map((o) => o.tileId)).toEqual(["education-credits"]);
+  });
+});
+
+/**
+ * Regulation F's validation notice (SPEC-5-readout-v3 R8), in the words of
+ * CFPB's Model Form B-1. Tier 3: every check is a question, the clock is the
+ * notice's own, and nothing says whether the debt is owed.
+ */
+describe("Readout v3, the debt collection validation notice", () => {
+  const NOTICE =
+    "North South Group P.O. Box 123456 Pasadena, CA 91111-2222 To: Person A 2323 Park Street " +
+    "Reference: 584-345 North South Group is a debt collector. We are trying to collect a debt " +
+    "that you owe to Bank of Rockville. We will use any information you give us to help collect the debt. " +
+    "Our information shows: You had a Main Street Department Store credit card from Bank of Rockville " +
+    "with account number 123-456-789. As of January 2, 2017, you owed: $ 2,234.56 " +
+    "Between January 2, 2017 and today: You were charged this amount in interest: + $ 75.00 " +
+    "You were charged this amount in fees: + $ 25.00 You paid or were credited this amount " +
+    "– $ 50.00 toward the debt: Total amount of the debt now: $ 2,284.56 " +
+    "How can you dispute the debt? Call or write to us by August 28, 2020, to dispute all or part of the debt.";
+  const windows = EnrollmentWindowsSchema.parse(
+    JSON.parse(
+      readFileSync(resolve(__dirname, "..", "..", "data", "enrollment-windows-2026.json"), "utf8"),
+    ),
+  );
+
+  it("reads who claims what, as of when, and the date to dispute by", () => {
+    const r = extractDocument(typed(NOTICE));
+    expect(r.kind).toBe("collectionsNotice");
+    const v = (id: string) => r.fields.find((f) => f.id === id)?.value;
+    expect(v("collections-creditor")).toBe("Bank of Rockville");
+    expect(v("collections-itemization-date")).toBe("2017-01-02");
+    expect(v("collections-owed")).toBe(2234.56);
+    expect(v("collections-interest")).toBe(75);
+    expect(v("collections-fees")).toBe(25);
+    expect(v("collections-paid")).toBe(50);
+    expect(v("collections-current")).toBe(2284.56);
+    expect(v("collections-dispute-by")).toBe("2020-08-28");
+  });
+
+  it("never reads the account number, or anyone's name or address", () => {
+    const r = extractDocument(typed(NOTICE));
+    const everything = JSON.stringify(r.fields);
+    for (const secret of ["123-456-789", "584-345", "Person A", "2323 Park", "P.O. Box"]) {
+      expect(everything).not.toContain(secret);
+    }
+    expect(r.fields.every((f) => f.target === undefined)).toBe(true);
+  });
+
+  it("asks whether the amount now follows from the itemization, and stays silent when it does", () => {
+    expect(buildAnswer(extractDocument(typed(NOTICE))).flags).toEqual([]);
+    const off = buildAnswer(extractDocument(typed(NOTICE.replace("$ 2,284.56", "$ 2,484.56"))));
+    const flag = off.flags.find((f) => f.checkId === "collections-itemization-sum")!;
+    expect(flag.question).toMatch(/\?$/);
+    expect(flag.detail).toContain("$2,284.56");
+  });
+
+  it("shows the notice's date as a cited Deadline, with the site's thirty days beside it", () => {
+    const a = buildAnswer(extractDocument(typed(NOTICE)), { windows, asOf: "2020-08-01" });
+    const first = a.next[0]!;
+    expect(first.deadline?.due).toEqual({ on: "2020-08-28" });
+    expect(first.deadline?.citation.sourceDocument).toContain("1006.34");
+    expect(first.label).toContain("would be 2020-08-31");
+    const text = a.next
+      .map((n) => n.label)
+      .join(" ")
+      .toLowerCase();
+    expect(text).not.toMatch(/not owed|don't owe|do not owe|is invalid/);
+  });
+
+  it("states no clock without the windows that cite it", () => {
+    const a = buildAnswer(extractDocument(typed(NOTICE)));
+    expect(a.next.some((n) => n.deadline)).toBe(false);
+  });
+
+  it("runs no check on a scan, and still gives the clock for review", () => {
+    const a = buildAnswer(extractDocument(scanned(NOTICE.replace("$ 2,284.56", "$ 2,484.56"))), {
+      windows,
+    });
+    expect(a.flags).toEqual([]);
+    expect(a.next[0]!.deadline).toBeDefined();
   });
 });
