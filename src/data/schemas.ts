@@ -1425,6 +1425,27 @@ export const MedicareSavingsSchema = z.object({
 });
 export type MedicareSavingsData = z.infer<typeof MedicareSavingsSchema>;
 
+/** §21's credit and §129's exclusion for child and dependent care (SPEC-5 young-family F1). */
+export const DependentCareSchema = z.object({
+  year: z.number().int(),
+  expenseCap: z.object({ one: z.number().gt(0), twoOrMore: z.number().gt(0) }),
+  /** §21(d)(2): a month's deemed earnings for a student or disabled spouse. */
+  deemedMonthlyEarnedIncome: z.object({ one: z.number().gt(0), twoOrMore: z.number().gt(0) }),
+  /** §21(a)(2), in whole percentage points. */
+  applicablePercentage: z.object({
+    start: z.number().int().gt(0),
+    firstFloor: z.number().int().gt(0),
+    firstThreshold: z.number().gt(0),
+    firstStep: z.number().gt(0),
+    secondFloor: z.number().int().gt(0),
+    secondThreshold: z.object({ other: z.number().gt(0), joint: z.number().gt(0) }),
+    secondStep: z.object({ other: z.number().gt(0), joint: z.number().gt(0) }),
+  }),
+  fsaExclusionLimit: z.object({ other: z.number().gt(0), separate: z.number().gt(0) }),
+  citation: CitationSchema,
+});
+export type DependentCareData = z.infer<typeof DependentCareSchema>;
+
 export const GiftTaxSchema = z.object({
   taxYear: z.number().int(),
   annualExclusion: z.number().gte(0),
@@ -2085,6 +2106,7 @@ export const DATASET_SCHEMAS = {
   "ss-family-benefits": SsFamilyBenefitsSchema,
   ssi: SsiSchema,
   "medicare-savings": MedicareSavingsSchema,
+  "dependent-care": DependentCareSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

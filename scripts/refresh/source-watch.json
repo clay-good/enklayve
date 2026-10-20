@@ -426,6 +426,20 @@
       "why": "§423.773 sets Extra Help's 150%-of-poverty line and treats Savings Program enrollees as eligible; the year's dollar lines come from Medicare.gov and CMS's LIS memo, which the zero-year window forces a person to re-read each fall.",
       "fingerprint": "37adf09986d00d4d23077f96539abbefd69516ed043c6d26dd40e90677f11a1d",
       "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "dependent-care-2026",
+      "url": "https://www.law.cornell.edu/uscode/text/26/21",
+      "why": "§21 holds the credit's caps and its two-band applicable percentage, none of them indexed, so a change can only come from Congress amending the section.",
+      "fingerprint": "5b2486810b4e9a507d026fcef0b47d5674f0c68b8d717a979e2c272b07b06db1",
+      "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "dependent-care-2026",
+      "url": "https://www.law.cornell.edu/uscode/text/26/129",
+      "why": "§129(a)(2) holds the FSA's $7,500 and $3,750 exclusion, unindexed, and §21(c) reduces the credit's cap by it.",
+      "fingerprint": "f1eb1e0ae0042401be39bfe549355581ea0d7cfba4c56b24271c0f2ade931de6",
+      "checkedOn": "2026-10-20"
     }
   ]
 }

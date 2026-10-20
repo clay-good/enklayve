@@ -214,6 +214,7 @@ describe("the Report against a profile no form could have produced", () => {
     qualifiedOvertimeAnnual: 1e308,
     preTaxContributions: 1e308,
     retirementContributionsAnnual: 1e308,
+    dependentCareExpensesAnnual: 1e308,
     elective401kAnnual: 1e308,
     employerMatchAnnual: 1e308,
     employerMatchCaptured: 0.01,

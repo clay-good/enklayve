@@ -302,6 +302,15 @@ const SHARDS: ShardSource[] = [
     staleAfterYears: 1,
   },
   { id: "ssi-2026", kind: "ssi", shard: "ssi-2026.json", ...PILLAR4_ANNUAL },
+  // Statutory and unindexed (§§21, 129), so a year's grace, as for the other
+  // unindexed statutes above.
+  {
+    id: "dependent-care-2026",
+    kind: "dependent-care",
+    shard: "dependent-care-2026.json",
+    ...ANNUAL,
+    staleAfterYears: 1,
+  },
   {
     id: "medicare-savings-2026",
     kind: "medicare-savings",

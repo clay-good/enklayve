@@ -68,6 +68,7 @@ const NUMERIC_FIELDS = [
   "qualifiedOvertimeAnnual",
   "preTaxContributions",
   "retirementContributionsAnnual",
+  "dependentCareExpensesAnnual",
   "elective401kAnnual",
   "employerMatchAnnual",
   "employerMatchCaptured",
@@ -101,6 +102,7 @@ const EXPECTED = [
   "cliff-explorer | qualifyingChildren <- Children who qualify for credits",
   "ctc | annualIncome <- Earned income (wages and self-employment)",
   "ctc | qualifyingChildren <- Qualifying children (under 17)",
+  "dependent-care | dependentCareExpensesAnnual <- What you pay for care in a year",
   "disability-insurance | annualIncome <- Annual income",
   "education-credits | annualIncome <- Modified adjusted gross income (MAGI)",
   "eitc | annualIncome <- Earned income",
@@ -571,10 +573,10 @@ describe("what a calculator may write into My Situation", () => {
         ).toBe("married_jointly");
       }
     }
-    // A sweep that reached no dropdown would assert nothing. Nineteen since
+    // A sweep that reached no dropdown would assert nothing. Twenty since
     // SPEC-5's tools, which load on demand: the test setup preloads them, and
     // this count is the proof the sweep reaches them.
-    expect(seen).toBe(19);
+    expect(seen).toBe(20);
   });
 
   /**

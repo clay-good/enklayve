@@ -55,6 +55,7 @@ import {
   type SsFamilyBenefitsData,
   type SsiData,
   type MedicareSavingsData,
+  type DependentCareData,
   type AmtData,
   type ChildTaxData,
   type EducationCreditsData,
@@ -84,7 +85,8 @@ const rawFiles = import.meta.glob(
     "!../../data/ss-earnings-test-2026.json",
     "!../../data/ss-family-benefits-2026.json",
     "!../../data/ssi-2026.json",
-    "!../../data/medicare-savings-2026.json"],
+    "!../../data/medicare-savings-2026.json",
+    "!../../data/dependent-care-2026.json"],
   { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
@@ -107,6 +109,7 @@ const deferredFiles = import.meta.glob(
     "../../data/ss-family-benefits-2026.json",
     "../../data/ssi-2026.json",
     "../../data/medicare-savings-2026.json",
+    "../../data/dependent-care-2026.json",
   ],
   { query: "?raw", import: "default" },
 ) as Record<string, () => Promise<string>>;
@@ -205,6 +208,7 @@ export interface BundledData {
   /** The federal SSI payment and exclusions (SPEC-5 later-life L6). Deferred. */
   ssi(): SsiData | null;
   medicareSavings(): MedicareSavingsData | null;
+  dependentCare(): DependentCareData | null;
   /** AMT exemption, phase-out, and rate breakpoint (SPEC-3 §4.7). */
   amt(): AmtData | null;
   /** Child-tax dependent shelter and earned-income add-on (SPEC-3 §4.5). */
@@ -377,6 +381,7 @@ async function build(): Promise<BundledData> {
     ssi: () => deferredDataOf("ssi-2026") as SsiData | null,
     medicareSavings: () =>
       deferredDataOf("medicare-savings-2026") as MedicareSavingsData | null,
+    dependentCare: () => deferredDataOf("dependent-care-2026") as DependentCareData | null,
     ssFamilyBenefits: () =>
       deferredDataOf("ss-family-benefits-2026") as SsFamilyBenefitsData | null,
     ssEarningsTest: () => deferredDataOf("ss-earnings-test-2026") as SsEarningsTestData | null,

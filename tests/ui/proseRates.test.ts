@@ -69,6 +69,26 @@ interface RateBound {
 const asPoints = (n: number) => n;
 
 const BOUND: RateBound[] = [
+  // Child & Dependent Care's "how" block: §21(a)(2)'s 50% start and its two
+  // floors, stored in whole points.
+  {
+    file: "tiles/dependentCareHow.ts",
+    shard: "dependent-care-2026",
+    path: ".applicablePercentage.start",
+    derive: asPoints,
+  },
+  {
+    file: "tiles/dependentCareHow.ts",
+    shard: "dependent-care-2026",
+    path: ".applicablePercentage.firstFloor",
+    derive: asPoints,
+  },
+  {
+    file: "tiles/dependentCareHow.ts",
+    shard: "dependent-care-2026",
+    path: ".applicablePercentage.secondFloor",
+    derive: asPoints,
+  },
   // The survivor's reduction at 60, in Spousal and Survivor Benefits' "how".
   {
     file: "tiles/ssSpousalSurvivorHow.ts",

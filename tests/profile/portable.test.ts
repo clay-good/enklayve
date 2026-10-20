@@ -52,6 +52,7 @@ const EVERY_FIELD: SituationValues = {
   qualifiedOvertimeAnnual: 2_345,
   preTaxContributions: 3_456,
   retirementContributionsAnnual: 4_567,
+  dependentCareExpensesAnnual: 6_789,
   elective401kAnnual: 4_567,
   employerMatchAnnual: 5_678,
   employerMatchCaptured: 678,

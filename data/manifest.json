@@ -1082,6 +1082,19 @@
       "contentHash": "615ec6638f88accae496be1eb3e356a51d5b1d55e8bf6e59422d5252ef1dc8e8"
     },
     {
+      "id": "dependent-care-2026",
+      "kind": "dependent-care",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 1,
+      "shard": "dependent-care-2026.json",
+      "sourceUrl": "https://www.law.cornell.edu/uscode/text/26/21",
+      "sourceDocument": "26 U.S.C. §21 and §129, as amended by Pub. L. 119-21 §§70404, 70405 (taxable years beginning after December 31, 2025)",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "04abb3529bd287c6a4a1c39de232ba609ed3ea78709092ab59cc6290d7164f54"
+    },
+    {
       "id": "medicare-savings-2026",
       "kind": "medicare-savings",
       "version": "2026.0",

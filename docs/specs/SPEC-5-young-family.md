@@ -21,7 +21,7 @@ F2, the FSA comparison, is a second output of F1 rather than a tile of its own, 
 
 **Answers:** "How much of what we pay for childcare comes back at tax time, and should we use the FSA at work instead?"
 
-**Deterministic core, the credit.** IRC §21 as amended by Pub. L. 119-21 §70404, effective for taxable years beginning after December 31, 2025:
+**Deterministic core, the credit.** IRC §21 as amended by Pub. L. 119-21 §70405 (§70404 amends §129), effective for taxable years beginning after December 31, 2025:
 
 - Qualifying expenses are capped at $3,000 for one qualifying individual and $6,000 for two or more (§21(c)), **reduced by any amount excluded through a dependent-care FSA** (§21(c), flush language, cross-referencing §129).
 - Expenses cannot exceed the earned income of the lower-earning spouse; a spouse who is a full-time student or incapable of self-care is deemed to earn $250 a month for one qualifying individual or $500 for two or more (§21(d)).

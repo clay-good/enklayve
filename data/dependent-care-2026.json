@@ -1,0 +1,22 @@
+{
+  "year": 2026,
+  "expenseCap": { "one": 3000, "twoOrMore": 6000 },
+  "deemedMonthlyEarnedIncome": { "one": 250, "twoOrMore": 500 },
+  "applicablePercentage": {
+    "start": 50,
+    "firstFloor": 35,
+    "firstThreshold": 15000,
+    "firstStep": 2000,
+    "secondFloor": 20,
+    "secondThreshold": { "other": 75000, "joint": 150000 },
+    "secondStep": { "other": 2000, "joint": 4000 }
+  },
+  "fsaExclusionLimit": { "other": 7500, "separate": 3750 },
+  "citation": {
+    "sourceUrl": "https://www.law.cornell.edu/uscode/text/26/21",
+    "sourceDocument": "26 U.S.C. §21 and §129, as amended by Pub. L. 119-21 §§70404, 70405 (taxable years beginning after December 31, 2025)",
+    "sourceNote": "§21(a)(2): the applicable percentage is \"50 percent— (A) reduced (but not below 35 percent) by 1 percentage point for each $2,000 or fraction thereof by which the taxpayer's adjusted gross income for the taxable year exceeds $15,000, and (B) further reduced (but not below 20 percent) by 1 percentage point for each $2,000 ($4,000 in the case of a joint return) or fraction thereof by which the taxpayer's adjusted gross income for the taxable year exceeds $75,000 ($150,000 in the case of a joint return).\" §21(c): expenses of $3,000 for one qualifying individual, $6,000 for two or more, \"reduced by the aggregate amount excludable from gross income under section 129\". §21(d): no more than the lower earner's earned income, a full-time student or disabled spouse being deemed to earn $250 a month ($500 for two or more). §21(e)(2): a married taxpayer must file jointly. §129(a)(2)(A): a dependent care exclusion of up to \"$7,500 ($3,750 in the case of a separate return by a married individual)\", limited by §129(b) to the lower earner's earned income. Neither figure is indexed. State dependent care credits are not computed. Read on Cornell LII 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

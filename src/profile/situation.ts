@@ -115,6 +115,12 @@ export interface SituationValues {
    */
   retirementContributionsAnnual: number;
   /**
+   * A year's work-related care for a child under 13, or another dependent who
+   * qualifies under §21(b)(1). The dependent care tool writes it, and the
+   * second-income question reads it as what going back to work costs.
+   */
+  dependentCareExpensesAnnual: number;
+  /**
    * The §402(g) elective deferral alone — what goes into a 401(k)/403(b)
    * through payroll, without the IRA beside it.
    *
@@ -242,6 +248,7 @@ export const SituationValuesSchema = z
     qualifiedOvertimeAnnual: num,
     preTaxContributions: num,
     retirementContributionsAnnual: num,
+    dependentCareExpensesAnnual: num,
     elective401kAnnual: num,
     employerMatchAnnual: num,
     employerMatchCaptured: num,

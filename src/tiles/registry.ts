@@ -74,6 +74,7 @@ import { childTaxCreditTile } from "./childTaxCredit";
 import { owedScreenerTile } from "./owedScreener";
 import { acaPtcTile } from "./acaPtc";
 import { saversCreditTile } from "./saversCredit";
+import { dependentCareTile } from "./dependentCare";
 import { snapTile } from "./snap";
 import { medicaidTile } from "./medicaid";
 import { fafsaSaiTile } from "./fafsaSai";
@@ -246,6 +247,7 @@ const HUB_CONFIGS: HubConfig[] = [
       childTaxCreditTile,
       acaPtcTile,
       saversCreditTile,
+      dependentCareTile,
       snapTile,
       medicaidTile,
       fafsaSaiTile,

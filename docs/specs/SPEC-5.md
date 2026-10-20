@@ -249,6 +249,8 @@ Ordered prompts in the SPEC/SPEC-2 convention. Each phase is independently shipp
 
 **Shell cost.** Two tiles and two small shards with the shell.
 
+**Status — in progress.** **`dependent-care` shipped 2026-10-19** (F1 with F2, tier 1, Benefits & Aid). It is on the lazy pattern, so its shard `dependent-care-2026` loads with the tool and not with the shell, by the owner's on-demand decision for every SPEC-5 tool. §21 and §129 were read on Cornell as Pub. L. 119-21 amended them; the credit's amendment is §70405, not the §70404 the companion spec named. The applicable percentage reproduces §21(a)(2) at $15,000, $43,000, $75,000, $150,000 and $210,000 joint (50, 36, 35, 35 and 20), and counts a fraction of a step as a step. The credit is limited by the engine's federal income tax and never shown as refundable. The FSA route runs the return with and without the exclusion and cites its FICA saving ($573.75 on $7,500) through the FICA shard. Under 2026's figures the $7,500 exclusion is larger than either cap, so the FSA route never keeps any credit; the split line renders only when it would. The tool reads and writes the new `dependentCareExpensesAnnual` profile field. **Measured: 0.6 kB** (318.5 → 319.1 of 325). F3, the screener rows and F5 are next.
+
 ### Phase 32: Readout v3
 
 **Goal.** The seven standardized forms and five cross-checks. Split into **32a** (the tax and benefit statements: SSA-1099, 1099-R, 1099-G, 1098-T and 1098-E, the Social Security Statement) and **32b** (the consumer documents: the Medicare Summary Notice, the Closing Disclosure with its Loan Estimate, the Reg F validation notice). Detail in [SPEC-5-readout-v3.md](SPEC-5-readout-v3.md).

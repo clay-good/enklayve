@@ -95,6 +95,7 @@ import { projectIBond } from "../src/engine/savingsBond";
 import { socialSecurityBenefit, fullRetirementAgeMonths } from "../src/engine/socialSecurity";
 import { spousalBenefit, survivorBenefit, survivorFraMonths } from "../src/engine/ssFamily";
 import { medicareSavingsScreen } from "../src/engine/medicareSavings";
+import { applicablePercentage, compareDependentCare } from "../src/engine/dependentCare";
 import { socialSecurityBenefitTaxation } from "../src/engine/socialSecurityTax";
 import {
   bracketTax,
@@ -134,6 +135,7 @@ export const PROBED_FILES = [
   "src/engine/socialSecurity.ts",
   "src/engine/ssFamily.ts",
   "src/engine/medicareSavings.ts",
+  "src/engine/dependentCare.ts",
   "src/engine/socialSecurityTax.ts",
   "src/engine/tax/brackets.ts",
   "src/engine/taxMoves.ts",
@@ -1060,6 +1062,60 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
           programs: r.programs.map((p) => p.underIncomeLine),
           savings: r.underSavingsResourceLimit,
           extraHelp: [r.extraHelp.underIncomeLine, r.extraHelp.resources],
+        });
+      }
+
+  // --- dependent care: §21(a)(2)'s thresholds on each side, a cent over, both
+  // floors, one child against two, and the earned-income limit at the cap.
+  const care = {
+    year: 2026,
+    expenseCap: { one: 3000, twoOrMore: 6000 },
+    deemedMonthlyEarnedIncome: { one: 250, twoOrMore: 500 },
+    applicablePercentage: {
+      start: 50,
+      firstFloor: 35,
+      firstThreshold: 15000,
+      firstStep: 2000,
+      secondFloor: 20,
+      secondThreshold: { other: 75000, joint: 150000 },
+      secondStep: { other: 2000, joint: 4000 },
+    },
+    fsaExclusionLimit: { other: 7500, separate: 3750 },
+    citation,
+  };
+  for (const joint of [false, true])
+    for (const agi of [15000, 15000.01, 17000, 75000, 75000.01, 150000, 150000.01, 400000])
+      put(`dcPct(${joint},${agi})`, applicablePercentage(agi, joint, care));
+  if (fedJ && ficaD)
+    for (const [kids, lower, deemed, expenses] of [
+      [1, 40000, false, 3000],
+      [2, 40000, false, 3000],
+      [2, 6000, false, 9000],
+      [2, 5999, false, 9000],
+      [2, 0, true, 6000],
+      [1, 0, true, 6000],
+      [2, 40000, false, 7500],
+      [2, 40000, false, 7500.01],
+    ] as const)
+      for (const filingStatus of ["married_jointly", "married_separately"] as const) {
+        const r = compareDependentCare(
+          {
+            filingStatus,
+            wages: 90000,
+            lowerEarnerWages: lower,
+            spouseDeemedEarner: deemed,
+            qualifyingIndividuals: kids,
+            expenses,
+          },
+          { federal: fedJ, fica: ficaD },
+          care,
+        );
+        put(`dc(${filingStatus},${kids},${lower},${deemed},${expenses})`, {
+          credit: r.creditOnly.credit.toNumber(),
+          creditable: r.creditOnly.creditable.toNumber(),
+          excluded: r.fsa.excluded.toNumber(),
+          fsa: r.fsa.total.toNumber(),
+          better: r.better,
         });
       }
 
