@@ -1253,6 +1253,20 @@ export const SeparationRulesSchema = z.object({
 });
 export type SeparationRulesData = z.infer<typeof SeparationRulesSchema>;
 
+/**
+ * Withholding on supplemental wages — severance, a bonus, vacation paid out
+ * (SPEC-5 layoff-month J4): IRC §3402(g) as Pub. 15 §7 states it each year.
+ */
+export const SupplementalWithholdingSchema = z.object({
+  /** The optional flat rate, when paid separately from regular wages. */
+  flatRate: z.number().gt(0).lt(1),
+  /** The mandatory rate on a year's supplemental wages over the threshold. */
+  mandatoryRate: z.number().gt(0).lt(1),
+  mandatoryThreshold: z.number().gt(0),
+  citation: CitationSchema,
+});
+export type SupplementalWithholdingData = z.infer<typeof SupplementalWithholdingSchema>;
+
 export const GiftTaxSchema = z.object({
   taxYear: z.number().int(),
   annualExclusion: z.number().gte(0),
@@ -1906,6 +1920,7 @@ export const DATASET_SCHEMAS = {
   "home-sale-exclusion": HomeSaleExclusionSchema,
   "early-distribution": EarlyDistributionSchema,
   "separation-rules": SeparationRulesSchema,
+  "supplemental-withholding": SupplementalWithholdingSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

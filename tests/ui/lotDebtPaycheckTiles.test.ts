@@ -4,6 +4,8 @@ import { mountLotPicker } from "../../src/tiles/lotPicker";
 import { mountBalanceTransfer } from "../../src/tiles/balanceTransfer";
 import { mountPaycheckOptimizer } from "../../src/tiles/paycheckOptimizer";
 import { mountW4Withholding } from "../../src/tiles/w4Withholding";
+import { supplementalWithholding } from "../../src/engine/supplemental";
+import { evaluateTaxes } from "../../src/engine/tax";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 import { SituationStore } from "../../src/profile/situation";
 import type { TileContext } from "../../src/tiles/types";
@@ -289,6 +291,76 @@ describe("W-4 Withholding & Refund Check", () => {
     expect(rowValue(root, "Projected balance due")).toBeDefined();
     expect(text).toContain("under-withholding");
     expect(text).toContain("Withhold about");
+  });
+
+  /**
+   * Extra pay (SPEC-5 layoff-month J4): severance or a bonus withheld at
+   * Pub. 15's flat rate, set beside what it actually adds to the tax.
+   */
+  const addsToTax = (wages: number, extra: number): number => {
+    const tax = (w: number) =>
+      evaluateTaxes(
+        { filingStatus: "single", wages: w },
+        { federal: data.federal()!, fica: data.fica()! },
+      ).federal.incomeTax.toNumber();
+    return Math.round((tax(wages + extra) - tax(wages)) * 100) / 100;
+  };
+
+  it("withholds 22% of a year's extra pay, and 37% of what passes $1 million", async () => {
+    await data.loadDeferred("supplemental-withholding-2026");
+    const rules = data.supplementalWithholding()!;
+    expect(rules.flatRate).toBe(0.22);
+    expect(supplementalWithholding(20000, rules).toNumber()).toBe(4400);
+    // $220,000 on the first million and $74,000 on the $200,000 above it.
+    expect(supplementalWithholding(1200000, rules).toNumber()).toBe(294000);
+  });
+
+  it("shows 22% under-withholding a bonus at a high marginal rate", async () => {
+    await data.loadDeferred("supplemental-withholding-2026");
+    const { root } = mount(
+      mountW4Withholding,
+      new URLSearchParams({ fs: "single", w: "260000", pf: "26", wh: "2400", xp: "20000" }),
+    );
+    expect(dollars(rowValue(root, "Withheld from the extra pay at the flat rate (22.0%)"))).toBe(
+      4400,
+    );
+    const adds = addsToTax(260000, 20000);
+    expect(adds).toBeGreaterThan(4400);
+    expect(dollars(rowValue(root, "What the extra pay adds to your tax"))).toBe(adds);
+    expect(root.querySelectorAll("a.cite-link").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("shows 22% over-withholding severance at a low one", async () => {
+    await data.loadDeferred("supplemental-withholding-2026");
+    const { root } = mount(
+      mountW4Withholding,
+      new URLSearchParams({ fs: "single", w: "20000", pf: "26", wh: "40", xp: "5000" }),
+    );
+    const adds = addsToTax(20000, 5000);
+    expect(adds).toBeLessThan(1100);
+    expect(dollars(rowValue(root, "What the extra pay adds to your tax"))).toBe(adds);
+  });
+
+  it("waits for the extra-pay rules, and gives no figure if they cannot load", async () => {
+    const root = document.createElement("div");
+    mountW4Withholding({
+      root,
+      params: new URLSearchParams({ fs: "single", w: "60000", pf: "26", wh: "300", xp: "8000" }),
+      setParams: () => {},
+      permalink: () => "",
+      navigate: () => {},
+      locale: "en-US",
+      data: {
+        ...data,
+        supplementalWithholding: () => null,
+        loadDeferred: async () => ({ status: "invalid" }) as never,
+      } as BundledData,
+      profile: new SituationStore(),
+    });
+    expect(root.textContent).toContain("Loading the withholding rules for extra pay");
+    await new Promise((r) => setTimeout(r, 0));
+    expect(root.querySelector(".verify-banner")).not.toBeNull();
+    expect(root.textContent).not.toMatch(/\$\d/);
   });
 
   it("reads filing status and income from My Situation", () => {

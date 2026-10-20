@@ -377,6 +377,13 @@
       "why": "COBRA's 102% premium ceiling and the 150% disability-extension ceiling are §1162(3) itself; an amendment changes what a plan may charge.",
       "fingerprint": "004450d11e50d4607fc09a9d6d3859d2c311394ef598739b713078734036eb44",
       "checkedOn": "2026-10-19"
+    },
+    {
+      "shard": "supplemental-withholding-2026",
+      "url": "https://www.irs.gov/publications/p15",
+      "why": "Pub. 15 restates the supplemental-wage rates each December; Pub. L. 119-21 made the brackets they track permanent, so a change here is either a new edition or a rate to re-read.",
+      "fingerprint": "5da796b8e41fde4d03b5d6832e0cdde1dd430600303a641cc9d34bedea283c3c",
+      "checkedOn": "2026-10-20"
     }
   ]
 }

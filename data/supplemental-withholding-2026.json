@@ -1,0 +1,12 @@
+{
+  "flatRate": 0.22,
+  "mandatoryRate": 0.37,
+  "mandatoryThreshold": 1000000,
+  "citation": {
+    "sourceUrl": "https://www.irs.gov/publications/p15",
+    "sourceDocument": "IRS Publication 15 (2026), Employer's Tax Guide, §7; IRC §3402(g); Treas. Reg. §31.3402(g)-1",
+    "sourceNote": "Pub. 15 (2026): \"The withholding rate on supplemental wages remains 22% (37% if supplemental wages paid to an employee during the calendar year exceed $1 million) because P.L. 119-21 permanently extended the individual tax rates\". §7: supplemental wages over $1 million in a calendar year are \"subject to withholding at 37%\", \"without regard to the employee's Form W-4\"; below that, an employer paying them separately from regular wages may withhold the optional flat 22%, or add them to regular wages and withhold on the total. Severance, bonuses and accrued vacation paid at separation are supplemental wages. The flat rate is a withholding rate, not the tax on the payment. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

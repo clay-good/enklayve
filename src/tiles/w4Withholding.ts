@@ -16,7 +16,8 @@ import { Money } from "../engine/money";
 import { evaluateTaxes, type TaxInput } from "../engine/tax";
 import type { FilingStatus } from "../data/schemas";
 import { el, option } from "../ui/dom";
-import { field, parseNonNegative, tryExampleButton } from "../ui/form";
+import { field, parseNonNegative, pct, tryExampleButton } from "../ui/form";
+import { supplementalWithholding } from "../engine/supplemental";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";
 import { rememberShared } from "./profileSync";
 import type { SituationStore } from "../profile/situation";
@@ -50,9 +51,20 @@ interface Fields {
   periods: number;
   perPaycheck: number;
   extra: number;
+  /** Severance, a bonus or vacation paid out separately this year (SPEC-5 J4). */
+  bonus: number;
 }
 
-const EXAMPLE: Fields = { fs: "single", wages: 70000, periods: 26, perPaycheck: 420, extra: 0 };
+const EXAMPLE: Fields = {
+  fs: "single",
+  wages: 70000,
+  periods: 26,
+  perPaycheck: 420,
+  extra: 0,
+  bonus: 0,
+};
+
+const SUPPLEMENTAL = "supplemental-withholding-2026";
 
 function isFilingStatus(v: string): v is FilingStatus {
   return FILING_STATUSES.some((f) => f.value === v);
@@ -67,6 +79,7 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
     periods: FREQUENCIES.some((f) => f.value === per) ? per : 26,
     perPaycheck: parseNonNegative(p.get("wh"), 0),
     extra: parseNonNegative(p.get("ex"), 0),
+    bonus: parseNonNegative(p.get("xp"), 0),
   };
 }
 
@@ -77,6 +90,7 @@ function writeFields(f: Fields): URLSearchParams {
   p.set("pf", String(f.periods));
   if (f.perPaycheck > 0) p.set("wh", String(f.perPaycheck));
   if (f.extra > 0) p.set("ex", String(f.extra));
+  if (f.bonus > 0) p.set("xp", String(f.bonus));
   return p;
 }
 
@@ -124,19 +138,56 @@ export function mountW4Withholding(ctx: TileContext): void {
   const wInput = mkNum("w", "Gross annual wages", fields.wages, 1000);
   const whInput = mkNum("wh", "Federal tax withheld per paycheck", fields.perPaycheck, 10);
   const exInput = mkNum("ex", "Extra withholding per paycheck", fields.extra, 10);
+  const xpInput = mkNum(
+    "xp",
+    "Extra pay this year, paid separately (severance, a bonus)",
+    fields.bonus,
+    500,
+  );
 
   const resultContainer = el("div", { class: "tile-result", attrs: { "aria-live": "polite" } });
 
   /** Projected annual FEDERAL INCOME TAX for the wages (W-4 governs this only). */
-  function projectedFederalTax(): Money {
-    const input: TaxInput = { filingStatus: fields.fs, wages: Math.max(0, fields.wages) };
+  function projectedFederalTax(extraPay = 0): Money {
+    const input: TaxInput = {
+      filingStatus: fields.fs,
+      wages: Math.max(0, fields.wages) + Math.max(0, extraPay),
+    };
     return evaluateTaxes(input, { federal: fed!, fica: fica! }).federal.incomeTax;
   }
 
   function compute(): void {
-    const tax = projectedFederalTax();
+    // Extra pay is withheld at Pub. 15's flat rates, which load on first use.
+    const supplemental = fields.bonus > 0 ? data!.supplementalWithholding() : null;
+    if (fields.bonus > 0 && !supplemental) {
+      resultContainer.replaceChildren(
+        el("p", {
+          class: "w4-loading",
+          attrs: { role: "status", "aria-busy": "true" },
+          text: "Loading the withholding rules for extra pay…",
+        }),
+      );
+      void data!.loadDeferred(SUPPLEMENTAL).then((ds) => {
+        if (ds?.status === "invalid") {
+          resultContainer.replaceChildren(
+            el("div", {
+              class: "verify-banner",
+              attrs: { role: "alert" },
+              text: "The withholding rules for extra pay did not load, so no figure is given. Reload the page and try again.",
+            }),
+          );
+          return;
+        }
+        compute();
+      });
+      return;
+    }
+    const tax = projectedFederalTax(fields.bonus);
     const perPay = Money.from(fields.perPaycheck).add(fields.extra);
-    const withholding = perPay.multiply(fields.periods);
+    const bonusWithheld = supplemental
+      ? supplementalWithholding(fields.bonus, supplemental)
+      : Money.zero();
+    const withholding = perPay.multiply(fields.periods).add(bonusWithheld);
     const gap = withholding.subtract(tax); // + over-withheld (refund), − under-withheld (owe)
     const fmt = (m: Money): string => m.format(ctx.locale);
 
@@ -150,7 +201,7 @@ export function mountW4Withholding(ctx: TileContext): void {
         citation: fed!.citation,
       },
       {
-        label: `Projected withholding (${fmt(perPay)} × ${fields.periods})`,
+        label: `Projected withholding (${fmt(perPay)} × ${fields.periods}${supplemental ? ", plus the extra pay's" : ""})`,
         value: fmt(withholding),
       },
       {
@@ -159,6 +210,27 @@ export function mountW4Withholding(ctx: TileContext): void {
         emphasis: true,
       },
     ];
+
+    if (supplemental) {
+      // The flat rate is a withholding rate, not the payment's tax: set the two
+      // side by side, the answer to "will I owe more on my severance".
+      const adds = tax.subtract(projectedFederalTax());
+      const rate = (m: Money): string => pct(fields.bonus > 0 ? m.toNumber() / fields.bonus : 0, 1);
+      lines.splice(
+        2,
+        0,
+        {
+          label: `Withheld from the extra pay at the flat rate (${rate(bonusWithheld)})`,
+          value: fmt(bonusWithheld),
+          citation: supplemental.citation,
+        },
+        {
+          label: `What the extra pay adds to your tax (${rate(adds)} of it)`,
+          value: fmt(adds),
+          citation: fed!.citation,
+        },
+      );
+    }
 
     if (overWithheld && !balanced) {
       const forgone = gap.multiply(ASSUMED_SAVINGS_RATE * AVG_HELD_FRACTION);
@@ -221,6 +293,7 @@ export function mountW4Withholding(ctx: TileContext): void {
       periods: Math.round(parseNonNegative(pfSelect.value, 26)),
       perPaycheck: parseNonNegative(whInput.value, 0),
       extra: parseNonNegative(exInput.value, 0),
+      bonus: parseNonNegative(xpInput.value, 0),
     };
     ctx.setParams(writeFields(fields));
     rememberShared(profile, { filingStatus: fields.fs, annualIncome: fields.wages });
@@ -228,7 +301,7 @@ export function mountW4Withholding(ctx: TileContext): void {
   }
 
   for (const s of [fsSelect, pfSelect]) s.addEventListener("change", recompute);
-  for (const i of [wInput, whInput, exInput]) i.addEventListener("input", recompute);
+  for (const i of [wInput, whInput, exInput, xpInput]) i.addEventListener("input", recompute);
 
   const tryExample = tryExampleButton(() => {
     fields = { ...EXAMPLE };
@@ -237,6 +310,7 @@ export function mountW4Withholding(ctx: TileContext): void {
     wInput.value = String(fields.wages);
     whInput.value = String(fields.perPaycheck);
     exInput.value = String(fields.extra);
+    xpInput.value = String(fields.bonus);
     recompute();
   });
 
@@ -253,6 +327,7 @@ export function mountW4Withholding(ctx: TileContext): void {
     field("Pay frequency", pfSelect),
     field("Federal tax withheld per paycheck", whInput),
     field("Extra withholding per paycheck", exInput),
+    field("Extra pay this year, paid separately (severance, a bonus)", xpInput),
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
@@ -279,7 +354,7 @@ export const w4WithholdingTile: TileDefinition = {
   ],
   status: "ready",
   how:
-    "Most people aim for a big tax refund, but a refund is not free money: it is an interest-free loan you made to the government. You overpaid your taxes a little out of every paycheck all year, and the refund is simply that overpayment handed back, with no interest. The ideal is a refund near zero: you keep your own money as you earn it (in a savings account, paying down debt, or invested) instead of lending it out for free.\n\nThis tool projects your federal income tax for the year from your wages and filing status using the same engine as the take-home tile, then compares it to what your current W-4 withholds (your per-paycheck federal withholding times your number of pay periods, plus any extra). If you are over-withholding it shows the refund, what that refund is really costing you in forgone interest, and how much less to withhold per paycheck. If you are under-withholding it shows the likely bill and how much more to withhold.\n\nThe W-4 controls federal income tax withholding only, so that is all this covers. Social Security and Medicare (FICA) are fixed and not on the W-4, and state withholding uses a separate state form. Adjust your real W-4 with your employer or in the IRS Tax Withholding Estimator; these figures point you in the right direction.\n\n" +
+    "Most people aim for a big tax refund, but a refund is not free money: it is an interest-free loan you made to the government. You overpaid your taxes a little out of every paycheck all year, and the refund is simply that overpayment handed back, with no interest. The ideal is a refund near zero: you keep your own money as you earn it (in a savings account, paying down debt, or invested) instead of lending it out for free.\n\nThis tool projects your federal income tax for the year from your wages and filing status using the same engine as the take-home tile, then compares it to what your current W-4 withholds (your per-paycheck federal withholding times your number of pay periods, plus any extra). If you are over-withholding it shows the refund, what that refund is really costing you in forgone interest, and how much less to withhold per paycheck. If you are under-withholding it shows the likely bill and how much more to withhold.\n\nSeverance, a bonus or vacation paid out when a job ends usually has a flat rate withheld from it, not the rate on your W-4. Enter it as extra pay and we add it to the year's income, withhold the flat rate the IRS sets, and show beside it what the payment actually adds to your tax. The flat rate is a withholding rate, not a tax rate, so it can be too much or too little.\n\nThe W-4 controls federal income tax withholding only, so that is all this covers. Social Security and Medicare (FICA) are fixed and not on the W-4, and state withholding uses a separate state form. Adjust your real W-4 with your employer or in the IRS Tax Withholding Estimator; these figures point you in the right direction.\n\n" +
     OBBBA_DEDUCTIONS_NOT_MODELED,
   resources: [
     {

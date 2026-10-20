@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-19",
+  "generatedAt": "2026-10-20",
   "datasets": [
     {
       "id": "federal-income-tax-2024",
@@ -1002,6 +1002,19 @@
       "sourceDocument": "ERISA §602(3), 29 U.S.C. §1162(3); IRC §4980B(f)(2)(C)",
       "dateRetrieved": "2026-10-19",
       "contentHash": "99323113d200f9b643a1cacc89c261cd54ab994d08b97d6ec6bd6fdde66627df"
+    },
+    {
+      "id": "supplemental-withholding-2026",
+      "kind": "supplemental-withholding",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "supplemental-withholding-2026.json",
+      "sourceUrl": "https://www.irs.gov/publications/p15",
+      "sourceDocument": "IRS Publication 15 (2026), Employer's Tax Guide, §7; IRC §3402(g); Treas. Reg. §31.3402(g)-1",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "f0a5325f6383a1911e0365710575f5ce807ac47c1ca1fe8f6e5bc59e8ca4b2f3"
     },
     {
       "id": "child-tax-2024",
