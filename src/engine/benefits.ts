@@ -7,9 +7,11 @@
 import { Money } from "./money";
 import type {
   AcaData,
+  CitationData,
   EitcCtcData,
   FederalPovertyLevelData,
   FilingStatus,
+  FplKeyedProgramsData,
   MedicaidData,
   SaversCreditData,
   SnapData,
@@ -523,4 +525,55 @@ export function estimatePremiumTaxCredit(
     belowMedicaidFloor,
     aboveSubsidyCap,
   };
+}
+
+/** A program keyed to the poverty line that the household appears to be under (SPEC-5 F4). */
+export interface FplKeyedRow {
+  id: string;
+  name: string;
+  worth: string;
+  categorical: string;
+  agencyUrl: string;
+  rule: CitationData;
+  /** The line the household is at or under, as a percentage; null where each state sets it. */
+  linePct: number | null;
+  /** School meals: free under the first line, reduced-price under the second. */
+  reducedPrice: boolean;
+}
+
+/**
+ * The programs whose federal line is a percentage of the poverty guidelines,
+ * filtered to the household. Each is a reason to apply, never a determination:
+ * every one of them also admits people through other programs, and the
+ * agency decides. A program a state sets the line for is listed only while the
+ * household is under the federal ceiling's poverty-line leg, and never with a
+ * line of its own.
+ */
+export function fplKeyedRows(
+  pctOfLine: number,
+  household: { children: number; youngChild: boolean },
+  data: FplKeyedProgramsData,
+): FplKeyedRow[] {
+  const rows: FplKeyedRow[] = [];
+  for (const p of data.programs) {
+    if (p.requires === "children" && household.children <= 0) continue;
+    if (p.requires === "youngChild" && !household.youngChild) continue;
+    const row = {
+      id: p.id,
+      name: p.name,
+      worth: p.worth,
+      categorical: p.categorical,
+      agencyUrl: p.agencyUrl,
+      rule: p.rule,
+    };
+    if (p.pctFpl === null) {
+      if (p.ceilingPctFpl === undefined || pctOfLine <= p.ceilingPctFpl)
+        rows.push({ ...row, linePct: null, reducedPrice: false });
+    } else if (pctOfLine <= p.pctFpl) {
+      rows.push({ ...row, linePct: p.pctFpl, reducedPrice: false });
+    } else if (p.reducedPctFpl !== undefined && pctOfLine <= p.reducedPctFpl) {
+      rows.push({ ...row, linePct: p.reducedPctFpl, reducedPrice: true });
+    }
+  }
+  return rows;
 }

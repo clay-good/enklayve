@@ -916,3 +916,132 @@ describe("the screener's 65-plus rows (SPEC-5 Phase 30)", () => {
     expect(written.has("med")).toBe(false);
   });
 });
+
+describe("the screener's programs keyed to the poverty line (SPEC-5 F4)", () => {
+  beforeAll(async () => {
+    await data.loadDeferred("fpl-keyed-programs-2026");
+  });
+  const items = (root: HTMLElement): Map<string, Element> =>
+    new Map(
+      Array.from(root.querySelectorAll(".screener-item")).map((i) => [
+        i.querySelector(".screener-program")?.textContent ?? "",
+        i,
+      ]),
+    );
+
+  it("lists school meals, Lifeline and LIHEAP under their lines, each citing its own rule", () => {
+    // A family of four at $30,000 is at about 91% of the 2026 poverty line.
+    const root = mount(
+      mountOwedScreener,
+      new URLSearchParams({ hh: "4", inc: "30000", kids: "2", mfj: "1" }),
+    );
+    const rows = items(root);
+    const keyed = data.fplKeyedPrograms()!;
+    for (const [name, id] of [
+      ["Free or reduced-price school meals", "school-meals"],
+      ["Lifeline", "lifeline"],
+      ["LIHEAP (home energy assistance)", "liheap"],
+    ] as const) {
+      const item = rows.get(name);
+      expect(item, name).toBeDefined();
+      const rule = keyed.programs.find((p) => p.id === id)!.rule;
+      expect(item!.querySelector("a.cite-link")?.getAttribute("href")).toBe(rule.sourceUrl);
+    }
+    expect(rows.get("Free or reduced-price school meals")!.textContent).toContain("130%");
+    // WIC and Head Start wait for the yes/no.
+    expect(rows.has("WIC")).toBe(false);
+    expect(rows.has("Head Start")).toBe(false);
+  });
+
+  it("adds WIC and Head Start for a child under five, and the answer rides the permalink", () => {
+    const root = mount(
+      mountOwedScreener,
+      new URLSearchParams({ hh: "4", inc: "30000", kids: "2", mfj: "1", young: "1" }),
+    );
+    const rows = items(root);
+    expect(rows.get("WIC")!.textContent).toContain("185%");
+    expect(rows.get("Head Start")!.textContent).toContain("100%");
+    let written = new URLSearchParams();
+    const rec = document.createElement("div");
+    mountOwedScreener({
+      root: rec,
+      params: new URLSearchParams({ hh: "4", inc: "30000" }),
+      setParams: (p) => (written = p),
+      permalink: () => "",
+      navigate: () => {},
+      locale: "en-US",
+      data,
+      profile: new SituationStore(),
+    });
+    const box = rec.querySelector<HTMLInputElement>('input[name="young"]')!;
+    expect(box.checked).toBe(false);
+    box.checked = true;
+    box.dispatchEvent(new Event("change"));
+    expect(written.get("young")).toBe("1");
+  });
+
+  it("gives reduced-price school meals between 130% and 185%, and nothing past it", () => {
+    // $50,000 for four is about 152% of the line.
+    const mid = items(
+      mount(mountOwedScreener, new URLSearchParams({ hh: "4", inc: "50000", kids: "2", mfj: "1" })),
+    );
+    expect(mid.get("Free or reduced-price school meals")!.textContent).toContain(
+      "Reduced price likely",
+    );
+    expect(mid.has("Lifeline")).toBe(false);
+    const high = items(
+      mount(mountOwedScreener, new URLSearchParams({ hh: "4", inc: "90000", kids: "2", mfj: "1" })),
+    );
+    expect(high.has("Free or reduced-price school meals")).toBe(false);
+  });
+
+  it("shows LIHEAP with no number at any income", () => {
+    for (const inc of ["0", "15000", "30000", "45000"]) {
+      const row = items(
+        mount(mountOwedScreener, new URLSearchParams({ hh: "4", inc, kids: "0" })),
+      ).get("LIHEAP (home energy assistance)");
+      if (!row) continue;
+      expect(row.textContent).not.toMatch(/\d+%|\$\d/);
+    }
+  });
+
+  it("measures an Alaska household against Alaska's own line", () => {
+    // About 130% of the lower 48's line for four, but under 110% of Alaska's.
+    const contiguous = items(
+      mount(mountOwedScreener, new URLSearchParams({ hh: "4", inc: "43500", kids: "2", mfj: "1" })),
+    );
+    const alaska = items(
+      mount(
+        mountOwedScreener,
+        new URLSearchParams({ hh: "4", inc: "43500", kids: "2", mfj: "1", region: "alaska" }),
+      ),
+    );
+    expect(contiguous.get("Free or reduced-price school meals")!.textContent).toContain(
+      "Reduced price likely",
+    );
+    expect(alaska.get("Free or reduced-price school meals")!.textContent).toContain(
+      "Likely worth applying",
+    );
+  });
+
+  it("holds no dollar figure in its shard", async () => {
+    const { readFileSync } = await import("node:fs");
+    const raw = readFileSync("data/fpl-keyed-programs-2026.json", "utf8");
+    expect(raw).not.toMatch(/\$\s?\d/);
+  });
+
+  it("reaches the saved Report through the same function", async () => {
+    const { buildReport } = await import("../../src/readout/report");
+    const profile = new SituationStore();
+    profile.set("annualIncome", 30000);
+    profile.set("householdSize", 4);
+    profile.set("qualifyingChildren", 2);
+    const owed = buildReport(profile, data).sections.find(
+      (s) => s.title === "What you may be owed",
+    )!;
+    const labels = owed.lines.map((l) => l.label);
+    expect(labels).toContain("Free or reduced-price school meals");
+    expect(labels).toContain("Lifeline");
+    expect(labels).not.toContain("WIC");
+  });
+});

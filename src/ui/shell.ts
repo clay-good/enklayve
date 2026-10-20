@@ -16,7 +16,7 @@ import { el, clear, option } from "./dom";
 import { tileHowResources } from "./explainer";
 import { evaluateTaxes, type TaxInput } from "../engine/tax";
 import type { FilingStatus, Jurisdiction } from "../data/schemas";
-import { loadBundledData, type BundledData } from "../data/browser";
+import { FPL_KEYED_PROGRAMS, loadBundledData, type BundledData } from "../data/browser";
 import { type TileContext, type TileDefinition } from "../tiles/types";
 import { getTile, TILES, SUB_TOOLS } from "../tiles/registry";
 import { HOME_TITLE, CATALOG_SUMMARY } from "./seo";
@@ -1131,6 +1131,8 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
   } catch {
     data = null;
   }
+  // Not awaited: the home page does not need it. See FPL_KEYED_PROGRAMS.
+  const keyedPrograms = data?.loadDeferred(FPL_KEYED_PROGRAMS) ?? Promise.resolve(null);
 
   const content = el("main", { id: "content", class: "content", attrs: { tabindex: "-1" } });
   const header = buildHeader(navigate);
@@ -1174,7 +1176,18 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
   const onPageHide = (): void => profile.clear();
   window.addEventListener("pagehide", onPageHide);
 
+  // Bumped on every render, so a render that waited for a shard can tell the
+  // reader has gone somewhere else meanwhile and leave the page alone.
+  let renderToken = 0;
+  const afterKeyedPrograms = (render: () => void): void => {
+    const token = ++renderToken;
+    void keyedPrograms.then(() => {
+      if (token === renderToken) render();
+    });
+  };
+
   const renderRoute = (route: Route): void => {
+    renderToken++;
     if (!route.tileId) {
       renderHome(content, navigate, data, profile);
       return;
@@ -1188,11 +1201,11 @@ export async function mountApp(root: HTMLElement): Promise<ShellHandle> {
       return;
     }
     if (route.tileId === "readout") {
-      renderReadout({ container: content, navigate, profile, data });
+      afterKeyedPrograms(() => renderReadout({ container: content, navigate, profile, data }));
       return;
     }
     if (route.tileId === "report") {
-      renderReport({ container: content, navigate, profile, data });
+      afterKeyedPrograms(() => renderReport({ container: content, navigate, profile, data }));
       return;
     }
     const tile = getTile(route.tileId);

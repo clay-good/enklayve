@@ -1,0 +1,89 @@
+{
+  "year": 2026,
+  "programs": [
+    {
+      "id": "school-meals",
+      "name": "Free or reduced-price school meals",
+      "pctFpl": 130,
+      "reducedPctFpl": 185,
+      "requires": "children",
+      "worth": "Free or reduced-price breakfast and lunch at school",
+      "categorical": "Children in a household on SNAP or TANF get free meals without an income test, and many schools serve every child free under community eligibility.",
+      "agencyUrl": "https://www.fns.usda.gov/nslp",
+      "rule": {
+        "sourceUrl": "https://www.law.cornell.edu/uscode/text/42/1758",
+        "sourceDocument": "42 U.S.C. §1758(b)(1)(A)",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    {
+      "id": "wic",
+      "name": "WIC",
+      "pctFpl": 185,
+      "requires": "youngChild",
+      "worth": "Food, infant formula and nutrition support",
+      "categorical": "Anyone on SNAP, Medicaid or TANF counts as income-eligible. A state may set its line lower, and its own table governs.",
+      "agencyUrl": "https://www.fns.usda.gov/wic/applicant-participant/eligibility",
+      "rule": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-7/subtitle-B/chapter-II/subchapter-A/part-246/subpart-C/section-246.7",
+        "sourceDocument": "7 CFR §246.7(d)",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    {
+      "id": "head-start",
+      "name": "Head Start",
+      "pctFpl": 100,
+      "requires": "youngChild",
+      "worth": "Early education and care for a child under five, and support during pregnancy",
+      "categorical": "Families on TANF or SSI, children who are homeless, and children in foster care are eligible at any income, and programs may fill some places from families above the line.",
+      "agencyUrl": "https://headstart.gov/center-locator",
+      "rule": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-45/subtitle-B/chapter-XIII/subchapter-B/part-1302/subpart-A/section-1302.12",
+        "sourceDocument": "45 CFR §1302.12(c)(1)",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    {
+      "id": "lifeline",
+      "name": "Lifeline",
+      "pctFpl": 135,
+      "requires": null,
+      "worth": "A monthly discount on phone or internet service",
+      "categorical": "Anyone on Medicaid, SNAP, SSI, Federal Public Housing Assistance or the Veterans Pension qualifies at any income, and residents of Tribal lands get a larger discount.",
+      "agencyUrl": "https://www.fcc.gov/lifeline-consumers",
+      "rule": {
+        "sourceUrl": "https://www.ecfr.gov/current/title-47/chapter-I/subchapter-B/part-54/subpart-E/section-54.409",
+        "sourceDocument": "47 CFR §54.409(a)",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    },
+    {
+      "id": "liheap",
+      "name": "LIHEAP (home energy assistance)",
+      "pctFpl": null,
+      "ceilingPctFpl": 150,
+      "requires": null,
+      "worth": "Help with heating and cooling bills",
+      "categorical": "Each state sets its own income line under a federal ceiling, and households on SNAP, SSI or TANF may be eligible at any income.",
+      "agencyUrl": "https://www.acf.hhs.gov/ocs/map/liheap-map-state-and-territory-contact-listing",
+      "rule": {
+        "sourceUrl": "https://www.law.cornell.edu/uscode/text/42/8624",
+        "sourceDocument": "42 U.S.C. §8624(b)(2)",
+        "effectiveYear": 2026,
+        "dateRetrieved": "2026-10-19"
+      }
+    }
+  ],
+  "citation": {
+    "sourceUrl": "https://www.law.cornell.edu/uscode/text/42/1758",
+    "sourceDocument": "Federal programs keyed to the poverty guidelines: 42 U.S.C. §§1758, 8624; 7 CFR §246.7; 45 CFR §1302.12; 47 CFR §54.409",
+    "sourceNote": "Each percentage is read from the rule that sets it, and the dollar lines come from the poverty guidelines the screener already reads, so this shard carries no dollar figure. 42 U.S.C. §1758(b)(1)(A): free meals at \"130 percent\", reduced-price at \"185 percent\" of the poverty guidelines. 7 CFR §246.7(d): WIC applicants with \"a gross income in excess of 185 percent\" of the guidelines are not eligible; under (d)(1) a state may set its line as low as 100%, and (d)(2)(vi) makes SNAP, Medicaid and TANF recipients income-eligible. 45 CFR §1302.12(c)(1): Head Start eligibility if \"The family's income is equal to or below the poverty line\", or the family gets public assistance, or the child is homeless or in foster care. 47 CFR §54.409(a): Lifeline at \"or below 135% of the Federal Poverty Guidelines\", or through Medicaid, SNAP, SSI, Federal Public Housing Assistance or the Veterans Pension. 42 U.S.C. §8624(b)(2)(B): LIHEAP up to \"the greater of\" 150% of the poverty level or 60% of state median income, set by each state, which is why the screener shows no line for it. Read on Cornell LII and eCFR 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

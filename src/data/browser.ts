@@ -30,6 +30,7 @@ import {
   type SaversCreditData,
   type SnapData,
   type MedicaidData,
+  type FplKeyedProgramsData,
   type BillTriageData,
   type FreeFilingData,
   type NoSurprisesData,
@@ -86,7 +87,8 @@ const rawFiles = import.meta.glob(
     "!../../data/ss-family-benefits-2026.json",
     "!../../data/ssi-2026.json",
     "!../../data/medicare-savings-2026.json",
-    "!../../data/dependent-care-2026.json"],
+    "!../../data/dependent-care-2026.json",
+    "!../../data/fpl-keyed-programs-2026.json"],
   { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
@@ -110,6 +112,7 @@ const deferredFiles = import.meta.glob(
     "../../data/ssi-2026.json",
     "../../data/medicare-savings-2026.json",
     "../../data/dependent-care-2026.json",
+    "../../data/fpl-keyed-programs-2026.json",
   ],
   { query: "?raw", import: "default" },
 ) as Record<string, () => Promise<string>>;
@@ -164,6 +167,7 @@ export interface BundledData {
   snap(): SnapData | null;
   /** Medicaid expansion status and thresholds by state (BUILD-SPEC.md §4.3). */
   medicaid(): MedicaidData | null;
+  fplKeyedPrograms(): FplKeyedProgramsData | null;
   /** Bill-triage consequence rules (SPEC-4 §A3). */
   billTriage(): BillTriageData | null;
   /** Free tax-filing channels and their eligibility tests (SPEC-4 §A5). */
@@ -240,6 +244,15 @@ export interface BundledData {
   /** The same, synchronously, once loaded; undefined while it has not been. */
   loadedDeferred(id: string): LoadedDataset | null | undefined;
 }
+
+/**
+ * The screener's and the Report's programs keyed to the poverty line (SPEC-5
+ * F4). Deferred like a tool's shard, to keep 1.7 kB out of the shell, but
+ * started as soon as the app has its data rather than when a tool opens: two
+ * surfaces read it, and the Report and the Readout wait for it so that a
+ * ledger is never written or compared with it half loaded.
+ */
+export const FPL_KEYED_PROGRAMS = "fpl-keyed-programs-2026";
 
 let cache: Promise<BundledData> | null = null;
 
@@ -350,6 +363,8 @@ async function build(): Promise<BundledData> {
     saversCredit: () => dataOf("savers-credit-2024") as SaversCreditData | null,
     snap: () => dataOf("snap-fy2024-contiguous") as SnapData | null,
     medicaid: () => dataOf("medicaid-2024") as MedicaidData | null,
+    fplKeyedPrograms: () =>
+      deferredDataOf(FPL_KEYED_PROGRAMS) as FplKeyedProgramsData | null,
     billTriage: () => dataOf("bill-triage-2026") as BillTriageData | null,
     freeFiling: () => dataOf("free-filing-2026") as FreeFilingData | null,
     noSurprises: () => dataOf("no-surprises-2026") as NoSurprisesData | null,

@@ -440,6 +440,41 @@
       "why": "§129(a)(2) holds the FSA's $7,500 and $3,750 exclusion, unindexed, and §21(c) reduces the credit's cap by it.",
       "fingerprint": "f1eb1e0ae0042401be39bfe549355581ea0d7cfba4c56b24271c0f2ade931de6",
       "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "fpl-keyed-programs-2026",
+      "url": "https://www.law.cornell.edu/uscode/text/42/1758",
+      "why": "§1758(b)(1)(A) sets the free and reduced-price school meal lines at 130% and 185% of the poverty guidelines.",
+      "fingerprint": "6b5d5cba895d2762304addef2538d9b1abbf4e31c01576964a88533aab0284b3",
+      "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "fpl-keyed-programs-2026",
+      "url": "https://www.ecfr.gov/current/title-7/subtitle-B/chapter-II/subchapter-A/part-246/subpart-C/section-246.7",
+      "why": "§246.7(d) caps WIC income eligibility at 185% of the poverty guidelines and lists who is income-eligible through other programs.",
+      "fingerprint": "51b5c44de492483e65c7398b99d2aa0663c28c0bec77dd5b5d652c2f883282a0",
+      "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "fpl-keyed-programs-2026",
+      "url": "https://www.ecfr.gov/current/title-45/subtitle-B/chapter-XIII/subchapter-B/part-1302/subpart-A/section-1302.12",
+      "why": "§1302.12(c) sets Head Start's income line at the poverty line and its categorical routes.",
+      "fingerprint": "131f3cff5b206eca971828d9ebd11da4155872cf767b85447a327807c43039b3",
+      "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "fpl-keyed-programs-2026",
+      "url": "https://www.ecfr.gov/current/title-47/chapter-I/subchapter-B/part-54/subpart-E/section-54.409",
+      "why": "§54.409(a) sets Lifeline's line at 135% of the poverty guidelines and its qualifying programs.",
+      "fingerprint": "a9d22a5994103f076176a42e5b7cd7671a112eba99d440ef74844de59ecb23e2",
+      "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "fpl-keyed-programs-2026",
+      "url": "https://www.law.cornell.edu/uscode/text/42/8624",
+      "why": "§8624(b)(2)(B) bounds a state's LIHEAP income line by the greater of 150% of the poverty level or 60% of state median income.",
+      "fingerprint": "c7b632246d1f623790f202daeccc531480f6c4f3ebf0e4abc5c66d65cdf440fd",
+      "checkedOn": "2026-10-20"
     }
   ]
 }

@@ -1446,6 +1446,37 @@ export const DependentCareSchema = z.object({
 });
 export type DependentCareData = z.infer<typeof DependentCareSchema>;
 
+/**
+ * Federal programs whose income line is a percentage of the poverty guidelines
+ * (SPEC-5 young-family F4). Percentages only: the dollar lines come from the
+ * poverty-guideline shard, so nothing here is a dollar figure to keep current.
+ */
+export const FplKeyedProgramsSchema = z.object({
+  year: z.number().int(),
+  programs: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        name: z.string().min(1),
+        /** The line, as a percentage of the poverty guidelines; null where each state sets it. */
+        pctFpl: z.number().gt(0).nullable(),
+        /** School meals' second, reduced-price line. */
+        reducedPctFpl: z.number().gt(0).optional(),
+        /** The federal ceiling on a state-set line, never shown as the line itself. */
+        ceilingPctFpl: z.number().gt(0).optional(),
+        /** Who the program is for: households with children, with a child under five or a pregnancy, or anyone. */
+        requires: z.enum(["children", "youngChild"]).nullable(),
+        worth: z.string().min(1),
+        categorical: z.string().min(1),
+        agencyUrl: z.string().url(),
+        rule: CitationSchema,
+      }),
+    )
+    .min(1),
+  citation: CitationSchema,
+});
+export type FplKeyedProgramsData = z.infer<typeof FplKeyedProgramsSchema>;
+
 export const GiftTaxSchema = z.object({
   taxYear: z.number().int(),
   annualExclusion: z.number().gte(0),
@@ -2107,6 +2138,7 @@ export const DATASET_SCHEMAS = {
   ssi: SsiSchema,
   "medicare-savings": MedicareSavingsSchema,
   "dependent-care": DependentCareSchema,
+  "fpl-keyed-programs": FplKeyedProgramsSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

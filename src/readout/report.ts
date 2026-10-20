@@ -18,6 +18,7 @@ import { resolveResidenceLocal } from "../ui/residenceLocal";
 import { evaluatePlan, DEFAULT_CONFIG, type PlanConfig, type PlanInput } from "../engine/plan";
 import {
   acaCreditEligible,
+  fplKeyedRows,
   estimateCtc,
   estimateEitc,
   fplPercent,
@@ -402,6 +403,26 @@ export function buildReport(
         value: "Likely eligible; size it in the ACA tool",
       });
       citations.push(acaData.citation);
+    }
+    // The programs keyed to the poverty line, through the screener's own
+    // function. Nothing here records a child under five or a pregnancy, so
+    // WIC and Head Start are the screener's to ask about.
+    const keyed = data?.fplKeyedPrograms() ?? null;
+    if (keyed) {
+      for (const row of fplKeyedRows(
+        p,
+        { children: qualifyingChildren, youngChild: false },
+        keyed,
+      )) {
+        owedLines.push({
+          label: row.name,
+          value:
+            row.linePct === null
+              ? "Your state sets the line; its energy assistance office has it"
+              : `Worth applying — at or under ${row.linePct}% of the poverty line${row.reducedPrice ? ", for reduced price" : ""}`,
+        });
+        citations.push(row.rule);
+      }
     }
   }
   if (income > 0 && eitcCtc) {

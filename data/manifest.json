@@ -1082,6 +1082,19 @@
       "contentHash": "615ec6638f88accae496be1eb3e356a51d5b1d55e8bf6e59422d5252ef1dc8e8"
     },
     {
+      "id": "fpl-keyed-programs-2026",
+      "kind": "fpl-keyed-programs",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 1,
+      "shard": "fpl-keyed-programs-2026.json",
+      "sourceUrl": "https://www.law.cornell.edu/uscode/text/42/1758",
+      "sourceDocument": "Federal programs keyed to the poverty guidelines: 42 U.S.C. §§1758, 8624; 7 CFR §246.7; 45 CFR §1302.12; 47 CFR §54.409",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "7391c459b591c5abf01b758e04515fff8db240d13dccf62330358a99a57c80c3"
+    },
+    {
       "id": "dependent-care-2026",
       "kind": "dependent-care",
       "version": "2026.0",

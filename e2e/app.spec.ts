@@ -238,6 +238,8 @@ test("a tool that loads on demand fetches its code and shard, then works offline
 test("the screener's Medicare rows load their limits on demand", async ({ page }) => {
   await page.goto("/#/benefits?tool=screener&hh=1&inc=18000&kids=0&mfj=0");
   await page.waitForSelector(".screener-summary");
+  // The poverty-line programs load on demand too, started with the app.
+  await expect(page.locator(".screener-program", { hasText: "Lifeline" })).toHaveCount(1);
   await expect(page.locator(".screener-program", { hasText: "Extra Help" })).toHaveCount(0);
   const shard = page.waitForResponse((r) =>
     /\/assets\/medicare-savings-2026-.*\.js$/.test(r.url()),

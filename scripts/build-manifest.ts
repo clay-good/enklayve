@@ -302,6 +302,15 @@ const SHARDS: ShardSource[] = [
     staleAfterYears: 1,
   },
   { id: "ssi-2026", kind: "ssi", shard: "ssi-2026.json", ...PILLAR4_ANNUAL },
+  // Percentages of the poverty line set in statute and regulation (SPEC-5
+  // young-family F4). They rarely move, so a year's grace.
+  {
+    id: "fpl-keyed-programs-2026",
+    kind: "fpl-keyed-programs",
+    shard: "fpl-keyed-programs-2026.json",
+    ...ANNUAL,
+    staleAfterYears: 1,
+  },
   // Statutory and unindexed (§§21, 129), so a year's grace, as for the other
   // unindexed statutes above.
   {

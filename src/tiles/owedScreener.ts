@@ -15,6 +15,7 @@ import {
   estimateSaversCredit,
   medicaidEligibility,
   acaCreditEligible,
+  fplKeyedRows,
 } from "../engine/benefits";
 import { medicareSavingsScreen } from "../engine/medicareSavings";
 import { el, option } from "../ui/dom";
@@ -46,6 +47,8 @@ interface Fields {
   married: boolean;
   /** Opt-in: someone 65 or older, or on Medicare (SPEC-5 Phase 30). */
   medicare: boolean;
+  /** A child under five, or a pregnancy: WIC and Head Start (SPEC-5 F4). */
+  youngChild: boolean;
 }
 
 const EXAMPLE: Fields = {
@@ -55,6 +58,7 @@ const EXAMPLE: Fields = {
   children: 2,
   married: true,
   medicare: false,
+  youngChild: false,
 };
 
 function isRegion(v: string): v is FplRegion {
@@ -81,6 +85,7 @@ function readFields(p: URLSearchParams, profile: SituationStore): Fields {
       : (profile.get("qualifyingChildren") ?? 0),
     married: p.has("mfj") ? p.get("mfj") === "1" : marriedDefault(profile),
     medicare: p.get("med") === "1",
+    youngChild: p.get("young") === "1",
   };
 }
 
@@ -98,6 +103,7 @@ function writeFields(f: Fields): URLSearchParams {
   // Nothing in My Situation answers this one, so its absence is "off" for
   // every reader and only "on" needs writing.
   if (f.medicare) p.set("med", "1");
+  if (f.youngChild) p.set("young", "1");
   return p;
 }
 
@@ -183,6 +189,7 @@ export function mountOwedScreener(ctx: TileContext): void {
   });
 
   const results = el("div", { class: "screener-results", attrs: { "aria-live": "polite" } });
+  let keyedRequested = false;
 
   function render(): void {
     results.replaceChildren();
@@ -376,6 +383,44 @@ export function mountOwedScreener(ctx: TileContext): void {
       });
     }
 
+    // The programs keyed to the poverty line (SPEC-5 F4), each citing the rule
+    // that sets its percentage. The region's own guidelines are already in
+    // `pctOfLine`, so Alaska and Hawaii get their own lines.
+    const keyed = bundled.fplKeyedPrograms();
+    // The app starts this load (FPL_KEYED_PROGRAMS in data/browser.ts, which
+    // this module cannot import a value from: the build reads it outside Vite).
+    // A screener opened first waits for it, once.
+    if (
+      !keyed &&
+      !keyedRequested &&
+      bundled.loadedDeferred("fpl-keyed-programs-2026") === undefined
+    ) {
+      keyedRequested = true;
+      void bundled.loadDeferred("fpl-keyed-programs-2026").then(() => render());
+    }
+    if (keyed) {
+      for (const row of fplKeyedRows(
+        pctOfLine,
+        { children: fields.children, youngChild: fields.youngChild },
+        keyed,
+      )) {
+        findings.push({
+          program: row.name,
+          estimate:
+            row.linePct === null
+              ? "Set by your state"
+              : row.reducedPrice
+                ? "Reduced price likely"
+                : "Likely worth applying",
+          note:
+            row.linePct === null
+              ? `${row.worth}. ${row.categorical} Your state's agency has the line.`
+              : `${row.worth}. Your income is at or under its line of ${row.linePct}% of the poverty line. ${row.categorical}`,
+          citation: row.rule,
+        });
+      }
+    }
+
     // The 65-plus rows, only with the toggle on. Their shard loads on demand,
     // so the first render after the toggle shows that it is loading and the
     // load renders again. They compare income only: the screener asks nothing
@@ -463,6 +508,8 @@ export function mountOwedScreener(ctx: TileContext): void {
   const mfj = marriedCheckbox(fields.married);
   const medicareBox = el("input", { type: "checkbox", name: "med" });
   medicareBox.checked = fields.medicare;
+  const youngBox = el("input", { type: "checkbox", name: "young" });
+  youngBox.checked = fields.youngChild;
 
   function recompute(): void {
     fields = {
@@ -472,6 +519,7 @@ export function mountOwedScreener(ctx: TileContext): void {
       children: Math.max(0, parseNonNegative(kidsInput.value, 0)),
       married: mfj.checked,
       medicare: medicareBox.checked,
+      youngChild: youngBox.checked,
     };
     ctx.setParams(writeFields(fields));
     profile.set("householdSize", fields.householdSize);
@@ -483,6 +531,7 @@ export function mountOwedScreener(ctx: TileContext): void {
   regionSelect.addEventListener("change", recompute);
   mfj.addEventListener("change", recompute);
   medicareBox.addEventListener("change", recompute);
+  youngBox.addEventListener("change", recompute);
   for (const i of [hhInput, incInput, kidsInput]) i.addEventListener("input", recompute);
 
   const tryExample = tryExampleButton(() => {
@@ -493,6 +542,7 @@ export function mountOwedScreener(ctx: TileContext): void {
     kidsInput.value = String(fields.children);
     mfj.checked = fields.married;
     medicareBox.checked = fields.medicare;
+    youngBox.checked = fields.youngChild;
     recompute();
   });
 
@@ -510,6 +560,12 @@ export function mountOwedScreener(ctx: TileContext): void {
       medicareBox,
       el("span", { text: "Anyone 65 or older, or on Medicare" }),
     ),
+    el(
+      "label",
+      { class: "checkbox" },
+      youngBox,
+      el("span", { text: "A child under five, or a pregnancy" }),
+    ),
     el("div", { class: "tile-form-actions" }, tryExample),
   );
 
@@ -524,7 +580,7 @@ export const owedScreenerTile: TileDefinition = {
   description: "Enter your situation once; see every program you likely qualify for.",
   keywords: ["screener", "benefits", "eligibility", "what am i owed"],
   status: "ready",
-  how: "You enter your household once, size, income, region, children, and filing status, and we compute your percentage of the poverty line, estimate the refundable credits you likely qualify for (the Earned Income Tax Credit and the Child Tax Credit), and flag where your income suggests Medicaid or ACA-subsidy eligibility. If anyone is 65 or older or on Medicare, tick that box to add the Medicare Savings Programs and Extra Help, measured against their federal income lines. Each line shows its public source.\n\nWe ask for nothing identifying and send nothing anywhere. These are estimates to point you toward programs worth applying for, the agencies make the final determination.",
+  how: "You enter your household once, size, income, region, children, and filing status, and we compute your percentage of the poverty line, estimate the refundable credits you likely qualify for (the Earned Income Tax Credit and the Child Tax Credit), and flag where your income suggests Medicaid or ACA-subsidy eligibility. It also lists the federal programs whose income line is a percentage of the poverty line: school meals, Lifeline and home energy help, and, if you tick that there is a child under five or a pregnancy, WIC and Head Start. If anyone is 65 or older or on Medicare, tick that box to add the Medicare Savings Programs and Extra Help, measured against their federal income lines. Each line shows its public source.\n\nWe ask for nothing identifying and send nothing anywhere. These are estimates to point you toward programs worth applying for, the agencies make the final determination.",
   resources: [
     { label: "USA.gov, find benefits", url: "https://www.usa.gov/benefit-finder" },
     { label: "HealthCare.gov, lower costs", url: "https://www.healthcare.gov/lower-costs/" },

@@ -51,6 +51,7 @@ import {
   estimateSnap,
   estimateSaversCredit,
   estimateEitc,
+  fplKeyedRows,
   fplPercent,
   medicaidEligibility,
   povertyLine,
@@ -1064,6 +1065,77 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
           extraHelp: [r.extraHelp.underIncomeLine, r.extraHelp.resources],
         });
       }
+
+  // --- the programs keyed to the poverty line: each line, at it and just
+  // over, with and without children and a child under five.
+  const rule = {
+    sourceUrl: "https://example.org/",
+    sourceDocument: "rule",
+    effectiveYear: 2026,
+    dateRetrieved: "2026-10-19",
+  };
+  const keyed = {
+    year: 2026,
+    programs: [
+      {
+        id: "meals",
+        name: "m",
+        pctFpl: 130,
+        reducedPctFpl: 185,
+        requires: "children" as const,
+        worth: "-",
+        categorical: "-",
+        agencyUrl: "https://example.org/",
+        rule,
+      },
+      {
+        id: "wic",
+        name: "w",
+        pctFpl: 185,
+        requires: "youngChild" as const,
+        worth: "-",
+        categorical: "-",
+        agencyUrl: "https://example.org/",
+        rule,
+      },
+      {
+        id: "life",
+        name: "l",
+        pctFpl: 135,
+        requires: null,
+        worth: "-",
+        categorical: "-",
+        agencyUrl: "https://example.org/",
+        rule,
+      },
+      {
+        id: "heat",
+        name: "h",
+        pctFpl: null,
+        ceilingPctFpl: 150,
+        requires: null,
+        worth: "-",
+        categorical: "-",
+        agencyUrl: "https://example.org/",
+        rule,
+      },
+    ],
+    citation,
+  };
+  for (const pct of [130, 130.01, 135, 135.01, 150, 150.01, 185, 185.01])
+    for (const [children, youngChild] of [
+      [0, false],
+      [1, false],
+      [1, true],
+    ] as const)
+      put(
+        `keyed(${pct},${children},${youngChild})`,
+        fplKeyedRows(pct, { children, youngChild }, keyed).map((r) => [
+          r.id,
+          r.linePct,
+          r.reducedPrice,
+        ]),
+      );
 
   // --- dependent care: §21(a)(2)'s thresholds on each side, a cent over, both
   // floors, one child against two, and the earned-income limit at the cap.
