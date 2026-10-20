@@ -424,6 +424,10 @@ const BOUND: RateBound[] = [
  * cannot arrive unnoticed.
  */
 const NOT_A_RATE: Record<string, Record<string, string>> = {
+  "readout/citations.ts": {
+    "10%":
+      "§1026.19(e)(3)(ii)'s aggregate tolerance, quoted in the citation for why sections A and B are held to zero; no check computes with it",
+  },
   "readout/report.ts": {
     "100%": "a table width in the report's own stylesheet",
     "60%": "a column width in the report's own stylesheet",

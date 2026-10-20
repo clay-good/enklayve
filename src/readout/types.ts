@@ -50,7 +50,9 @@ export type DocKind =
   | "medicareSummaryNotice"
   // The TRID Closing Disclosure, read on model form H-25's page-1 captions
   // (12 CFR §1026.38). A creditor prints no model version on it.
-  | "closingDisclosure";
+  | "closingDisclosure"
+  // Its Loan Estimate, on model form H-24 (§1026.37), revisionless likewise.
+  | "loanEstimate";
 
 /** The My Situation fields the Readout can populate on confirmation. Kept
  * narrow (not all of {@link SituationKey}) so the mapping stays type-safe, and

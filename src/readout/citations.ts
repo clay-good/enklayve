@@ -31,3 +31,16 @@ export const DIRECT_ROLLOVER_REPORTING_CITATION: CitationData = {
   effectiveYear: 2026,
   dateRetrieved: "2026-10-19",
 };
+
+/**
+ * TRID's good-faith rule, for the Readout's Loan Estimate × Closing
+ * Disclosure question (SPEC-5-readout-v3 §3).
+ */
+export const TRID_GOOD_FAITH_CITATION: CitationData = {
+  sourceUrl: "https://www.ecfr.gov/current/title-12/chapter-X/part-1026/subpart-E/section-1026.19",
+  sourceDocument: "12 CFR §1026.19(e)(3)(i) and (iv), good faith of closing cost estimates",
+  sourceNote:
+    '§1026.19(e)(3)(i): an estimated closing cost "is in good faith if the charge paid by or imposed on the consumer does not exceed the amount originally disclosed", except as (ii) through (iv) provide. (ii) allows 10% in aggregate only for third-party services the creditor lets the consumer shop for and recording fees, so charges paid to the creditor (section A) and services the consumer could not shop for (section B) take the general rule. (iv) lets a revised Loan Estimate reset the comparison for a changed circumstance. Read on eCFR 2026-10-20.',
+  effectiveYear: 2026,
+  dateRetrieved: "2026-10-20",
+};

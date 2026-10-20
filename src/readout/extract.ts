@@ -41,6 +41,7 @@ const REVISIONLESS_KINDS: DocKind[] = [
   "collectionsNotice",
   "medicareSummaryNotice",
   "closingDisclosure",
+  "loanEstimate",
 ];
 
 /** Pay frequencies, most-specific first so "bi-weekly" isn't shadowed by
@@ -240,6 +241,11 @@ const DOC_MARKERS: { kind: DocKind; re: RegExp; also?: RegExp }[] = [
   // Model Form B-1's opening sentence and one of its captions, so a letter that
   // only mentions a collector is not read as a validation notice.
   {
+    kind: "loanEstimate",
+    re: /loan estimate/i,
+    also: /save this loan estimate to compare with your closing disclosure/i,
+  },
+  {
     kind: "closingDisclosure",
     re: /closing disclosure/i,
     also: /statement of final loan terms and closing costs/i,
@@ -422,6 +428,49 @@ function dollarsAfter(text: string, anchor: RegExp): number {
 }
 
 const LONG_DATE = String.raw`([A-Z][a-z]+\s+\d{1,2},\s*\d{4})`;
+
+/**
+ * The loan terms the Loan Estimate and the Closing Disclosure print the same
+ * way on page 1 (model forms H-24 and H-25): amount, rate, term, and monthly
+ * principal and interest. `prefix` keeps the two documents' fields apart.
+ */
+function loanTerms(text: string, prefix: "le" | "cd"): ExtractedField[] {
+  const out: ExtractedField[] = [];
+  const amountField = field(
+    `${prefix}-loan-amount`,
+    "Loan amount",
+    amountAfter(text, /loan amount(?=\s*\$)/i),
+    undefined,
+  );
+  if (amountField) out.push(amountField);
+  const rate = /interest rate\s*([0-9]{1,2}(?:\.[0-9]{1,4})?)\s*%/i.exec(text);
+  if (rate)
+    out.push({
+      id: `${prefix}-rate`,
+      label: "Interest rate (%)",
+      value: Number(rate[1]),
+      confidence: "high",
+      needsReview: false,
+    });
+  const term = /loan term\s*([0-9]{1,2})\s*years?/i.exec(text);
+  if (term)
+    out.push({
+      id: `${prefix}-term-years`,
+      label: "Loan term (years)",
+      value: Number(term[1]),
+      confidence: "high",
+      needsReview: false,
+    });
+  const pi = field(
+    `${prefix}-pi`,
+    "Monthly principal & interest",
+    amountAfter(text, /monthly principal\s*&\s*interest/i),
+    undefined,
+    "Feeds Loan & Mortgage Amortization as a figure to check against.",
+  );
+  if (pi) out.push(pi);
+  return out;
+}
 
 /** Citation for one 1099 variant (INT/DIV/NEC/B), pinned to the revision. */
 function f1099Citation(variant: string): (rev: string) => CitationData {
@@ -1181,6 +1230,41 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
    * else on page 1 is read at all: not the borrower, the seller, the property,
    * the file number, the loan ID or the mortgage insurance case number.
    */
+  /**
+   * The Loan Estimate, on model form H-24's captions: page 1's loan terms and
+   * estimated cash to close, and page 2's sections A and B, the two the
+   * Closing Disclosure may not exceed (§1026.19(e)(3)(i)). Like the Closing
+   * Disclosure, nothing that identifies anyone is read.
+   */
+  loanEstimate: {
+    citation: () => null,
+    extract: (t) => {
+      const text = t.text;
+      const fields = loanTerms(text, "le");
+      for (const f of [
+        field(
+          "le-cash-to-close",
+          "Estimated cash to close",
+          amountAfter(text, /estimated cash to close(?=\s*\$)/i),
+          undefined,
+        ),
+        field(
+          "le-section-a",
+          "Origination charges (section A)",
+          amountAfter(text, /A\.\s*origination charges/i),
+          undefined,
+        ),
+        field(
+          "le-section-b",
+          "Services you cannot shop for (section B)",
+          amountAfter(text, /B\.\s*services you cannot shop for/i),
+          undefined,
+        ),
+      ])
+        if (f) fields.push(f);
+      return fields;
+    },
+  },
   closingDisclosure: {
     citation: () => null,
     extract: (t) => {
@@ -1189,39 +1273,21 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
       const push = (f: ExtractedField | null): void => {
         if (f) fields.push(f);
       };
+      fields.push(...loanTerms(text, "cd"));
       push(
         field(
-          "cd-loan-amount",
-          "Loan amount",
-          amountAfter(text, /loan amount(?=\s*\$)/i),
+          "cd-section-a",
+          "Origination charges (section A)",
+          amountAfter(text, /A\.\s*origination charges/i),
           undefined,
         ),
       );
-      const rate = /interest rate\s*([0-9]{1,2}(?:\.[0-9]{1,4})?)\s*%/i.exec(text);
-      if (rate)
-        fields.push({
-          id: "cd-rate",
-          label: "Interest rate (%)",
-          value: Number(rate[1]),
-          confidence: "high",
-          needsReview: false,
-        });
-      const term = /loan term\s*([0-9]{1,2})\s*years?/i.exec(text);
-      if (term)
-        fields.push({
-          id: "cd-term-years",
-          label: "Loan term (years)",
-          value: Number(term[1]),
-          confidence: "high",
-          needsReview: false,
-        });
       push(
         field(
-          "cd-pi",
-          "Monthly principal & interest",
-          amountAfter(text, /monthly principal\s*&\s*interest/i),
+          "cd-section-b",
+          "Services you did not shop for (section B)",
+          amountAfter(text, /B\.\s*services borrower did not shop for/i),
           undefined,
-          "Feeds Loan & Mortgage Amortization as a figure to check against.",
         ),
       );
       push(
@@ -1549,7 +1615,7 @@ export function extractDocument(t: ExtractedText): ExtractionResult {
 
   if (kind === "unknown") {
     warnings.push(
-      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B/R/G), SSA-1099, 1095-A, 1098 mortgage statements, 1098-T, 1098-E, the FAFSA Submission Summary, health plan Explanations of Benefits, itemized medical bills, benefits determination notices, debt collection validation notices, Part B Medicare Summary Notices, and mortgage Closing Disclosures.",
+      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B/R/G), SSA-1099, 1095-A, 1098 mortgage statements, 1098-T, 1098-E, the FAFSA Submission Summary, health plan Explanations of Benefits, itemized medical bills, benefits determination notices, debt collection validation notices, Part B Medicare Summary Notices, and mortgage Loan Estimates and Closing Disclosures.",
     );
     return {
       kind,
@@ -1678,6 +1744,8 @@ export function labelFor(kind: DocKind | "unknown"): string {
       return "Medicare Summary Notice";
     case "closingDisclosure":
       return "Closing Disclosure";
+    case "loanEstimate":
+      return "Loan Estimate";
     default:
       return "document";
   }

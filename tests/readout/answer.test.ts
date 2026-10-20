@@ -1018,3 +1018,68 @@ describe("Readout v3, the SSA-1099 against the 1040 (SPEC-5-readout-v3 §3)", ()
     expect(ids([ssa])).not.toContain("ssa1099-on-1040");
   });
 });
+
+/**
+ * The Loan Estimate and its zero-tolerance comparison with the Closing
+ * Disclosure (SPEC-5-readout-v3 §3), on CFPB's paired samples H-24(B) and
+ * H-25(B).
+ */
+describe("Readout v3, the Loan Estimate against the Closing Disclosure", () => {
+  const LE =
+    "FICUS BANK Save this Loan Estimate to compare with your Closing Disclosure. Loan Estimate " +
+    "LOAN TERM 30 years DATE ISSUED 2/15/2013 APPLICANTS Michael Jones and Mary Stone 123 Anywhere Street " +
+    "LOAN ID # 1234567891330172608 PROPERTY 456 Somewhere Avenue Loan Terms Loan Amount $162,000 NO " +
+    "Interest Rate 3.875% NO Monthly Principal & Interest $761.78 NO Estimated Cash to Close $16,054 " +
+    "A. Origination Charges $1,802 B. Services You Cannot Shop For $672";
+  const CD = (a: string, b: string) =>
+    "This form is a statement of final loan terms and closing costs. Closing Disclosure " +
+    "Loan Term 30 years Loan Amount $162,000 Interest Rate 3.875% Monthly Principal & Interest $761.78 " +
+    `Closing Costs $9,712.10 Cash to Close $14,147.26 A. Origination Charges ${a} ` +
+    `B. Services Borrower Did Not Shop For ${b}`;
+  const v = (r: ExtractionResult, id: string) => r.fields.find((f) => f.id === id)?.value;
+  const flags = (cd: string) => {
+    const le = extractDocument(typed(LE));
+    const c = extractDocument(typed(cd));
+    return buildAnswer(c, { documents: [le, c] }).flags.map((f) => f.checkId);
+  };
+
+  it("reads the estimate's terms and its sections A and B, and nothing that identifies", () => {
+    const r = extractDocument(typed(LE));
+    expect(r.kind).toBe("loanEstimate");
+    expect(v(r, "le-loan-amount")).toBe(162000);
+    expect(v(r, "le-rate")).toBe(3.875);
+    expect(v(r, "le-pi")).toBe(761.78);
+    expect(v(r, "le-cash-to-close")).toBe(16054);
+    expect(v(r, "le-section-a")).toBe(1802);
+    expect(v(r, "le-section-b")).toBe(672);
+    const everything = JSON.stringify(r.fields);
+    for (const secret of ["Michael", "Anywhere", "Somewhere", "1234567891330172608"]) {
+      expect(everything).not.toContain(secret);
+    }
+  });
+
+  it("is silent on the CFPB's own pair, where nothing in A or B rose", () => {
+    expect(flags(CD("$1,802.00", "$236.55"))).not.toContain("le-cd-zero-tolerance");
+  });
+
+  it("asks, citing §1026.19(e)(3), when A or B rose", () => {
+    const le = extractDocument(typed(LE));
+    const cd = extractDocument(typed(CD("$2,102.00", "$236.55")));
+    const flag = buildAnswer(cd, { documents: [le, cd] }).flags.find(
+      (f) => f.checkId === "le-cd-zero-tolerance",
+    )!;
+    expect(flag.detail).toContain("$1,802.00 on the Loan Estimate, $2,102.00");
+    expect(flag.citation?.sourceDocument).toContain("1026.19(e)(3)");
+    expect(flags(CD("$1,802.00", "$900.00"))).toContain("le-cd-zero-tolerance");
+  });
+
+  it("stays silent with only one of the pair, or on a scan", () => {
+    const cd = extractDocument(typed(CD("$2,102.00", "$236.55")));
+    expect(buildAnswer(cd).flags.map((f) => f.checkId)).not.toContain("le-cd-zero-tolerance");
+    const le = extractDocument(scanned(LE));
+    const scannedCd = extractDocument(scanned(CD("$2,102.00", "$236.55")));
+    expect(
+      buildAnswer(scannedCd, { documents: [le, scannedCd] }).flags.map((f) => f.checkId),
+    ).not.toContain("le-cd-zero-tolerance");
+  });
+});

@@ -24,6 +24,7 @@ import { TIPPED_OCCUPATION_CITATION } from "../data/statutes";
 import {
   DIRECT_ROLLOVER_REPORTING_CITATION,
   EARLY_DISTRIBUTION_WITHHOLDING_CITATION,
+  TRID_GOOD_FAITH_CITATION,
 } from "./citations";
 import type { CheckKind, CheckOutcome, DocKind, ExtractionResult } from "./types";
 
@@ -248,6 +249,40 @@ export const CHECKS: CheckDefinition[] = [
         detail: `The SSA-1099's net benefits in box 5 are ${usd(box5)}. Line 6a of the return shows ${usd(line6a)}, which is ${usd(box5 - line6a)} less.`,
         askWho:
           "Whoever prepared the return, or a free VITA site. If the return is already filed, an amended return (Form 1040-X) corrects it.",
+      };
+    },
+  },
+  {
+    // SPEC-5-readout-v3 §3: sections A and B of the Loan Estimate are held to
+    // zero tolerance at closing. Asked as a question to take to the closing
+    // table, because a changed circumstance can lawfully reset either one.
+    id: "le-cd-zero-tolerance",
+    kind: "rule",
+    appliesTo: ["loanEstimate", "closingDisclosure"],
+    citation: TRID_GOOD_FAITH_CITATION,
+    falsePositive:
+      "A revised Loan Estimate issued for a changed circumstance, or a rate lock after the estimate, resets the comparison, and a lender may cure an excess with a credit at closing.",
+    suppressOnOcr: true,
+    run: (ctx) => {
+      const le = doc(ctx, "loanEstimate");
+      const cd = doc(ctx, "closingDisclosure");
+      const rises = [
+        ["Origination charges (section A)", "le-section-a", "cd-section-a"],
+        ["Services you could not shop for (section B)", "le-section-b", "cd-section-b"],
+      ]
+        .map(([label, l, c]) => ({ label: label!, from: amount(le, l!), to: amount(cd, c!) }))
+        .filter((r) => r.from !== null && r.to !== null && r.to - r.from > NOISE_FLOOR);
+      if (rises.length === 0) return null;
+      return {
+        question: "Why did charges that may not go up at closing go up?",
+        detail: rises
+          .map(
+            (r) =>
+              `${r.label}: ${usd(r.from!)} on the Loan Estimate, ${usd(r.to!)} on the Closing Disclosure.`,
+          )
+          .join(" "),
+        askWho:
+          "The lender, before you sign. Ask whether a revised Loan Estimate was issued for a changed circumstance, and if not, for the difference back as a credit.",
       };
     },
   },
