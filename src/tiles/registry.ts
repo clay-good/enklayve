@@ -57,6 +57,7 @@ import { homeSaleGainTile } from "./homeSaleGain";
 import { retirementCashOutTile } from "./retirementCashOut";
 import { cobraVsMarketplaceTile } from "./cobraVsMarketplace";
 import { filingJointlyVsSeparatelyTile } from "./filingJointlyVsSeparately";
+import { medicareIrmaaTile } from "./medicareIrmaa";
 import { healthPlanTile } from "./healthPlan";
 import { eobCheckerTile } from "./eobChecker";
 import { cashFlowTile } from "./cashFlow";
@@ -157,6 +158,18 @@ const HUB_CONFIGS: HubConfig[] = [
       downshiftTile,
     ],
   },
+  {
+    // SPEC-5 §7.1: the thirteenth hub, and the ceiling. The household at or
+    // near 65: Medicare's costs, penalties and clocks, and Social Security
+    // for a couple and for someone still working.
+    id: "medicare-later-life",
+    title: "Medicare & Later Life",
+    pillar: "retirement",
+    description:
+      "Medicare premiums and surcharges at 65, and the Social Security rules around them.",
+    tools: [medicareIrmaaTile],
+  },
+
   {
     id: "debt",
     title: "Borrowing & Debt",

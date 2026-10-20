@@ -1295,6 +1295,38 @@ export const UiTaxationSchema = z.object({
 });
 export type UiTaxationData = z.infer<typeof UiTaxationSchema>;
 
+/** One IRMAA tier: from `above` (exclusive, or inclusive when `atOrAbove`). */
+const IrmaaTierSchema = z.object({
+  above: z.number().gte(0),
+  atOrAbove: z.boolean(),
+  /** The tier's total monthly Part B premium. */
+  partBMonthly: z.number().gt(0),
+  /** The Part D income-related adjustment, on top of the plan's own premium. */
+  partDMonthly: z.number().gte(0),
+});
+
+/**
+ * Medicare's costs for a year (SPEC-5 Phase 29): the Part B premium and
+ * deductible and the income-related tiers, from CMS's annual fact sheet.
+ */
+export const MedicareCostsSchema = z.object({
+  year: z.number().int(),
+  partB: z.object({ standardMonthly: z.number().gt(0), annualDeductible: z.number().gt(0) }),
+  irmaa: z.object({
+    /** §1395r(i)(4)(B): MAGI from this many years before the premium year. */
+    lookbackYears: z.number().int().positive(),
+    schedules: z.object({
+      individual: z.array(IrmaaTierSchema).min(2),
+      joint: z.array(IrmaaTierSchema).min(2),
+      /** Married filing separately, having lived with the spouse in the year. */
+      separate: z.array(IrmaaTierSchema).min(2),
+    }),
+  }),
+  citation: CitationSchema,
+});
+export type MedicareCostsData = z.infer<typeof MedicareCostsSchema>;
+export type IrmaaTier = z.infer<typeof IrmaaTierSchema>;
+
 export const GiftTaxSchema = z.object({
   taxYear: z.number().int(),
   annualExclusion: z.number().gte(0),
@@ -1950,6 +1982,7 @@ export const DATASET_SCHEMAS = {
   "separation-rules": SeparationRulesSchema,
   "supplemental-withholding": SupplementalWithholdingSchema,
   "ui-taxation": UiTaxationSchema,
+  "medicare-costs": MedicareCostsSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

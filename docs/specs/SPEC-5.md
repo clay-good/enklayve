@@ -225,6 +225,8 @@ Ordered prompts in the SPEC/SPEC-2 convention. Each phase is independently shipp
 
 **Shell cost.** `medicare-costs-2026` loads on demand (the IRMAA table is the heaviest new data in the spec, and only a reader who opens the hub needs it). The hub and five tiles load with the shell.
 
+**Status — in progress.** **The `medicare-later-life` hub opened 2026-10-19** with L1, **`medicare-irmaa`** (tier 1, on the lazy pattern). It uses `medicare-costs-2026`, read from CMS's 2026 Parts A & B fact sheet (zero-window; 2027's had not been announced): the $202.90 Part B premium, the $283 deductible, and the IRMAA tiers for individual, joint and separate returns, with the inclusive top lines carried as `atOrAbove`. The tool shows the tier, Part B, the Part D surcharge, the year for one person and a couple, the room to the next line, and the two-year lag in plain words. Form SSA-44 is its channel, and the reconsideration window renders through `renderDeadline`. Golden cases sit at every line and a cent past it. **Measured: 0.6 kB** (314.6 → 315.2 of 319), the hub and the tool's definition. L2, L7, L3 and L4 remain.
+
 ### Phase 30: Later life, the screeners
 
 **Goal.** The two tier-3 screens, and the screener's 65-plus rows.

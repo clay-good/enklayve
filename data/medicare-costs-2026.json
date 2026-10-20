@@ -1,0 +1,115 @@
+{
+  "year": 2026,
+  "partB": {
+    "standardMonthly": 202.9,
+    "annualDeductible": 283
+  },
+  "irmaa": {
+    "lookbackYears": 2,
+    "schedules": {
+      "individual": [
+        {
+          "above": 0,
+          "atOrAbove": true,
+          "partBMonthly": 202.9,
+          "partDMonthly": 0
+        },
+        {
+          "above": 109000,
+          "atOrAbove": false,
+          "partBMonthly": 284.1,
+          "partDMonthly": 14.5
+        },
+        {
+          "above": 137000,
+          "atOrAbove": false,
+          "partBMonthly": 405.8,
+          "partDMonthly": 37.5
+        },
+        {
+          "above": 171000,
+          "atOrAbove": false,
+          "partBMonthly": 527.5,
+          "partDMonthly": 60.4
+        },
+        {
+          "above": 205000,
+          "atOrAbove": false,
+          "partBMonthly": 649.2,
+          "partDMonthly": 83.3
+        },
+        {
+          "above": 500000,
+          "atOrAbove": true,
+          "partBMonthly": 689.9,
+          "partDMonthly": 91.0
+        }
+      ],
+      "joint": [
+        {
+          "above": 0,
+          "atOrAbove": true,
+          "partBMonthly": 202.9,
+          "partDMonthly": 0
+        },
+        {
+          "above": 218000,
+          "atOrAbove": false,
+          "partBMonthly": 284.1,
+          "partDMonthly": 14.5
+        },
+        {
+          "above": 274000,
+          "atOrAbove": false,
+          "partBMonthly": 405.8,
+          "partDMonthly": 37.5
+        },
+        {
+          "above": 342000,
+          "atOrAbove": false,
+          "partBMonthly": 527.5,
+          "partDMonthly": 60.4
+        },
+        {
+          "above": 410000,
+          "atOrAbove": false,
+          "partBMonthly": 649.2,
+          "partDMonthly": 83.3
+        },
+        {
+          "above": 750000,
+          "atOrAbove": true,
+          "partBMonthly": 689.9,
+          "partDMonthly": 91.0
+        }
+      ],
+      "separate": [
+        {
+          "above": 0,
+          "atOrAbove": true,
+          "partBMonthly": 202.9,
+          "partDMonthly": 0
+        },
+        {
+          "above": 109000,
+          "atOrAbove": false,
+          "partBMonthly": 649.2,
+          "partDMonthly": 83.3
+        },
+        {
+          "above": 391000,
+          "atOrAbove": true,
+          "partBMonthly": 689.9,
+          "partDMonthly": 91.0
+        }
+      ]
+    }
+  },
+  "citation": {
+    "sourceUrl": "https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-premiums-deductibles",
+    "sourceDocument": "CMS, 2026 Medicare Parts A & B Premiums and Deductibles (Nov. 14, 2025); 42 U.S.C. \u00a71395r(i)",
+    "sourceNote": "CMS: \"The standard monthly premium for Medicare Part B enrollees will be $202.90 for 2026\" and \"The annual deductible for all Medicare Part B beneficiaries will be $283 in 2026\". The income-related tables give each tier's total Part B premium and Part D adjustment by modified adjusted gross income, individual and joint: \"Less than or equal to $109,000\" ($218,000 joint) pays $202.90; above that, $284.10, $405.80, $527.50 and $649.20 to \"less than $500,000\" ($750,000), and $689.90 \"Greater than or equal to\" it; Part D adds $14.50, $37.50, $60.40, $83.30 and $91.00. Married filing separately and living together at any time in the year: $202.90 to $109,000, $649.20 above it and below $391,000, $689.90 at or above. \u00a71395r(i)(4): MAGI is AGI \"increased by the amount of interest ... exempt from tax\", from \"the individual's last taxable year beginning in the second calendar year preceding the year involved\", so 2026 premiums use 2024 returns. CMS had not announced 2027's figures on the day this was read. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}

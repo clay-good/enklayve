@@ -391,6 +391,13 @@
       "why": "The 10% voluntary withholding on unemployment compensation is §3402(p)(2); the per-state treatment is read each January under the zero-year window, since 21 agency pages are too many to fingerprint with confidence.",
       "fingerprint": "f5330b06be4c65d8d93195d7b16ca05e6b6c7727d52345281763256f8a57de3d",
       "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "medicare-costs-2026",
+      "url": "https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-premiums-deductibles",
+      "why": "CMS's 2026 fact sheet is the source of every premium and tier; a correction lands here, and the 2027 figures arrive as a new fact sheet each November, which the zero-year window forces a person to read.",
+      "fingerprint": "749ce659c4bf4014c22825f1084584e62a7c496103fed8f10267dc51587b72c7",
+      "checkedOn": "2026-10-20"
     }
   ]
 }
