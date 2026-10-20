@@ -75,6 +75,7 @@ import { owedScreenerTile } from "./owedScreener";
 import { acaPtcTile } from "./acaPtc";
 import { saversCreditTile } from "./saversCredit";
 import { dependentCareTile } from "./dependentCare";
+import { secondIncomeTile } from "./secondIncome";
 import { snapTile } from "./snap";
 import { medicaidTile } from "./medicaid";
 import { fafsaSaiTile } from "./fafsaSai";
@@ -263,7 +264,7 @@ const HUB_CONFIGS: HubConfig[] = [
     title: "Benefit Cliffs",
     pillar: "rough",
     description: "Whether earning more actually leaves you better off, and where the edges are.",
-    tools: [cliffExplorerTile, marginalRealityTile],
+    tools: [cliffExplorerTile, marginalRealityTile, secondIncomeTile],
   },
   {
     // Pillar 4 (SPEC-4 §7.1). Separate from "Borrowing & Debt" on purpose: that

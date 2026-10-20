@@ -136,6 +136,7 @@ const EXPECTED = [
   "screener | householdSize <- Household size",
   "screener | qualifyingChildren <- Qualifying children",
   "se-retirement | selfEmploymentProfitAnnual <- Net business profit",
+  "second-income | dependentCareExpensesAnnual <- Childcare the job needs, a year",
   "snap | householdSize <- Household size",
   "social-security | birthYear <- Birth year",
   "take-home | annualIncome <- Annual wages",
@@ -573,10 +574,10 @@ describe("what a calculator may write into My Situation", () => {
         ).toBe("married_jointly");
       }
     }
-    // A sweep that reached no dropdown would assert nothing. Twenty since
+    // A sweep that reached no dropdown would assert nothing. Twenty-one since
     // SPEC-5's tools, which load on demand: the test setup preloads them, and
     // this count is the proof the sweep reaches them.
-    expect(seen).toBe(20);
+    expect(seen).toBe(21);
   });
 
   /**

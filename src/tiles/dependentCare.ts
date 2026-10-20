@@ -28,6 +28,14 @@ export const dependentCareTile: TileDefinition = lazyTile(
       "section 129",
     ],
     status: "ready",
+    related: [
+      {
+        hubId: "benefit-cliffs",
+        tool: "second-income",
+        label: "Is the Second Income Worth It?",
+        note: "Whether a job clears the childcare it needs",
+      },
+    ],
     resources: [
       {
         label: "IRS Publication 503, Child and Dependent Care Expenses",

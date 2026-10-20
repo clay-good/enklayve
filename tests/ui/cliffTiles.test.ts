@@ -245,10 +245,10 @@ describe("downsampleCurve", () => {
 });
 
 describe("catalog wiring", () => {
-  it("registers the hub and both calculators", () => {
+  it("registers the hub and its three calculators", () => {
     expect(getTile("benefit-cliffs")).toBeDefined();
     const ids = SUB_TOOLS.filter((s) => s.hubId === "benefit-cliffs").map((s) => s.tile.id);
-    expect(ids).toEqual(["cliff-explorer", "marginal-reality"]);
+    expect(ids).toEqual(["cliff-explorer", "marginal-reality", "second-income"]);
   });
 
   it("is reachable from search by the words people actually type", () => {

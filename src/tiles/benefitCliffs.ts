@@ -146,7 +146,7 @@ function toCliffInput(f: Fields): CliffInput {
  * anything modeled here, so a user reading this chart as complete would be
  * misled about the thing they came to find out.
  */
-function unmodeledBlock(unmodeled: string[]): HTMLElement {
+export function unmodeledBlock(unmodeled: string[]): HTMLElement {
   return el(
     "details",
     { class: "cliff-unmodeled", attrs: { open: "" } },
@@ -689,6 +689,12 @@ export const cliffExplorerTile: TileDefinition = {
       tool: "marginal-reality",
       label: "Marginal Reality Rate",
       note: "What one specific raise costs, including lost benefits",
+    },
+    {
+      hubId: "benefit-cliffs",
+      tool: "second-income",
+      label: "Is the Second Income Worth It?",
+      note: "The same question for going back to work, after childcare",
     },
     {
       hubId: "benefits",

@@ -428,6 +428,9 @@ const NOT_A_RATE: Record<string, Record<string, string>> = {
     // tile and the Readout Report, so the document cannot drift from the tile.
     "100%": "the point a combined rate can exceed, which is arithmetic and not a rate anyone sets",
   },
+  "tiles/secondIncomeHow.ts": {
+    "100%": "the point a combined rate can exceed, which is arithmetic and not a rate anyone sets",
+  },
   "tiles/benefitCliffs.ts": {
     "100%": "the point a combined rate can exceed, which is arithmetic and not a rate anyone sets",
   },
