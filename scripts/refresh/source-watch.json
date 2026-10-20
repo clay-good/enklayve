@@ -503,6 +503,13 @@
       "why": "The Department's IDR Plan Request states RAP's terms, IBR's and the tiered Standard range; the un-park gate needs it and the statute to agree.",
       "fingerprint": "bf999ff8b9a1c668fcd51505ba2a2bd3c91fd8811aa5555431e27ed9632867d3",
       "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "ssi-2026",
+      "url": "https://secure.ssa.gov/poms.nsf/lnx/0500810350",
+      "why": "SSA's own table of SSI break-even points by year; a new row is the year's federal benefit rate published, and the engine must reproduce it at the roll.",
+      "fingerprint": "87c02d11a1ccb378e6829d3a2fa49797562b827f75c1c9e8f81310cfdbc68306",
+      "checkedOn": "2026-10-20"
     }
   ]
 }

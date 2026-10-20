@@ -5,6 +5,7 @@ import { medicareSavingsScreen } from "../../src/engine/medicareSavings";
 import { pmiEndDates } from "../../src/engine/pmi";
 import { survivorFraMonths } from "../../src/engine/ssFamily";
 import { interestDeduction } from "../../src/engine/studentLoans";
+import { ssiEstimate } from "../../src/engine/ssi";
 import { Money } from "../../src/engine/money";
 import { loadBundledData, type BundledData } from "../../src/data/browser";
 
@@ -25,6 +26,7 @@ beforeAll(async () => {
       "early-distribution-2026",
       "ss-family-benefits-2026",
       "student-loans-2026",
+      "ssi-2026",
     ].map((id) => data.loadDeferred(id)),
   );
 });
@@ -101,5 +103,24 @@ describe("SPEC-5 thresholds, on the line", () => {
     expect(interestDeduction(2500, 85000, false, rules)).toBe(2500);
     expect(interestDeduction(2500, 100000, false, rules)).toBe(0);
     expect(interestDeduction(2500, 92500, false, rules)).toBe(1250);
+  });
+
+  it("SSI: reproduces SSA's own 2026 break-even points (POMS SI 00810.350)", () => {
+    // SSA: "2 FBR + $85 = monthly earned income break-even amount" and
+    // "FBR + $20 = monthly unearned income break-even amount", with the 2026
+    // exhibit at $2,073 / $3,067 earned and $1,014 / $1,511 unearned. At each
+    // the federal payment is exactly zero; a dollar under, it is not.
+    const rules = data.ssi()!;
+    const pay = (couple: boolean, earned: number, unearned: number) =>
+      ssiEstimate(
+        { couple, earned, unearned, student: false, resources: 0 },
+        rules,
+      ).payment.toNumber();
+    expect(pay(false, 2073, 0)).toBe(0);
+    expect(pay(true, 3067, 0)).toBe(0);
+    expect(pay(false, 0, 1014)).toBe(0);
+    expect(pay(true, 0, 1511)).toBe(0);
+    expect(pay(false, 2072, 0)).toBe(0.5);
+    expect(pay(false, 0, 1013)).toBe(1);
   });
 });
