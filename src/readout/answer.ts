@@ -50,6 +50,10 @@ const CHANNELS = {
     label: "Find your State Health Insurance Assistance Program (SHIP)",
     url: "https://www.shiphelp.org/",
   },
+  closingDisclosure: {
+    label: "CFPB: what to check on your Closing Disclosure",
+    url: "https://www.consumerfinance.gov/owning-a-home/closing-disclosure/",
+  },
   cfpbComplaint: {
     label: "CFPB: submit a complaint about a debt collector",
     url: "https://www.consumerfinance.gov/complaint/",
@@ -227,6 +231,24 @@ function appealChannel(program: string | number | undefined): { label: string; u
 /** "What to do next, by when", per kind. Ordered: the first line is the first move. */
 function nextFor(result: ExtractionResult, options: BuildAnswerOptions): ReadoutAnswer["next"] {
   switch (result.kind) {
+    case "closingDisclosure":
+      return [
+        {
+          label:
+            "Compare this with your Loan Estimate line by line, starting with the loan amount, rate, monthly payment and cash to close.",
+          channel: CHANNELS.closingDisclosure,
+        },
+        {
+          // A rule, not a Deadline: its trigger is the lender's delivery, which
+          // is not a date printed on the form (SPEC-5-readout-v3 R7).
+          label:
+            "The lender must make sure you receive this form at least three business days before closing (12 CFR §1026.19(f)(1)(ii)). If you got it later, or a term changed since, ask before you sign.",
+        },
+        {
+          label:
+            "Confirm the loan terms above to check the payment in Loan & Mortgage Amortization. Nothing from this form is kept.",
+        },
+      ];
     case "medicareSummaryNotice": {
       const next: ReadoutAnswer["next"] = [
         {

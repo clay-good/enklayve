@@ -19,6 +19,7 @@
  */
 import type { CitationData, NoSurprisesData } from "../data/schemas";
 import { Money } from "../engine/money";
+import { monthlyMortgagePayment } from "../engine/finance";
 import { TIPPED_OCCUPATION_CITATION } from "../data/statutes";
 import {
   DIRECT_ROLLOVER_REPORTING_CITATION,
@@ -225,6 +226,33 @@ export const CHECKS: CheckDefinition[] = [
         detail: `Box 12 code TP reports ${usd(tips)} of cash tips, and box 14b includes the code 000 — which the IRS instructions require when any of the tips were received in an occupation that does not qualify. The deductible figure may be smaller than ${usd(tips)}.`,
         askWho:
           "Your employer's payroll department, who entered the occupation codes and can say which tips they cover.",
+      };
+    },
+  },
+  {
+    // The payment the form prints against the one its own amount, rate and
+    // term produce, through the same formula Loan & Mortgage Amortization
+    // uses. A mismatch is the first question to ask at the closing table.
+    id: "cd-pi-reconciles",
+    kind: "arithmetic",
+    appliesTo: ["closingDisclosure"],
+    falsePositive:
+      "An adjustable, step-rate or interest-only loan, or one whose first payment period is irregular, has a payment this fixed-rate formula does not describe.",
+    suppressOnOcr: true,
+    run: (ctx) => {
+      const d = doc(ctx, "closingDisclosure");
+      const principal = amount(d, "cd-loan-amount");
+      const rate = amount(d, "cd-rate");
+      const years = amount(d, "cd-term-years");
+      const pi = amount(d, "cd-pi");
+      if (principal === null || rate === null || years === null || pi === null) return null;
+      const expected = monthlyMortgagePayment(principal, rate, years).roundToCents().toNumber();
+      if (Math.abs(expected - pi) <= NOISE_FLOOR) return null;
+      return {
+        question: "Does the monthly payment match the loan you are signing for?",
+        detail: `A ${usd(principal)} loan at ${rate}% over ${years} years amortizes at ${usd(expected)} a month. This form shows ${usd(pi)}.`,
+        askWho:
+          "Your lender or the settlement agent, before you sign. Ask which figure is right and why.",
       };
     },
   },

@@ -47,7 +47,10 @@ export type DocKind =
   | "collectionsNotice"
   // The Part B Medicare Summary Notice, read on the captions of CMS's own
   // sample. CMS prints no revision on it, so it is revisionless too.
-  | "medicareSummaryNotice";
+  | "medicareSummaryNotice"
+  // The TRID Closing Disclosure, read on model form H-25's page-1 captions
+  // (12 CFR §1026.38). A creditor prints no model version on it.
+  | "closingDisclosure";
 
 /** The My Situation fields the Readout can populate on confirmation. Kept
  * narrow (not all of {@link SituationKey}) so the mapping stays type-safe, and

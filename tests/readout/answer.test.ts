@@ -925,3 +925,65 @@ describe("Readout v3, the Medicare Summary Notice", () => {
     expect(step.label).toContain("is 2020-07-04");
   });
 });
+
+/**
+ * The Closing Disclosure (SPEC-5-readout-v3 R7), in the words and figures of
+ * CFPB's H-25(B) fixed-rate sample.
+ */
+describe("Readout v3, the Closing Disclosure", () => {
+  const CD =
+    "This form is a statement of final loan terms and closing costs. Compare this document with your Loan Estimate. " +
+    "Closing Disclosure Closing Information Date Issued 4/15/2013 Closing Date 4/15/2013 " +
+    "Settlement Agent Epsilon Title Co. File # 12-3456 Property 456 Somewhere Ave Anytown, ST 12345 " +
+    "Sale Price $180,000 Transaction Information Borrower Michael Jones and Mary Stone 123 Anywhere Street " +
+    "Seller Steve Cole and Amy Doe Lender Ficus Bank Loan Information Loan Term 30 years Purpose Purchase " +
+    "Product Fixed Rate Loan ID # 123456789 MIC # 000654321 Loan Terms Loan Amount $162,000 NO " +
+    "Interest Rate 3.875% NO Monthly Principal & Interest $761.78 NO " +
+    "Costs at Closing Closing Costs $9,712.10 Includes $4,694.05 in Loan Costs " +
+    "Cash to Close $14,147.26 Includes Closing Costs.";
+  const v = (r: ExtractionResult, id: string) => r.fields.find((f) => f.id === id)?.value;
+
+  it("reads page 1's loan terms and costs", () => {
+    const r = extractDocument(typed(CD));
+    expect(r.kind).toBe("closingDisclosure");
+    expect(v(r, "cd-loan-amount")).toBe(162000);
+    expect(v(r, "cd-rate")).toBe(3.875);
+    expect(v(r, "cd-term-years")).toBe(30);
+    expect(v(r, "cd-pi")).toBe(761.78);
+    expect(v(r, "cd-closing-costs")).toBe(9712.1);
+    expect(v(r, "cd-cash-to-close")).toBe(14147.26);
+  });
+
+  it("never reads the borrower, seller, property, file number, loan ID or MIC number", () => {
+    const everything = JSON.stringify(extractDocument(typed(CD)).fields);
+    for (const secret of [
+      "Michael",
+      "Stone",
+      "Steve Cole",
+      "Anywhere",
+      "Somewhere",
+      "12-3456",
+      "123456789",
+      "000654321",
+    ]) {
+      expect(everything).not.toContain(secret);
+    }
+  });
+
+  it("reconciles the sample's payment, and asks when a payment does not", () => {
+    // The CFPB's own sample: $162,000 at 3.875% over 30 years is $761.78.
+    expect(buildAnswer(extractDocument(typed(CD))).flags).toEqual([]);
+    const off = buildAnswer(extractDocument(typed(CD.replace("$761.78", "$811.78"))));
+    const flag = off.flags.find((f) => f.checkId === "cd-pi-reconciles")!;
+    expect(flag.detail).toContain("$761.78");
+    expect(buildAnswer(extractDocument(scanned(CD.replace("$761.78", "$811.78")))).flags).toEqual(
+      [],
+    );
+  });
+
+  it("states the three-business-day rule, as a rule and not a Deadline", () => {
+    const a = buildAnswer(extractDocument(typed(CD)));
+    expect(a.next.some((n) => n.label.includes("three business days"))).toBe(true);
+    expect(a.next.some((n) => n.deadline)).toBe(false);
+  });
+});

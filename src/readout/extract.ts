@@ -40,6 +40,7 @@ const REVISIONLESS_KINDS: DocKind[] = [
   "benefitsNotice",
   "collectionsNotice",
   "medicareSummaryNotice",
+  "closingDisclosure",
 ];
 
 /** Pay frequencies, most-specific first so "bi-weekly" isn't shadowed by
@@ -238,6 +239,11 @@ const DOC_MARKERS: { kind: DocKind; re: RegExp; also?: RegExp }[] = [
   // itemized bill's markers are the broadest, so it goes last.
   // Model Form B-1's opening sentence and one of its captions, so a letter that
   // only mentions a collector is not read as a validation notice.
+  {
+    kind: "closingDisclosure",
+    re: /closing disclosure/i,
+    also: /statement of final loan terms and closing costs/i,
+  },
   {
     kind: "medicareSummaryNotice",
     re: /medicare summary notice/i,
@@ -1147,6 +1153,75 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
       return fields;
     },
   },
+  /**
+   * The Closing Disclosure's page 1, on model form H-25's captions: the loan
+   * amount, rate, term, monthly principal and interest, closing costs and cash
+   * to close. It is the most sensitive document the site reads, so nothing
+   * else on page 1 is read at all: not the borrower, the seller, the property,
+   * the file number, the loan ID or the mortgage insurance case number.
+   */
+  closingDisclosure: {
+    citation: () => null,
+    extract: (t) => {
+      const text = t.text;
+      const fields: ExtractedField[] = [];
+      const push = (f: ExtractedField | null): void => {
+        if (f) fields.push(f);
+      };
+      push(
+        field(
+          "cd-loan-amount",
+          "Loan amount",
+          amountAfter(text, /loan amount(?=\s*\$)/i),
+          undefined,
+        ),
+      );
+      const rate = /interest rate\s*([0-9]{1,2}(?:\.[0-9]{1,4})?)\s*%/i.exec(text);
+      if (rate)
+        fields.push({
+          id: "cd-rate",
+          label: "Interest rate (%)",
+          value: Number(rate[1]),
+          confidence: "high",
+          needsReview: false,
+        });
+      const term = /loan term\s*([0-9]{1,2})\s*years?/i.exec(text);
+      if (term)
+        fields.push({
+          id: "cd-term-years",
+          label: "Loan term (years)",
+          value: Number(term[1]),
+          confidence: "high",
+          needsReview: false,
+        });
+      push(
+        field(
+          "cd-pi",
+          "Monthly principal & interest",
+          amountAfter(text, /monthly principal\s*&\s*interest/i),
+          undefined,
+          "Feeds Loan & Mortgage Amortization as a figure to check against.",
+        ),
+      );
+      push(
+        field(
+          "cd-closing-costs",
+          "Closing costs",
+          amountAfter(text, /\bclosing costs(?=\s*\$)/i),
+          undefined,
+        ),
+      );
+      push(
+        field(
+          "cd-cash-to-close",
+          "Cash to close",
+          amountAfter(text, /\bcash to close(?=\s*\$)/i),
+          undefined,
+        ),
+      );
+      return fields;
+    },
+  },
   fafsaSummary: {
     citation: (rev) =>
       formCitation(
@@ -1453,7 +1528,7 @@ export function extractDocument(t: ExtractedText): ExtractionResult {
 
   if (kind === "unknown") {
     warnings.push(
-      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B/R/G), SSA-1099, 1095-A, 1098 mortgage statements, 1098-T, 1098-E, the FAFSA Submission Summary, health plan Explanations of Benefits, itemized medical bills, benefits determination notices, debt collection validation notices, and Part B Medicare Summary Notices.",
+      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B/R/G), SSA-1099, 1095-A, 1098 mortgage statements, 1098-T, 1098-E, the FAFSA Submission Summary, health plan Explanations of Benefits, itemized medical bills, benefits determination notices, debt collection validation notices, Part B Medicare Summary Notices, and mortgage Closing Disclosures.",
     );
     return {
       kind,
@@ -1580,6 +1655,8 @@ export function labelFor(kind: DocKind | "unknown"): string {
       return "debt collection validation notice";
     case "medicareSummaryNotice":
       return "Medicare Summary Notice";
+    case "closingDisclosure":
+      return "Closing Disclosure";
     default:
       return "document";
   }

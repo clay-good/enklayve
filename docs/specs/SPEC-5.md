@@ -271,7 +271,10 @@ The SSA-1099 and 1098-T point at the Social Security Taxation and Education Cred
 - Within the notice: the maximum you may be billed against approved less paid. It runs only when no service was denied, because CMS's sample shows a denied service adds its whole charge.
 - §3's MSN × provider bill: the bill's total against the notice's maximum, firing only when both are in the session.
 
-The appeal date renders as a `Deadline` cited to `medicare-summary-appeal`. Beside it is 42 CFR §405.942's 120 days from receipt presumed five days after the notice's own date. CMS's sample prints a date nine days later than that, which is what the cross-check exists to show. The Closing Disclosure (R7) and §3's remaining cross-checks are next.
+The appeal date renders as a `Deadline` cited to `medicare-summary-appeal`. Beside it is 42 CFR §405.942's 120 days from receipt presumed five days after the notice's own date. CMS's sample prints a date nine days later than that, which is what the cross-check exists to show. **The Closing Disclosure (R7) shipped the same day, page 1 first.** It is read on the captions and figures of CFPB's H-25(B) fixed-rate sample: the loan amount, rate, term, monthly principal and interest, closing costs and cash to close. A fixture asserts that nothing else on page 1 is read: not the borrower, the seller, the property, the file number, the loan ID or the mortgage insurance case number. One check, silent on a scan, holds the printed payment to the amortization formula Loan & Mortgage Amortization uses. The sample's $761.78 reconciles to the cent. The three-business-day receipt rule (§1026.19(f)(1)(ii)) is stated as a rule, not a `Deadline`, since its trigger is the lender's delivery. **Still open in Phase 32:**
+- the Loan Estimate as a kind of its own, with §3's tolerance cross-check (§1026.19(e)(3)) and its `trid-tolerances` block;
+- the pay stub × W-2, 1095-A × 1040 and SSA-1099 × 1040 cross-checks;
+- R4, parked as above.
 
 ### Phase 33: Student loans
 
