@@ -70,6 +70,8 @@ const HARNESS_ONLY: Record<string, string> = {
     "the files the shell inlines, held against the deferred list by a test, since the two globs that define them must be literals and cannot share one list",
   "src/tiles/lazy.ts: preloadLazyTiles":
     "loads every lazy tile before the test sweeps mount the catalog, so a tile that loads on demand is not passed over as a 'Loading' line",
+  "src/readout/extract.ts: SUPPORTED_KINDS":
+    "every kind an extractor exists for, so the robustness sweep can fail when a kind has no fixture rather than fuzzing a list kept by hand",
   "src/tiles/lazy.ts: lazyTileCount":
     "lets the test setup skip the preload in a file that reached no lazy tile",
 };
