@@ -10,6 +10,8 @@ Specs 1 through 4 built a catalog that serves two households very well: the one 
 - [SPEC-5-readout-v3.md](SPEC-5-readout-v3.md) — the standardized forms these households hold and the Readout cannot read: the SSA-1099, 1099-R, 1099-G, the Social Security Statement, the Medicare Summary Notice, the Closing Disclosure, and the Regulation F debt-validation notice.
 - [SPEC-5-student-loans.md](SPEC-5-student-loans.md) — federal student loan payments under the Repayment Assistance Plan, now that the plan set is fixed in statute and live, with the un-park gate kept.
 
+**Status — complete, 2026-10-20.** Phases 27 to 33 shipped. Four items are parked with their un-park gates in §8a, by the owner's decision the same day.
+
 ---
 
 ## 1. Thesis of this pass
@@ -296,6 +298,17 @@ The appeal date renders as a `Deadline` cited to `medicare-summary-appeal`. Besi
 §221's deduction is shown as a deduction amount (Rev. Proc. 2025-32's 2026 phase-out), not run through the tax engine for its worth. §127's $5,250 is stated. The forgiven balance is called taxable income under §108(f)(5) as amended, without a computed tax. **Measured: 0.5 kB** (312.1 → 312.6 of 325). **The College Cost Planner's loan-limits note followed the same day.** §1087e(a)'s limits from July 1, 2026 are in the shard, and each figure in the planner's how block is bound to its path. Those are parent PLUS, graduate and professional unsubsidized, and the $257,500 lifetime limit. The note also covers the end of Grad PLUS and paragraph (8)'s three-year interim exception for students already borrowing.
 
 ---
+
+## 8a. Parked, with un-park gates
+
+Recorded 2026-10-20, when SPEC-5 was closed. Each is blocked on a source or a rule, not on effort, and each comes back only when its gate is met.
+
+| Item | Why parked | Un-park gate |
+| --- | --- | --- |
+| R4, the Social Security Statement, and its `socialSecurityPia` target | Its captions cannot be verified from a primary source: ssa.gov refuses automated reads, and the Internet Archive holds no copy of SSA's sample Statements. An extractor anchored on remembered captions would be a guess pinned to a revision. | A copy of SSA's sample Statement for the current redesign, read for its captions and the layout of the benefit-estimate bar. |
+| Pay stub × W-2 cross-check | A pay stub is the employer's own document, with no standard caption for year-to-date withholding or deferrals. Anchoring one would be inference, which the Readout's rules forbid. | A caption every payroll provider prints, or a pay-stub standard the Readout can pin to. |
+| 1095-A × 1040 cross-check | The reconciliation the check asks about is on Form 8962 and Schedule 2, which the Readout does not read; the 1040 alone carries neither figure. | Form 8962 (and Schedule 2's line for excess advance credit) as Readout kinds, revision-pinned like the 1040. |
+| The 10% aggregate tolerance of §1026.19(e)(3)(ii) | Which charges fall in the bucket turns on whether the borrower chose a provider from the lender's written list, which neither form states. | A per-line marker on the forms, or a reader-supplied answer the check can ask for before it runs. |
 
 ## 9. Decisions recorded
 
