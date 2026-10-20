@@ -1,0 +1,7 @@
+/**
+ * Spousal and Survivor Benefits: the "How this works" block, loaded with the
+ * tool rather than with the shell (SPEC-5 §7.5). The build reads it for the
+ * tool's crawlable page.
+ */
+export const how =
+  "A spouse can be paid on the other's Social Security record, and a widow or widower can be paid on the record of the spouse who died. Both start from the worker's primary insurance amount, the figure on their Social Security statement for full retirement age.\n\nA spousal benefit is up to half of it. Claimed before your own full retirement age, it is reduced: 25/36 of one percent for each of the first 36 months early, and 5/12 of one percent for each month beyond that. Unlike your own benefit, it does not grow if you wait past full retirement age. If you also have your own record, Social Security pays the higher of the two, not both added together.\n\nA survivor benefit can be all of the worker's amount. It can start at 60, reduced by up to 28.5% at 60 and less for each month you wait, until full retirement age for survivors, which runs on its own schedule. Social Security rounds each reduction up to the next ten cents, and so do we.\n\nEnter your spouse's figure, your own if you have one, your birth year and the age you would claim, and we show the spousal benefit, your own for comparison, and the survivor benefit at 60, at the age you chose and at full retirement age. Births on January 1 count as the year before, which a birth year alone cannot show. This is information about published rules, not financial advice.";

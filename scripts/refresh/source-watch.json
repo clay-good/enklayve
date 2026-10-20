@@ -405,6 +405,13 @@
       "why": "SSA's annual determinations notice states both exempt amounts and the withholding ratios; ssa.gov refuses this pipeline, and 2027's arrives as a new notice each fall, which the zero-year window forces a person to read.",
       "fingerprint": "57e743ff35fb4ad185ed6617973a94c44caea167fff32cac7c46af3544a316e0",
       "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "ss-family-benefits-2026",
+      "url": "https://www.ecfr.gov/current/title-20/chapter-III/part-404/subpart-E/section-404.410",
+      "why": "§404.410 holds the spousal and survivor reduction rules and their examples, and §404.409 the survivor's full retirement age; an amendment here is a rule to re-read.",
+      "fingerprint": "064a1fc2934bf96d4d6b6c9616267028ec93714bb04730ba934c8e5f12e97588",
+      "checkedOn": "2026-10-20"
     }
   ]
 }

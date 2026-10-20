@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import axe from "axe-core";
-import { earningsTest } from "../../src/engine/socialSecurity";
+import { earningsTest } from "../../src/engine/ssFamily";
 import { ssEarningsTestTile } from "../../src/tiles/ssEarningsTest";
 import { mountSsEarningsTest } from "../../src/tiles/ssEarningsTestView";
 import { loadBundledData, type BundledData } from "../../src/data/browser";

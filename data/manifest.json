@@ -1056,6 +1056,19 @@
       "contentHash": "dce67827341b875d3e157ae61b6f8939f5d1ff7c1be62758a8efbd66e2f67060"
     },
     {
+      "id": "ss-family-benefits-2026",
+      "kind": "ss-family-benefits",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 1,
+      "shard": "ss-family-benefits-2026.json",
+      "sourceUrl": "https://www.ecfr.gov/current/title-20/chapter-III/part-404/subpart-E/section-404.410",
+      "sourceDocument": "20 CFR §§404.409, 404.410 (full retirement age; reduction of wife's, husband's, widow's and widower's benefits)",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "6776f6f35e4831a39d843b5825a688a876f1aa5af7539370ac41e9b5b364c88b"
+    },
+    {
       "id": "child-tax-2024",
       "kind": "child-tax",
       "version": "2026.0",

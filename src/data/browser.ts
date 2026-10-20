@@ -52,6 +52,7 @@ import {
   type UiTaxationData,
   type MedicareCostsData,
   type SsEarningsTestData,
+  type SsFamilyBenefitsData,
   type AmtData,
   type ChildTaxData,
   type EducationCreditsData,
@@ -78,7 +79,8 @@ const rawFiles = import.meta.glob(
     "!../../data/supplemental-withholding-2026.json",
     "!../../data/ui-taxation-2026.json",
     "!../../data/medicare-costs-2026.json",
-    "!../../data/ss-earnings-test-2026.json"],
+    "!../../data/ss-earnings-test-2026.json",
+    "!../../data/ss-family-benefits-2026.json"],
   { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
@@ -98,6 +100,7 @@ const deferredFiles = import.meta.glob(
     "../../data/ui-taxation-2026.json",
     "../../data/medicare-costs-2026.json",
     "../../data/ss-earnings-test-2026.json",
+    "../../data/ss-family-benefits-2026.json",
   ],
   { query: "?raw", import: "default" },
 ) as Record<string, () => Promise<string>>;
@@ -191,6 +194,8 @@ export interface BundledData {
   medicareCosts(): MedicareCostsData | null;
   /** Social Security's retirement earnings test (SPEC-5 later-life L3). Deferred. */
   ssEarningsTest(): SsEarningsTestData | null;
+  /** Spousal and survivor reductions (SPEC-5 later-life L4). Deferred. */
+  ssFamilyBenefits(): SsFamilyBenefitsData | null;
   /** AMT exemption, phase-out, and rate breakpoint (SPEC-3 §4.7). */
   amt(): AmtData | null;
   /** Child-tax dependent shelter and earned-income add-on (SPEC-3 §4.5). */
@@ -360,6 +365,8 @@ async function build(): Promise<BundledData> {
     giftTax: () => dataOf("gift-tax-2024") as GiftTaxData | null,
     trumpAccounts: () => dataOf("trump-accounts-2026") as TrumpAccountData | null,
     pmiCancellation: () => deferredDataOf("pmi-cancellation-2026") as PmiCancellationData | null,
+    ssFamilyBenefits: () =>
+      deferredDataOf("ss-family-benefits-2026") as SsFamilyBenefitsData | null,
     ssEarningsTest: () => deferredDataOf("ss-earnings-test-2026") as SsEarningsTestData | null,
     medicareCosts: () => deferredDataOf("medicare-costs-2026") as MedicareCostsData | null,
     uiTaxation: () => deferredDataOf("ui-taxation-2026") as UiTaxationData | null,

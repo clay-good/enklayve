@@ -11,7 +11,7 @@
  */
 import Decimal from "decimal.js";
 import { Money } from "./money";
-import type { SocialSecurityData, SsEarningsTestData } from "../data/schemas";
+import type { SocialSecurityData } from "../data/schemas";
 
 export interface SocialSecurityResult {
   /** Full Retirement Age for the birth year, in months. */
@@ -99,53 +99,5 @@ export function socialSecurityBenefit(
     monthsFromFra,
     adjustment: adjustment.toNumber(),
     monthlyBenefit: piaMoney.multiply(adjustment.plus(1)),
-  };
-}
-
-export interface EarningsTestInput {
-  monthlyBenefit: number;
-  /** "before": full retirement age is in a later year; "this-year": it is reached this year. */
-  stage: "before" | "this-year";
-  /** Earnings that count: the year's, or in the year of FRA, those in the months before it. */
-  earnings: number;
-  /** Months of benefits that can be withheld: 12, or the months before the FRA month. */
-  months: number;
-}
-
-export interface EarningsTestResult {
-  exempt: number;
-  /** The amount the test withholds. */
-  withheld: Money;
-  /** Whole monthly benefits held back to cover it. */
-  monthsWithheld: number;
-  /** Benefits still paid this year, in the months not withheld. */
-  paid: Money;
-}
-
-/**
- * The retirement earnings test (42 U.S.C. §403(b), (f)): $1 withheld for every
- * $2 over the lower exempt amount, or $1 for every $3 over the higher one in the
- * year full retirement age is reached. Social Security holds back whole monthly
- * benefits until the amount is covered, and credits those months back at full
- * retirement age (§402(q)(7)).
- */
-export function earningsTest(
-  input: EarningsTestInput,
-  rules: SsEarningsTestData,
-): EarningsTestResult {
-  const fraYear = input.stage === "this-year";
-  const exempt = fraYear ? rules.higherAnnualExempt : rules.lowerAnnualExempt;
-  const per = fraYear ? rules.earningsPerDollarWithheldInFraYear : rules.earningsPerDollarWithheld;
-  const months = Math.max(0, Math.min(12, Math.floor(input.months)));
-  const benefit = new Decimal(Math.max(0, input.monthlyBenefit));
-  const due = Decimal.max(0, new Decimal(Math.max(0, input.earnings)).minus(exempt)).dividedBy(per);
-  const monthsWithheld = benefit.isZero()
-    ? 0
-    : Math.min(months, due.dividedBy(benefit).ceil().toNumber());
-  return {
-    exempt,
-    withheld: Money.from(due).roundToCents(),
-    monthsWithheld,
-    paid: Money.from(benefit.times(months - monthsWithheld)).roundToCents(),
   };
 }

@@ -4,7 +4,7 @@
  * the shell.
  */
 import { Money } from "../engine/money";
-import { earningsTest } from "../engine/socialSecurity";
+import { earningsTest } from "../engine/ssFamily";
 import { el, option } from "../ui/dom";
 import { field, parseNonNegative, tryExampleButton } from "../ui/form";
 import { resultCard, type BreakdownLine } from "../ui/resultCard";

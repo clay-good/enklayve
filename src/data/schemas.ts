@@ -1359,6 +1359,28 @@ export const SsEarningsTestSchema = z.object({
 });
 export type SsEarningsTestData = z.infer<typeof SsEarningsTestSchema>;
 
+/** Spousal and survivor benefits (SPEC-5 later-life L4), from 20 CFR §§404.409-404.410. */
+export const SsFamilyBenefitsSchema = z.object({
+  /** A spouse's unreduced benefit, as a share of the worker's PIA. */
+  spousalShare: z.number().gt(0).lte(1),
+  spousalReductionFirst36Numer: z.number().int().positive(),
+  spousalReductionFirst36Denom: z.number().int().positive(),
+  spousalReductionBeyondNumer: z.number().int().positive(),
+  spousalReductionBeyondDenom: z.number().int().positive(),
+  earliestSpousalAge: z.number().int().positive(),
+  earliestSurvivorAge: z.number().int().positive(),
+  /** §404.410(c)(1): the survivor's reduction at 60, spread over the months to FRA. */
+  survivorMaxReduction: z.number().gt(0).lt(1),
+  /** Each reduction is rounded up to this many dollars. */
+  reductionRoundedUpTo: z.number().gt(0),
+  /** §404.409(b): a survivor's full retirement age, in months, by birth year. */
+  survivorFullRetirementAge: z
+    .array(z.object({ bornThrough: z.number().int().nullable(), months: z.number().int().positive() }))
+    .min(1),
+  citation: CitationSchema,
+});
+export type SsFamilyBenefitsData = z.infer<typeof SsFamilyBenefitsSchema>;
+
 export const GiftTaxSchema = z.object({
   taxYear: z.number().int(),
   annualExclusion: z.number().gte(0),
@@ -2016,6 +2038,7 @@ export const DATASET_SCHEMAS = {
   "ui-taxation": UiTaxationSchema,
   "medicare-costs": MedicareCostsSchema,
   "ss-earnings-test": SsEarningsTestSchema,
+  "ss-family-benefits": SsFamilyBenefitsSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

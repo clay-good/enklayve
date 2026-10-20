@@ -93,6 +93,7 @@ import { evaluatePlan, DEFAULT_CONFIG, type PlanInput } from "../src/engine/plan
 import { requiredMinimumDistribution } from "../src/engine/rmd";
 import { projectIBond } from "../src/engine/savingsBond";
 import { socialSecurityBenefit, fullRetirementAgeMonths } from "../src/engine/socialSecurity";
+import { spousalBenefit, survivorBenefit, survivorFraMonths } from "../src/engine/ssFamily";
 import { socialSecurityBenefitTaxation } from "../src/engine/socialSecurityTax";
 import {
   bracketTax,
@@ -130,6 +131,7 @@ export const PROBED_FILES = [
   "src/engine/rmd.ts",
   "src/engine/savingsBond.ts",
   "src/engine/socialSecurity.ts",
+  "src/engine/ssFamily.ts",
   "src/engine/socialSecurityTax.ts",
   "src/engine/tax/brackets.ts",
   "src/engine/taxMoves.ts",
@@ -1000,6 +1002,35 @@ export function observeEngine(data: BundledData): Record<string, unknown> {
       due: r.federalDueAtFiling.toNumber(),
     });
   }
+
+  // --- spousal and survivor: the birth-year lines of the survivor FRA table,
+  // the 36th month of a spouse's reduction, and a survivor at 60 and at FRA.
+  const family = {
+    spousalShare: 0.5,
+    spousalReductionFirst36Numer: 25,
+    spousalReductionFirst36Denom: 36,
+    spousalReductionBeyondNumer: 5,
+    spousalReductionBeyondDenom: 12,
+    earliestSpousalAge: 62,
+    earliestSurvivorAge: 60,
+    survivorMaxReduction: 0.285,
+    reductionRoundedUpTo: 0.1,
+    survivorFullRetirementAge: [
+      { bornThrough: 1956, months: 792 },
+      { bornThrough: 1961, months: 802 },
+      { bornThrough: null, months: 804 },
+    ],
+    citation,
+  };
+  for (const born of [1956, 1957, 1961, 1962])
+    put(`survivorFra(${born})`, survivorFraMonths(born, family));
+  for (const early of [35, 36, 37])
+    put(
+      `spousal(1600,${early})`,
+      spousalBenefit(1600, 804, 804 - early, family).monthly.toNumber(),
+    );
+  for (const claim of [720, 803, 804])
+    put(`survivor(2000,${claim})`, survivorBenefit(2000, 804, claim, family).monthly.toNumber());
 
   return o;
 }

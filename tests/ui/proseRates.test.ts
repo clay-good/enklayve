@@ -69,6 +69,12 @@ interface RateBound {
 const asPoints = (n: number) => n;
 
 const BOUND: RateBound[] = [
+  // The survivor's reduction at 60, in Spousal and Survivor Benefits' "how".
+  {
+    file: "tiles/ssSpousalSurvivorHow.ts",
+    shard: "ss-family-benefits-2026",
+    path: ".survivorMaxReduction",
+  },
   // Medicare Enrollment Penalties' "how" block: the Part B and bought-Part-A
   // 10% a full year late, and Part D's 1% a month.
   {

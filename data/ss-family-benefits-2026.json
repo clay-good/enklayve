@@ -1,0 +1,27 @@
+{
+  "spousalShare": 0.5,
+  "spousalReductionFirst36Numer": 25,
+  "spousalReductionFirst36Denom": 36,
+  "spousalReductionBeyondNumer": 5,
+  "spousalReductionBeyondDenom": 12,
+  "earliestSpousalAge": 62,
+  "earliestSurvivorAge": 60,
+  "survivorMaxReduction": 0.285,
+  "reductionRoundedUpTo": 0.1,
+  "survivorFullRetirementAge": [
+    { "bornThrough": 1956, "months": 792 },
+    { "bornThrough": 1957, "months": 794 },
+    { "bornThrough": 1958, "months": 796 },
+    { "bornThrough": 1959, "months": 798 },
+    { "bornThrough": 1960, "months": 800 },
+    { "bornThrough": 1961, "months": 802 },
+    { "bornThrough": null, "months": 804 }
+  ],
+  "citation": {
+    "sourceUrl": "https://www.ecfr.gov/current/title-20/chapter-III/part-404/subpart-E/section-404.410",
+    "sourceDocument": "20 CFR §§404.409, 404.410 (full retirement age; reduction of wife's, husband's, widow's and widower's benefits)",
+    "sourceNote": "§404.410(b): a spouse's benefit is reduced \"25/36 of 1 percent for each of the first 36 months and 5/12 of 1 percent for each month in excess of 36\" before full retirement age; its example, $412.40 for 28 months, is $80.18, \"rounded to $80.20 (the next higher multiple of 10 cents)\", leaving $332.20. §404.410(c)(1): a survivor's \"number of months of entitlement prior to full retirement age is multiplied by .285 and then divided by the number of months in the period beginning with the month of attainment of age 60\"; its example is $785.70 at 64 with a full retirement age of 65 and 4 months, $55.98, rounded to $56.00, leaving $729.70. §404.409(b) sets the survivor's own full retirement age: 66 for births 1/2/1945 to 1/1/1957, rising two months a year to 67 for births from 1/2/1962. A spouse's unreduced benefit is half the worker's primary insurance amount. Births on January 1 belong to the year before, which a birth-year input cannot see. Read 2026-10-19.",
+    "effectiveYear": 2026,
+    "dateRetrieved": "2026-10-19"
+  }
+}
