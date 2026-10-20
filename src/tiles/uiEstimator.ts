@@ -311,6 +311,7 @@ export function mountUiEstimator(ctx: TileContext): void {
               yearBenefits,
               filingStatus: ctx.profile.get("filingStatus") ?? "single",
               otherIncome: ctx.profile.get("annualIncome") ?? 0,
+              reportedBenefits: ctx.profile.get("unemploymentCompensationAnnual"),
               locale: ctx.locale,
             },
             rules,

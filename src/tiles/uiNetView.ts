@@ -22,6 +22,8 @@ export interface UiNetInput {
   filingStatus: FilingStatus;
   /** Other income this year, beneath the benefits. */
   otherIncome: number;
+  /** A year's benefits as a confirmed 1099-G reports them, when there is one. */
+  reportedBenefits?: number;
   locale: string;
 }
 
@@ -82,6 +84,24 @@ export function renderUiNet(
       citationLink(fed.citation),
     ),
   ];
+  // The year a 1099-G already reports, taxed the same way (SPEC-5 §7.2).
+  if (input.reportedBenefits !== undefined && input.reportedBenefits > 0) {
+    const reported = taxOnBenefits(input.reportedBenefits, input, {
+      federal: fed,
+      fica,
+      ...(jurisdiction ? { state: jurisdiction } : {}),
+    });
+    lines.push(
+      el(
+        "p",
+        { class: "uie-net" },
+        el("span", {
+          text: `Your 1099-G reports ${fmt(Money.from(input.reportedBenefits))} of benefits. At your other income that adds about ${fmt(reported.federal)} of federal income tax; set what its box 4 shows was withheld against it. `,
+        }),
+        citationLink(fed.citation),
+      ),
+    );
+  }
   if (!stateRule) {
     lines.push(
       el("p", {

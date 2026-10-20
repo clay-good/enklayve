@@ -607,6 +607,29 @@ describe("Readout v3, the tax statements", () => {
     expect(mortgage.kind).toBe("form1098");
   });
 
+  it("reads the 1099-G, and box 1 is the one figure it writes, once confirmed", () => {
+    const r = extractDocument(
+      typed(
+        "Form 1099-G 2025 Certain Government Payments 1 Unemployment compensation $8,000.00 " +
+          "2 State or local income tax refunds, credits, or offsets $312.00 " +
+          "4 Federal income tax withheld $800.00 11a State 11b State identification no. " +
+          "12 State income tax withheld $0.00",
+      ),
+    );
+    expect(r.kind).toBe("form1099g");
+    expect(value(r, "1099g-box1")).toBe(8000);
+    expect(value(r, "1099g-box2")).toBe(312);
+    expect(value(r, "1099g-box4")).toBe(800);
+    expect(value(r, "1099g-box12")).toBe(0);
+    expect(r.fields.filter((f) => f.target).map((f) => [f.id, f.target])).toEqual([
+      ["1099g-box1", "unemploymentCompensationAnnual"],
+    ]);
+    const store = new SituationStore();
+    applyToSituation(store, r.fields);
+    expect(store.get("unemploymentCompensationAnnual")).toBe(8000);
+    expect(store.sourceOf("unemploymentCompensationAnnual")).toBe("extracted");
+  });
+
   it("flags an unvalidated revision and reads nothing", () => {
     const r = extractDocument(
       typed(

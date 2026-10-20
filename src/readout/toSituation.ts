@@ -89,6 +89,7 @@ const TARGET_NAMES: Record<ReadoutTarget, string> = {
   filingStatus: "Filing status",
   qualifiedTipsAnnual: "Qualified tips",
   qualifiedOvertimeAnnual: "Qualified overtime",
+  unemploymentCompensationAnnual: "Unemployment compensation",
 };
 
 const SOURCE_NAMES: Record<FieldSource, string> = {

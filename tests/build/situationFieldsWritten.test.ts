@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { resolve, dirname, join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { READOUT_TARGETS } from "../../src/readout/types";
 
 /**
  * Every My Situation field something reads is a field something writes.
@@ -102,7 +103,13 @@ describe("every My Situation field", () => {
       // `field:` matches the interface that declares it and the plan's own
       // input type, and a bare `set("debts"` matches the Home Affordability
       // tile writing a URL parameter of that name onto a `URLSearchParams`.
-      const written = new RegExp(`(?:profile|store)\\.set\\(\\s*"${field}"`).test(source);
+      // The Readout writes its targets through one generic `store.set(target,
+      // …)` in toSituation.ts, after the reader confirms them, so a target is
+      // written even where no literal names it. That is the only writer SPEC-5
+      // §7.2 allows unemploymentCompensationAnnual.
+      const written =
+        new RegExp(`(?:profile|store)\\.set\\(\\s*"${field}"`).test(source) ||
+        (READOUT_TARGETS as readonly string[]).includes(field);
       if (!read) {
         expect(
           UNREAD_OK[field] ?? null,

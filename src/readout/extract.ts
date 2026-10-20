@@ -221,6 +221,7 @@ const DOC_MARKERS: { kind: DocKind; re: RegExp; also?: RegExp }[] = [
   { kind: "form1099r", re: /\b1099-?R\b/, also: /gross distribution/i },
   { kind: "form1098t", re: /\b1098-?T\b/, also: /tuition/i },
   { kind: "form1098e", re: /\b1098-?E\b/, also: /student loan interest/i },
+  { kind: "form1099g", re: /\b1099-?G\b/, also: /unemployment compensation/i },
   // Anchored to "mortgage interest" so the 1098-T (tuition) and 1098-E (student
   // loan) variants don't masquerade as a mortgage statement.
   { kind: "form1098", re: /\b1098\b/, also: /mortgage interest/i },
@@ -847,6 +848,49 @@ const EXTRACTORS: Record<DocKind, Extractor> = {
       return box1 ? [box1] : [];
     },
   },
+  /**
+   * Form 1099-G, on the 2026 revision's boxes: box 1 unemployment
+   * compensation, box 2 state or local refunds, box 4 federal withholding,
+   * and box 12 state withholding (11a and 11b are the state and its ID). Box 1 is the one figure the
+   * profile keeps, and the unemployment estimator taxes it.
+   */
+  form1099g: {
+    citation: f1099Citation("G"),
+    extract: (t) => {
+      const text = t.text;
+      return [
+        field(
+          "1099g-box1",
+          "Unemployment compensation (box 1)",
+          amountAfter(text, /1\s*unemployment compensation/i),
+          "unemploymentCompensationAnnual",
+          "Taxable federal income. The Unemployment Benefit Estimator shows the tax on it at your other income.",
+        ),
+        field(
+          "1099g-box2",
+          "State or local income tax refunds, credits, or offsets (box 2)",
+          amountAfter(
+            text,
+            /2\s*state or local income tax\s*refunds,?\s*credits,?\s*or\s*offsets/i,
+          ),
+          undefined,
+          "Taxable only if you itemized deductions in the year it refunds.",
+        ),
+        field(
+          "1099g-box4",
+          "Federal income tax withheld (box 4)",
+          amountAfter(text, /4\s*federal income tax\s*withheld/i),
+          undefined,
+        ),
+        field(
+          "1099g-box12",
+          "State income tax withheld (box 12)",
+          amountAfter(text, /12\s*state income tax\s*withheld/i),
+          undefined,
+        ),
+      ].filter((f): f is ExtractedField => f !== null);
+    },
+  },
   fafsaSummary: {
     citation: (rev) =>
       formCitation(
@@ -1153,7 +1197,7 @@ export function extractDocument(t: ExtractedText): ExtractionResult {
 
   if (kind === "unknown") {
     warnings.push(
-      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B/R), SSA-1099, 1095-A, 1098 mortgage statements, 1098-T, 1098-E, the FAFSA Submission Summary, health plan Explanations of Benefits, itemized medical bills, and benefits determination notices.",
+      "We couldn't recognize this document. Supported: typed W-2, Form 1040, pay stubs, 1099 (INT/DIV/NEC/B/R/G), SSA-1099, 1095-A, 1098 mortgage statements, 1098-T, 1098-E, the FAFSA Submission Summary, health plan Explanations of Benefits, itemized medical bills, and benefits determination notices.",
     );
     return {
       kind,
@@ -1274,6 +1318,8 @@ export function labelFor(kind: DocKind | "unknown"): string {
       return "1098-T tuition statement";
     case "form1098e":
       return "1098-E student loan interest statement";
+    case "form1099g":
+      return "1099-G";
     default:
       return "document";
   }

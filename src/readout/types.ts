@@ -39,7 +39,8 @@ export type DocKind =
   | "ssa1099"
   | "form1099r"
   | "form1098t"
-  | "form1098e";
+  | "form1098e"
+  | "form1099g";
 
 /** The My Situation fields the Readout can populate on confirmation. Kept
  * narrow (not all of {@link SituationKey}) so the mapping stays type-safe, and
@@ -55,6 +56,8 @@ export const READOUT_TARGETS = [
   "filingStatus",
   "qualifiedTipsAnnual",
   "qualifiedOvertimeAnnual",
+  // SPEC-5 §7.2, written only by a 1099-G's box 1 (SPEC-5-readout-v3 R3).
+  "unemploymentCompensationAnnual",
 ] as const satisfies readonly SituationKey[];
 export type ReadoutTarget = (typeof READOUT_TARGETS)[number];
 

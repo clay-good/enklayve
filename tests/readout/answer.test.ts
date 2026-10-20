@@ -102,6 +102,7 @@ describe("the fields a document may write into My Situation", () => {
     // SPEC-4-readout-v2 §2.1. SPEC-5 §7.2 adds socialSecurityPia (the Social
     // Security Statement) and unemploymentCompensationAnnual (1099-G box 1)
     // with the extractors that write them, and this list grows by those two.
+    // The 1099-G's has landed; the Statement's waits on its template.
     expect([...READOUT_TARGETS]).toEqual([
       "annualIncome",
       "selfEmploymentProfitAnnual",
@@ -109,6 +110,7 @@ describe("the fields a document may write into My Situation", () => {
       "filingStatus",
       "qualifiedTipsAnnual",
       "qualifiedOvertimeAnnual",
+      "unemploymentCompensationAnnual",
     ]);
   });
 });

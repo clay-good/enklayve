@@ -69,6 +69,9 @@ const NUMERIC_FIELDS = [
   "preTaxContributions",
   "retirementContributionsAnnual",
   "dependentCareExpensesAnnual",
+  // No calculator writes it (only a confirmed 1099-G does), and the sweep
+  // proves that stays true.
+  "unemploymentCompensationAnnual",
   "elective401kAnnual",
   "employerMatchAnnual",
   "employerMatchCaptured",

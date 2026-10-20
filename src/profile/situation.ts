@@ -121,6 +121,12 @@ export interface SituationValues {
    */
   dependentCareExpensesAnnual: number;
   /**
+   * A year's unemployment compensation, from a 1099-G's box 1 (SPEC-5 §7.2),
+   * the only thing that writes it. The unemployment estimator reads it to show
+   * the tax on what the form reports.
+   */
+  unemploymentCompensationAnnual: number;
+  /**
    * The §402(g) elective deferral alone — what goes into a 401(k)/403(b)
    * through payroll, without the IRA beside it.
    *
@@ -249,6 +255,7 @@ export const SituationValuesSchema = z
     preTaxContributions: num,
     retirementContributionsAnnual: num,
     dependentCareExpensesAnnual: num,
+    unemploymentCompensationAnnual: num,
     elective401kAnnual: num,
     employerMatchAnnual: num,
     employerMatchCaptured: num,

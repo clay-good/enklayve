@@ -333,6 +333,33 @@ describe("what the unemployment check nets", () => {
     expect(text).toContain("State treatment not yet read for Texas");
   });
 
+  it("taxes the year a confirmed 1099-G reports (SPEC-5 §7.2)", async () => {
+    await data.loadDeferred("ui-taxation-2026");
+    const input = {
+      stateCode: "TX",
+      stateName: "Texas",
+      weekly: 480,
+      yearBenefits: 9720,
+      filingStatus: "single" as const,
+      otherIncome: 30000,
+      locale: "en-US",
+    };
+    const without = renderUiNet(input, data.uiTaxation()!, data)
+      .map((n) => n.textContent)
+      .join(" ");
+    expect(without).not.toContain("1099-G");
+    const text = renderUiNet({ ...input, reportedBenefits: 8000 }, data.uiTaxation()!, data)
+      .map((n) => n.textContent)
+      .join(" ");
+    // $8,000 on top of $30,000 of wages, single: all of it in the 12% band.
+    const ctx = { federal: data.federal()!, fica: data.fica()! };
+    const base = evaluateTaxes({ filingStatus: "single", wages: 30000 }, ctx);
+    const withIt = evaluateTaxes({ filingStatus: "single", wages: 30000, otherIncome: 8000 }, ctx);
+    const added = withIt.federal.incomeTax.subtract(base.federal.incomeTax).format("en-US");
+    expect(text).toContain(`Your 1099-G reports $8,000.00 of benefits`);
+    expect(text).toContain(`about ${added} of federal income tax`);
+  });
+
   it("covers every state the estimator covers, each with its own citation", async () => {
     await data.loadDeferred("ui-taxation-2026");
     const states = data.uiTaxation()!.states;

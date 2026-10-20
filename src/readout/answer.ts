@@ -235,6 +235,26 @@ function nextFor(result: ExtractionResult): ReadoutAnswer["next"] {
           channel: CHANNELS.hospitalFap,
         },
       ];
+    case "form1099g": {
+      const benefits = valueOf(result, "1099g-box1");
+      const withheld = valueOf(result, "1099g-box4");
+      if (typeof benefits !== "number")
+        return [
+          {
+            label:
+              "Box 1 could not be read. Enter your unemployment compensation by hand from the form.",
+          },
+        ];
+      const next: ReadoutAnswer["next"] = [
+        {
+          label:
+            typeof withheld === "number" && withheld > 0
+              ? "Unemployment benefits are taxable federal income, and the withholding in box 4 may not cover all of it. Confirm box 1, then open the Unemployment Benefit Estimator to see the tax on it at your other income."
+              : "Unemployment benefits are taxable federal income, and this form shows no federal tax withheld, so the tax on them is due with your return. Confirm box 1, then open the Unemployment Benefit Estimator to see how much.",
+        },
+      ];
+      return next;
+    }
     case "form1099r": {
       const code = valueOf(result, "1099r-code");
       const next: ReadoutAnswer["next"] = [];
