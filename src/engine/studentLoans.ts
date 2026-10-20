@@ -84,7 +84,10 @@ function simulate(s: LoanSituation, plan: PlanOutcome["plan"], sim: Simulation):
     const pay = Math.min(sim.payment(Math.floor(months / 12)), owed);
     totalPaid += pay;
     let toPrincipal = 0;
-    if (pay >= interest) {
+    // Strict on purpose: a payment exactly equal to the interest takes either
+    // branch to the same place (nothing to principal, nothing left unpaid), so
+    // `>=` would be a boundary no case could ever hold.
+    if (pay > interest) {
       toPrincipal = pay - interest;
       unpaidInterest = 0;
     } else {
@@ -183,7 +186,10 @@ export function interestDeduction(
   const d = rules.interestDeduction;
   const [from, to] = joint ? d.phaseOut.joint : d.phaseOut.other;
   const capped = Math.min(Math.max(0, interestPaid), d.max);
-  if (magi <= from) return capped;
-  if (magi >= to) return 0;
+  // Strict at both ends: the phase-out is continuous, so at exactly `from` it
+  // gives the whole deduction and at exactly `to` it gives none, the same
+  // answers these early returns give.
+  if (magi < from) return capped;
+  if (magi > to) return 0;
   return Math.round(capped * (1 - (magi - from) / (to - from)) * 100) / 100;
 }
