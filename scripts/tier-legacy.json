@@ -13,7 +13,8 @@
     "tests/build/auditRelease.test.ts only ever goes down.",
     "",
     "2026-10-19: home-purchases left the list the day it was written, when When PMI Ends (tier 1) joined the hub and the hub took its tier.",
-    "2026-10-19: retirement left too, when Cashing Out a 401(k) (tier 2) joined the hub."
+    "2026-10-19: retirement left too, when Cashing Out a 401(k) (tier 2) joined the hub.",
+    "2026-10-19: paycheck-taxes left as well, when Married: Jointly or Separately? (tier 1) joined it."
   ],
   "untiered": [
     "aca-ptc",
@@ -55,7 +56,6 @@
     "marginal-explorer",
     "medicaid",
     "paycheck-optimizer",
-    "paycheck-taxes",
     "peace-of-mind",
     "pell",
     "quarterly-taxes",

@@ -56,6 +56,7 @@ import { pmiEndDateTile } from "./pmiEndDate";
 import { homeSaleGainTile } from "./homeSaleGain";
 import { retirementCashOutTile } from "./retirementCashOut";
 import { cobraVsMarketplaceTile } from "./cobraVsMarketplace";
+import { filingJointlyVsSeparatelyTile } from "./filingJointlyVsSeparately";
 import { healthPlanTile } from "./healthPlan";
 import { eobCheckerTile } from "./eobChecker";
 import { cashFlowTile } from "./cashFlow";
@@ -100,6 +101,7 @@ const HUB_CONFIGS: HubConfig[] = [
       w4WithholdingTile,
       hourlySalaryTile,
       federalIncomeTaxTile,
+      filingJointlyVsSeparatelyTile,
       marginalExplorerTile,
       paycheckOptimizerTile,
       amtScreenerTile,

@@ -416,10 +416,10 @@ describe("audit: every new tile declares a tier", () => {
   });
 
   it("only shrinks: an id added to the baseline fails the build", () => {
-    // 69 tiles and hubs had no tier on 2026-10-19; home-purchases and
-    // retirement left the same day. Lower this when the list shrinks; it never
-    // goes up, so a new untiered tile cannot buy its way in.
-    expect(legacy.length).toBeLessThanOrEqual(67);
+    // 69 tiles and hubs had no tier on 2026-10-19; home-purchases, retirement
+    // and paycheck-taxes left the same day. Lower this when the list shrinks;
+    // it never goes up, so a new untiered tile cannot buy its way in.
+    expect(legacy.length).toBeLessThanOrEqual(66);
     expect(new Set(legacy).size, "the baseline repeats an id").toBe(legacy.length);
     expect([...legacy].sort(), "keep the baseline sorted, so a diff reads").toEqual(legacy);
   });

@@ -1,0 +1,7 @@
+/**
+ * Married: Jointly or Separately?: the "How this works" block, loaded with the
+ * tool rather than with the shell (SPEC-5 §7.5). The build reads it for the
+ * tool's crawlable page.
+ */
+export const how =
+  "A married couple can file one joint return or two separate ones. We run your two incomes through the same federal and state tax calculation three times, once jointly and once for each of you separately, and apply the credits each way. Then we show which costs less and by how much.\n\nFor most couples, joint wins, and the credits are why. A separate return gives up the Earned Income Credit unless you lived apart from your spouse for the last six months of the year with a child, which this does not model. It also gives up the education credits, the child and dependent care credit, and the student loan interest deduction. On separate returns the Child Tax Credit goes to whichever of you claims the children, with the lower income limit that applies to anyone not filing jointly.\n\nThe one common case where separate can win is an income-driven student loan payment, which is set from the income on the return you file. That saving is outside this comparison; weigh it against the tax this shows separate filing costs. Community property states split income between spouses on separate returns, and we do not.\n\nThis compares wages only, on the standard deduction. It is information about published tax rules applied to the figures you enter, not tax advice.";
