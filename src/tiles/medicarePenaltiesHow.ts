@@ -1,0 +1,7 @@
+/**
+ * Medicare Enrollment Penalties: the "How this works" block, loaded with the
+ * tool rather than with the shell (SPEC-5 §7.5). The build reads it for the
+ * tool's crawlable page.
+ */
+export const how =
+  "Medicare charges a penalty for signing up late, and the Part B and Part D penalties last as long as you have that coverage. Each is a published formula.\n\nPart B adds 10% of the standard premium for each full 12 months you could have had it and did not, so 23 months late costs the same as 12. Part D adds 1% of the national base beneficiary premium for each month you went without a drug plan or other creditable coverage after your first chance to enroll, once a gap runs 63 days or more. Medicare rounds both to the nearest ten cents. If you buy Part A because you do not get it free, a late start adds 10% to that premium for twice the number of full years you were late.\n\nEnter how late you were, and we show each penalty a month, a year, and over the years you expect to keep the coverage. That last figure is at today's premiums: premiums usually rise, and because the penalties are percentages of them, so do the penalties.\n\nMany people owe no penalty at all. Coverage through your own or your spouse's current job lets you delay Part B with a special enrollment period, and Extra Help removes the Part D penalty. This does not decide whether one of those applies to you; Medicare decides, and you can ask it to reconsider a penalty you think is wrong. This is information about published rules. It is not legal or insurance advice.";

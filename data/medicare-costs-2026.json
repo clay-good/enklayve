@@ -107,9 +107,23 @@
   },
   "citation": {
     "sourceUrl": "https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-premiums-deductibles",
-    "sourceDocument": "CMS, 2026 Medicare Parts A & B Premiums and Deductibles (Nov. 14, 2025); 42 U.S.C. \u00a71395r(i)",
-    "sourceNote": "CMS: \"The standard monthly premium for Medicare Part B enrollees will be $202.90 for 2026\" and \"The annual deductible for all Medicare Part B beneficiaries will be $283 in 2026\". The income-related tables give each tier's total Part B premium and Part D adjustment by modified adjusted gross income, individual and joint: \"Less than or equal to $109,000\" ($218,000 joint) pays $202.90; above that, $284.10, $405.80, $527.50 and $649.20 to \"less than $500,000\" ($750,000), and $689.90 \"Greater than or equal to\" it; Part D adds $14.50, $37.50, $60.40, $83.30 and $91.00. Married filing separately and living together at any time in the year: $202.90 to $109,000, $649.20 above it and below $391,000, $689.90 at or above. \u00a71395r(i)(4): MAGI is AGI \"increased by the amount of interest ... exempt from tax\", from \"the individual's last taxable year beginning in the second calendar year preceding the year involved\", so 2026 premiums use 2024 returns. CMS had not announced 2027's figures on the day this was read. Read 2026-10-19.",
+    "sourceDocument": "CMS, 2026 Medicare Parts A & B Premiums and Deductibles; 2026 Part D bid information; 42 CFR \u00a7\u00a7406.32, 408.22, 423.286",
+    "sourceNote": "CMS: \"The standard monthly premium for Medicare Part B enrollees will be $202.90 for 2026\" and \"The annual deductible for all Medicare Part B beneficiaries will be $283 in 2026\". The income-related tables give each tier's total Part B premium and Part D adjustment by modified adjusted gross income, individual and joint: \"Less than or equal to $109,000\" ($218,000 joint) pays $202.90; above that, $284.10, $405.80, $527.50 and $649.20 to \"less than $500,000\" ($750,000), and $689.90 \"Greater than or equal to\" it; Part D adds $14.50, $37.50, $60.40, $83.30 and $91.00. Married filing separately and living together at any time in the year: $202.90 to $109,000, $649.20 above it and below $391,000, $689.90 at or above. \u00a71395r(i)(4): MAGI is AGI \"increased by the amount of interest ... exempt from tax\", from \"the individual's last taxable year beginning in the second calendar year preceding the year involved\", so 2026 premiums use 2024 returns. CMS had not announced 2027's figures on the day this was read. Part A for those who buy it: \"$311 in 2026\" (reduced) and \"$565 a month in 2026\" (full). CMS's Part D bid fact sheet (July 28, 2025): \"For 2026, the base beneficiary premium will be $38.99.\" Penalties: 42 CFR \u00a7408.22 raises Part B \"by ten percent for each full twelve months\" of delay; \u00a7423.286(d)(3)(i)(B) charges \"1 percent of the base beneficiary premium ... for each uncovered month\"; \u00a7406.32(d) raises bought Part A by 10% \"for twice the number of full 12-month periods\". Medicare.gov rounds each to the nearest $0.10: a 14-month Part D gap is $38.99 \u00d7 0.14 = $5.46, \"rounded to the nearest $0.10 = $5.50\", and a two-year Part B delay makes $243.48 into $243.50. Read 2026-10-19.",
     "effectiveYear": 2026,
     "dateRetrieved": "2026-10-19"
+  },
+  "partA": {
+    "premiumFull": 565,
+    "premiumReduced": 311
+  },
+  "partD": {
+    "baseBeneficiaryPremium": 38.99
+  },
+  "penalties": {
+    "partBPerFullYear": 0.1,
+    "partDPerMonth": 0.01,
+    "partAPerFullYear": 0.1,
+    "partADurationMultiple": 2,
+    "roundedTo": 0.1
   }
 }

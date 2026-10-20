@@ -69,6 +69,23 @@ interface RateBound {
 const asPoints = (n: number) => n;
 
 const BOUND: RateBound[] = [
+  // Medicare Enrollment Penalties' "how" block: the Part B and bought-Part-A
+  // 10% a full year late, and Part D's 1% a month.
+  {
+    file: "tiles/medicarePenaltiesHow.ts",
+    shard: "medicare-costs-2026",
+    path: ".penalties.partBPerFullYear",
+  },
+  {
+    file: "tiles/medicarePenaltiesHow.ts",
+    shard: "medicare-costs-2026",
+    path: ".penalties.partAPerFullYear",
+  },
+  {
+    file: "tiles/medicarePenaltiesHow.ts",
+    shard: "medicare-costs-2026",
+    path: ".penalties.partDPerMonth",
+  },
   // Cashing Out a 401(k)'s "how" block: the additional tax, the withholding,
   // and the check that is what the withholding leaves.
   {

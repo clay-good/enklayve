@@ -1038,9 +1038,9 @@
       "staleAfterYears": 0,
       "shard": "medicare-costs-2026.json",
       "sourceUrl": "https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-premiums-deductibles",
-      "sourceDocument": "CMS, 2026 Medicare Parts A & B Premiums and Deductibles (Nov. 14, 2025); 42 U.S.C. §1395r(i)",
+      "sourceDocument": "CMS, 2026 Medicare Parts A & B Premiums and Deductibles; 2026 Part D bid information; 42 CFR §§406.32, 408.22, 423.286",
       "dateRetrieved": "2026-10-19",
-      "contentHash": "093235e474b599503643b6a06dbe2a08258005bb0af0b0347d0c9d4e3b1ed103"
+      "contentHash": "4606f814f9bf2d0d4a078b918c98ab32e9b6fa0bc623d0048595c7593c57f4b2"
     },
     {
       "id": "child-tax-2024",

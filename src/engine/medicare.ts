@@ -77,3 +77,64 @@ export function irmaaFor(
     next,
   };
 }
+
+/** To the nearest `step` dollars, half up, as Medicare rounds a premium. */
+function toNearest(value: Decimal, step: number): Money {
+  return Money.from(value.dividedBy(step).toDecimalPlaces(0, Decimal.ROUND_HALF_UP).times(step));
+}
+
+export interface PenaltyInput {
+  /** Full months after the initial enrollment period without Part B and without a special period. */
+  monthsLateB: number;
+  /** Months after the initial period without Part D or creditable coverage, past the 63-day grace. */
+  monthsLateD: number;
+  /** For someone who buys Part A: months late, and which premium they pay. */
+  monthsLateA: number;
+  partAPremium: "none" | "reduced" | "full";
+}
+
+export interface PenaltyResult {
+  partB: { percent: number; monthly: Money; premiumWithPenalty: Money };
+  partD: { percent: number; monthly: Money };
+  partA: { percent: number; monthly: Money; years: number };
+}
+
+/**
+ * The three late-enrollment penalties. Part B adds 10% of the standard premium
+ * for each full 12 months late, for as long as the reader has Part B; Part D adds
+ * 1% of the base beneficiary premium for each uncovered month, for as long as
+ * they have Part D; bought Part A adds 10% for twice the full years late.
+ */
+export function medicarePenalties(input: PenaltyInput, costs: MedicareCostsData): PenaltyResult {
+  const p = costs.penalties;
+  const yearsB = Math.floor(Math.max(0, input.monthsLateB) / 12);
+  const monthsD = Math.floor(Math.max(0, input.monthsLateD));
+  const yearsA = Math.floor(Math.max(0, input.monthsLateA) / 12);
+  const standard = new Decimal(costs.partB.standardMonthly);
+  const pctB = new Decimal(p.partBPerFullYear).times(yearsB);
+  const penaltyB = standard.times(pctB);
+  const pctD = new Decimal(p.partDPerMonth).times(monthsD);
+  const premiumA =
+    input.partAPremium === "full"
+      ? costs.partA.premiumFull
+      : input.partAPremium === "reduced"
+        ? costs.partA.premiumReduced
+        : 0;
+  const pctA = yearsA > 0 ? new Decimal(p.partAPerFullYear) : new Decimal(0);
+  return {
+    partB: {
+      percent: pctB.toNumber(),
+      monthly: Money.from(penaltyB).roundToCents(),
+      premiumWithPenalty: toNearest(standard.plus(penaltyB), p.roundedTo),
+    },
+    partD: {
+      percent: pctD.toNumber(),
+      monthly: toNearest(new Decimal(costs.partD.baseBeneficiaryPremium).times(pctD), p.roundedTo),
+    },
+    partA: {
+      percent: pctA.toNumber(),
+      monthly: Money.from(new Decimal(premiumA).times(pctA)).roundToCents(),
+      years: premiumA > 0 ? yearsA * p.partADurationMultiple : 0,
+    },
+  };
+}

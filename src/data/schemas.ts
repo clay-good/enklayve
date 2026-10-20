@@ -1312,6 +1312,19 @@ const IrmaaTierSchema = z.object({
 export const MedicareCostsSchema = z.object({
   year: z.number().int(),
   partB: z.object({ standardMonthly: z.number().gt(0), annualDeductible: z.number().gt(0) }),
+  /** Part A for someone who buys it: under 30 quarters (full) or 30-39 (reduced). */
+  partA: z.object({ premiumFull: z.number().gt(0), premiumReduced: z.number().gt(0) }),
+  partD: z.object({ baseBeneficiaryPremium: z.number().gt(0) }),
+  /** The late-enrollment penalties (42 CFR §§408.22, 423.286(d)(3), 406.32(d)). */
+  penalties: z.object({
+    partBPerFullYear: z.number().gt(0).lt(1),
+    partDPerMonth: z.number().gt(0).lt(1),
+    partAPerFullYear: z.number().gt(0).lt(1),
+    /** Bought Part A carries its penalty for this many times the years of delay. */
+    partADurationMultiple: z.number().int().positive(),
+    /** Medicare rounds a premium with its penalty to this, in dollars. */
+    roundedTo: z.number().gt(0),
+  }),
   irmaa: z.object({
     /** §1395r(i)(4)(B): MAGI from this many years before the premium year. */
     lookbackYears: z.number().int().positive(),
