@@ -1313,7 +1313,12 @@ export const MedicareCostsSchema = z.object({
   year: z.number().int(),
   partB: z.object({ standardMonthly: z.number().gt(0), annualDeductible: z.number().gt(0) }),
   /** Part A for someone who buys it: under 30 quarters (full) or 30-39 (reduced). */
-  partA: z.object({ premiumFull: z.number().gt(0), premiumReduced: z.number().gt(0) }),
+  partA: z.object({
+    premiumFull: z.number().gt(0),
+    premiumReduced: z.number().gt(0),
+    /** §406.6(d)(4): a late application reaches back this many months, never before eligibility. */
+    retroactiveMonths: z.number().int().positive(),
+  }),
   partD: z.object({ baseBeneficiaryPremium: z.number().gt(0) }),
   /** The late-enrollment penalties (42 CFR §§408.22, 423.286(d)(3), 406.32(d)). */
   penalties: z.object({

@@ -138,3 +138,66 @@ export function medicarePenalties(input: PenaltyInput, costs: MedicareCostsData)
     },
   };
 }
+
+/** A calendar month as a count, so months can be compared and subtracted. */
+function monthIndex(year: number, month: number): number {
+  return year * 12 + (month - 1);
+}
+
+export interface HsaTimingInput {
+  /** "YYYY-MM-DD". */
+  birthDate: string;
+  /** "YYYY-MM": the month the reader applies for Part A, or claims Social Security. */
+  applyMonth: string;
+  coverage: "self" | "family";
+  limits: { selfOnly: number; family: number; catchUp55: number };
+}
+
+export interface HsaTimingResult {
+  /** The first month of Medicare eligibility, at 65. */
+  eligibleFrom: { year: number; month: number };
+  /** When premium-free Part A actually starts, reaching back from the application. */
+  partAFrom: { year: number; month: number };
+  /** The last month an HSA contribution may be made for; null if none in that year. */
+  lastContributionMonth: { year: number; month: number } | null;
+  /** Months of the Part A year the reader is still HSA-eligible. */
+  eligibleMonths: number;
+  /** The prorated limit for that year, with the catch-up at 55. */
+  limit: Money;
+  /** Months between Part A's start and the application, the backdated ones. */
+  backdatedMonths: number;
+}
+
+/**
+ * When HSA contributions must stop around Medicare (IRC §223(b)(7)). Premium-
+ * free Part A applied for late reaches back up to six months, never before the
+ * month of eligibility (42 CFR §406.6(d)(4)), and the HSA limit is zero from the
+ * first month of entitlement. The year's limit is one twelfth for each month
+ * still eligible (§223(b)(2)), with the catch-up at 55.
+ */
+export function hsaMedicareTiming(
+  input: HsaTimingInput,
+  costs: MedicareCostsData,
+): HsaTimingResult {
+  const [by, bm, bd] = input.birthDate.split("-").map(Number) as [number, number, number];
+  // Medicare counts age 65 as reached the day before the 65th birthday, so a
+  // first-of-the-month birthday makes the month before the first month.
+  const elig = monthIndex(by + 65, bm) - (bd === 1 ? 1 : 0);
+  const [ay, am] = input.applyMonth.split("-").map(Number) as [number, number];
+  const applied = monthIndex(ay, am);
+  const start = Math.max(elig, applied - costs.partA.retroactiveMonths);
+  const asMonth = (i: number) => ({ year: Math.floor(i / 12), month: (i % 12) + 1 });
+  const startMonth = asMonth(start);
+  const eligibleMonths = startMonth.month - 1;
+  const annual =
+    (input.coverage === "family" ? input.limits.family : input.limits.selfOnly) +
+    input.limits.catchUp55;
+  return {
+    eligibleFrom: asMonth(elig),
+    partAFrom: startMonth,
+    lastContributionMonth: eligibleMonths > 0 ? asMonth(start - 1) : null,
+    eligibleMonths,
+    limit: Money.from(new Decimal(annual).times(eligibleMonths).dividedBy(12)).roundToCents(),
+    backdatedMonths: Math.max(0, applied - start),
+  };
+}
