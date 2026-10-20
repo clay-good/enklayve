@@ -1381,6 +1381,23 @@ export const SsFamilyBenefitsSchema = z.object({
 });
 export type SsFamilyBenefitsData = z.infer<typeof SsFamilyBenefitsSchema>;
 
+/** The federal SSI payment and its exclusions for a year (SPEC-5 later-life L6). */
+export const SsiSchema = z.object({
+  year: z.number().int(),
+  federalBenefitRate: z.object({ individual: z.number().gt(0), couple: z.number().gt(0) }),
+  /** §416.1124(c)(12), from unearned income first. */
+  generalExclusion: z.number().gt(0),
+  /** §416.1112(c)(5). */
+  earnedExclusion: z.number().gt(0),
+  /** §416.1112(c)(7): the share of the rest that counts. */
+  earnedShareCounted: z.number().gt(0).lt(1),
+  /** For a student under 22, §416.1112(c)(3). */
+  studentExclusion: z.object({ monthly: z.number().gt(0), annual: z.number().gt(0) }),
+  resourceLimit: z.object({ individual: z.number().gt(0), couple: z.number().gt(0) }),
+  citation: CitationSchema,
+});
+export type SsiData = z.infer<typeof SsiSchema>;
+
 export const GiftTaxSchema = z.object({
   taxYear: z.number().int(),
   annualExclusion: z.number().gte(0),
@@ -2039,6 +2056,7 @@ export const DATASET_SCHEMAS = {
   "medicare-costs": MedicareCostsSchema,
   "ss-earnings-test": SsEarningsTestSchema,
   "ss-family-benefits": SsFamilyBenefitsSchema,
+  ssi: SsiSchema,
 } as const;
 
 export type DatasetKind = keyof typeof DATASET_SCHEMAS;

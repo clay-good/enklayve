@@ -1069,6 +1069,19 @@
       "contentHash": "6776f6f35e4831a39d843b5825a688a876f1aa5af7539370ac41e9b5b364c88b"
     },
     {
+      "id": "ssi-2026",
+      "kind": "ssi",
+      "version": "2026.0",
+      "effectiveYear": 2026,
+      "expectedRefreshMonths": 12,
+      "staleAfterYears": 0,
+      "shard": "ssi-2026.json",
+      "sourceUrl": "https://www.federalregister.gov/documents/2025/11/03/2025-19763/cost-of-living-increase-and-other-determinations-for-2026",
+      "sourceDocument": "SSA, Cost-of-Living Increase and Other Determinations for 2026 (Nov. 3, 2025); 20 CFR §§416.1112, 416.1124, 416.1205",
+      "dateRetrieved": "2026-10-19",
+      "contentHash": "615ec6638f88accae496be1eb3e356a51d5b1d55e8bf6e59422d5252ef1dc8e8"
+    },
+    {
       "id": "child-tax-2024",
       "kind": "child-tax",
       "version": "2026.0",

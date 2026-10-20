@@ -237,6 +237,8 @@ Ordered prompts in the SPEC/SPEC-2 convention. Each phase is independently shipp
 
 **Shell cost.** Two tiles; both shards load on demand with the hub.
 
+**Status — in progress.** **`ssi-estimate` shipped 2026-10-19** (L6, tier 3, channel: SSA), on the lazy pattern with its new shard `ssi-2026`. The 2026 federal payment ($994 and $1,491) and the student exclusion ($2,410 a month, $9,730 a year) come from SSA's Federal Register notice. The $20 and $65 exclusions, the half of the rest, and their order (20 CFR §416.1112), plus the $2,000 and $3,000 resource limits (§416.1205), come from eCFR. Golden cases work the regulation's order by hand: $500 of wages counts as $207.50. **One acceptance line is still open.** SSA's site refuses automated reads, so the Red Book's worked example has not been checked against the tool. A person should check it. The no-verdict and caveat-above-figure tests pass. **Measured: 0.4 kB** (316.8 → 317.2 of 325). L5 and the screener rows are next.
+
 ### Phase 31: The young family
 
 **Goal.** The rewritten credit, its FSA, the second-income question, and the screener's missing programs.

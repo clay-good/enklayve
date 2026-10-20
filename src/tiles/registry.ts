@@ -62,6 +62,7 @@ import { medicarePenaltiesTile } from "./medicarePenalties";
 import { ssEarningsTestTile } from "./ssEarningsTest";
 import { hsaMedicareTimingTile } from "./hsaMedicareTiming";
 import { ssSpousalSurvivorTile } from "./ssSpousalSurvivor";
+import { ssiEstimateTile } from "./ssiEstimate";
 import { healthPlanTile } from "./healthPlan";
 import { eobCheckerTile } from "./eobChecker";
 import { cashFlowTile } from "./cashFlow";
@@ -177,6 +178,7 @@ const HUB_CONFIGS: HubConfig[] = [
       hsaMedicareTimingTile,
       ssEarningsTestTile,
       ssSpousalSurvivorTile,
+      ssiEstimateTile,
     ],
   },
 

@@ -412,6 +412,13 @@
       "why": "§404.410 holds the spousal and survivor reduction rules and their examples, and §404.409 the survivor's full retirement age; an amendment here is a rule to re-read.",
       "fingerprint": "064a1fc2934bf96d4d6b6c9616267028ec93714bb04730ba934c8e5f12e97588",
       "checkedOn": "2026-10-20"
+    },
+    {
+      "shard": "ssi-2026",
+      "url": "https://www.ecfr.gov/current/title-20/chapter-III/part-416/subpart-K/section-416.1112",
+      "why": "The earned-income exclusions and their order are §416.1112; the 2026 federal benefit rates come from SSA's annual notice, which the zero-year window forces a person to read each fall.",
+      "fingerprint": "2254c0f544736fd1da5b7ed897be43afe1452db303f4d4e7a8ecdb51fcb03294",
+      "checkedOn": "2026-10-20"
     }
   ]
 }

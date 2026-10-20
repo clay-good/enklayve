@@ -147,6 +147,12 @@ describe("the containment test on money", () => {
 });
 
 const BOUND: Bound[] = [
+  // SSI's $20 general and $65 earned-income exclusions, in the how block and
+  // the breakdown labels.
+  { file: "tiles/ssiEstimateHow.ts", shard: "ssi-2026", path: ".generalExclusion" },
+  { file: "tiles/ssiEstimateHow.ts", shard: "ssi-2026", path: ".earnedExclusion" },
+  { file: "tiles/ssiEstimateView.ts", shard: "ssi-2026", path: ".generalExclusion" },
+  { file: "tiles/ssiEstimateView.ts", shard: "ssi-2026", path: ".earnedExclusion" },
   // The earnings test's ratios, "$1 for every $2" and "$1 for every $3".
   {
     file: "tiles/ssEarningsTestHow.ts",
