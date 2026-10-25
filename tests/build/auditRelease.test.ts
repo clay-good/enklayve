@@ -860,7 +860,17 @@ describe("checkBundleBudget", () => {
     // Then to 315, by the owner, for NJ, VA, WA, AZ and MA (4.2 kB), and to
     // 319 for TN, IN, MD, MO and CO (3.4 kB). Then to 325, by the owner, for
     // the rest of SPEC-5, at a measured 0.2 to 0.6 kB per on-demand tool.
-    expect(SHELL_GZIP_BUDGET_KB).toBe(325);
+    //
+    // And to 328 on 2026-10-25, by the owner, for a security patch rather than
+    // a feature: zod's GHSA-mrhx-c7xc-m3w5 has no 3.x fix, so the advisory
+    // forced 3.25.76 -> 4.6.7 and 13.5 kB of eager shell with it. It is the
+    // first raise here that bought nothing a reader can see, and the first the
+    // lazy pattern could not argue down — zod validates every shard on the
+    // eager load path, so deferring it defers the data. 328 and not 327
+    // because MIN_HEADROOM_KB wants a kilobyte clear of CI's 326.6. The
+    // docstring records the measurement and the alternatives that were weighed
+    // and rejected; the next tool argues against 328.
+    expect(SHELL_GZIP_BUDGET_KB).toBe(328);
   });
 });
 
