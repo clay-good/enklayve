@@ -65,14 +65,16 @@ export const TaxBracketSchema = z.object({
   baseTax: z.number().gte(0).optional(),
 });
 
-const bracketsByStatus = z.record(FilingStatus, z.array(TaxBracketSchema).min(1));
-const amountByStatus = z.record(FilingStatus, z.number().gte(0));
+const bracketsByStatus = z.partialRecord(FilingStatus, z.array(TaxBracketSchema).min(1));
+const amountByStatus = z.partialRecord(FilingStatus, z.number().gte(0));
 
 /**
- * A per-filing-status amount that MUST define **every** status. `z.record` over
- * an enum key validates a *partial* object at runtime (a shard with only
- * `single` still parses), which is the right shape for state schedules that
- * legitimately omit statuses and lean on the engine's `bracketsFor` fallback.
+ * A per-filing-status amount that MUST define **every** status.
+ * `z.partialRecord` over an enum key validates a *partial* object at runtime (a
+ * shard with only `single` still parses), which is the right shape for state
+ * schedules that legitimately omit statuses and lean on the engine's
+ * `bracketsFor` fallback. Plain `z.record` over an enum is exhaustive as of zod
+ * 4 and would reject those shards outright.
  * But a federal figure published for all five statuses — the Additional Medicare
  * Tax threshold — must be complete: a shard missing one is a data error that
  * should fail load-time validation and trip the fail-safe banner, never let the

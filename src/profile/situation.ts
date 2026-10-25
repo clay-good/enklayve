@@ -233,7 +233,7 @@ export const MAX_PROFILE_ROWS = 100;
 /** Keep the first {@link MAX_PROFILE_ROWS} rows of a restored list, or nothing. */
 function rows<T extends z.ZodTypeAny>(
   schema: T,
-): z.ZodCatch<z.ZodOptional<z.ZodEffects<T, z.infer<T>, z.input<T>>>> {
+): z.ZodCatch<z.ZodOptional<z.ZodType<z.infer<T>, z.input<T>>>> {
   return schema
     .transform((list: z.infer<T>) => (list as unknown[]).slice(0, MAX_PROFILE_ROWS) as z.infer<T>)
     .optional()
