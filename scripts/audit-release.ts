@@ -717,8 +717,38 @@ export function checkTierDeclared(tiles: AuditTile[], legacy: readonly string[])
  * that is about 5 kB, which a 1 kB minimum headroom and the 0.5 kB CI spread
  * put at 322 to 323. Six, not four: a ceiling that has to be raised again
  * mid-phase is the drift this comment has argued against since 260.
+ *
+ * **328 on 2026-10-25, and this one bought no features at all.** zod published
+ * GHSA-mrhx-c7xc-m3w5 — memory exhausted while validating oversized
+ * constrained collections — against every release below 4.6.6, with no 3.x
+ * patch line to take instead, so the only fix on offer was the major move
+ * `3.25.76 -> 4.6.7`. It costs **13.5 kB of eager shell**: 312.6 here and
+ * 326.1 after, which is 326.6 on the heavy reading in CI. That is three
+ * kilobytes of ceiling in one step, against a comment that has argued for one
+ * at a time since 260, so it is worth being plain about why none of the usual
+ * answers applied.
+ *
+ * The lazy pattern does not reach it. zod is not a feature that can wait for a
+ * click: it is the validator every dataset shard passes through on the eager
+ * load path, so deferring it means deferring the data, and the data is what a
+ * first visit is for. Nor is it divisible — the previous raises bought tools
+ * that could be counted off one by one and trimmed as they landed, while this
+ * is a single dependency that either parses the shards or does not. The two
+ * real alternatives were both worse. `zod/mini`'s functional API is a rewrite
+ * of some three thousand lines of schema for a security patch, which is how
+ * schema bugs get introduced. Dismissing the advisory was genuinely arguable —
+ * there is no server, so the only input is the reader's own file in their own
+ * browser, and MAX_PROFILE_ROWS already caps the one unbounded door for
+ * exactly this freeze — but it was the owner's call and the owner took the
+ * bytes instead, on the grounds that a known-vulnerable validator on the load
+ * path is not where this app wants to be clever.
+ *
+ * 328 rather than 327 because MIN_HEADROOM_KB wants a kilobyte clear of CI's
+ * 326.6, and a budget set from the local reading is the mistake the paragraphs
+ * below spent three raises learning. That leaves 1.4 kB free in CI, which is
+ * tighter than any new work should assume: the next tool pays for itself.
  */
-export const SHELL_GZIP_BUDGET_KB = 325;
+export const SHELL_GZIP_BUDGET_KB = 328;
 
 /**
  * The headroom this gate needs to be measuring the shell rather than the runner.
