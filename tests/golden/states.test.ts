@@ -120,16 +120,16 @@ describe("states that start from federal taxable income", () => {
 });
 
 describe("graduated states", () => {
-  it("California single $50k → $1,192.53 (2025 Schedule X, std deduction $5,706)", () => {
+  it("California single $50k → $1,142.72 (2026 Schedule X, std deduction $5,706)", () => {
     const r = evaluateTaxes(
       { filingStatus: "single", wages: 50000 },
       { federal: ds.federal, state: ds.state("ca"), fica: ds.fica },
     );
-    // Taxable 44,294: 1%·11,079 + 2%·15,185 + 4%·15,188 + 6%·2,842 = 1,192.53.
-    expect(cents(r.state!.incomeTax)).toBe("1192.53");
-    // Combined: federal 3,820 + FICA 3,825 + CA 1,192.53.
-    expect(cents(r.totals.totalTax)).toBe("8837.53");
-    expect(cents(r.totals.takeHome)).toBe("41162.47");
+    // Taxable 44,294: 1%·11,456 + 2%·15,701 + 4%·15,704 + 6%·1,433 = 1,142.72.
+    expect(cents(r.state!.incomeTax)).toBe("1142.72");
+    // Combined: federal 3,820 + FICA 3,825 + CA 1,142.72.
+    expect(cents(r.totals.totalTax)).toBe("8787.72");
+    expect(cents(r.totals.takeHome)).toBe("41212.28");
     expect(r.totals.marginalRate).toBeCloseTo(0.2565, 5); // 12 + 7.65 + 6
   });
 

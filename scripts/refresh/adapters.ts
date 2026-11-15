@@ -3866,28 +3866,25 @@ export const ADAPTERS: RefreshAdapter[] = [
     sourceUrl: "https://www.ftb.ca.gov/file/personal/deductions/index.html",
     cadence: "Annual",
     parse: parseStandardDeductions,
-    // The deduction this adapter anchors is already on 2026. The BRACKETS are
-    // not: the FTB indexes them to the California CPI and had not published a
-    // 2026 rate schedule as of 2026-09-01, so the shard deliberately carries the
-    // 2025 thresholds forward and its own note says so.
+    // The brackets are on 2026: the FTB's 2026 rate schedules arrived and were
+    // transcribed on 2026-11-15. The DEDUCTION is not. The deductions page this
+    // adapter reads still states the 2025 chart, and it will keep agreeing with
+    // a shard that carries that chart forward, so its agreement says nothing
+    // about whether a 2026 figure exists.
     //
-    // Nothing was watching for the day that changes. This adapter reads the
-    // deductions page, which will keep agreeing with a shard that is already
-    // right, so the arrival of the rate schedules would have been noticed by
-    // whoever happened to remember — the failure that left four other states
-    // stale. California is the largest of the fifty-one; a year of un-indexed
-    // brackets there is the most people this repo can be slightly wrong about
-    // at once.
+    // So this waits on the document that will state it: the 2026 Form 540
+    // booklet, whose line 18 chart is the 2026 standard deduction. Not the 2026
+    // Form 540-ES, which is already out and restates the 2025 amounts.
     awaiting: {
-      what: "California FTB's 2026 California Tax Rate Schedules (Schedule X single/MFS, Schedule Y MFJ/QSS, Schedule Z head of household — the CCPI-indexed bracket thresholds)",
+      what: "California FTB's 2026 Form 540 booklet (the line 18 standard deduction chart, CCPI-indexed for 2026)",
       // The URL carries the tax year, so answering at all is the whole signal.
-      // Nothing is parsed from it: arrival means a person transcribes the
-      // schedule and reads the diff, which is what a bracket table deserves.
-      arrived: { url: "https://www.ftb.ca.gov/forms/2026/2026-540-tax-rate-schedules.pdf" },
-      // The 2025 schedule at the same pattern, verified answering on
-      // 2026-09-01 while the 2026 one 404s. If the FTB renames the scheme, this
-      // stops hitting and the probe reports itself blind rather than patient.
-      calibration: { url: "https://www.ftb.ca.gov/forms/2025/2025-540-tax-rate-schedules.pdf" },
+      // Nothing is parsed from it: arrival means a person reads the chart and
+      // the diff.
+      arrived: { url: "https://www.ftb.ca.gov/forms/2026/2026-540-booklet.pdf" },
+      // The 2025 booklet at the same pattern, verified answering on 2026-11-15
+      // while the 2026 one 404s. If the FTB renames the scheme, this stops
+      // hitting and the probe reports itself blind rather than patient.
+      calibration: { url: "https://www.ftb.ca.gov/forms/2025/2025-540-booklet.pdf" },
     },
   },
   {

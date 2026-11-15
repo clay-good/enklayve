@@ -7,36 +7,36 @@
   "bracketsByFilingStatus": {
     "single": [
       { "lowerBound": 0, "rate": 0.01 },
-      { "lowerBound": 11079, "rate": 0.02 },
-      { "lowerBound": 26264, "rate": 0.04 },
-      { "lowerBound": 41452, "rate": 0.06 },
-      { "lowerBound": 57542, "rate": 0.08 },
-      { "lowerBound": 72724, "rate": 0.093 },
-      { "lowerBound": 371479, "rate": 0.103 },
-      { "lowerBound": 445771, "rate": 0.113 },
-      { "lowerBound": 742953, "rate": 0.123 }
+      { "lowerBound": 11456, "rate": 0.02 },
+      { "lowerBound": 27157, "rate": 0.04 },
+      { "lowerBound": 42861, "rate": 0.06 },
+      { "lowerBound": 59498, "rate": 0.08 },
+      { "lowerBound": 75197, "rate": 0.093 },
+      { "lowerBound": 384109, "rate": 0.103 },
+      { "lowerBound": 460927, "rate": 0.113 },
+      { "lowerBound": 768213, "rate": 0.123 }
     ],
     "married_jointly": [
       { "lowerBound": 0, "rate": 0.01 },
-      { "lowerBound": 22158, "rate": 0.02 },
-      { "lowerBound": 52528, "rate": 0.04 },
-      { "lowerBound": 82904, "rate": 0.06 },
-      { "lowerBound": 115084, "rate": 0.08 },
-      { "lowerBound": 145448, "rate": 0.093 },
-      { "lowerBound": 742958, "rate": 0.103 },
-      { "lowerBound": 891542, "rate": 0.113 },
-      { "lowerBound": 1485906, "rate": 0.123 }
+      { "lowerBound": 22912, "rate": 0.02 },
+      { "lowerBound": 54314, "rate": 0.04 },
+      { "lowerBound": 85722, "rate": 0.06 },
+      { "lowerBound": 118996, "rate": 0.08 },
+      { "lowerBound": 150394, "rate": 0.093 },
+      { "lowerBound": 768218, "rate": 0.103 },
+      { "lowerBound": 921854, "rate": 0.113 },
+      { "lowerBound": 1536426, "rate": 0.123 }
     ],
     "head_of_household": [
       { "lowerBound": 0, "rate": 0.01 },
-      { "lowerBound": 22173, "rate": 0.02 },
-      { "lowerBound": 52530, "rate": 0.04 },
-      { "lowerBound": 67716, "rate": 0.06 },
-      { "lowerBound": 83805, "rate": 0.08 },
-      { "lowerBound": 98990, "rate": 0.093 },
-      { "lowerBound": 505208, "rate": 0.103 },
-      { "lowerBound": 606251, "rate": 0.113 },
-      { "lowerBound": 1010417, "rate": 0.123 }
+      { "lowerBound": 22927, "rate": 0.02 },
+      { "lowerBound": 54316, "rate": 0.04 },
+      { "lowerBound": 70018, "rate": 0.06 },
+      { "lowerBound": 86654, "rate": 0.08 },
+      { "lowerBound": 102356, "rate": 0.093 },
+      { "lowerBound": 522385, "rate": 0.103 },
+      { "lowerBound": 626864, "rate": 0.113 },
+      { "lowerBound": 1044771, "rate": 0.123 }
     ]
   },
   "standardDeductionByFilingStatus": {
@@ -54,11 +54,11 @@
     }
   ],
   "citation": {
-    "sourceUrl": "https://www.ftb.ca.gov/forms/2025/2025-540-tax-rate-schedules.pdf",
-    "sourceDocument": "California FTB 2025 California Tax Rate Schedules; 2026 standard deduction (FTB Form 540-ES)",
-    "sourceNote": "Bracket thresholds are the FTB 2025 California Tax Rate Schedules (Schedule X single/MFS, Schedule Y MFJ/QSS, Schedule Z head of household) — the most recent rate schedule the FTB has published; the 2026-indexed brackets are not yet issued, so these latest-published values are used (a small under-index vs. an unknown ~3% CCPI bump). The standard deduction ($5,706 single/MFS, $11,412 MFJ/HoH/QSS) is the 2025 amount, carried like the brackets. A 2026-DATED FTB document is not a 2026 source here: the 2026 Form 540-ES worksheet and the EDD's 2026 Method B withholding schedules both restate the prior year's figures — 2026 Method B carries exactly the 2025 booklet's brackets and deduction, and 2025 Method B carried 2024's. FTB publishes the June-to-June CCPI factor that sets the 2026 amounts in its October Tax News, with the schedules following in late December; until then these are the most recent real figures and they under-index, erring slightly high. The 1% Behavioral Health Services Tax (Prop 63) applies to taxable income over $1,000,000.",
+    "sourceUrl": "https://www.ftb.ca.gov/forms/2026/2026-540-tax-rate-schedules.pdf",
+    "sourceDocument": "California FTB 2026 California Tax Rate Schedules; 2025 standard deduction (FTB deductions page)",
+    "sourceNote": "Bracket thresholds are the FTB 2026 California Tax Rate Schedules (Schedule X single/MFS, Schedule Y MFJ/QSS, Schedule Z head of household), the CCPI-indexed 2026 schedule, published in the 2026 Personal Income Tax Booklet. The standard deduction ($5,706 single/MFS, $11,412 MFJ/HoH/QSS) is still the 2025 amount: the FTB deductions page states the 2025 chart, and no 2026 Form 540 booklet is published yet, so it is carried forward and errs slightly low, so tax slightly high (the 2026 amount is indexed by the same CCPI factor, about 3.4%, that moved the brackets). A 2026-DATED FTB document is not a 2026 source for the deduction: the 2026 Form 540-ES worksheet and the EDD's 2026 Method B withholding schedules both restate the prior year's figures. The 1% Behavioral Health Services Tax (Prop 63) applies to taxable income over $1,000,000.",
     "effectiveYear": 2026,
-    "dateRetrieved": "2026-06-05"
+    "dateRetrieved": "2026-11-15"
   },
   "effectiveDateRange": {
     "start": "2026-01-01",
