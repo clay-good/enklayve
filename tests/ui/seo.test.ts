@@ -1,7 +1,24 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { renderToolPage, toolPages, toolPagePath, toolPageUrl } from "../../scripts/tool-pages";
+import {
+  renderToolPage,
+  searchName,
+  toolPages,
+  toolPagePath,
+  toolPageUrl,
+} from "../../scripts/tool-pages";
+import {
+  statePages,
+  stateInfos,
+  statePageUrl,
+  workedExample,
+  STATES_INDEX_URL,
+} from "../../scripts/state-pages";
+import { guidePages, GUIDES } from "../../scripts/guides";
+import { TAX_YEAR } from "../../scripts/shards";
+import { US_STATES } from "../../src/data/usStates";
+import { ANTI_BUDGET_SECTIONS } from "../../src/ui/guideCopy";
 import { loadLazyHows } from "../../src/tiles/lazy";
 import { pmiEndDateTile } from "../../src/tiles/pmiEndDate";
 import { escapeHtml } from "../../scripts/tools-index";
@@ -41,9 +58,9 @@ describe("per-tile static shells", () => {
     for (const tile of TILES) {
       const html = renderToolPage(tile);
       expect(html).toContain("<!doctype html>");
-      // Keyword-carrying title: the tool's own name, then what it costs.
+      // Keyword-carrying title: the name people search for, then what it costs.
       expect(html).toContain(
-        `<title>${escapeHtml(tile.title)} · Free &amp; private · enklayve</title>`,
+        `<title>${escapeHtml(searchName(tile, true))} · Free &amp; private · enklayve</title>`,
       );
       // A real, deep link into the live on-device tool.
       expect(html).toContain(`href="/#/${tile.id}"`);
@@ -246,9 +263,12 @@ describe("sitemap.xml", () => {
     }
   });
 
-  it("has exactly one <loc> per indexable URL (home + both pages + every tool page)", () => {
+  it("has exactly one <loc> per indexable URL (home, site pages, tool, state and guide pages)", () => {
     const locs = xml.match(/<loc>/g) ?? [];
-    expect(locs.length).toBe(PAGE_COUNT + 3);
+    expect(locs.length).toBe(PAGE_COUNT + 3 + statePages().length + guidePages().length);
+    for (const { name } of US_STATES) {
+      expect(xml).toContain(`<loc>${SITE_ORIGIN}/${statePageUrl(name)}</loc>`);
+    }
   });
 
   /**
@@ -276,6 +296,9 @@ describe("every page's description fits a search result", () => {
     ["tools.html", renderToolsIndex()],
     [ABOUT_PAGE_PATH, renderAboutPage()],
     ...toolPages().map(({ fileName, source }) => [fileName, source] as [string, string]),
+    ...[...statePages(), ...guidePages()].map(
+      ({ fileName, source }) => [fileName, source] as [string, string],
+    ),
   ];
 
   it("says enough to be worth clicking, and not so much that it is cut off", () => {
@@ -322,5 +345,91 @@ describe("a tool whose explanation loads on demand still has it on its crawl pag
     await loadLazyHows();
     const html = renderToolPage(pmiEndDateTile, "home-purchases");
     expect(html).toContain("Homeowners Protection Act sets three dates");
+  });
+});
+
+/**
+ * The searches people actually type name the thing and the year: "take-home
+ * pay calculator 2026", not "Take-Home Pay". A tool page whose title says
+ * neither loses that query to one that does.
+ */
+describe("tool page titles carry the search", () => {
+  it("names the kind of tool, and the most-searched carry the tax year", () => {
+    for (const { tile } of SUB_TOOLS) {
+      expect(searchName(tile, false), tile.id).toMatch(
+        /calculator|checker|estimat|planner|screener|checklist|chooser|explorer|optimizer|picker|timeline|sequences|limits|windows|triage|\?$/i,
+      );
+    }
+    const takeHome = SUB_TOOLS.find((s) => s.tile.id === "take-home")!.tile;
+    expect(searchName(takeHome, false)).toBe(`Take-Home Pay Calculator ${TAX_YEAR}`);
+  });
+});
+
+/**
+ * One page per state, because "California paycheck calculator" is a search
+ * and `/tools/take-home` names no state. Its examples must be the numbers the
+ * calculator itself would show, not a second model of them.
+ */
+describe("per-state paycheck pages", () => {
+  const pages = statePages();
+  const infos = stateInfos();
+
+  it("covers all fifty states and DC, plus an index that links every one", () => {
+    expect(infos.length).toBe(51);
+    expect(pages.length).toBe(52);
+    const index = pages.find((p) => p.url === STATES_INDEX_URL)!.source;
+    for (const { name } of US_STATES) expect(index).toContain(`href="/${statePageUrl(name)}"`);
+  });
+
+  it("prints the engine's own take-home figure, and deep-links the calculator to the state", () => {
+    const ca = infos.find((i) => i.code === "CA")!;
+    const html = pages.find((p) => p.url === statePageUrl("California"))!.source;
+    const takeHome = Math.round(workedExample(ca.jurisdiction, 60_000).totals.takeHome.toNumber());
+    expect(html).toContain(`$${takeHome.toLocaleString("en-US")}`);
+    expect(html).toContain('href="/#/paycheck-taxes?tool=take-home&st=ca&fs=single&w=80000"');
+    expect(html).toContain(`<link rel="canonical" href="${SITE_ORIGIN}/states/california" />`);
+  });
+
+  it("says plainly when a state has no income tax on wages", () => {
+    const html = pages.find((p) => p.url === statePageUrl("Texas"))!.source;
+    expect(html).toContain("Texas has no income tax on wages");
+  });
+
+  it("names the county a mandatory local tax is computed for", () => {
+    const html = pages.find((p) => p.url === statePageUrl("Maryland"))!.source;
+    expect(html).toContain("Montgomery County");
+  });
+
+  it("loads nothing cross-origin", () => {
+    for (const { source } of pages) {
+      expect(/<script[^>]+src\s*=\s*"https?:\/\//i.test(source)).toBe(false);
+      expect(/<link[^>]+href\s*=\s*"https?:\/\/(?!enklayve\.com\/)/i.test(source)).toBe(false);
+    }
+  });
+});
+
+/**
+ * The anti-budget is what the site leads with, and it lived only on the
+ * browser-rendered home, invisible to a crawler. The guide carries the same
+ * words the home does.
+ */
+describe("guides", () => {
+  it("renders the home's anti-budget copy, word for word", () => {
+    const html = guidePages().find((p) => p.url === "guides/anti-budget")!.source;
+    for (const s of ANTI_BUDGET_SECTIONS) expect(html).toContain(escapeHtml(s.body));
+  });
+
+  it("links a real tool page from every step", () => {
+    for (const g of GUIDES) {
+      for (const step of g.steps) {
+        expect(step.tools.length, `${g.slug}: ${step.heading}`).toBeGreaterThan(0);
+        for (const id of step.tools) {
+          expect(
+            SUB_TOOLS.some((s) => s.tile.id === id),
+            `${g.slug} links ${id}`,
+          ).toBe(true);
+        }
+      }
+    }
   });
 });

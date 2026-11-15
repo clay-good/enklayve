@@ -17,6 +17,7 @@ import { TILES, SUB_TOOLS } from "../src/tiles/registry";
 import type { TileDefinition } from "../src/tiles/types";
 import { escapeHtml, PAGE_STYLE, breadcrumb, INDEX_PAGE_URL } from "./tools-index";
 import { SITE_ORIGIN } from "./sitemap";
+import { TAX_YEAR } from "./shards";
 
 /** The build path for a tile's shell — the file the bundle emits. */
 export function toolPagePath(id: string): string {
@@ -36,6 +37,67 @@ export function toolPagePath(id: string): string {
  */
 export function toolPageUrl(id: string): string {
   return `tools/${encodeURIComponent(id)}`;
+}
+
+/**
+ * The name a person types into a search box, where it differs from the name
+ * the tool wears in the app. "Take-Home Pay" is a fine heading inside a
+ * calculator; nobody searches for it. They search "take-home pay calculator
+ * 2026", and a page whose title never says "calculator" or the year loses that
+ * query to one that does. `{year}` is the federal shard's tax year, so these
+ * roll with the data rather than with someone's memory.
+ */
+const SEARCH_NAMES: Record<string, string> = {
+  "take-home": "Take-Home Pay Calculator {year}",
+  w4: "W-4 Withholding Calculator {year}",
+  "hourly-salary": "Hourly to Salary Calculator",
+  "federal-income-tax": "Federal Income Tax Calculator {year}",
+  "filing-jointly-vs-separately": "Married Filing Jointly vs Separately Calculator",
+  "marginal-explorer": "Marginal Tax Rate Calculator {year}",
+  "amt-screener": "AMT Calculator {year}",
+  "gift-tax": "Gift Tax Calculator {year}",
+  "self-employment-tax": "Self-Employment Tax Calculator {year}",
+  "quarterly-taxes": "Quarterly Estimated Tax Calculator {year}",
+  "freelance-rate": "Freelance Rate Calculator",
+  "contract-vs-salary": "1099 vs W-2 Calculator",
+  "capital-gains": "Capital Gains Tax Calculator {year}",
+  "compound-growth": "Compound Interest Calculator",
+  "savings-bond": "I Bond Calculator",
+  inflation: "Inflation Calculator (CPI)",
+  "retirement-optimizer": "401(k) and IRA Contribution Calculator {year}",
+  rmd: "RMD Calculator {year}",
+  "social-security-tax": "Social Security Taxable Benefits Calculator",
+  "medicare-irmaa": "Medicare IRMAA Calculator {year}",
+  "loan-amortization": "Mortgage & Loan Amortization Calculator",
+  "debt-freedom": "Debt Payoff Calculator",
+  "student-loan-payment": "Student Loan Payment Calculator",
+  "spending-plan": "50/30/20 Budget Calculator",
+  "home-affordability": "Home Affordability Calculator",
+  "life-insurance": "Life Insurance Needs Calculator",
+  eitc: "EITC Calculator {year}",
+  ctc: "Child Tax Credit Calculator {year}",
+  "aca-ptc": "ACA Premium Tax Credit Calculator {year}",
+  fpl: "Federal Poverty Level Calculator {year}",
+  "fafsa-sai": "FAFSA Student Aid Index Calculator",
+  "ui-estimator": "Unemployment Benefits Calculator",
+  // Hubs, whose page lists the calculators it holds.
+  "paycheck-taxes": "Paycheck & Tax Calculators {year}",
+  "self-employed": "Self-Employed & 1099 Tax Calculators",
+  benefits: "Benefits & Aid Eligibility Calculators",
+  "when-money-is-tight": "Help When Money Is Tight",
+  "where-you-stand": "Where You Stand: Financial Check-Up",
+};
+
+/** A title that already says what kind of tool it is needs no "Calculator". */
+const NAMES_ITS_KIND =
+  /\b(calculator|checker|estimator|estimate|planner|screener|checklist|chooser|explorer|optimizer|picker|timeline|sequences|limits|windows|triage)\b|\?$/i;
+
+/** The searchable name a tile's page leads its `<title>` with. */
+export function searchName(tile: TileDefinition, isHub: boolean): string {
+  const named = SEARCH_NAMES[tile.id];
+  if (named) return named.replace("{year}", String(TAX_YEAR));
+  if (NAMES_ITS_KIND.test(tile.title)) return tile.title;
+  return `${tile.title} ${isHub ? "Calculators" : "Calculator"}`;
 }
 
 /** Every tile that has a page, by id — used to resolve sibling and related links. */
@@ -60,6 +122,9 @@ const EXTRA_STYLE = `
       @media (max-width: 480px) {
         .open { display: block; text-align: center; }
       }`;
+
+/** The pages that point at the per-state pages (scripts/state-pages.ts). */
+const BY_STATE = new Set(["take-home", "paycheck-taxes", "federal-income-tax", "w4"]);
 
 /** A list of links to other tool pages, titles resolved from the registry. */
 function linkList(items: { id: string; note?: string }[]): string {
@@ -93,7 +158,8 @@ export function renderToolPage(tile: TileDefinition, hubId?: string): string {
   const appUrl = hubId
     ? `/#/${encodeURIComponent(hubId)}?tool=${encodeURIComponent(tile.id)}`
     : `/#/${encodeURIComponent(tile.id)}`;
-  const title = `${tile.title} · Free & private · enklayve`;
+  const name = searchName(tile, hubId === undefined);
+  const title = `${name} · Free & private · enklayve`;
   const description = `${tile.description} Free, with no account, and computed entirely on your device.`;
 
   const how = (tile.how ?? "")
@@ -175,10 +241,10 @@ export function renderToolPage(tile: TileDefinition, hubId?: string): string {
   </head>
   <body>
     <nav><a href="/">← enklayve home</a> · <a href="/tools">All tools</a> · <a href="/about">Why enklayve</a></nav>
-    <h1>${escapeHtml(tile.title)}</h1>
+    <h1>${escapeHtml(name)}</h1>
     <p class="lede">${escapeHtml(tile.description)}</p>
 ${covers}    <a class="open" href="${appUrl}">Open the ${escapeHtml(tile.title)} tool →</a>
-${section("How this works", how)}${section(
+${BY_STATE.has(tile.id) ? `    <p><a href="/states">See take-home pay and income tax brackets for every state →</a></p>\n` : ""}${section("How this works", how)}${section(
     hosted.length ? "Calculators in this area" : "Others in this area",
     hosted.length || siblings.length
       ? `    <ul class="tools">\n${linkList(hosted.length ? hosted : siblings)}\n    </ul>`
