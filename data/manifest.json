@@ -101,10 +101,10 @@
       "expectedRefreshMonths": 12,
       "staleAfterYears": 2,
       "shard": "state-ca-income-tax-2024.json",
-      "sourceUrl": "https://www.ftb.ca.gov/forms/2025/2025-540-tax-rate-schedules.pdf",
-      "sourceDocument": "California FTB 2025 California Tax Rate Schedules; 2026 standard deduction (FTB Form 540-ES)",
-      "dateRetrieved": "2026-06-05",
-      "contentHash": "76490a512258c9fc40b975e37d1eee2204f238f697ece3eabb9f5fadc6bedf20"
+      "sourceUrl": "https://www.ftb.ca.gov/forms/2026/2026-540-tax-rate-schedules.pdf",
+      "sourceDocument": "California FTB 2026 California Tax Rate Schedules; 2025 standard deduction (FTB deductions page)",
+      "dateRetrieved": "2026-11-15",
+      "contentHash": "dc194225ac7ea7bac408d651b15cf2daa0c5f991a5588bcb55f6d5195d9c397e"
     },
     {
       "id": "state-ny-income-tax-2024",
