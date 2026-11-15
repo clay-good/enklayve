@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-20",
+  "generatedAt": "2026-11-15",
   "datasets": [
     {
       "id": "federal-income-tax-2024",
@@ -76,9 +76,9 @@
       "staleAfterYears": 2,
       "shard": "treasury-bonds-2024.json",
       "sourceUrl": "https://www.treasurydirect.gov/savings-bonds/i-bonds/i-bonds-interest-rates/",
-      "sourceDocument": "U.S. Treasury (TreasuryDirect), Series I Savings Bond fixed rate and semiannual inflation rate by rate period (through May 2026)",
-      "dateRetrieved": "2026-08-29",
-      "contentHash": "3b40055938aa85975940a84f396fbb2925e190e5bdb5f110357fba0e51c885db"
+      "sourceDocument": "U.S. Treasury (TreasuryDirect), Series I Savings Bond fixed rate and semiannual inflation rate by rate period (through November 2026)",
+      "dateRetrieved": "2026-11-15",
+      "contentHash": "9289774370d20b750560ca81721a2197f4cd0cf594f2386f08e6c062ea84a48a"
     },
     {
       "id": "cpi-u-annual",

@@ -35,15 +35,17 @@ describe("I-bond composite rate", () => {
 });
 
 describe("I-bond projection", () => {
-  it("values a $10,000 May-2022 bond through May 2026", () => {
-    // Fixed 0% (locked May 2022), so each composite = 2·semi. Compounding the nine
-    // semiannual periods from May 2022 through May 2026 (rounding each to cents).
+  it("values a $10,000 May-2022 bond through November 2026", () => {
+    // Fixed 0% (locked May 2022), so each composite = 2·semi. Compounding the ten
+    // semiannual periods from May 2022 through November 2026 (rounding each to
+    // cents): the nine through May 2026 reach $12,038.44, and November 2026's
+    // 2.04% semiannual rate is a 4.08% composite, so ×1.0204 → $12,284.02.
     const r = projectIBond(10000, "2022-05", ds.treasuryBonds)!;
     expect(r).not.toBeNull();
     expect(r.fixedRate).toBe(0);
-    expect(r.periodsHeld).toBe(9);
-    expect(r.currentValue.roundToCents().toNumber()).toBe(12038.44);
-    expect(r.interestEarned.roundToCents().toNumber()).toBe(2038.44);
+    expect(r.periodsHeld).toBe(10);
+    expect(r.currentValue.roundToCents().toNumber()).toBe(12284.02);
+    expect(r.interestEarned.roundToCents().toNumber()).toBe(2284.02);
     // The first period earns the at-purchase composite (9.62%).
     expect(r.periods[0]!.compositeRate).toBeCloseTo(0.0962, 6);
   });
@@ -52,8 +54,9 @@ describe("I-bond projection", () => {
     // A Nov-2023 bond has fixed 1.30%; the latest composite uses that fixed rate.
     const r = projectIBond(10000, "2023-11", ds.treasuryBonds)!;
     expect(r.fixedRate).toBe(0.013);
-    // Latest period May 2026 semi 1.67% with fixed 1.30% -> 4.66%.
-    expect(r.latestCompositeRate).toBeCloseTo(0.0466171, 6);
+    // Latest period November 2026 semi 2.04% with fixed 1.30% -> 5.41%, which is
+    // TreasuryDirect's published composite for a Nov-2023 bond this period.
+    expect(r.latestCompositeRate).toBeCloseTo(0.0540652, 6);
   });
 
   it("never decreases in value across periods (monotonic)", () => {

@@ -3128,10 +3128,16 @@ describe("adapters: TreasuryDirect I-bond rates (one figure stated, one checked)
     // The parser this replaces wrote into rates[length - 1] whatever period the
     // page described, so the morning Treasury announces a new period it would
     // have rewritten the previous one — in a series that exists to be a history.
-    const result = adapter.parse(page("4.26", "0.90", "November", "2026"), current);
+    // The period after the shard's newest, whichever that is today: a fixed
+    // "November 2026" stopped being new the day that period was appended.
+    const rates = current.rates as { period: string }[];
+    const [y, m] = rates[rates.length - 1]!.period.split("-").map(Number) as [number, number];
+    const next = m === 5 ? { month: "November", year: y } : { month: "May", year: y + 1 };
+    const nextPeriod = `${next.year}-${next.month === "May" ? "05" : "11"}`;
+    const result = adapter.parse(page("4.26", "0.90", next.month, String(next.year)), current);
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.reason).toContain("2026-11");
+    expect(result.reason).toContain(nextPeriod);
     expect(result.reason).toContain("reviewer's step");
   });
 
