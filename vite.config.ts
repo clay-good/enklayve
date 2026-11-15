@@ -9,6 +9,8 @@ import { renderSitemap, renderRobots, SITE_ORIGIN } from "./scripts/sitemap";
 import { indexablePaths } from "./scripts/indexable";
 import { injectHomeSeo } from "./scripts/home-page";
 import { renderAboutPage, ABOUT_PAGE_PATH } from "./scripts/about-page";
+import { statePages } from "./scripts/state-pages";
+import { guidePages } from "./scripts/guides";
 import { CORE_SHELL, renderServiceWorker, renderWebManifest } from "./scripts/service-worker";
 
 const REPO_ROOT = resolve(__dirname);
@@ -68,6 +70,11 @@ function staticSeo(): Plugin {
       // crawler can index, so the page that explains what the site is had no
       // URL of its own while every calculator had one.
       this.emitFile({ type: "asset", fileName: ABOUT_PAGE_PATH, source: renderAboutPage() });
+      // One page per state, and the guides: the searches the calculators answer
+      // but no URL here named (scripts/state-pages.ts, scripts/guides.ts).
+      for (const page of [...statePages(), ...guidePages()]) {
+        this.emitFile({ type: "asset", fileName: page.fileName, source: page.source });
+      }
       // Indexable URLs: the home, the two site-wide pages, and every tool
       // shell — named as the host serves them (scripts/sitemap.ts).
       const paths = indexablePaths();

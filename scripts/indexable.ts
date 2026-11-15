@@ -15,6 +15,8 @@
 import { toolPages, toolPageUrl } from "./tool-pages";
 import { INDEX_PAGE_URL } from "./tools-index";
 import { ABOUT_PAGE_URL } from "./about-page";
+import { statePages } from "./state-pages";
+import { guidePages } from "./guides";
 
 export function indexablePaths(): string[] {
   return [
@@ -22,5 +24,7 @@ export function indexablePaths(): string[] {
     `/${INDEX_PAGE_URL}`,
     `/${ABOUT_PAGE_URL}`,
     ...toolPages().map((p) => `/${toolPageUrl(p.id)}`),
+    ...statePages().map((p) => `/${p.url}`),
+    ...guidePages().map((p) => `/${p.url}`),
   ];
 }

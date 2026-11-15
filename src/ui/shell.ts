@@ -21,6 +21,7 @@ import { type TileContext, type TileDefinition } from "../tiles/types";
 import { getTile, TILES, SUB_TOOLS } from "../tiles/registry";
 import { HOME_TITLE, CATALOG_SUMMARY } from "./seo";
 import { ABOUT_LEDE, ABOUT_POINTS, WHERE_IT_WORKS, US_RESOURCES } from "./aboutCopy";
+import { ANTI_BUDGET_TITLE, ANTI_BUDGET_SECTIONS } from "./guideCopy";
 import { SituationStore } from "../profile/situation";
 import { resolveResidenceLocal, seedResidenceLocal, rememberableCounty } from "./residenceLocal";
 import { rememberShared, type SharedFields } from "../tiles/profileSync";
@@ -766,21 +767,9 @@ function budgetWhy(): HTMLElement {
   return el(
     "section",
     { class: "budget-why home-budget-why" },
-    el("h2", { class: "budget-why__title", text: "The anti-budget: give every dollar a job" }),
-    para(
-      "Most budgets fail because they run on willpower, and willpower runs out by week three. So flip it. Decide where every dollar goes before the month starts. When the choice is already made, there is nothing left to fight at the store.",
-    ),
-    subhead("Then make it automatic"),
-    para(
-      "Get yourself out of the way. Turn on automatic 401(k), IRA, and HSA contributions so the money moves before you can spend it. Put every bill on autopay. Set money to move to savings on payday. You are building a little robot that grows your money while you sleep, and the robot never gets tired or tempted.",
-    ),
-    subhead("Fund things in this order"),
-    para(
-      "Grab your full 401(k) match first, because it is free money. Then pay off high-interest debt fast, since clearing a 24% card is a guaranteed 24% raise. Then save six months of expenses in a high-yield savings account. After that, invest in this order: 401(k), traditional IRA, HSA, then a regular brokerage. Once it all runs on autopilot, buy whatever future you believe in, from a rental house to index funds to a rare Charizard.",
-    ),
-    subhead("Just do the next thing"),
-    para(
-      "That is the whole plan, and you do not need a separate dashboard to run it. Look at the budget above to see where you stand, then find the first line here you have not finished and do only that one. Cushion, match, debt, six-month fund, then invest, one move at a time. Knowing where you stand is just knowing which line you are on. The rest is patience and autopay.",
+    el("h2", { class: "budget-why__title", text: ANTI_BUDGET_TITLE }),
+    ...ANTI_BUDGET_SECTIONS.flatMap((s) =>
+      s.heading ? [subhead(s.heading), para(s.body)] : [para(s.body)],
     ),
   );
 }

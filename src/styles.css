@@ -91,6 +91,37 @@ body {
   flex-direction: column;
 }
 
+/* The crawlable catalog index.html ships inside #app (scripts/home-page.ts).
+   It is the first paint until the shell boots, and unstyled it read as a wall
+   of run-together text, so it gets the home's calm column. */
+.boot-fallback {
+  width: 100%;
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 2.5rem 1rem;
+  color: var(--enk-text-muted);
+}
+.boot-fallback h1 {
+  color: var(--enk-text);
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  line-height: 1.2;
+}
+.boot-fallback h2 {
+  color: var(--enk-text);
+  font-size: 1.1rem;
+  margin-top: 2rem;
+}
+.boot-fallback ul {
+  padding-left: 1.1rem;
+}
+.boot-fallback li {
+  padding: 0.25rem 0;
+}
+.boot-fallback a {
+  color: var(--enk-primary);
+  font-weight: 600;
+}
+
 /* --- Focus: always visible for keyboard users (WCAG 2.2 AA, §11). --- */
 :focus-visible {
   outline: 3px solid var(--enk-focus);

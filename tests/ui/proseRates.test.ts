@@ -485,7 +485,7 @@ const NOT_A_RATE: Record<string, Record<string, string>> = {
     "100%": "the point a combined rate can exceed, which is arithmetic and not a rate anyone sets",
   },
   "tiles/billTriage.ts": { "24%": "an illustrative card APR in the explainer" },
-  "ui/shell.ts": { "24%": "the same illustrative card APR, in the getting-started guidance" },
+  "ui/guideCopy.ts": { "24%": "the same illustrative card APR, in the anti-budget guidance" },
   "tiles/childTax.ts": { "0%": "what is rendered when the computed rate is zero" },
   "tiles/saversCredit.ts": { "0%": "what is rendered above the income limit" },
   "tiles/socialSecurityTax.ts": { "0%": "what is rendered when none of the benefit is taxable" },

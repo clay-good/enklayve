@@ -111,6 +111,8 @@ export function renderHomeFallback(): string {
 ${areas}
       </ul>
       <p><a href="/tools">See all ${TOOL_COUNT} calculators →</a> ·
+        <a href="/states">Take-home pay by state →</a> ·
+        <a href="/guides/anti-budget">The anti-budget →</a> ·
         <a href="/about">Why enklayve is free and private →</a></p>
     </div>`;
 }
