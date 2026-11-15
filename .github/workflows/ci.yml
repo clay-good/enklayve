@@ -41,7 +41,12 @@ jobs:
   # width), the offline service worker, and the deep-link → compute path —
   # things happy-dom cannot. Kept a separate job so the unit suite stays fast.
   e2e:
-    runs-on: ubuntu-latest
+    # Pinned, unlike the build job. On 2026-11-15 `ubuntu-latest` became Ubuntu
+    # 26.04, and Playwright's installer refuses it outright ("Playwright does not
+    # support chromium on ubuntu26.04-x64"), so every PR went red before a single
+    # test ran. Move this to ubuntu-latest again once the Playwright in
+    # package-lock.json lists 26.04 among its supported hosts.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
